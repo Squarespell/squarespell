@@ -1,0 +1,28 @@
+.layout { display: flex; min-height: 100vh; background: var(--bg); }
+.sidebar { width: 240px; flex-shrink: 0; border-right: 1px solid #2a3e14; padding: 28px 20px; display: flex; flex-direction: column; gap: 20px; background: #0d1509; position: sticky; top: 0; height: 100vh; }
+.logo { font-size: 20px; font-weight: 800; color: #D2FF1D; letter-spacing: -0.02em; }
+.planBadge { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #4a6020; text-transform: uppercase; }
+.usage { font-size: 12px; color: #4a6020; }
+.newBtn { margin-top: auto; width: 100%; padding: 13px; background: #D2FF1D; color: #0a0f05; border: none; border-radius: 20px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+.newBtn:hover { opacity: 0.88; }
+.main { flex: 1; padding: 40px; }
+.heading { font-size: 26px; font-weight: 800; color: #e8f5c8; margin-bottom: 28px; }
+.empty { color: #4a6020; font-size: 15px; padding: 60px 0; text-align: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.card { background: #0d1509; border: 1px solid #2a3e14; border-radius: 14px; padding: 24px; cursor: pointer; transition: border-color 0.2s, transform 0.15s; }
+.card:hover { border-color: #4a6020; transform: translateY(-2px); }
+.cardTitle { font-size: 15px; font-weight: 600; color: #e8f5c8; margin-bottom: 12px; }
+.cardMeta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #4a6020; flex-wrap: wrap; }
+.live { color: #D2FF1D; font-weight: 600; }
+.draft { color: #4a6020; }
+.analyticsLink { background: transparent; border: none; color: #D2FF1D; font-size: 12px; cursor: pointer; padding: 0; margin-left: auto; font-family: var(--font); }
+.loading { padding: 60px; color: #e8f5c8; text-align: center; }
+@media (max-width: 768px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; border-right: none; border-bottom: 1px solid #2a3e14; }
+  .logo { flex: 1; }
+  .newBtn { width: auto; padding: 10px 18px; margin-top: 0; }
+  .planBadge, .usage { display: none; }
+  .main { padding: 24px 16px; }
+  .grid { grid-template-columns: 1fr; }
+}
