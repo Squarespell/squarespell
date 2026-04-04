@@ -68,7 +68,7 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .gn-btn:hover{color:var(--t1);border-color:var(--b1)}
 .gn-btn.acc{background:var(--acc);color:#07090c;border-color:var(--acc);font-weight:700}
 .dsidebar{position:fixed;top:56px;left:0;bottom:0;width:210px;background:var(--bg2);border-right:.5px solid var(--b2);padding:16px 10px;z-index:100;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none}
-.dsi{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:14px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative;letter-spacing:-.01em}
+.dsi{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:20px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative;letter-spacing:-.01em}
 .dsi:hover{background:var(--g1);color:var(--t2)}
 .dsi.on{background:var(--acc-dim);border:.5px solid var(--acc-b);color:var(--acc)}
 .dsi svg{flex-shrink:0;opacity:.7;width:16px;height:16px}
