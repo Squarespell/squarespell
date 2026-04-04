@@ -22,21 +22,21 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .gnav{position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(7,9,12,.88);backdrop-filter:blur(32px);border-bottom:.5px solid var(--b2);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px}
 .gnav-logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex-shrink:0}
 .gnav-mark{width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.gnav-name{font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.03em}
+.gnav-name{font-size:19px;font-weight:700;color:var(--t1);letter-spacing:-.03em}
 .gnav-pages{display:flex;gap:1px;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none}
 .gnav-pages::-webkit-scrollbar{display:none}
-.gp{font-size:12px;font-weight:500;color:var(--t3);padding:5px 10px;border-radius:7px;cursor:pointer;border:none;background:transparent;font-family:var(--fam);letter-spacing:-.01em;white-space:nowrap;transition:color .15s,background .15s}
+.gp{font-size:16px;font-weight:500;color:var(--t3);padding:5px 10px;border-radius:7px;cursor:pointer;border:none;background:transparent;font-family:var(--fam);letter-spacing:-.01em;white-space:nowrap;transition:color .15s,background .15s}
 .gp:hover,.gp.on{color:var(--t1);background:var(--g1)}
 .gp.on{border:.5px solid var(--b1)}
 .gnav-right{display:flex;gap:8px;align-items:center;flex-shrink:0}
-.gn-btn{font-size:12px;font-weight:500;color:var(--t3);padding:6px 12px;border-radius:8px;cursor:pointer;border:.5px solid var(--b2);background:transparent;font-family:var(--fam);transition:all .15s;white-space:nowrap}
+.gn-btn{font-size:16px;font-weight:500;color:var(--t3);padding:6px 12px;border-radius:8px;cursor:pointer;border:.5px solid var(--b2);background:transparent;font-family:var(--fam);transition:all .15s;white-space:nowrap}
 .gn-btn:hover{color:var(--t1);border-color:var(--b1)}
 .gn-btn.on{background:var(--g1);color:var(--t1);border-color:var(--b1)}
 .gn-btn.acc{background:var(--acc);color:#07090c;border-color:var(--acc);font-weight:700}
 /* VTABS */
 .vtabs{position:fixed;top:56px;left:0;right:0;z-index:290;background:rgba(7,9,12,.78);backdrop-filter:blur(20px);border-bottom:.5px solid var(--b3);height:40px;display:flex;align-items:center;padding:0 24px;gap:16px}
 .vt-group{display:flex;gap:2px;background:rgba(255,255,255,.04);border:.5px solid var(--b3);border-radius:8px;padding:3px}
-.vt{font-size:11px;font-weight:500;color:var(--t4);padding:3px 11px;border-radius:5px;cursor:pointer;border:none;background:transparent;font-family:var(--fam);transition:all .15s;display:flex;align-items:center;gap:4px}
+.vt{font-size:15px;font-weight:500;color:var(--t4);padding:3px 11px;border-radius:5px;cursor:pointer;border:none;background:transparent;font-family:var(--fam);transition:all .15s;display:flex;align-items:center;gap:4px}
 .vt:hover{color:var(--t2)}
 .vt.on{background:var(--g1);border:.5px solid var(--b1);color:var(--t1)}
 /* LAYOUT */
@@ -54,64 +54,64 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .glass-sm{background:var(--g2);backdrop-filter:blur(18px);border:.5px solid var(--b2);border-radius:12px}
 /* SIDEBAR */
 .dsidebar{position:fixed;top:96px;left:0;bottom:0;width:210px;background:var(--bg2);border-right:.5px solid var(--b2);padding:16px 10px;z-index:100;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none}
-.dsi{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:13px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative}
+.dsi{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:17px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative}
 .dsi:hover{background:var(--g1);color:var(--t2)}
 .dsi.on{background:var(--acc-dim);border:.5px solid var(--acc-b);color:var(--acc)}
 .dsi svg{flex-shrink:0;opacity:.7}
 .dsi.on svg{opacity:1}
-.dsec{font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.1em;padding:12px 10px 5px}
+.dsec{font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.1em;padding:12px 10px 5px}
 .dnotif{width:5px;height:5px;border-radius:50%;background:var(--acc);position:absolute;right:9px;top:50%;transform:translateY(-50%)}
 /* DCONTENT */
 .dcontent{margin-left:210px;padding:28px 36px;min-height:calc(100vh - 96px)}
 .dpage{display:none}
 .dpage.on{display:block}
 /* TYPOGRAPHY */
-.disp{font-size:54px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
+.disp{font-size:62px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
 .disp span{color:var(--acc)}
-.h2{font-size:32px;font-weight:800;color:var(--t1);line-height:1.1;letter-spacing:-.045em}
+.h2{font-size:38px;font-weight:800;color:var(--t1);line-height:1.1;letter-spacing:-.045em}
 .h2 span{color:var(--acc)}
-.h3{font-size:20px;font-weight:700;color:var(--t1);letter-spacing:-.035em}
-.h4{font-size:16px;font-weight:600;color:var(--t1);letter-spacing:-.02em}
-.body-lg{font-size:17px;color:var(--t2);line-height:1.65;letter-spacing:-.01em}
-.body{font-size:14px;color:var(--t2);line-height:1.6;letter-spacing:-.01em}
-.body-sm{font-size:12px;color:var(--t3);line-height:1.55}
-.label{font-size:10px;font-weight:700;color:var(--acc);letter-spacing:.08em;text-transform:uppercase}
-.caption{font-size:11px;color:var(--t4)}
+.h3{font-size:25px;font-weight:700;color:var(--t1);letter-spacing:-.035em}
+.h4{font-size:21px;font-weight:600;color:var(--t1);letter-spacing:-.02em}
+.body-lg{font-size:22px;color:var(--t2);line-height:1.65;letter-spacing:-.01em}
+.body{font-size:18px;color:var(--t2);line-height:1.6;letter-spacing:-.01em}
+.body-sm{font-size:16px;color:var(--t3);line-height:1.55}
+.label{font-size:14px;font-weight:700;color:var(--acc);letter-spacing:.08em;text-transform:uppercase}
+.caption{font-size:15px;color:var(--t4)}
 .mono{font-family:var(--mono)}
 /* BUTTONS */
-.btn-p{background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:12px 22px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s,transform .1s;letter-spacing:-.02em}
+.btn-p{background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:12px 22px;font-size:18px;font-weight:700;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s,transform .1s;letter-spacing:-.02em}
 .btn-p:hover{background:#c8f517;transform:translateY(-1px)}
-.btn-p-lg{padding:15px 30px;font-size:16px;border-radius:13px}
-.btn-s{background:var(--g1);color:var(--t1);border:.5px solid var(--b1);border-radius:11px;padding:11px 20px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s}
+.btn-p-lg{padding:15px 30px;font-size:21px;border-radius:13px}
+.btn-s{background:var(--g1);color:var(--t1);border:.5px solid var(--b1);border-radius:11px;padding:11px 20px;font-size:18px;font-weight:500;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s}
 .btn-s:hover{border-color:rgba(255,255,255,.16)}
-.btn-s-lg{padding:14px 28px;font-size:15px;border-radius:13px}
+.btn-s-lg{padding:14px 28px;font-size:19px;border-radius:13px}
 /* BADGES */
-.chip{background:var(--g2);border:.5px solid var(--b2);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--t3);font-weight:500;display:inline-flex;align-items:center;gap:4px}
-.chip-acc{background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--acc);font-weight:600;display:inline-flex;align-items:center;gap:4px}
-.badge-pop{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--acc);color:#07090c;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 12px;border-radius:20px;white-space:nowrap}
-.badge-hot{display:inline-flex;align-items:center;gap:3px;background:rgba(248,113,113,.12);border:.5px solid rgba(248,113,113,.25);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;color:#fca5a5}
-.badge-warm{display:inline-flex;align-items:center;gap:3px;background:rgba(251,191,36,.1);border:.5px solid rgba(251,191,36,.2);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;color:#fcd34d}
-.badge-cold{display:inline-flex;align-items:center;gap:3px;background:rgba(96,165,250,.1);border:.5px solid rgba(96,165,250,.2);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;color:#93c5fd}
+.chip{background:var(--g2);border:.5px solid var(--b2);border-radius:20px;padding:3px 10px;font-size:15px;color:var(--t3);font-weight:500;display:inline-flex;align-items:center;gap:4px}
+.chip-acc{background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 10px;font-size:15px;color:var(--acc);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.badge-pop{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--acc);color:#07090c;font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 12px;border-radius:20px;white-space:nowrap}
+.badge-hot{display:inline-flex;align-items:center;gap:3px;background:rgba(248,113,113,.12);border:.5px solid rgba(248,113,113,.25);border-radius:20px;padding:2px 8px;font-size:14px;font-weight:700;color:#fca5a5}
+.badge-warm{display:inline-flex;align-items:center;gap:3px;background:rgba(251,191,36,.1);border:.5px solid rgba(251,191,36,.2);border-radius:20px;padding:2px 8px;font-size:14px;font-weight:700;color:#fcd34d}
+.badge-cold{display:inline-flex;align-items:center;gap:3px;background:rgba(96,165,250,.1);border:.5px solid rgba(96,165,250,.2);border-radius:20px;padding:2px 8px;font-size:14px;font-weight:700;color:#93c5fd}
 /* TRIAL BADGE */
-.trial-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--acc)}
+.trial-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:4px 12px;font-size:15px;font-weight:600;color:var(--acc)}
 /* OR DIVIDER */
 .or-div{display:flex;align-items:center;gap:10px;margin:12px 0}
 .or-div div{flex:1;height:.5px;background:var(--b1)}
-.or-div span{font-size:11px;color:var(--t4)}
+.or-div span{font-size:15px;color:var(--t4)}
 /* INPUTS */
 .inp-row{background:var(--g2);border:.5px solid var(--b2);border-radius:11px;padding:11px 13px;display:flex;align-items:center;gap:9px;transition:border-color .15s}
 .inp-row:focus-within{border-color:var(--acc-b)}
-.inp{background:transparent;border:none;outline:none;font-size:13px;color:var(--t1);font-family:var(--fam);flex:1}
+.inp{background:transparent;border:none;outline:none;font-size:17px;color:var(--t1);font-family:var(--fam);flex:1}
 .inp::placeholder{color:var(--t4)}
 /* AUTH BUTTONS */
-.auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--g1);border:.5px solid var(--b1);border-radius:11px;padding:12px 18px;cursor:pointer;font-size:13px;color:var(--t2);font-weight:500;font-family:var(--fam);width:100%;margin-bottom:9px;letter-spacing:-.01em;transition:all .15s}
+.auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--g1);border:.5px solid var(--b1);border-radius:11px;padding:12px 18px;cursor:pointer;font-size:17px;color:var(--t2);font-weight:500;font-family:var(--fam);width:100%;margin-bottom:9px;letter-spacing:-.01em;transition:all .15s}
 .auth-btn:hover{border-color:rgba(255,255,255,.16);color:var(--t1)}
 /* STAT CARD */
 .stat-card{background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:18px 20px;transition:all .2s;cursor:default}
 .stat-card:hover{border-color:var(--acc-b);transform:translateY(-1px)}
-.stat-v{font-size:28px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1}
-.stat-l{font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
-.stat-d{font-size:11px;font-weight:600;margin-top:4px}
+.stat-v{font-size:34px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1}
+.stat-l{font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
+.stat-d{font-size:15px;font-weight:600;margin-top:4px}
 .stat-d.up{color:var(--green)}
 .stat-d.down{color:var(--red)}
 .stat-d.neu{color:var(--t4)}
@@ -119,18 +119,18 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .p-card{background:var(--g1);border:.5px solid var(--b1);border-radius:18px;padding:26px;position:relative;transition:all .2s}
 .p-card:hover{transform:translateY(-2px)}
 .p-card.popular{background:var(--acc-dim);border-color:var(--acc-b);padding-top:38px}
-.p-check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--t2);margin-bottom:8px;line-height:1.4}
+.p-check{display:flex;gap:8px;align-items:flex-start;font-size:17px;color:var(--t2);margin-bottom:8px;line-height:1.4}
 .p-check svg{flex-shrink:0;margin-top:1px}
-.p-cross{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--t4);margin-bottom:8px}
+.p-cross{display:flex;gap:8px;align-items:flex-start;font-size:17px;color:var(--t4);margin-bottom:8px}
 /* BILLING TOGGLE */
 .bill-tog{display:flex;background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:3px;gap:2px}
-.bt-opt{font-size:13px;font-weight:500;color:var(--t4);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+.bt-opt{font-size:17px;font-weight:500;color:var(--t4);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
 .bt-opt.on{background:var(--g1);color:var(--t1);border:.5px solid var(--b1)}
-.bt-save{background:var(--acc);color:#07090c;font-size:9px;font-weight:800;border-radius:20px;padding:2px 7px}
+.bt-save{background:var(--acc);color:#07090c;font-size:13px;font-weight:800;border-radius:20px;padding:2px 7px}
 /* TABLE */
 .d-table{width:100%;border-collapse:collapse}
-.d-table th{font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;padding:9px 12px;text-align:left;border-bottom:.5px solid var(--b2)}
-.d-table td{font-size:12px;color:var(--t2);padding:10px 12px;border-bottom:.5px solid var(--b3);letter-spacing:-.01em}
+.d-table th{font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;padding:9px 12px;text-align:left;border-bottom:.5px solid var(--b2)}
+.d-table td{font-size:16px;color:var(--t2);padding:10px 12px;border-bottom:.5px solid var(--b3);letter-spacing:-.01em}
 .d-table tr:last-child td{border-bottom:none}
 .d-table tr:hover td{background:var(--g3);cursor:pointer}
 /* FUNNEL */
@@ -138,11 +138,11 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .f-bar-wrap{flex:1;background:rgba(255,255,255,.05);border-radius:20px;height:4px;overflow:hidden}
 .f-bar{height:4px;border-radius:20px;background:var(--acc)}
 /* AI BOX */
-.ai-box{background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--t2);line-height:1.55}
+.ai-box{background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:10px;padding:11px 13px;font-size:16px;color:var(--t2);line-height:1.55}
 /* ROI */
 .roi-card{background:linear-gradient(135deg,rgba(210,255,29,.06),rgba(210,255,29,.02));border:.5px solid var(--acc-b);border-radius:13px;padding:18px 20px}
 /* PIPELINE */
-.pipe-stage{border-radius:9px;padding:4px 10px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.pipe-stage{border-radius:9px;padding:4px 10px;font-size:15px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
 .pipe-new{color:var(--green);background:rgba(74,222,128,.07);border:.5px solid rgba(74,222,128,.15)}
 .pipe-contact{color:var(--acc);background:var(--acc-dim);border:.5px solid var(--acc-b)}
 .pipe-nurture{color:var(--yellow);background:rgba(251,191,36,.08);border:.5px solid rgba(251,191,36,.15)}
@@ -154,8 +154,8 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .pay-ok{background:rgba(74,222,128,.08);border:.5px solid rgba(74,222,128,.2);border-radius:12px;text-align:center}
 .pay-fail{background:rgba(248,113,113,.08);border:.5px solid rgba(248,113,113,.2);border-radius:12px;text-align:center}
 /* CODE BOX */
-.code-box{background:rgba(0,0,0,.45);border:.5px solid var(--b1);border-radius:10px;padding:13px 14px;font-family:var(--mono);font-size:11px;color:var(--acc);word-break:break-all;position:relative;line-height:1.6}
-.code-copy-btn{position:absolute;right:9px;top:9px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;padding:3px 9px;font-size:10px;color:var(--t3);cursor:pointer;font-family:var(--fam);transition:all .15s}
+.code-box{background:rgba(0,0,0,.45);border:.5px solid var(--b1);border-radius:10px;padding:13px 14px;font-family:var(--mono);font-size:15px;color:var(--acc);word-break:break-all;position:relative;line-height:1.6}
+.code-copy-btn{position:absolute;right:9px;top:9px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;padding:3px 9px;font-size:14px;color:var(--t3);cursor:pointer;font-family:var(--fam);transition:all .15s}
 .code-copy-btn:hover{color:var(--t1)}
 /* TRIAL COUNTDOWN */
 .trial-bar{background:linear-gradient(90deg,rgba(210,255,29,.08),rgba(210,255,29,.02));border:.5px solid var(--acc-b);border-radius:11px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
@@ -175,39 +175,39 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .av{width:24px;height:24px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid var(--bg);margin-right:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--acc)}
 /* FAQ */
 .faq-item{border-bottom:.5px solid var(--b2);padding:16px 0}
-.faq-q{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:14px;font-weight:600;color:var(--t1);letter-spacing:-.02em;gap:14px}
-.faq-a{font-size:13px;color:var(--t3);line-height:1.6;margin-top:10px;display:none}
+.faq-q{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:18px;font-weight:600;color:var(--t1);letter-spacing:-.02em;gap:14px}
+.faq-a{font-size:17px;color:var(--t3);line-height:1.6;margin-top:10px;display:none}
 .faq-item.open .faq-a{display:block}
 .faq-item.open .faq-chev{transform:rotate(180deg)}
 .faq-chev{transition:transform .2s;flex-shrink:0}
 /* FOOTER */
 .footer{background:var(--bg2);border-top:.5px solid var(--b2);padding:44px 36px 24px}
 .footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:36px;margin-bottom:36px}
-.ft{font-size:11px;font-weight:700;color:var(--t1);margin-bottom:12px}
-.fl{display:block;font-size:12px;color:var(--t4);margin-bottom:8px;cursor:pointer;transition:color .15s}
+.ft{font-size:15px;font-weight:700;color:var(--t1);margin-bottom:12px}
+.fl{display:block;font-size:16px;color:var(--t4);margin-bottom:8px;cursor:pointer;transition:color .15s}
 .fl:hover{color:var(--t2)}
 /* MOBILE */
 .mscreen{display:none}
 .mscreen.on{display:block}
 .mprog{height:2px;background:rgba(255,255,255,.06)}
 .mprog-fill{height:2px;background:var(--acc);transition:width .3s}
-.mstatus{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;font-size:11px;color:var(--t3)}
+.mstatus{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;font-size:15px;color:var(--t3)}
 .mt{font-size:19px;font-weight:800;color:var(--t1);line-height:1.2;letter-spacing:-.04em}
 .mt span{color:var(--acc)}
-.mc{font-size:12px;color:var(--t3)}
-.me{font-size:9px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em}
-.mbp{background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:13px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
+.mc{font-size:16px;color:var(--t3)}
+.me{font-size:13px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em}
+.mbp{background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:13px;font-size:18px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
 .mbp:hover{background:#c8f517}
-.mbs{background:var(--g1);border:.5px solid var(--b1);color:var(--t1);border-radius:11px;padding:12px;font-size:13px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center}
+.mbs{background:var(--g1);border:.5px solid var(--b1);color:var(--t1);border-radius:11px;padding:12px;font-size:17px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center}
 .mopt{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:11px;cursor:pointer;margin-bottom:7px;transition:all .15s}
 .mopt.on{background:var(--acc-dim);border-color:var(--acc-b)}
-.mopt-k{width:24px;height:24px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--t3);flex-shrink:0}
+.mopt-k{width:24px;height:24px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--t3);flex-shrink:0}
 .mopt.on .mopt-k{background:var(--acc);color:#07090c;border-color:transparent}
-.mopt-lbl{font-size:13px;color:var(--t2);line-height:1.35}
+.mopt-lbl{font-size:17px;color:var(--t2);line-height:1.35}
 .mopt.on .mopt-lbl{color:var(--t1)}
 .mbnav{display:flex;background:rgba(7,9,12,.9);backdrop-filter:blur(24px);border-top:.5px solid var(--b2);padding:9px 0 16px;justify-content:space-around}
 .mbnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:0 8px}
-.mbnav-lbl{font-size:9px;font-weight:600}
+.mbnav-lbl{font-size:13px;font-weight:600}
 .mbnav-item.active .mbnav-lbl{color:var(--acc)}
 .mbnav-item.inactive .mbnav-lbl{color:var(--t4)}
 .bsafe{height:24px}
@@ -226,9 +226,32 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 /* RESPONSIVE */
 @media(max-width:1100px){.dcontent{margin-left:0!important}.dsidebar{display:none!important}}
 @media(max-width:768px){.gnav-pages{display:none}.footer-grid{grid-template-columns:1fr 1fr!important}}
-@media(max-width:480px){.disp{font-size:36px}.h2{font-size:24px}}
+@media(max-width:480px){.disp{font-size:44px}.h2{font-size:30px}}
 /* MINI CHART BARS */
 .mini-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px}
+
+/* Premium gradient enhancements */
+.stat-card{background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.03) 100%)!important}
+.stat-card:hover{background:linear-gradient(135deg,rgba(210,255,29,.08) 0%,rgba(210,255,29,.03) 100%)!important;border-color:var(--acc-b)!important}
+.glass-sm{background:linear-gradient(135deg,rgba(255,255,255,.038) 0%,rgba(255,255,255,.018) 100%)!important}
+.tmpl-card{background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.03) 100%)!important}
+.tmpl-card:hover{background:linear-gradient(135deg,rgba(210,255,29,.09) 0%,rgba(210,255,29,.03) 100%)!important}
+.roi-card{background:linear-gradient(135deg,rgba(210,255,29,.09) 0%,rgba(210,255,29,.03) 100%)!important}
+.dsidebar{background:linear-gradient(180deg,#0d1018 0%,#0a0e14 100%)!important}
+.gnav{background:linear-gradient(90deg,rgba(7,9,12,.95) 0%,rgba(10,14,20,.9) 100%)!important}
+.p-card.popular{background:linear-gradient(135deg,rgba(210,255,29,.12) 0%,rgba(210,255,29,.04) 100%)!important}
+
+/* Larger sidebar items */
+.dsi{font-size:15px!important;padding:9px 12px!important;gap:11px!important}
+.dsi svg{width:17px!important;height:17px!important}
+.dsec{font-size:12px!important;padding:18px 12px 8px!important}
+
+/* Auth buttons premium */
+.auth-btn{border-radius:14px!important;padding:15px 20px!important;font-size:16px!important}
+
+/* Pricing toggle fix */
+.bt-opt{color:var(--t2)!important;font-size:15px!important}
+.bt-opt.on{color:var(--t1)!important;background:linear-gradient(135deg,rgba(210,255,29,.15),rgba(210,255,29,.05))!important;border:.5px solid var(--acc-b)!important}
 </style>
 </head>
 <body><script>
@@ -239,36 +262,20 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
   var urlParams = new URLSearchParams(window.location.search);
   var t = urlParams.get("t");
   if (t) { token = t; try { localStorage.setItem("sq_token", t); } catch(e){} }
-  
   function apiFetch(path, opts) {
     return fetch(API + path, Object.assign({}, opts, {
       headers: Object.assign({"Authorization":"Bearer "+token,"Content-Type":"application/json"}, (opts||{}).headers)
     }));
   }
-  
-  window.__realSignOut = function() {
-    try { localStorage.removeItem("sq_token"); } catch(e){}
-    window.location.href = "/";
-  };
-  
+  window.__realSignOut = function() { try { localStorage.removeItem("sq_token"); } catch(e){} window.location.href = "/"; };
   window.__realGenerate = function(url, goal) {
     if (!url) { alert("Enter your website URL first"); return; }
-    var btn = document.getElementById("real-gen-btn");
-    if (btn) { btn.textContent = "Generating..."; btn.disabled = true; }
-    apiFetch("/api/generate", {
-      method: "POST",
-      body: JSON.stringify({ url: url, business_type: "coaching", goal: goal || "Generate more leads" })
-    }).then(function(r){ return r.json(); })
-    .then(function(data) {
-      if (data.error) { alert(data.error); }
-      else { alert("Quiz created! Check your dashboard."); gD("dashboard"); }
-      if (btn) { btn.textContent = "Generate quiz"; btn.disabled = false; }
-    }).catch(function() {
-      alert("Failed. Try again.");
-      if (btn) { btn.textContent = "Generate quiz"; btn.disabled = false; }
-    });
+    apiFetch("/api/generate", { method: "POST", body: JSON.stringify({ url: url, business_type: "coaching", goal: goal || "Generate more leads" }) })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data.error) { alert(data.error); } else { alert("Quiz created! Check your dashboard."); gD("dashboard"); }
+      }).catch(function() { alert("Failed. Try again."); });
   };
-  
   document.addEventListener("DOMContentLoaded", function() {
     if (!token) return;
     Promise.all([apiFetch("/api/quizzes"), apiFetch("/api/user/plan")])
@@ -452,18 +459,18 @@ function showPay(state) {
 <div class="mscreen on" id="ms-landing">
 <div style="position:relative;overflow:hidden;background:var(--bg)">
   <div class="orb" style="width:320px;height:320px;background:radial-gradient(circle,rgba(100,180,20,.16) 0%,transparent 65%);top:-100px;right:-80px"></div>
-  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span style="font-size:10px;color:var(--t4)">AI Quizzes</span></div>
+  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span style="font-size:14px;color:var(--t4)">AI Quizzes</span></div>
   <div style="padding:20px 20px 0;position:relative;z-index:2">
     <div style="display:inline-flex;align-items:center;gap:5px;background:var(--g1);border:.5px solid var(--b1);border-radius:20px;padding:4px 11px;margin-bottom:16px">
       <div class="notif-dot"></div>
-      <span style="font-size:10px;font-weight:600;color:var(--t2)">AI quiz funnels for Squarespace</span>
+      <span style="font-size:14px;font-weight:600;color:var(--t2)">AI quiz funnels for Squarespace</span>
     </div>
     <p class="mt" style="margin-bottom:10px">Turn visitors<br>into <span>leads</span><br>in 2 minutes.</p>
-    <p style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:18px">Build a quiz that matches your brand, captures leads, and converts.</p>
+    <p style="font-size:17px;color:var(--t3);line-height:1.6;margin-bottom:18px">Build a quiz that matches your brand, captures leads, and converts.</p>
     <!-- FREE TRIAL BADGE -->
     <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:4px 12px;margin-bottom:16px">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-      <span style="font-size:10px;font-weight:700;color:var(--acc)">FREE 7-day trial · No card needed</span>
+      <span style="font-size:14px;font-weight:700;color:var(--acc)">FREE 7-day trial · No card needed</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
       <button class="mbp" onclick="gP('signin')">Start free trial <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
@@ -471,15 +478,15 @@ function showPay(state) {
     </div>
     <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:11px;margin-bottom:24px">
       <div class="avrow"><div class="av">S</div><div class="av">M</div><div class="av">R</div></div>
-      <p style="margin-left:5px;font-size:10px;color:var(--t3)">Joined by <span style="color:var(--acc);font-weight:700">2,400+ owners</span> this month</p>
+      <p style="margin-left:5px;font-size:14px;color:var(--t3)">Joined by <span style="color:var(--acc);font-weight:700">2,400+ owners</span> this month</p>
     </div>
     <p class="me" style="margin-bottom:5px">Built for Squarespace</p>
-    <p style="font-size:16px;font-weight:800;color:var(--t1);margin-bottom:12px;letter-spacing:-.04em">Everything your quiz needs</p>
+    <p style="font-size:21px;font-weight:800;color:var(--t1);margin-bottom:12px;letter-spacing:-.04em">Everything your quiz needs</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px">
-      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><p style="font-size:11px;font-weight:700;color:var(--t1);margin-bottom:2px">AI generator</p><p style="font-size:9px;color:var(--t4);line-height:1.4">Full quiz from URL in 30s</p></div>
-      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><p style="font-size:11px;font-weight:700;color:var(--t1);margin-bottom:2px">Lead scoring</p><p style="font-size:9px;color:var(--t4);line-height:1.4">Hot/Warm/Cold auto-score</p></div>
-      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><p style="font-size:11px;font-weight:700;color:var(--t1);margin-bottom:2px">Live analytics</p><p style="font-size:9px;color:var(--t4);line-height:1.4">Views, leads, drop-offs</p></div>
-      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg></div><p style="font-size:11px;font-weight:700;color:var(--t1);margin-bottom:2px">Brand match</p><p style="font-size:9px;color:var(--t4);line-height:1.4">AI detects your style</p></div>
+      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><p style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:2px">AI generator</p><p style="font-size:13px;color:var(--t4);line-height:1.4">Full quiz from URL in 30s</p></div>
+      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><p style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:2px">Lead scoring</p><p style="font-size:13px;color:var(--t4);line-height:1.4">Hot/Warm/Cold auto-score</p></div>
+      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><p style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:2px">Live analytics</p><p style="font-size:13px;color:var(--t4);line-height:1.4">Views, leads, drop-offs</p></div>
+      <div class="glass-sm" style="padding:10px"><div style="width:26px;height:26px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg></div><p style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:2px">Brand match</p><p style="font-size:13px;color:var(--t4);line-height:1.4">AI detects your style</p></div>
     </div>
     <div class="bsafe"></div>
   </div>
@@ -501,21 +508,21 @@ function showPay(state) {
   <div style="padding:20px 20px;position:relative;z-index:2">
     <div style="text-align:center;margin-bottom:22px">
       <div style="width:46px;height:46px;background:var(--acc);border-radius:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 11px"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-      <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 11px;margin-bottom:10px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span style="font-size:10px;font-weight:700;color:var(--acc)">FREE 7-day trial included</span></div>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 11px;margin-bottom:10px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span style="font-size:14px;font-weight:700;color:var(--acc)">FREE 7-day trial included</span></div>
       <p style="font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.04em;margin-bottom:3px">Welcome back</p>
       <p class="mc">Sign in to Squarespell</p>
     </div>
     <div class="glass" style="padding:16px">
       <button class="auth-btn"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
-      <button class="auth-btn"><svg width="14" height="16" viewBox="0 0 814 1000"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-36.8-162.8-106.3C142.9 768.6 80.7 622.3 80.7 482.8c0-214.2 139.4-327.3 276.8-327.3 73.1 0 134.2 48.4 180.3 48.4 43.5 0 112.7-51.4 193.5-51.4 31.2 0 108.2 2.6 168.4 80.1zm-234.5-181c31.2-37.5 53.1-90 53.1-142.5 0-7.7-.6-15.4-1.9-21.8-50.6 1.9-110.8 33.7-147.6 75.8-28.5 32.4-55.1 83.6-55.1 136.7 0 8.3 1.3 16.6 1.9 19.2 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.9-68.7z" fill="var(--t1)"/></svg>Continue with Apple</button>
+      <button class="auth-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--t1)" xmlns="http://www.w3.org/2000/svg"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Continue with Apple</button>
       <button class="auth-btn"><svg width="14" height="14" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>Continue with Microsoft</button>
       <div class="or-div"><div></div><span>or email</span><div></div></div>
-      <div style="margin-bottom:8px"><span style="font-size:10px;font-weight:500;color:var(--t4);display:block;margin-bottom:4px">Email</span><div class="inp-row"><input class="inp" type="email" placeholder="you＠yourbiz.com" style="font-size:12px"/></div></div>
-      <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;font-weight:500;color:var(--t4)">Password</span><span style="font-size:10px;color:var(--acc);font-weight:600;cursor:pointer">Forgot?</span></div><div class="inp-row"><input class="inp" type="password" placeholder="••••••••" style="font-size:12px"/></div></div>
+      <div style="margin-bottom:8px"><span style="font-size:14px;font-weight:500;color:var(--t4);display:block;margin-bottom:4px">Email</span><div class="inp-row"><input class="inp" type="email" placeholder="you＠yourbiz.com" style="font-size:16px"/></div></div>
+      <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:14px;font-weight:500;color:var(--t4)">Password</span><span style="font-size:14px;color:var(--acc);font-weight:600;cursor:pointer">Forgot?</span></div><div class="inp-row"><input class="inp" type="password" placeholder="••••••••" style="font-size:16px"/></div></div>
       <button class="mbp" style="margin-bottom:9px" onclick="gP('dashboard')">Start free trial</button>
-      <p style="text-align:center;font-size:11px;color:var(--t4)">No account? <span style="color:var(--acc);font-weight:700;cursor:pointer">Sign up free</span></p>
+      <p style="text-align:center;font-size:15px;color:var(--t4)">No account? <span style="color:var(--acc);font-weight:700;cursor:pointer">Sign up free</span></p>
     </div>
-    <p style="text-align:center;font-size:10px;color:var(--t4);margin-top:12px">Secured by <span style="color:var(--t3)">Cloudflare Access</span> · GDPR compliant</p>
+    <p style="text-align:center;font-size:14px;color:var(--t4);margin-top:12px">Secured by <span style="color:var(--t3)">Cloudflare Access</span> · GDPR compliant</p>
   </div>
 </div>
 </div>
@@ -524,14 +531,14 @@ function showPay(state) {
 <div class="mscreen" id="ms-question">
 <div style="position:relative;overflow:hidden;background:var(--bg)">
   <div class="mprog"><div class="mprog-fill" style="width:40%"></div></div>
-  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span style="font-size:10px;color:var(--t4)">2 of 5</span></div>
+  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span style="font-size:14px;color:var(--t4)">2 of 5</span></div>
   <div style="padding:14px 20px;position:relative;z-index:2">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:8px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px">
       <div class="xp-wrap"><div class="xp-bar" style="width:40%"></div></div>
-      <span style="font-size:10px;color:var(--t4);font-weight:600;white-space:nowrap">40% done</span>
+      <span style="font-size:14px;color:var(--t4);font-weight:600;white-space:nowrap">40% done</span>
     </div>
     <p class="me" style="margin-bottom:5px">Your challenge</p>
-    <p style="font-size:18px;font-weight:800;color:var(--t1);margin-bottom:18px;letter-spacing:-.04em;line-height:1.2">What is your biggest business challenge?</p>
+    <p style="font-size:23px;font-weight:800;color:var(--t1);margin-bottom:18px;letter-spacing:-.04em;line-height:1.2">What is your biggest business challenge?</p>
     <div style="margin-bottom:18px">
       <div class="mopt on" onclick="pickOpt(this)"><div class="mopt-k">A</div><span class="mopt-lbl">Getting quality leads</span></div>
       <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">B</div><span class="mopt-lbl">Converting visitors</span></div>
@@ -548,16 +555,16 @@ function showPay(state) {
 <div class="mscreen" id="ms-lead">
 <div style="position:relative;overflow:hidden;background:var(--bg)">
   <div class="mprog"><div class="mprog-fill" style="width:90%"></div></div>
-  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span style="font-size:10px;color:var(--acc);font-weight:700">Almost done!</span></div>
+  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span style="font-size:14px;color:var(--acc);font-weight:700">Almost done!</span></div>
   <div style="padding:20px 20px;position:relative;z-index:2;text-align:center">
-    <div style="font-size:40px;margin-bottom:12px">🎯</div>
-    <p style="font-size:18px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.04em">Your results are ready!</p>
-    <p style="font-size:12px;color:var(--t3);line-height:1.6;margin-bottom:18px">Enter your email to unlock your personalised lead profile and action plan.</p>
+    <div style="margin-bottom:16px"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+    <p style="font-size:23px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.04em">Your results are ready!</p>
+    <p style="font-size:16px;color:var(--t3);line-height:1.6;margin-bottom:18px">Enter your email to unlock your personalised lead profile and action plan.</p>
     <div class="glass" style="padding:14px;text-align:left">
-      <div style="margin-bottom:9px"><div class="inp-row"><input class="inp" placeholder="Your first name" style="font-size:12px"/></div></div>
-      <div style="margin-bottom:13px"><div class="inp-row"><input class="inp" type="email" placeholder="your＠email.com" style="font-size:12px"/></div></div>
+      <div style="margin-bottom:9px"><div class="inp-row"><input class="inp" placeholder="Your first name" style="font-size:16px"/></div></div>
+      <div style="margin-bottom:13px"><div class="inp-row"><input class="inp" type="email" placeholder="your＠email.com" style="font-size:16px"/></div></div>
       <button class="mbp" style="margin-bottom:8px" onclick="gP('result')">Show my results 🎉</button>
-      <p style="text-align:center;font-size:10px;color:var(--t4)">No spam. Unsubscribe anytime.</p>
+      <p style="text-align:center;font-size:14px;color:var(--t4)">No spam. Unsubscribe anytime.</p>
     </div>
     <div class="bsafe"></div>
   </div>
@@ -568,15 +575,15 @@ function showPay(state) {
 <div class="mscreen" id="ms-result">
 <div style="position:relative;overflow:hidden;background:var(--bg)">
   <div class="orb" style="width:280px;height:280px;background:radial-gradient(circle,rgba(100,180,20,.18) 0%,transparent 65%);top:-90px;right:-70px"></div>
-  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span class="badge-hot">🔥 Hot lead</span></div>
+  <div class="mstatus"><span style="font-weight:700;color:var(--t2)">9:41</span><span class="badge-hot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot lead</span></div>
   <div style="padding:20px 20px;position:relative;z-index:2;text-align:center">
     <div style="font-size:48px;margin-bottom:14px">🚀</div>
     <p class="me" style="text-align:center;margin-bottom:6px">Your result</p>
-    <p style="font-size:18px;font-weight:800;color:var(--t1);margin-bottom:10px;letter-spacing:-.04em">You're a Growth-Stage Coach</p>
-    <p style="font-size:12px;color:var(--t3);line-height:1.6;margin-bottom:16px">You have proven results. Your main challenge is building a consistent lead pipeline at scale.</p>
+    <p style="font-size:23px;font-weight:800;color:var(--t1);margin-bottom:10px;letter-spacing:-.04em">You're a Growth-Stage Coach</p>
+    <p style="font-size:16px;color:var(--t3);line-height:1.6;margin-bottom:16px">You have proven results. Your main challenge is building a consistent lead pipeline at scale.</p>
     <div class="ai-box" style="text-align:left;margin-bottom:14px">
-      <p style="font-size:11px;font-weight:700;color:var(--acc);margin-bottom:5px">🤖 AI Recommendation</p>
-      <p style="font-size:12px">Coaches with your profile see 18% conversion on "What type of coach do you need?" quizzes. Create yours now.</p>
+      <p style="font-size:15px;font-weight:700;color:var(--acc);margin-bottom:5px">🤖 AI Recommendation</p>
+      <p style="font-size:16px">Coaches with your profile see 18% conversion on "What type of coach do you need?" quizzes. Create yours now.</p>
     </div>
     <button class="mbp" style="margin-bottom:8px" onclick="gP('signin')">Get my free quiz template</button>
     <button class="mbs">Share my result</button>
@@ -594,39 +601,39 @@ function showPay(state) {
 <div style="background:var(--bg);min-height:820px;position:relative;overflow:hidden">
   <div class="orb" style="width:460px;height:460px;background:radial-gradient(circle,rgba(100,180,20,.13) 0%,transparent 65%);top:-140px;right:-90px"></div>
   <div style="background:rgba(7,9,12,.85);backdrop-filter:blur(24px);border-bottom:.5px solid var(--b2);height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 22px">
-    <div style="display:flex;align-items:center;gap:7px"><div style="width:24px;height:24px;background:var(--acc);border-radius:6px;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span style="font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.03em">Squarespell</span></div>
+    <div style="display:flex;align-items:center;gap:7px"><div style="width:24px;height:24px;background:var(--acc);border-radius:6px;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span style="font-size:17px;font-weight:700;color:var(--t1);letter-spacing:-.03em">Squarespell</span></div>
     <div style="display:flex;gap:5px;align-items:center">
-      <span style="font-size:12px;color:var(--t3);padding:0 9px;cursor:pointer">Features</span>
-      <span style="font-size:12px;color:var(--t3);padding:0 9px;cursor:pointer">Pricing</span>
-      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 10px;margin-right:5px"><span style="font-size:10px;font-weight:700;color:var(--acc)">7-day free trial</span></div>
-      <button style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:7px 15px;font-size:12px;font-weight:700;font-family:var(--fam);cursor:pointer" onclick="gP('signin')">Start free</button>
+      <span style="font-size:16px;color:var(--t3);padding:0 9px;cursor:pointer">Features</span>
+      <span style="font-size:16px;color:var(--t3);padding:0 9px;cursor:pointer">Pricing</span>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 10px;margin-right:5px"><span style="font-size:14px;font-weight:700;color:var(--acc)">7-day free trial</span></div>
+      <button style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:7px 15px;font-size:16px;font-weight:700;font-family:var(--fam);cursor:pointer" onclick="gP('signin')">Start free</button>
     </div>
   </div>
   <div style="padding:48px 36px;display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center;position:relative;z-index:2">
     <div>
-      <div style="display:inline-flex;align-items:center;gap:5px;background:var(--g1);border:.5px solid var(--b1);border-radius:20px;padding:4px 12px;margin-bottom:18px"><div class="notif-dot"></div><span style="font-size:11px;font-weight:500;color:var(--t2)">AI quiz funnels for Squarespace</span></div>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:var(--g1);border:.5px solid var(--b1);border-radius:20px;padding:4px 12px;margin-bottom:18px"><div class="notif-dot"></div><span style="font-size:15px;font-weight:500;color:var(--t2)">AI quiz funnels for Squarespace</span></div>
       <p style="font-size:34px;font-weight:800;color:var(--t1);line-height:1.06;letter-spacing:-.05em;margin-bottom:12px">Turn visitors<br>into <span style="color:var(--acc)">leads</span><br>in 2 minutes.</p>
-      <p style="font-size:14px;color:var(--t2);line-height:1.65;margin-bottom:22px">Build a quiz that matches your brand, captures qualified leads, and converts.</p>
-      <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:5px 13px;margin-bottom:20px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span style="font-size:11px;font-weight:700;color:var(--acc)">FREE 7-day trial · No card required</span></div>
+      <p style="font-size:18px;color:var(--t2);line-height:1.65;margin-bottom:22px">Build a quiz that matches your brand, captures qualified leads, and converts.</p>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:5px 13px;margin-bottom:20px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span style="font-size:15px;font-weight:700;color:var(--acc)">FREE 7-day trial · No card required</span></div>
       <div style="display:flex;gap:9px">
-        <button style="background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:12px 22px;font-size:13px;font-weight:700;font-family:var(--fam);cursor:pointer" onclick="gP('signin')">Start free trial</button>
-        <button style="background:var(--g1);border:.5px solid var(--b1);color:var(--t1);border-radius:11px;padding:11px 18px;font-size:12px;font-weight:500;font-family:var(--fam);cursor:pointer">Watch demo</button>
+        <button style="background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:12px 22px;font-size:17px;font-weight:700;font-family:var(--fam);cursor:pointer" onclick="gP('signin')">Start free trial</button>
+        <button style="background:var(--g1);border:.5px solid var(--b1);color:var(--t1);border-radius:11px;padding:11px 18px;font-size:16px;font-weight:500;font-family:var(--fam);cursor:pointer">Watch demo</button>
       </div>
     </div>
     <div style="background:var(--bg2);border:.5px solid var(--b1);border-radius:16px;padding:20px;box-shadow:0 20px 56px rgba(0,0,0,.55)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><p style="font-size:13px;font-weight:700;color:var(--t1)">Live quiz preview</p><span style="background:rgba(74,222,128,.1);border:.5px solid rgba(74,222,128,.2);border-radius:20px;padding:2px 9px;font-size:9px;font-weight:700;color:var(--green)">● Live</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><p style="font-size:17px;font-weight:700;color:var(--t1)">Live quiz preview</p><span style="background:rgba(74,222,128,.1);border:.5px solid rgba(74,222,128,.2);border-radius:20px;padding:2px 9px;font-size:13px;font-weight:700;color:var(--green)">● Live</span></div>
       <div style="background:rgba(0,0,0,.4);border-radius:11px;padding:16px;margin-bottom:14px">
         <div style="height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:14px"><div style="width:40%;height:2px;background:var(--acc);border-radius:2px"></div></div>
-        <p style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:11px">What's your biggest business challenge?</p>
+        <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:11px">What's your biggest business challenge?</p>
         <div style="display:flex;flex-direction:column;gap:6px">
-          <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--acc);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#07090c;flex-shrink:0">A</span><span style="font-size:11px;color:var(--t1)">Getting quality leads</span></div>
-          <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:var(--t3);flex-shrink:0">B</span><span style="font-size:11px;color:var(--t2)">Converting visitors</span></div>
+          <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--acc);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#07090c;flex-shrink:0">A</span><span style="font-size:15px;color:var(--t1)">Getting quality leads</span></div>
+          <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--t3);flex-shrink:0">B</span><span style="font-size:15px;color:var(--t2)">Converting visitors</span></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
-        <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:8px;padding:9px;text-align:center"><p style="font-size:16px;font-weight:800;color:var(--acc);letter-spacing:-.04em">312</p><p style="font-size:8px;color:var(--t4);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Views</p></div>
-        <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:8px;padding:9px;text-align:center"><p style="font-size:16px;font-weight:800;color:var(--acc);letter-spacing:-.04em">38</p><p style="font-size:8px;color:var(--t4);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Leads</p></div>
-        <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:8px;padding:9px;text-align:center"><p style="font-size:16px;font-weight:800;color:var(--acc);letter-spacing:-.04em">61%</p><p style="font-size:8px;color:var(--t4);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Done</p></div>
+        <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:8px;padding:9px;text-align:center"><p style="font-size:21px;font-weight:800;color:var(--acc);letter-spacing:-.04em">312</p><p style="font-size:12px;color:var(--t4);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Views</p></div>
+        <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:8px;padding:9px;text-align:center"><p style="font-size:21px;font-weight:800;color:var(--acc);letter-spacing:-.04em">38</p><p style="font-size:12px;color:var(--t4);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Leads</p></div>
+        <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:8px;padding:9px;text-align:center"><p style="font-size:21px;font-weight:800;color:var(--acc);letter-spacing:-.04em">61%</p><p style="font-size:12px;color:var(--t4);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Done</p></div>
       </div>
     </div>
   </div>
@@ -663,13 +670,13 @@ function showPay(state) {
   <div style="position:relative;overflow:hidden;min-height:560px;display:flex;align-items:center;margin:-28px -36px 0;padding:64px;gap:64px;background:linear-gradient(180deg,var(--bg2),var(--bg))">
     <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(100,180,20,.12) 0%,transparent 60%);top:-160px;right:-160px"></div>
     <div style="flex:1;max-width:520px;position:relative;z-index:2">
-      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--g1);border:.5px solid var(--b1);border-radius:20px;padding:5px 13px;margin-bottom:22px"><div class="notif-dot"></div><span style="font-size:12px;font-weight:500;color:var(--t2)">AI quiz funnels for Squarespace</span></div>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--g1);border:.5px solid var(--b1);border-radius:20px;padding:5px 13px;margin-bottom:22px"><div class="notif-dot"></div><span style="font-size:16px;font-weight:500;color:var(--t2)">AI quiz funnels for Squarespace</span></div>
       <p class="disp" style="margin-bottom:18px">Turn visitors<br>into <span>leads</span><br>in 2 minutes.</p>
       <p class="body-lg" style="margin-bottom:24px;max-width:420px">Build a quiz that matches your Squarespace brand, captures qualified leads, and converts. No code. No designer.</p>
       <!-- FREE TRIAL CTA -->
       <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:5px 14px;margin-bottom:24px">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        <span style="font-size:12px;font-weight:700;color:var(--acc)">FREE 7-day trial · No credit card required</span>
+        <span style="font-size:16px;font-weight:700;color:var(--acc)">FREE 7-day trial · No credit card required</span>
       </div>
       <div style="display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap">
         <button class="btn-p btn-p-lg" onclick="gD('signin')">Start free trial <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
@@ -677,25 +684,25 @@ function showPay(state) {
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <div class="avrow"><div class="av">S</div><div class="av">M</div><div class="av">R</div><div class="av">J</div></div>
-        <p style="margin-left:6px;font-size:13px;color:var(--t3)">Trusted by <span style="color:var(--acc);font-weight:700">2,400+ Squarespace owners</span> this month</p>
+        <p style="margin-left:6px;font-size:17px;color:var(--t3)">Trusted by <span style="color:var(--acc);font-weight:700">2,400+ Squarespace owners</span> this month</p>
       </div>
     </div>
     <div style="flex:1;display:flex;justify-content:center;position:relative;z-index:2">
       <div style="background:var(--bg2);border:.5px solid var(--b1);border-radius:20px;padding:24px;width:380px;box-shadow:0 28px 72px rgba(0,0,0,.6)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><p style="font-size:14px;font-weight:700;color:var(--t1)">Live quiz preview</p><span style="background:rgba(74,222,128,.1);border:.5px solid rgba(74,222,128,.2);border-radius:20px;padding:2px 9px;font-size:9px;font-weight:700;color:var(--green)">● Live</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><p style="font-size:18px;font-weight:700;color:var(--t1)">Live quiz preview</p><span style="background:rgba(74,222,128,.1);border:.5px solid rgba(74,222,128,.2);border-radius:20px;padding:2px 9px;font-size:13px;font-weight:700;color:var(--green)">● Live</span></div>
         <div style="background:rgba(0,0,0,.42);border-radius:13px;padding:18px;margin-bottom:16px">
           <div style="height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:18px"><div style="width:40%;height:2px;background:var(--acc);border-radius:2px"></div></div>
-          <p style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:12px">What is your biggest business challenge?</p>
+          <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:12px">What is your biggest business challenge?</p>
           <div style="display:flex;flex-direction:column;gap:7px">
-            <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--acc);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#07090c;flex-shrink:0">A</span><span style="font-size:11px;color:var(--t1)">Getting consistent quality leads</span></div>
-            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:var(--t3);flex-shrink:0">B</span><span style="font-size:11px;color:var(--t2)">Converting visitors into clients</span></div>
-            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:var(--t3);flex-shrink:0">C</span><span style="font-size:11px;color:var(--t2)">Standing out from competitors</span></div>
+            <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--acc);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#07090c;flex-shrink:0">A</span><span style="font-size:15px;color:var(--t1)">Getting consistent quality leads</span></div>
+            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--t3);flex-shrink:0">B</span><span style="font-size:15px;color:var(--t2)">Converting visitors into clients</span></div>
+            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--t3);flex-shrink:0">C</span><span style="font-size:15px;color:var(--t2)">Standing out from competitors</span></div>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-          <div class="stat-card" style="padding:11px;text-align:center"><p class="stat-v" style="font-size:20px">312</p><p class="stat-l">Views</p><p class="stat-d up">+24%</p></div>
-          <div class="stat-card" style="padding:11px;text-align:center"><p class="stat-v" style="font-size:20px">38</p><p class="stat-l">Leads</p><p class="stat-d up">+12</p></div>
-          <div class="stat-card" style="padding:11px;text-align:center"><p class="stat-v" style="font-size:20px">61%</p><p class="stat-l">Done</p><p class="stat-d up">+8%</p></div>
+          <div class="stat-card" style="padding:11px;text-align:center"><p class="stat-v" style="font-size:25px">312</p><p class="stat-l">Views</p><p class="stat-d up">+24%</p></div>
+          <div class="stat-card" style="padding:11px;text-align:center"><p class="stat-v" style="font-size:25px">38</p><p class="stat-l">Leads</p><p class="stat-d up">+12</p></div>
+          <div class="stat-card" style="padding:11px;text-align:center"><p class="stat-v" style="font-size:25px">61%</p><p class="stat-l">Done</p><p class="stat-d up">+8%</p></div>
         </div>
       </div>
     </div>
@@ -703,11 +710,11 @@ function showPay(state) {
 
   <!-- Trust bar -->
   <div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:28px 0;border-bottom:.5px solid var(--b3);flex-wrap:wrap">
-    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:12px;color:var(--t2);font-weight:500">No code required</span></div>
-    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span style="font-size:12px;color:var(--t2);font-weight:500">AI brand detection</span></div>
-    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span style="font-size:12px;color:var(--t2);font-weight:500">Live in 5 minutes</span></div>
-    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span style="font-size:12px;color:var(--t2);font-weight:500">Cloudflare-secured</span></div>
-    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span style="font-size:12px;color:var(--t2);font-weight:500">Real-time analytics</span></div>
+    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:16px;color:var(--t2);font-weight:500">No code required</span></div>
+    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span style="font-size:16px;color:var(--t2);font-weight:500">AI brand detection</span></div>
+    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span style="font-size:16px;color:var(--t2);font-weight:500">Live in 5 minutes</span></div>
+    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span style="font-size:16px;color:var(--t2);font-weight:500">Cloudflare-secured</span></div>
+    <div class="trust-b"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span style="font-size:16px;color:var(--t2);font-weight:500">Real-time analytics</span></div>
   </div>
 
   <!-- Features -->
@@ -738,7 +745,7 @@ function showPay(state) {
   <!-- Footer -->
   <div class="footer" style="margin:36px -36px -28px">
     <div class="footer-grid">
-      <div><div style="display:flex;align-items:center;gap:7px;margin-bottom:12px"><div style="width:22px;height:22px;background:var(--acc);border-radius:6px;display:flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span style="font-size:13px;font-weight:700;color:var(--t1)">Squarespell</span></div><p class="body-sm" style="max-width:220px;margin-bottom:14px">AI-powered quiz funnels built for Squarespace. Powered by Cloudflare.</p></div>
+      <div><div style="display:flex;align-items:center;gap:7px;margin-bottom:12px"><div style="width:22px;height:22px;background:var(--acc);border-radius:6px;display:flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span style="font-size:17px;font-weight:700;color:var(--t1)">Squarespell</span></div><p class="body-sm" style="max-width:220px;margin-bottom:14px">AI-powered quiz funnels built for Squarespace. Powered by Cloudflare.</p></div>
       <div><p class="ft">Product</p><a class="fl" onclick="gD('landing')">Features</a><a class="fl" onclick="gD('pricing')">Pricing</a><a class="fl" onclick="gD('analytics')">Analytics</a><a class="fl">Changelog</a></div>
       <div><p class="ft">Support</p><a class="fl">Documentation</a><a class="fl">Community</a><a class="fl">Contact</a><a class="fl">Status</a></div>
       <div><p class="ft">Company</p><a class="fl">About</a><a class="fl">Blog</a><a class="fl">Privacy</a><a class="fl">Terms</a></div>
@@ -751,29 +758,63 @@ function showPay(state) {
 <!-- D: SIGN IN                    -->
 <!-- ══════════════════════════════ -->
 <div class="dpage" id="dp-signin">
-  <div style="max-width:440px;margin:0 auto;padding:52px 0">
+  <div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 96px);margin:-28px -36px 0">
+    <!-- LEFT: Branding panel -->
+    <div style="background:linear-gradient(135deg,#0a1200 0%,#0d1a00 50%,#07090c 100%);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:60px 52px">
+      <div style="position:absolute;top:-120px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(210,255,29,.12) 0%,transparent 60%);pointer-events:none"></div>
+      <div style="position:absolute;bottom:-80px;left:-60px;width:380px;height:380px;background:radial-gradient(circle,rgba(100,180,20,.08) 0%,transparent 60%);pointer-events:none"></div>
+      <div style="position:relative;z-index:2">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:44px">
+          <div style="width:36px;height:36px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <span style="font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-.03em">Squarespell</span>
+        </div>
+        <h1 style="font-size:42px;font-weight:800;color:var(--t1);line-height:1.1;letter-spacing:-.05em;margin-bottom:16px">Turn visitors into <span style="color:var(--acc)">leads</span> in 2 minutes.</h1>
+        <p style="font-size:17px;color:var(--t3);line-height:1.65;margin-bottom:40px">AI-powered quiz funnels built exclusively for Squarespace. No code. No designer.</p>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 18px;background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.07);border-radius:12px">
+            <div style="width:38px;height:38px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            <div><p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:2px">AI quiz generator</p><p style="font-size:13px;color:var(--t4)">Full quiz from URL in 30 seconds</p></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 18px;background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.07);border-radius:12px">
+            <div style="width:38px;height:38px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
+            <div><p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:2px">Smart lead scoring</p><p style="font-size:13px;color:var(--t4)">Hot / Warm / Cold auto-classification</p></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 18px;background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.07);border-radius:12px">
+            <div style="width:38px;height:38px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div><p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:2px">Live analytics</p><p style="font-size:13px;color:var(--t4)">Real-time views, completions, drop-off</p></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:36px">
+          <div style="display:flex"><div style="width:28px;height:28px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid #07090c;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--acc);margin-right:-7px">S</div><div style="width:28px;height:28px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid #07090c;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--acc);margin-right:-7px">M</div><div style="width:28px;height:28px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid #07090c;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--acc);margin-right:-7px">R</div><div style="width:28px;height:28px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid #07090c;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--acc)">J</div></div>
+          <p style="font-size:13px;color:var(--t4)">Joined by <span style="color:var(--acc);font-weight:700">2,400+</span> Squarespace owners</p>
+        </div>
+      </div>
+    </div>
+    <!-- RIGHT: Sign in form -->
+    <div style="display:flex;align-items:center;justify-content:center;padding:52px;background:var(--bg)">
+    <div style="width:100%;max-width:400px">
     <div style="text-align:center;margin-bottom:28px">
       <div style="width:52px;height:52px;background:var(--acc);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
       <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:4px 13px;margin-bottom:14px">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        <span style="font-size:11px;font-weight:700;color:var(--acc)">FREE 7-day trial · No card needed</span>
+        <span style="font-size:15px;font-weight:700;color:var(--acc)">FREE 7-day trial · No card needed</span>
       </div>
-      <p class="h2" style="font-size:24px;margin-bottom:6px">Welcome to Squarespell</p>
+      <p class="h2" style="font-size:30px;margin-bottom:6px">Welcome to Squarespell</p>
       <p class="body">Sign in or create your free account</p>
     </div>
     <div class="glass" style="padding:24px">
       <button class="auth-btn"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
-      <button class="auth-btn"><svg width="14" height="16" viewBox="0 0 814 1000"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-36.8-162.8-106.3C142.9 768.6 80.7 622.3 80.7 482.8c0-214.2 139.4-327.3 276.8-327.3 73.1 0 134.2 48.4 180.3 48.4 43.5 0 112.7-51.4 193.5-51.4 31.2 0 108.2 2.6 168.4 80.1zm-234.5-181c31.2-37.5 53.1-90 53.1-142.5 0-7.7-.6-15.4-1.9-21.8-50.6 1.9-110.8 33.7-147.6 75.8-28.5 32.4-55.1 83.6-55.1 136.7 0 8.3 1.3 16.6 1.9 19.2 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.9-68.7z" fill="var(--t1)"/></svg>Continue with Apple</button>
+      <button class="auth-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--t1)" xmlns="http://www.w3.org/2000/svg"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Continue with Apple</button>
       <button class="auth-btn"><svg width="15" height="15" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>Continue with Microsoft</button>
       <div class="or-div"><div></div><span>or continue with email</span><div></div></div>
-      <div style="margin-bottom:10px"><span style="font-size:11px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Email address</span><div class="inp-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><input class="inp" type="email" placeholder="you＠yourbiz.com"/></div></div>
-      <div style="margin-bottom:18px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:11px;font-weight:500;color:var(--t4)">Password</span><span style="font-size:11px;color:var(--acc);font-weight:600;cursor:pointer">Forgot password?</span></div><div class="inp-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input class="inp" type="password" placeholder="••••••••"/></div></div>
-      <button class="btn-p" style="width:100%;margin-bottom:12px;font-size:14px;padding:13px" onclick="gD('dashboard')">Start free trial</button>
-      <p style="text-align:center;font-size:12px;color:var(--t4)">No account? <span style="color:var(--acc);font-weight:700;cursor:pointer" onclick="gD('dashboard')">Sign up free →</span></p>
+      <div style="margin-bottom:10px"><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Email address</span><div class="inp-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><input class="inp" type="email" placeholder="you＠yourbiz.com"/></div></div>
+      <div style="margin-bottom:18px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:15px;font-weight:500;color:var(--t4)">Password</span><span style="font-size:15px;color:var(--acc);font-weight:600;cursor:pointer">Forgot password?</span></div><div class="inp-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input class="inp" type="password" placeholder="••••••••"/></div></div>
+      <button class="btn-p" style="width:100%;margin-bottom:12px;font-size:18px;padding:13px" onclick="gD('dashboard')">Start free trial</button>
+      <p style="text-align:center;font-size:16px;color:var(--t4)">No account? <span style="color:var(--acc);font-weight:700;cursor:pointer" onclick="gD('dashboard')">Sign up free →</span></p>
     </div>
     <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:14px">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span style="font-size:11px;color:var(--t4)">Secured by Cloudflare Access · GDPR compliant · 256-bit SSL</span>
+      <span style="font-size:15px;color:var(--t4)">Secured by Cloudflare Access · GDPR compliant · 256-bit SSL</span>
     </div>
   </div>
 </div>
@@ -786,19 +827,19 @@ function showPay(state) {
   <div class="trial-bar">
     <div style="display:flex;align-items:center;gap:12px">
       <div style="width:36px;height:36px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-      <div><p style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:2px">5 days left on your free trial</p><p style="font-size:11px;color:var(--t3)">Upgrade before trial ends to keep your leads and quizzes.</p></div>
+      <div><p style="font-size:17px;font-weight:700;color:var(--t1);margin-bottom:2px">5 days left on your free trial</p><p style="font-size:15px;color:var(--t3)">Upgrade before trial ends to keep your leads and quizzes.</p></div>
     </div>
     <div style="display:flex;gap:9px;flex-shrink:0">
-      <button class="btn-p" style="font-size:12px;padding:9px 16px" onclick="gD('pricing')">Upgrade now</button>
-      <button style="font-size:12px;color:var(--t4);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Remind me later</button>
+      <button class="btn-p" style="font-size:16px;padding:9px 16px" onclick="gD('pricing')">Upgrade now</button>
+      <button style="font-size:16px;color:var(--t4);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Remind me later</button>
     </div>
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div><p class="h3" style="margin-bottom:2px">Dashboard</p><p class="caption">Last 7 days · All quizzes</p></div>
     <div style="display:flex;gap:9px">
-      <button class="btn-s" style="font-size:12px;padding:9px 14px" onclick="gD('editor')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New quiz</button>
-      <button class="btn-s" style="font-size:12px;padding:9px 14px">Export CSV</button>
+      <button class="btn-s" style="font-size:16px;padding:9px 14px" onclick="gD('editor')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New quiz</button>
+      <button class="btn-s" style="font-size:16px;padding:9px 14px">Export CSV</button>
     </div>
   </div>
 
@@ -812,7 +853,7 @@ function showPay(state) {
 
   <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:14px">
     <div class="glass-sm" style="padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><p class="h4">Daily performance</p><div style="display:flex;gap:10px"><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:10px;color:var(--t3)">Views</span></div><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:10px;color:var(--t3)">Leads</span></div></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><p class="h4">Daily performance</p><div style="display:flex;gap:10px"><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:14px;color:var(--t3)">Views</span></div><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:14px;color:var(--t3)">Leads</span></div></div></div>
       <div style="display:flex;align-items:flex-end;gap:5px;height:120px;margin-bottom:6px">
         <div class="mini-bar" style="background:rgba(210,255,29,.15);height:50%"></div>
         <div class="mini-bar" style="background:rgba(210,255,29,.15);height:35%"></div>
@@ -822,15 +863,15 @@ function showPay(state) {
         <div class="mini-bar" style="background:var(--acc);height:100%"></div>
         <div class="mini-bar" style="background:rgba(210,255,29,.15);height:67%"></div>
       </div>
-      <div style="display:flex;gap:5px"><span style="flex:1;text-align:center;font-size:10px;color:var(--t4)">Mon</span><span style="flex:1;text-align:center;font-size:10px;color:var(--t4)">Tue</span><span style="flex:1;text-align:center;font-size:10px;color:var(--t4)">Wed</span><span style="flex:1;text-align:center;font-size:10px;color:var(--t4)">Thu</span><span style="flex:1;text-align:center;font-size:10px;color:var(--t4)">Fri</span><span style="flex:1;text-align:center;font-size:10px;color:var(--acc);font-weight:700">Sat</span><span style="flex:1;text-align:center;font-size:10px;color:var(--t4)">Sun</span></div>
+      <div style="display:flex;gap:5px"><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Mon</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Tue</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Wed</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Thu</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Fri</span><span style="flex:1;text-align:center;font-size:14px;color:var(--acc);font-weight:700">Sat</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Sun</span></div>
     </div>
     <div class="glass-sm" style="padding:18px">
       <p class="h4" style="margin-bottom:14px">Traffic sources</p>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--t2);font-weight:500">Direct</span><span style="font-size:12px;color:var(--t3)">58%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:58%;background:var(--acc)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--t2);font-weight:500">Instagram</span><span style="font-size:12px;color:var(--t3)">24%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:24%;background:rgba(210,255,29,.6)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--t2);font-weight:500">Google</span><span style="font-size:12px;color:var(--t3)">12%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:12%;background:rgba(210,255,29,.35)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--t2);font-weight:500">Pinterest</span><span style="font-size:12px;color:var(--t3)">6%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:6%;background:rgba(210,255,29,.2)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Direct</span><span style="font-size:16px;color:var(--t3)">58%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:58%;background:var(--acc)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Instagram</span><span style="font-size:16px;color:var(--t3)">24%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:24%;background:rgba(210,255,29,.6)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Google</span><span style="font-size:16px;color:var(--t3)">12%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:12%;background:rgba(210,255,29,.35)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Pinterest</span><span style="font-size:16px;color:var(--t3)">6%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:6%;background:rgba(210,255,29,.2)"></div></div></div>
       </div>
     </div>
   </div>
@@ -839,24 +880,24 @@ function showPay(state) {
     <div class="glass-sm" style="padding:18px">
       <p class="h4" style="margin-bottom:14px">Quiz funnel</p>
       <div style="display:flex;flex-direction:column;gap:7px">
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q1</span><div class="f-bar-wrap"><div class="f-bar" style="width:100%"></div></div><span style="font-size:12px;color:var(--t1);font-weight:700;width:36px;text-align:right">100%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q2</span><div class="f-bar-wrap"><div class="f-bar" style="width:88%"></div></div><span style="font-size:12px;color:var(--t1);font-weight:700;width:36px;text-align:right">88%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--yellow);width:55px;flex-shrink:0;font-weight:600">Q3 ⚠</span><div class="f-bar-wrap"><div class="f-bar" style="width:72%;background:var(--yellow)"></div></div><span style="font-size:12px;color:var(--yellow);font-weight:700;width:36px;text-align:right">72%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q4</span><div class="f-bar-wrap"><div class="f-bar" style="width:68%;background:rgba(210,255,29,.35)"></div></div><span style="font-size:12px;color:var(--t1);font-weight:700;width:36px;text-align:right">68%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Lead</span><div class="f-bar-wrap"><div class="f-bar" style="width:61%;background:var(--green)"></div></div><span style="font-size:12px;color:var(--green);font-weight:700;width:36px;text-align:right">61%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q1</span><div class="f-bar-wrap"><div class="f-bar" style="width:100%"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">100%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q2</span><div class="f-bar-wrap"><div class="f-bar" style="width:88%"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">88%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--yellow);width:55px;flex-shrink:0;font-weight:600">Q3 ⚠</span><div class="f-bar-wrap"><div class="f-bar" style="width:72%;background:var(--yellow)"></div></div><span style="font-size:16px;color:var(--yellow);font-weight:700;width:36px;text-align:right">72%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q4</span><div class="f-bar-wrap"><div class="f-bar" style="width:68%;background:rgba(210,255,29,.35)"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">68%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Lead</span><div class="f-bar-wrap"><div class="f-bar" style="width:61%;background:var(--green)"></div></div><span style="font-size:16px;color:var(--green);font-weight:700;width:36px;text-align:right">61%</span></div>
       </div>
-      <div class="ai-box" style="margin-top:12px">💡 Q3 drop is 16 pts. Try reducing to 3 options to improve completion by ~12%.</div>
+      <div class="ai-box" style="margin-top:12px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> Q3 drop is 16 pts. Try reducing to 3 options to improve completion by ~12%.</div>
     </div>
     <div class="glass-sm" style="padding:18px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><p class="h4">Recent leads</p><button style="font-size:11px;color:var(--acc);background:transparent;border:none;cursor:pointer;font-family:var(--fam);font-weight:600" onclick="gD('leads')">View all →</button></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><p class="h4">Recent leads</p><button style="font-size:15px;color:var(--acc);background:transparent;border:none;cursor:pointer;font-family:var(--fam);font-weight:600" onclick="gD('leads')">View all →</button></div>
       <table class="d-table">
         <thead><tr><th>Name</th><th>Score</th><th>Stage</th><th>Time</th></tr></thead>
         <tbody>
-          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Sarah Chen</td><td><span class="badge-hot">🔥 Hot</span></td><td><span class="pipe-stage pipe-new">New</span></td><td>2m ago</td></tr>
-          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Marcus Riley</td><td><span class="badge-warm">⚡ Warm</span></td><td><span class="pipe-stage pipe-contact">Contacted</span></td><td>18m ago</td></tr>
-          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Jade Park</td><td><span class="badge-hot">🔥 Hot</span></td><td><span class="pipe-stage pipe-nurture">Nurtured</span></td><td>1h ago</td></tr>
-          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Tom Lee</td><td><span class="badge-cold">❄ Cold</span></td><td><span class="pipe-stage pipe-new">New</span></td><td>3h ago</td></tr>
-          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Amy Liu</td><td><span class="badge-warm">⚡ Warm</span></td><td><span class="pipe-stage pipe-convert">Converted</span></td><td>5h ago</td></tr>
+          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Sarah Chen</td><td><span class="badge-hot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot</span></td><td><span class="pipe-stage pipe-new">New</span></td><td>2m ago</td></tr>
+          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Marcus Riley</td><td><span class="badge-warm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fcd34d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Warm</span></td><td><span class="pipe-stage pipe-contact">Contacted</span></td><td>18m ago</td></tr>
+          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Jade Park</td><td><span class="badge-hot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot</span></td><td><span class="pipe-stage pipe-nurture">Nurtured</span></td><td>1h ago</td></tr>
+          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Tom Lee</td><td><span class="badge-cold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="m17 7-5 5-5-5"/><path d="m17 17-5-5-5 5"/><line x1="2" y1="12" x2="22" y2="12"/><path d="m7 7 5 5 5-5"/><path d="m7 17 5-5 5 5"/></svg> Cold</span></td><td><span class="pipe-stage pipe-new">New</span></td><td>3h ago</td></tr>
+          <tr onclick="gD('leads')"><td style="font-weight:600;color:var(--t1)">Amy Liu</td><td><span class="badge-warm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fcd34d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Warm</span></td><td><span class="pipe-stage pipe-convert">Converted</span></td><td>5h ago</td></tr>
         </tbody>
       </table>
     </div>
@@ -865,13 +906,13 @@ function showPay(state) {
   <!-- ROI Tracker -->
   <div class="roi-card" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
     <div><p class="label" style="margin-bottom:4px">ROI Tracker</p><p class="h4" style="margin-bottom:3px">Estimated pipeline value this month</p><p class="caption">38 leads × $150 avg client value</p></div>
-    <div style="text-align:right"><p style="font-size:38px;font-weight:800;color:var(--acc);letter-spacing:-.06em">$5,700</p><p style="font-size:11px;color:var(--t3)">Potential revenue</p></div>
+    <div style="text-align:right"><p style="font-size:46px;font-weight:800;color:var(--acc);letter-spacing:-.06em">$5,700</p><p style="font-size:15px;color:var(--t3)">Potential revenue</p></div>
   </div>
 
   <!-- Upgrade prompt -->
   <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-    <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:500">Leads used (trial)</span><span style="font-size:11px;color:var(--yellow)">38/50 — Running low</span></div><div class="usage-wrap" style="width:200px"><div class="usage-bar" style="width:76%;background:var(--yellow)"></div></div></div>
-    <button class="btn-p" style="font-size:12px;padding:9px 16px" onclick="gD('pricing')">Upgrade to Pro</button>
+    <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Leads used (trial)</span><span style="font-size:15px;color:var(--yellow)">38/50 — Running low</span></div><div class="usage-wrap" style="width:200px"><div class="usage-bar" style="width:76%;background:var(--yellow)"></div></div></div>
+    <button class="btn-p" style="font-size:16px;padding:9px 16px" onclick="gD('pricing')">Upgrade to Pro</button>
   </div>
 </div>
 
@@ -883,11 +924,11 @@ function showPay(state) {
     <div><p class="h3" style="margin-bottom:2px">Analytics</p><p class="caption">My coaching quiz · Last 30 days</p></div>
     <div style="display:flex;gap:9px">
       <div style="display:flex;gap:1px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;padding:3px">
-        <button style="font-size:11px;color:var(--t1);padding:4px 11px;border-radius:5px;cursor:pointer;border:none;background:var(--g1);font-family:var(--fam)">7d</button>
-        <button style="font-size:11px;color:var(--t3);padding:4px 11px;border-radius:5px;cursor:pointer;border:none;background:transparent;font-family:var(--fam)">30d</button>
-        <button style="font-size:11px;color:var(--t3);padding:4px 11px;border-radius:5px;cursor:pointer;border:none;background:transparent;font-family:var(--fam)">All</button>
+        <button style="font-size:15px;color:var(--t1);padding:4px 11px;border-radius:5px;cursor:pointer;border:none;background:var(--g1);font-family:var(--fam)">7d</button>
+        <button style="font-size:15px;color:var(--t3);padding:4px 11px;border-radius:5px;cursor:pointer;border:none;background:transparent;font-family:var(--fam)">30d</button>
+        <button style="font-size:15px;color:var(--t3);padding:4px 11px;border-radius:5px;cursor:pointer;border:none;background:transparent;font-family:var(--fam)">All</button>
       </div>
-      <button class="btn-s" style="font-size:12px;padding:9px 14px">Export report</button>
+      <button class="btn-s" style="font-size:16px;padding:9px 14px">Export report</button>
     </div>
   </div>
 
@@ -903,27 +944,27 @@ function showPay(state) {
       <p class="h4" style="margin-bottom:5px">Conversion funnel</p>
       <p class="body-sm" style="margin-bottom:18px">How visitors flow through your quiz</p>
       <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="background:rgba(210,255,29,.13);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:13px;font-weight:600;color:var(--t1)">Page views</span></div><span style="font-size:17px;font-weight:800;color:var(--acc)">1,248</span></div>
+        <div style="background:rgba(210,255,29,.13);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Page views</span></div><span style="font-size:22px;font-weight:800;color:var(--acc)">1,248</span></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(210,255,29,.09);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.6)"></div><span style="font-size:13px;font-weight:600;color:var(--t1)">Quiz started</span></div><div style="text-align:right"><span style="font-size:17px;font-weight:800;color:var(--t1)">846</span><span style="font-size:10px;color:var(--t3);display:block">68% of views</span></div></div>
+        <div style="background:rgba(210,255,29,.09);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.6)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Quiz started</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">846</span><span style="font-size:14px;color:var(--t3);display:block">68% of views</span></div></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(210,255,29,.05);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.35)"></div><span style="font-size:13px;font-weight:600;color:var(--t1)">Completed</span></div><div style="text-align:right"><span style="font-size:17px;font-weight:800;color:var(--t1)">575</span><span style="font-size:10px;color:var(--t3);display:block">68% of starters</span></div></div>
+        <div style="background:rgba(210,255,29,.05);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.35)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Completed</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">575</span><span style="font-size:14px;color:var(--t3);display:block">68% of starters</span></div></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(74,222,128,.07);border:.5px solid rgba(74,222,128,.15);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:13px;font-weight:600;color:var(--green)">Email submitted</span></div><div style="text-align:right"><span style="font-size:17px;font-weight:800;color:var(--green)">154</span><span style="font-size:10px;color:var(--t3);display:block">26.8% of completers</span></div></div>
+        <div style="background:rgba(74,222,128,.07);border:.5px solid rgba(74,222,128,.15);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:17px;font-weight:600;color:var(--green)">Email submitted</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--green)">154</span><span style="font-size:14px;color:var(--t3);display:block">26.8% of completers</span></div></div>
       </div>
     </div>
     <div class="glass-sm" style="padding:20px">
       <p class="h4" style="margin-bottom:5px">Question drop-off</p>
       <p class="body-sm" style="margin-bottom:18px">Where visitors leave your quiz</p>
       <div style="display:flex;flex-direction:column;gap:7px">
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Q1 — Challenge</span><div class="f-bar-wrap"><div class="f-bar" style="width:100%"></div></div><span style="font-size:12px;color:var(--t1);font-weight:700;width:36px;text-align:right">100%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Q2 — Business</span><div class="f-bar-wrap"><div class="f-bar" style="width:92%"></div></div><span style="font-size:12px;color:var(--t1);font-weight:700;width:36px;text-align:right">92%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--yellow);width:90px;flex-shrink:0;font-weight:600">Q3 — Budget ⚠</span><div class="f-bar-wrap"><div class="f-bar" style="width:72%;background:var(--yellow)"></div></div><span style="font-size:12px;color:var(--yellow);font-weight:700;width:36px;text-align:right">72%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Q4 — Timeline</span><div class="f-bar-wrap"><div class="f-bar" style="width:68%;background:rgba(210,255,29,.35)"></div></div><span style="font-size:12px;color:var(--t1);font-weight:700;width:36px;text-align:right">68%</span></div>
-        <div class="funnel-step"><span style="font-size:11px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Lead gate</span><div class="f-bar-wrap"><div class="f-bar" style="width:27%;background:var(--green)"></div></div><span style="font-size:12px;color:var(--green);font-weight:700;width:36px;text-align:right">27%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Q1 — Challenge</span><div class="f-bar-wrap"><div class="f-bar" style="width:100%"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">100%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Q2 — Business</span><div class="f-bar-wrap"><div class="f-bar" style="width:92%"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">92%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--yellow);width:90px;flex-shrink:0;font-weight:600">Q3 — Budget ⚠</span><div class="f-bar-wrap"><div class="f-bar" style="width:72%;background:var(--yellow)"></div></div><span style="font-size:16px;color:var(--yellow);font-weight:700;width:36px;text-align:right">72%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Q4 — Timeline</span><div class="f-bar-wrap"><div class="f-bar" style="width:68%;background:rgba(210,255,29,.35)"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">68%</span></div>
+        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:90px;flex-shrink:0;font-weight:500">Lead gate</span><div class="f-bar-wrap"><div class="f-bar" style="width:27%;background:var(--green)"></div></div><span style="font-size:16px;color:var(--green);font-weight:700;width:36px;text-align:right">27%</span></div>
       </div>
       <div class="ai-box" style="margin-top:14px">
-        <p style="font-weight:700;color:var(--acc);margin-bottom:5px">💡 AI Insight</p>
+        <p style="font-weight:700;color:var(--acc);margin-bottom:5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> AI Insight</p>
         <p>Q3 (Budget) drops 20 pts. Reframe as "What's your monthly marketing investment?" — estimated +8-12% improvement.</p>
       </div>
     </div>
@@ -934,25 +975,25 @@ function showPay(state) {
       <p class="h4" style="margin-bottom:14px">Lead score breakdown</p>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(248,113,113,.07);border:.5px solid rgba(248,113,113,.15);border-radius:10px">
-          <span style="font-size:20px">🔥</span>
-          <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;color:#fca5a5">Hot leads</span><span style="font-size:14px;font-weight:800;color:#fca5a5">23</span></div><div class="usage-wrap"><div class="usage-bar" style="width:60%;background:rgba(248,113,113,.5)"></div></div></div>
+          <span style="font-size:25px">🔥</span>
+          <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;font-weight:700;color:#fca5a5">Hot leads</span><span style="font-size:18px;font-weight:800;color:#fca5a5">23</span></div><div class="usage-wrap"><div class="usage-bar" style="width:60%;background:rgba(248,113,113,.5)"></div></div></div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(251,191,36,.07);border:.5px solid rgba(251,191,36,.15);border-radius:10px">
-          <span style="font-size:20px">⚡</span>
-          <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;color:#fcd34d">Warm leads</span><span style="font-size:14px;font-weight:800;color:#fcd34d">71</span></div><div class="usage-wrap"><div class="usage-bar" style="width:46%;background:rgba(251,191,36,.5)"></div></div></div>
+          <span style="font-size:25px">⚡</span>
+          <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;font-weight:700;color:#fcd34d">Warm leads</span><span style="font-size:18px;font-weight:800;color:#fcd34d">71</span></div><div class="usage-wrap"><div class="usage-bar" style="width:46%;background:rgba(251,191,36,.5)"></div></div></div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(96,165,250,.07);border:.5px solid rgba(96,165,250,.15);border-radius:10px">
-          <span style="font-size:20px">❄️</span>
-          <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;color:#93c5fd">Cold leads</span><span style="font-size:14px;font-weight:800;color:#93c5fd">60</span></div><div class="usage-wrap"><div class="usage-bar" style="width:39%;background:rgba(96,165,250,.35)"></div></div></div>
+          <span style="font-size:25px">❄️</span>
+          <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;font-weight:700;color:#93c5fd">Cold leads</span><span style="font-size:18px;font-weight:800;color:#93c5fd">60</span></div><div class="usage-wrap"><div class="usage-bar" style="width:39%;background:rgba(96,165,250,.35)"></div></div></div>
         </div>
       </div>
     </div>
     <div class="glass-sm" style="padding:18px">
       <p class="h4" style="margin-bottom:14px">AI quick insights</p>
       <div style="display:flex;flex-direction:column;gap:9px">
-        <div style="padding:11px 13px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px"><p style="font-size:11px;font-weight:700;color:var(--acc);margin-bottom:4px">🎯 Best day</p><p style="font-size:12px;color:var(--t2)">Saturday generates 2.3× more leads. Schedule posts for Friday evening.</p></div>
-        <div style="padding:11px 13px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px"><p style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:4px">⚡ Quick win</p><p style="font-size:12px;color:var(--t2)">Adding a progress bar to Q3 typically improves completion by 6-9%.</p></div>
-        <div style="padding:11px 13px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px"><p style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px">📈 Prediction</p><p style="font-size:12px;color:var(--t2)">At current growth you'll hit 200 leads by next week. Hot lead conversion: 74%.</p></div>
+        <div style="padding:11px 13px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px"><p style="font-size:15px;font-weight:700;color:var(--acc);margin-bottom:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Best day</p><p style="font-size:16px;color:var(--t2)">Saturday generates 2.3× more leads. Schedule posts for Friday evening.</p></div>
+        <div style="padding:11px 13px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px"><p style="font-size:15px;font-weight:700;color:var(--yellow);margin-bottom:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Quick win</p><p style="font-size:16px;color:var(--t2)">Adding a progress bar to Q3 typically improves completion by 6-9%.</p></div>
+        <div style="padding:11px 13px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px"><p style="font-size:15px;font-weight:700;color:var(--green);margin-bottom:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Prediction</p><p style="font-size:16px;color:var(--t2)">At current growth you'll hit 200 leads by next week. Hot lead conversion: 74%.</p></div>
       </div>
     </div>
   </div>
@@ -965,37 +1006,37 @@ function showPay(state) {
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
     <div><p class="h3" style="margin-bottom:2px">Lead pipeline</p><p class="caption">154 total leads · All quizzes</p></div>
     <div style="display:flex;gap:9px">
-      <span class="badge-hot" style="cursor:pointer;padding:4px 12px;font-size:11px">🔥 Hot (23)</span>
-      <span class="badge-warm" style="cursor:pointer;padding:4px 12px;font-size:11px">⚡ Warm (71)</span>
-      <span class="badge-cold" style="cursor:pointer;padding:4px 12px;font-size:11px">❄ Cold (60)</span>
-      <button class="btn-s" style="font-size:12px;padding:9px 14px">Export CSV</button>
+      <span class="badge-hot" style="cursor:pointer;padding:4px 12px;font-size:15px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot (23)</span>
+      <span class="badge-warm" style="cursor:pointer;padding:4px 12px;font-size:15px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fcd34d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Warm (71)</span>
+      <span class="badge-cold" style="cursor:pointer;padding:4px 12px;font-size:15px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="m17 7-5 5-5-5"/><path d="m17 17-5-5-5 5"/><line x1="2" y1="12" x2="22" y2="12"/><path d="m7 7 5 5 5-5"/><path d="m7 17 5-5 5 5"/></svg> Cold (60)</span>
+      <button class="btn-s" style="font-size:16px;padding:9px 14px">Export CSV</button>
     </div>
   </div>
   <!-- Kanban -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px">
     <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">New</p><span style="background:rgba(74,222,128,.1);border:.5px solid rgba(74,222,128,.2);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;color:var(--green)">28</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">New</p><span style="background:rgba(74,222,128,.1);border:.5px solid rgba(74,222,128,.2);border-radius:20px;padding:2px 9px;font-size:14px;font-weight:700;color:var(--green)">28</span></div>
       <div style="display:flex;flex-direction:column;gap:7px">
-        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--acc-b)'" onmouseout="this.style.borderColor=''"><p style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px">Sarah Chen</p><p style="font-size:10px;color:var(--t4)">2m ago</p><div style="margin-top:6px"><span class="badge-hot">🔥 Hot</span></div></div>
-        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer"><p style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px">Tom Lee</p><p style="font-size:10px;color:var(--t4)">3h ago</p><div style="margin-top:6px"><span class="badge-cold">❄ Cold</span></div></div>
+        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--acc-b)'" onmouseout="this.style.borderColor=''"><p style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:2px">Sarah Chen</p><p style="font-size:14px;color:var(--t4)">2m ago</p><div style="margin-top:6px"><span class="badge-hot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot</span></div></div>
+        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer"><p style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:2px">Tom Lee</p><p style="font-size:14px;color:var(--t4)">3h ago</p><div style="margin-top:6px"><span class="badge-cold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="m17 7-5 5-5-5"/><path d="m17 17-5-5-5 5"/><line x1="2" y1="12" x2="22" y2="12"/><path d="m7 7 5 5 5-5"/><path d="m7 17 5-5 5 5"/></svg> Cold</span></div></div>
       </div>
     </div>
     <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Contacted</p><span class="chip-acc" style="font-size:10px">42</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Contacted</p><span class="chip-acc" style="font-size:14px">42</span></div>
       <div style="display:flex;flex-direction:column;gap:7px">
-        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer"><p style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px">Marcus Riley</p><p style="font-size:10px;color:var(--t4)">18m ago</p><div style="margin-top:6px"><span class="badge-warm">⚡ Warm</span></div></div>
+        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer"><p style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:2px">Marcus Riley</p><p style="font-size:14px;color:var(--t4)">18m ago</p><div style="margin-top:6px"><span class="badge-warm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fcd34d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Warm</span></div></div>
       </div>
     </div>
     <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Nurtured</p><span style="background:rgba(251,191,36,.08);border:.5px solid rgba(251,191,36,.18);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;color:var(--yellow)">51</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Nurtured</p><span style="background:rgba(251,191,36,.08);border:.5px solid rgba(251,191,36,.18);border-radius:20px;padding:2px 9px;font-size:14px;font-weight:700;color:var(--yellow)">51</span></div>
       <div style="display:flex;flex-direction:column;gap:7px">
-        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer"><p style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px">Jade Park</p><p style="font-size:10px;color:var(--t4)">1h ago</p><div style="margin-top:6px"><span class="badge-hot">🔥 Hot</span></div></div>
+        <div style="padding:9px;background:var(--g2);border:.5px solid var(--b2);border-radius:8px;cursor:pointer"><p style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:2px">Jade Park</p><p style="font-size:14px;color:var(--t4)">1h ago</p><div style="margin-top:6px"><span class="badge-hot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot</span></div></div>
       </div>
     </div>
     <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Converted</p><span style="background:rgba(74,222,128,.08);border:.5px solid rgba(74,222,128,.18);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;color:var(--green)">33</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Converted</p><span style="background:rgba(74,222,128,.08);border:.5px solid rgba(74,222,128,.18);border-radius:20px;padding:2px 9px;font-size:14px;font-weight:700;color:var(--green)">33</span></div>
       <div style="display:flex;flex-direction:column;gap:7px">
-        <div style="padding:9px;background:rgba(74,222,128,.05);border:.5px solid rgba(74,222,128,.15);border-radius:8px;cursor:pointer"><p style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px">Amy Liu</p><p style="font-size:10px;color:var(--t4)">5h ago</p><div style="display:flex;align-items:center;gap:4px;margin-top:6px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:10px;color:var(--green);font-weight:600">Converted</span></div></div>
+        <div style="padding:9px;background:rgba(74,222,128,.05);border:.5px solid rgba(74,222,128,.15);border-radius:8px;cursor:pointer"><p style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:2px">Amy Liu</p><p style="font-size:14px;color:var(--t4)">5h ago</p><div style="display:flex;align-items:center;gap:4px;margin-top:6px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:var(--green);font-weight:600">Converted</span></div></div>
       </div>
     </div>
   </div>
@@ -1003,9 +1044,9 @@ function showPay(state) {
   <div class="ai-box" style="display:flex;align-items:flex-start;gap:12px">
     <div style="width:34px;height:34px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
     <div style="flex:1">
-      <p style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:5px">AI next step · Sarah Chen (🔥 Hot lead, 2m ago)</p>
-      <p style="font-size:12px;color:var(--t2);line-height:1.55">Sarah answered "Getting quality leads" with a high-budget signal. Hot leads convert 3× better within 30 minutes. Send a personalised email now.</p>
-      <div style="display:flex;gap:8px;margin-top:11px"><button class="btn-p" style="font-size:12px;padding:8px 14px">Send email now</button><button class="btn-s" style="font-size:12px;padding:8px 14px">Schedule call</button></div>
+      <p style="font-size:16px;font-weight:700;color:var(--acc);margin-bottom:5px">AI next step · Sarah Chen (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot lead, 2m ago)</p>
+      <p style="font-size:16px;color:var(--t2);line-height:1.55">Sarah answered "Getting quality leads" with a high-budget signal. Hot leads convert 3× better within 30 minutes. Send a personalised email now.</p>
+      <div style="display:flex;gap:8px;margin-top:11px"><button class="btn-p" style="font-size:16px;padding:8px 14px">Send email now</button><button class="btn-s" style="font-size:16px;padding:8px 14px">Schedule call</button></div>
     </div>
   </div>
 </div>
@@ -1017,8 +1058,8 @@ function showPay(state) {
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
     <div><p class="h3" style="margin-bottom:2px">Quiz editor</p><p class="caption">My coaching quiz · 5 questions · Draft</p></div>
     <div style="display:flex;gap:9px">
-      <button class="btn-s" style="font-size:12px;padding:9px 14px" onclick="gD('question')">Preview quiz</button>
-      <button class="btn-p" style="font-size:12px;padding:9px 16px">
+      <button class="btn-s" style="font-size:16px;padding:9px 14px" onclick="gD('question')">Preview quiz</button>
+      <button class="btn-p" style="font-size:16px;padding:9px 16px">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Publish quiz
       </button>
     </div>
@@ -1027,45 +1068,45 @@ function showPay(state) {
     <div>
       <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:12px">
         <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:12px;padding:14px;cursor:pointer">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px"><span style="font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.07em">Q1 · Single select</span><div style="display:flex;gap:6px"><button style="font-size:10px;color:var(--t3);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Edit</button><button style="font-size:10px;color:var(--red);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Delete</button></div></div>
-          <p style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:11px;letter-spacing:-.02em">What is your biggest business challenge right now?</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:11px;color:var(--t2)">A · Getting quality leads</div><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:11px;color:var(--t2)">B · Converting visitors</div><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:11px;color:var(--t2)">C · Standing out</div><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:11px;color:var(--t2)">D · Scaling delivery</div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px"><span style="font-size:14px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.07em">Q1 · Single select</span><div style="display:flex;gap:6px"><button style="font-size:14px;color:var(--t3);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Edit</button><button style="font-size:14px;color:var(--red);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Delete</button></div></div>
+          <p style="font-size:18px;font-weight:600;color:var(--t1);margin-bottom:11px;letter-spacing:-.02em">What is your biggest business challenge right now?</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:15px;color:var(--t2)">A · Getting quality leads</div><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:15px;color:var(--t2)">B · Converting visitors</div><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:15px;color:var(--t2)">C · Standing out</div><div style="padding:8px 11px;background:rgba(0,0,0,.25);border-radius:7px;font-size:15px;color:var(--t2)">D · Scaling delivery</div></div>
         </div>
         <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--acc-b)'" onmouseout="this.style.borderColor=''">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Q2 · Single select</span><div style="display:flex;gap:6px"><button style="font-size:10px;color:var(--t3);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Edit</button></div></div>
-          <p style="font-size:13px;font-weight:600;color:var(--t1);letter-spacing:-.02em">How long have you been in business?</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Q2 · Single select</span><div style="display:flex;gap:6px"><button style="font-size:14px;color:var(--t3);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Edit</button></div></div>
+          <p style="font-size:17px;font-weight:600;color:var(--t1);letter-spacing:-.02em">How long have you been in business?</p>
         </div>
         <div style="background:var(--g1);border:.5px solid var(--yellow);border-radius:12px;padding:14px;cursor:pointer">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.07em">Q3 · Single select · ⚠ High drop-off</span><button style="font-size:10px;color:var(--t3);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Edit</button></div>
-          <p style="font-size:13px;font-weight:600;color:var(--t1);letter-spacing:-.02em">What's your monthly marketing budget?</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:14px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.07em">Q3 · Single select · ⚠ High drop-off</span><button style="font-size:14px;color:var(--t3);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Edit</button></div>
+          <p style="font-size:17px;font-weight:600;color:var(--t1);letter-spacing:-.02em">What's your monthly marketing budget?</p>
         </div>
-        <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer"><span style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Lead gate · Email capture</span><p style="font-size:13px;font-weight:600;color:var(--t1);margin-top:7px">Get your personalised results</p></div>
+        <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:12px;padding:14px;cursor:pointer"><span style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">Lead gate · Email capture</span><p style="font-size:17px;font-weight:600;color:var(--t1);margin-top:7px">Get your personalised results</p></div>
         <div style="background:var(--acc-dim);border:.5px dashed var(--acc-b);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onmouseover="this.style.background='rgba(210,255,29,.14)'" onmouseout="this.style.background='var(--acc-dim)'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(210,255,29,.45)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 4px;display:block"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <p style="font-size:11px;font-weight:600;color:rgba(210,255,29,.45)">Add question or AI generate</p>
+          <p style="font-size:15px;font-weight:600;color:rgba(210,255,29,.45)">Add question or AI generate</p>
         </div>
       </div>
       <!-- Embed code -->
       <div class="glass-sm" style="padding:16px">
-        <p style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:9px">Embed on Squarespace</p>
+        <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:9px">Embed on Squarespace</p>
         <div class="code-box"><span class="code-txt">&lt;script src="https://app.squarespell.com/quiz/my-coaching-quiz.js"&gt;&lt;/script&gt;</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <p style="font-size:11px;color:var(--t4);margin-top:7px">Paste in any Squarespace Code Block. Works on all page types. No plugins needed.</p>
+        <p style="font-size:15px;color:var(--t4);margin-top:7px">Paste in any Squarespace Code Block. Works on all page types. No plugins needed.</p>
       </div>
     </div>
     <!-- Preview -->
     <div style="position:sticky;top:110px">
       <div style="background:var(--bg2);border:.5px solid var(--b1);border-radius:16px;overflow:hidden">
-        <div style="background:rgba(0,0,0,.42);padding:10px 14px;border-bottom:.5px solid var(--b2);display:flex;align-items:center;justify-content:space-between"><p style="font-size:11px;font-weight:600;color:var(--t3)">Live preview</p><div style="display:flex;gap:4px"><div style="width:7px;height:7px;border-radius:50%;background:#f87171;opacity:.6"></div><div style="width:7px;height:7px;border-radius:50%;background:#fbbf24;opacity:.6"></div><div style="width:7px;height:7px;border-radius:50%;background:#4ade80;opacity:.6"></div></div></div>
+        <div style="background:rgba(0,0,0,.42);padding:10px 14px;border-bottom:.5px solid var(--b2);display:flex;align-items:center;justify-content:space-between"><p style="font-size:15px;font-weight:600;color:var(--t3)">Live preview</p><div style="display:flex;gap:4px"><div style="width:7px;height:7px;border-radius:50%;background:#f87171;opacity:.6"></div><div style="width:7px;height:7px;border-radius:50%;background:#fbbf24;opacity:.6"></div><div style="width:7px;height:7px;border-radius:50%;background:#4ade80;opacity:.6"></div></div></div>
         <div style="padding:20px 18px">
           <div style="height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:18px"><div style="width:40%;height:2px;background:var(--acc);border-radius:2px"></div></div>
-          <p style="font-size:8px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px">Your challenge</p>
-          <p style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:16px;letter-spacing:-.03em;line-height:1.3">What best describes your challenge?</p>
+          <p style="font-size:12px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px">Your challenge</p>
+          <p style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:16px;letter-spacing:-.03em;line-height:1.3">What best describes your challenge?</p>
           <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px">
-            <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:7px"><span style="width:19px;height:19px;background:var(--acc);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#07090c">A</span><span style="font-size:11px;color:var(--t1)">Getting leads</span></div>
-            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:7px"><span style="width:19px;height:19px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:var(--t3)">B</span><span style="font-size:11px;color:var(--t2)">Converting visitors</span></div>
-            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:7px"><span style="width:19px;height:19px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:var(--t3)">C</span><span style="font-size:11px;color:var(--t2)">Standing out</span></div>
+            <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:7px"><span style="width:19px;height:19px;background:var(--acc);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#07090c">A</span><span style="font-size:15px;color:var(--t1)">Getting leads</span></div>
+            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:7px"><span style="width:19px;height:19px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--t3)">B</span><span style="font-size:15px;color:var(--t2)">Converting visitors</span></div>
+            <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:7px"><span style="width:19px;height:19px;background:var(--g1);border:.5px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--t3)">C</span><span style="font-size:15px;color:var(--t2)">Standing out</span></div>
           </div>
-          <button style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%">Continue →</button>
+          <button style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:10px;font-size:16px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%">Continue →</button>
         </div>
       </div>
     </div>
@@ -1083,32 +1124,32 @@ function showPay(state) {
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:36px">
     <div class="tmpl-card">
-      <div style="width:36px;height:36px;background:rgba(210,255,29,.1);border:.5px solid var(--acc-b);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:18px">🎯</span></div>
-      <p style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:5px">Coaching</p>
-      <p style="font-size:11px;color:var(--t3);line-height:1.5;margin-bottom:10px">Qualify discovery call prospects by urgency, budget, and alignment.</p>
+      <div style="width:36px;height:36px;background:rgba(210,255,29,.1);border:.5px solid var(--acc-b);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:23px">🎯</span></div>
+      <p style="font-size:17px;font-weight:700;color:var(--t1);margin-bottom:5px">Coaching</p>
+      <p style="font-size:15px;color:var(--t3);line-height:1.5;margin-bottom:10px">Qualify discovery call prospects by urgency, budget, and alignment.</p>
       <div style="margin-bottom:11px"><span class="chip-acc">12% avg conversion</span></div>
-      <button class="btn-s" style="font-size:11px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
+      <button class="btn-s" style="font-size:15px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
     </div>
     <div class="tmpl-card">
-      <div style="width:36px;height:36px;background:rgba(96,165,250,.08);border:.5px solid rgba(96,165,250,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:18px">🏢</span></div>
-      <p style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:5px">Agency</p>
-      <p style="font-size:11px;color:var(--t3);line-height:1.5;margin-bottom:10px">Qualify clients by project type and budget. Filter time-wasters automatically.</p>
+      <div style="width:36px;height:36px;background:rgba(96,165,250,.08);border:.5px solid rgba(96,165,250,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:23px">🏢</span></div>
+      <p style="font-size:17px;font-weight:700;color:var(--t1);margin-bottom:5px">Agency</p>
+      <p style="font-size:15px;color:var(--t3);line-height:1.5;margin-bottom:10px">Qualify clients by project type and budget. Filter time-wasters automatically.</p>
       <div style="margin-bottom:11px"><span class="chip">White-label ready</span></div>
-      <button class="btn-s" style="font-size:11px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
+      <button class="btn-s" style="font-size:15px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
     </div>
     <div class="tmpl-card">
-      <div style="width:36px;height:36px;background:rgba(251,191,36,.08);border:.5px solid rgba(251,191,36,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:18px">✨</span></div>
-      <p style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:5px">Creators</p>
-      <p style="font-size:11px;color:var(--t3);line-height:1.5;margin-bottom:10px">Match followers to your right offer. Grow your list with qualified subscribers.</p>
+      <div style="width:36px;height:36px;background:rgba(251,191,36,.08);border:.5px solid rgba(251,191,36,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:23px">✨</span></div>
+      <p style="font-size:17px;font-weight:700;color:var(--t1);margin-bottom:5px">Creators</p>
+      <p style="font-size:15px;color:var(--t3);line-height:1.5;margin-bottom:10px">Match followers to your right offer. Grow your list with qualified subscribers.</p>
       <div style="margin-bottom:11px"><span class="chip">Content-focused</span></div>
-      <button class="btn-s" style="font-size:11px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
+      <button class="btn-s" style="font-size:15px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
     </div>
     <div class="tmpl-card">
-      <div style="width:36px;height:36px;background:rgba(167,139,250,.08);border:.5px solid rgba(167,139,250,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:18px">📍</span></div>
-      <p style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:5px">Local Business</p>
-      <p style="font-size:11px;color:var(--t3);line-height:1.5;margin-bottom:10px">Capture local leads and pre-qualify by area, budget, and timeline.</p>
+      <div style="width:36px;height:36px;background:rgba(167,139,250,.08);border:.5px solid rgba(167,139,250,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><span style="font-size:23px">📍</span></div>
+      <p style="font-size:17px;font-weight:700;color:var(--t1);margin-bottom:5px">Local Business</p>
+      <p style="font-size:15px;color:var(--t3);line-height:1.5;margin-bottom:10px">Capture local leads and pre-qualify by area, budget, and timeline.</p>
       <div style="margin-bottom:11px"><span class="chip">Local SEO boost</span></div>
-      <button class="btn-s" style="font-size:11px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
+      <button class="btn-s" style="font-size:15px;padding:8px 14px;width:100%" onclick="gD('editor')">Use template</button>
     </div>
   </div>
   <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:16px;padding:32px;text-align:center">
@@ -1130,12 +1171,12 @@ function showPay(state) {
     <p class="h2" style="margin-bottom:12px">Start free. Scale as you grow.</p>
     <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:4px 14px;margin-bottom:20px">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-      <span style="font-size:11px;font-weight:700;color:var(--acc)">FREE 7-day trial on all paid plans · No credit card required</span>
+      <span style="font-size:15px;font-weight:700;color:var(--acc)">FREE 7-day trial on all paid plans · No credit card required</span>
     </div>
     <p class="body" style="max-width:440px;margin:0 auto 22px">No contracts, no hidden fees. Cancel anytime.</p>
     <div style="display:flex;justify-content:center">
       <div style="display:flex;background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:3px;gap:2px">
-        <button class="bt-opt on" onclick="toggleBilling(false)">Monthly</button>
+        <button class="bt-opt on" style="color:var(--t1)" onclick="toggleBilling(false)">Monthly</button>
         <button class="bt-opt" onclick="toggleBilling(true)">Annual <span class="bt-save">20% off</span></button>
       </div>
     </div>
@@ -1143,10 +1184,10 @@ function showPay(state) {
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:48px">
     <!-- Free -->
     <div class="p-card">
-      <p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Free</p>
-      <p style="font-size:32px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px">$0<span style="font-size:12px;font-weight:400;color:var(--t4)">/mo</span></p>
-      <p class="caption" style="margin-bottom:16px">Forever free. No card.</p>
-      <button class="btn-s" style="width:100%;margin-bottom:20px;font-size:12px;padding:10px" onclick="gD('signin')">Get started free</button>
+      <p style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Free</p>
+      <p style="font-size:38px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px">$0<span style="font-size:16px;font-weight:400;color:var(--t4)">/mo</span></p>
+      <p class="caption" style="margin-bottom:16px">7-day free trial on all plans. No card.</p>
+      <button class="btn-s" style="width:100%;margin-bottom:20px;font-size:16px;padding:10px" onclick="gD('signin')">Get started free</button>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>1 quiz</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>50 leads/month</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Basic analytics</div>
@@ -1155,10 +1196,10 @@ function showPay(state) {
     </div>
     <!-- Starter -->
     <div class="p-card">
-      <p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Starter</p>
-      <p style="font-size:32px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px"><span id="price-starter">$19</span><span style="font-size:12px;font-weight:400;color:var(--t4)">/mo</span></p>
+      <p style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Starter</p>
+      <p style="font-size:38px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px"><span id="price-starter">$19</span><span style="font-size:16px;font-weight:400;color:var(--t4)">/mo</span></p>
       <p class="caption" style="margin-bottom:16px">7-day free trial included.</p>
-      <button class="btn-s" style="width:100%;margin-bottom:20px;font-size:12px;padding:10px" onclick="gD('payment')">Start free trial</button>
+      <button class="btn-s" style="width:100%;margin-bottom:20px;font-size:16px;padding:10px" onclick="gD('payment')">Start free trial</button>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5 quizzes</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>500 leads/month</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI lead scoring</div>
@@ -1168,10 +1209,10 @@ function showPay(state) {
     <!-- Pro - Most Popular -->
     <div class="p-card popular">
       <span class="badge-pop">Most Popular</span>
-      <p style="font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Pro</p>
-      <p style="font-size:32px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px"><span id="price-pro">$39</span><span style="font-size:12px;font-weight:400;color:var(--t4)">/mo</span></p>
+      <p style="font-size:14px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Pro</p>
+      <p style="font-size:38px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px"><span id="price-pro">$39</span><span style="font-size:16px;font-weight:400;color:var(--t4)">/mo</span></p>
       <p class="caption" style="margin-bottom:16px">7-day free trial included.</p>
-      <button class="btn-p" style="width:100%;margin-bottom:20px;font-size:12px;padding:10px" onclick="gD('payment')">Start free trial</button>
+      <button class="btn-p" style="width:100%;margin-bottom:20px;font-size:16px;padding:10px" onclick="gD('payment')">Start free trial</button>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>20 quizzes</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5,000 leads/month</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI scoring + pipeline</div>
@@ -1180,10 +1221,10 @@ function showPay(state) {
     </div>
     <!-- Agency -->
     <div class="p-card">
-      <p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Agency</p>
-      <p style="font-size:32px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px"><span id="price-agency">$79</span><span style="font-size:12px;font-weight:400;color:var(--t4)">/mo</span></p>
+      <p style="font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Agency</p>
+      <p style="font-size:38px;font-weight:800;color:var(--t1);letter-spacing:-.06em;margin-bottom:4px"><span id="price-agency">$79</span><span style="font-size:16px;font-weight:400;color:var(--t4)">/mo</span></p>
       <p class="caption" style="margin-bottom:16px">7-day free trial included.</p>
-      <button class="btn-s" style="width:100%;margin-bottom:20px;font-size:12px;padding:10px" onclick="gD('payment')">Start free trial</button>
+      <button class="btn-s" style="width:100%;margin-bottom:20px;font-size:16px;padding:10px" onclick="gD('payment')">Start free trial</button>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited quizzes</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited leads</div>
       <div class="p-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>White-label branding</div>
@@ -1207,41 +1248,41 @@ function showPay(state) {
 <div class="dpage" id="dp-account">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
     <div><p class="h3" style="margin-bottom:2px">Account</p><p class="caption">Manage your plan and settings</p></div>
-    <button style="background:rgba(248,113,113,.12);color:var(--red);border:.5px solid rgba(248,113,113,.2);border-radius:9px;padding:9px 16px;font-size:12px;font-weight:600;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:6px" onclick="gD('signin')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</button>
+    <button style="background:rgba(248,113,113,.12);color:var(--red);border:.5px solid rgba(248,113,113,.2);border-radius:9px;padding:9px 16px;font-size:16px;font-weight:600;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:6px" onclick="gD('signin')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div class="glass" style="padding:20px">
       <p class="h4" style="margin-bottom:16px">Profile</p>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
-        <div style="width:48px;height:48px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--acc)">H</div>
-        <div><p style="font-size:14px;font-weight:700;color:var(--t1)">Hussnain</p><p style="font-size:12px;color:var(--t3)">info＠squarespell.com</p></div>
+        <div style="width:48px;height:48px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800;color:var(--acc)">H</div>
+        <div><p style="font-size:18px;font-weight:700;color:var(--t1)">Hussnain</p><p style="font-size:16px;color:var(--t3)">info＠squarespell.com</p></div>
       </div>
-      <div style="margin-bottom:11px"><span style="font-size:11px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Full name</span><div class="inp-row"><input class="inp" value="Hussnain" style="font-size:13px"/></div></div>
-      <div style="margin-bottom:16px"><span style="font-size:11px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Email</span><div class="inp-row"><input class="inp" value="info＠squarespell.com" style="font-size:13px"/></div></div>
-      <button class="btn-s" style="font-size:12px;padding:9px 18px">Save changes</button>
+      <div style="margin-bottom:11px"><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Full name</span><div class="inp-row"><input class="inp" value="Hussnain" style="font-size:17px"/></div></div>
+      <div style="margin-bottom:16px"><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Email</span><div class="inp-row"><input class="inp" value="info＠squarespell.com" style="font-size:17px"/></div></div>
+      <button class="btn-s" style="font-size:16px;padding:9px 18px">Save changes</button>
     </div>
     <div class="glass" style="padding:20px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <p class="h4">Current plan</p>
         <div style="display:flex;align-items:center;gap:7px">
-          <span style="background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;color:var(--acc)">Trial</span>
-          <span style="font-size:11px;color:var(--yellow);font-weight:600">5 days left</span>
+          <span style="background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:2px 9px;font-size:14px;font-weight:700;color:var(--acc)">Trial</span>
+          <span style="font-size:15px;color:var(--yellow);font-weight:600">5 days left</span>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:500">Quizzes</span><span style="font-size:11px;color:var(--t3)">1 / 1</span></div><div class="usage-wrap"><div class="usage-bar" style="width:100%;background:var(--yellow)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:500">Leads this month</span><span style="font-size:11px;color:var(--t3)">38 / 50</span></div><div class="usage-wrap"><div class="usage-bar" style="width:76%;background:rgba(251,191,36,.7)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--t2);font-weight:500">AI generations</span><span style="font-size:11px;color:var(--t3)">2 / 3</span></div><div class="usage-wrap"><div class="usage-bar" style="width:67%;background:rgba(210,255,29,.4)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Quizzes</span><span style="font-size:15px;color:var(--t3)">1 / 1</span></div><div class="usage-wrap"><div class="usage-bar" style="width:100%;background:var(--yellow)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Leads this month</span><span style="font-size:15px;color:var(--t3)">38 / 50</span></div><div class="usage-wrap"><div class="usage-bar" style="width:76%;background:rgba(251,191,36,.7)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">AI generations</span><span style="font-size:15px;color:var(--t3)">2 / 3</span></div><div class="usage-wrap"><div class="usage-bar" style="width:67%;background:rgba(210,255,29,.4)"></div></div></div>
       </div>
       <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:10px;padding:12px;margin-bottom:12px">
-        <p style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px">Upgrade to Pro — $39/mo</p>
-        <p style="font-size:11px;color:var(--t3);margin-bottom:10px">20 quizzes · 5,000 leads · AI scoring · Zapier · No branding</p>
-        <button class="btn-p" style="font-size:12px;padding:9px;width:100%" onclick="gD('pricing')">Upgrade now</button>
+        <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:3px">Upgrade to Pro — $39/mo</p>
+        <p style="font-size:15px;color:var(--t3);margin-bottom:10px">20 quizzes · 5,000 leads · AI scoring · Zapier · No branding</p>
+        <button class="btn-p" style="font-size:16px;padding:9px;width:100%" onclick="gD('pricing')">Upgrade now</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:1px">
-        <button style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border:none;background:transparent;cursor:pointer;font-family:var(--fam);border-bottom:.5px solid var(--b3);width:100%"><span style="font-size:12px;color:var(--t2);font-weight:500">Billing &amp; invoices</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-        <button style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border:none;background:transparent;cursor:pointer;font-family:var(--fam);border-bottom:.5px solid var(--b3);width:100%"><span style="font-size:12px;color:var(--t2);font-weight:500">Integrations</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-        <button style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border:none;background:transparent;cursor:pointer;font-family:var(--fam);width:100%"><span style="font-size:12px;color:var(--t2);font-weight:500">Cloudflare Access settings</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border:none;background:transparent;cursor:pointer;font-family:var(--fam);border-bottom:.5px solid var(--b3);width:100%"><span style="font-size:16px;color:var(--t2);font-weight:500">Billing &amp; invoices</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border:none;background:transparent;cursor:pointer;font-family:var(--fam);border-bottom:.5px solid var(--b3);width:100%"><span style="font-size:16px;color:var(--t2);font-weight:500">Integrations</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border:none;background:transparent;cursor:pointer;font-family:var(--fam);width:100%"><span style="font-size:16px;color:var(--t2);font-weight:500">Cloudflare Access settings</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
     </div>
   </div>
@@ -1255,17 +1296,17 @@ function showPay(state) {
     <div style="height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:28px;position:relative"><div style="width:40%;height:2px;background:var(--acc);border-radius:2px"></div></div>
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:22px;padding:9px 13px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px">
       <div class="xp-wrap"><div class="xp-bar" style="width:40%"></div></div>
-      <span style="font-size:10px;color:var(--t3);font-weight:600;white-space:nowrap">Question 2 of 5 · 40% done</span>
+      <span style="font-size:14px;color:var(--t3);font-weight:600;white-space:nowrap">Question 2 of 5 · 40% done</span>
     </div>
-    <div style="display:inline-flex;align-items:center;gap:5px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 11px;margin-bottom:16px"><span style="font-size:10px;font-weight:600;color:var(--acc)">Your challenge</span></div>
+    <div style="display:inline-flex;align-items:center;gap:5px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 11px;margin-bottom:16px"><span style="font-size:14px;font-weight:600;color:var(--acc)">Your challenge</span></div>
     <p class="h2" style="margin-bottom:26px;font-size:26px">What is your biggest business challenge right now?</p>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:26px">
-      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">A</div><span class="mopt-lbl" style="font-size:14px">Getting consistent quality leads</span></div>
-      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">B</div><span class="mopt-lbl" style="font-size:14px">Converting visitors into clients</span></div>
-      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">C</div><span class="mopt-lbl" style="font-size:14px">Standing out from competitors</span></div>
-      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">D</div><span class="mopt-lbl" style="font-size:14px">Scaling my service delivery</span></div>
+      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">A</div><span class="mopt-lbl" style="font-size:18px">Getting consistent quality leads</span></div>
+      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">B</div><span class="mopt-lbl" style="font-size:18px">Converting visitors into clients</span></div>
+      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">C</div><span class="mopt-lbl" style="font-size:18px">Standing out from competitors</span></div>
+      <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">D</div><span class="mopt-lbl" style="font-size:18px">Scaling my service delivery</span></div>
     </div>
-    <div style="display:flex;gap:10px"><button class="btn-s" style="font-size:13px;padding:12px 20px">← Back</button><button class="btn-p" style="flex:1;font-size:14px;padding:13px" onclick="gD('leadgate')">Next question →</button></div>
+    <div style="display:flex;gap:10px"><button class="btn-s" style="font-size:17px;padding:12px 20px">← Back</button><button class="btn-p" style="flex:1;font-size:18px;padding:13px" onclick="gD('leadgate')">Next question →</button></div>
   </div>
 </div>
 
@@ -1276,16 +1317,16 @@ function showPay(state) {
   <div style="max-width:500px;margin:0 auto;padding:40px 0;text-align:center">
     <div style="font-size:56px;margin-bottom:16px">🎯</div>
     <p class="label" style="margin-bottom:10px;display:block">Your results are ready</p>
-    <p class="h2" style="font-size:28px;margin-bottom:12px">Unlock your personalised quiz results</p>
+    <p class="h2" style="font-size:34px;margin-bottom:12px">Unlock your personalised quiz results</p>
     <p class="body" style="margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto">Based on your answers, we've built your ideal lead profile. Enter your details to see your results and action plan.</p>
     <div class="glass" style="padding:26px;text-align:left">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px">
-        <div><span style="font-size:11px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">First name</span><div class="inp-row"><input class="inp" placeholder="Your first name"/></div></div>
-        <div><span style="font-size:11px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Business name</span><div class="inp-row"><input class="inp" placeholder="Your business"/></div></div>
+        <div><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">First name</span><div class="inp-row"><input class="inp" placeholder="Your first name"/></div></div>
+        <div><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Business name</span><div class="inp-row"><input class="inp" placeholder="Your business"/></div></div>
       </div>
-      <div style="margin-bottom:18px"><span style="font-size:11px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Email address</span><div class="inp-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><input class="inp" type="email" placeholder="your＠email.com"/></div></div>
-      <button class="btn-p" style="width:100%;font-size:14px;padding:14px;margin-bottom:11px" onclick="gD('result')">Show my personalised results 🎉</button>
-      <p style="text-align:center;font-size:11px;color:var(--t4)">No spam ever. Unsubscribe in one click.</p>
+      <div style="margin-bottom:18px"><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Email address</span><div class="inp-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><input class="inp" type="email" placeholder="your＠email.com"/></div></div>
+      <button class="btn-p" style="width:100%;font-size:18px;padding:14px;margin-bottom:11px" onclick="gD('result')">Show my personalised results 🎉</button>
+      <p style="text-align:center;font-size:15px;color:var(--t4)">No spam ever. Unsubscribe in one click.</p>
     </div>
   </div>
 </div>
@@ -1296,21 +1337,21 @@ function showPay(state) {
 <div class="dpage" id="dp-result">
   <div style="max-width:580px;margin:0 auto;padding:36px 0">
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:60px;margin-bottom:14px">🚀</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:14px"><span class="badge-hot" style="padding:4px 12px;font-size:11px">🔥 Hot lead score</span><span class="chip-acc">87 / 100</span></div>
+      <div style="margin-bottom:18px"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2l11-11c1.2-1.2 1.2-3.1 0-4.3a3 3 0 0 0-4.3 0z"/><path d="m15 5 4 4"/><path d="M9 7c0 0-4 0-6 6l4 4"/><path d="M17 17s0 4-6 6l-4-4"/></svg></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:14px"><span class="badge-hot" style="padding:4px 12px;font-size:15px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot lead score</span><span class="chip-acc">87 / 100</span></div>
       <p class="label" style="margin-bottom:9px;display:block">Your result</p>
       <p class="h2" style="margin-bottom:12px;font-size:30px">You're a Growth-Stage Coach</p>
       <p class="body" style="max-width:460px;margin:0 auto">You have proven results and strong client outcomes. Your main challenge is building a consistent lead pipeline that matches your quality of delivery.</p>
     </div>
     <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:14px;padding:20px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><p style="font-size:12px;font-weight:700;color:var(--acc)">AI Recommendation for you</p></div>
-      <p style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:12px">Coaches with your profile see the best results from a "What type of coach do you need?" quiz — average 18% lead conversion rate with high-intent visitors.</p>
-      <div style="display:flex;gap:9px"><button class="btn-p" style="font-size:12px;padding:9px 16px" onclick="gD('editor')">Create this quiz now</button><button class="btn-s" style="font-size:12px;padding:9px 14px">See examples</button></div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><p style="font-size:16px;font-weight:700;color:var(--acc)">AI Recommendation for you</p></div>
+      <p style="font-size:17px;color:var(--t2);line-height:1.6;margin-bottom:12px">Coaches with your profile see the best results from a "What type of coach do you need?" quiz — average 18% lead conversion rate with high-intent visitors.</p>
+      <div style="display:flex;gap:9px"><button class="btn-p" style="font-size:16px;padding:9px 16px" onclick="gD('editor')">Create this quiz now</button><button class="btn-s" style="font-size:16px;padding:9px 14px">See examples</button></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px">
-      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:24px">18%</p><p class="stat-l">Avg conversion</p><p class="stat-d up">For your profile</p></div>
-      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:24px">87</p><p class="stat-l">Lead score</p><p class="stat-d up">Top 13%</p></div>
-      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:24px">$4k</p><p class="stat-l">Est. monthly value</p><p class="stat-d up">At current rate</p></div>
+      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:30px">18%</p><p class="stat-l">Avg conversion</p><p class="stat-d up">For your profile</p></div>
+      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:30px">87</p><p class="stat-l">Lead score</p><p class="stat-d up">Top 13%</p></div>
+      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:30px">$4k</p><p class="stat-l">Est. monthly value</p><p class="stat-d up">At current rate</p></div>
     </div>
     <div style="display:flex;gap:10px">
       <button class="btn-p btn-p-lg" style="flex:1" onclick="gD('signin')">Start free trial — capture leads now</button>
@@ -1326,38 +1367,38 @@ function showPay(state) {
   <div style="max-width:500px;margin:0 auto;padding:36px 0">
     <!-- Demo toggle -->
     <div style="display:flex;gap:9px;justify-content:center;margin-bottom:20px">
-      <button onclick="showPay('ok')" style="font-size:11px;color:var(--t3);background:transparent;border:.5px solid var(--b2);border-radius:7px;padding:5px 13px;cursor:pointer;font-family:var(--fam)">Show success</button>
-      <button onclick="showPay('fail')" style="font-size:11px;color:var(--t3);background:transparent;border:.5px solid var(--b2);border-radius:7px;padding:5px 13px;cursor:pointer;font-family:var(--fam)">Show failure</button>
+      <button onclick="showPay('ok')" style="font-size:15px;color:var(--t3);background:transparent;border:.5px solid var(--b2);border-radius:7px;padding:5px 13px;cursor:pointer;font-family:var(--fam)">Show success</button>
+      <button onclick="showPay('fail')" style="font-size:15px;color:var(--t3);background:transparent;border:.5px solid var(--b2);border-radius:7px;padding:5px 13px;cursor:pointer;font-family:var(--fam)">Show failure</button>
     </div>
     <!-- SUCCESS -->
     <div id="pay-ok-state">
       <div class="pay-ok" style="padding:32px;margin-bottom:18px">
-        <div style="font-size:52px;margin-bottom:13px">🎉</div>
-        <p style="font-size:20px;font-weight:800;color:var(--green);margin-bottom:7px;letter-spacing:-.04em">Payment successful!</p>
-        <p style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:18px">Welcome to Squarespell Pro. Your 7-day free trial has started and all Pro features are now active.</p>
+        <div style="margin-bottom:16px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div>
+        <p style="font-size:25px;font-weight:800;color:var(--green);margin-bottom:7px;letter-spacing:-.04em">Payment successful!</p>
+        <p style="font-size:17px;color:var(--t3);line-height:1.6;margin-bottom:18px">Welcome to Squarespell Pro. Your 7-day free trial has started and all Pro features are now active.</p>
         <div style="display:flex;flex-direction:column;gap:7px;text-align:left;margin-bottom:20px;padding:0 18px">
-          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:12px;color:var(--t2)">20 quizzes unlocked</span></div>
-          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:12px;color:var(--t2)">5,000 leads / month</span></div>
-          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:12px;color:var(--t2)">AI lead scoring active</span></div>
-          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:12px;color:var(--t2)">Squarespell branding removed</span></div>
-          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:12px;color:var(--t2)">Trial ends in 7 days — no charge until then</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:16px;color:var(--t2)">20 quizzes unlocked</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:16px;color:var(--t2)">5,000 leads / month</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:16px;color:var(--t2)">AI lead scoring active</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:16px;color:var(--t2)">Squarespell branding removed</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:16px;color:var(--t2)">Trial ends in 7 days — no charge until then</span></div>
         </div>
-        <button class="btn-p" style="width:100%;font-size:13px;padding:12px" onclick="gD('dashboard')">Go to dashboard →</button>
+        <button class="btn-p" style="width:100%;font-size:17px;padding:12px" onclick="gD('dashboard')">Go to dashboard →</button>
       </div>
-      <p style="text-align:center;font-size:11px;color:var(--t4)">Receipt sent · <span style="color:var(--acc);cursor:pointer">View invoice</span></p>
+      <p style="text-align:center;font-size:15px;color:var(--t4)">Receipt sent · <span style="color:var(--acc);cursor:pointer">View invoice</span></p>
     </div>
     <!-- FAILURE -->
     <div id="pay-fail-state" style="display:none">
       <div class="pay-fail" style="padding:32px;margin-bottom:18px">
-        <div style="font-size:52px;margin-bottom:13px">⚠️</div>
-        <p style="font-size:20px;font-weight:800;color:var(--red);margin-bottom:7px;letter-spacing:-.04em">Payment failed</p>
-        <p style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:20px">Your card was declined. No charges were made. Check your card details and try again, or use a different payment method.</p>
+        <div style="margin-bottom:16px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+        <p style="font-size:25px;font-weight:800;color:var(--red);margin-bottom:7px;letter-spacing:-.04em">Payment failed</p>
+        <p style="font-size:17px;color:var(--t3);line-height:1.6;margin-bottom:20px">Your card was declined. No charges were made. Check your card details and try again, or use a different payment method.</p>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn-p" style="width:100%;font-size:13px;padding:12px">Try a different card</button>
-          <button class="btn-s" style="width:100%;font-size:13px;padding:11px">Try PayPal instead</button>
+          <button class="btn-p" style="width:100%;font-size:17px;padding:12px">Try a different card</button>
+          <button class="btn-s" style="width:100%;font-size:17px;padding:11px">Try PayPal instead</button>
         </div>
       </div>
-      <p style="text-align:center;font-size:11px;color:var(--t4)">Need help? <span style="color:var(--acc);cursor:pointer">Contact support</span></p>
+      <p style="text-align:center;font-size:15px;color:var(--t4)">Need help? <span style="color:var(--acc);cursor:pointer">Contact support</span></p>
     </div>
   </div>
 </div>
