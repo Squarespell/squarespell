@@ -18,20 +18,17 @@ async function getHeaders(): Promise<Record<string, string>> {
       if (token) headers['Authorization'] = 'Bearer ' + token;
     } else if (typeof window !== 'undefined') {
       const clerk = (window as any).Clerk;
-      if (clerk?.session) {
+      if (clerk && clerk.session) {
         const token = await clerk.session.getToken();
         if (token) headers['Authorization'] = 'Bearer ' + token;
       }
     }
-  } catch (_) {}
+  } catch (e) {}
   return headers;
 }
 
 async function req(path: string, options?: RequestInit): Promise<any> {
-  const res = await fetch(API_URL + path, {
-    ...options,
-    headers: await getHeaders(),
-  });
+  const res = await fetch(API_URL + path, { ...options, headers: await getHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -39,14 +36,15 @@ async function req(path: string, options?: RequestInit): Promise<any> {
 
 export const api = {
   setAuthToken,
-  getUserPlan: () => req('/api/user/plan'),
-  generateQuiz: (data: any) => req('/api/generate', { method: 'POST', body: JSON.stringify(data) }),
-  generate: (data: any) => req('/api/generate', { method: 'POST', body: JSON.stringify(data) }),
-  getQuizzes: () => req('/api/quizzes'),
-  getQuiz: (id: string) => req('/api/quizzes/' + id),
-  updateQuiz: (id: string, data: any) => req('/api/quizzes/' + id, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteQuiz: (id: string) => req('/api/quizzes/' + id, { method: 'DELETE' }),
-  getLeads: (quizId: string) => req('/api/leads/' + quizId),
-  getAnalytics: (quizId: string) => req('/api/analytics/' + quizId),
-  scrapeBrand: (url: string) => req('/api/scrape-brand', { method: 'POST', body: JSON.stringify({ url }) }),
+  getUserPlan:   ()                  => req('/api/user/plan'),
+  generateQuiz:  (data: any)         => req('/api/generate',          { method: 'POST', body: JSON.stringify(data) }),
+  generate:      (data: any)         => req('/api/generate',          { method: 'POST', body: JSON.stringify(data) }),
+  getQuizzes:    ()                  => req('/api/quizzes'),
+  getQuiz:       (id: string)        => req('/api/quizzes/' + id),
+  updateQuiz:    (id: string, d: any)=> req('/api/quizzes/' + id,     { method: 'PUT',    body: JSON.stringify(d) }),
+  publishQuiz:   (id: string)        => req('/api/quizzes/' + id + '/publish', { method: 'POST' }),
+  deleteQuiz:    (id: string)        => req('/api/quizzes/' + id,     { method: 'DELETE' }),
+  getLeads:      (quizId: string)    => req('/api/leads/' + quizId),
+  getAnalytics:  (quizId: string)    => req('/api/analytics/' + quizId),
+  scrapeBrand:   (url: string)       => req('/api/scrape-brand',      { method: 'POST', body: JSON.stringify({ url }) }),
 };
