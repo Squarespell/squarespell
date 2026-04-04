@@ -2,11 +2,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 let _getToken: (() => Promise<string>) | null = null;
 
-export function setAuthToken(fn: (() => Promise<string>) | string) {
+export function setAuthToken(fn: (() => Promise<string>) | string | null) {
   if (typeof fn === 'function') {
     _getToken = fn;
-  } else {
+  } else if (typeof fn === 'string') {
     _getToken = () => Promise.resolve(fn);
+  } else {
+    _getToken = null;
   }
 }
 
