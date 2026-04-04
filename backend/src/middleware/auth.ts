@@ -10,56 +10,58 @@ export interface AuthenticatedRequest extends Request {
   params: any;
 }
 
-// Decode JWT payload without verifying signature (just to extract sid)
-function decodeJWTPayload(token: string): any {
+// Decode JWT payload to extract session ID and user ID
+function decodeJWT(token: string): { sid?: string; sub?: string; exp?: number } | null {
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = Buffer.from(parts[1], 'base64').toString('utf8');
-    return JSON.parse(payload);
+    const part = token.split('.')[1];
+    if (!part) return null;
+    const json = Buffer.from(part, 'base64url').toString('utf8');
+    return JSON.parse(json);
   } catch {
-    return null;
+    try {
+      // Fallback: standard base64
+      const part = token.split('.')[1];
+      const json = Buffer.from(part, 'base64').toString('utf8');
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
   }
 }
 
-// Verify Clerk token using sessions API (works in @clerk/clerk-sdk-node v4.x)
 async function getClerkUserId(token: string): Promise<string | null> {
   try {
-    const decoded = decodeJWTPayload(token);
+    const decoded = decodeJWT(token);
     if (!decoded) return null;
 
-    // Try sessions.verifyToken first (most reliable in v4)
-    if (decoded.sid) {
-      try {
-        const session = await clerkClient.sessions.verifyToken(decoded.sid, token);
-        return session.userId || null;
-      } catch {
-        // Fall through to next method
-      }
+    // Check token hasn't expired
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+      console.log('Token expired');
+      return null;
     }
 
-    // Try verifyToken directly (works in some v4 builds)
-    try {
-      const payload = await (clerkClient as any).verifyToken(token);
-      return payload?.sub || null;
-    } catch {
-      // Fall through
+    const sessionId = decoded.sid;
+    const userId = decoded.sub;
+
+    if (!sessionId || !userId) {
+      console.log('No sid or sub in token');
+      return null;
     }
 
-    // Last resort: use the decoded sub if token is recent (< 60s old)
-    if (decoded.sub && decoded.iat) {
-      const age = Math.floor(Date.now() / 1000) - decoded.iat;
-      if (age < 120) return decoded.sub;
+    // Verify session is active via Clerk API
+    const session = await clerkClient.sessions.getSession(sessionId);
+    if (session && session.status === 'active' && session.userId === userId) {
+      return userId;
     }
 
+    console.log('Session not active or userId mismatch', session?.status);
     return null;
   } catch (err: any) {
-    console.error('Token verification error:', err?.message);
+    console.error('getClerkUserId error:', err?.message);
     return null;
   }
 }
 
-// Verify Bearer token
 export async function requireAuth(
   req: AuthenticatedRequest,
   res: Response,
@@ -86,7 +88,6 @@ export async function requireAuth(
   }
 }
 
-// Find or auto-create user in Supabase
 export async function attachUser(
   req: AuthenticatedRequest,
   res: Response,
