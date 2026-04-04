@@ -252,6 +252,86 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 /* Pricing toggle fix */
 .bt-opt{color:var(--t2)!important;font-size:15px!important}
 .bt-opt.on{color:var(--t1)!important;background:linear-gradient(135deg,rgba(210,255,29,.15),rgba(210,255,29,.05))!important;border:.5px solid var(--acc-b)!important}
+
+/* HIDE prototype nav bars */
+.gnav { display: none !important; }
+.vtabs { display: none !important; }
+.content { padding-top: 0 !important; }
+.dcontent { padding-top: 28px !important; margin-top: 0 !important; }
+.dsidebar { top: 0 !important; }
+
+/* PURE BLACK background - no bluish */
+:root {
+  --bg: #000000 !important;
+  --bg2: #0a0a0a !important;
+  --bg3: #111111 !important;
+}
+body { background: #000000 !important; }
+.dsidebar { background: #0a0a0a !important; border-right: .5px solid rgba(255,255,255,.06) !important; }
+
+/* SIDEBAR - 25px font, generous spacing */
+.dsi { 
+  font-size: 25px !important; 
+  padding: 13px 16px !important; 
+  gap: 14px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 2px !important;
+}
+.dsi svg { width: 22px !important; height: 22px !important; }
+.dsec { 
+  font-size: 13px !important; 
+  padding: 22px 16px 9px !important; 
+  letter-spacing: .12em !important;
+}
+.dsidebar { width: 260px !important; }
+.dcontent { margin-left: 260px !important; }
+
+/* REMOVE all fake gradients */
+.stat-card { background: rgba(255,255,255,.05) !important; }
+.stat-card:hover { background: rgba(210,255,29,.07) !important; border-color: var(--acc-b) !important; }
+.glass-sm { background: rgba(255,255,255,.03) !important; }
+.tmpl-card { background: rgba(255,255,255,.04) !important; }
+.tmpl-card:hover { background: rgba(210,255,29,.06) !important; }
+.roi-card { background: rgba(210,255,29,.06) !important; }
+.p-card { background: rgba(255,255,255,.04) !important; }
+.p-card.popular { background: rgba(210,255,29,.08) !important; }
+
+/* SIGN-IN PAGE - no scroll, consistent dark */
+#dp-signin { 
+  height: calc(100vh) !important; 
+  overflow: hidden !important; 
+}
+#dp-signin > div {
+  height: 100% !important;
+  margin: 0 !important;
+}
+/* Left panel - pure dark, no gradient */
+#dp-signin > div > div:first-child {
+  background: #000000 !important;
+  border-right: .5px solid rgba(255,255,255,.07) !important;
+}
+/* Remove orb glows from sign-in */
+#dp-signin .orb { display: none !important; }
+
+/* AUTH BUTTONS */
+.auth-btn { 
+  font-size: 17px !important; 
+  padding: 16px 22px !important; 
+  border-radius: 14px !important;
+  margin-bottom: 11px !important;
+}
+
+/* GLOBAL font size bump */
+.h3 { font-size: 28px !important; }
+.h4 { font-size: 22px !important; }
+.body { font-size: 17px !important; }
+.body-sm { font-size: 15px !important; }
+.caption { font-size: 14px !important; }
+.label { font-size: 13px !important; }
+
+/* Remove the vtabs/mobile/tablet/desktop buttons */
+.vt-group { display: none !important; }
+[data-view] { display: none !important; }
 </style>
 </head>
 <body><script>
@@ -688,7 +768,7 @@ function showPay(state) {
       </div>
     </div>
     <div style="flex:1;display:flex;justify-content:center;position:relative;z-index:2">
-      <div style="background:var(--bg2);border:.5px solid var(--b1);border-radius:20px;padding:24px;width:380px;box-shadow:0 28px 72px rgba(0,0,0,.6)">
+      <div style="background:var(--bg2);border:.5px solid var(--b1);border-radius:20px;padding:24px;width:460px;box-shadow:0 28px 72px rgba(0,0,0,.6)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><p style="font-size:18px;font-weight:700;color:var(--t1)">Live quiz preview</p><span style="background:rgba(74,222,128,.1);border:.5px solid rgba(74,222,128,.2);border-radius:20px;padding:2px 9px;font-size:13px;font-weight:700;color:var(--green)">● Live</span></div>
         <div style="background:rgba(0,0,0,.42);border-radius:13px;padding:18px;margin-bottom:16px">
           <div style="height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:18px"><div style="width:40%;height:2px;background:var(--acc);border-radius:2px"></div></div>
@@ -758,9 +838,9 @@ function showPay(state) {
 <!-- D: SIGN IN                    -->
 <!-- ══════════════════════════════ -->
 <div class="dpage" id="dp-signin">
-  <div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 96px);margin:-28px -36px 0">
+  <div style="display:grid;grid-template-columns:1fr 1fr;height:100vh;margin:0;overflow:hidden">
     <!-- LEFT: Branding panel -->
-    <div style="background:linear-gradient(135deg,#0a1200 0%,#0d1a00 50%,#07090c 100%);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:60px 52px">
+    <div style="background:#000000;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:60px 52px">
       <div style="position:absolute;top:-120px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(210,255,29,.12) 0%,transparent 60%);pointer-events:none"></div>
       <div style="position:absolute;bottom:-80px;left:-60px;width:380px;height:380px;background:radial-gradient(circle,rgba(100,180,20,.08) 0%,transparent 60%);pointer-events:none"></div>
       <div style="position:relative;z-index:2">
@@ -791,7 +871,7 @@ function showPay(state) {
       </div>
     </div>
     <!-- RIGHT: Sign in form -->
-    <div style="display:flex;align-items:center;justify-content:center;padding:52px;background:var(--bg)">
+    <div style="display:flex;align-items:center;justify-content:center;padding:52px;background:#000000;overflow-y:auto">
     <div style="width:100%;max-width:400px">
     <div style="text-align:center;margin-bottom:28px">
       <div style="width:52px;height:52px;background:var(--acc);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
