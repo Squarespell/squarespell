@@ -1,23 +1,47 @@
+import { clerkClient, requireAuth } from '@clerk/express';
 import { Request, Response, NextFunction } from 'express';
-import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
 import { supabase } from '../db/supabaseClient';
 
 export interface AuthenticatedRequest extends Request {
-  userId?: string;
-  dbUserId?: string;
+  auth?: { userId: string };
+  user?: any;
+  body: any;
+  params: any;
 }
 
-export const requireAuth = ClerkExpressRequireAuth();
+export const authenticate = [
+  requireAuth(),
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const clerkUserId = req.auth?.userId;
+      if (!clerkUserId) return res.status(401).json({ error: 'Unauthenticated' });
 
-export async function attachUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const clerkUserId = (req as any).auth?.userId;
-  if (!clerkUserId) return res.status(401).json({ error: 'Unauthorized' });
-  const { data: user, error } = await supabase
-    .from('users').select('id,plan,quiz_count').eq('clerk_user_id', clerkUserId).single();
-  if (error || !user) return res.status(401).json({ error: 'User not found' });
-  req.userId = clerkUserId;
-  req.dbUserId = user.id;
-  (req as any).userPlan = user.plan;
-  (req as any).quizCount = user.quiz_count;
-  next();
-}
+      let { data: user } = await supabase
+        .from('users')
+        .select('*')
+        .eq('clerk_user_id', clerkUserId)
+        .single();
+
+      if (!user) {
+        const clerkUser = await clerkClient.users.getUser(clerkUserId);
+        const email = clerkUser.emailAddresses[0]?.emailAddress || '';
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({ clerk_user_id: clerkUserId, email, plan: 'free', quiz_count: 0 })
+          .select()
+          .single();
+        if (createError) {
+          console.error('Create user error:', createError);
+          return res.status(500).json({ error: 'Failed to create user' });
+        }
+        user = newUser;
+      }
+
+      req.user = user;
+      next();
+    } catch (err: any) {
+      console.error('Auth error:', err?.message || err);
+      res.status(401).json({ error: 'Authentication failed' });
+    }
+  }
+];
