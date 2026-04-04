@@ -1,6 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-// Always get a fresh token — never store it (Clerk tokens expire in 60s)
+// Get a fresh Clerk token on every call — never use a stored one (expires in 60s)
 async function getFreshToken(): Promise<string | null> {
   try {
     if (typeof window !== 'undefined' && (window as any).Clerk?.session) {
@@ -12,16 +12,16 @@ async function getFreshToken(): Promise<string | null> {
   }
 }
 
-// Kept for backwards compatibility — no longer needs to be called
-export function setAuthToken(_token: string) {}
-
 async function authHeaders(): Promise<HeadersInit> {
   const token = await getFreshToken();
   return {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
+
+// No-op kept so existing imports don't break
+export function setAuthToken(_token: string) {}
 
 export async function generateQuiz(data: {
   url: string;
@@ -36,7 +36,7 @@ export async function generateQuiz(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Failed to generate quiz');
+    throw new Error((err as any).error || 'Failed to generate quiz');
   }
   return res.json();
 }
@@ -109,3 +109,17 @@ export async function scrapeBrand(url: string) {
   if (!res.ok) throw new Error('Failed to scrape brand');
   return res.json();
 }
+
+// Object export — for all pages using { api } pattern
+export const api = {
+  setAuthToken,
+  generateQuiz,
+  getQuizzes,
+  getQuiz,
+  updateQuiz,
+  deleteQuiz,
+  getLeads,
+  getAnalytics,
+  getUserPlan,
+  scrapeBrand,
+};
