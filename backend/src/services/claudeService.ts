@@ -1,34 +1,127 @@
 import Anthropic from '@anthropic-ai/sdk';
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = 'claude-sonnet-4-20250514';
 
-const QUIZ_SYSTEM = `You are an expert quiz funnel strategist for small businesses. Generate a complete conversion-optimised quiz.
-OUTPUT RULES:
-- Respond with ONLY valid JSON. No markdown, no explanation, no preamble.
-- Generate exactly 4 questions + 1 lead_capture gate question.
-- Question 1: single_choice. Question 2: multi_select with one is_other:true option. Question 3: text_input with ai_process:true. Question 4: lead_capture.
-- Generate exactly 2 outcomes: score 0-59 (needs_work) and 60-100 (ready_to_grow).
-- Every outcome: exactly 3 score_cards and 3 insights.
-- Assign score_value (0-25) to each option. Growth = 15-25, struggle = 0-10, other = 10.
-- All copy specific to the business type and goal. Conversational tone.
-Return JSON: { "title":string, "description":string, "questions":[], "outcomes":[] }`;
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export async function generateQuiz(url: string, businessType: string, goal: string) {
-  const msg = await client.messages.create({
-    model: MODEL, max_tokens: 2000, system: QUIZ_SYSTEM,
-    messages: [{ role: 'user', content: `URL: ${url}\nBusiness: ${businessType}\nGoal: ${goal}\nGenerate the quiz JSON now.` }]
-  });
-  const raw = msg.content[0].type === 'text' ? msg.content[0].text : '';
-  try { return JSON.parse(raw); } catch { throw new Error('Claude returned invalid JSON'); }
+// Robustly extract JSON from Claude's response — handles markdown fences and extra text
+function extractJSON(text: string): string {
+  // Strip ```json ... ``` or ``` ... ```
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  // Find first JSON object or array
+  const start = text.search(/[\[{]/);
+  if (start !== -1) {
+    const chunk = text.slice(start);
+    // Find the matching closing bracket
+    const endObj = chunk.lastIndexOf('}');
+    const endArr = chunk.lastIndexOf(']');
+    const end = Math.max(endObj, endArr);
+    if (end !== -1) return chunk.slice(0, end + 1).trim();
+    return chunk.trim();
+  }
+  return text.trim();
 }
 
-const OTHER_SYSTEM = `You are a quiz personalisation engine. Visitor answered Other with free text. Respond ONLY with JSON: { "matched_outcome_id": string, "personalised_insight": string } — insight max 15 words, personalised to their answer.`;
+const SYSTEM_PROMPT = `You are a quiz funnel expert for Squarespace businesses.
+You generate high-converting quiz funnels that capture qualified leads.
+CRITICAL: Respond with ONLY a valid JSON object. 
+No markdown formatting. No code fences. No explanation text.
+Start your response with { and end with }.`;
 
-export async function processOtherAnswer(freeText: string, outcomes: { id: string; title: string }[]) {
-  const msg = await client.messages.create({
-    model: MODEL, max_tokens: 200, system: OTHER_SYSTEM,
-    messages: [{ role: 'user', content: `Answer: "${freeText}"\nOutcomes: ${JSON.stringify(outcomes)}` }]
-  });
-  const raw = msg.content[0].type === 'text' ? msg.content[0].text : '';
-  try { return JSON.parse(raw); } catch { return { matched_outcome_id: outcomes[0]?.id ?? '', personalised_insight: '' }; }
+function buildPrompt(websiteUrl: string, quizType: string, goal: string, brandData?: any): string {
+  return `Create a quiz funnel for this Squarespace business.
+
+Website: ${websiteUrl}
+Quiz type: ${quizType}  
+Business goal: ${goal}
+Brand data: ${brandData ? JSON.stringify(brandData, null, 2) : 'Not provided'}
+
+Return ONLY this exact JSON structure with no additional text:
+{
+  "title": "Engaging quiz title",
+  "description": "One sentence description",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "question": "Question text here?",
+      "subtitle": "",
+      "options": [
+        { "id": "a", "text": "Option A text", "score": 3 },
+        { "id": "b", "text": "Option B text", "score": 2 },
+        { "id": "c", "text": "Option C text", "score": 1 }
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "single",
+      "question": "Second question?",
+      "subtitle": "",
+      "options": [
+        { "id": "a", "text": "Option A", "score": 3 },
+        { "id": "b", "text": "Option B", "score": 2 },
+        { "id": "c", "text": "Option C", "score": 1 }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "id": "r1",
+      "title": "High-potential result title",
+      "description": "Personalised result description for high scorers",
+      "minScore": 6,
+      "maxScore": 100,
+      "ctaText": "Book a free call",
+      "ctaUrl": ""
+    },
+    {
+      "id": "r2",
+      "title": "Growth-stage result title",
+      "description": "Personalised result description for mid scorers",
+      "minScore": 0,
+      "maxScore": 5,
+      "ctaText": "Get started",
+      "ctaUrl": ""
+    }
+  ],
+  "leadGate": {
+    "headline": "Your results are ready!",
+    "subtext": "Enter your email to unlock your personalised action plan",
+    "buttonText": "Show my results"
+  },
+  "settings": {
+    "primaryColor": "${brandData?.colors?.[0] || '#000000'}",
+    "showProgressBar": true,
+    "requireEmail": true,
+    "estimatedTime": "2 minutes"
+  }
+}`;
 }
+
+async function callClaude(websiteUrl: string, quizType: string, goal: string, brandData?: any): Promise<any> {
+  const message = await anthropic.messages.create({
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: buildPrompt(websiteUrl, quizType, goal, brandData) }]
+  });
+
+  const rawText = message.content
+    .filter((b: any) => b.type === 'text')
+    .map((b: any) => b.text)
+    .join('');
+
+  const cleanJSON = extractJSON(rawText);
+
+  try {
+    return JSON.parse(cleanJSON);
+  } catch (err) {
+    console.error('JSON parse failed. Raw length:', rawText.length, 'First 300 chars:', rawText.substring(0, 300));
+    throw new Error('Failed to generate quiz. Please try again.');
+  }
+}
+
+// Export all function name variants so any route file works
+export const generateQuizWithClaude = callClaude;
+export const generateQuiz = callClaude;
+export const generateQuizContent = callClaude;
+export default callClaude;
