@@ -217,15 +217,15 @@ export default function PricingPage() {
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
         .mtbl { width:100%; border-collapse:collapse; font-size:17px; min-width:580px; }
         .mtbl thead tr { border-bottom:1px solid rgba(255,255,255,.07); }
-        .mtbl th { padding:20px 28px; font-weight:700; }
+        .mtbl th { padding:14px 20px; font-weight:700; }
         .mtbl th:first-child { text-align:left; color:var(--t3); font-weight:500; width:44%; }
         .mtbl th.tp { color:var(--acc); }
         .mtbl th.to { color:var(--t2); }
-        .mtbl td { padding:16px 28px; }
+        .mtbl td { padding:11px 20px; }
         .mtbl td:first-child { color:var(--t2); }
         .mtbl td:not(:first-child) { text-align:center; }
-        .mtbl .cat td { padding:10px 24px 6px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--t4); background:rgba(255,255,255,.02); }
-        .mtbl .dr { border-top:1px solid rgba(255,255,255,.04); }
+        .mtbl .cat td { padding:8px 20px 5px; font-size:10px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:rgba(210,255,29,0.55); background:rgba(210,255,29,0.025); }
+        .mtbl .dr { border-top:1px solid rgba(255,255,255,.04); } .mtbl .dr td:nth-child(3) { background:rgba(210,255,29,0.035); border-left:1px solid rgba(210,255,29,0.08); border-right:1px solid rgba(210,255,29,0.08); } .mtbl thead th:nth-child(3) { background:rgba(210,255,29,0.04); border-left:1px solid rgba(210,255,29,0.10); border-right:1px solid rgba(210,255,29,0.10); }
         .mv { font-size:14px; font-weight:600; }
         .mv.p { color:var(--acc); }
         .mv.o { color:var(--t2); }
@@ -245,7 +245,7 @@ export default function PricingPage() {
         .ctabox { max-width:800px; margin:0 auto; text-align:center; background:rgba(210,255,29,.05); border:1px solid rgba(210,255,29,.15); border-radius:24px; padding:64px 48px; }
         .ctabox h2 { font-size:36px; font-weight:800; letter-spacing:-.04em; margin-bottom:16px; }
         .ctabox p { font-size:17px; color:var(--t3); line-height:1.65; max-width:460px; margin:0 auto 36px; }
-        .ctabtn { background:var(--acc); color:#07090c; border:none; border-radius:12px; padding:16px 44px; font-size:17px; font-weight:700; cursor:pointer; transition:background .15s; }
+        .ctabtn { background:var(--acc); color:#07090c; border:none; border-radius:12px; padding:16px 44px; font-size:17px; font-weight:700; cursor:pointer; transition:background .15s; display:block; margin:0 auto; }
         .ctabtn:hover { background:#c8f200; }
         .ctanote { font-size:13px; color:var(--t4); margin-top:14px; }
 
