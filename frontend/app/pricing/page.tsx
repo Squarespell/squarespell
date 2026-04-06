@@ -149,8 +149,8 @@ const FAQS = [
     a: 'A lead is counted when someone completes your quiz and submits their email address. Partial completions and views never count against your monthly limit.',
   },
   {
-    q: 'How is Squarespell different from Typeform?',
-    a: 'Typeform charges $199 per month just to access lead gen features. Squarespell starts at $19 per month and is built specifically for Squarespace owners. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
+    q: 'How is Squarespell different from other tools?',
+    a: 'Other tools charge $199 per month just to access lead gen features. Squarespell starts at $19 per month and is built specifically for Squarespace owners. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
   },
   {
     q: 'I run an agency. Can I manage multiple client sites?',
@@ -241,7 +241,7 @@ export default function PricingPage() {
         {/* HERO */}
         <div style={{ maxWidth: 1400, margin: '0 auto', textAlign: 'center', paddingTop: 72 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(210,255,29,.09)', border: '.5px solid rgba(210,255,29,.18)', borderRadius: 20, padding: '4px 12px', marginBottom: 24 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: acc, letterSpacing: '.06em', textTransform: 'uppercase' }}>10x cheaper than Typeform</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: acc, letterSpacing: '.06em', textTransform: 'uppercase' }}>10x cheaper than other tools</span>
           </div>
           <h1 style={{ fontSize: 52, fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1.1, marginBottom: 16, color: '#f0f2f5' }}>
             One quiz. More clients.<br />
@@ -349,7 +349,7 @@ export default function PricingPage() {
                     <span style={{ marginTop: 1, flexShrink: 0 }}>
                       {f.included ? <CheckIcon color={plan.featured ? acc : '#4ade80'} /> : <XIcon />}
                     </span>
-                    <span style={{ fontSize: 16, color: f.included ? 'var(--t2)' : 'var(--t4)', lineHeight: 1.4 }}>{f.text}</span>
+                    <span style={{ fontSize: 16, color: f.included ? 'var(--t2)' : 'rgba(240,242,245,0.45)', lineHeight: 1.4 }}>{f.text}</span>
                   </div>
                 ))}
               </div>
@@ -361,8 +361,8 @@ export default function PricingPage() {
         <div style={{ maxWidth: '100%', margin: '36px auto 0', background: 'rgba(255,255,255,.028)', border: '.5px solid rgba(255,255,255,.05)', borderRadius: 14, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
             {[
-              { label: 'Typeform lead gen plan', price: '$199/mo', you: false },
-              { label: 'Interact quiz builder', price: '$99/mo', you: false },
+              { label: 'Leading form tool', price: '$199/mo', you: false },
+              { label: 'Quiz builder tools', price: '$99/mo', you: false },
               { label: 'Squarespell Pro', price: '$39/mo', you: true },
             ].map(c => (
               <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
