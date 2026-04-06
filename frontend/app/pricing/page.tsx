@@ -242,12 +242,12 @@ export default function PricingPage() {
         .faq-a { padding:0 24px 20px; font-size:17px; color:var(--t3); line-height:1.7; }
 
         /* CTA BOX */
-        .ctabox { width:100%; background:#07090c; border-top:1px solid rgba(255,255,255,.08); padding:80px 40px; display:flex; flex-direction:column; align-items:flex-start; gap:32px; }
+        .ctabox { width:100%; background:#07090c; border-top:1px solid rgba(255,255,255,.08); padding:80px 48px; display:flex; flex-direction:column; align-items:flex-start; gap:28px; }
         .ctabox h2 { font-size:clamp(32px,4vw,52px); font-weight:800; letter-spacing:-.04em; margin:0; flex:1; min-width:280px; }
         .ctabox-right { display:flex; flex-direction:column; align-items:flex-start; gap:12px; } .ctabox p { font-size:17px; color:var(--t3); line-height:1.65; margin:0; }
-        .ctabtn { background:var(--acc); color:#07090c; border:none; border-radius:12px; padding:16px 44px; font-size:17px; font-weight:700; cursor:pointer; transition:background .15s; display:block; margin:0 auto; }
+        .ctabtn { background:#f0f2f5; color:#07090c; border:none; border-radius:6px; padding:13px 28px; font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition:background .15s; }
         .ctabtn:hover { background:#c8f200; }
-        .ctanote { font-size:13px; color:var(--t4); margin:0; }
+        .ctanote { font-size:15px; color:var(--t3); margin:0; line-height:1.5; }
 
         /* RESPONSIVE */
         @media(max-width:900px){
