@@ -114,6 +114,11 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
     : null;
   res.json({ plan, quiz_count: user.quiz_count, limits: getPlanLimits(plan), trial_ends_at: trialEndsAt, email: user.email || '' });
 });
+userRouter.post('/notifications', async (req: AuthenticatedRequest, res) => {
+  const { enabled } = req.body;
+  await supabase.from('users').update({ email_notifications: !!enabled }).eq('id', req.dbUserId);
+  res.json({ ok: true, enabled: !!enabled });
+});
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);

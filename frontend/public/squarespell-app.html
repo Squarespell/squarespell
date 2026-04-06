@@ -615,6 +615,15 @@ body { background: #07090c !important; }
     renderLeadsTable(filtered);
   };
 
+  // Notification toggle
+  window.__saveNotifPref = function(enabled) {
+    var slider = document.getElementById("notif-slider");
+    var thumb = document.getElementById("notif-thumb");
+    if (slider) slider.style.background = enabled ? "#D2FF1D" : "rgba(255,255,255,0.1)";
+    if (thumb) thumb.style.transform = enabled ? "translateX(20px)" : "translateX(0)";
+    apiFetch("/api/user/notifications", { method: "POST", body: JSON.stringify({ enabled: enabled }) }).catch(function(){});
+  };
+
   window.__exportLeadsCSV = function() {
     var leads = window.__allLeads || [];
     if (!leads.length) { alert("No leads to export"); return; }
@@ -1190,6 +1199,20 @@ function showPay(state) {
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
     <div><p class="h3" style="margin-bottom:2px">Account</p><p class="caption">Manage your plan and settings</p></div>
     <button style="background:rgba(248,113,113,.12);color:var(--red);border:.5px solid rgba(248,113,113,.2);border-radius:9px;padding:9px 16px;font-size:16px;font-weight:600;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:6px" onclick="window.__realSignOut()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</button>
+  </div>
+  <!-- Email notifications toggle -->
+  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <p style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:4px">Email notifications</p>
+        <p style="font-size:14px;color:var(--t3)">Get notified by email when a new lead is captured</p>
+      </div>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+        <input type="checkbox" id="notif-toggle" style="opacity:0;width:0;height:0" onchange="window.__saveNotifPref && window.__saveNotifPref(this.checked)">
+        <span id="notif-slider" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.1);border-radius:24px;transition:.3s"></span>
+        <span id="notif-thumb" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#f0f2f5;border-radius:50%;transition:.3s"></span>
+      </label>
+    </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div class="glass" style="padding:20px">
