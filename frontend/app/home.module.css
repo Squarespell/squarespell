@@ -11,9 +11,9 @@
 .heroTitle { font-size: clamp(40px, 6vw, 72px); font-weight: 800; color: #f0f2f5; line-height: 1.05; letter-spacing: -0.04em; margin-bottom: 24px; }
 .heroSub { font-size: clamp(17px, 2vw, 20px); color: rgba(240,242,245,0.5); line-height: 1.65; margin-bottom: 40px; max-width: 560px; margin-left: auto; margin-right: auto; }
 .heroCtas { display: flex; gap: 16px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-.ctaPrimary { background: #D2FF1D; color: #07090c; padding: 16px 36px; border-radius: 10px; font-weight: 700; font-size: 17px; transition: background 0.15s; letter-spacing: -.01em; }
+.ctaPrimary { background: #D2FF1D; color: #07090c; padding: 20px 48px; border-radius: 12px; font-weight: 700; font-size: 19px; transition: background 0.15s; letter-spacing: -.01em; }
 .ctaPrimary:hover { background: #c8f200; }
-.ctaSecondary { border: 1px solid rgba(255,255,255,0.14); color: #f0f2f5; padding: 16px 32px; border-radius: 10px; font-size: 16px; transition: border-color 0.2s; background: rgba(255,255,255,0.05); }
+.ctaSecondary { border: 1px solid rgba(255,255,255,0.14); color: #f0f2f5; padding: 20px 44px; border-radius: 12px; font-size: 18px; transition: border-color 0.2s; background: rgba(255,255,255,0.05); }
 .ctaSecondary:hover { border-color: rgba(255,255,255,0.3); }
 .heroNote { font-size: 14px; color: rgba(240,242,245,0.3); }
 @media(max-width:768px){
