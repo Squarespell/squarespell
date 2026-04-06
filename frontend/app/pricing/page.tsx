@@ -236,23 +236,23 @@ export default function PricingPage() {
         button { cursor: pointer; font-family: inherit; }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#07090c', padding: '0 20px 80px' }}>
+      <div style={{ minHeight: '100vh', background: '#07090c', padding: '0 60px 80px' }}>
 
         {/* HERO */}
-        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center', paddingTop: 72 }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', textAlign: 'center', paddingTop: 72 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(210,255,29,.09)', border: '.5px solid rgba(210,255,29,.18)', borderRadius: 20, padding: '4px 12px', marginBottom: 24 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: acc, letterSpacing: '.06em', textTransform: 'uppercase' }}>10x cheaper than Typeform</span>
           </div>
-          <h1 style={{ fontSize: 42, fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1.1, marginBottom: 16, color: '#f0f2f5' }}>
+          <h1 style={{ fontSize: 52, fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1.1, marginBottom: 16, color: '#f0f2f5' }}>
             One quiz. More clients.<br />
             <span style={{ color: acc }}>No Squarespace expertise needed.</span>
           </h1>
-          <p style={{ fontSize: 16, color: 'var(--t3)', lineHeight: 1.65, marginBottom: 12, maxWidth: 520, margin: '0 auto 12px' }}>
+          <p style={{ fontSize: 17, color: 'var(--t3)', lineHeight: 1.65, marginBottom: 12, maxWidth: 600, margin: '0 auto 12px' }}>
             Start your 7-day free trial. No credit card required. Cancel anytime.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap', marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap', marginTop: 20 }}>
             {['2,400+ Squarespace owners', 'No credit card required', 'Cancel anytime'].map(t => (
-              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--t3)' }}>
+              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--t3)' }}>
                 <CheckIcon color="rgba(74,222,128,.6)" />
                 {t}
               </span>
@@ -266,7 +266,7 @@ export default function PricingPage() {
             <button
               onClick={() => setBilling('monthly')}
               style={{
-                padding: '7px 18px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600,
+                padding: '8px 22px', borderRadius: 8, border: 'none', fontSize: 14, fontWeight: 600,
                 background: billing === 'monthly' ? '#f0f2f5' : 'transparent',
                 color: billing === 'monthly' ? '#07090c' : 'var(--t3)',
                 transition: 'all .15s',
@@ -277,7 +277,7 @@ export default function PricingPage() {
             <button
               onClick={() => setBilling('yearly')}
               style={{
-                padding: '7px 18px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600,
+                padding: '8px 22px', borderRadius: 8, border: 'none', fontSize: 14, fontWeight: 600,
                 background: billing === 'yearly' ? '#f0f2f5' : 'transparent',
                 color: billing === 'yearly' ? '#07090c' : 'var(--t3)',
                 transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 7,
@@ -290,54 +290,54 @@ export default function PricingPage() {
             </button>
           </div>
           {billing === 'yearly' && (
-            <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 600 }}>
+            <span style={{ fontSize: 13, color: '#4ade80', fontWeight: 600 }}>
               You save up to ${yearlyAnnualSaving('agency')}/year
             </span>
           )}
         </div>
 
         {/* PRICING CARDS */}
-        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {(Object.entries(PLANS) as [keyof typeof PLANS, typeof PLANS[keyof typeof PLANS]][]).map(([key, plan]) => (
             <div
               key={key}
               style={{
                 background: plan.featured ? 'rgba(210,255,29,.05)' : 'rgba(255,255,255,.034)',
                 border: plan.featured ? '1.5px solid rgba(210,255,29,.3)' : '.5px solid rgba(255,255,255,.058)',
-                borderRadius: 16,
-                padding: '28px 24px',
+                borderRadius: 20,
+                padding: '36px 32px',
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
               }}
             >
               {plan.featured && (
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: acc, color: '#07090c', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', background: acc, color: '#07090c', fontSize: 10, fontWeight: 800, padding: '4px 16px', borderRadius: 20, letterSpacing: '.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                   Most popular
                 </div>
               )}
-              <div style={{ marginBottom: 6 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: plan.featured ? acc : 'var(--t1)' }}>{plan.name}</span>
+              <div style={{ marginBottom: 8 }}>
+                <span style={{ fontSize: 17, fontWeight: 700, color: plan.featured ? acc : 'var(--t1)' }}>{plan.name}</span>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 20, minHeight: 36 }}>{plan.desc}</p>
+              <p style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 24, minHeight: 40 }}>{plan.desc}</p>
               <div style={{ marginBottom: 4 }}>
                 {billing === 'yearly' && (
-                  <span style={{ fontSize: 13, color: 'var(--t4)', textDecoration: 'line-through', marginRight: 6 }}>${plan.monthly}</span>
+                  <span style={{ fontSize: 14, color: 'var(--t4)', textDecoration: 'line-through', marginRight: 6 }}>${plan.monthly}</span>
                 )}
-                <span style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-.04em', color: 'var(--t1)' }}>${billing === 'monthly' ? plan.monthly : plan.yearly}</span>
-                <span style={{ fontSize: 13, color: 'var(--t3)', marginLeft: 2 }}>/mo</span>
+                <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-.04em', color: 'var(--t1)' }}>${billing === 'monthly' ? plan.monthly : plan.yearly}</span>
+                <span style={{ fontSize: 14, color: 'var(--t3)', marginLeft: 3 }}>/mo</span>
               </div>
-              <p style={{ fontSize: 11, color: 'var(--t4)', marginBottom: 24 }}>
+              <p style={{ fontSize: 12, color: 'var(--t4)', marginBottom: 28 }}>
                 {billing === 'yearly' ? `Billed $${(billing === 'yearly' ? plan.yearly : plan.monthly) * 12}/year` : 'Billed monthly'}
               </p>
               <button
                 onClick={() => handleUpgrade(key)}
                 disabled={loading === key}
                 style={{
-                  width: '100%', padding: '12px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 700,
+                  width: '100%', padding: '14px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 700,
                   background: plan.featured ? acc : 'rgba(255,255,255,.08)',
                   color: plan.featured ? '#07090c' : 'var(--t1)',
-                  marginBottom: 24, transition: 'all .15s',
+                  marginBottom: 28, transition: 'all .15s',
                   opacity: loading === key ? .6 : 1,
                 }}
               >
@@ -345,11 +345,11 @@ export default function PricingPage() {
               </button>
               <div style={{ flex: 1 }}>
                 {plan.features.map((f, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, marginBottom: 9 }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 11 }}>
                     <span style={{ marginTop: 1, flexShrink: 0 }}>
                       {f.included ? <CheckIcon color={plan.featured ? acc : '#4ade80'} /> : <XIcon />}
                     </span>
-                    <span style={{ fontSize: 12, color: f.included ? 'var(--t2)' : 'var(--t4)', lineHeight: 1.4 }}>{f.text}</span>
+                    <span style={{ fontSize: 13, color: f.included ? 'var(--t2)' : 'var(--t4)', lineHeight: 1.4 }}>{f.text}</span>
                   </div>
                 ))}
               </div>
@@ -358,34 +358,34 @@ export default function PricingPage() {
         </div>
 
         {/* COMPETITOR CALLOUT */}
-        <div style={{ maxWidth: 1000, margin: '32px auto 0', background: 'rgba(255,255,255,.028)', border: '.5px solid rgba(255,255,255,.05)', borderRadius: 12, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+        <div style={{ maxWidth: 1280, margin: '36px auto 0', background: 'rgba(255,255,255,.028)', border: '.5px solid rgba(255,255,255,.05)', borderRadius: 14, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
             {[
               { label: 'Typeform lead gen plan', price: '$199/mo', you: false },
               { label: 'Interact quiz builder', price: '$99/mo', you: false },
               { label: 'Squarespell Pro', price: '$39/mo', you: true },
             ].map(c => (
               <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 12, color: 'var(--t4)' }}>{c.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: c.you ? acc : 'var(--t3)', textDecoration: c.you ? 'none' : 'line-through', textDecorationColor: 'rgba(240,242,245,.2)' }}>{c.price}</span>
-                {c.you && <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(210,255,29,.12)', color: acc, padding: '2px 7px', borderRadius: 10, border: '.5px solid rgba(210,255,29,.2)' }}>You</span>}
+                <span style={{ fontSize: 13, color: 'var(--t4)' }}>{c.label}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: c.you ? acc : 'var(--t3)', textDecoration: c.you ? 'none' : 'line-through', textDecorationColor: 'rgba(240,242,245,.2)' }}>{c.price}</span>
+                {c.you && <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(210,255,29,.12)', color: acc, padding: '2px 8px', borderRadius: 10, border: '.5px solid rgba(210,255,29,.2)' }}>You</span>}
               </div>
             ))}
           </div>
-          <span style={{ fontSize: 11, color: 'var(--t4)' }}>Same outcome. Fraction of the cost.</span>
+          <span style={{ fontSize: 12, color: 'var(--t4)' }}>Same outcome. Fraction of the cost.</span>
         </div>
 
         {/* FEATURE MATRIX */}
-        <div style={{ maxWidth: 1000, margin: '64px auto 0' }}>
-          <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 8 }}>Full feature breakdown</h2>
-          <p style={{ fontSize: 14, color: 'var(--t3)', textAlign: 'center', marginBottom: 32 }}>Every feature, across every plan</p>
-          <div style={{ background: 'rgba(255,255,255,.034)', border: '.5px solid rgba(255,255,255,.058)', borderRadius: 16, overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ maxWidth: 1280, margin: '72px auto 0' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 10 }}>Full feature breakdown</h2>
+          <p style={{ fontSize: 15, color: 'var(--t3)', textAlign: 'center', marginBottom: 36 }}>Every feature, across every plan</p>
+          <div style={{ background: 'rgba(255,255,255,.034)', border: '.5px solid rgba(255,255,255,.058)', borderRadius: 18, overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
                 <tr style={{ borderBottom: '.5px solid rgba(255,255,255,.06)' }}>
-                  <th style={{ padding: '14px 20px', textAlign: 'left', color: 'var(--t3)', fontWeight: 500, width: '46%' }}>Feature</th>
+                  <th style={{ padding: '16px 28px', textAlign: 'left', color: 'var(--t3)', fontWeight: 500, width: '46%' }}>Feature</th>
                   {['Starter', 'Pro', 'Agency'].map((p, i) => (
-                    <th key={p} style={{ padding: '14px 12px', textAlign: 'center', color: i === 1 ? acc : 'var(--t2)', fontWeight: 700, width: '18%' }}>{p}</th>
+                    <th key={p} style={{ padding: '16px 16px', textAlign: 'center', color: i === 1 ? acc : 'var(--t2)', fontWeight: 700, width: '18%' }}>{p}</th>
                   ))}
                 </tr>
               </thead>
@@ -393,19 +393,19 @@ export default function PricingPage() {
                 {MATRIX.map(section => (
                   <>
                     <tr key={section.category} style={{ background: 'rgba(255,255,255,.02)' }}>
-                      <td colSpan={4} style={{ padding: '10px 20px', fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--t4)' }}>
+                      <td colSpan={4} style={{ padding: '12px 28px', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--t4)' }}>
                         {section.category}
                       </td>
                     </tr>
                     {section.rows.map((row, ri) => (
                       <tr key={ri} style={{ borderTop: '.5px solid rgba(255,255,255,.04)' }}>
-                        <td style={{ padding: '11px 20px', color: 'var(--t2)' }}>{row.label}</td>
+                        <td style={{ padding: '13px 28px', color: 'var(--t2)' }}>{row.label}</td>
                         {(['starter', 'pro', 'agency'] as const).map(p => (
-                          <td key={p} style={{ padding: '11px 12px', textAlign: 'center' }}>
+                          <td key={p} style={{ padding: '13px 16px', textAlign: 'center' }}>
                             {typeof row[p] === 'boolean' ? (
                               row[p] ? <CheckIcon color={p === 'pro' ? acc : '#4ade80'} /> : <XIcon />
                             ) : (
-                              <span style={{ fontSize: 12, fontWeight: 600, color: p === 'pro' ? acc : 'var(--t2)' }}>{row[p] as string}</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: p === 'pro' ? acc : 'var(--t2)' }}>{row[p] as string}</span>
                             )}
                           </td>
                         ))}
@@ -419,24 +419,24 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div style={{ maxWidth: 680, margin: '80px auto 0' }}>
-          <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 8 }}>Common questions</h2>
-          <p style={{ fontSize: 14, color: 'var(--t3)', textAlign: 'center', marginBottom: 36 }}>Everything you need to know before you start</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ maxWidth: 860, margin: '88px auto 0' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 10 }}>Common questions</h2>
+          <p style={{ fontSize: 15, color: 'var(--t3)', textAlign: 'center', marginBottom: 40 }}>Everything you need to know before you start</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {FAQS.map((faq, i) => (
               <div
                 key={i}
-                style={{ background: 'rgba(255,255,255,.034)', border: '.5px solid rgba(255,255,255,.058)', borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,.034)', border: '.5px solid rgba(255,255,255,.058)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer' }}
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--t1)', flex: 1, paddingRight: 16 }}>{faq.q}</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,.4)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px' }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--t1)', flex: 1, paddingRight: 16 }}>{faq.q}</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,.4)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
                 {openFaq === i && (
-                  <div style={{ padding: '0 20px 16px', fontSize: 13, color: 'var(--t3)', lineHeight: 1.7 }}>
+                  <div style={{ padding: '0 24px 18px', fontSize: 14, color: 'var(--t3)', lineHeight: 1.7 }}>
                     {faq.a}
                   </div>
                 )}
@@ -446,20 +446,20 @@ export default function PricingPage() {
         </div>
 
         {/* FINAL CTA */}
-        <div style={{ maxWidth: 600, margin: '80px auto 0', textAlign: 'center', background: 'rgba(210,255,29,.05)', border: '.5px solid rgba(210,255,29,.12)', borderRadius: 20, padding: '48px 32px' }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', marginBottom: 12 }}>
+        <div style={{ maxWidth: 760, margin: '88px auto 0', textAlign: 'center', background: 'rgba(210,255,29,.05)', border: '.5px solid rgba(210,255,29,.12)', borderRadius: 24, padding: '56px 48px' }}>
+          <h2 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.04em', marginBottom: 14 }}>
             Start capturing leads today
           </h2>
-          <p style={{ fontSize: 14, color: 'var(--t3)', lineHeight: 1.65, marginBottom: 28, maxWidth: 400, margin: '0 auto 28px' }}>
+          <p style={{ fontSize: 15, color: 'var(--t3)', lineHeight: 1.65, marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
             7 days free. No credit card. Your first quiz goes live in under 60 seconds.
           </p>
           <button
             onClick={() => handleUpgrade('pro')}
-            style={{ background: acc, color: '#07090c', border: 'none', borderRadius: 12, padding: '14px 32px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            style={{ background: acc, color: '#07090c', border: 'none', borderRadius: 14, padding: '16px 40px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
           >
             Start my free trial
           </button>
-          <p style={{ fontSize: 11, color: 'var(--t4)', marginTop: 12 }}>No credit card required. Cancel anytime.</p>
+          <p style={{ fontSize: 12, color: 'var(--t4)', marginTop: 14 }}>No credit card required. Cancel anytime.</p>
         </div>
 
       </div>
