@@ -313,11 +313,10 @@ body { background: #07090c !important; }
         document.querySelectorAll(".sq-cvr").forEach(function(e){ e.textContent=convRate; });
 
         // Onboarding vs real dashboard
-        var onboard = document.getElementById("sq-onboarding");
-        var realDash = document.getElementById("sq-real-dashboard");
-        var isNew = window.location.search.indexOf("new=true") !== -1 || window.parent.location.search.indexOf("new=true") !== -1;
+        var onboard = document.getElementById("dash-onboarding");
+        var realDash = document.getElementById("dash-real");
         if (onboard && realDash) {
-          if (quizzes.length === 0 || isNew) {
+          if (quizzes.length === 0) {
             onboard.style.display = "block";
             realDash.style.display = "none";
           } else {
@@ -325,6 +324,8 @@ body { background: #07090c !important; }
             realDash.style.display = "block";
           }
         }
+        var cvr = totalViews > 0 ? ((totalLeads / totalViews) * 100).toFixed(1) + "%" : "0%";
+        document.querySelectorAll(".sq-cvr").forEach(function(e) { e.textContent = cvr; });
 
         // Plan badge
         if (plan) {
@@ -392,26 +393,6 @@ body { background: #07090c !important; }
         var planLimits = { trial:{q:1,l:50}, starter:{q:5,l:500}, pro:{q:20,l:5000}, agency:{q:999999,l:999999} };
         var lim = planLimits[userPlan] || planLimits.trial;
 
-        // A. Dashboard plan-aware banner
-        var dashBanner = document.getElementById("sq-plan-banner");
-        if (dashBanner) {
-          if (userPlan === "trial" || userPlan === "free") {
-            var dLeft = 7;
-            if (plan && plan.trial_ends_at) {
-              dLeft = Math.max(0, Math.ceil((new Date(plan.trial_ends_at).getTime() - Date.now()) / 86400000));
-            }
-            dashBanner.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Trial: <strong>' + dLeft + ' days left</strong> — upgrade to keep your leads</span></div><button onclick="gD(\'pricing\')" style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;font-family:var(--fam);cursor:pointer;white-space:nowrap">Upgrade now</button>';
-            dashBanner.style.background = "rgba(251,191,36,.08)";
-            dashBanner.style.borderColor = "rgba(251,191,36,.2)";
-          } else if (userPlan === "starter" && quizzes.length >= lim.q) {
-            dashBanner.innerHTML = '<span style="font-size:14px;color:var(--t2)">Starter Plan — <strong style="color:var(--yellow)">' + quizzes.length + '/' + lim.q + ' quizzes used</strong></span><button onclick="gD(\'pricing\')" style="background:var(--g1);color:var(--t1);border:.5px solid var(--b1);border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;font-family:var(--fam);cursor:pointer">Upgrade</button>';
-            dashBanner.style.background = "rgba(255,255,255,.04)";
-            dashBanner.style.borderColor = "rgba(255,255,255,.08)";
-          } else if (userPlan === "pro" || userPlan === "agency") {
-            dashBanner.style.display = "none";
-          }
-        }
-
         // B. Sidebar lock icons for restricted features
         var lockSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5" style="margin-left:auto;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
         if (userPlan === "trial" || userPlan === "free") {
@@ -463,18 +444,6 @@ body { background: #07090c !important; }
           return true;
         };
 
-        // Dashboard plan usage bars
-        var dashPlanBadge = document.getElementById("sq-dash-plan-badge");
-        if (dashPlanBadge) dashPlanBadge.textContent = userPlan;
-        var dqUsage = document.getElementById("sq-dash-q-usage");
-        var dqBar = document.getElementById("sq-dash-q-bar");
-        var dlUsage = document.getElementById("sq-dash-l-usage");
-        var dlBar = document.getElementById("sq-dash-l-bar");
-        if (dqUsage) dqUsage.textContent = quizzes.length + " / " + (lim.q > 99999 ? "Unlimited" : lim.q);
-        if (dqBar) dqBar.style.width = lim.q > 99999 ? "5%" : Math.min(100, quizzes.length / lim.q * 100) + "%";
-        if (dlUsage) dlUsage.textContent = totalLeads + " / " + (lim.l > 99999 ? "Unlimited" : lim.l);
-        if (dlBar) dlBar.style.width = lim.l > 99999 ? "5%" : Math.min(100, totalLeads / lim.l * 100) + "%";
-
         // Squarespace connection status
         if (sqsp && sqsp.connected) {
           var dc = document.getElementById("sqsp-disconnected");
@@ -500,6 +469,7 @@ body { background: #07090c !important; }
           window.__quizMap = quizMap;
           renderLeadsTable(allLeads);
           renderRecentLeads(allLeads.slice(0, 5));
+          renderDashRecentLeads(allLeads.slice(0, 5));
           // Update leads usage on dashboard
           var usageEl = document.getElementById("sq-dash-leads-usage");
           if (usageEl) usageEl.textContent = allLeads.length + " leads captured";
@@ -544,6 +514,18 @@ body { background: #07090c !important; }
     container.innerHTML = leads.map(function(l) {
       return '<tr onclick="gD(\'leads\')" style="cursor:pointer"><td style="font-weight:600;color:var(--t1)">' + (l.name || "—") + '</td><td style="color:var(--t3)">' + (l.email || "—") + '</td><td style="color:var(--t4)">' + fmtDate(l.created_at) + '</td></tr>';
     }).join("");
+  }
+
+  function renderDashRecentLeads(leads) {
+    var container = document.getElementById("dash-recent-leads");
+    if (!container) return;
+    if (!leads.length) {
+      container.innerHTML = '<p style="font-size:14px;color:rgba(240,242,245,0.3);text-align:center;padding:24px 0">No leads yet — embed your quiz to start capturing</p>';
+      return;
+    }
+    container.innerHTML = '<table class="d-table" style="width:100%"><thead><tr><th>Name</th><th>Email</th><th>Date</th></tr></thead><tbody>' + leads.map(function(l) {
+      return '<tr style="cursor:pointer" onclick="gD(\'leads\')"><td style="font-weight:600;color:var(--t1)">' + (l.name || "—") + '</td><td style="color:var(--t3)">' + (l.email || "—") + '</td><td style="color:var(--t4)">' + fmtDate(l.created_at) + '</td></tr>';
+    }).join("") + '</tbody></table>';
   }
 
   window.__exportLeadsCSV = function() {
@@ -960,97 +942,50 @@ function showPay(state) {
 <div class="dcontent" id="dContent" style="margin-left:210px">
 
 <div class="dpage on" id="dp-dashboard">
-
-  <!-- ═══ ONBOARDING STATE (shown when 0 quizzes) ═══ -->
-  <div id="sq-onboarding" style="display:none">
-    <div style="margin-bottom:32px">
-      <p style="font-size:28px;font-weight:800;color:var(--t1);letter-spacing:-.04em;margin-bottom:8px">Welcome! Let's get your first lead.</p>
-      <p style="font-size:16px;color:var(--t3);margin-bottom:20px">You're 3 quick steps away from capturing leads on autopilot.</p>
-      <div style="background:rgba(255,255,255,0.08);border-radius:3px;height:6px;overflow:hidden"><div id="sq-onboard-progress" style="height:6px;border-radius:3px;background:var(--acc);width:0%;transition:width .5s"></div></div>
-    </div>
-
-    <!-- Step 1 — Active -->
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-left:3px solid var(--acc);border-radius:12px;padding:20px 24px;display:flex;gap:16px;margin-bottom:12px;align-items:flex-start">
-      <div style="width:32px;height:32px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:#07090c">1</div>
-      <div style="flex:1">
-        <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:4px">Create your quiz</p>
-        <p style="font-size:14px;color:var(--t3);line-height:1.5;margin-bottom:12px">Paste your Squarespace URL. AI builds a branded quiz matching your site in 30 seconds.</p>
-        <button class="btn-p" style="font-size:15px;padding:10px 20px" onclick="gD('editor')">Create my first quiz →</button>
+<div id="dash-onboarding">
+  <div style="max-width:560px;margin:0 auto;padding:40px 0">
+    <h2 style="font-size:24px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Welcome! Let's get your first lead</h2>
+    <p style="font-size:15px;color:rgba(240,242,245,0.5);margin-bottom:32px">3 quick steps to capturing leads on autopilot.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(210,255,29,0.3);border-left:3px solid #D2FF1D;border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start">
+        <div style="width:28px;height:28px;background:#D2FF1D;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#07090c;flex-shrink:0">1</div>
+        <div style="flex:1"><p style="font-size:15px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Create your first quiz</p><p style="font-size:14px;color:rgba(240,242,245,0.5);line-height:1.5;margin-bottom:14px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;opacity:0.5">
+        <div style="width:28px;height:28px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">2</div>
+        <div style="flex:1"><p style="font-size:15px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Embed on your Squarespace site</p><p style="font-size:14px;color:rgba(240,242,245,0.5);line-height:1.5;margin-bottom:14px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;opacity:0.5">
+        <div style="width:28px;height:28px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">3</div>
+        <div style="flex:1"><p style="font-size:15px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Watch leads come in</p><p style="font-size:14px;color:rgba(240,242,245,0.5);line-height:1.5;margin-bottom:14px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
       </div>
     </div>
-
-    <!-- Step 2 — Locked -->
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;display:flex;gap:16px;margin-bottom:12px;opacity:0.5;align-items:flex-start">
-      <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:var(--t4)">2</div>
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><p style="font-size:16px;font-weight:700;color:var(--t3)">Embed on your Squarespace site</p><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <p style="font-size:14px;color:var(--t4);line-height:1.5;margin-bottom:12px">One code block. Your quiz goes live on any page instantly. No plugins needed.</p>
-        <button disabled style="background:rgba(255,255,255,0.06);color:var(--t4);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 20px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:default">Get embed code</button>
-      </div>
-    </div>
-
-    <!-- Step 3 — Locked -->
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;display:flex;gap:16px;margin-bottom:24px;opacity:0.5;align-items:flex-start">
-      <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:var(--t4)">3</div>
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><p style="font-size:16px;font-weight:700;color:var(--t3)">Watch leads come in</p><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <p style="font-size:14px;color:var(--t4);line-height:1.5;margin-bottom:12px">Every quiz response becomes a lead with name, email, and score in your dashboard.</p>
-        <button disabled style="background:rgba(255,255,255,0.06);color:var(--t4);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 20px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:default">View leads</button>
-      </div>
-    </div>
-
-    <button onclick="document.getElementById('sq-onboarding').style.display='none';document.getElementById('sq-real-dashboard').style.display='block'" style="font-size:14px;color:var(--t4);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Skip setup, explore dashboard →</button>
+    <p style="text-align:center;margin-top:24px"><a onclick="document.getElementById('dash-onboarding').style.display='none';document.getElementById('dash-real').style.display='block'" style="font-size:14px;color:rgba(240,242,245,0.4);cursor:pointer;text-decoration:underline">Skip, explore dashboard →</a></p>
   </div>
-
-  <!-- ═══ REAL DASHBOARD (shown when quizzes exist) ═══ -->
-  <div id="sq-real-dashboard">
-
-  <!-- Plan-aware banner -->
-  <div id="sq-plan-banner" style="border:1px solid rgba(251,191,36,.2);border-radius:11px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;font-size:14px;color:var(--t2);flex-wrap:wrap">Loading plan...</div>
-
-  <!-- ROW 1: Stat cards -->
+</div>
+<div id="dash-real" style="display:none">
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-q" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Active Quizzes</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-l" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Total Leads</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-v" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Total Views</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-cvr" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0%</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Conversion Rate</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-q" style="font-size:36px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Active Quizzes</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-l" style="font-size:36px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Leads</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-v" style="font-size:36px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Views</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-cvr" style="font-size:36px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0%</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Conversion Rate</p></div>
   </div>
-
-  <!-- ROW 2: Recent leads + Quick actions -->
-  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><p style="font-size:16px;font-weight:700;color:var(--t1)">Recent Leads</p><button style="font-size:14px;color:var(--acc);background:transparent;border:none;cursor:pointer;font-family:var(--fam);font-weight:600" onclick="gD('leads')">View all →</button></div>
-      <table class="d-table" style="width:100%">
-        <thead><tr><th>Name</th><th>Email</th><th>Date</th></tr></thead>
-        <tbody id="sq-recent-leads">
-          <tr><td colspan="3" style="text-align:center;color:var(--t4);padding:20px">No leads yet — embed your quiz to start capturing</td></tr>
-        </tbody>
-      </table>
+  <div style="display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:24px">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><p style="font-size:16px;font-weight:700;color:#f0f2f5">Recent Leads</p><a onclick="gD('leads')" style="font-size:14px;color:rgba(240,242,245,0.5);cursor:pointer">View all →</a></div>
+      <div id="dash-recent-leads"><p style="font-size:14px;color:rgba(240,242,245,0.3);text-align:center;padding:24px 0">No leads yet — embed your quiz to start capturing</p></div>
     </div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px">
-      <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:16px">Quick Actions</p>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button onclick="if(window.__checkQuizLimit && window.__checkQuizLimit()) gD('editor')" style="background:var(--acc);color:#07090c;border:none;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create new quiz</button>
-        <button onclick="gD('leads')" style="background:rgba(255,255,255,0.04);color:var(--t2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>View all leads</button>
-        <button onclick="gD('embed')" style="background:rgba(255,255,255,0.04);color:var(--t2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Get embed code</button>
-        <button onclick="gD('analytics')" style="background:rgba(255,255,255,0.04);color:var(--t2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</button>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px">
+      <p style="font-size:16px;font-weight:700;color:#f0f2f5;margin-bottom:16px">Quick Actions</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%">+ Create new quiz</button>
+        <button onclick="gD('leads')" style="background:rgba(255,255,255,0.06);color:#f0f2f5;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%">View all leads</button>
+        <button onclick="gD('embed')" style="background:rgba(255,255,255,0.06);color:#f0f2f5;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%">Get embed code</button>
+        <button onclick="gD('analytics')" style="background:rgba(255,255,255,0.06);color:#f0f2f5;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%">View analytics</button>
       </div>
     </div>
   </div>
-
-  <!-- ROW 3: Plan usage -->
-  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-      <span id="sq-dash-plan-badge" style="background:rgba(210,255,29,.08);border:1px solid rgba(210,255,29,.18);border-radius:20px;padding:3px 12px;font-size:13px;font-weight:700;color:var(--acc);text-transform:capitalize">trial</span>
-    </div>
-    <div style="flex:1;display:flex;gap:24px;min-width:200px">
-      <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t3)">Quizzes</span><span id="sq-dash-q-usage" style="font-size:13px;color:var(--t3)">0 / 1</span></div><div style="background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden"><div id="sq-dash-q-bar" style="height:4px;border-radius:20px;background:var(--acc);width:0%;transition:width .5s"></div></div></div>
-      <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t3)">Leads</span><span id="sq-dash-l-usage" style="font-size:13px;color:var(--t3)">0 / 50</span></div><div style="background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden"><div id="sq-dash-l-bar" style="height:4px;border-radius:20px;background:var(--acc);width:0%;transition:width .5s"></div></div></div>
-    </div>
-    <button onclick="gD('pricing')" style="background:transparent;color:var(--acc);border:1px solid rgba(210,255,29,.18);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;font-family:var(--fam);cursor:pointer;white-space:nowrap;flex-shrink:0">Upgrade plan →</button>
-  </div>
-
-  </div><!-- /sq-real-dashboard -->
+</div>
 </div>
 
 <!-- ══════════════════════════════ -->
@@ -1089,13 +1024,13 @@ function showPay(state) {
       <p class="h4" style="margin-bottom:5px">Conversion funnel</p>
       <p class="body-sm" style="margin-bottom:18px">How visitors flow through your quiz</p>
       <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="background:rgba(210,255,29,.13);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Page views</span></div><span style="font-size:22px;font-weight:800;color:var(--acc)">1,248</span></div>
+        <div style="background:rgba(210,255,29,.13);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Page views</span></div><span style="font-size:22px;font-weight:800;color:var(--acc)">0</span></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(210,255,29,.09);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.6)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Quiz started</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">846</span><span style="font-size:14px;color:var(--t3);display:block">68% of views</span></div></div>
+        <div style="background:rgba(210,255,29,.09);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.6)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Quiz started</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">0</span><span style="font-size:14px;color:var(--t3);display:block">68% of views</span></div></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(210,255,29,.05);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.35)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Completed</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">575</span><span style="font-size:14px;color:var(--t3);display:block">68% of starters</span></div></div>
+        <div style="background:rgba(210,255,29,.05);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.35)"></div><span style="font-size:17px;font-weight:600;color:var(--t1)">Completed</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">0</span><span style="font-size:14px;color:var(--t3);display:block">68% of starters</span></div></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(74,222,128,.07);border:.5px solid rgba(74,222,128,.15);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:17px;font-weight:600;color:var(--green)">Email submitted</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--green)">154</span><span style="font-size:14px;color:var(--t3);display:block">26.8% of completers</span></div></div>
+        <div style="background:rgba(74,222,128,.07);border:.5px solid rgba(74,222,128,.15);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:17px;font-weight:600;color:var(--green)">Email submitted</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--green)">0</span><span style="font-size:14px;color:var(--t3);display:block">26.8% of completers</span></div></div>
       </div>
     </div>
     <div class="glass-sm" style="padding:20px">
