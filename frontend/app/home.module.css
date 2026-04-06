@@ -1,17 +1,18 @@
-.page { min-height: 100vh; background: var(--bg); }
-.nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid #2a3e14; }
-.navLogo { font-size: 20px; font-weight: 800; color: #D2FF1D; }
-.navLinks { display: flex; align-items: center; gap: 28px; font-size: 14px; color: #4a6020; }
+.page { min-height: 100vh; background: #07090c; }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.navLogo { font-size: 20px; font-weight: 800; color: #D2FF1D; letter-spacing: -.02em; }
+.navLinks { display: flex; align-items: center; gap: 28px; font-size: 14px; color: rgba(240,242,245,0.5); }
 .navLinks a { transition: color 0.2s; }
 .navLinks a:hover { color: #f0f2f5; }
-.navCta { background: #D2FF1D; color: #07090c !important; padding: 10px 20px; border-radius: 20px; font-weight: 700; }
-.hero { text-align: center; padding: 100px 24px 80px; max-width: 760px; margin: 0 auto; }
-.heroBadge { display: inline-block; background: #141f0a; border: 1px solid #2a3e14; color: #D2FF1D; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 16px; border-radius: 20px; margin-bottom: 28px; }
-.heroTitle { font-size: clamp(32px, 6vw, 56px); font-weight: 800; color: #f0f2f5; line-height: 1.1; margin-bottom: 20px; }
-.heroSub { font-size: 17px; color: #4a6020; line-height: 1.7; margin-bottom: 36px; max-width: 540px; margin-left: auto; margin-right: auto; }
+.navCta { background: #D2FF1D; color: #07090c !important; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; }
+.navCta:hover { background: #c8f200; }
+.hero { text-align: center; padding: 100px 24px 80px; max-width: 800px; margin: 0 auto; }
+.heroBadge { display: inline-flex; align-items: center; background: rgba(210,255,29,0.08); border: 1px solid rgba(210,255,29,0.2); color: #D2FF1D; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; margin-bottom: 28px; }
+.heroTitle { font-size: clamp(34px, 5vw, 54px); font-weight: 800; color: #f0f2f5; line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 20px; }
+.heroSub { font-size: clamp(16px, 2vw, 18px); color: rgba(240,242,245,0.5); line-height: 1.65; margin-bottom: 36px; max-width: 500px; margin-left: auto; margin-right: auto; }
 .heroCtas { display: flex; gap: 14px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
-.ctaPrimary { background: #D2FF1D; color: #07090c; padding: 16px 32px; border-radius: 20px; font-weight: 700; font-size: 16px; transition: opacity 0.2s; }
-.ctaPrimary:hover { opacity: 0.88; }
-.ctaSecondary { border: 1px solid #2a3e14; color: #f0f2f5; padding: 16px 28px; border-radius: 20px; font-size: 15px; transition: border-color 0.2s; }
-.ctaSecondary:hover { border-color: #4a6020; }
-.heroNote { font-size: 12px; color: #4a6020; }
+.ctaPrimary { background: #D2FF1D; color: #07090c; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 16px; transition: background 0.15s; letter-spacing: -.01em; }
+.ctaPrimary:hover { background: #c8f200; }
+.ctaSecondary { border: 1px solid rgba(255,255,255,0.12); color: #f0f2f5; padding: 14px 28px; border-radius: 10px; font-size: 15px; transition: border-color 0.2s; background: rgba(255,255,255,0.05); }
+.ctaSecondary:hover { border-color: rgba(255,255,255,0.25); }
+.heroNote { font-size: 13px; color: rgba(240,242,245,0.3); }
