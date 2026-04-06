@@ -244,13 +244,13 @@ body { background: #07090c !important; }
 
 /* Top nav bar for logged-in state */
 .sq-topbar {
-  position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 500;
-  background: rgba(7,9,12,.92); backdrop-filter: blur(32px);
-  border-bottom: .5px solid rgba(255,255,255,0.08);
-  display: flex; align-items: center; padding: 0 24px; gap: 16px;
+  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 500;
+  background: rgba(255,255,255,0.03); backdrop-filter: blur(32px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
 }
-.dcontent { margin-top: 56px !important; }
-.dsidebar { top: 56px !important; }
+.dcontent { margin-top: 52px !important; }
+.dsidebar { top: 52px !important; }
 
 /* Sidebar sizing */
 .dsi { font-size: 15px !important; padding: 8px 14px !important; gap: 10px !important; color: rgba(240,242,245,0.6) !important; }
@@ -309,6 +309,8 @@ body { background: #07090c !important; }
         document.querySelectorAll(".sq-v").forEach(function(e){ if(totalViews>0) e.textContent=totalViews; });
         document.querySelectorAll(".sq-l").forEach(function(e){ if(totalLeads>0) e.textContent=totalLeads; });
         document.querySelectorAll(".sq-q").forEach(function(e){ e.textContent=quizzes.length; });
+        var convRate = totalViews > 0 ? (totalLeads / totalViews * 100).toFixed(1) + "%" : "0%";
+        document.querySelectorAll(".sq-cvr").forEach(function(e){ e.textContent=convRate; });
 
         // Onboarding vs real dashboard
         var onboard = document.getElementById("sq-onboarding");
@@ -461,6 +463,18 @@ body { background: #07090c !important; }
           return true;
         };
 
+        // Dashboard plan usage bars
+        var dashPlanBadge = document.getElementById("sq-dash-plan-badge");
+        if (dashPlanBadge) dashPlanBadge.textContent = userPlan;
+        var dqUsage = document.getElementById("sq-dash-q-usage");
+        var dqBar = document.getElementById("sq-dash-q-bar");
+        var dlUsage = document.getElementById("sq-dash-l-usage");
+        var dlBar = document.getElementById("sq-dash-l-bar");
+        if (dqUsage) dqUsage.textContent = quizzes.length + " / " + (lim.q > 99999 ? "Unlimited" : lim.q);
+        if (dqBar) dqBar.style.width = lim.q > 99999 ? "5%" : Math.min(100, quizzes.length / lim.q * 100) + "%";
+        if (dlUsage) dlUsage.textContent = totalLeads + " / " + (lim.l > 99999 ? "Unlimited" : lim.l);
+        if (dlBar) dlBar.style.width = lim.l > 99999 ? "5%" : Math.min(100, totalLeads / lim.l * 100) + "%";
+
         // Squarespace connection status
         if (sqsp && sqsp.connected) {
           var dc = document.getElementById("sqsp-disconnected");
@@ -524,11 +538,11 @@ body { background: #07090c !important; }
     var container = document.getElementById("sq-recent-leads");
     if (!container) return;
     if (!leads.length) {
-      container.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--t4);padding:20px">No leads yet</td></tr>';
+      container.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--t4);padding:20px">No leads yet — embed your quiz to start capturing</td></tr>';
       return;
     }
     container.innerHTML = leads.map(function(l) {
-      return '<tr onclick="gD(\'leads\')"><td style="font-weight:600;color:var(--t1)">' + (l.name || "—") + '</td><td style="color:var(--t3)">' + (l.email || "—") + '</td><td style="color:var(--t4)">' + (l._quiz_name || "—") + '</td><td style="color:var(--t4)">' + fmtDate(l.created_at) + '</td></tr>';
+      return '<tr onclick="gD(\'leads\')" style="cursor:pointer"><td style="font-weight:600;color:var(--t1)">' + (l.name || "—") + '</td><td style="color:var(--t3)">' + (l.email || "—") + '</td><td style="color:var(--t4)">' + fmtDate(l.created_at) + '</td></tr>';
     }).join("");
   }
 
@@ -547,14 +561,14 @@ body { background: #07090c !important; }
 })();
 </script>
 <div class="sq-topbar" id="sq-topbar" style="display:flex">
-  <div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="gD('dashboard')">
-    <div style="width:28px;height:28px;background:#D2FF1D;border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-    <span style="font-size:16px;font-weight:700;color:#f0f2f5;letter-spacing:-.03em">Squarespell</span>
+  <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="gD('dashboard')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <span style="font-size:18px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em">Squarespell</span>
   </div>
-  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-    <span id="sq-plan-badge" style="background:rgba(255,255,255,.06);border:.5px solid rgba(255,255,255,.09);border-radius:20px;padding:3px 10px;font-size:12px;color:rgba(240,242,245,.5);font-weight:500;text-transform:capitalize">free</span>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="sq-plan-badge" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:3px 10px;font-size:12px;color:rgba(240,242,245,.5);font-weight:500;text-transform:capitalize">free</span>
     <button onclick="gD('pricing')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Upgrade ↑</button>
-    <button onclick="window.__realSignOut && window.__realSignOut()" style="font-size:13px;color:rgba(240,242,245,.42);background:transparent;border:.5px solid rgba(255,255,255,.09);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif">Sign out</button>
+    <button onclick="window.__realSignOut && window.__realSignOut()" style="font-size:13px;color:rgba(240,242,245,.42);background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif">Sign out</button>
   </div>
 </div>
 
@@ -945,10 +959,6 @@ function showPay(state) {
 
 <div class="dcontent" id="dContent" style="margin-left:210px">
 
-<!-- Landing page deleted — logged-in users go straight to dashboard -->
-
-<!-- Sign-in page deleted — auth handled by Clerk -->
-
 <div class="dpage on" id="dp-dashboard">
 
   <!-- ═══ ONBOARDING STATE (shown when 0 quizzes) ═══ -->
@@ -994,84 +1004,52 @@ function showPay(state) {
 
   <!-- ═══ REAL DASHBOARD (shown when quizzes exist) ═══ -->
   <div id="sq-real-dashboard">
+
   <!-- Plan-aware banner -->
   <div id="sq-plan-banner" style="border:1px solid rgba(251,191,36,.2);border-radius:11px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;font-size:14px;color:var(--t2);flex-wrap:wrap">Loading plan...</div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-    <div><p class="h3" style="margin-bottom:2px">Dashboard</p><p class="caption">Last 7 days · All quizzes</p></div>
-    <div style="display:flex;gap:9px">
-      <button class="btn-s" style="font-size:16px;padding:9px 14px" onclick="if(window.__checkQuizLimit && window.__checkQuizLimit()) gD('editor')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New quiz</button>
-      <button class="btn-s" style="font-size:16px;padding:9px 14px">Export CSV</button>
-    </div>
-  </div>
-
-  <!-- Stats -->
+  <!-- ROW 1: Stat cards -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
-    <div class="stat-card"><p class="stat-v sq-v">0</p><p class="stat-l">Total views</p><p class="stat-d up">↑ 24% vs last week</p></div>
-    <div class="stat-card"><p class="stat-v sq-l">0</p><p class="stat-l">Leads captured</p><p class="stat-d up">↑ 12 new leads</p></div>
-    <div class="stat-card"><p class="stat-v sq-q">0</p><p class="stat-l">Active quizzes</p><p class="stat-d up">Create more to grow leads</p></div>
-    <div class="stat-card"><p class="stat-v">12%</p><p class="stat-l">Lead conversion</p><p class="stat-d up">Avg is 8%</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-q" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Active Quizzes</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-l" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Total Leads</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-v" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Total Views</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-cvr" style="font-size:36px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1">0%</p><p style="font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;margin-top:6px">Conversion Rate</p></div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:16px">
-    <div class="glass-sm" style="padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><p class="h4">Daily performance</p><div style="display:flex;gap:10px"><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:14px;color:var(--t3)">Views</span></div><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:14px;color:var(--t3)">Leads</span></div></div></div>
-      <div style="display:flex;align-items:flex-end;gap:5px;height:120px;margin-bottom:6px">
-        <div class="mini-bar" style="background:rgba(210,255,29,.15);height:50%"></div>
-        <div class="mini-bar" style="background:rgba(210,255,29,.15);height:35%"></div>
-        <div class="mini-bar" style="background:rgba(210,255,29,.15);height:64%"></div>
-        <div class="mini-bar" style="background:rgba(210,255,29,.15);height:44%"></div>
-        <div class="mini-bar" style="background:rgba(210,255,29,.15);height:74%"></div>
-        <div class="mini-bar" style="background:var(--acc);height:100%"></div>
-        <div class="mini-bar" style="background:rgba(210,255,29,.15);height:67%"></div>
-      </div>
-      <div style="display:flex;gap:5px"><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Mon</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Tue</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Wed</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Thu</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Fri</span><span style="flex:1;text-align:center;font-size:14px;color:var(--acc);font-weight:700">Sat</span><span style="flex:1;text-align:center;font-size:14px;color:var(--t4)">Sun</span></div>
-    </div>
-    <div class="glass-sm" style="padding:18px">
-      <p class="h4" style="margin-bottom:14px">Traffic sources</p>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Direct</span><span style="font-size:16px;color:var(--t3)">58%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:58%;background:var(--acc)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Instagram</span><span style="font-size:16px;color:var(--t3)">24%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:24%;background:rgba(210,255,29,.6)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Google</span><span style="font-size:16px;color:var(--t3)">12%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:12%;background:rgba(210,255,29,.35)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;color:var(--t2);font-weight:500">Pinterest</span><span style="font-size:16px;color:var(--t3)">6%</span></div><div class="usage-wrap"><div class="usage-bar" style="width:6%;background:rgba(210,255,29,.2)"></div></div></div>
-      </div>
-    </div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:14px;margin-bottom:14px">
-    <div class="glass-sm" style="padding:18px">
-      <p class="h4" style="margin-bottom:14px">Quiz funnel</p>
-      <div style="display:flex;flex-direction:column;gap:7px">
-        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q1</span><div class="f-bar-wrap"><div class="f-bar" style="width:100%"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">100%</span></div>
-        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q2</span><div class="f-bar-wrap"><div class="f-bar" style="width:88%"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">88%</span></div>
-        <div class="funnel-step"><span style="font-size:15px;color:var(--yellow);width:55px;flex-shrink:0;font-weight:600">Q3 ⚠</span><div class="f-bar-wrap"><div class="f-bar" style="width:72%;background:var(--yellow)"></div></div><span style="font-size:16px;color:var(--yellow);font-weight:700;width:36px;text-align:right">72%</span></div>
-        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Q4</span><div class="f-bar-wrap"><div class="f-bar" style="width:68%;background:rgba(210,255,29,.35)"></div></div><span style="font-size:16px;color:var(--t1);font-weight:700;width:36px;text-align:right">68%</span></div>
-        <div class="funnel-step"><span style="font-size:15px;color:var(--t3);width:55px;flex-shrink:0;font-weight:500">Lead</span><div class="f-bar-wrap"><div class="f-bar" style="width:61%;background:var(--green)"></div></div><span style="font-size:16px;color:var(--green);font-weight:700;width:36px;text-align:right">61%</span></div>
-      </div>
-      <div class="ai-box" style="margin-top:12px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> Q3 drop is 16 pts. Try reducing to 3 options to improve completion by ~12%.</div>
-    </div>
-    <div class="glass-sm" style="padding:18px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><p class="h4">Recent leads</p><button style="font-size:15px;color:var(--acc);background:transparent;border:none;cursor:pointer;font-family:var(--fam);font-weight:600" onclick="gD('leads')">View all →</button></div>
-      <table class="d-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Quiz</th><th>Time</th></tr></thead>
+  <!-- ROW 2: Recent leads + Quick actions -->
+  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><p style="font-size:16px;font-weight:700;color:var(--t1)">Recent Leads</p><button style="font-size:14px;color:var(--acc);background:transparent;border:none;cursor:pointer;font-family:var(--fam);font-weight:600" onclick="gD('leads')">View all →</button></div>
+      <table class="d-table" style="width:100%">
+        <thead><tr><th>Name</th><th>Email</th><th>Date</th></tr></thead>
         <tbody id="sq-recent-leads">
-          <tr><td colspan="4" style="text-align:center;color:var(--t4);padding:20px">Loading leads...</td></tr>
+          <tr><td colspan="3" style="text-align:center;color:var(--t4);padding:20px">No leads yet — embed your quiz to start capturing</td></tr>
         </tbody>
       </table>
     </div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px">
+      <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:16px">Quick Actions</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="if(window.__checkQuizLimit && window.__checkQuizLimit()) gD('editor')" style="background:var(--acc);color:#07090c;border:none;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create new quiz</button>
+        <button onclick="gD('leads')" style="background:rgba(255,255,255,0.04);color:var(--t2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>View all leads</button>
+        <button onclick="gD('embed')" style="background:rgba(255,255,255,0.04);color:var(--t2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Get embed code</button>
+        <button onclick="gD('analytics')" style="background:rgba(255,255,255,0.04);color:var(--t2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</button>
+      </div>
+    </div>
   </div>
 
-  <!-- ROI Tracker -->
-  <div class="roi-card" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-    <div><p class="label" style="margin-bottom:4px">ROI Tracker</p><p class="h4" style="margin-bottom:3px">Estimated pipeline value this month</p><p class="caption">38 leads × $150 avg client value</p></div>
-    <div style="text-align:right"><p style="font-size:46px;font-weight:800;color:var(--acc);letter-spacing:-.06em">$5,700</p><p style="font-size:15px;color:var(--t3)">Potential revenue</p></div>
+  <!-- ROW 3: Plan usage -->
+  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <span id="sq-dash-plan-badge" style="background:rgba(210,255,29,.08);border:1px solid rgba(210,255,29,.18);border-radius:20px;padding:3px 12px;font-size:13px;font-weight:700;color:var(--acc);text-transform:capitalize">trial</span>
+    </div>
+    <div style="flex:1;display:flex;gap:24px;min-width:200px">
+      <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t3)">Quizzes</span><span id="sq-dash-q-usage" style="font-size:13px;color:var(--t3)">0 / 1</span></div><div style="background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden"><div id="sq-dash-q-bar" style="height:4px;border-radius:20px;background:var(--acc);width:0%;transition:width .5s"></div></div></div>
+      <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t3)">Leads</span><span id="sq-dash-l-usage" style="font-size:13px;color:var(--t3)">0 / 50</span></div><div style="background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden"><div id="sq-dash-l-bar" style="height:4px;border-radius:20px;background:var(--acc);width:0%;transition:width .5s"></div></div></div>
+    </div>
+    <button onclick="gD('pricing')" style="background:transparent;color:var(--acc);border:1px solid rgba(210,255,29,.18);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;font-family:var(--fam);cursor:pointer;white-space:nowrap;flex-shrink:0">Upgrade plan →</button>
   </div>
 
-  <!-- Upgrade prompt -->
-  <div style="background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-    <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Leads used (trial)</span><span style="font-size:15px;color:var(--yellow)">38/50 — Running low</span></div><div class="usage-wrap" style="width:200px"><div class="usage-bar" style="width:76%;background:var(--yellow)"></div></div></div>
-    <button class="btn-p" style="font-size:16px;padding:9px 16px" onclick="gD('pricing')">Upgrade to Pro</button>
-  </div>
   </div><!-- /sq-real-dashboard -->
 </div>
 
