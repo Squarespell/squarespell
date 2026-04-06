@@ -68,23 +68,25 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 /* TYPOGRAPHY */
 .disp{font-size:62px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
 .disp span{color:var(--acc)}
-.h2{font-size:38px;font-weight:800;color:var(--t1);line-height:1.1;letter-spacing:-.045em}
+.h1{font-size:48px;font-weight:800;letter-spacing:-.04em;line-height:1.1;color:#f0f2f5}
+.h2{font-size:36px;font-weight:800;color:#f0f2f5;line-height:1.15;letter-spacing:-.03em}
 .h2 span{color:var(--acc)}
-.h3{font-size:22px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em}
-.h4{font-size:21px;font-weight:600;color:var(--t1);letter-spacing:-.02em}
-.body-lg{font-size:22px;color:var(--t2);line-height:1.65;letter-spacing:-.01em}
-.body{font-size:18px;color:var(--t2);line-height:1.6;letter-spacing:-.01em}
-.body-sm{font-size:16px;color:var(--t3);line-height:1.55}
-.label{font-size:14px;font-weight:700;color:var(--acc);letter-spacing:.08em;text-transform:uppercase}
-.caption{font-size:15px;color:var(--t4)}
+.h3{font-size:24px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;line-height:1.2}
+.h4{font-size:18px;font-weight:700;color:#f0f2f5;letter-spacing:-.02em}
+.body-lg{font-size:18px;color:rgba(240,242,245,0.7);line-height:1.6}
+.body{font-size:16px;color:rgba(240,242,245,0.7);line-height:1.6}
+.body-sm{font-size:16px;color:rgba(240,242,245,0.6);line-height:1.6}
+.label{font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);letter-spacing:.07em;text-transform:uppercase}
+.caption{font-size:15px;color:rgba(240,242,245,0.5);line-height:1.5}
 .mono{font-family:var(--mono)}
 /* BUTTONS */
-.btn-p{background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:12px 22px;font-size:18px;font-weight:700;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s,transform .1s;letter-spacing:-.02em}
-.btn-p:hover{background:#c8f517;transform:translateY(-1px)}
-.btn-p-lg{padding:15px 30px;font-size:21px;border-radius:13px}
-.btn-s{background:var(--g1);color:var(--t1);border:.5px solid var(--b1);border-radius:11px;padding:11px 20px;font-size:18px;font-weight:500;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s}
-.btn-s:hover{border-color:rgba(255,255,255,.16)}
-.btn-s-lg{padding:14px 28px;font-size:19px;border-radius:13px}
+.btn-p{background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:12px 28px;font-size:16px;font-weight:700;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:opacity .15s}
+.btn-p:hover{opacity:.88}
+.btn-p-lg{padding:15px 30px;font-size:18px;border-radius:12px}
+.btn-s{background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 24px;font-size:15px;font-weight:500;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s}
+.btn-s:hover{background:rgba(255,255,255,0.1)}
+.btn-s-lg{padding:14px 28px;font-size:17px;border-radius:12px}
+.btn-sm{padding:8px 16px;font-size:14px;border-radius:8px}
 /* BADGES */
 .chip{background:var(--g2);border:.5px solid var(--b2);border-radius:20px;padding:3px 10px;font-size:15px;color:var(--t3);font-weight:500;display:inline-flex;align-items:center;gap:4px}
 .chip-acc{background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 10px;font-size:15px;color:var(--acc);font-weight:600;display:inline-flex;align-items:center;gap:4px}
@@ -107,10 +109,10 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--g1);border:.5px solid var(--b1);border-radius:11px;padding:12px 18px;cursor:pointer;font-size:17px;color:var(--t2);font-weight:500;font-family:var(--fam);width:100%;margin-bottom:9px;letter-spacing:-.01em;transition:all .15s}
 .auth-btn:hover{border-color:rgba(255,255,255,.16);color:var(--t1)}
 /* STAT CARD */
-.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;transition:all .2s;cursor:default}
+.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;transition:all .2s;cursor:default}
 .stat-card:hover{border-color:var(--acc-b);transform:translateY(-1px)}
-.stat-v{font-size:34px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1}
-.stat-l{font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
+.stat-v{font-size:40px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
+.stat-l{font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em}
 .stat-d{font-size:15px;font-weight:600;margin-top:4px}
 .stat-d.up{color:var(--green)}
 .stat-d.down{color:var(--red)}
@@ -129,10 +131,10 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .bt-save{background:var(--acc);color:#07090c;font-size:13px;font-weight:800;border-radius:20px;padding:2px 7px}
 /* TABLE */
 .d-table{width:100%;border-collapse:collapse}
-.d-table th{font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;padding:9px 12px;text-align:left;border-bottom:.5px solid var(--b2)}
-.d-table td{font-size:16px;color:var(--t2);padding:10px 12px;border-bottom:.5px solid var(--b3);letter-spacing:-.01em}
+.d-table th{font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06)}
+.d-table td{font-size:15px;color:rgba(240,242,245,0.8);padding:14px;border-bottom:1px solid rgba(255,255,255,0.06)}
 .d-table tr:last-child td{border-bottom:none}
-.d-table tr:hover td{background:var(--g3);cursor:pointer}
+.d-table tr:hover td{background:rgba(255,255,255,0.03);cursor:pointer}
 /* FUNNEL */
 .funnel-step{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:10px}
 .f-bar-wrap{flex:1;background:rgba(255,255,255,.05);border-radius:20px;height:4px;overflow:hidden}
@@ -234,36 +236,51 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .gnav { display: none !important; }
 .vtabs { display: none !important; }
 .content { padding-top: 0 !important; }
-.dcontent { padding-top: 28px !important; }
-.dsidebar { top: 0 !important; }
 
 /* Background */
 body { background: #07090c !important; }
 :root { --bg: #07090c !important; --bg2: rgba(255,255,255,0.03) !important; --b1: rgba(255,255,255,0.08) !important; --b2: rgba(255,255,255,0.08) !important; --b3: rgba(255,255,255,0.08) !important; }
-.dsidebar { background: rgba(255,255,255,0.03) !important; border-right-color: rgba(255,255,255,0.08) !important; }
 
-/* Top nav bar for logged-in state */
+/* Top nav bar */
 .sq-topbar {
-  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 500;
+  position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 500;
   background: rgba(255,255,255,0.03); backdrop-filter: blur(32px);
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
 }
-.dcontent { margin-top: 52px !important; }
-.dsidebar { top: 52px !important; }
 
-/* Sidebar sizing */
-.dsi { font-size: 15px !important; padding: 8px 14px !important; gap: 10px !important; color: rgba(240,242,245,0.6) !important; }
-.dsi:hover { color: #f0f2f5 !important; }
-.dsi.on { color: var(--acc) !important; }
+/* Sidebar */
+.dsidebar { position: fixed; top: 56px; left: 0; bottom: 0; width: 220px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.08); padding: 16px 12px; z-index: 100; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; scrollbar-width: none; }
+.dsi { font-size: 15px !important; padding: 10px 16px !important; gap: 10px !important; color: rgba(240,242,245,0.6) !important; border-radius: 8px; margin-bottom: 2px; font-weight: 500; }
+.dsi:hover { color: #f0f2f5 !important; background: rgba(255,255,255,0.04) !important; }
+.dsi.on { color: var(--acc) !important; background: rgba(210,255,29,0.06) !important; }
 .dsi svg { width: 16px !important; height: 16px !important; }
-.dsec { font-size: 11px !important; padding: 18px 14px 8px !important; }
-.dsidebar { width: 220px !important; }
-.dcontent { margin-left: 220px !important; padding: 32px !important; }
+.dsec { font-size: 11px !important; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(240,242,245,0.3) !important; padding: 16px 16px 6px !important; }
+
+/* Content area */
+.dcontent { margin-left: 220px !important; margin-top: 56px !important; padding: 0 !important; min-height: calc(100vh - 56px); }
+.dpage { display: none; padding: 40px 48px; max-width: 1200px; }
+.dpage.on { display: block; }
+
+/* Glass cards */
+.glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; backdrop-filter: none; }
+.glass-sm { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; backdrop-filter: none; }
+
+/* Input fields */
+input[type="text"], input[type="email"], input[type="url"] {
+  font-size: 16px; padding: 14px 18px; border-radius: 10px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: #f0f2f5; font-family: var(--fam); width: 100%; box-sizing: border-box;
+}
+input[type="text"]:focus, input[type="email"]:focus, input[type="url"]:focus { outline: none; border-color: rgba(210,255,29,0.4); }
+input::placeholder { color: rgba(240,242,245,0.3); }
 
 /* Pricing toggle */
 .bt-opt { color: var(--t2) !important; font-size: 16px !important; }
 .bt-opt.on { color: var(--t1) !important; }
+
+/* Responsive */
+@media(max-width:1100px){.dcontent{margin-left:0!important}.dsidebar{display:none!important}}
 
 </style>
 </head>
@@ -636,12 +653,12 @@ body { background: #07090c !important; }
 <div class="sq-topbar" id="sq-topbar" style="display:flex">
   <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="gD('dashboard')">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    <span style="font-size:18px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em">Squarespell</span>
+    <span style="font-size:20px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em">Squarespell</span>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <span id="sq-plan-badge" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:3px 10px;font-size:12px;color:rgba(240,242,245,.5);font-weight:500;text-transform:capitalize">free</span>
-    <button onclick="gD('pricing')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Upgrade ↑</button>
-    <button onclick="window.__realSignOut && window.__realSignOut()" style="font-size:13px;color:rgba(240,242,245,.42);background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif">Sign out</button>
+    <button onclick="gD('pricing')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Upgrade ↑</button>
+    <button onclick="window.__realSignOut && window.__realSignOut()" style="font-size:14px;color:rgba(240,242,245,.42);background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 16px;cursor:pointer;font-family:'DM Sans',sans-serif">Sign out</button>
   </div>
 </div>
 
@@ -848,20 +865,20 @@ function showPay(state) {
 <div class="dpage on" id="dp-dashboard">
 <div id="dash-onboarding">
   <div style="max-width:560px;margin:0 auto;padding:40px 0">
-    <h2 style="font-size:24px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Welcome! Let's get your first lead</h2>
-    <p style="font-size:15px;color:rgba(240,242,245,0.5);margin-bottom:32px">3 quick steps to capturing leads on autopilot.</p>
+    <h2 style="font-size:32px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Welcome! Let's get your first lead</h2>
+    <p style="font-size:16px;color:rgba(240,242,245,0.5);margin-bottom:32px;line-height:1.6">3 quick steps to capturing leads on autopilot.</p>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(210,255,29,0.3);border-left:3px solid #D2FF1D;border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start">
         <div style="width:28px;height:28px;background:#D2FF1D;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#07090c;flex-shrink:0">1</div>
-        <div style="flex:1"><p style="font-size:15px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Create your first quiz</p><p style="font-size:14px;color:rgba(240,242,245,0.5);line-height:1.5;margin-bottom:14px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
+        <div style="flex:1"><p style="font-size:18px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Create your first quiz</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:14px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
       </div>
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;opacity:0.5">
         <div style="width:28px;height:28px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">2</div>
-        <div style="flex:1"><p style="font-size:15px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Embed on your Squarespace site</p><p style="font-size:14px;color:rgba(240,242,245,0.5);line-height:1.5;margin-bottom:14px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
+        <div style="flex:1"><p style="font-size:18px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Embed on your Squarespace site</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:14px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
       </div>
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;opacity:0.5">
         <div style="width:28px;height:28px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">3</div>
-        <div style="flex:1"><p style="font-size:15px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Watch leads come in</p><p style="font-size:14px;color:rgba(240,242,245,0.5);line-height:1.5;margin-bottom:14px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
+        <div style="flex:1"><p style="font-size:18px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Watch leads come in</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:14px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
       </div>
     </div>
     <p style="text-align:center;margin-top:24px"><a onclick="document.getElementById('dash-onboarding').style.display='none';document.getElementById('dash-real').style.display='block'" style="font-size:14px;color:rgba(240,242,245,0.4);cursor:pointer;text-decoration:underline">Skip, explore dashboard →</a></p>
