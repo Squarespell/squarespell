@@ -284,6 +284,10 @@ body { background: #07090c !important; }
     }));
   }
   window.__realSignOut = function() { try { localStorage.removeItem("sq_token"); } catch(e){} window.location.href = "/"; };
+  window.__connectSquarespace = function() {
+    if (!token) { alert("Please sign in first"); return; }
+    window.location.href = API + "/auth/squarespace/connect?token=" + encodeURIComponent(token);
+  };
   window.__realGenerate = function(url, goal) {
     if (!url) { alert("Enter your website URL first"); return; }
     apiFetch("/api/generate", { method: "POST", body: JSON.stringify({ url: url, business_type: "coaching", goal: goal || "Generate more leads" }) })
@@ -294,11 +298,12 @@ body { background: #07090c !important; }
   };
   document.addEventListener("DOMContentLoaded", function() {
     if (!token) return;
-    Promise.all([apiFetch("/api/quizzes"), apiFetch("/api/user/plan")])
+    Promise.all([apiFetch("/api/quizzes"), apiFetch("/api/user/plan"), apiFetch("/auth/squarespace/status")])
       .then(function(rs) { return Promise.all(rs.map(function(r){ return r.ok ? r.json() : null; })); })
       .then(function(results) {
         var quizzes = results[0] || [];
         var plan = results[1];
+        var sqsp = results[2];
         var views = quizzes.reduce(function(s,q){ return s+(q.views||0); }, 0);
         var leads = quizzes.reduce(function(s,q){ return s+(q.leads||0); }, 0);
         document.querySelectorAll(".sq-v").forEach(function(e){ if(views>0) e.textContent=views; });
@@ -307,6 +312,15 @@ body { background: #07090c !important; }
         if (plan) {
           var badge = document.getElementById("sq-plan-badge");
           if (badge) badge.textContent = plan.plan || "free";
+        }
+        // Squarespace connection status
+        if (sqsp && sqsp.connected) {
+          var dc = document.getElementById("sqsp-disconnected");
+          var cn = document.getElementById("sqsp-connected");
+          var url = document.getElementById("sqsp-site-url");
+          if (dc) dc.style.display = "none";
+          if (cn) cn.style.display = "block";
+          if (url) url.textContent = sqsp.site_url || "Connected";
         }
       }).catch(function(){});
   });
@@ -431,6 +445,16 @@ function copyCode(btn) {
 function copyEmbed() {
   var block = document.getElementById('embed-code-block');
   var btn = document.getElementById('embed-copy-btn');
+  if(block && navigator.clipboard) {
+    navigator.clipboard.writeText(block.textContent).then(function(){
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copied!';
+      setTimeout(function(){ btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy code'; }, 2000);
+    });
+  }
+}
+function copyInstallCode() {
+  var block = document.getElementById('install-code-block');
+  var btn = document.getElementById('install-copy-btn');
   if(block && navigator.clipboard) {
     navigator.clipboard.writeText(block.textContent).then(function(){
       btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copied!';
@@ -696,6 +720,9 @@ function showPay(state) {
   <button class="dsi" data-sec="templates" onclick="gD('templates')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Templates</button>
   <button class="dsi" data-sec="pricing" onclick="gD('pricing')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Pricing</button>
   <button class="dsi" data-sec="account" onclick="gD('account')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Account</button>
+  <p class="dsec">Squarespace</p>
+  <button class="dsi" data-sec="connect" onclick="gD('connect')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Connect</button>
+  <button class="dsi" data-sec="install" onclick="gD('install')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install</button>
   <p class="dsec">Quiz flow</p>
   <button class="dsi" data-sec="question" onclick="gD('question')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Question</button>
   <button class="dsi" data-sec="leadgate" onclick="gD('leadgate')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Lead gate</button>
@@ -1433,6 +1460,134 @@ function showPay(state) {
         </div>
       </div>
       <p style="text-align:center;font-size:15px;color:var(--t4)">Need help? <span style="color:var(--acc);cursor:pointer">Contact support</span></p>
+    </div>
+  </div>
+</div>
+
+<div class="dpage" id="dp-connect">
+  <div style="max-width:600px">
+    <div style="margin-bottom:28px">
+      <p class="h3" style="margin-bottom:4px">Connect Squarespace</p>
+      <p class="caption">Link your Squarespace site to enable one-click quiz embedding</p>
+    </div>
+
+    <!-- Not connected state -->
+    <div id="sqsp-disconnected">
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:32px;text-align:center;margin-bottom:24px">
+        <div style="width:56px;height:56px;background:rgba(210,255,29,0.08);border:1px solid rgba(210,255,29,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </div>
+        <p style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px">No site connected</p>
+        <p style="font-size:15px;color:var(--t3);line-height:1.6;margin-bottom:24px;max-width:380px;margin-left:auto;margin-right:auto">Connect your Squarespace site to automatically embed quizzes, track analytics, and capture leads.</p>
+        <button onclick="window.__connectSquarespace()" style="background:var(--acc);color:#07090c;border:none;border-radius:10px;padding:14px 32px;font-size:16px;font-weight:700;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background .15s">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Connect Squarespace Site
+        </button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span style="font-size:14px;color:var(--t2)">Secure OAuth — we never see your Squarespace password</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span style="font-size:14px;color:var(--t2)">Read-only access — we can't modify your site content</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span style="font-size:14px;color:var(--t2)">Disconnect anytime from your Account settings</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connected state -->
+    <div id="sqsp-connected" style="display:none">
+      <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:12px;padding:24px;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="width:40px;height:40px;background:rgba(74,222,128,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <p style="font-size:16px;font-weight:700;color:var(--green)">Site connected</p>
+            <p id="sqsp-site-url" style="font-size:14px;color:var(--t3);margin-top:2px"></p>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onclick="gD('install')" style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">Install quiz on site →</button>
+          <button onclick="gD('embed')" style="background:transparent;color:var(--t3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer">Manual embed code</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dpage" id="dp-install">
+  <div style="max-width:720px">
+    <div style="margin-bottom:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <p class="h3" style="margin-bottom:4px">Install on Squarespace</p>
+          <p class="caption">Add your quiz to your connected Squarespace site</p>
+        </div>
+        <div id="install-status" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:20px">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div>
+          <span style="font-size:13px;font-weight:600;color:var(--green)">Connected</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Embed code -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span style="font-size:15px;font-weight:700;color:var(--t1)">Your embed code</span>
+        </div>
+        <button id="install-copy-btn" onclick="copyInstallCode()" style="display:flex;align-items:center;gap:6px;background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;font-family:var(--fam);cursor:pointer;transition:background .15s">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy code
+        </button>
+      </div>
+      <div id="install-code-block" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:14px;color:var(--acc);line-height:1.7;word-break:break-all;white-space:pre-wrap">&lt;!-- Squarespell Quiz --&gt;
+&lt;div id="squarespell-quiz"&gt;&lt;/div&gt;
+&lt;script src="https://app.squarespell.com/embed/quiz-embed.js"
+  data-quiz-id="YOUR_QUIZ_ID"&gt;
+&lt;/script&gt;</div>
+    </div>
+
+    <!-- Quick install steps -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin-bottom:24px">
+      <p style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:20px">Quick install steps</p>
+
+      <div style="display:flex;gap:16px;margin-bottom:18px">
+        <div style="width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:800;color:#07090c">1</div>
+        <div>
+          <p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:3px">Copy the code above</p>
+          <p style="font-size:14px;color:var(--t3);line-height:1.5">Click "Copy code" and replace <strong style="color:var(--acc)">YOUR_QUIZ_ID</strong> with your quiz ID from the Editor.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px;margin-bottom:18px">
+        <div style="width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:800;color:#07090c">2</div>
+        <div>
+          <p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:3px">Add a Code Block in Squarespace</p>
+          <p style="font-size:14px;color:var(--t3);line-height:1.5">Edit your page → <strong style="color:var(--t2)">Add Block → Code</strong>. Make sure "Display Source" is <strong style="color:var(--t2)">off</strong>.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px">
+        <div style="width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:800;color:#07090c">3</div>
+        <div>
+          <p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:3px">Paste, save, and publish</p>
+          <p style="font-size:14px;color:var(--t3);line-height:1.5">Paste the embed code into the Code Block, save your page, and you're live.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tip -->
+    <div style="background:rgba(210,255,29,0.06);border:1px solid rgba(210,255,29,0.15);border-radius:12px;padding:18px 20px;display:flex;gap:12px;align-items:flex-start">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <p style="font-size:14px;color:var(--t2);line-height:1.55"><strong style="color:var(--acc)">Tip:</strong> Your quiz will automatically match your Squarespace site's width. Place the Code Block wherever you want the quiz to appear.</p>
     </div>
   </div>
 </div>
