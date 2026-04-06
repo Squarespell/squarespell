@@ -215,7 +215,7 @@ export default function PricingPage() {
         .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
-        .mtbl { width:100%; border-collapse:collapse; font-size:17px; min-width:580px; }
+        .mtbl { width:100%; min-width:580px; border-collapse:collapse; font-size:17px; }
         .mtbl thead tr { border-bottom:1px solid rgba(255,255,255,.07); }
         .mtbl th { padding:18px 24px; font-size:16px; font-weight:700; }
         .mtbl th:first-child { text-align:left; color:var(--t3); font-weight:500; width:44%; }
