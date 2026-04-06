@@ -507,7 +507,7 @@ body { background: #07090c !important; }
   }
 
   function renderLeadsTable(leads) {
-    var container = document.getElementById("sq-leads-body");
+    var container = document.getElementById("leads-table-body");
     var empty = document.getElementById("sq-leads-empty");
     var count = document.getElementById("sq-leads-count");
     if (!container) return;
@@ -980,7 +980,7 @@ function showPay(state) {
   <div id="sq-leads-table-wrap" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden">
     <table class="d-table" style="width:100%">
       <thead><tr><th style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);padding:12px 16px">Name</th><th style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);padding:12px 16px">Email</th><th style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);padding:12px 16px">Quiz</th><th style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);padding:12px 16px">Score</th><th style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);padding:12px 16px">Date</th></tr></thead>
-      <tbody id="sq-leads-body"><tr><td colspan="5" style="text-align:center;color:var(--t4);padding:24px">Loading...</td></tr></tbody>
+      <tbody id="leads-table-body"><tr><td colspan="5" style="text-align:center;color:var(--t4);padding:24px">Loading...</td></tr></tbody>
     </table>
   </div>
 </div>
