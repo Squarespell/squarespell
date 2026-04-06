@@ -196,7 +196,7 @@ export default function PricingPage() {
         .pold { font-size:16px; color:var(--t4); text-decoration:line-through; margin-right:4px; }
         .pnum { font-size:48px; font-weight:800; letter-spacing:-.04em; color:var(--t1); line-height:1; }
         .pper { font-size:16px; color:var(--t3); }
-        .pbill { font-size:13px; color:var(--t4); margin-bottom:28px; }
+        .pbill { font-size:13px; color:var(--t4); margin-bottom:6px; }
         .cta { width:100%; padding:14px 20px; border-radius:10px; border:none; font-size:16px; font-weight:700; margin-bottom:28px; transition:all .15s; letter-spacing:-.01em; }
         .cta.p { background:var(--acc); color:#07090c; }
         .cta.p:hover { background:#c8f200; }
@@ -313,7 +313,7 @@ export default function PricingPage() {
                   <span className="pnum">${billing === 'monthly' ? plan.monthly : plan.yearly}</span>
                   <span className="pper">/mo</span>
                 </div>
-                <div className="pbill">{billing === 'yearly' ? `Billed $${plan.yearly * 12}/year` : 'Billed monthly'}</div>
+                <div className="pbill">{billing === 'yearly' ? `Billed $${plan.yearly * 12}/year` : 'Billed monthly'}</div>{billing === 'yearly' && <div style={{fontSize:'14px',color:'#4ade80',fontWeight:600,marginBottom:'20px'}}>Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>}
                 <button className={`cta ${plan.featured ? 'p' : 's'}`} onClick={() => handleUpgrade(key)} disabled={loading === key}>
                   {loading === key ? 'Loading...' : plan.cta}
                 </button>
