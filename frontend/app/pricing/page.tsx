@@ -217,14 +217,14 @@ export default function PricingPage() {
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
         .mtbl { width:100%; border-collapse:collapse; font-size:17px; min-width:580px; }
         .mtbl thead tr { border-bottom:1px solid rgba(255,255,255,.07); }
-        .mtbl th { padding:14px 20px; font-weight:700; }
+        .mtbl th { padding:18px 24px; font-size:16px; font-weight:700; }
         .mtbl th:first-child { text-align:left; color:var(--t3); font-weight:500; width:44%; }
         .mtbl th.tp { color:var(--acc); }
         .mtbl th.to { color:var(--t2); }
-        .mtbl td { padding:11px 20px; }
+        .mtbl td { padding:14px 24px; font-size:16px; } .mtbl td:first-child { font-size:16px; color:rgba(240,242,245,0.85); font-weight:400; }
         .mtbl td:first-child { color:var(--t2); }
         .mtbl td:not(:first-child) { text-align:center; }
-        .mtbl .cat td { padding:8px 20px 5px; font-size:10px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:rgba(210,255,29,0.55); background:rgba(210,255,29,0.025); }
+        .mtbl .cat td { padding:10px 24px 8px; font-size:11px !important; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:rgba(210,255,29,0.6); background:rgba(210,255,29,0.03); border-top:1px solid rgba(255,255,255,0.06); }
         .mtbl .dr { border-top:1px solid rgba(255,255,255,.04); } .mtbl .dr td:nth-child(3) { background:rgba(210,255,29,0.035); border-left:1px solid rgba(210,255,29,0.08); border-right:1px solid rgba(210,255,29,0.08); } .mtbl thead th:nth-child(3) { background:rgba(210,255,29,0.04); border-left:1px solid rgba(210,255,29,0.10); border-right:1px solid rgba(210,255,29,0.10); }
         .mv { font-size:14px; font-weight:600; }
         .mv.p { color:var(--acc); }
@@ -351,7 +351,7 @@ export default function PricingPage() {
                         <tr key={ri} className="dr">
                           <td>{row.label}</td>
                           {(['starter', 'pro', 'agency'] as const).map(p => (
-                            <td key={p} style={p === 'pro' ? {background:'rgba(210,255,29,0.04)',borderLeft:'1px solid rgba(210,255,29,0.1)',borderRight:'1px solid rgba(210,255,29,0.1)'} : {}}>
+                            <td key={p} style={p === 'pro' ? {background:'rgba(210,255,29,0.05)',borderLeft:'1px solid rgba(210,255,29,0.12)',borderRight:'1px solid rgba(210,255,29,0.12)'} : {}}>
                               {typeof row[p] === 'boolean'
                                 ? (row[p] ? <Check color={p === 'pro' ? acc : '#4ade80'} /> : <Cross />)
                                 : <span className={`mv ${p === 'pro' ? 'p' : 'o'}`}>{row[p] as string}</span>}
