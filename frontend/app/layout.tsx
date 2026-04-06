@@ -25,21 +25,21 @@ function KeepAlive() {
 }
 
 const fc = {
-  footer: { background:'#07090c', borderTop:'1px solid rgba(255,255,255,0.08)', padding:'48px 40px 0', fontFamily:'"DM Sans",system-ui,sans-serif' } as React.CSSProperties,
-  inner: { maxWidth:'1120px', margin:'0 auto' } as React.CSSProperties,
-  top: { display:'flex', justifyContent:'space-between', gap:'48px', flexWrap:'wrap', paddingBottom:'40px' } as React.CSSProperties,
-  brand: { maxWidth:'260px' } as React.CSSProperties,
+  footer: { background:'#07090c', borderTop:'1px solid rgba(255,255,255,0.08)', marginTop:'80px', fontFamily:'"DM Sans",system-ui,sans-serif' } as React.CSSProperties,
+  inner: { maxWidth:'1400px', margin:'0 auto', padding:'64px 48px 40px' } as React.CSSProperties,
+  top: { display:'flex', gap:'80px', flexWrap:'wrap', paddingBottom:'40px' } as React.CSSProperties,
+  brand: { maxWidth:'280px', flexShrink:0 } as React.CSSProperties,
   logo: { display:'flex', alignItems:'center', gap:'8px', marginBottom:'16px', textDecoration:'none' } as React.CSSProperties,
   logoIcon: { width:'28px', height:'28px', background:'#D2FF1D', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center' } as React.CSSProperties,
-  logoText: { fontSize:'18px', fontWeight:700, color:'#f0f2f5', letterSpacing:'-0.03em' } as React.CSSProperties,
+  logoText: { fontSize:'18px', fontWeight:800, color:'#f0f2f5', letterSpacing:'-0.03em' } as React.CSSProperties,
   tagline: { fontSize:'14px', color:'rgba(240,242,245,0.4)', lineHeight:'1.6' } as React.CSSProperties,
-  cols: { display:'flex', gap:'64px', flexWrap:'wrap' } as React.CSSProperties,
-  colTitle: { fontSize:'13px', fontWeight:700, color:'rgba(240,242,245,0.3)', textTransform:'uppercase' as const, letterSpacing:'0.08em', marginBottom:'14px' } as React.CSSProperties,
-  colLink: { display:'block', fontSize:'14px', color:'rgba(240,242,245,0.5)', marginBottom:'10px', textDecoration:'none', transition:'color .15s' } as React.CSSProperties,
-  bar: { borderTop:'1px solid rgba(255,255,255,0.08)', padding:'20px 0', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'12px' } as React.CSSProperties,
-  copy: { fontSize:'13px', color:'rgba(240,242,245,0.3)' } as React.CSSProperties,
+  cols: { display:'flex', gap:'48px', flexWrap:'wrap' } as React.CSSProperties,
+  colTitle: { fontSize:'11px', fontWeight:700, color:'rgba(240,242,245,0.3)', textTransform:'uppercase' as const, letterSpacing:'0.08em', marginBottom:'14px' } as React.CSSProperties,
+  colLink: { display:'block', fontSize:'15px', color:'rgba(240,242,245,0.5)', marginBottom:'10px', textDecoration:'none', transition:'color .15s' } as React.CSSProperties,
+  bar: { borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:'32px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'12px' } as React.CSSProperties,
+  copy: { fontSize:'14px', color:'rgba(240,242,245,0.3)' } as React.CSSProperties,
   barLinks: { display:'flex', gap:'20px' } as React.CSSProperties,
-  barLink: { fontSize:'13px', color:'rgba(240,242,245,0.35)', textDecoration:'none', transition:'color .15s' } as React.CSSProperties,
+  barLink: { fontSize:'14px', color:'rgba(240,242,245,0.35)', textDecoration:'none', transition:'color .15s' } as React.CSSProperties,
 };
 
 function Footer() {
