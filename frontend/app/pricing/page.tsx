@@ -185,7 +185,7 @@ export default function PricingPage() {
         .saving { font-size:14px; color:#4ade80; font-weight:600; }
 
         /* CARDS */
-        .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:100%; margin:0 auto 80px; }
+        .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1400px; margin:0 auto 80px; padding:0 48px; }
         .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px 28px; display:flex; flex-direction:column; position:relative; }
         .card.pro { background:rgba(210,255,29,.05); border-color:rgba(210,255,29,.25); }
         .pop { position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--acc); color:#07090c; font-size:11px; font-weight:800; padding:4px 16px; border-radius:100px; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
@@ -211,7 +211,7 @@ export default function PricingPage() {
         .fi-text.n { color:rgba(240,242,245,.42); }
 
         /* TABLE */
-        .mtbl-wrap { max-width:100%; margin:0 auto 80px; }
+        .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; }
         .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
@@ -253,7 +253,7 @@ export default function PricingPage() {
         @media(max-width:900px){
           .inner { padding:0 20px; }
           .hero { padding:60px 0 40px; }
-          .grid { grid-template-columns:1fr; gap:16px; }
+          .grid { grid-template-columns:1fr; gap:16px; padding:0; }
           .card { padding:28px 24px; }
           .card.pro { margin-top:8px; }
           .sec-title,.ctabox h2 { font-size:26px; }
