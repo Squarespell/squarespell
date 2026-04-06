@@ -211,10 +211,10 @@ export default function PricingPage() {
         .fi-text.n { color:rgba(240,242,245,.42); }
 
         /* TABLE */
-        .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; box-sizing:border-box; }
+        .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; width:100%; box-sizing:border-box; }
         .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
-        .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow-x:auto; overflow-y:hidden; width:100%; box-sizing:border-box; }
+        .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
         .mtbl { width:100%; min-width:580px; border-collapse:collapse; font-size:17px; }
         .mtbl thead tr { border-bottom:1px solid rgba(255,255,255,.07); }
         .mtbl th { padding:18px 24px; font-size:16px; font-weight:700; }
@@ -261,7 +261,7 @@ export default function PricingPage() {
           .trust { gap:16px; }
           .trust span { font-size:13px; }
         }
-        @media(max-width:600px){ .ctabox { flex-direction:column; padding:48px 20px; text-align:center; } .ctabox-right { align-items:center; width:100%; } .ctabtn { width:100%; } 
+        @media(max-width:600px){ .mtbl-wrap { padding:0; } .ctabox { flex-direction:column; padding:48px 20px; text-align:center; } .ctabox-right { align-items:center; width:100%; } .ctabtn { width:100%; } 
           .toggle-wrap { flex-direction:column; gap:8px; }
           .pnum { font-size:40px; }
           .ctabox { border-radius:16px; padding:36px 20px; }
@@ -272,7 +272,7 @@ export default function PricingPage() {
         }
       `}</style>
 
-      <div className="wrap" style={{overflowX:"hidden"}}>
+      <div className="wrap">
         <div className="inner">
 
           {/* HERO */}
@@ -330,7 +330,8 @@ export default function PricingPage() {
           </div>
 
           {/* TABLE */}
-          <div className="mtbl-wrap" style={{overflowX:"auto",WebkitOverflowScrolling:"touch",width:"100%",maxWidth:"100vw",boxSizing:"border-box"}}>
+          {/* TABLE */}
+          <div className="mtbl-wrap">
             <h2 className="sec-title">Full feature breakdown</h2>
             <p className="sec-sub">Every feature, across every plan</p>
             <div className="tscroll">
