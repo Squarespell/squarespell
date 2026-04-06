@@ -164,7 +164,7 @@ export default function PricingPage() {
         .wrap { min-height:100vh; background:#07090c; padding:0 0 100px; position:relative; overflow-x:clip; }
         .wrap::before { content:''; position:fixed; top:-300px; left:-300px; width:800px; height:800px; background:radial-gradient(circle,rgba(210,255,29,.06) 0%,transparent 65%); pointer-events:none; z-index:0; }
         .wrap::after { content:''; position:fixed; bottom:-300px; right:-300px; width:700px; height:700px; background:radial-gradient(circle,rgba(210,255,29,.04) 0%,transparent 65%); pointer-events:none; z-index:0; }
-        .inner { position:relative; z-index:1; padding:0 20px; }
+        .inner { position:relative; z-index:1; padding:0 20px; width:100%; box-sizing:border-box; }
 
         /* HERO */
         .hero { max-width:800px; margin:0 auto; text-align:center; padding:80px 0 56px; }
@@ -211,7 +211,7 @@ export default function PricingPage() {
         .fi-text.n { color:rgba(240,242,245,.42); }
 
         /* TABLE */
-        .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; box-sizing:border-box; }
         .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
