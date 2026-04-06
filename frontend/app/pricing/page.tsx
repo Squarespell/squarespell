@@ -261,7 +261,7 @@ export default function PricingPage() {
           .trust { gap:16px; }
           .trust span { font-size:13px; }
         }
-        @media(max-width:600px){ .mtbl-wrap { padding:0; } .ctabox { flex-direction:column; padding:48px 20px; text-align:center; } .ctabox-right { align-items:center; width:100%; } .ctabtn { width:100%; } 
+        @media(max-width:600px){ .mtbl-wrap { padding:0; } .mtbl th:nth-child(2),.mtbl td:nth-child(2),.mtbl th:nth-child(4),.mtbl td:nth-child(4) { display:none; } .mtbl th:first-child { width:60%; } .ctabox { flex-direction:column; padding:48px 20px; text-align:center; } .ctabox-right { align-items:center; width:100%; } .ctabtn { width:100%; } 
           .toggle-wrap { flex-direction:column; gap:8px; }
           .pnum { font-size:40px; }
           .ctabox { border-radius:16px; padding:36px 20px; }
