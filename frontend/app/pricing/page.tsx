@@ -164,7 +164,7 @@ export default function PricingPage() {
         .wrap { min-height:100vh; background:#07090c; padding:0 0 100px; position:relative; overflow:hidden; }
         .wrap::before { content:''; position:fixed; top:-300px; left:-300px; width:800px; height:800px; background:radial-gradient(circle,rgba(210,255,29,.06) 0%,transparent 65%); pointer-events:none; z-index:0; }
         .wrap::after { content:''; position:fixed; bottom:-300px; right:-300px; width:700px; height:700px; background:radial-gradient(circle,rgba(210,255,29,.04) 0%,transparent 65%); pointer-events:none; z-index:0; }
-        .inner { position:relative; z-index:1; padding:0 32px; }
+        .inner { position:relative; z-index:1; padding:0 20px; }
 
         /* HERO */
         .hero { max-width:800px; margin:0 auto; text-align:center; padding:80px 0 56px; }
@@ -185,13 +185,13 @@ export default function PricingPage() {
         .saving { font-size:14px; color:#4ade80; font-weight:600; }
 
         /* CARDS */
-        .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1300px; margin:0 auto 80px; }
+        .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:100%; margin:0 auto 80px; }
         .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px 28px; display:flex; flex-direction:column; position:relative; }
         .card.pro { background:rgba(210,255,29,.05); border-color:rgba(210,255,29,.25); }
         .pop { position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--acc); color:#07090c; font-size:11px; font-weight:800; padding:4px 16px; border-radius:100px; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
-        .cname { font-size:18px; font-weight:700; margin-bottom:8px; }
+        .cname { font-size:26px; font-weight:700; margin-bottom:8px; }
         .cname.a { color:var(--acc); }
-        .cdesc { font-size:15px; color:var(--t3); line-height:1.55; margin-bottom:28px; min-height:44px; }
+        .cdesc { font-size:17px; color:var(--t3); line-height:1.55; margin-bottom:28px; min-height:44px; }
         .prow { display:flex; align-items:baseline; gap:3px; margin-bottom:6px; }
         .pold { font-size:16px; color:var(--t4); text-decoration:line-through; margin-right:4px; }
         .pnum { font-size:48px; font-weight:800; letter-spacing:-.04em; color:var(--t1); line-height:1; }
@@ -206,22 +206,22 @@ export default function PricingPage() {
         .flist { flex:1; display:flex; flex-direction:column; gap:12px; }
         .fi { display:flex; align-items:flex-start; gap:10px; }
         .fi-icon { flex-shrink:0; margin-top:1px; }
-        .fi-text { font-size:15px; line-height:1.45; }
+        .fi-text { font-size:17px; line-height:1.45; }
         .fi-text.y { color:var(--t2); }
         .fi-text.n { color:rgba(240,242,245,.42); }
 
         /* TABLE */
-        .mtbl-wrap { max-width:1300px; margin:0 auto 80px; }
+        .mtbl-wrap { max-width:100%; margin:0 auto 80px; }
         .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
-        .mtbl { width:100%; border-collapse:collapse; font-size:15px; min-width:580px; }
+        .mtbl { width:100%; border-collapse:collapse; font-size:17px; min-width:580px; }
         .mtbl thead tr { border-bottom:1px solid rgba(255,255,255,.07); }
-        .mtbl th { padding:16px 24px; font-weight:700; }
+        .mtbl th { padding:20px 28px; font-weight:700; }
         .mtbl th:first-child { text-align:left; color:var(--t3); font-weight:500; width:44%; }
         .mtbl th.tp { color:var(--acc); }
         .mtbl th.to { color:var(--t2); }
-        .mtbl td { padding:13px 24px; }
+        .mtbl td { padding:16px 28px; }
         .mtbl td:first-child { color:var(--t2); }
         .mtbl td:not(:first-child) { text-align:center; }
         .mtbl .cat td { padding:10px 24px 6px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--t4); background:rgba(255,255,255,.02); }
@@ -236,10 +236,10 @@ export default function PricingPage() {
         .faq-item { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; }
         .faq-item:hover { border-color:rgba(255,255,255,.14); }
         .faq-q { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; gap:16px; }
-        .faq-qt { font-size:17px; font-weight:600; color:var(--t1); flex:1; line-height:1.4; }
+        .faq-qt { font-size:19px; font-weight:600; color:var(--t1); flex:1; line-height:1.4; }
         .faq-chev { flex-shrink:0; transition:transform .2s; color:var(--t4); }
         .faq-chev.o { transform:rotate(180deg); }
-        .faq-a { padding:0 24px 20px; font-size:16px; color:var(--t3); line-height:1.7; }
+        .faq-a { padding:0 24px 20px; font-size:17px; color:var(--t3); line-height:1.7; }
 
         /* CTA BOX */
         .ctabox { max-width:800px; margin:0 auto; text-align:center; background:rgba(210,255,29,.05); border:1px solid rgba(210,255,29,.15); border-radius:24px; padding:64px 48px; }
