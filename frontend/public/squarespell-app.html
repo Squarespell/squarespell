@@ -369,6 +369,84 @@ body { background: #07090c !important; }
           if (acctPlan) acctPlan.textContent = (plan.plan || "trial").charAt(0).toUpperCase() + (plan.plan || "trial").slice(1);
         }
 
+        // ── Plan enforcement ──
+        var userPlan = (plan && plan.plan) || "trial";
+        window.__userPlan = userPlan;
+        window.__quizzes = quizzes;
+        var planLimits = { trial:{q:1,l:50}, starter:{q:5,l:500}, pro:{q:20,l:5000}, agency:{q:999999,l:999999} };
+        var lim = planLimits[userPlan] || planLimits.trial;
+
+        // A. Dashboard plan-aware banner
+        var dashBanner = document.getElementById("sq-plan-banner");
+        if (dashBanner) {
+          if (userPlan === "trial" || userPlan === "free") {
+            var dLeft = 7;
+            if (plan && plan.trial_ends_at) {
+              dLeft = Math.max(0, Math.ceil((new Date(plan.trial_ends_at).getTime() - Date.now()) / 86400000));
+            }
+            dashBanner.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Trial: <strong>' + dLeft + ' days left</strong> — upgrade to keep your leads</span></div><button onclick="gD(\'pricing\')" style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;font-family:var(--fam);cursor:pointer;white-space:nowrap">Upgrade now</button>';
+            dashBanner.style.background = "rgba(251,191,36,.08)";
+            dashBanner.style.borderColor = "rgba(251,191,36,.2)";
+          } else if (userPlan === "starter" && quizzes.length >= lim.q) {
+            dashBanner.innerHTML = '<span style="font-size:14px;color:var(--t2)">Starter Plan — <strong style="color:var(--yellow)">' + quizzes.length + '/' + lim.q + ' quizzes used</strong></span><button onclick="gD(\'pricing\')" style="background:var(--g1);color:var(--t1);border:.5px solid var(--b1);border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;font-family:var(--fam);cursor:pointer">Upgrade</button>';
+            dashBanner.style.background = "rgba(255,255,255,.04)";
+            dashBanner.style.borderColor = "rgba(255,255,255,.08)";
+          } else if (userPlan === "pro" || userPlan === "agency") {
+            dashBanner.style.display = "none";
+          }
+        }
+
+        // B. Sidebar lock icons for restricted features
+        var lockSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5" style="margin-left:auto;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+        if (userPlan === "trial" || userPlan === "free") {
+          ["templates","connect","install","embed"].forEach(function(sec) {
+            var btn = document.querySelector('.dsi[data-sec="' + sec + '"]');
+            if (btn) { btn.style.opacity = "0.4"; btn.insertAdjacentHTML("beforeend", lockSvg); }
+          });
+        }
+
+        // C. Leads usage bar
+        var leadsUsageBar = document.getElementById("sq-leads-usage-bar");
+        var leadsUsageText = document.getElementById("sq-leads-usage-text");
+        if (leadsUsageBar && leadsUsageText) {
+          var lMax = (userPlan === "agency") ? "Unlimited" : lim.l;
+          leadsUsageText.textContent = totalLeads + " / " + lMax + " leads this month";
+          if (lMax !== "Unlimited") {
+            var pct = Math.min(100, totalLeads / lMax * 100);
+            leadsUsageBar.style.width = pct + "%";
+            leadsUsageBar.style.background = pct >= 100 ? "var(--red)" : pct >= 80 ? "var(--yellow)" : "var(--acc)";
+          } else {
+            leadsUsageBar.style.width = "10%";
+            leadsUsageBar.style.background = "var(--green)";
+          }
+        }
+
+        // E. Analytics advanced lock
+        var analyticsLock = document.getElementById("sq-analytics-lock");
+        if (analyticsLock) {
+          if (userPlan === "trial" || userPlan === "free" || userPlan === "starter") {
+            analyticsLock.style.display = "flex";
+          } else {
+            analyticsLock.style.display = "none";
+          }
+        }
+
+        // F. Quiz creation limit check
+        window.__checkQuizLimit = function() {
+          var p = window.__userPlan || "trial";
+          var l = planLimits[p] || planLimits.trial;
+          var q = window.__quizzes || [];
+          if (q.length >= l.q) {
+            var modal = document.getElementById("sq-quiz-limit-modal");
+            if (modal) {
+              modal.querySelector("#sq-limit-msg").textContent = "You've reached your " + l.q + " quiz limit on " + p.charAt(0).toUpperCase() + p.slice(1) + ". Upgrade for more quizzes.";
+              modal.style.display = "flex";
+            }
+            return false;
+          }
+          return true;
+        };
+
         // Squarespace connection status
         if (sqsp && sqsp.connected) {
           var dc = document.getElementById("sqsp-disconnected");
@@ -454,8 +532,8 @@ body { background: #07090c !important; }
   };
 })();
 </script>
-<div class="sq-topbar" id="sq-topbar" style="display:none">
-  <div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="gD('landing')">
+<div class="sq-topbar" id="sq-topbar" style="display:flex">
+  <div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="gD('dashboard')">
     <div style="width:28px;height:28px;background:#D2FF1D;border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
     <span style="font-size:16px;font-weight:700;color:#f0f2f5;letter-spacing:-.03em">Squarespell</span>
   </div>
@@ -524,7 +602,7 @@ function gD(sec) {
     b.className = b.className.replace(/\bon\b/g,'').trim();
     if(b.dataset.sec === sec) b.className += ' on';
   });
-  var noSb = ['signin','landing','question','leadgate','result'];
+  var noSb = [];
   var sb = document.getElementById('dSidebar');
   var dc = document.getElementById('dContent');
   if(sb && dc && _view === 'desktop') {
@@ -853,10 +931,7 @@ function showPay(state) {
 
 <div class="dcontent" id="dContent" style="margin-left:210px">
 
-<!-- ══════════════════════════════ -->
-<!-- D: LANDING                    -->
-<!-- ══════════════════════════════ -->
-<div class="dpage on" id="dp-landing">
+<div class="dpage" id="dp-landing" style="display:none!important">
   <div style="position:relative;overflow:hidden;min-height:560px;display:flex;align-items:center;margin:-28px -36px 0;padding:64px;gap:64px;background:linear-gradient(180deg,var(--bg2),var(--bg))">
     <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(100,180,20,.12) 0%,transparent 60%);top:-160px;right:-160px"></div>
     <div style="flex:1;max-width:520px;position:relative;z-index:2">
@@ -947,7 +1022,7 @@ function showPay(state) {
 <!-- ══════════════════════════════ -->
 <!-- D: SIGN IN                    -->
 <!-- ══════════════════════════════ -->
-<div class="dpage" id="dp-signin">
+<div class="dpage" id="dp-signin" style="display:none!important">
 <div style="display:grid;grid-template-columns:1fr 1fr;height:100vh;overflow:hidden;margin:-28px -36px 0 -210px">
   <!-- LEFT: Dark branding panel -->
   <div style="background:#000000;border-right:.5px solid rgba(255,255,255,.06);display:flex;flex-direction:column;justify-content:center;padding:60px 52px;overflow:hidden">
@@ -1004,23 +1079,14 @@ function showPay(state) {
 </div>
 </div>
 
-<div class="dpage" id="dp-dashboard">
-  <!-- Trial countdown banner -->
-  <div class="trial-bar">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:36px;height:36px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-      <div><p id="sq-trial-days" style="font-size:17px;font-weight:700;color:var(--t1);margin-bottom:2px">Loading trial info...</p><p style="font-size:15px;color:var(--t3)">Upgrade before trial ends to keep your leads and quizzes.</p></div>
-    </div>
-    <div style="display:flex;gap:9px;flex-shrink:0">
-      <button class="btn-p" style="font-size:16px;padding:9px 16px" onclick="gD('pricing')">Upgrade now</button>
-      <button style="font-size:16px;color:var(--t4);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Remind me later</button>
-    </div>
-  </div>
+<div class="dpage on" id="dp-dashboard">
+  <!-- Plan-aware banner -->
+  <div id="sq-plan-banner" style="border:1px solid rgba(251,191,36,.2);border-radius:11px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;font-size:14px;color:var(--t2);flex-wrap:wrap">Loading plan...</div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div><p class="h3" style="margin-bottom:2px">Dashboard</p><p class="caption">Last 7 days · All quizzes</p></div>
     <div style="display:flex;gap:9px">
-      <button class="btn-s" style="font-size:16px;padding:9px 14px" onclick="gD('editor')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New quiz</button>
+      <button class="btn-s" style="font-size:16px;padding:9px 14px" onclick="if(window.__checkQuizLimit && window.__checkQuizLimit()) gD('editor')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New quiz</button>
       <button class="btn-s" style="font-size:16px;padding:9px 14px">Export CSV</button>
     </div>
   </div>
@@ -1117,6 +1183,14 @@ function showPay(state) {
     <div class="stat-card"><p class="stat-v" id="sq-a-conv">0%</p><p class="stat-l">Lead conversion</p><p class="stat-d neu">Views → leads</p></div>
   </div>
 
+  <div style="position:relative">
+  <!-- Analytics lock overlay for trial/starter -->
+  <div id="sq-analytics-lock" style="display:none;position:absolute;inset:0;z-index:10;backdrop-filter:blur(6px);background:rgba(7,9,12,.7);border-radius:14px;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:40px">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <p style="font-size:20px;font-weight:800;color:var(--t1);letter-spacing:-.03em">Advanced Analytics</p>
+    <p style="font-size:15px;color:var(--t3);max-width:320px">Conversion funnels, lead scoring, and AI insights are available on the Pro plan.</p>
+    <button onclick="gD('pricing')" style="background:var(--acc);color:#07090c;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer">Upgrade to Pro</button>
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
     <div class="glass-sm" style="padding:20px">
       <p class="h4" style="margin-bottom:5px">Conversion funnel</p>
@@ -1175,6 +1249,7 @@ function showPay(state) {
       </div>
     </div>
   </div>
+  </div><!-- /analytics-lock wrapper -->
 </div>
 
 <!-- ══════════════════════════════ -->
@@ -1186,6 +1261,11 @@ function showPay(state) {
     <div style="display:flex;gap:9px">
       <button class="btn-s" style="font-size:16px;padding:9px 14px" onclick="window.__exportLeadsCSV()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>
     </div>
+  </div>
+  <!-- Leads usage bar -->
+  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
+    <span id="sq-leads-usage-text" style="font-size:14px;color:var(--t3);white-space:nowrap">— / — leads</span>
+    <div style="flex:1;background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden"><div id="sq-leads-usage-bar" style="height:4px;border-radius:20px;background:var(--acc);width:0%;transition:width .5s"></div></div>
   </div>
   <!-- Empty state -->
   <div id="sq-leads-empty" style="display:none;text-align:center;padding:64px 20px">
@@ -1762,15 +1842,23 @@ function showPay(state) {
 </div><!-- /dcontent -->
 </div><!-- /view-desktop -->
 </main>
+<!-- Quiz limit modal -->
+<div id="sq-quiz-limit-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;font-family:var(--fam)">
+  <div style="background:#0d1018;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:32px;max-width:420px;text-align:center">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <p style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.03em">Quiz limit reached</p>
+    <p id="sq-limit-msg" style="font-size:15px;color:var(--t3);line-height:1.6;margin-bottom:24px">You've reached your quiz limit. Upgrade for more.</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="gD('pricing');document.getElementById('sq-quiz-limit-modal').style.display='none'" style="background:var(--acc);color:#07090c;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer">Upgrade plan</button>
+      <button onclick="document.getElementById('sq-quiz-limit-modal').style.display='none'" style="background:var(--g1);color:var(--t2);border:.5px solid var(--b1);border-radius:10px;padding:12px 20px;font-size:15px;font-weight:500;font-family:var(--fam);cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
 <script>
 (function() {
-  var noBar = ['landing','signin'];
-  var origGD = window.gD;
-  window.gD = function(sec) {
-    origGD && origGD(sec);
-    var bar = document.getElementById('sq-topbar');
-    if (bar) bar.style.display = noBar.indexOf(sec) === -1 ? 'flex' : 'none';
-  };
+  // Topbar always visible — this is a logged-in dashboard
+  var bar = document.getElementById('sq-topbar');
+  if (bar) bar.style.display = 'flex';
 })();
 </script>
 </body>
