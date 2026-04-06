@@ -22,7 +22,7 @@ app.use('/api/stripe', stripeRouter);
 app.use('/api/clerk', clerkWebhookRoute);
 app.use('/api/quiz', publicQuizRouter);
 app.use('/api/user', userRouter);
-app.get('/health', (_req, res) => res.json({ status: 'ok' }));
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
