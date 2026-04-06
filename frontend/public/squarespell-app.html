@@ -301,6 +301,7 @@ body { background: #000000 !important; }
         var leads = quizzes.reduce(function(s,q){ return s+(q.leads||0); }, 0);
         document.querySelectorAll(".sq-v").forEach(function(e){ if(views>0) e.textContent=views; });
         document.querySelectorAll(".sq-l").forEach(function(e){ if(leads>0) e.textContent=leads; });
+        document.querySelectorAll(".sq-q").forEach(function(e){ e.textContent=quizzes.length; });
         if (plan) {
           var badge = document.getElementById("sq-plan-badge");
           if (badge) badge.textContent = plan.plan || "free";
@@ -865,8 +866,8 @@ function showPay(state) {
 
   <!-- Stats -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
-    <div class="stat-card"><p class="stat-v">312</p><p class="stat-l">Total views</p><p class="stat-d up">↑ 24% vs last week</p></div>
-    <div class="stat-card"><p class="stat-v">38</p><p class="stat-l">Leads captured</p><p class="stat-d up">↑ 12 new leads</p></div>
+    <div class="stat-card"><p class="stat-v sq-v">0</p><p class="stat-l">Total views</p><p class="stat-d up">↑ 24% vs last week</p></div>
+    <div class="stat-card"><p class="stat-v sq-l">0</p><p class="stat-l">Leads captured</p><p class="stat-d up">↑ 12 new leads</p></div>
     <div class="stat-card"><p class="stat-v">61%</p><p class="stat-l">Completion rate</p><p class="stat-d up">Industry avg 48%</p></div>
     <div class="stat-card"><p class="stat-v">12%</p><p class="stat-l">Lead conversion</p><p class="stat-d up">Avg is 8%</p></div>
   </div>
