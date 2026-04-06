@@ -19,7 +19,7 @@ export default function Dashboard() {
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), 30000);
       try {
-        const res = await fetch(`${API}/api/me`, {
+        const res = await fetch(`${API}/api/user/plan`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: ctrl.signal
         });
