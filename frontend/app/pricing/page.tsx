@@ -161,7 +161,7 @@ export default function PricingPage() {
           --t3: rgba(240,242,245,0.50); --t4: rgba(240,242,245,0.30);
           --card: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
         }
-        .wrap { min-height:100vh; background:#07090c; padding:0 0 100px; position:relative; overflow:hidden; }
+        .wrap { min-height:100vh; background:#07090c; padding:0 0 100px; position:relative; overflow-x:clip; }
         .wrap::before { content:''; position:fixed; top:-300px; left:-300px; width:800px; height:800px; background:radial-gradient(circle,rgba(210,255,29,.06) 0%,transparent 65%); pointer-events:none; z-index:0; }
         .wrap::after { content:''; position:fixed; bottom:-300px; right:-300px; width:700px; height:700px; background:radial-gradient(circle,rgba(210,255,29,.04) 0%,transparent 65%); pointer-events:none; z-index:0; }
         .inner { position:relative; z-index:1; padding:0 20px; }
