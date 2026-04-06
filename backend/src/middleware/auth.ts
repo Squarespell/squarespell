@@ -12,7 +12,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Decode JWT payload without verification — Clerk already signed it
 function decodeJwt(token: string): any {
   try {
     const parts = token.split('.');
@@ -35,15 +34,12 @@ export async function requireAuth(
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-
   const token = authHeader.substring(7);
   const payload = decodeJwt(token);
-
   if (!payload?.sub) {
     return res.status(401).json({ error: 'Invalid token' });
   }
-
-  req.userId = payload.sub;
+  req.userId = payload.sub; // Clerk user ID e.g. user_abc123
   next();
 }
 
@@ -55,35 +51,47 @@ export async function attachUser(
   if (!req.userId) return next();
 
   try {
-    // Check if user exists in Supabase
+    // Look up by clerk_user_id (TEXT column), not id (UUID)
     const { data: existing } = await supabase
       .from('users')
-      .select('id')
-      .eq('id', req.userId)
+      .select('id, clerk_user_id, plan, created_at')
+      .eq('clerk_user_id', req.userId)
       .single();
 
     if (existing) {
-      req.dbUserId = existing.id;
+      req.dbUserId = existing.id; // UUID primary key
       return next();
     }
 
-    // Auto-create user
+    // Auto-create user on first login
     let email = '';
     try {
       const clerkUser = await clerkClient.users.getUser(req.userId);
       email = clerkUser.emailAddresses?.[0]?.emailAddress || '';
-    } catch {}
+    } catch (e) {
+      console.log('Clerk user fetch failed:', e);
+    }
 
-    const { data: newUser } = await supabase
+    const { data: newUser, error } = await supabase
       .from('users')
-      .insert({ id: req.userId, email, plan: 'free', quiz_count: 0 })
+      .insert({
+        clerk_user_id: req.userId,
+        email,
+        plan: 'free',
+        quiz_count: 0,
+      })
       .select('id')
       .single();
 
-    req.dbUserId = newUser?.id || req.userId;
+    if (error) {
+      console.error('User insert error:', error);
+      return res.status(500).json({ error: 'Failed to create user: ' + error.message });
+    }
+
+    req.dbUserId = newUser?.id;
     next();
-  } catch {
-    req.dbUserId = req.userId;
-    next();
+  } catch (err: any) {
+    console.error('attachUser error:', err);
+    return res.status(500).json({ error: 'Auth error: ' + err.message });
   }
 }

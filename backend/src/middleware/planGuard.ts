@@ -14,6 +14,7 @@ const PLAN_LIMITS: Record<string, { quizzes: number; leads: number }> = {
   starter: { quizzes: 5,        leads: 500 },
   pro:     { quizzes: 20,       leads: 5000 },
   agency:  { quizzes: Infinity, leads: Infinity },
+  free:    { quizzes: 999,      leads: 999999 }, // free = on trial
 };
 
 export function getPlanLimits(plan: string) {
@@ -39,13 +40,16 @@ export async function guardQuizCreation(
   next: NextFunction
 ) {
   try {
-    const { data: user } = await supabase
+    // req.dbUserId is the UUID from the users table
+    const { data: user, error } = await supabase
       .from('users')
-      .select('plan, quiz_count, created_at')
+      .select('id, plan, quiz_count, created_at')
       .eq('id', req.dbUserId)
       .single();
 
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (error || !user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     const plan = user.plan ?? 'free';
     const onTrial = plan === 'free' || plan === 'trial';
@@ -54,7 +58,7 @@ export async function guardQuizCreation(
       if (!isTrialActive(user.created_at)) {
         return res.status(403).json({
           error: 'trial_expired',
-          message: 'Your 7-day free trial has ended. Please choose a plan to continue.',
+          message: 'Your 7-day free trial has ended. Please choose a plan.',
           upgrade_url: `${process.env.FRONTEND_URL}/pricing`,
         });
       }
