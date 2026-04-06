@@ -1,8 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap");
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --bg: #07090c; --s1: #0d1509; --s2: #141f0a;
   --accent: #D2FF1D; --text: #f0f2f5; --muted: #4a6020;
-  --border: #2a3e14; --font: var(--font-poppins), sans-serif;
+  --border: #2a3e14; --font: "DM Sans", system-ui, sans-serif;
   --r-card: 8px; --r-pill: 20px;
 }
 body { background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
