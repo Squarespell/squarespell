@@ -17,7 +17,8 @@
   --green:#4ade80;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;
   --fam:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
 }
-body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100vh}
+body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100vh;font-size:16px;line-height:1.6}
+p{font-size:16px;line-height:1.6;margin:0}
 /* NAV */
 .gnav{position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(7,9,12,.88);backdrop-filter:blur(32px);border-bottom:.5px solid var(--b2);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px}
 .gnav-logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex-shrink:0}
@@ -63,7 +64,7 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .dnotif{width:5px;height:5px;border-radius:50%;background:var(--acc);position:absolute;right:9px;top:50%;transform:translateY(-50%)}
 /* DCONTENT */
 .dcontent{margin-left:210px;padding:28px 36px;min-height:calc(100vh - 96px)}
-.dpage{display:none}
+.dpage{display:none;padding:40px 48px;max-width:1200px}
 .dpage.on{display:block}
 /* TYPOGRAPHY */
 .disp{font-size:62px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
