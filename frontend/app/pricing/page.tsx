@@ -220,6 +220,43 @@ export default function PricingPage() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         body { font-family: 'DM Sans', system-ui, sans-serif; background: #07090c; color: #f0f2f5; }
+        .pricing-bg {
+          background: #07090c;
+          position: relative;
+        }
+        .pricing-bg::before {
+          content: '';
+          position: fixed;
+          top: -200px;
+          left: -200px;
+          width: 600px;
+          height: 600px;
+          background: radial-gradient(circle, rgba(210,255,29,0.07) 0%, transparent 70%);
+          pointer-events: none;
+          z-index: 0;
+        }
+        .pricing-bg::after {
+          content: '';
+          position: fixed;
+          bottom: -200px;
+          right: -200px;
+          width: 600px;
+          height: 600px;
+          background: radial-gradient(circle, rgba(210,255,29,0.05) 0%, transparent 70%);
+          pointer-events: none;
+          z-index: 0;
+        }
+        .pricing-inner { position: relative; z-index: 1; }
+        @media (max-width: 768px) {
+          .pricing-grid { grid-template-columns: 1fr !important; }
+          .pricing-outer { padding: 0 16px 60px !important; }
+          .pricing-hero h1 { font-size: 32px !important; line-height: 1.2 !important; }
+          .pricing-hero p { font-size: 15px !important; }
+          .faq-item { padding: 14px 16px !important; }
+          .cta-box { padding: 36px 20px !important; margin-left: 0 !important; margin-right: 0 !important; }
+          .competitor-bar { flex-direction: column !important; gap: 8px !important; padding: 14px 16px !important; }
+          .matrix-wrap { overflow-x: auto; }
+        }
         :root {
           --acc: #D2FF1D;
           --bg: #07090c;
@@ -297,7 +334,7 @@ export default function PricingPage() {
         </div>
 
         {/* PRICING CARDS */}
-        <div style={{ maxWidth: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <div style={{ maxWidth: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }} className='pricing-grid'>
           {(Object.entries(PLANS) as [keyof typeof PLANS, typeof PLANS[keyof typeof PLANS]][]).map(([key, plan]) => (
             <div
               key={key}
@@ -319,7 +356,7 @@ export default function PricingPage() {
               <div style={{ marginBottom: 8 }}>
                 <span style={{ fontSize: 17, fontWeight: 700, color: plan.featured ? acc : 'var(--t1)' }}>{plan.name}</span>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 24, minHeight: 40 }}>{plan.desc}</p>
+              <p style={{ fontSize: 15, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 24, minHeight: 40 }}>{plan.desc}</p>
               <div style={{ marginBottom: 4 }}>
                 {billing === 'yearly' && (
                   <span style={{ fontSize: 14, color: 'var(--t4)', textDecoration: 'line-through', marginRight: 6 }}>${plan.monthly}</span>
@@ -349,7 +386,7 @@ export default function PricingPage() {
                     <span style={{ marginTop: 1, flexShrink: 0 }}>
                       {f.included ? <CheckIcon color={plan.featured ? acc : '#4ade80'} /> : <XIcon />}
                     </span>
-                    <span style={{ fontSize: 13, color: f.included ? 'var(--t2)' : 'var(--t4)', lineHeight: 1.4 }}>{f.text}</span>
+                    <span style={{ fontSize: 15, color: f.included ? 'var(--t2)' : 'var(--t4)', lineHeight: 1.4 }}>{f.text}</span>
                   </div>
                 ))}
               </div>
@@ -419,7 +456,7 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div style={{ maxWidth: 860, margin: '88px auto 0' }}>
+        <div style={{ maxWidth: 900, margin: '88px auto 0' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 10 }}>Common questions</h2>
           <p style={{ fontSize: 15, color: 'var(--t3)', textAlign: 'center', marginBottom: 40 }}>Everything you need to know before you start</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -430,13 +467,13 @@ export default function PricingPage() {
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px' }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--t1)', flex: 1, paddingRight: 16 }}>{faq.q}</span>
+                  <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--t1)', flex: 1, paddingRight: 16 }}>{faq.q}</span>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,.4)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
                 {openFaq === i && (
-                  <div style={{ padding: '0 24px 18px', fontSize: 14, color: 'var(--t3)', lineHeight: 1.7 }}>
+                  <div style={{ padding: '0 24px 18px', fontSize: 16, color: 'var(--t3)', lineHeight: 1.7 }}>
                     {faq.a}
                   </div>
                 )}
@@ -463,6 +500,7 @@ export default function PricingPage() {
         </div>
 
       </div>
+    </div>
     </>
   );
 }
