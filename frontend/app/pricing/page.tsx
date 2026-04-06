@@ -297,7 +297,7 @@ export default function PricingPage() {
         </div>
 
         {/* PRICING CARDS */}
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <div style={{ maxWidth: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {(Object.entries(PLANS) as [keyof typeof PLANS, typeof PLANS[keyof typeof PLANS]][]).map(([key, plan]) => (
             <div
               key={key}
@@ -358,7 +358,7 @@ export default function PricingPage() {
         </div>
 
         {/* COMPETITOR CALLOUT */}
-        <div style={{ maxWidth: 1280, margin: '36px auto 0', background: 'rgba(255,255,255,.028)', border: '.5px solid rgba(255,255,255,.05)', borderRadius: 14, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ maxWidth: '100%', margin: '36px auto 0', background: 'rgba(255,255,255,.028)', border: '.5px solid rgba(255,255,255,.05)', borderRadius: 14, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
             {[
               { label: 'Typeform lead gen plan', price: '$199/mo', you: false },
@@ -376,7 +376,7 @@ export default function PricingPage() {
         </div>
 
         {/* FEATURE MATRIX */}
-        <div style={{ maxWidth: 1280, margin: '72px auto 0' }}>
+        <div style={{ maxWidth: '100%', margin: '72px auto 0' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 10 }}>Full feature breakdown</h2>
           <p style={{ fontSize: 15, color: 'var(--t3)', textAlign: 'center', marginBottom: 36 }}>Every feature, across every plan</p>
           <div style={{ background: 'rgba(255,255,255,.034)', border: '.5px solid rgba(255,255,255,.058)', borderRadius: 18, overflow: 'hidden' }}>
