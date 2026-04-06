@@ -310,6 +310,20 @@ body { background: #07090c !important; }
         document.querySelectorAll(".sq-l").forEach(function(e){ if(totalLeads>0) e.textContent=totalLeads; });
         document.querySelectorAll(".sq-q").forEach(function(e){ e.textContent=quizzes.length; });
 
+        // Onboarding vs real dashboard
+        var onboard = document.getElementById("sq-onboarding");
+        var realDash = document.getElementById("sq-real-dashboard");
+        var isNew = window.location.search.indexOf("new=true") !== -1 || window.parent.location.search.indexOf("new=true") !== -1;
+        if (onboard && realDash) {
+          if (quizzes.length === 0 || isNew) {
+            onboard.style.display = "block";
+            realDash.style.display = "none";
+          } else {
+            onboard.style.display = "none";
+            realDash.style.display = "block";
+          }
+        }
+
         // Plan badge
         if (plan) {
           var badge = document.getElementById("sq-plan-badge");
@@ -936,6 +950,50 @@ function showPay(state) {
 <!-- Sign-in page deleted — auth handled by Clerk -->
 
 <div class="dpage on" id="dp-dashboard">
+
+  <!-- ═══ ONBOARDING STATE (shown when 0 quizzes) ═══ -->
+  <div id="sq-onboarding" style="display:none">
+    <div style="margin-bottom:32px">
+      <p style="font-size:28px;font-weight:800;color:var(--t1);letter-spacing:-.04em;margin-bottom:8px">Welcome! Let's get your first lead.</p>
+      <p style="font-size:16px;color:var(--t3);margin-bottom:20px">You're 3 quick steps away from capturing leads on autopilot.</p>
+      <div style="background:rgba(255,255,255,0.08);border-radius:3px;height:6px;overflow:hidden"><div id="sq-onboard-progress" style="height:6px;border-radius:3px;background:var(--acc);width:0%;transition:width .5s"></div></div>
+    </div>
+
+    <!-- Step 1 — Active -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-left:3px solid var(--acc);border-radius:12px;padding:20px 24px;display:flex;gap:16px;margin-bottom:12px;align-items:flex-start">
+      <div style="width:32px;height:32px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:#07090c">1</div>
+      <div style="flex:1">
+        <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:4px">Create your quiz</p>
+        <p style="font-size:14px;color:var(--t3);line-height:1.5;margin-bottom:12px">Paste your Squarespace URL. AI builds a branded quiz matching your site in 30 seconds.</p>
+        <button class="btn-p" style="font-size:15px;padding:10px 20px" onclick="gD('editor')">Create my first quiz →</button>
+      </div>
+    </div>
+
+    <!-- Step 2 — Locked -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;display:flex;gap:16px;margin-bottom:12px;opacity:0.5;align-items:flex-start">
+      <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:var(--t4)">2</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><p style="font-size:16px;font-weight:700;color:var(--t3)">Embed on your Squarespace site</p><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <p style="font-size:14px;color:var(--t4);line-height:1.5;margin-bottom:12px">One code block. Your quiz goes live on any page instantly. No plugins needed.</p>
+        <button disabled style="background:rgba(255,255,255,0.06);color:var(--t4);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 20px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:default">Get embed code</button>
+      </div>
+    </div>
+
+    <!-- Step 3 — Locked -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;display:flex;gap:16px;margin-bottom:24px;opacity:0.5;align-items:flex-start">
+      <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:800;color:var(--t4)">3</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><p style="font-size:16px;font-weight:700;color:var(--t3)">Watch leads come in</p><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <p style="font-size:14px;color:var(--t4);line-height:1.5;margin-bottom:12px">Every quiz response becomes a lead with name, email, and score in your dashboard.</p>
+        <button disabled style="background:rgba(255,255,255,0.06);color:var(--t4);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 20px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:default">View leads</button>
+      </div>
+    </div>
+
+    <button onclick="document.getElementById('sq-onboarding').style.display='none';document.getElementById('sq-real-dashboard').style.display='block'" style="font-size:14px;color:var(--t4);background:transparent;border:none;cursor:pointer;font-family:var(--fam)">Skip setup, explore dashboard →</button>
+  </div>
+
+  <!-- ═══ REAL DASHBOARD (shown when quizzes exist) ═══ -->
+  <div id="sq-real-dashboard">
   <!-- Plan-aware banner -->
   <div id="sq-plan-banner" style="border:1px solid rgba(251,191,36,.2);border-radius:11px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;font-size:14px;color:var(--t2);flex-wrap:wrap">Loading plan...</div>
 
@@ -1014,6 +1072,7 @@ function showPay(state) {
     <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Leads used (trial)</span><span style="font-size:15px;color:var(--yellow)">38/50 — Running low</span></div><div class="usage-wrap" style="width:200px"><div class="usage-bar" style="width:76%;background:var(--yellow)"></div></div></div>
     <button class="btn-p" style="font-size:16px;padding:9px 16px" onclick="gD('pricing')">Upgrade to Pro</button>
   </div>
+  </div><!-- /sq-real-dashboard -->
 </div>
 
 <!-- ══════════════════════════════ -->

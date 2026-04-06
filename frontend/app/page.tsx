@@ -16,7 +16,7 @@ export default function HomePage() {
         <h1 className={styles.heroTitle}>Turn your <span style={{color:"#D2FF1D"}}>Squarespace</span> visitors into qualified leads in minutes.</h1>
         <p className={styles.heroSub}>Paste your URL. AI builds a branded quiz. Embed it in one click. Collect leads, personalise results, grow your business.</p>
         <div className={styles.heroCtas}>
-          <Link href="/sign-up" className={styles.ctaPrimary}>Start for free →</Link>
+          <Link href="/try" className={styles.ctaPrimary}>Start for free →</Link>
           <Link href="/pricing" className={styles.ctaSecondary}>See pricing</Link>
         </div>
         <p className={styles.heroNote}>No credit card required · Free plan available</p>
