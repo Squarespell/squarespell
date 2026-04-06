@@ -12,12 +12,12 @@ export default function Dashboard() {
   const [src, setSrc] = useState('');
   const [status, setStatus] = useState<'loading'|'trial'|'active'|'expired'>('loading');
   const [daysLeft, setDaysLeft] = useState(0);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
-    getToken().then(async token => {
-      if (!token) return;
+    async function fetchMe(token: string, isRetry = false) {
       const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), 15000);
+      const timeout = setTimeout(() => ctrl.abort(), 30000);
       try {
         const res = await fetch(`${API}/api/me`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -38,17 +38,29 @@ export default function Dashboard() {
           setDaysLeft(days);
           setStatus('trial');
         }
+        setRetrying(false);
         setSrc(`/squarespell-app.html?t=${encodeURIComponent(token)}`);
       } catch {
         clearTimeout(timeout);
-        setStatus('expired');
+        if (!isRetry) {
+          setRetrying(true);
+          fetchMe(token, true);
+        } else {
+          setRetrying(false);
+          setStatus('expired');
+        }
       }
+    }
+
+    getToken().then(token => {
+      if (token) fetchMe(token);
     });
   }, []);
 
   if (status === 'loading') return (
-    <div style={{background:'#07090c',height:'100vh',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div style={{background:'#07090c',height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'16px',fontFamily:'DM Sans,system-ui,sans-serif'}}>
       <div style={{width:'32px',height:'32px',border:'2px solid rgba(210,255,29,.2)',borderTopColor:ACC,borderRadius:'50%',animation:'spin .7s linear infinite'}}/>
+      {retrying && <p style={{fontSize:'14px',color:'rgba(240,242,245,.5)',margin:0}}>Connection slow, retrying...</p>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
