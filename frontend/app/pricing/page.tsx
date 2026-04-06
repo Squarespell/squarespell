@@ -247,8 +247,10 @@ export default function PricingPage() {
           z-index: 0;
         }
         .pricing-inner { position: relative; z-index: 1; }
+        .pricing-grid { grid-template-columns: repeat(3, 1fr); }
         @media (max-width: 768px) {
-          .pricing-grid { grid-template-columns: 1fr !important; }
+          .pricing-grid { grid-template-columns: 1fr !important; display: grid !important; }
+          .pricing-grid > div { width: 100% !important; }
           .pricing-outer { padding: 0 16px 60px !important; }
           .pricing-hero h1 { font-size: 32px !important; line-height: 1.2 !important; }
           .pricing-hero p { font-size: 15px !important; }
@@ -289,7 +291,7 @@ export default function PricingPage() {
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap', marginTop: 20 }}>
             {['2,400+ Squarespace owners', 'No credit card required', 'Cancel anytime'].map(t => (
-              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--t3)' }}>
+              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 16, color: 'var(--t3)' }}>
                 <CheckIcon color="rgba(74,222,128,.6)" />
                 {t}
               </span>
@@ -334,7 +336,7 @@ export default function PricingPage() {
         </div>
 
         {/* PRICING CARDS */}
-        <div style={{ maxWidth: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }} className='pricing-grid'>
+        <div style={{ maxWidth: '100%', margin: '0 auto', display: 'grid', gap: 20 }} className='pricing-grid'>
           {(Object.entries(PLANS) as [keyof typeof PLANS, typeof PLANS[keyof typeof PLANS]][]).map(([key, plan]) => (
             <div
               key={key}
@@ -362,7 +364,7 @@ export default function PricingPage() {
                   <span style={{ fontSize: 14, color: 'var(--t4)', textDecoration: 'line-through', marginRight: 6 }}>${plan.monthly}</span>
                 )}
                 <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-.04em', color: 'var(--t1)' }}>${billing === 'monthly' ? plan.monthly : plan.yearly}</span>
-                <span style={{ fontSize: 14, color: 'var(--t3)', marginLeft: 3 }}>/mo</span>
+                <span style={{ fontSize: 16, color: 'var(--t3)', marginLeft: 3 }}>/mo</span>
               </div>
               <p style={{ fontSize: 12, color: 'var(--t4)', marginBottom: 28 }}>
                 {billing === 'yearly' ? `Billed $${(billing === 'yearly' ? plan.yearly : plan.monthly) * 12}/year` : 'Billed monthly'}
