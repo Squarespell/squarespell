@@ -351,7 +351,7 @@ export default function PricingPage() {
                         <tr key={ri} className="dr">
                           <td>{row.label}</td>
                           {(['starter', 'pro', 'agency'] as const).map(p => (
-                            <td key={p}>
+                            <td key={p} style={p === 'pro' ? {background:'rgba(210,255,29,0.04)',borderLeft:'1px solid rgba(210,255,29,0.1)',borderRight:'1px solid rgba(210,255,29,0.1)'} : {}}>
                               {typeof row[p] === 'boolean'
                                 ? (row[p] ? <Check color={p === 'pro' ? acc : '#4ade80'} /> : <Cross />)
                                 : <span className={`mv ${p === 'pro' ? 'p' : 'o'}`}>{row[p] as string}</span>}
