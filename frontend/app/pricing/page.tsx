@@ -242,7 +242,7 @@ export default function PricingPage() {
         .faq-a { padding:0 24px 20px; font-size:17px; color:var(--t3); line-height:1.7; }
 
         /* CTA BOX */
-        .ctabox { width:100%; background:#07090c; border-top:1px solid rgba(255,255,255,.08); padding:80px 40px; display:flex; align-items:center; justify-content:space-between; gap:48px; flex-wrap:wrap; }
+        .ctabox { width:100%; background:#07090c; border-top:1px solid rgba(255,255,255,.08); padding:80px 40px; display:flex; flex-direction:column; align-items:flex-start; gap:32px; }
         .ctabox h2 { font-size:clamp(32px,4vw,52px); font-weight:800; letter-spacing:-.04em; margin:0; flex:1; min-width:280px; }
         .ctabox-right { display:flex; flex-direction:column; align-items:flex-start; gap:12px; } .ctabox p { font-size:17px; color:var(--t3); line-height:1.65; margin:0; }
         .ctabtn { background:var(--acc); color:#07090c; border:none; border-radius:12px; padding:16px 44px; font-size:17px; font-weight:700; cursor:pointer; transition:background .15s; display:block; margin:0 auto; }
@@ -313,7 +313,7 @@ export default function PricingPage() {
                   <span className="pnum">${billing === 'monthly' ? plan.monthly : plan.yearly}</span>
                   <span className="pper">/mo</span>
                 </div>
-                <div className="pbill">{billing === 'yearly' ? `Billed $${plan.yearly * 12}/year` : 'Billed monthly'}</div>{billing === 'yearly' && <div className="psave">Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>}{billing === 'yearly' && <div style={{fontSize:'14px',color:'#4ade80',fontWeight:600,marginBottom:'20px'}}>Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>}
+                <div className="pbill">{billing === 'yearly' ? `Billed $${plan.yearly * 12}/year` : 'Billed monthly'}</div><div className="psave">Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>{billing === 'yearly' && <div style={{fontSize:'14px',color:'#4ade80',fontWeight:600,marginBottom:'20px'}}>Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>}
                 <button className={`cta ${plan.featured ? 'p' : 's'}`} onClick={() => handleUpgrade(key)} disabled={loading === key}>
                   {loading === key ? 'Loading...' : plan.cta}
                 </button>
