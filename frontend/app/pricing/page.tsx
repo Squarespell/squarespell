@@ -245,7 +245,7 @@ export default function PricingPage() {
         .ctabox { width:100%; background:#07090c; border-top:1px solid rgba(255,255,255,.08); padding:80px 48px; display:flex; flex-direction:column; align-items:flex-start; gap:28px; }
         .ctabox h2 { font-size:clamp(56px,8vw,96px); font-weight:800; letter-spacing:-.04em; line-height:1.0; margin:0; max-width:800px; }
         .ctabox-right { display:flex; flex-direction:column; align-items:flex-start; gap:12px; } .ctabox p { font-size:17px; color:var(--t3); line-height:1.65; margin:0; }
-        .ctabtn { background:#f0f2f5; color:#07090c; border:none; border-radius:6px; padding:13px 28px; font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition:background .15s; }
+        .ctabtn { background:var(--acc); color:#07090c; border:none; border-radius:12px; padding:16px 40px; font-size:17px; font-weight:700; cursor:pointer; transition:background .15s; }
         .ctabtn:hover { background:#c8f200; }
         .ctanote { font-size:15px; color:var(--t3); margin:0; line-height:1.5; }
 
