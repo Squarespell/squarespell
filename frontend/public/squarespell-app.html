@@ -400,6 +400,18 @@ body { background: #07090c !important; }
         var planLimits = { trial:{q:1,l:50}, starter:{q:5,l:500}, pro:{q:20,l:5000}, agency:{q:999999,l:999999} };
         var lim = planLimits[userPlan] || planLimits.trial;
 
+        // Account acc-* IDs
+        var _el = function(id){ return document.getElementById(id); };
+        var userEmail = (plan && plan.email) || "";
+        var userName = userEmail ? userEmail.split("@")[0] : "User";
+        if(_el('acc-name')) _el('acc-name').textContent = userName;
+        if(_el('acc-email')) _el('acc-email').textContent = userEmail || '—';
+        if(_el('acc-plan')) _el('acc-plan').textContent = (userPlan || 'trial').charAt(0).toUpperCase() + (userPlan || 'trial').slice(1);
+        if(_el('acc-q-used')) _el('acc-q-used').textContent = quizzes.length;
+        if(_el('acc-q-limit')) _el('acc-q-limit').textContent = lim.q > 99999 ? 'Unlimited' : lim.q;
+        if(_el('acc-l-used')) _el('acc-l-used').textContent = totalLeads;
+        if(_el('acc-l-limit')) _el('acc-l-limit').textContent = lim.l > 99999 ? 'Unlimited' : lim.l;
+
         // B. Sidebar lock icons for restricted features
         var lockSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5" style="margin-left:auto;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
         if (userPlan === "trial" || userPlan === "free") {
@@ -1139,7 +1151,7 @@ function showPay(state) {
       <p class="h4" style="margin-bottom:16px">Profile</p>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
         <div id="sq-acct-avatar" style="width:48px;height:48px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800;color:var(--acc)">—</div>
-        <div><p id="sq-acct-name" style="font-size:18px;font-weight:700;color:var(--t1)">Loading...</p><p id="sq-acct-email" style="font-size:16px;color:var(--t3)">—</p></div>
+        <div><p id="sq-acct-name" style="font-size:18px;font-weight:700;color:var(--t1)"><span id="acc-name">—</span></p><p id="sq-acct-email" style="font-size:16px;color:var(--t3)"><span id="acc-email">—</span></p></div>
       </div>
       <div style="margin-bottom:11px"><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Full name</span><div class="inp-row"><input id="sq-acct-name-input" class="inp" value="" style="font-size:17px"/></div></div>
       <div style="margin-bottom:16px"><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Email</span><div class="inp-row"><input id="sq-acct-email-input" class="inp" value="" style="font-size:17px" readonly/></div></div>
@@ -1149,13 +1161,13 @@ function showPay(state) {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <p class="h4">Current plan</p>
         <div style="display:flex;align-items:center;gap:7px">
-          <span id="sq-acct-plan" style="background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:2px 9px;font-size:14px;font-weight:700;color:var(--acc)">Trial</span>
+          <span id="sq-acct-plan" style="background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:2px 9px;font-size:14px;font-weight:700;color:var(--acc)"><span id="acc-plan">Trial</span></span>
           <span id="sq-acct-days" style="font-size:15px;color:var(--yellow);font-weight:600">—</span>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Quizzes</span><span id="sq-acct-q-usage" style="font-size:15px;color:var(--t3)">— / —</span></div><div class="usage-wrap"><div id="sq-acct-q-bar" class="usage-bar" style="width:0%;background:var(--acc)"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Leads this month</span><span id="sq-acct-l-usage" style="font-size:15px;color:var(--t3)">— / —</span></div><div class="usage-wrap"><div id="sq-acct-l-bar" class="usage-bar" style="width:0%;background:var(--acc)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Quizzes</span><span id="sq-acct-q-usage" style="font-size:15px;color:var(--t3)"><span id="acc-q-used">0</span> / <span id="acc-q-limit">1</span></span></div><div class="usage-wrap"><div id="sq-acct-q-bar" class="usage-bar" style="width:0%;background:var(--acc)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:15px;color:var(--t2);font-weight:500">Leads this month</span><span id="sq-acct-l-usage" style="font-size:15px;color:var(--t3)"><span id="acc-l-used">0</span> / <span id="acc-l-limit">50</span></span></div><div class="usage-wrap"><div id="sq-acct-l-bar" class="usage-bar" style="width:0%;background:var(--acc)"></div></div></div>
       </div>
       <div style="background:var(--g2);border:.5px solid var(--b2);border-radius:10px;padding:12px;margin-bottom:12px">
         <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:3px">Upgrade to Pro — $39/mo</p>
