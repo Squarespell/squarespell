@@ -51,7 +51,7 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .d-tablet-frame{background:var(--bg);border-radius:28px;border:6px solid rgba(255,255,255,.07);overflow:hidden}
 /* GLASS */
 .glass{background:var(--g1);backdrop-filter:blur(24px);border:.5px solid var(--b1);border-radius:16px}
-.glass-sm{background:var(--g2);backdrop-filter:blur(18px);border:.5px solid var(--b2);border-radius:12px}
+.glass-sm{background:rgba(255,255,255,0.04);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.08);border-radius:12px}
 /* SIDEBAR */
 .dsidebar{position:fixed;top:96px;left:0;bottom:0;width:210px;background:var(--bg2);border-right:.5px solid var(--b2);padding:16px 10px;z-index:100;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none}
 .dsi{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:17px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative}
@@ -70,7 +70,7 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .disp span{color:var(--acc)}
 .h2{font-size:38px;font-weight:800;color:var(--t1);line-height:1.1;letter-spacing:-.045em}
 .h2 span{color:var(--acc)}
-.h3{font-size:25px;font-weight:700;color:var(--t1);letter-spacing:-.035em}
+.h3{font-size:22px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em}
 .h4{font-size:21px;font-weight:600;color:var(--t1);letter-spacing:-.02em}
 .body-lg{font-size:22px;color:var(--t2);line-height:1.65;letter-spacing:-.01em}
 .body{font-size:18px;color:var(--t2);line-height:1.6;letter-spacing:-.01em}
@@ -107,7 +107,7 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--g1);border:.5px solid var(--b1);border-radius:11px;padding:12px 18px;cursor:pointer;font-size:17px;color:var(--t2);font-weight:500;font-family:var(--fam);width:100%;margin-bottom:9px;letter-spacing:-.01em;transition:all .15s}
 .auth-btn:hover{border-color:rgba(255,255,255,.16);color:var(--t1)}
 /* STAT CARD */
-.stat-card{background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:18px 20px;transition:all .2s;cursor:default}
+.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;transition:all .2s;cursor:default}
 .stat-card:hover{border-color:var(--acc-b);transform:translateY(-1px)}
 .stat-v{font-size:34px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1}
 .stat-l{font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
@@ -237,27 +237,29 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
 .dcontent { padding-top: 28px !important; }
 .dsidebar { top: 0 !important; }
 
-/* Pure black background */
-body { background: #000000 !important; }
-:root { --bg: #000000 !important; --bg2: #0a0a0a !important; }
-.dsidebar { background: #0a0a0a !important; }
+/* Background */
+body { background: #07090c !important; }
+:root { --bg: #07090c !important; --bg2: rgba(255,255,255,0.03) !important; --b1: rgba(255,255,255,0.08) !important; --b2: rgba(255,255,255,0.08) !important; --b3: rgba(255,255,255,0.08) !important; }
+.dsidebar { background: rgba(255,255,255,0.03) !important; border-right-color: rgba(255,255,255,0.08) !important; }
 
 /* Top nav bar for logged-in state */
 .sq-topbar {
   position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 500;
-  background: rgba(0,0,0,.9); backdrop-filter: blur(32px);
-  border-bottom: .5px solid rgba(255,255,255,.07);
+  background: rgba(7,9,12,.92); backdrop-filter: blur(32px);
+  border-bottom: .5px solid rgba(255,255,255,0.08);
   display: flex; align-items: center; padding: 0 24px; gap: 16px;
 }
 .dcontent { margin-top: 56px !important; }
 .dsidebar { top: 56px !important; }
 
 /* Sidebar sizing */
-.dsi { font-size: 16px !important; padding: 10px 14px !important; gap: 12px !important; }
-.dsi svg { width: 18px !important; height: 18px !important; }
+.dsi { font-size: 15px !important; padding: 8px 14px !important; gap: 10px !important; color: rgba(240,242,245,0.6) !important; }
+.dsi:hover { color: #f0f2f5 !important; }
+.dsi.on { color: var(--acc) !important; }
+.dsi svg { width: 16px !important; height: 16px !important; }
 .dsec { font-size: 11px !important; padding: 18px 14px 8px !important; }
-.dsidebar { width: 230px !important; }
-.dcontent { margin-left: 230px !important; }
+.dsidebar { width: 220px !important; }
+.dcontent { margin-left: 220px !important; padding: 32px !important; }
 
 /* Pricing toggle */
 .bt-opt { color: var(--t2) !important; font-size: 16px !important; }
@@ -389,7 +391,7 @@ function gD(sec) {
       dc.style.marginLeft = '0';
     } else {
       sb.style.display = 'flex';
-      dc.style.marginLeft = '210px';
+      dc.style.marginLeft = '220px';
     }
   }
 }
@@ -674,20 +676,20 @@ function showPay(state) {
 
 <div class="dsidebar" id="dSidebar">
   <p class="dsec">Pages</p>
-  <button class="dsi on" data-sec="landing" onclick="gD('landing')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Landing</button>
-  <button class="dsi" data-sec="signin" onclick="gD('signin')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Sign in</button>
-  <button class="dsi" data-sec="dashboard" onclick="gD('dashboard')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard<span class="dnotif"></span></button>
-  <button class="dsi" data-sec="analytics" onclick="gD('analytics')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</button>
-  <button class="dsi" data-sec="leads" onclick="gD('leads')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Leads</button>
-  <button class="dsi" data-sec="editor" onclick="gD('editor')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editor</button>
-  <button class="dsi" data-sec="templates" onclick="gD('templates')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Templates</button>
-  <button class="dsi" data-sec="pricing" onclick="gD('pricing')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Pricing</button>
-  <button class="dsi" data-sec="account" onclick="gD('account')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Account</button>
+  <button class="dsi on" data-sec="landing" onclick="gD('landing')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Landing</button>
+  <button class="dsi" data-sec="signin" onclick="gD('signin')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Sign in</button>
+  <button class="dsi" data-sec="dashboard" onclick="gD('dashboard')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Dashboard<span class="dnotif"></span></button>
+  <button class="dsi" data-sec="analytics" onclick="gD('analytics')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</button>
+  <button class="dsi" data-sec="leads" onclick="gD('leads')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><circle cx="19" cy="7" r="3"/></svg>Leads</button>
+  <button class="dsi" data-sec="editor" onclick="gD('editor')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Editor</button>
+  <button class="dsi" data-sec="templates" onclick="gD('templates')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Templates</button>
+  <button class="dsi" data-sec="pricing" onclick="gD('pricing')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Pricing</button>
+  <button class="dsi" data-sec="account" onclick="gD('account')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Account</button>
   <p class="dsec">Quiz flow</p>
-  <button class="dsi" data-sec="question" onclick="gD('question')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Question</button>
-  <button class="dsi" data-sec="leadgate" onclick="gD('leadgate')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Lead gate</button>
-  <button class="dsi" data-sec="result" onclick="gD('result')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/></svg>Result</button>
-  <button class="dsi" data-sec="payment" onclick="gD('payment')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payment</button>
+  <button class="dsi" data-sec="question" onclick="gD('question')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Question</button>
+  <button class="dsi" data-sec="leadgate" onclick="gD('leadgate')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Lead gate</button>
+  <button class="dsi" data-sec="result" onclick="gD('result')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Result</button>
+  <button class="dsi" data-sec="payment" onclick="gD('payment')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payment</button>
 </div>
 
 <div class="dcontent" id="dContent" style="margin-left:210px">
@@ -865,14 +867,14 @@ function showPay(state) {
   </div>
 
   <!-- Stats -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
     <div class="stat-card"><p class="stat-v sq-v">0</p><p class="stat-l">Total views</p><p class="stat-d up">↑ 24% vs last week</p></div>
     <div class="stat-card"><p class="stat-v sq-l">0</p><p class="stat-l">Leads captured</p><p class="stat-d up">↑ 12 new leads</p></div>
     <div class="stat-card"><p class="stat-v sq-q">0</p><p class="stat-l">Active quizzes</p><p class="stat-d up">Create more to grow leads</p></div>
     <div class="stat-card"><p class="stat-v">12%</p><p class="stat-l">Lead conversion</p><p class="stat-d up">Avg is 8%</p></div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:16px">
     <div class="glass-sm" style="padding:18px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><p class="h4">Daily performance</p><div style="display:flex;gap:10px"><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size:14px;color:var(--t3)">Views</span></div><div style="display:flex;align-items:center;gap:4px"><div class="cdot" style="background:var(--green)"></div><span style="font-size:14px;color:var(--t3)">Leads</span></div></div></div>
       <div style="display:flex;align-items:flex-end;gap:5px;height:120px;margin-bottom:6px">
