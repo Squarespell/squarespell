@@ -67,6 +67,19 @@ export default function Dashboard() {
 
   return (
     <>
+      {status === 'trial' && daysLeft > 3 && daysLeft <= 10 && (
+        <div style={{background:'#1a1f2e',borderBottom:'1px solid rgba(255,255,255,0.1)',padding:'14px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',fontFamily:'DM Sans,system-ui,sans-serif',flexWrap:'wrap',gap:'12px'}}>
+          <span style={{fontSize:'15px',color:'rgba(240,242,245,0.85)'}}>
+            Your trial expires in <strong style={{color:'#f0f2f5'}}>{ daysLeft} days</strong>. Add a payment method to ensure uninterrupted service when your trial expires.
+          </span>
+          <button
+            onClick={() => router.push('/pricing')}
+            style={{background:'#f0f2f5',color:'#07090c',border:'none',borderRadius:'8px',padding:'10px 20px',fontSize:'14px',fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}
+          >
+            Add a Card
+          </button>
+        </div>
+      )}
       {status === 'trial' && daysLeft <= 3 && (
         <div style={{background:'rgba(210,255,29,.08)',borderBottom:'1px solid rgba(210,255,29,.2)',padding:'10px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',fontFamily:'DM Sans,system-ui,sans-serif',flexWrap:'wrap',gap:'8px'}}>
           <span style={{fontSize:'14px',color:'rgba(240,242,245,.75)'}}>
