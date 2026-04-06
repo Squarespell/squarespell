@@ -243,7 +243,7 @@ export default function PricingPage() {
 
         /* CTA BOX */
         .ctabox { width:100%; background:#07090c; border-top:1px solid rgba(255,255,255,.08); padding:80px 48px; display:flex; flex-direction:column; align-items:flex-start; gap:28px; }
-        .ctabox h2 { font-size:clamp(32px,4vw,52px); font-weight:800; letter-spacing:-.04em; margin:0; flex:1; min-width:280px; }
+        .ctabox h2 { font-size:clamp(56px,8vw,96px); font-weight:800; letter-spacing:-.04em; line-height:1.0; margin:0; max-width:800px; }
         .ctabox-right { display:flex; flex-direction:column; align-items:flex-start; gap:12px; } .ctabox p { font-size:17px; color:var(--t3); line-height:1.65; margin:0; }
         .ctabtn { background:#f0f2f5; color:#07090c; border:none; border-radius:6px; padding:13px 28px; font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition:background .15s; }
         .ctabtn:hover { background:#c8f200; }
@@ -313,7 +313,7 @@ export default function PricingPage() {
                   <span className="pnum">${billing === 'monthly' ? plan.monthly : plan.yearly}</span>
                   <span className="pper">/mo</span>
                 </div>
-                <div className="pbill">{billing === 'yearly' ? `Billed $${plan.yearly * 12}/year` : 'Billed monthly'}</div><div className="psave">Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>{billing === 'yearly' && <div style={{fontSize:'14px',color:'#4ade80',fontWeight:600,marginBottom:'20px'}}>Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>}
+                <div className="pbill">{billing === 'yearly' ? `Billed $${plan.yearly * 12}/year` : 'Billed monthly'}</div><div className="psave">Save {Math.round((1 - plan.yearly / plan.monthly) * 100)}% annually</div>
                 <button className={`cta ${plan.featured ? 'p' : 's'}`} onClick={() => handleUpgrade(key)} disabled={loading === key}>
                   {loading === key ? 'Loading...' : plan.cta}
                 </button>
