@@ -93,11 +93,12 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const PRICE_IDS: Record<string,string> = { starter: process.env.STRIPE_STARTER_PRICE_ID!, pro: process.env.STRIPE_PRO_PRICE_ID!, agency: process.env.STRIPE_AGENCY_PRICE_ID! };
+const PRICE_IDS: Record<string,Record<string,string>> = { starter: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
 
 export const stripeRouter = Router();
 stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
-  const priceId = PRICE_IDS[req.body.plan];
+  const billing = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
+  const priceId = (PRICE_IDS[req.body.plan] as any)?.[billing];
   if (!priceId) return res.status(400).json({ error: 'Invalid plan' });
   const { data: user } = await supabase.from('users').select('email,stripe_customer_id').eq('id', req.dbUserId).single();
   const session = await stripe.checkout.sessions.create({ mode: 'subscription', payment_method_types: ['card'], customer_email: user?.stripe_customer_id ? undefined : user?.email, customer: user?.stripe_customer_id ?? undefined, line_items: [{ price: priceId, quantity: 1 }], success_url: `${process.env.FRONTEND_URL}/dashboard?upgraded=true`, cancel_url: `${process.env.FRONTEND_URL}/pricing`, metadata: { db_user_id: req.dbUserId!, plan: req.body.plan } });

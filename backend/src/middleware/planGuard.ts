@@ -9,12 +9,12 @@ const supabase = createClient(
 
 const TRIAL_DAYS = 7;
 
-const PLAN_LIMITS: Record<string, { quizzes: number; leads: number }> = {
+export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number }> = {
+  free:    { quizzes: 999,      leads: 999999 },
   trial:   { quizzes: 999,      leads: 999999 },
   starter: { quizzes: 5,        leads: 500 },
   pro:     { quizzes: 20,       leads: 5000 },
   agency:  { quizzes: Infinity, leads: Infinity },
-  free:    { quizzes: 999,      leads: 999999 }, // free = on trial
 };
 
 export function getPlanLimits(plan: string) {
@@ -40,7 +40,6 @@ export async function guardQuizCreation(
   next: NextFunction
 ) {
   try {
-    // req.dbUserId is the UUID from the users table
     const { data: user, error } = await supabase
       .from('users')
       .select('id, plan, quiz_count, created_at')
@@ -48,6 +47,7 @@ export async function guardQuizCreation(
       .single();
 
     if (error || !user) {
+      console.error('guardQuizCreation: user not found for dbUserId:', req.dbUserId);
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -58,7 +58,7 @@ export async function guardQuizCreation(
       if (!isTrialActive(user.created_at)) {
         return res.status(403).json({
           error: 'trial_expired',
-          message: 'Your 7-day free trial has ended. Please choose a plan.',
+          message: 'Your 7-day free trial has ended. Please choose a plan to continue.',
           upgrade_url: `${process.env.FRONTEND_URL}/pricing`,
         });
       }
@@ -84,6 +84,7 @@ export async function guardQuizCreation(
     (req as any).quizCount = quizCount;
     next();
   } catch (err: any) {
+    console.error('guardQuizCreation error:', err.message);
     res.status(500).json({ error: err.message ?? 'Plan check failed' });
   }
 }

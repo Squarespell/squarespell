@@ -39,7 +39,7 @@ export async function requireAuth(
   if (!payload?.sub) {
     return res.status(401).json({ error: 'Invalid token' });
   }
-  req.userId = payload.sub; // Clerk user ID e.g. user_abc123
+  req.userId = payload.sub;
   next();
 }
 
@@ -51,7 +51,7 @@ export async function attachUser(
   if (!req.userId) return next();
 
   try {
-    // Look up by clerk_user_id (TEXT column), not id (UUID)
+    // Look up by clerk_user_id (text), not id (uuid)
     const { data: existing } = await supabase
       .from('users')
       .select('id, clerk_user_id, plan, created_at')
@@ -59,17 +59,17 @@ export async function attachUser(
       .single();
 
     if (existing) {
-      req.dbUserId = existing.id; // UUID primary key
+      req.dbUserId = existing.id;
       return next();
     }
 
-    // Auto-create user on first login
+    // Auto-create user — do NOT set id, let Supabase auto-generate the UUID
     let email = '';
     try {
       const clerkUser = await clerkClient.users.getUser(req.userId);
       email = clerkUser.emailAddresses?.[0]?.emailAddress || '';
     } catch (e) {
-      console.log('Clerk user fetch failed:', e);
+      console.log('Clerk lookup failed, continuing without email:', e);
     }
 
     const { data: newUser, error } = await supabase
@@ -84,14 +84,14 @@ export async function attachUser(
       .single();
 
     if (error) {
-      console.error('User insert error:', error);
+      console.error('User insert error:', error.message);
       return res.status(500).json({ error: 'Failed to create user: ' + error.message });
     }
 
     req.dbUserId = newUser?.id;
     next();
   } catch (err: any) {
-    console.error('attachUser error:', err);
+    console.error('attachUser error:', err.message);
     return res.status(500).json({ error: 'Auth error: ' + err.message });
   }
 }
