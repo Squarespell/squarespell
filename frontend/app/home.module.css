@@ -1,10 +1,10 @@
 .page { min-height: 100vh; background: #07090c; }
 .nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 48px; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .navLogo { font-size: 22px; font-weight: 800; color: #D2FF1D; letter-spacing: -.03em; }
-.navLinks { display: flex; align-items: center; gap: 32px; font-size: 16px; color: rgba(240,242,245,0.6); }
+.navLinks { display: flex; align-items: center; gap: 32px; font-size: 16px; color: rgba(240,242,245,0.75); }
 .navLinks a { color: rgba(240,242,245,0.6); transition: color 0.2s; }
 .navLinks a:hover { color: #f0f2f5; }
-.navCta { background: #D2FF1D !important; color: #07090c !important; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 15px; transition: background 0.15s; }
+.navCta { background: #D2FF1D !important; color: #07090c !important; padding: 13px 28px; border-radius: 10px; font-weight: 700; font-size: 16px; transition: background 0.15s; }
 .navCta:hover { background: #c8f200 !important; }
 .hero { text-align: center; padding: 120px 24px 100px; max-width: 900px; margin: 0 auto; }
 .heroBadge { display: inline-flex; align-items: center; background: rgba(210,255,29,0.08); border: 1px solid rgba(210,255,29,0.2); color: #D2FF1D; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; margin-bottom: 32px; }
