@@ -5,6 +5,9 @@ import { generateQuiz, processOtherAnswer } from '../services/claudeService';
 import { scrapeBrand } from '../services/brandScraper';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
+import { Resend } from 'resend';
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function normalizeUrl(input: string): string {
   let url = input.trim().replace(/\/+$/, '');
@@ -59,6 +62,23 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   const { error } = await supabase.from('leads').insert({ quiz_id: quiz.id, user_id: quiz.user_id, name: name ?? null, email, answers: answers ?? {}, outcome_id: outcome_id ?? null });
   if (error) return res.status(500).json({ error: error.message });
   await supabase.rpc('increment_lead_count', { qid: quiz.id });
+
+  // Send email notification to quiz owner
+  if (resend) {
+    try {
+      const { data: ownerUser } = await supabase.from('users').select('email').eq('id', quiz.user_id).single();
+      if (ownerUser?.email) {
+        const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
+        await resend.emails.send({
+          from: 'Squarespell <notifications@squarespell.com>',
+          to: ownerUser.email,
+          subject: `New lead captured: ${name || email}`,
+          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || '—'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="https://squarespell.com/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
+        });
+      }
+    } catch (e) { console.log('Email notification failed:', e); }
+  }
+
   res.status(201).json({ success: true });
 });
 

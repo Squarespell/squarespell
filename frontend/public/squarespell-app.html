@@ -291,7 +291,7 @@ body { background: #07090c !important; }
     apiFetch("/api/generate", { method: "POST", body: JSON.stringify({ url: url, business_type: "coaching", goal: goal || "Generate more leads" }) })
       .then(function(r){ return r.json(); })
       .then(function(data) {
-        if (data.error) { alert(data.error); } else { alert("Quiz created!"); gD("dashboard"); }
+        if (data.error) { alert(data.error); var btn=document.getElementById("editor-gen-btn"); if(btn){btn.textContent="Generate quiz →";btn.disabled=false;} } else { var btn=document.getElementById("editor-gen-btn"); var st=document.getElementById("editor-gen-status"); if(btn){btn.textContent="Quiz created!";btn.style.background="var(--green)";} if(st) st.textContent="Redirecting to embed code..."; setTimeout(function(){ gD("embed"); if(btn){btn.textContent="Generate quiz →";btn.disabled=false;btn.style.background="#D2FF1D";} if(st) st.textContent=""; }, 2000); }
       }).catch(function() { alert("Failed. Try again."); });
   };
   document.addEventListener("DOMContentLoaded", function() {
@@ -358,8 +358,9 @@ body { background: #07090c !important; }
         var analyticsEmpty = document.getElementById("sq-analytics-empty");
         if (analyticsEmpty) analyticsEmpty.style.display = totalViews === 0 ? "block" : "none";
 
-        // Editor quiz list
+        // Editor quiz list + Quizzes page
         if (typeof renderEditorQuizzes === "function") renderEditorQuizzes(quizzes);
+        if (typeof renderQuizzesPage === "function") renderQuizzesPage(quizzes);
 
         // Account page
         if (plan) {
@@ -576,6 +577,30 @@ body { background: #07090c !important; }
         '<div><p style="font-size:16px;font-weight:700;color:#f0f2f5;margin-bottom:4px">' + (q.title || "Untitled quiz") + '</p>' +
         '<div style="display:flex;gap:16px;font-size:13px;color:rgba(240,242,245,0.4)"><span>' + views + ' views</span><span>' + leads + ' leads</span><span style="color:' + statusColor + ';font-weight:600;text-transform:capitalize">' + status + '</span></div></div>' +
         '<div style="display:flex;gap:8px"><button onclick="gD(\'embed\')" style="background:transparent;color:var(--acc);border:1px solid rgba(210,255,29,.18);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;font-family:var(--fam);cursor:pointer">Embed code</button></div></div>';
+    }).join("");
+  }
+
+  // Quizzes page
+  function renderQuizzesPage(quizzes) {
+    var grid = document.getElementById("sq-quizzes-grid");
+    var empty = document.getElementById("sq-quizzes-empty");
+    if (!grid) return;
+    if (!quizzes.length) {
+      grid.innerHTML = "";
+      if (empty) empty.style.display = "block";
+      return;
+    }
+    if (empty) empty.style.display = "none";
+    grid.innerHTML = quizzes.map(function(q) {
+      var views = q.view_count || q.views || 0;
+      var leads = q.lead_count || q.leads || 0;
+      var st = q.status || "draft";
+      var stColor = st === "live" || st === "published" ? "var(--green)" : "var(--yellow)";
+      var date = new Date(q.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      return '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><p style="font-size:16px;font-weight:700;color:#f0f2f5">' + (q.title || "Untitled quiz") + '</p><span style="font-size:12px;font-weight:700;color:' + stColor + ';text-transform:uppercase;letter-spacing:.06em">' + st + '</span></div>' +
+        '<div style="display:flex;gap:20px;margin-bottom:16px;font-size:13px;color:rgba(240,242,245,0.4)"><span>' + views + ' views</span><span>' + leads + ' leads</span><span>' + date + '</span></div>' +
+        '<div style="display:flex;gap:8px"><button onclick="gD(\'embed\')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;font-family:var(--fam);cursor:pointer">Embed</button><button onclick="gD(\'editor\')" style="background:rgba(255,255,255,0.06);color:#f0f2f5;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--fam);cursor:pointer">Edit</button></div></div>';
     }).join("");
   }
 
@@ -801,6 +826,7 @@ function showPay(state) {
 <div class="dsidebar" id="dSidebar">
   <p class="dsec">Pages</p>
   <button class="dsi on" data-sec="dashboard" onclick="gD('dashboard')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Dashboard<span class="dnotif"></span></button>
+  <button class="dsi" data-sec="quizzes" onclick="gD('quizzes')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Quizzes</button>
   <button class="dsi" data-sec="analytics" onclick="gD('analytics')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</button>
   <button class="dsi" data-sec="leads" onclick="gD('leads')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><circle cx="19" cy="7" r="3"/></svg>Leads</button>
   <button class="dsi" data-sec="editor" onclick="gD('editor')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Editor</button>
@@ -860,6 +886,25 @@ function showPay(state) {
     </div>
   </div>
 </div>
+</div>
+
+<!-- ══════════════════════════════ -->
+<!-- D: QUIZZES                    -->
+<!-- ══════════════════════════════ -->
+<div class="dpage" id="dp-quizzes">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <p class="h3">Your Quizzes</p>
+    <button onclick="if(window.__checkQuizLimit && window.__checkQuizLimit()) gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">+ Create new quiz</button>
+  </div>
+  <!-- Empty state -->
+  <div id="sq-quizzes-empty" style="display:none;text-align:center;padding:60px 20px">
+    <div style="width:56px;height:56px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+    <p style="font-size:17px;font-weight:700;color:rgba(240,242,245,0.75);margin-bottom:8px">No quizzes yet</p>
+    <p style="font-size:15px;color:rgba(240,242,245,0.4);line-height:1.6;max-width:320px;margin:0 auto 24px">Create your first quiz — paste your Squarespace URL and AI builds it in 30 seconds.</p>
+    <button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer">Create your first quiz →</button>
+  </div>
+  <!-- Quiz grid -->
+  <div id="sq-quizzes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
 </div>
 
 <!-- ══════════════════════════════ -->

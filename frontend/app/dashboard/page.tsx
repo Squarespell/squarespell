@@ -67,25 +67,31 @@ export default function Dashboard() {
   );
 
   if (status === 'expired') return (
-    <div style={{background:'#07090c',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'DM Sans,system-ui,sans-serif',padding:'24px'}}>
-      <div style={{textAlign:'center',maxWidth:'480px'}}>
-        <div style={{width:'64px',height:'64px',borderRadius:'50%',background:'#1a3a1a',border:'1px solid rgba(210,255,29,.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 32px'}}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="13" stroke="#f0f2f5" strokeWidth="2"/>
-            <line x1="16" y1="16" x2="16" y2="8" stroke="#f0f2f5" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="16" y1="16" x2="22" y2="16" stroke="#f0f2f5" strokeWidth="2" strokeLinecap="round"/>
-            <circle cx="16" cy="16" r="1.5" fill="#f0f2f5"/>
-          </svg>
+    <div style={{background:'#07090c',minHeight:'100vh',fontFamily:'DM Sans,system-ui,sans-serif',padding:'24px'}}>
+      {/* Logo */}
+      <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'16px 8px 0'}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={ACC} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span style={{fontSize:'18px',fontWeight:800,color:'#f0f2f5',letterSpacing:'-0.03em'}}>Squarespell</span>
+      </div>
+      <div style={{maxWidth:'900px',margin:'0 auto',textAlign:'center',paddingTop:'80px'}}>
+        <h1 style={{fontSize:'clamp(32px,5vw,40px)',fontWeight:800,letterSpacing:'-.04em',color:'#f0f2f5',marginBottom:'16px',lineHeight:1.1}}>Your free trial has ended</h1>
+        <p style={{fontSize:'17px',color:'rgba(240,242,245,.5)',lineHeight:1.65,marginBottom:'48px',maxWidth:'480px',marginLeft:'auto',marginRight:'auto'}}>You captured leads during your trial. Upgrade to keep access and never lose a lead.</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'16px',marginBottom:'48px',textAlign:'left'}}>
+          {[
+            {name:'Starter',price:'$19',desc:'5 quizzes · 500 leads/mo · CSV export'},
+            {name:'Pro',price:'$39',desc:'20 quizzes · 5,000 leads/mo · Lead scoring · Zapier',pop:true},
+            {name:'Agency',price:'$79',desc:'Unlimited quizzes · Unlimited leads · White-label'},
+          ].map((p,i) => (
+            <div key={i} style={{background:p.pop?'rgba(210,255,29,.06)':'rgba(255,255,255,.04)',border:`1px solid ${p.pop?'rgba(210,255,29,.2)':'rgba(255,255,255,.08)'}`,borderRadius:'14px',padding:'28px 24px',position:'relative'}}>
+              {p.pop && <div style={{position:'absolute',top:'-10px',left:'50%',transform:'translateX(-50%)',background:ACC,color:'#07090c',fontSize:'11px',fontWeight:800,padding:'2px 12px',borderRadius:'20px',letterSpacing:'.06em',textTransform:'uppercase'}}>Most Popular</div>}
+              <p style={{fontSize:'14px',fontWeight:700,color:'rgba(240,242,245,.5)',marginBottom:'8px'}}>{p.name}</p>
+              <p style={{fontSize:'36px',fontWeight:800,color:'#f0f2f5',letterSpacing:'-.04em',marginBottom:'4px'}}>{p.price}<span style={{fontSize:'15px',fontWeight:500,color:'rgba(240,242,245,.4)'}}>/mo</span></p>
+              <p style={{fontSize:'14px',color:'rgba(240,242,245,.4)',lineHeight:1.5,marginBottom:'20px'}}>{p.desc}</p>
+              <button onClick={()=>router.push('/pricing')} style={{width:'100%',background:p.pop?ACC:'rgba(255,255,255,.06)',color:p.pop?'#07090c':'#f0f2f5',border:p.pop?'none':'1px solid rgba(255,255,255,.08)',borderRadius:'10px',padding:'12px',fontSize:'15px',fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Choose plan</button>
+            </div>
+          ))}
         </div>
-        <h1 style={{fontSize:'36px',fontWeight:800,letterSpacing:'-.03em',color:'#f0f2f5',marginBottom:'16px',lineHeight:1.1}}>Your trial has ended</h1>
-        <p style={{fontSize:'17px',color:'rgba(240,242,245,.5)',lineHeight:1.65,marginBottom:'36px'}}>Choose a plan to keep capturing leads. Your quiz and all leads collected are saved and ready.</p>
-        <button
-          onClick={() => router.push('/pricing')}
-          style={{background:ACC,color:'#07090c',border:'none',borderRadius:'12px',padding:'16px 40px',fontSize:'17px',fontWeight:700,cursor:'pointer',width:'100%',marginBottom:'12px'}}
-        >
-          See plans & pricing
-        </button>
-        <p style={{fontSize:'13px',color:'rgba(240,242,245,.3)'}}>No credit card required to start · Cancel anytime</p>
+        <p style={{fontSize:'13px',color:'rgba(240,242,245,.3)'}}>Questions? Email us at hello@squarespell.com</p>
       </div>
     </div>
   );
