@@ -24,70 +24,66 @@ function KeepAlive() {
   return null;
 }
 
-const fc = {
-  footer: { background:'#07090c', borderTop:'1px solid rgba(255,255,255,0.08)', marginTop:'80px', fontFamily:'"DM Sans",system-ui,sans-serif' } as React.CSSProperties,
-  inner: { maxWidth:'1400px', margin:'0 auto', padding:'64px 48px 40px' } as React.CSSProperties,
-  top: { display:'flex', gap:'80px', flexWrap:'wrap', paddingBottom:'40px' } as React.CSSProperties,
-  brand: { maxWidth:'280px', flexShrink:0 } as React.CSSProperties,
-  logo: { display:'flex', alignItems:'center', gap:'8px', marginBottom:'16px', textDecoration:'none' } as React.CSSProperties,
-  logoIcon: { width:'28px', height:'28px', background:'#D2FF1D', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center' } as React.CSSProperties,
-  logoText: { fontSize:'18px', fontWeight:800, color:'#f0f2f5', letterSpacing:'-0.03em' } as React.CSSProperties,
-  tagline: { fontSize:'14px', color:'rgba(240,242,245,0.4)', lineHeight:'1.6' } as React.CSSProperties,
-  cols: { display:'flex', gap:'48px', flexWrap:'wrap' } as React.CSSProperties,
-  colTitle: { fontSize:'11px', fontWeight:700, color:'rgba(240,242,245,0.3)', textTransform:'uppercase' as const, letterSpacing:'0.08em', marginBottom:'14px' } as React.CSSProperties,
-  colLink: { display:'block', fontSize:'15px', color:'rgba(240,242,245,0.5)', marginBottom:'10px', textDecoration:'none', transition:'color .15s' } as React.CSSProperties,
-  bar: { borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:'32px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'12px' } as React.CSSProperties,
-  copy: { fontSize:'14px', color:'rgba(240,242,245,0.3)' } as React.CSSProperties,
-  barLinks: { display:'flex', gap:'20px' } as React.CSSProperties,
-  barLink: { fontSize:'14px', color:'rgba(240,242,245,0.35)', textDecoration:'none', transition:'color .15s' } as React.CSSProperties,
-};
+const LINK_COLOR = 'rgba(240,242,245,0.6)';
+const HOVER_COLOR = '#f0f2f5';
+const BAR_COLOR = 'rgba(240,242,245,0.4)';
+const hover = (c: string) => ({
+  onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = HOVER_COLOR; },
+  onMouseLeave: (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = c; },
+});
 
 function Footer() {
   const pathname = usePathname();
   if (pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <footer style={fc.footer}>
-      <div style={fc.inner}>
-        <div style={fc.top}>
-          <div style={fc.brand}>
-            <div style={fc.logo}>
-              <div style={fc.logoIcon}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#07090c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <footer style={{width:'100%',background:'#07090c',borderTop:'1px solid rgba(255,255,255,0.08)',marginTop:'80px',fontFamily:'"DM Sans",system-ui,sans-serif'}}>
+      <style>{`
+        @media(max-width:768px){
+          .ft-top{flex-direction:column!important;gap:48px!important}
+          .ft-inner{padding:40px 20px 32px!important}
+        }
+      `}</style>
+      <div className="ft-inner" style={{maxWidth:'1400px',margin:'0 auto',padding:'64px 48px 40px'}}>
+        <div className="ft-top" style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap'}}>
+          <div style={{width:'280px',flexShrink:0}}>
+            <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}>
+              <div style={{width:'32px',height:'32px',background:'#D2FF1D',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#07090c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               </div>
-              <span style={fc.logoText}>Squarespell</span>
+              <span style={{fontSize:'20px',fontWeight:800,color:'#f0f2f5',letterSpacing:'-0.03em'}}>Squarespell</span>
             </div>
-            <p style={fc.tagline}>AI-powered quiz funnels for Squarespace. Turn visitors into leads in minutes.</p>
+            <p style={{fontSize:'15px',color:'rgba(240,242,245,0.5)',lineHeight:'1.6',marginTop:'12px'}}>AI-powered quiz funnels for Squarespace. Turn visitors into leads in minutes.</p>
           </div>
-          <div style={fc.cols}>
+          <div style={{display:'flex',gap:'64px',flexWrap:'wrap'}}>
             <div>
-              <p style={fc.colTitle}>Product</p>
-              <Link href="/#features" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Features</Link>
-              <Link href="/pricing" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Pricing</Link>
-              <Link href="/#analytics" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Analytics</Link>
-              <Link href="/#changelog" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Changelog</Link>
+              <p style={{fontSize:'11px',fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',color:'rgba(240,242,245,0.4)',marginBottom:'16px'}}>Product</p>
+              <Link href="/#features" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Features</Link>
+              <Link href="/pricing" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Pricing</Link>
+              <Link href="/#analytics" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Analytics</Link>
+              <Link href="/#changelog" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Changelog</Link>
             </div>
             <div>
-              <p style={fc.colTitle}>Support</p>
-              <Link href="/#docs" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Documentation</Link>
-              <Link href="/#community" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Community</Link>
-              <Link href="/#contact" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Contact</Link>
-              <Link href="/#status" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Status</Link>
+              <p style={{fontSize:'11px',fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',color:'rgba(240,242,245,0.4)',marginBottom:'16px'}}>Support</p>
+              <Link href="/#docs" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Documentation</Link>
+              <Link href="/#community" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Community</Link>
+              <Link href="/#contact" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Contact</Link>
+              <Link href="/#status" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Status</Link>
             </div>
             <div>
-              <p style={fc.colTitle}>Company</p>
-              <Link href="/#about" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>About</Link>
-              <Link href="/#blog" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Blog</Link>
-              <Link href="/privacy" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Privacy</Link>
-              <Link href="/terms" style={fc.colLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.5)')}>Terms</Link>
+              <p style={{fontSize:'11px',fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',color:'rgba(240,242,245,0.4)',marginBottom:'16px'}}>Company</p>
+              <Link href="/#about" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>About</Link>
+              <Link href="/#blog" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Blog</Link>
+              <Link href="/privacy" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Privacy</Link>
+              <Link href="/terms" style={{display:'block',fontSize:'15px',color:LINK_COLOR,lineHeight:'2',textDecoration:'none',transition:'color .15s'}} {...hover(LINK_COLOR)}>Terms</Link>
             </div>
           </div>
         </div>
-        <div style={fc.bar}>
-          <span style={fc.copy}>&copy; 2025 Squarespell. Powered by Cloudflare.</span>
-          <div style={fc.barLinks}>
-            <Link href="/privacy" style={fc.barLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.35)')}>Privacy</Link>
-            <Link href="/terms" style={fc.barLink} onMouseEnter={e=>(e.currentTarget.style.color='#f0f2f5')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(240,242,245,0.35)')}>Terms</Link>
+        <div style={{marginTop:'48px',paddingTop:'24px',borderTop:'1px solid rgba(255,255,255,0.08)',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px'}}>
+          <span style={{fontSize:'14px',color:BAR_COLOR}}>&copy; 2025 Squarespell. Powered by Cloudflare.</span>
+          <div style={{display:'flex',gap:'20px'}}>
+            <Link href="/privacy" style={{fontSize:'14px',color:BAR_COLOR,textDecoration:'none',transition:'color .15s'}} {...hover(BAR_COLOR)}>Privacy</Link>
+            <Link href="/terms" style={{fontSize:'14px',color:BAR_COLOR,textDecoration:'none',transition:'color .15s'}} {...hover(BAR_COLOR)}>Terms</Link>
           </div>
         </div>
       </div>
