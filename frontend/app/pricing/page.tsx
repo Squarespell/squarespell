@@ -357,24 +357,6 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* COMPETITOR CALLOUT */}
-        <div style={{ maxWidth: '100%', margin: '36px auto 0', background: 'rgba(255,255,255,.028)', border: '.5px solid rgba(255,255,255,.05)', borderRadius: 14, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
-            {[
-              { label: 'Leading form tool', price: '$199/mo', you: false },
-              { label: 'Quiz builder tools', price: '$99/mo', you: false },
-              { label: 'Squarespell Pro', price: '$39/mo', you: true },
-            ].map(c => (
-              <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 16, color: 'var(--t4)' }}>{c.label}</span>
-                <span style={{ fontSize: 17, fontWeight: 700, color: c.you ? acc : 'var(--t3)', textDecoration: c.you ? 'none' : 'line-through', textDecorationColor: 'rgba(240,242,245,.2)' }}>{c.price}</span>
-                {c.you && <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(210,255,29,.12)', color: acc, padding: '2px 8px', borderRadius: 10, border: '.5px solid rgba(210,255,29,.2)' }}>You</span>}
-              </div>
-            ))}
-          </div>
-          <span style={{ fontSize: 17, color: 'var(--t4)' }}>Same outcome. Fraction of the cost.</span>
-        </div>
-
         {/* FEATURE MATRIX */}
         <div style={{ maxWidth: '100%', margin: '72px auto 0' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 10 }}>Full feature breakdown</h2>
