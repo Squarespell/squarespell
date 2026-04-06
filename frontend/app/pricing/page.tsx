@@ -387,11 +387,10 @@ export default function PricingPage() {
 
           {/* CTA */}
           <div className="ctabox">
-            <h2>Start capturing leads today</h2>
+            <h2>Start capturing<br/>leads today.</h2>
             <div className="ctabox-right">
-              <p>7 days free. No credit card required. Cancel anytime.</p>
               <button className="ctabtn" onClick={() => handleUpgrade('pro')}>Start my free trial</button>
-              <p className="ctanote">No credit card required · Cancel anytime</p>
+              <p className="ctanote">No credit card required · Cancel anytime.</p>
             </div>
           </div>
 
