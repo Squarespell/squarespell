@@ -211,7 +211,7 @@ export default function PricingPage() {
         .fi-text.n { color:rgba(240,242,245,.42); }
 
         /* TABLE */
-        .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; }
+        .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
         .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
@@ -387,7 +387,7 @@ export default function PricingPage() {
 
           {/* CTA */}
           <div className="ctabox">
-            <h2>Start capturing<br/>leads today.</h2>
+            <h2>Start capturing leads today.</h2>
             <div className="ctabox-right">
               <button className="ctabtn" onClick={() => handleUpgrade('pro')}>Start my free trial</button>
               <p className="ctanote">No credit card required · Cancel anytime.</p>
