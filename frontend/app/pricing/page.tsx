@@ -272,7 +272,7 @@ export default function PricingPage() {
         }
       `}</style>
 
-      <div className="wrap">
+      <div className="wrap" style={{overflowX:"hidden"}}>
         <div className="inner">
 
           {/* HERO */}
@@ -330,7 +330,7 @@ export default function PricingPage() {
           </div>
 
           {/* TABLE */}
-          <div className="mtbl-wrap">
+          <div className="mtbl-wrap" style={{overflowX:"auto",WebkitOverflowScrolling:"touch",width:"100%",maxWidth:"100vw",boxSizing:"border-box"}}>
             <h2 className="sec-title">Full feature breakdown</h2>
             <p className="sec-sub">Every feature, across every plan</p>
             <div className="tscroll">
