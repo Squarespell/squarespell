@@ -6,6 +6,13 @@ import { scrapeBrand } from '../services/brandScraper';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
 
+function normalizeUrl(input: string): string {
+  let url = input.trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  new URL(url);
+  return url;
+}
+
 // ── Generate ──────────────────────────────────────────────────────────────────
 export const generateRouter = Router();
 generateRouter.post('/generate', requireAuth, attachUser, guardQuizCreation, async (req: AuthenticatedRequest, res) => {
