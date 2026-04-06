@@ -358,7 +358,7 @@ export default function PricingPage() {
               <div style={{ marginBottom: 8 }}>
                 <span style={{ fontSize: 17, fontWeight: 700, color: plan.featured ? acc : 'var(--t1)' }}>{plan.name}</span>
               </div>
-              <p style={{ fontSize: 15, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 24, minHeight: 40 }}>{plan.desc}</p>
+              <p style={{ fontSize: 17, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 24, minHeight: 40 }}>{plan.desc}</p>
               <div style={{ marginBottom: 4 }}>
                 {billing === 'yearly' && (
                   <span style={{ fontSize: 14, color: 'var(--t4)', textDecoration: 'line-through', marginRight: 6 }}>${plan.monthly}</span>
@@ -366,7 +366,7 @@ export default function PricingPage() {
                 <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-.04em', color: 'var(--t1)' }}>${billing === 'monthly' ? plan.monthly : plan.yearly}</span>
                 <span style={{ fontSize: 16, color: 'var(--t3)', marginLeft: 3 }}>/mo</span>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--t4)', marginBottom: 28 }}>
+              <p style={{ fontSize: 15, color: 'var(--t4)', marginBottom: 28 }}>
                 {billing === 'yearly' ? `Billed $${(billing === 'yearly' ? plan.yearly : plan.monthly) * 12}/year` : 'Billed monthly'}
               </p>
               <button
@@ -388,7 +388,7 @@ export default function PricingPage() {
                     <span style={{ marginTop: 1, flexShrink: 0 }}>
                       {f.included ? <CheckIcon color={plan.featured ? acc : '#4ade80'} /> : <XIcon />}
                     </span>
-                    <span style={{ fontSize: 15, color: f.included ? 'var(--t2)' : 'var(--t4)', lineHeight: 1.4 }}>{f.text}</span>
+                    <span style={{ fontSize: 17, color: f.included ? 'var(--t2)' : 'var(--t4)', lineHeight: 1.4 }}>{f.text}</span>
                   </div>
                 ))}
               </div>
@@ -405,8 +405,8 @@ export default function PricingPage() {
               { label: 'Squarespell Pro', price: '$39/mo', you: true },
             ].map(c => (
               <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 13, color: 'var(--t4)' }}>{c.label}</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: c.you ? acc : 'var(--t3)', textDecoration: c.you ? 'none' : 'line-through', textDecorationColor: 'rgba(240,242,245,.2)' }}>{c.price}</span>
+                <span style={{ fontSize: 16, color: 'var(--t4)' }}>{c.label}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: c.you ? acc : 'var(--t3)', textDecoration: c.you ? 'none' : 'line-through', textDecorationColor: 'rgba(240,242,245,.2)' }}>{c.price}</span>
                 {c.you && <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(210,255,29,.12)', color: acc, padding: '2px 8px', borderRadius: 10, border: '.5px solid rgba(210,255,29,.2)' }}>You</span>}
               </div>
             ))}
@@ -417,9 +417,9 @@ export default function PricingPage() {
         {/* FEATURE MATRIX */}
         <div style={{ maxWidth: '100%', margin: '72px auto 0' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 10 }}>Full feature breakdown</h2>
-          <p style={{ fontSize: 15, color: 'var(--t3)', textAlign: 'center', marginBottom: 36 }}>Every feature, across every plan</p>
+          <p style={{ fontSize: 17, color: 'var(--t3)', textAlign: 'center', marginBottom: 36 }}>Every feature, across every plan</p>
           <div style={{ background: 'rgba(255,255,255,.034)', border: '.5px solid rgba(255,255,255,.058)', borderRadius: 18, overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 17 }}>
               <thead>
                 <tr style={{ borderBottom: '.5px solid rgba(255,255,255,.06)' }}>
                   <th style={{ padding: '16px 28px', textAlign: 'left', color: 'var(--t3)', fontWeight: 500, width: '46%' }}>Feature</th>
@@ -444,7 +444,7 @@ export default function PricingPage() {
                             {typeof row[p] === 'boolean' ? (
                               row[p] ? <CheckIcon color={p === 'pro' ? acc : '#4ade80'} /> : <XIcon />
                             ) : (
-                              <span style={{ fontSize: 13, fontWeight: 600, color: p === 'pro' ? acc : 'var(--t2)' }}>{row[p] as string}</span>
+                              <span style={{ fontSize: 16, fontWeight: 600, color: p === 'pro' ? acc : 'var(--t2)' }}>{row[p] as string}</span>
                             )}
                           </td>
                         ))}
@@ -460,7 +460,7 @@ export default function PricingPage() {
         {/* FAQ */}
         <div style={{ maxWidth: 900, margin: '88px auto 0' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', textAlign: 'center', marginBottom: 10 }}>Common questions</h2>
-          <p style={{ fontSize: 15, color: 'var(--t3)', textAlign: 'center', marginBottom: 40 }}>Everything you need to know before you start</p>
+          <p style={{ fontSize: 17, color: 'var(--t3)', textAlign: 'center', marginBottom: 40 }}>Everything you need to know before you start</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {FAQS.map((faq, i) => (
               <div
@@ -469,7 +469,7 @@ export default function PricingPage() {
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px' }}>
-                  <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--t1)', flex: 1, paddingRight: 16 }}>{faq.q}</span>
+                  <span style={{ fontSize: 19, fontWeight: 600, color: 'var(--t1)', flex: 1, paddingRight: 16 }}>{faq.q}</span>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,.4)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
@@ -489,7 +489,7 @@ export default function PricingPage() {
           <h2 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.04em', marginBottom: 14 }}>
             Start capturing leads today
           </h2>
-          <p style={{ fontSize: 15, color: 'var(--t3)', lineHeight: 1.65, marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
+          <p style={{ fontSize: 17, color: 'var(--t3)', lineHeight: 1.65, marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
             7 days free. No credit card. Your first quiz goes live in under 60 seconds.
           </p>
           <button
@@ -498,7 +498,7 @@ export default function PricingPage() {
           >
             Start my free trial
           </button>
-          <p style={{ fontSize: 12, color: 'var(--t4)', marginTop: 14 }}>No credit card required. Cancel anytime.</p>
+          <p style={{ fontSize: 15, color: 'var(--t4)', marginTop: 14 }}>No credit card required. Cancel anytime.</p>
         </div>
 
       </div>
