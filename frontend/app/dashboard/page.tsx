@@ -44,6 +44,7 @@ export default function Dashboard() {
         clearTimeout(timeout);
         if (!isRetry) {
           setRetrying(true);
+          await new Promise(r => setTimeout(r, 5000));
           fetchMe(token, true);
         } else {
           setRetrying(false);
@@ -60,7 +61,7 @@ export default function Dashboard() {
   if (status === 'loading') return (
     <div style={{background:'#07090c',height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'16px',fontFamily:'DM Sans,system-ui,sans-serif'}}>
       <div style={{width:'32px',height:'32px',border:'2px solid rgba(210,255,29,.2)',borderTopColor:ACC,borderRadius:'50%',animation:'spin .7s linear infinite'}}/>
-      {retrying && <p style={{fontSize:'14px',color:'rgba(240,242,245,.5)',margin:0}}>Connection slow, retrying...</p>}
+      {retrying && <p style={{fontSize:'14px',color:'rgba(240,242,245,.5)',margin:0}}>Connecting to server...</p>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -68,7 +69,14 @@ export default function Dashboard() {
   if (status === 'expired') return (
     <div style={{background:'#07090c',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'DM Sans,system-ui,sans-serif',padding:'24px'}}>
       <div style={{textAlign:'center',maxWidth:'480px'}}>
-        <div style={{width:'64px',height:'64px',borderRadius:'50%',background:'rgba(210,255,29,.1)',border:'1px solid rgba(210,255,29,.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 32px',fontSize:'28px'}}>⏱</div>
+        <div style={{width:'64px',height:'64px',borderRadius:'50%',background:'#1a3a1a',border:'1px solid rgba(210,255,29,.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 32px'}}>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="13" stroke="#f0f2f5" strokeWidth="2"/>
+            <line x1="16" y1="16" x2="16" y2="8" stroke="#f0f2f5" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="16" y1="16" x2="22" y2="16" stroke="#f0f2f5" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="16" cy="16" r="1.5" fill="#f0f2f5"/>
+          </svg>
+        </div>
         <h1 style={{fontSize:'36px',fontWeight:800,letterSpacing:'-.03em',color:'#f0f2f5',marginBottom:'16px',lineHeight:1.1}}>Your trial has ended</h1>
         <p style={{fontSize:'17px',color:'rgba(240,242,245,.5)',lineHeight:1.65,marginBottom:'36px'}}>Choose a plan to keep capturing leads. Your quiz and all leads collected are saved and ready.</p>
         <button
