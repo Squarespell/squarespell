@@ -16,10 +16,14 @@ export default function Dashboard() {
   useEffect(() => {
     getToken().then(async token => {
       if (!token) return;
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 15000);
       try {
         const res = await fetch(`${API}/api/me`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          signal: ctrl.signal
         });
+        clearTimeout(timeout);
         const data = await res.json();
         const plan = data.plan || 'trial';
         const trialEnds = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
@@ -36,7 +40,8 @@ export default function Dashboard() {
         }
         setSrc(`/squarespell-app.html?t=${encodeURIComponent(token)}`);
       } catch {
-        setSrc('');
+        clearTimeout(timeout);
+        setStatus('expired');
       }
     });
   }, []);
