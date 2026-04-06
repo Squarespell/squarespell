@@ -239,7 +239,7 @@ export default function PricingPage() {
       <div style={{ minHeight: '100vh', background: '#07090c', padding: '0 60px 80px' }}>
 
         {/* HERO */}
-        <div style={{ maxWidth: 1000, margin: '0 auto', textAlign: 'center', paddingTop: 72 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', textAlign: 'center', paddingTop: 72 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(210,255,29,.09)', border: '.5px solid rgba(210,255,29,.18)', borderRadius: 20, padding: '4px 12px', marginBottom: 24 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: acc, letterSpacing: '.06em', textTransform: 'uppercase' }}>10x cheaper than Typeform</span>
           </div>
@@ -446,7 +446,7 @@ export default function PricingPage() {
         </div>
 
         {/* FINAL CTA */}
-        <div style={{ maxWidth: 760, margin: '88px auto 0', textAlign: 'center', background: 'rgba(210,255,29,.05)', border: '.5px solid rgba(210,255,29,.12)', borderRadius: 24, padding: '56px 48px' }}>
+        <div style={{ maxWidth: 900, margin: '88px auto 0', textAlign: 'center', background: 'rgba(210,255,29,.05)', border: '.5px solid rgba(210,255,29,.12)', borderRadius: 24, padding: '56px 48px' }}>
           <h2 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.04em', marginBottom: 14 }}>
             Start capturing leads today
           </h2>
