@@ -214,7 +214,7 @@ export default function PricingPage() {
         .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; box-sizing:border-box; }
         .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
-        .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; overflow-x:auto; }
+        .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow-x:auto; overflow-y:hidden; width:100%; box-sizing:border-box; }
         .mtbl { width:100%; min-width:580px; border-collapse:collapse; font-size:17px; }
         .mtbl thead tr { border-bottom:1px solid rgba(255,255,255,.07); }
         .mtbl th { padding:18px 24px; font-size:16px; font-weight:700; }
