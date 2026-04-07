@@ -1806,5 +1806,26 @@ function showPay(state) {
   document.head.appendChild(style);
 })();
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Force onboarding wrapper to full width
+  var ob = document.getElementById('dash-onboarding');
+  if (ob) {
+    var wrapper = ob.querySelector(':scope > div');
+    if (wrapper) {
+      wrapper.style.setProperty('max-width', '100%', 'important');
+      wrapper.style.setProperty('width', '100%', 'important');
+      wrapper.style.setProperty('padding', '48px 0', 'important');
+    }
+    // Make each step card bigger
+    var cards = ob.querySelectorAll(':scope > div > div > div');
+    cards.forEach(function(card) {
+      card.style.setProperty('padding', '32px 36px', 'important');
+      card.style.setProperty('min-height', '120px', 'important');
+      card.style.setProperty('align-items', 'center', 'important');
+    });
+  }
+});
+</script>
 </body>
 </html>
