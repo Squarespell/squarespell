@@ -23,7 +23,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 .gnav{position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(7,9,12,.88);backdrop-filter:blur(32px);border-bottom:.5px solid var(--b2);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px}
 .gnav-logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex-shrink:0}
 .gnav-mark{width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.gnav-name{font-size:19px;font-weight:700;color:var(--t1);letter-spacing:-.03em}
+.gnav-name{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.03em}
 .gnav-pages{display:flex;gap:1px;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none}
 .gnav-pages::-webkit-scrollbar{display:none}
 .gp{font-size:16px;font-weight:500;color:var(--t3);padding:5px 10px;border-radius:7px;cursor:pointer;border:none;background:transparent;font-family:var(--fam);letter-spacing:-.01em;white-space:nowrap;transition:color .15s,background .15s}
@@ -67,10 +67,10 @@ p{font-size:14px;line-height:1.6;margin:0}
 .dpage{display:none;padding:40px 48px;max-width:960px;margin:0 auto}
 .dpage.on{display:block}
 /* TYPOGRAPHY */
-.disp{font-size:62px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
+.disp{font-size:22px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
 .disp span{color:var(--acc)}
-.h1{font-size:48px;font-weight:800;letter-spacing:-.04em;line-height:1.1;color:#f0f2f5}
-.h2{font-size:24px;font-weight:700;color:#f0f2f5;line-height:1.2;letter-spacing:-.02em}
+.h1{font-size:20px;font-weight:800;letter-spacing:-.04em;line-height:1.1;color:#f0f2f5}
+.h2{font-size:18px;font-weight:700;color:#f0f2f5;line-height:1.2;letter-spacing:-.02em}
 .h2 span{color:var(--acc)}
 .h3{font-size:20px;font-weight:700;color:#f0f2f5;letter-spacing:-.02em;line-height:1.3}
 .h4{font-size:16px;font-weight:600;color:#f0f2f5;letter-spacing:-.01em}
@@ -112,7 +112,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 /* STAT CARD */
 .stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;transition:all .2s;cursor:default}
 .stat-card:hover{border-color:var(--acc-b);transform:translateY(-1px)}
-.stat-v{font-size:36px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
+.stat-v{font-size:18px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
 .stat-l{font-size:11px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em}
 .stat-d{font-size:15px;font-weight:600;margin-top:4px}
 .stat-d.up{color:var(--green)}
@@ -195,7 +195,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 .mprog{height:2px;background:rgba(255,255,255,.06)}
 .mprog-fill{height:2px;background:var(--acc);transition:width .3s}
 .mstatus{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;font-size:15px;color:var(--t3)}
-.mt{font-size:19px;font-weight:800;color:var(--t1);line-height:1.2;letter-spacing:-.04em}
+.mt{font-size:13px;font-weight:800;color:var(--t1);line-height:1.2;letter-spacing:-.04em}
 .mt span{color:var(--acc)}
 .mc{font-size:16px;color:var(--t3)}
 .me{font-size:13px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em}
@@ -229,7 +229,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 /* RESPONSIVE */
 @media(max-width:1100px){.dcontent{margin-left:0!important}.dsidebar{display:none!important}}
 @media(max-width:768px){.gnav-pages{display:none}.footer-grid{grid-template-columns:1fr 1fr!important}}
-@media(max-width:480px){.disp{font-size:44px}.h2{font-size:30px}}
+@media(max-width:480px){.disp{font-size:18px}.h2{font-size:18px}}
 /* MINI CHART BARS */
 .mini-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px}
 
@@ -295,7 +295,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 .dcontent td { font-size: 14px !important; padding: 14px 16px !important; }
 .dcontent input, .dcontent textarea { font-size: 14px !important; padding: 14px 18px !important; }
 .dcontent .dsi { font-size: 13px !important; padding: 9px 12px !important; }
-.dcontent .stat-v { font-size: 36px !important; }
+.dcontent .stat-v { font-size:18px !important; }
 
 /* ═══ FINAL LAYOUT LOCK ═══ */
 .dsi { font-size: 14px !important; padding: 8px 12px !important; }
@@ -339,7 +339,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 }
 
 /* Stat card values */
-.dcontent .stat-v { font-size: 36px !important; }
+.dcontent .stat-v { font-size:18px !important; }
 .dcontent .stat-l { font-size: 13px !important; }
 
 /* Buttons */
@@ -386,11 +386,11 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 /* ═══ FINAL DESIGN POLISH ═══ */
 
 /* Onboarding heading */
-#dash-onboarding h2 { font-size: 32px !important; letter-spacing: -0.04em !important; }
+#dash-onboarding h2 { font-size:18px !important; letter-spacing: -0.04em !important; }
 #dash-onboarding > div { max-width: 100% !important; }
 
 /* Editor page */
-#dp-editor h2, #dp-editor .h2 { font-size: 24px !important; }
+#dp-editor h2, #dp-editor .h2 { font-size:15px !important; }
 #dp-editor input[type="text"], #dp-editor input[type="url"] { height: 60px !important; font-size: 13px !important; }
 #dp-editor .btn-p { height: 60px !important; font-size: 13px !important; }
 
@@ -398,31 +398,31 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 #dp-leads input { height: 52px !important; font-size: 14px !important; }
 #dp-leads .d-table td { font-size: 14px !important; padding: 16px 14px !important; }
 #dp-leads .d-table th { font-size: 13px !important; padding: 12px 14px !important; }
-#dp-leads h2, #dp-leads .h2 { font-size: 24px !important; }
+#dp-leads h2, #dp-leads .h2 { font-size:15px !important; }
 
 /* Analytics page */
-#dp-analytics h2, #dp-analytics .h2 { font-size: 24px !important; }
-#dp-analytics .stat-v { font-size: 36px !important; }
+#dp-analytics h2, #dp-analytics .h2 { font-size:15px !important; }
+#dp-analytics .stat-v { font-size:18px !important; }
 
 /* Quizzes page */
-#dp-quizzes h2, #dp-quizzes .h2 { font-size: 24px !important; }
+#dp-quizzes h2, #dp-quizzes .h2 { font-size:15px !important; }
 
 /* Account page */
-#dp-account h2, #dp-account .h2 { font-size: 24px !important; }
+#dp-account h2, #dp-account .h2 { font-size:15px !important; }
 #dp-account input { height: 52px !important; font-size: 14px !important; }
 
 /* Connect page */
-#dp-connect h2, #dp-connect .h2, #dp-connect .h3 { font-size: 24px !important; }
+#dp-connect h2, #dp-connect .h2, #dp-connect .h3 { font-size:15px !important; }
 #dp-connect #sqsp-disconnected button { height: 60px !important; font-size: 13px !important; font-weight: 700 !important; min-width: 280px !important; }
 #dp-connect p { font-size: 14px !important; }
 
 /* Install + Embed pages */
-#dp-install h2, #dp-install .h2, #dp-install .h3 { font-size: 24px !important; }
-#dp-embed h2, #dp-embed .h2, #dp-embed .h3 { font-size: 24px !important; }
+#dp-install h2, #dp-install .h2, #dp-install .h3 { font-size:15px !important; }
+#dp-embed h2, #dp-embed .h2, #dp-embed .h3 { font-size:15px !important; }
 #dp-install p, #dp-embed p { font-size: 14px !important; }
 
 /* Templates page */
-#dp-templates h2, #dp-templates .h2 { font-size: 24px !important; }
+#dp-templates h2, #dp-templates .h2 { font-size:15px !important; }
 
 /* Global page subtitle pattern */
 .dpage > div > p:first-of-type { font-size: 14px !important; color: rgba(240,242,245,0.5) !important; }
@@ -1200,15 +1200,15 @@ function showPay(state) {
       <p class="h4" style="margin-bottom:14px">Lead score breakdown</p>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(248,113,113,.07);border:.5px solid rgba(248,113,113,.15);border-radius:10px">
-          <span style="font-size:25px">🔥</span>
+          <span style="font-size:14px">🔥</span>
           <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;font-weight:700;color:#fca5a5">Hot leads</span><span style="font-size: 13px;font-weight:800;color:#fca5a5">23</span></div><div class="usage-wrap"><div class="usage-bar" style="width:60%;background:rgba(248,113,113,.5)"></div></div></div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(251,191,36,.07);border:.5px solid rgba(251,191,36,.15);border-radius:10px">
-          <span style="font-size:25px">⚡</span>
+          <span style="font-size:14px">⚡</span>
           <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;font-weight:700;color:#fcd34d">Warm leads</span><span style="font-size: 13px;font-weight:800;color:#fcd34d">71</span></div><div class="usage-wrap"><div class="usage-bar" style="width:46%;background:rgba(251,191,36,.5)"></div></div></div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(96,165,250,.07);border:.5px solid rgba(96,165,250,.15);border-radius:10px">
-          <span style="font-size:25px">❄️</span>
+          <span style="font-size:14px">❄️</span>
           <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:16px;font-weight:700;color:#93c5fd">Cold leads</span><span style="font-size: 13px;font-weight:800;color:#93c5fd">60</span></div><div class="usage-wrap"><div class="usage-bar" style="width:39%;background:rgba(96,165,250,.35)"></div></div></div>
         </div>
       </div>
@@ -1340,7 +1340,7 @@ function showPay(state) {
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;display:flex;flex-direction:column">
       <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,242,245,0.4);margin-bottom:16px">STARTER</p>
-      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-starter" style="font-size:52px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$19</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-starter" style="font-size:20px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$19</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
       <p style="font-size:14px;color:rgba(240,242,245,0.4);margin-bottom:28px">7-day free trial included.</p>
       <button onclick="gD('account')" style="background:rgba(255,255,255,0.08);color:#f0f2f5;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:pointer;margin-bottom:28px;transition:background .15s">Start free trial</button>
       <div style="display:flex;flex-direction:column;gap:12px">
@@ -1359,7 +1359,7 @@ function showPay(state) {
     <div style="background:rgba(255,255,255,0.04);border:2px solid #D2FF1D;border-radius:16px;padding:32px;display:flex;flex-direction:column;position:relative">
       <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#D2FF1D;color:#07090c;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:20px">MOST POPULAR</div>
       <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#D2FF1D;margin-bottom:16px">PRO</p>
-      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-pro" style="font-size:52px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$39</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-pro" style="font-size:20px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$39</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
       <p style="font-size:14px;color:rgba(240,242,245,0.4);margin-bottom:28px">7-day free trial included.</p>
       <button onclick="gD('account')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer;margin-bottom:28px">Start free trial</button>
       <div style="display:flex;flex-direction:column;gap:12px">
@@ -1378,7 +1378,7 @@ function showPay(state) {
     </div>
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;display:flex;flex-direction:column">
       <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,242,245,0.4);margin-bottom:16px">AGENCY</p>
-      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-agency" style="font-size:52px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$79</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-agency" style="font-size:20px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$79</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
       <p style="font-size:14px;color:rgba(240,242,245,0.4);margin-bottom:28px">7-day free trial included.</p>
       <button onclick="gD('account')" style="background:rgba(255,255,255,0.08);color:#f0f2f5;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:pointer;margin-bottom:28px">Start free trial</button>
       <div style="display:flex;flex-direction:column;gap:12px">
@@ -1421,7 +1421,7 @@ function showPay(state) {
     <div class="glass" style="padding:20px">
       <p class="h4" style="margin-bottom:16px">Profile</p>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
-        <div id="sq-acct-avatar" style="width:48px;height:48px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800;color:var(--acc)">—</div>
+        <div id="sq-acct-avatar" style="width:48px;height:48px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--acc)">—</div>
         <div><p id="sq-acct-name" style="font-size: 13px;font-weight:700;color:var(--t1)"><span id="acc-name">—</span></p><p id="sq-acct-email" style="font-size:16px;color:var(--t3)"><span id="acc-email">—</span></p></div>
       </div>
       <div style="margin-bottom:11px"><span style="font-size:15px;font-weight:500;color:var(--t4);display:block;margin-bottom:5px">Full name</span><div class="inp-row"><input id="sq-acct-name-input" class="inp" value="" style="font-size: 14px"/></div></div>
@@ -1465,7 +1465,7 @@ function showPay(state) {
       <span style="font-size:14px;color:var(--t3);font-weight:600;white-space:nowrap">Question 2 of 5 · 40% done</span>
     </div>
     <div style="display:inline-flex;align-items:center;gap:5px;background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:20px;padding:3px 11px;margin-bottom:16px"><span style="font-size:14px;font-weight:600;color:var(--acc)">Your challenge</span></div>
-    <p class="h2" style="margin-bottom:26px;font-size:26px">What is your biggest business challenge right now?</p>
+    <p class="h2" style="margin-bottom:26px;font-size:15px">What is your biggest business challenge right now?</p>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:26px">
       <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">A</div><span class="mopt-lbl" style="font-size: 13px">Getting consistent quality leads</span></div>
       <div class="mopt" onclick="pickOpt(this)"><div class="mopt-k">B</div><span class="mopt-lbl" style="font-size: 13px">Converting visitors into clients</span></div>
@@ -1481,9 +1481,9 @@ function showPay(state) {
 <!-- ══════════════════════════════ -->
 <div class="dpage" id="dp-leadgate">
   <div style="max-width:500px;margin:0 auto;padding:40px 0;text-align:center">
-    <div style="font-size:56px;margin-bottom:16px">🎯</div>
+    <div style="font-size:15px;margin-bottom:16px">🎯</div>
     <p class="label" style="margin-bottom:10px;display:block">Your results are ready</p>
-    <p class="h2" style="font-size:34px;margin-bottom:12px">Unlock your personalised quiz results</p>
+    <p class="h2" style="font-size:16px;margin-bottom:12px">Unlock your personalised quiz results</p>
     <p class="body" style="margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto">Based on your answers, we've built your ideal lead profile. Enter your details to see your results and action plan.</p>
     <div class="glass" style="padding:26px;text-align:left">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px">
@@ -1503,10 +1503,10 @@ function showPay(state) {
 <div class="dpage" id="dp-result">
   <div style="max-width:580px;margin:0 auto;padding:36px 0">
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:60px;margin-bottom:14px">🚀</div>
+      <div style="font-size:16px;margin-bottom:14px">🚀</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:14px"><span class="badge-hot" style="padding:4px 12px;font-size:15px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Hot lead score</span><span class="chip-acc">87 / 100</span></div>
       <p class="label" style="margin-bottom:9px;display:block">Your result</p>
-      <p class="h2" style="margin-bottom:12px;font-size:30px">You're a Growth-Stage Coach</p>
+      <p class="h2" style="margin-bottom:12px;font-size:16px">You're a Growth-Stage Coach</p>
       <p class="body" style="max-width:460px;margin:0 auto">You have proven results and strong client outcomes. Your main challenge is building a consistent lead pipeline that matches your quality of delivery.</p>
     </div>
     <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:14px;padding:20px;margin-bottom:14px">
@@ -1515,9 +1515,9 @@ function showPay(state) {
       <div style="display:flex;gap:9px"><button class="btn-p" style="font-size:16px;padding:9px 16px" onclick="gD('editor')">Create this quiz now</button><button class="btn-s" style="font-size:16px;padding:9px 14px">See examples</button></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px">
-      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:30px">18%</p><p class="stat-l">Avg conversion</p><p class="stat-d up">For your profile</p></div>
-      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:30px">87</p><p class="stat-l">Lead score</p><p class="stat-d up">Top 13%</p></div>
-      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:30px">$4k</p><p class="stat-l">Est. monthly value</p><p class="stat-d up">At current rate</p></div>
+      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:16px">18%</p><p class="stat-l">Avg conversion</p><p class="stat-d up">For your profile</p></div>
+      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:16px">87</p><p class="stat-l">Lead score</p><p class="stat-d up">Top 13%</p></div>
+      <div class="stat-card" style="text-align:center"><p class="stat-v" style="font-size:16px">$4k</p><p class="stat-l">Est. monthly value</p><p class="stat-d up">At current rate</p></div>
     </div>
     <div style="display:flex;gap:10px">
       <button class="btn-p btn-p-lg" style="flex:1" onclick="gD('signin')">Start free trial, capture leads now</button>
@@ -1539,8 +1539,8 @@ function showPay(state) {
     <!-- SUCCESS -->
     <div id="pay-ok-state">
       <div class="pay-ok" style="padding:32px;margin-bottom:18px">
-        <div style="font-size:52px;margin-bottom:13px">🎉</div>
-        <p style="font-size:25px;font-weight:800;color:var(--green);margin-bottom:7px;letter-spacing:-.04em">Payment successful!</p>
+        <div style="font-size:20px;margin-bottom:13px">🎉</div>
+        <p style="font-size:14px;font-weight:800;color:var(--green);margin-bottom:7px;letter-spacing:-.04em">Payment successful!</p>
         <p style="font-size: 14px;color:var(--t3);line-height:1.6;margin-bottom:18px">Welcome to Squarespell Pro. Your 7-day free trial has started and all Pro features are now active.</p>
         <div style="display:flex;flex-direction:column;gap:7px;text-align:left;margin-bottom:20px;padding:0 18px">
           <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:16px;color:var(--t2)">20 quizzes unlocked</span></div>
@@ -1556,8 +1556,8 @@ function showPay(state) {
     <!-- FAILURE -->
     <div id="pay-fail-state" style="display:none">
       <div class="pay-fail" style="padding:32px;margin-bottom:18px">
-        <div style="font-size:52px;margin-bottom:13px">⚠️</div>
-        <p style="font-size:25px;font-weight:800;color:var(--red);margin-bottom:7px;letter-spacing:-.04em">Payment failed</p>
+        <div style="font-size:20px;margin-bottom:13px">⚠️</div>
+        <p style="font-size:14px;font-weight:800;color:var(--red);margin-bottom:7px;letter-spacing:-.04em">Payment failed</p>
         <p style="font-size: 14px;color:var(--t3);line-height:1.6;margin-bottom:20px">Your card was declined. No charges were made. Check your card details and try again, or use a different payment method.</p>
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn-p" style="width:100%;font-size: 14px;padding:12px">Try a different card</button>
