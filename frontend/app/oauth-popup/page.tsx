@@ -1,25 +1,25 @@
 'use client'
-import { useSignUp } from '@clerk/nextjs'
+import { useSignIn } from '@clerk/nextjs'
 import { useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
 function OAuthPopupContent() {
-  const { signUp, isLoaded } = useSignUp()
+  const { signIn, isLoaded } = useSignIn()
   const searchParams = useSearchParams()
   const strategy = searchParams.get('strategy') || 'oauth_google'
   const dest = searchParams.get('dest') || '/dashboard'
 
   useEffect(() => {
-    if (!isLoaded || !signUp) return
-    signUp.authenticateWithRedirect({
+    if (!isLoaded || !signIn) return
+    signIn.authenticateWithRedirect({
       strategy: strategy as any,
       redirectUrl: '/sso-callback',
       redirectUrlComplete: dest,
     }).catch(() => {
       window.close()
     })
-  }, [isLoaded, signUp, strategy, dest])
+  }, [isLoaded, signIn, strategy, dest])
 
   return (
     <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", system-ui, sans-serif' }}>
