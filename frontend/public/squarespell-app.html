@@ -386,7 +386,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 
 /* Onboarding heading */
 #dash-onboarding h2 { font-size: 40px !important; letter-spacing: -0.04em !important; }
-#dash-onboarding > div { max-width: 800px !important; }
+#dash-onboarding > div { max-width: 100% !important; }
 
 /* Editor page */
 #dp-editor h2, #dp-editor .h2 { font-size: 36px !important; }
@@ -1056,24 +1056,24 @@ function showPay(state) {
 
 <div class="dpage on" id="dp-dashboard">
 <div id="dash-onboarding">
-  <div style="max-width:800px;margin:0 auto;padding:40px 0">
+  <div style="max-width:100%;padding:40px 0">
     <h2 style="font-size:40px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em;margin-bottom:12px">Welcome! Let's get your first lead</h2>
-    <p style="font-size:16px;color:rgba(240,242,245,0.5);margin-bottom:32px;line-height:1.6">3 quick steps to capturing leads on autopilot.</p>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(210,255,29,0.3);border-left:3px solid #D2FF1D;border-radius:12px;padding:28px 32px;display:flex;gap:20px;align-items:flex-start">
-        <div style="width:36px;height:36px;background:#D2FF1D;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#07090c;flex-shrink:0">1</div>
-        <div style="flex:1"><p style="font-size:20px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Create your first quiz</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.65;margin-bottom:16px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
+    <p style="font-size:18px;color:rgba(240,242,245,0.5);margin-bottom:40px;line-height:1.6">3 quick steps to capturing leads on autopilot.</p>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(210,255,29,0.3);border-left:4px solid #D2FF1D;border-radius:12px;padding:32px 36px;min-height:120px;display:flex;align-items:center;gap:24px">
+        <div style="width:44px;height:44px;background:#D2FF1D;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#07090c;flex-shrink:0">1</div>
+        <div style="flex:1"><p style="font-size:22px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Create your first quiz</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:14px 36px;font-size:17px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
       </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:28px 32px;display:flex;gap:20px;align-items:flex-start;opacity:0.5">
-        <div style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">2</div>
-        <div style="flex:1"><p style="font-size:20px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Embed on your Squarespace site</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.65;margin-bottom:16px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:32px 36px;min-height:120px;display:flex;align-items:center;gap:24px;opacity:0.5">
+        <div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">2</div>
+        <div style="flex:1"><p style="font-size:22px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Embed on your Squarespace site</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:10px;padding:14px 36px;font-size:17px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
       </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:28px 32px;display:flex;gap:20px;align-items:flex-start;opacity:0.5">
-        <div style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">3</div>
-        <div style="flex:1"><p style="font-size:20px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Watch leads come in</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.65;margin-bottom:16px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:32px 36px;min-height:120px;display:flex;align-items:center;gap:24px;opacity:0.5">
+        <div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">3</div>
+        <div style="flex:1"><p style="font-size:22px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Watch leads come in</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:10px;padding:14px 36px;font-size:17px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
       </div>
     </div>
-    <p style="text-align:center;margin-top:24px"><a onclick="document.getElementById('dash-onboarding').style.display='none';document.getElementById('dash-real').style.display='block'" style="font-size:14px;color:rgba(240,242,245,0.4);cursor:pointer;text-decoration:underline">Skip, explore dashboard →</a></p>
+    <p style="text-align:center;margin-top:28px"><a onclick="document.getElementById('dash-onboarding').style.display='none';document.getElementById('dash-real').style.display='block'" style="font-size:15px;color:rgba(240,242,245,0.4);cursor:pointer;text-decoration:underline">Skip, explore dashboard →</a></p>
   </div>
 </div>
 <div id="dash-real" style="display:none">
