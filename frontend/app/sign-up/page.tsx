@@ -78,19 +78,31 @@ function SignUpContent() {
       padding: '40px 24px',
     }}>
       <style>{`
-        .cl-internal-b3fm6y { display: none !important; }
-        .cl-internal-1dauvpw { display: none !important; }
-        .cl-providerIcon__apple { filter: invert(1) !important; }
-        .cl-footer { display: none !important; }
-        .cl-footerAction { margin-top: 24px !important; }
+        .cl-rootBox { width: 100% !important; max-width: 100% !important; }
+        .cl-card { background: transparent !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; }
+        .cl-main { width: 100% !important; gap: 20px !important; }
+        .cl-header { display: none !important; }
+        .cl-socialButtonsBlockButton { height: 56px !important; font-size: 16px !important; border-radius: 12px !important; background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.12) !important; color: #f0f2f5 !important; width: 100% !important; }
+        .cl-socialButtonsBlockButtonText { color: #f0f2f5 !important; font-size: 16px !important; font-weight: 500 !important; }
+        .cl-providerIcon__apple { filter: invert(1) !important; width: 20px !important; height: 20px !important; }
+        .cl-socialButtonsBlockButton__apple .cl-providerIcon { filter: invert(1) !important; }
+        .cl-formFieldInput { height: 56px !important; font-size: 17px !important; background: rgba(255,255,255,0.07) !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; color: #f0f2f5 !important; padding: 0 18px !important; }
+        .cl-formFieldLabel { font-size: 15px !important; font-weight: 600 !important; color: rgba(240,242,245,0.6) !important; }
+        .cl-formButtonPrimary { height: 56px !important; font-size: 17px !important; font-weight: 700 !important; background: #D2FF1D !important; color: #07090c !important; border-radius: 12px !important; border: none !important; }
+        .cl-footerAction { margin-top: 20px !important; text-align: center !important; }
         .cl-footerActionText { font-size: 15px !important; color: rgba(240,242,245,0.4) !important; }
         .cl-footerActionLink { font-size: 15px !important; color: #D2FF1D !important; font-weight: 600 !important; }
-        .cl-card { padding: 0 !important; }
-        .cl-main { gap: 20px !important; }
+        .cl-internal-b3fm6y { display: none !important; }
+        .cl-internal-1dauvpw { display: none !important; }
+        .cl-badge { display: none !important; }
+        [data-clerk-badge] { display: none !important; }
+        .cl-dividerRow { margin: 16px 0 !important; }
+        .cl-dividerLine { background: rgba(255,255,255,0.1) !important; }
+        .cl-dividerText { color: rgba(240,242,245,0.4) !important; font-size: 14px !important; }
         .cl-socialButtonsRoot { gap: 12px !important; }
       `}</style>
 
-      <div style={{ width: '100%', maxWidth: '480px' }}>
+      <div style={{ width: '100%', maxWidth: '520px' }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '48px' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="#D2FF1D" stroke="none">
