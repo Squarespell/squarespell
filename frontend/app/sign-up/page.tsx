@@ -27,6 +27,8 @@ const appearance = {
     formFieldInput: { fontSize: '16px', height: '48px' },
     dividerLine: { background: 'rgba(255,255,255,0.08)' },
     dividerText: { color: 'rgba(240,242,245,0.4)', fontSize: '13px' },
+    formField__firstName: { display: 'none' },
+    formField__lastName: { display: 'none' },
   }
 }
 
@@ -52,6 +54,7 @@ function SignUpContent() {
       <SignUp
         appearance={appearance}
         afterSignUpUrl={fromTry ? '/dashboard?new=true' : '/dashboard'}
+        unsafeMetadata={{}}
       />
     </div>
   )
