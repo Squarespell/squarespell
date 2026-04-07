@@ -41,7 +41,7 @@ export default function TryPage() {
           <div style={{ width: '28px', height: '28px', background: ACC, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#07090c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
-          <span style={{ fontSize: '17px', fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
+          <span style={{ fontSize: '15px', fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
         </Link>
         <div style={{ fontSize: '14px', color: 'rgba(240,242,245,0.5)' }}>
           Already have an account?{' '}
@@ -58,7 +58,7 @@ export default function TryPage() {
         <h1 style={{ fontSize: 'clamp(36px,5vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.08, marginBottom: '16px' }}>
           See your quiz in 30 seconds
         </h1>
-        <p style={{ fontSize: '18px', color: 'rgba(240,242,245,0.5)', lineHeight: 1.6, marginBottom: '40px', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
+        <p style={{ fontSize: '15px', color: 'rgba(240,242,245,0.5)', lineHeight: 1.6, marginBottom: '40px', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
           Enter your Squarespace site URL. AI reads your brand and builds a quiz instantly.
         </p>
 
@@ -68,7 +68,7 @@ export default function TryPage() {
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder="yoursite.squarespace.com"
-              style={{ width: '100%', height: '56px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', color: '#f0f2f5', fontSize: '17px', padding: '0 20px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '12px' }}
+              style={{ width: '100%', height: '56px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', color: '#f0f2f5', fontSize: '15px', padding: '0 20px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '12px' }}
             />
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
               {examples.map(ex => (
@@ -79,7 +79,7 @@ export default function TryPage() {
             </div>
             <button
               onClick={() => { if (url.trim()) setStage('loading'); }}
-              style={{ width: '100%', height: '56px', background: url.trim() ? ACC : 'rgba(210,255,29,0.3)', color: BG, fontSize: '18px', fontWeight: 700, border: 'none', borderRadius: '12px', cursor: url.trim() ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'background 0.15s' }}
+              style={{ width: '100%', height: '56px', background: url.trim() ? ACC : 'rgba(210,255,29,0.3)', color: BG, fontSize: '15px', fontWeight: 700, border: 'none', borderRadius: '12px', cursor: url.trim() ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'background 0.15s' }}
             >
               Build my quiz →
             </button>
@@ -92,7 +92,7 @@ export default function TryPage() {
             <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '6px', height: '6px', overflow: 'hidden', marginBottom: '20px' }}>
               <div style={{ height: '6px', background: ACC, borderRadius: '6px', width: `${progress}%`, transition: 'width 0.1s linear' }} />
             </div>
-            <p style={{ fontSize: '17px', color: 'rgba(240,242,245,0.6)', fontWeight: 500 }}>{loadingMessages[msgIdx]}</p>
+            <p style={{ fontSize: '15px', color: 'rgba(240,242,245,0.6)', fontWeight: 500 }}>{loadingMessages[msgIdx]}</p>
           </div>
         )}
 
@@ -124,7 +124,7 @@ export default function TryPage() {
 
             {/* CTAs */}
             <div style={{ display: 'flex', gap: '12px' }}>
-              <Link href="/sign-up?from=try" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', background: ACC, color: BG, fontSize: '17px', fontWeight: 700, borderRadius: '12px', textDecoration: 'none' }}>
+              <Link href="/sign-up?from=try" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', background: ACC, color: BG, fontSize: '15px', fontWeight: 700, borderRadius: '12px', textDecoration: 'none' }}>
                 Publish my quiz →
               </Link>
               <Link href="/pricing" style={{ flex: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', padding: '0 24px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#f0f2f5', fontSize: '15px', fontWeight: 500, borderRadius: '12px', textDecoration: 'none', whiteSpace: 'nowrap' }}>

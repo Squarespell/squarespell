@@ -62,7 +62,7 @@ export default function SignInPage() {
   const inputStyle = {
     width: '100%', height: '56px', background: 'rgba(255,255,255,0.07)',
     border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
-    padding: '0 20px', fontSize: '17px', color: '#f0f2f5',
+    padding: '0 20px', fontSize: '15px', color: '#f0f2f5',
     fontFamily: '"DM Sans", system-ui, sans-serif', outline: 'none',
     boxSizing: 'border-box' as const,
   }
@@ -83,13 +83,13 @@ export default function SignInPage() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '48px' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="#D2FF1D"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          <span style={{ fontSize: '26px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
+          <span style={{ fontSize: '22px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
         </div>
 
         {/* Heading */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '36px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px', lineHeight: 1.1 }}>Welcome back</h1>
-          <p style={{ fontSize: '18px', color: 'rgba(240,242,245,0.45)', margin: 0 }}>Sign in to your Squarespell account</p>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px', lineHeight: 1.1 }}>Welcome back</h1>
+          <p style={{ fontSize: '15px', color: 'rgba(240,242,245,0.45)', margin: 0 }}>Sign in to your Squarespell account</p>
         </div>
 
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -122,7 +122,7 @@ export default function SignInPage() {
             <input type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} required />
           </div>
           {error && <p style={{ fontSize: '14px', color: '#ff6b6b', marginBottom: '16px', textAlign: 'center' }}>{error}</p>}
-          <button type="submit" disabled={loading} style={{ width: '100%', height: '56px', background: '#D2FF1D', color: '#07090c', border: 'none', borderRadius: '12px', fontSize: '17px', fontWeight: 700, fontFamily: '"DM Sans", system-ui, sans-serif', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+          <button type="submit" disabled={loading} style={{ width: '100%', height: '56px', background: '#D2FF1D', color: '#07090c', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 700, fontFamily: '"DM Sans", system-ui, sans-serif', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
