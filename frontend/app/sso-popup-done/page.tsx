@@ -3,12 +3,10 @@ import { useEffect } from 'react'
 
 export default function SSOPopupDone() {
   useEffect(() => {
-    if (window.opener) {
-      window.opener.postMessage('oauth_complete', '*')
-      window.close()
-    } else {
-      window.location.href = '/dashboard'
-    }
+    const channel = new BroadcastChannel('oauth_channel')
+    channel.postMessage('oauth_complete')
+    channel.close()
+    window.close()
   }, [])
 
   return (
