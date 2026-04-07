@@ -21,30 +21,26 @@ function SignUpContent() {
   const openOAuthPopup = (strategy: string, setLoadingFn: (v: boolean) => void) => {
     const dest = fromTry ? '/dashboard?new=true' : '/dashboard'
     const popup = window.open(
-      `/oauth-popup?strategy=${strategy}&dest=${encodeURIComponent(dest)}`,
+      `/oauth-popup?strategy=${strategy}`,
       'oauthPopup',
       'width=500,height=620,top=' + Math.round(window.screenY + (window.outerHeight - 620) / 2) +
       ',left=' + Math.round(window.screenX + (window.outerWidth - 500) / 2) +
       ',toolbar=no,menubar=no,scrollbars=no,resizable=no'
     )
-    if (!popup) {
-      setLoadingFn(false)
-      return
-    }
-    const onMessage = (e: MessageEvent) => {
+    if (!popup) { setLoadingFn(false); return }
+
+    const channel = new BroadcastChannel('oauth_channel')
+    channel.onmessage = (e) => {
       if (e.data === 'oauth_complete') {
-        window.removeEventListener('message', onMessage)
+        channel.close()
         router.push(dest)
-      } else if (e.data === 'oauth_error') {
-        window.removeEventListener('message', onMessage)
-        setLoadingFn(false)
       }
     }
-    window.addEventListener('message', onMessage)
+
     const pollClosed = setInterval(() => {
       if (popup.closed) {
         clearInterval(pollClosed)
-        window.removeEventListener('message', onMessage)
+        channel.close()
         setLoadingFn(false)
       }
     }, 500)
