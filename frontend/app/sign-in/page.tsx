@@ -31,20 +31,22 @@ export default function SignInPage() {
 
   const handleGoogle = async () => {
     if (!isLoaded) return
-    await signIn.authenticateWithRedirect({
-      strategy: 'oauth_google',
-      redirectUrl: '/sso-callback',
-      redirectUrlComplete: '/dashboard',
-    })
+    try {
+      await signIn.authenticateWithPopup({ strategy: 'oauth_google' })
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err?.errors?.[0]?.message || 'Google sign in failed.')
+    }
   }
 
   const handleApple = async () => {
     if (!isLoaded) return
-    await signIn.authenticateWithRedirect({
-      strategy: 'oauth_apple',
-      redirectUrl: '/sso-callback',
-      redirectUrlComplete: '/dashboard',
-    })
+    try {
+      await signIn.authenticateWithPopup({ strategy: 'oauth_apple' })
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err?.errors?.[0]?.message || 'Apple sign in failed.')
+    }
   }
 
   const inputStyle = {
