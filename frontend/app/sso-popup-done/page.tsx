@@ -4,8 +4,10 @@ import { useEffect } from 'react'
 export default function SSOPopupDone() {
   useEffect(() => {
     if (window.opener) {
-      window.opener.postMessage('oauth_complete', window.location.origin)
+      window.opener.postMessage('oauth_complete', '*')
       window.close()
+    } else {
+      window.location.href = '/dashboard'
     }
   }, [])
 
