@@ -251,16 +251,17 @@ body { background: #07090c !important; }
 }
 
 /* Sidebar */
-.dsidebar { position: fixed; top: 56px; left: 0; bottom: 0; width: 248px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.06); padding: 0 8px 64px; z-index: 100; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; scrollbar-width: none; position: relative; }
-.dsi { display:flex; align-items:center; gap:10px; padding:7px 10px !important; border-radius:6px; font-size:14px !important; font-weight:500; color:rgba(240,242,245,0.65) !important; cursor:pointer; transition:background .1s,color .1s; margin-bottom:1px; width:100%; text-align:left; border:none; background:transparent; font-family:var(--fam); }
+html, body { height: 100%; overflow: hidden; }
+.dsidebar { position: fixed; top: 56px; left: 0; bottom: 0; width: 248px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.06); padding: 0 8px 64px; z-index: 100; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.dsi { display:flex; align-items:center; gap:10px; padding:9px 12px !important; border-radius:6px; font-size:18px !important; font-weight:500; color:rgba(240,242,245,0.65) !important; cursor:pointer; transition:background .1s,color .1s; margin-bottom:1px; width:100%; text-align:left; border:none; background:transparent; font-family:var(--fam); }
 .dsi:hover { background:rgba(255,255,255,0.06) !important; color:#f0f2f5 !important; }
 .dsi.on { background:rgba(255,255,255,0.08) !important; color:#f0f2f5 !important; font-weight:600 !important; }
-.dsi svg { width:16px !important; height:16px !important; flex-shrink:0; }
-.dsec { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:rgba(240,242,245,0.28); padding:16px 10px 4px; display:block; }
+.dsi svg { width:20px !important; height:20px !important; flex-shrink:0; }
+.dsec { font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:rgba(240,242,245,0.28); padding:16px 10px 4px; display:block; }
 
 /* Content area */
-.dcontent { margin-left: 248px !important; margin-top: 56px !important; padding: 0 !important; min-height: calc(100vh - 56px); }
-.dpage { display: none; padding: 40px 48px; max-width: 1200px; }
+.dcontent { position: fixed; top: 56px; left: 248px; right: 0; bottom: 0; overflow-y: auto; overflow-x: hidden; padding: 0 !important; }
+.dpage { display: none; padding: 40px 48px; max-width: 1200px; min-height: 100%; box-sizing: border-box; }
 .dpage.on { display: block; }
 
 /* Glass cards */
@@ -293,7 +294,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 .dcontent .body-sm { font-size: 16px !important; }
 .dcontent td { font-size: 15px !important; padding: 14px !important; }
 .dcontent input, .dcontent textarea { font-size: 16px !important; padding: 14px 18px !important; }
-.dcontent .dsi { font-size: 15px !important; padding: 10px 16px !important; }
+.dcontent .dsi { font-size: 18px !important; padding: 9px 12px !important; }
 .dcontent .stat-v { font-size: 40px !important; }
 
 </style>
@@ -882,8 +883,8 @@ function showPay(state) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="#07090c" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
       <div style="flex:1;min-width:0">
-        <p style="font-size:14px;font-weight:700;color:#f0f2f5;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Squarespell</p>
-        <p id="sb-plan-label" style="font-size:12px;color:rgba(240,242,245,0.4);line-height:1.2;text-transform:capitalize">Free plan</p>
+        <p style="font-size:16px;font-weight:700;color:#f0f2f5;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Squarespell</p>
+        <p id="sb-plan-label" style="font-size:13px;color:rgba(240,242,245,0.4);line-height:1.2;text-transform:capitalize">Free plan</p>
       </div>
     </div>
   </div>
@@ -905,8 +906,8 @@ function showPay(state) {
     <div onclick="gD('account')" style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
       <div id="sb-avatar" style="width:28px;height:28px;background:rgba(210,255,29,0.15);border:1px solid rgba(210,255,29,0.2);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#D2FF1D">?</div>
       <div style="flex:1;min-width:0">
-        <p id="sb-username" style="font-size:13px;font-weight:600;color:#f0f2f5;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Account</p>
-        <p id="sb-email" style="font-size:11px;color:rgba(240,242,245,0.35);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Settings</p>
+        <p id="sb-username" style="font-size:15px;font-weight:600;color:#f0f2f5;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Account</p>
+        <p id="sb-email" style="font-size:13px;color:rgba(240,242,245,0.35);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Settings</p>
       </div>
     </div>
   </div>
