@@ -22,21 +22,29 @@ function SignUpContent() {
   const handleGoogleSignUp = async () => {
     if (!signUpLoaded || googleLoading) return
     setGoogleLoading(true)
-    await signUp.authenticateWithRedirect({
-      strategy: 'oauth_google',
-      redirectUrl: '/sso-callback',
-      redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
-    })
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
+      })
+    } catch {
+      setGoogleLoading(false)
+    }
   }
 
   const handleAppleSignUp = async () => {
     if (!signUpLoaded || appleLoading) return
     setAppleLoading(true)
-    await signUp.authenticateWithRedirect({
-      strategy: 'oauth_apple',
-      redirectUrl: '/sso-callback',
-      redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
-    })
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy: 'oauth_apple',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
+      })
+    } catch {
+      setAppleLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,11 +129,11 @@ function SignUpContent() {
 
             {/* Social buttons */}
             <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-              <button onClick={handleGoogleSignUp} disabled={googleLoading} style={{ ...socialBtnStyle, opacity: googleLoading ? 0.7 : 1, cursor: googleLoading ? 'not-allowed' : 'pointer' }}>
-                {googleLoading ? (<><div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.2)', borderTop: '2px solid #f0f2f5', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }}/>Connecting...</>) : (<><svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</>)}
+              <button onClick={handleGoogleSignUp} disabled={googleLoading} style={{ flex:1, height:'56px', background: googleLoading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'12px', color:'#f0f2f5', fontSize:'16px', fontWeight:500, fontFamily:'"DM Sans",system-ui,sans-serif', cursor: googleLoading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px', transition:'all 0.15s' }}>
+                {googleLoading ? (<><div style={{ width:'18px', height:'18px', border:'2px solid rgba(255,255,255,0.15)', borderTop:'2px solid #f0f2f5', borderRadius:'50%', animation:'spin 0.7s linear infinite', flexShrink:0 }}/>Connecting...</>) : (<><svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</>)}
               </button>
-              <button onClick={handleAppleSignUp} disabled={appleLoading} style={{ ...socialBtnStyle, opacity: appleLoading ? 0.7 : 1, cursor: appleLoading ? 'not-allowed' : 'pointer' }}>
-                {appleLoading ? (<><div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.2)', borderTop: '2px solid #f0f2f5', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }}/>Connecting...</>) : (<><svg width="18" height="22" viewBox="0 0 18 22" fill="#f0f2f5"><path d="M14.9408 11.6493C14.9207 9.20154 16.9557 8.01013 17.0459 7.95386C15.8944 6.24517 14.0808 6.01392 13.4449 5.99377C11.9144 5.83788 10.4341 6.89645 9.65568 6.89645C8.86218 6.89645 7.65372 6.00884 6.36327 6.03402C4.69829 6.05919 3.14337 7.00951 2.29076 8.49888C0.534265 11.5288 1.83479 16.0391 3.52452 18.5186C4.36706 19.7301 5.35974 21.0923 6.66526 21.0421C7.94058 20.9869 8.42308 20.2187 9.94843 20.2187C11.4587 20.2187 11.9112 21.0421 13.2418 21.0119C14.6126 20.9869 15.4701 19.7904 16.2927 18.5688C17.2754 17.168 17.6777 15.7923 17.6977 15.7219C17.6676 15.7119 14.9659 14.7063 14.9408 11.6493Z"/><path d="M12.4511 4.27053C13.1372 3.42298 13.6047 2.2668 13.4746 1.09546C12.4862 1.14067 11.2376 1.77438 10.5214 2.60182C9.88551 3.33394 9.3228 4.53038 9.46797 5.66132C10.5765 5.74681 11.7499 5.10808 12.4511 4.27053Z"/></svg>Continue with Apple</>)}
+              <button onClick={handleAppleSignUp} disabled={appleLoading} style={{ flex:1, height:'56px', background: appleLoading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'12px', color:'#f0f2f5', fontSize:'16px', fontWeight:500, fontFamily:'"DM Sans",system-ui,sans-serif', cursor: appleLoading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px', transition:'all 0.15s' }}>
+                {appleLoading ? (<><div style={{ width:'18px', height:'18px', border:'2px solid rgba(255,255,255,0.15)', borderTop:'2px solid #f0f2f5', borderRadius:'50%', animation:'spin 0.7s linear infinite', flexShrink:0 }}/>Connecting...</>) : (<><svg width="18" height="22" viewBox="0 0 18 22" fill="#f0f2f5"><path d="M14.9408 11.6493C14.9207 9.20154 16.9557 8.01013 17.0459 7.95386C15.8944 6.24517 14.0808 6.01392 13.4449 5.99377C11.9144 5.83788 10.4341 6.89645 9.65568 6.89645C8.86218 6.89645 7.65372 6.00884 6.36327 6.03402C4.69829 6.05919 3.14337 7.00951 2.29076 8.49888C0.534265 11.5288 1.83479 16.0391 3.52452 18.5186C4.36706 19.7301 5.35974 21.0923 6.66526 21.0421C7.94058 20.9869 8.42308 20.2187 9.94843 20.2187C11.4587 20.2187 11.9112 21.0421 13.2418 21.0119C14.6126 20.9869 15.4701 19.7904 16.2927 18.5688C17.2754 17.168 17.6777 15.7923 17.6977 15.7219C17.6676 15.7119 14.9659 14.7063 14.9408 11.6493Z"/><path d="M12.4511 4.27053C13.1372 3.42298 13.6047 2.2668 13.4746 1.09546C12.4862 1.14067 11.2376 1.77438 10.5214 2.60182C9.88551 3.33394 9.3228 4.53038 9.46797 5.66132C10.5765 5.74681 11.7499 5.10808 12.4511 4.27053Z"/></svg>Continue with Apple</>)}
               </button>
             </div>
 
