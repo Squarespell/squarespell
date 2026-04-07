@@ -9,7 +9,6 @@ function SignUpContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromTry = searchParams.get('from') === 'try'
-
   const [step, setStep] = useState<'form' | 'verify'>('form')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,9 +22,8 @@ function SignUpContent() {
     if (!signUpLoaded || googleLoading) return
     setGoogleLoading(true)
     try {
-      await signUp.authenticateWithRedirect({
+      await signUp.authenticateWithPopup({
         strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',
         redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
       })
     } catch {
@@ -37,9 +35,8 @@ function SignUpContent() {
     if (!signUpLoaded || appleLoading) return
     setAppleLoading(true)
     try {
-      await signUp.authenticateWithRedirect({
+      await signUp.authenticateWithPopup({
         strategy: 'oauth_apple',
-        redirectUrl: '/sso-callback',
         redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
       })
     } catch {
@@ -81,30 +78,39 @@ function SignUpContent() {
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', height: '56px',
+    width: '100%',
+    height: '56px',
     background: 'rgba(255,255,255,0.07)',
     border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '12px', padding: '0 20px',
-    fontSize: '17px', color: '#f0f2f5',
+    borderRadius: '12px',
+    padding: '0 20px',
+    fontSize: '17px',
+    color: '#f0f2f5',
     fontFamily: '"DM Sans", system-ui, sans-serif',
-    outline: 'none', boxSizing: 'border-box',
+    outline: 'none',
+    boxSizing: 'border-box',
   }
 
   const socialBtnStyle: React.CSSProperties = {
-    flex: 1, height: '56px',
+    flex: 1,
+    height: '56px',
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '12px', color: '#f0f2f5',
-    fontSize: '16px', fontWeight: 500,
+    borderRadius: '12px',
+    color: '#f0f2f5',
+    fontSize: '16px',
+    fontWeight: 500,
     fontFamily: '"DM Sans", system-ui, sans-serif',
-    cursor: 'pointer', display: 'flex',
-    alignItems: 'center', justifyContent: 'center', gap: '10px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px',
   }
 
   return (
     <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", system-ui, sans-serif', padding: '40px 24px' }}>
       <div style={{ width: '100%', maxWidth: '480px' }}>
-
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '48px' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="#D2FF1D"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
