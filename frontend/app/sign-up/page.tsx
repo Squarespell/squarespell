@@ -1,7 +1,7 @@
 'use client'
-import { useSignUp } from '@clerk/nextjs'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useSignUp } from '@clerk/nextjs'
 import { Suspense } from 'react'
 
 function SignUpContent() {
@@ -18,30 +18,48 @@ function SignUpContent() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [appleLoading, setAppleLoading] = useState(false)
 
-  const handleGoogleSignUp = async () => {
-    if (!signUpLoaded || googleLoading) return
-    setGoogleLoading(true)
-    try {
-      await signUp.authenticateWithPopup({
-        strategy: 'oauth_google',
-        redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
-      })
-    } catch {
-      setGoogleLoading(false)
+  const openOAuthPopup = (strategy: string, setLoadingFn: (v: boolean) => void) => {
+    const dest = fromTry ? '/dashboard?new=true' : '/dashboard'
+    const popup = window.open(
+      `/oauth-popup?strategy=${strategy}&dest=${encodeURIComponent(dest)}`,
+      'oauthPopup',
+      'width=500,height=620,top=' + Math.round(window.screenY + (window.outerHeight - 620) / 2) +
+      ',left=' + Math.round(window.screenX + (window.outerWidth - 500) / 2) +
+      ',toolbar=no,menubar=no,scrollbars=no,resizable=no'
+    )
+    if (!popup) {
+      setLoadingFn(false)
+      return
     }
+    const onMessage = (e: MessageEvent) => {
+      if (e.data === 'oauth_complete') {
+        window.removeEventListener('message', onMessage)
+        router.push(dest)
+      } else if (e.data === 'oauth_error') {
+        window.removeEventListener('message', onMessage)
+        setLoadingFn(false)
+      }
+    }
+    window.addEventListener('message', onMessage)
+    const pollClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(pollClosed)
+        window.removeEventListener('message', onMessage)
+        setLoadingFn(false)
+      }
+    }, 500)
   }
 
-  const handleAppleSignUp = async () => {
-    if (!signUpLoaded || appleLoading) return
+  const handleGoogleSignUp = () => {
+    if (googleLoading) return
+    setGoogleLoading(true)
+    openOAuthPopup('oauth_google', setGoogleLoading)
+  }
+
+  const handleAppleSignUp = () => {
+    if (appleLoading) return
     setAppleLoading(true)
-    try {
-      await signUp.authenticateWithPopup({
-        strategy: 'oauth_apple',
-        redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
-      })
-    } catch {
-      setAppleLoading(false)
-    }
+    openOAuthPopup('oauth_apple', setAppleLoading)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,40 +96,18 @@ function SignUpContent() {
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%',
-    height: '56px',
+    width: '100%', height: '56px',
     background: 'rgba(255,255,255,0.07)',
     border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '12px',
-    padding: '0 20px',
-    fontSize: '17px',
-    color: '#f0f2f5',
+    borderRadius: '12px', padding: '0 20px',
+    fontSize: '17px', color: '#f0f2f5',
     fontFamily: '"DM Sans", system-ui, sans-serif',
-    outline: 'none',
-    boxSizing: 'border-box',
-  }
-
-  const socialBtnStyle: React.CSSProperties = {
-    flex: 1,
-    height: '56px',
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '12px',
-    color: '#f0f2f5',
-    fontSize: '16px',
-    fontWeight: 500,
-    fontFamily: '"DM Sans", system-ui, sans-serif',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px',
+    outline: 'none', boxSizing: 'border-box',
   }
 
   return (
     <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", system-ui, sans-serif', padding: '40px 24px' }}>
       <div style={{ width: '100%', maxWidth: '480px' }}>
-        {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '48px' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="#D2FF1D"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           <span style={{ fontSize: '26px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
@@ -133,7 +129,6 @@ function SignUpContent() {
 
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-            {/* Social buttons */}
             <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
               <button onClick={handleGoogleSignUp} disabled={googleLoading} style={{ flex:1, height:'56px', background: googleLoading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'12px', color:'#f0f2f5', fontSize:'16px', fontWeight:500, fontFamily:'"DM Sans",system-ui,sans-serif', cursor: googleLoading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px', transition:'all 0.15s' }}>
                 {googleLoading ? (<><div style={{ width:'18px', height:'18px', border:'2px solid rgba(255,255,255,0.15)', borderTop:'2px solid #f0f2f5', borderRadius:'50%', animation:'spin 0.7s linear infinite', flexShrink:0 }}/>Connecting...</>) : (<><svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</>)}
@@ -143,14 +138,12 @@ function SignUpContent() {
               </button>
             </div>
 
-            {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
               <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}/>
               <span style={{ fontSize: '14px', color: 'rgba(240,242,245,0.35)' }}>or continue with email</span>
               <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}/>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '15px', fontWeight: 600, color: 'rgba(240,242,245,0.65)', marginBottom: '8px' }}>Email address</label>
