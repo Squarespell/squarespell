@@ -1,11 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useSignUp } from '@clerk/nextjs'
+import { useSignUp, useAuth } from '@clerk/nextjs'
 import { Suspense } from 'react'
 
 function SignUpContent() {
   const { signUp, isLoaded: signUpLoaded } = useSignUp()
+  const { isSignedIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromTry = searchParams.get('from') === 'try'
@@ -17,9 +18,19 @@ function SignUpContent() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [appleLoading, setAppleLoading] = useState(false)
+  const oauthActiveRef = useRef(false)
+  const popupRef = useRef<Window | null>(null)
+
+  // When Clerk session appears (popup completed OAuth), navigate to dashboard
+  useEffect(() => {
+    if (isSignedIn && oauthActiveRef.current) {
+      popupRef.current?.close()
+      router.push(fromTry ? '/dashboard?new=true' : '/dashboard')
+    }
+  }, [isSignedIn])
 
   const openOAuthPopup = (strategy: string, setLoadingFn: (v: boolean) => void) => {
-    const dest = fromTry ? '/dashboard?new=true' : '/dashboard'
+    oauthActiveRef.current = true
     const popup = window.open(
       `/oauth-popup?strategy=${strategy}`,
       'oauthPopup',
@@ -27,20 +38,13 @@ function SignUpContent() {
       ',left=' + Math.round(window.screenX + (window.outerWidth - 500) / 2) +
       ',toolbar=no,menubar=no,scrollbars=no,resizable=no'
     )
-    if (!popup) { setLoadingFn(false); return }
-
-    const channel = new BroadcastChannel('oauth_channel')
-    channel.onmessage = (e) => {
-      if (e.data === 'oauth_complete') {
-        channel.close()
-        router.push(dest)
-      }
-    }
+    if (!popup) { oauthActiveRef.current = false; setLoadingFn(false); return }
+    popupRef.current = popup
 
     const pollClosed = setInterval(() => {
       if (popup.closed) {
         clearInterval(pollClosed)
-        channel.close()
+        oauthActiveRef.current = false
         setLoadingFn(false)
       }
     }, 500)
