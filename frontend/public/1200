@@ -64,7 +64,7 @@ p{font-size:16px;line-height:1.6;margin:0}
 .dnotif{width:5px;height:5px;border-radius:50%;background:var(--acc);position:absolute;right:9px;top:50%;transform:translateY(-50%)}
 /* DCONTENT */
 .dcontent{margin-left:210px;padding:28px 36px;min-height:calc(100vh - 96px)}
-.dpage{display:none;padding:40px 48px;max-width:1200px}
+.dpage{display:none;padding:40px 48px;max-width:720px;margin:0 auto}
 .dpage.on{display:block}
 /* TYPOGRAPHY */
 .disp{font-size:62px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
