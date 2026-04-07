@@ -650,6 +650,17 @@ input::placeholder { color: rgba(240,242,245,0.3); }
     apiFetch("/api/user/notifications", { method: "POST", body: JSON.stringify({ enabled: enabled }) }).catch(function(){});
   };
 
+  window.__toggleBilling = function() {
+    var t = document.getElementById('dash-billing-toggle');
+    if (!t) return;
+    var on = t.classList.toggle('on');
+    t.style.background = on ? '#D2FF1D' : 'rgba(255,255,255,0.1)';
+    t.querySelector('div').style.transform = on ? 'translateX(20px)' : 'translateX(0)';
+    document.querySelectorAll('.dash-price-starter').forEach(function(e){ e.textContent = on ? '$15' : '$19'; });
+    document.querySelectorAll('.dash-price-pro').forEach(function(e){ e.textContent = on ? '$31' : '$39'; });
+    document.querySelectorAll('.dash-price-agency').forEach(function(e){ e.textContent = on ? '$63' : '$79'; });
+  };
+
   window.__exportLeadsCSV = function() {
     var leads = window.__allLeads || [];
     if (!leads.length) { alert("No leads to export"); return; }
@@ -678,7 +689,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 
 <script>
 // ═══════════════════════════════════════════
-// ALL NAVIGATION — INLINE, NO EVENTLISTENER
+// ALL NAVIGATION - INLINE, NO EVENTLISTENER
 // ═══════════════════════════════════════════
 var _view = 'desktop';
 var _annual = false;
@@ -1142,93 +1153,78 @@ function showPay(state) {
 <!-- D: PRICING                    -->
 <!-- ══════════════════════════════ -->
 <div class="dpage" id="dp-pricing">
-  <div style="text-align:center;margin-bottom:40px">
-    <p class="label" style="margin-bottom:10px">Simple pricing</p>
-    <p class="h2" style="margin-bottom:12px">Choose your plan</p>
-    <p class="body" style="max-width:440px;margin:0 auto 28px">Start free for 7 days. Upgrade anytime. Cancel anytime.</p>
-    <!-- Billing toggle -->
-    <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:40px">
-      <div class="bill-tog">
-        <div class="bt-opt on" onclick="toggleBilling(false)">Monthly</div>
-        <div class="bt-opt" onclick="toggleBilling(true)">Annual <span class="bt-save">Save 20%</span></div>
+<div style="max-width:1100px">
+  <div style="text-align:center;margin-bottom:48px">
+    <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,242,245,0.4);margin-bottom:12px">SIMPLE PRICING</p>
+    <h2 style="font-size:40px;font-weight:800;color:#f0f2f5;letter-spacing:-0.04em;margin-bottom:16px">Start free. Scale as you grow.</h2>
+    <div style="display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:40px;padding:6px 6px 6px 16px">
+      <span style="font-size:14px;color:rgba(240,242,245,0.6)">Monthly</span>
+      <div id="dash-billing-toggle" onclick="window.__toggleBilling&&window.__toggleBilling()" style="width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:24px;cursor:pointer;position:relative;transition:background .2s">
+        <div style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#f0f2f5;border-radius:50%;transition:transform .2s"></div>
       </div>
+      <span style="font-size:14px;color:rgba(240,242,245,0.6)">Annual <span style="background:rgba(210,255,29,0.15);color:#D2FF1D;border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700">20% off</span></span>
     </div>
   </div>
-
-  <!-- Plan cards -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:64px">
-    <!-- Starter -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;display:flex;flex-direction:column">
-      <p style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(240,242,245,0.5);margin-bottom:12px">Starter</p>
-      <p style="margin-bottom:4px"><span id="price-starter" style="font-size:56px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em">$19</span><span style="font-size:20px;color:rgba(240,242,245,0.4)">/mo</span></p>
-      <p style="font-size:15px;color:rgba(240,242,245,0.5);margin-bottom:24px">For coaches and consultants</p>
-      <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>5 live quizzes</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>500 leads per month</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>AI quiz generation</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Squarespace one-click connect</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Lead dashboard and CSV export</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Email notifications</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Basic analytics</div>
-        <div class="p-cross"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Remove branding</div>
-        <div class="p-cross"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Lead scoring</div>
-        <div class="p-cross"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Zapier integration</div>
+      <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,242,245,0.4);margin-bottom:16px">STARTER</p>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-starter" style="font-size:52px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$19</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
+      <p style="font-size:14px;color:rgba(240,242,245,0.4);margin-bottom:28px">7-day free trial included.</p>
+      <button onclick="gD('account')" style="background:rgba(255,255,255,0.08);color:#f0f2f5;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:pointer;margin-bottom:28px;transition:background .15s">Start free trial</button>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">5 live quizzes</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">500 leads per month</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">AI quiz generation from your website</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Squarespace one-click connect</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Lead dashboard and CSV export</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Email notifications on new leads</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Basic analytics</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.3)">Remove Squarespell branding</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.3)">Conversion insights and lead scoring</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.3)">Zapier and webhook integration</span></div>
       </div>
-      <button class="btn-s" style="width:100%;justify-content:center" onclick="window.__startCheckout && window.__startCheckout('starter')">Start free trial</button>
     </div>
-
-    <!-- Pro (Most Popular) -->
-    <div style="background:rgba(210,255,29,0.04);border:2px solid rgba(210,255,29,0.25);border-radius:16px;padding:32px;position:relative;display:flex;flex-direction:column">
-      <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#D2FF1D;color:#07090c;font-size:11px;font-weight:800;padding:4px 16px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase">Most Popular</div>
-      <p style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(240,242,245,0.5);margin-bottom:12px">Pro</p>
-      <p style="margin-bottom:4px"><span id="price-pro" style="font-size:56px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em">$39</span><span style="font-size:20px;color:rgba(240,242,245,0.4)">/mo</span></p>
-      <p style="font-size:15px;color:rgba(240,242,245,0.5);margin-bottom:24px">For growing businesses</p>
-      <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>20 live quizzes</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>5,000 leads per month</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Everything in Starter</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Remove Squarespell branding</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Conversion insights and lead scoring</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>A/B test quiz versions</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Zapier and webhook integration</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Advanced analytics</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Priority email support</div>
-        <div class="p-cross"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>White-label</div>
-        <div class="p-cross"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Client reporting</div>
+    <div style="background:rgba(255,255,255,0.04);border:2px solid #D2FF1D;border-radius:16px;padding:32px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#D2FF1D;color:#07090c;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:20px">MOST POPULAR</div>
+      <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#D2FF1D;margin-bottom:16px">PRO</p>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-pro" style="font-size:52px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$39</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
+      <p style="font-size:14px;color:rgba(240,242,245,0.4);margin-bottom:28px">7-day free trial included.</p>
+      <button onclick="gD('account')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer;margin-bottom:28px">Start free trial</button>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">20 live quizzes</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">5,000 leads per month</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Everything in Starter</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Remove Squarespell branding</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Conversion insights and lead scoring</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">A/B test quiz versions</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Zapier and webhook integration</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Advanced analytics dashboard</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Priority email support</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.3)">White-label (your brand)</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.2)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.3)">Client reporting dashboard</span></div>
       </div>
-      <button class="btn-p" style="width:100%;justify-content:center" onclick="window.__startCheckout && window.__startCheckout('pro')">Start free trial</button>
     </div>
-
-    <!-- Agency -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;display:flex;flex-direction:column">
-      <p style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(240,242,245,0.5);margin-bottom:12px">Agency</p>
-      <p style="margin-bottom:4px"><span id="price-agency" style="font-size:56px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em">$79</span><span style="font-size:20px;color:rgba(240,242,245,0.4)">/mo</span></p>
-      <p style="font-size:15px;color:rgba(240,242,245,0.5);margin-bottom:24px">For agencies and teams</p>
-      <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Unlimited live quizzes</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Unlimited leads</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Everything in Pro</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>White-label (your brand)</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Multi-site management</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Client reporting dashboard</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Custom onboarding call</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Dedicated account manager</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>SLA-backed support</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Custom integrations on request</div>
-        <div class="p-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.3)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Team seats (coming soon)</div>
+      <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,242,245,0.4);margin-bottom:16px">AGENCY</p>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px"><span class="dash-price-agency" style="font-size:52px;font-weight:800;color:#f0f2f5;letter-spacing:-0.05em;line-height:1">$79</span><span style="font-size:16px;color:rgba(240,242,245,0.4)">/mo</span></div>
+      <p style="font-size:14px;color:rgba(240,242,245,0.4);margin-bottom:28px">7-day free trial included.</p>
+      <button onclick="gD('account')" style="background:rgba(255,255,255,0.08);color:#f0f2f5;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px;font-size:15px;font-weight:600;font-family:var(--fam);cursor:pointer;margin-bottom:28px">Start free trial</button>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Unlimited live quizzes</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Unlimited leads</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Everything in Pro</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">White-label (your brand)</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Multi-site management</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Client reporting dashboard</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Custom onboarding call</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Dedicated account manager</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">SLA-backed support</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Custom integrations on request</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:14px;color:rgba(240,242,245,0.8)">Team seats (coming soon)</span></div>
       </div>
-      <button class="btn-s" style="width:100%;justify-content:center" onclick="window.__startCheckout && window.__startCheckout('agency')">Start free trial</button>
     </div>
   </div>
-
-  <!-- FAQ -->
-  <div style="max-width:640px;margin:0 auto">
-    <p class="h3" style="text-align:center;margin-bottom:24px">Frequently asked questions</p>
-    <div class="faq-item"><div class="faq-q" onclick="faqT(this)"><span>Can I cancel at any time?</span><svg class="faq-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Yes, cancel anytime from your account. No questions. Quizzes stay active until end of billing period.</div></div>
-    <div class="faq-item"><div class="faq-q" onclick="faqT(this)"><span>How does the 7-day free trial work?</span><svg class="faq-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">You get full access to your chosen plan for 7 days, no credit card required. After the trial, you can upgrade or stay on the free plan.</div></div>
-    <div class="faq-item"><div class="faq-q" onclick="faqT(this)"><span>How does AI lead scoring work?</span><svg class="faq-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Our AI reads each lead's quiz answers and scores them Hot, Warm, or Cold based on urgency, budget, and engagement time. Hot leads are ready to buy now.</div></div>
-    <div class="faq-item"><div class="faq-q" onclick="faqT(this)"><span>What happens to my data if I downgrade?</span><svg class="faq-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a">Your quizzes and leads are never deleted. If you exceed your plan limits, new leads pause until you upgrade. Existing data stays accessible.</div></div>
-  </div>
+</div>
 </div>
 
 <!-- ══════════════════════════════ -->
@@ -1620,7 +1616,7 @@ function showPay(state) {
 </div>
 <script>
 (function() {
-  // Topbar always visible — this is a logged-in dashboard
+  // Topbar always visible - logged-in dashboard
   var bar = document.getElementById('sq-topbar');
   if (bar) bar.style.display = 'flex';
 })();
