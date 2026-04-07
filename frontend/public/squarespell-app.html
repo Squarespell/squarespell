@@ -251,15 +251,15 @@ body { background: #07090c !important; }
 }
 
 /* Sidebar */
-.dsidebar { position: fixed; top: 56px; left: 0; bottom: 0; width: 220px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.08); padding: 16px 12px; z-index: 100; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; scrollbar-width: none; }
-.dsi { font-size: 15px !important; padding: 10px 16px !important; gap: 10px !important; color: rgba(240,242,245,0.6) !important; border-radius: 8px; margin-bottom: 2px; font-weight: 500; }
-.dsi:hover { color: #f0f2f5 !important; background: rgba(255,255,255,0.04) !important; }
-.dsi.on { color: var(--acc) !important; background: rgba(210,255,29,0.06) !important; }
-.dsi svg { width: 16px !important; height: 16px !important; }
-.dsec { font-size: 11px !important; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(240,242,245,0.3) !important; padding: 16px 16px 6px !important; }
+.dsidebar { position: fixed; top: 56px; left: 0; bottom: 0; width: 248px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.06); padding: 0 8px 64px; z-index: 100; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; scrollbar-width: none; position: relative; }
+.dsi { display:flex; align-items:center; gap:10px; padding:7px 10px !important; border-radius:6px; font-size:14px !important; font-weight:500; color:rgba(240,242,245,0.65) !important; cursor:pointer; transition:background .1s,color .1s; margin-bottom:1px; width:100%; text-align:left; border:none; background:transparent; font-family:var(--fam); }
+.dsi:hover { background:rgba(255,255,255,0.06) !important; color:#f0f2f5 !important; }
+.dsi.on { background:rgba(255,255,255,0.08) !important; color:#f0f2f5 !important; font-weight:600 !important; }
+.dsi svg { width:16px !important; height:16px !important; flex-shrink:0; }
+.dsec { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:rgba(240,242,245,0.28); padding:16px 10px 4px; display:block; }
 
 /* Content area */
-.dcontent { margin-left: 220px !important; margin-top: 56px !important; padding: 0 !important; min-height: calc(100vh - 56px); }
+.dcontent { margin-left: 248px !important; margin-top: 56px !important; padding: 0 !important; min-height: calc(100vh - 56px); }
 .dpage { display: none; padding: 40px 48px; max-width: 1200px; }
 .dpage.on { display: block; }
 
@@ -443,6 +443,11 @@ input::placeholder { color: rgba(240,242,245,0.3); }
         if(_el('acc-q-limit')) _el('acc-q-limit').textContent = lim.q > 99999 ? 'Unlimited' : lim.q;
         if(_el('acc-l-used')) _el('acc-l-used').textContent = totalLeads;
         if(_el('acc-l-limit')) _el('acc-l-limit').textContent = lim.l > 99999 ? 'Unlimited' : lim.l;
+        // Sidebar user info
+        if(_el('sb-plan-label')) _el('sb-plan-label').textContent = (userPlan || 'free') + ' plan';
+        if(_el('sb-avatar')) _el('sb-avatar').textContent = userEmail ? userEmail.charAt(0).toUpperCase() : '?';
+        if(_el('sb-username')) _el('sb-username').textContent = userName || 'Account';
+        if(_el('sb-email')) _el('sb-email').textContent = 'Account settings';
 
         // B. Sidebar lock icons for restricted features
         var lockSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="1.5" style="margin-left:auto;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
@@ -754,7 +759,7 @@ function gD(sec) {
       dc.style.marginLeft = '0';
     } else {
       sb.style.display = 'flex';
-      dc.style.marginLeft = '220px';
+      dc.style.marginLeft = '248px';
     }
   }
 }
@@ -870,6 +875,18 @@ function showPay(state) {
 <div id="view-desktop" style="display:block">
 
 <div class="dsidebar" id="dSidebar">
+  <!-- Workspace block -->
+  <div style="padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
+      <div style="width:28px;height:28px;background:#D2FF1D;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#07090c" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:14px;font-weight:700;color:#f0f2f5;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Squarespell</p>
+        <p id="sb-plan-label" style="font-size:12px;color:rgba(240,242,245,0.4);line-height:1.2;text-transform:capitalize">Free plan</p>
+      </div>
+    </div>
+  </div>
   <p class="dsec">Pages</p>
   <button class="dsi on" data-sec="dashboard" onclick="gD('dashboard')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard<span class="dnotif"></span></button>
   <button class="dsi" data-sec="quizzes" onclick="gD('quizzes')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Quizzes</button>
@@ -883,9 +900,19 @@ function showPay(state) {
   <button class="dsi" data-sec="connect" onclick="gD('connect')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Connect</button>
   <button class="dsi" data-sec="install" onclick="gD('install')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install</button>
   <button class="dsi" data-sec="embed" onclick="gD('embed')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Embed</button>
+  <!-- Bottom user section -->
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:12px;border-top:1px solid rgba(255,255,255,0.06);background:#07090c">
+    <div onclick="gD('account')" style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">
+      <div id="sb-avatar" style="width:28px;height:28px;background:rgba(210,255,29,0.15);border:1px solid rgba(210,255,29,0.2);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#D2FF1D">?</div>
+      <div style="flex:1;min-width:0">
+        <p id="sb-username" style="font-size:13px;font-weight:600;color:#f0f2f5;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Account</p>
+        <p id="sb-email" style="font-size:11px;color:rgba(240,242,245,0.35);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Settings</p>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="dcontent" id="dContent" style="margin-left:210px">
+<div class="dcontent" id="dContent" style="margin-left:248px">
 
 <div class="dpage on" id="dp-dashboard">
 <div id="dash-onboarding">
