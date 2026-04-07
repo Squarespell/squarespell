@@ -328,6 +328,60 @@ input::placeholder { color: rgba(240,242,245,0.3); }
   box-sizing: border-box !important;
 }
 
+/* ═══ FINAL POLISH — GLOBAL SIZING ═══ */
+
+/* Page headings */
+.dcontent .h2, .dpage > div:first-child .h3 {
+  font-size: 32px !important; font-weight: 800 !important;
+  letter-spacing: -0.03em !important; color: #f0f2f5 !important;
+  margin-bottom: 4px !important;
+}
+
+/* Stat card values */
+.dcontent .stat-v { font-size: 44px !important; }
+.dcontent .stat-l { font-size: 13px !important; }
+
+/* Buttons */
+.dcontent .btn-p {
+  min-height: 48px !important; font-size: 16px !important;
+  font-weight: 700 !important; padding: 12px 28px !important;
+  border-radius: 10px !important;
+}
+.dcontent .btn-s {
+  min-height: 44px !important; font-size: 15px !important;
+  padding: 10px 20px !important; border-radius: 8px !important;
+}
+
+/* Tables */
+.dcontent .d-table th {
+  font-size: 13px !important; padding: 12px 14px !important;
+}
+.dcontent .d-table td {
+  font-size: 16px !important; padding: 16px 14px !important;
+  min-height: 52px !important;
+}
+.dcontent .d-table tr { min-height: 52px; }
+
+/* Empty states */
+.dcontent [id$="-empty"] p:first-of-type,
+.dcontent [id$="-empty"] p[style*="font-weight:700"] {
+  font-size: 22px !important;
+}
+
+/* Inputs in content */
+.dcontent input[type="text"],
+.dcontent input[type="email"],
+.dcontent input[type="url"] {
+  height: 52px !important; font-size: 17px !important;
+  border-radius: 10px !important; padding: 0 20px !important;
+}
+
+/* Section labels (QUICK START etc) */
+.dcontent .label { font-size: 13px !important; }
+
+/* Caption / subtitle under headings */
+.dcontent .caption { font-size: 17px !important; color: rgba(240,242,245,0.5) !important; }
+
 </style>
 </head>
 <body>
@@ -948,21 +1002,21 @@ function showPay(state) {
 
 <div class="dpage on" id="dp-dashboard">
 <div id="dash-onboarding">
-  <div style="max-width:560px;margin:0 auto;padding:40px 0">
-    <h2 style="font-size:32px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Welcome! Let's get your first lead</h2>
+  <div style="max-width:800px;margin:0 auto;padding:40px 0">
+    <h2 style="font-size:40px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em;margin-bottom:12px">Welcome! Let's get your first lead</h2>
     <p style="font-size:16px;color:rgba(240,242,245,0.5);margin-bottom:32px;line-height:1.6">3 quick steps to capturing leads on autopilot.</p>
     <div style="display:flex;flex-direction:column;gap:12px">
-      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(210,255,29,0.3);border-left:3px solid #D2FF1D;border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start">
-        <div style="width:28px;height:28px;background:#D2FF1D;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#07090c;flex-shrink:0">1</div>
-        <div style="flex:1"><p style="font-size:18px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Create your first quiz</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:14px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(210,255,29,0.3);border-left:3px solid #D2FF1D;border-radius:12px;padding:28px 32px;display:flex;gap:20px;align-items:flex-start">
+        <div style="width:36px;height:36px;background:#D2FF1D;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#07090c;flex-shrink:0">1</div>
+        <div style="flex:1"><p style="font-size:20px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Create your first quiz</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.65;margin-bottom:16px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
       </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;opacity:0.5">
-        <div style="width:28px;height:28px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">2</div>
-        <div style="flex:1"><p style="font-size:18px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Embed on your Squarespace site</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:14px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:28px 32px;display:flex;gap:20px;align-items:flex-start;opacity:0.5">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">2</div>
+        <div style="flex:1"><p style="font-size:20px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Embed on your Squarespace site</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.65;margin-bottom:16px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
       </div>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;opacity:0.5">
-        <div style="width:28px;height:28px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">3</div>
-        <div style="flex:1"><p style="font-size:18px;font-weight:700;color:#f0f2f5;margin-bottom:4px">Watch leads come in</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:14px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:28px 32px;display:flex;gap:20px;align-items:flex-start;opacity:0.5">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">3</div>
+        <div style="flex:1"><p style="font-size:20px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Watch leads come in</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.65;margin-bottom:16px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
       </div>
     </div>
     <p style="text-align:center;margin-top:24px"><a onclick="document.getElementById('dash-onboarding').style.display='none';document.getElementById('dash-real').style.display='block'" style="font-size:14px;color:rgba(240,242,245,0.4);cursor:pointer;text-decoration:underline">Skip, explore dashboard →</a></p>
@@ -1120,7 +1174,7 @@ function showPay(state) {
     <div><p class="h3" style="margin-bottom:2px">Leads</p><p class="caption" id="sq-leads-count">Loading...</p></div>
     <button onclick="window.__exportLeadsCSV()" style="background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>
   </div>
-  <input id="sq-leads-search" type="text" placeholder="Search by name or email..." oninput="window.__filterLeads(this.value)" style="width:100%;height:44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f5;font-size:15px;padding:0 16px;outline:none;font-family:var(--fam);box-sizing:border-box;margin-bottom:16px"/>
+  <input id="sq-leads-search" type="text" placeholder="Search by name or email..." oninput="window.__filterLeads(this.value)" style="width:100%;height:52px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f5;font-size:17px;padding:0 20px;outline:none;font-family:var(--fam);box-sizing:border-box;margin-bottom:16px"/>
   <div id="sq-leads-empty" style="display:none;text-align:center;padding:60px 20px">
     <div style="width:56px;height:56px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,245,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><circle cx="19" cy="7" r="3"/></svg></div>
     <p style="font-size:17px;font-weight:700;color:rgba(240,242,245,0.75);margin-bottom:8px">No leads yet</p>
@@ -1142,10 +1196,10 @@ function showPay(state) {
   <!-- State A: Quiz generator (no quizzes) -->
   <div id="editor-create">
     <div style="max-width:520px;margin:0 auto;padding:40px 0">
-      <h2 style="font-size:24px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Create your first quiz</h2>
-      <p style="font-size:15px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:32px">Paste your Squarespace site URL. AI reads your brand and generates a quiz in 30 seconds.</p>
-      <input id="editor-url-input" type="text" placeholder="https://yoursite.squarespace.com" style="width:100%;height:52px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#f0f2f5;font-size:16px;padding:0 20px;outline:none;font-family:var(--fam);box-sizing:border-box;margin-bottom:12px"/>
-      <button id="editor-gen-btn" onclick="window.__editorGenerate()" style="width:100%;height:52px;background:#D2FF1D;color:#07090c;border:none;border-radius:12px;font-size:17px;font-weight:700;font-family:var(--fam);cursor:pointer">Generate quiz →</button>
+      <h2 style="font-size:36px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Create your first quiz</h2>
+      <p style="font-size:18px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:32px">Paste your Squarespace site URL. AI reads your brand and generates a quiz in 30 seconds.</p>
+      <input id="editor-url-input" type="text" placeholder="https://yoursite.squarespace.com" style="width:100%;height:60px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#f0f2f5;font-size:18px;padding:0 24px;outline:none;font-family:var(--fam);box-sizing:border-box;margin-bottom:12px"/>
+      <button id="editor-gen-btn" onclick="window.__editorGenerate()" style="width:100%;height:60px;background:#D2FF1D;color:#07090c;border:none;border-radius:12px;font-size:18px;font-weight:700;font-family:var(--fam);cursor:pointer">Generate quiz →</button>
       <p id="editor-gen-status" style="font-size:14px;color:rgba(240,242,245,0.4);text-align:center;margin-top:12px"></p>
     </div>
   </div>
