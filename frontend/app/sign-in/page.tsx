@@ -83,12 +83,12 @@ export default function SignInPage() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '48px' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="#D2FF1D"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          <span style={{ fontSize: '22px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
+          <span style={{ fontSize: '15px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
         </div>
 
         {/* Heading */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px', lineHeight: 1.1 }}>Welcome back</h1>
+          <h1 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px', lineHeight: 1.1 }}>Welcome back</h1>
           <p style={{ fontSize: '15px', color: 'rgba(240,242,245,0.45)', margin: 0 }}>Sign in to your Squarespell account</p>
         </div>
 

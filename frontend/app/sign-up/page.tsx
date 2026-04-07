@@ -107,13 +107,13 @@ function SignUpContent() {
       <div style={{ width: '100%', maxWidth: '480px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '48px' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="#D2FF1D"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          <span style={{ fontSize: '22px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
+          <span style={{ fontSize: '15px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.03em' }}>Squarespell</span>
         </div>
 
         {step === 'form' ? (
           <>
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px', lineHeight: 1.1 }}>Start your free trial</h1>
+              <h1 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px', lineHeight: 1.1 }}>Start your free trial</h1>
               <p style={{ fontSize: '15px', color: 'rgba(240,242,245,0.45)', margin: 0 }}>7 days free. No credit card required.</p>
             </div>
             {fromTry && (
@@ -160,13 +160,13 @@ function SignUpContent() {
               <div style={{ width: '64px', height: '64px', background: 'rgba(210,255,29,0.1)', border: '1px solid rgba(210,255,29,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               </div>
-              <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px' }}>Check your email</h1>
+              <h1 style={{ fontSize: '15px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px' }}>Check your email</h1>
               <p style={{ fontSize: '16px', color: 'rgba(240,242,245,0.45)', margin: 0 }}>We sent a 6-digit code to <strong style={{ color: '#f0f2f5' }}>{email}</strong></p>
             </div>
             <form onSubmit={handleVerify}>
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', fontSize: '15px', fontWeight: 600, color: 'rgba(240,242,245,0.65)', marginBottom: '8px' }}>Verification code</label>
-                <input type="text" placeholder="Enter 6-digit code" value={code} onChange={e => setCode(e.target.value)} style={{ ...inputStyle, textAlign: 'center' as const, fontSize: '24px', letterSpacing: '0.3em' }} maxLength={6} required />
+                <input type="text" placeholder="Enter 6-digit code" value={code} onChange={e => setCode(e.target.value)} style={{ ...inputStyle, textAlign: 'center' as const, fontSize: '15px', letterSpacing: '0.3em' }} maxLength={6} required />
               </div>
               {error && <p style={{ fontSize: '14px', color: '#ff6b6b', marginBottom: '16px', textAlign: 'center' }}>{error}</p>}
               <button type="submit" disabled={loading} style={{ width: '100%', height: '56px', background: '#D2FF1D', color: '#07090c', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 700, fontFamily: '"DM Sans", system-ui, sans-serif', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>

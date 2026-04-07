@@ -51,7 +51,7 @@ function Footer() {
               <div style={{width:'32px',height:'32px',background:'#D2FF1D',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#07090c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               </div>
-              <span style={{fontSize:'20px',fontWeight:800,color:'#f0f2f5',letterSpacing:'-0.03em'}}>Squarespell</span>
+              <span style={{fontSize: '14px',fontWeight:800,color:'#f0f2f5',letterSpacing:'-0.03em'}}>Squarespell</span>
             </div>
             <p style={{fontSize:'15px',color:'rgba(240,242,245,0.5)',lineHeight:'1.6',marginTop:'12px'}}>AI-powered quiz funnels for Squarespace. Turn visitors into leads in minutes.</p>
           </div>

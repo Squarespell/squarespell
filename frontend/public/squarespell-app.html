@@ -64,15 +64,15 @@ p{font-size:14px;line-height:1.6;margin:0}
 .dnotif{width:5px;height:5px;border-radius:50%;background:var(--acc);position:absolute;right:9px;top:50%;transform:translateY(-50%)}
 /* DCONTENT */
 .dcontent{margin-left:210px;padding:28px 36px;min-height:calc(100vh - 96px)}
-.dpage{display:none;padding:48px 80px;max-width:800px;margin:0 auto}
+.dpage{display:none;padding:40px 80px;max-width:800px !important;margin:0 auto !important}
 .dpage.on{display:block}
 /* TYPOGRAPHY */
 .disp{font-size:62px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
 .disp span{color:var(--acc)}
 .h1{font-size:48px;font-weight:800;letter-spacing:-.04em;line-height:1.1;color:#f0f2f5}
-.h2{font-size: 22px;font-weight:800;color:#f0f2f5;line-height:1.15;letter-spacing:-.03em}
+.h2{font-size: 15px;font-weight:800;color:#f0f2f5;line-height:1.15;letter-spacing:-.03em}
 .h2 span{color:var(--acc)}
-.h3{font-size:24px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;line-height:1.2}
+.h3{font-size: 15px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;line-height:1.2}
 .h4{font-size: 13px;font-weight:700;color:#f0f2f5;letter-spacing:-.02em}
 .body-lg{font-size: 13px;color:rgba(240,242,245,0.7);line-height:1.6}
 .body{font-size:16px;color:rgba(240,242,245,0.7);line-height:1.6}
@@ -112,7 +112,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 /* STAT CARD */
 .stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;transition:all .2s;cursor:default}
 .stat-card:hover{border-color:var(--acc-b);transform:translateY(-1px)}
-.stat-v{font-size: 28px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
+.stat-v{font-size: 16px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
 .stat-l{font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em}
 .stat-d{font-size:15px;font-weight:600;margin-top:4px}
 .stat-d.up{color:var(--green)}
@@ -175,7 +175,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 .tmpl-card:hover{border-color:var(--acc-b);transform:translateY(-2px)}
 /* AVROW */
 .avrow{display:flex}
-.av{width:24px;height:24px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid var(--bg);margin-right:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--acc)}
+.av{width: 16px;height: 16px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid var(--bg);margin-right:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--acc)}
 /* FAQ */
 .faq-item{border-bottom:.5px solid var(--b2);padding:16px 0}
 .faq-q{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size: 13px;font-weight:600;color:var(--t1);letter-spacing:-.02em;gap:14px}
@@ -204,7 +204,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 .mbs{background:var(--g1);border:.5px solid var(--b1);color:var(--t1);border-radius:11px;padding:12px;font-size:13px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center}
 .mopt{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:11px;cursor:pointer;margin-bottom:7px;transition:all .15s}
 .mopt.on{background:var(--acc-dim);border-color:var(--acc-b)}
-.mopt-k{width:24px;height:24px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--t3);flex-shrink:0}
+.mopt-k{width: 16px;height: 16px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--t3);flex-shrink:0}
 .mopt.on .mopt-k{background:var(--acc);color:#07090c;border-color:transparent}
 .mopt-lbl{font-size: 14px;color:var(--t2);line-height:1.35}
 .mopt.on .mopt-lbl{color:var(--t1)}
@@ -213,7 +213,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 .mbnav-lbl{font-size:13px;font-weight:600}
 .mbnav-item.active .mbnav-lbl{color:var(--acc)}
 .mbnav-item.inactive .mbnav-lbl{color:var(--t4)}
-.bsafe{height:24px}
+.bsafe{height: 16px}
 /* MISC */
 .orb{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
 .cdot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
@@ -289,13 +289,13 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 .dcontent p { font-size: 14px !important; line-height: 1.6 !important; }
 .dcontent .caption { font-size: 15px !important; }
 .dcontent .label, .dcontent th { font-size: 12px !important; }
-.dcontent .h3 { font-size: 24px !important; font-weight: 800 !important; letter-spacing: -0.03em !important; }
+.dcontent .h3 { font-size: 15px !important; font-weight: 800 !important; letter-spacing: -0.03em !important; }
 .dcontent .h4 { font-size: 13px !important; font-weight: 700 !important; }
 .dcontent .body-sm { font-size: 14px !important; }
 .dcontent td { font-size: 15px !important; padding: 14px !important; }
 .dcontent input, .dcontent textarea { font-size: 14px !important; padding: 14px 18px !important; }
 .dcontent .dsi { font-size: 13px !important; padding: 9px 12px !important; }
-.dcontent .stat-v { font-size: 28px !important; }
+.dcontent .stat-v { font-size: 14px !important; }
 
 /* ═══ FINAL LAYOUT LOCK ═══ */
 .dsi { font-size: 13px !important; padding: 9px 12px !important; }
@@ -332,7 +332,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 
 /* Page headings */
 .dcontent .h2, .dpage > div:first-child .h3 {
-  font-size: 32px !important; font-weight: 800 !important;
+  font-size: 13px !important; font-weight: 800 !important;
   letter-spacing: -0.03em !important; color: #f0f2f5 !important;
   margin-bottom: 4px !important;
 }
@@ -365,7 +365,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 /* Empty states */
 .dcontent [id$="-empty"] p:first-of-type,
 .dcontent [id$="-empty"] p[style*="font-weight:700"] {
-  font-size: 22px !important;
+  font-size: 15px !important;
 }
 
 /* Inputs in content */
@@ -385,11 +385,11 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 /* ═══ FINAL DESIGN POLISH ═══ */
 
 /* Onboarding heading */
-#dash-onboarding h2 { font-size: 28px !important; letter-spacing: -0.04em !important; }
+#dash-onboarding h2 { font-size: 14px !important; letter-spacing: -0.04em !important; }
 #dash-onboarding > div { max-width: 100% !important; }
 
 /* Editor page */
-#dp-editor h2, #dp-editor .h2 { font-size: 22px !important; }
+#dp-editor h2, #dp-editor .h2 { font-size: 15px !important; }
 #dp-editor input[type="text"], #dp-editor input[type="url"] { height: 60px !important; font-size: 13px !important; }
 #dp-editor .btn-p { height: 60px !important; font-size: 13px !important; }
 
@@ -397,31 +397,31 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 #dp-leads input { height: 52px !important; font-size: 14px !important; }
 #dp-leads .d-table td { font-size: 14px !important; padding: 16px 14px !important; }
 #dp-leads .d-table th { font-size: 13px !important; padding: 12px 14px !important; }
-#dp-leads h2, #dp-leads .h2 { font-size: 32px !important; }
+#dp-leads h2, #dp-leads .h2 { font-size: 13px !important; }
 
 /* Analytics page */
-#dp-analytics h2, #dp-analytics .h2 { font-size: 32px !important; }
+#dp-analytics h2, #dp-analytics .h2 { font-size: 13px !important; }
 #dp-analytics .stat-v { font-size: 44px !important; }
 
 /* Quizzes page */
-#dp-quizzes h2, #dp-quizzes .h2 { font-size: 32px !important; }
+#dp-quizzes h2, #dp-quizzes .h2 { font-size: 13px !important; }
 
 /* Account page */
-#dp-account h2, #dp-account .h2 { font-size: 32px !important; }
+#dp-account h2, #dp-account .h2 { font-size: 13px !important; }
 #dp-account input { height: 52px !important; font-size: 14px !important; }
 
 /* Connect page */
-#dp-connect h2, #dp-connect .h2, #dp-connect .h3 { font-size: 32px !important; }
+#dp-connect h2, #dp-connect .h2, #dp-connect .h3 { font-size: 13px !important; }
 #dp-connect #sqsp-disconnected button { height: 60px !important; font-size: 13px !important; font-weight: 700 !important; min-width: 280px !important; }
 #dp-connect p { font-size: 14px !important; }
 
 /* Install + Embed pages */
-#dp-install h2, #dp-install .h2, #dp-install .h3 { font-size: 32px !important; }
-#dp-embed h2, #dp-embed .h2, #dp-embed .h3 { font-size: 32px !important; }
+#dp-install h2, #dp-install .h2, #dp-install .h3 { font-size: 13px !important; }
+#dp-embed h2, #dp-embed .h2, #dp-embed .h3 { font-size: 13px !important; }
 #dp-install p, #dp-embed p { font-size: 14px !important; }
 
 /* Templates page */
-#dp-templates h2, #dp-templates .h2 { font-size: 32px !important; }
+#dp-templates h2, #dp-templates .h2 { font-size: 13px !important; }
 
 /* Global page subtitle pattern */
 .dpage > div > p:first-of-type { font-size: 14px !important; color: rgba(240,242,245,0.5) !important; }
@@ -827,7 +827,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 <div class="sq-topbar" id="sq-topbar" style="display:flex">
   <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="gD('dashboard')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="#D2FF1D" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    <span style="font-size:20px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em">Squarespell</span>
+    <span style="font-size: 14px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em">Squarespell</span>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <span id="sq-plan-badge" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:3px 10px;font-size:12px;color:rgba(240,242,245,.5);font-weight:500;text-transform:capitalize">free</span>
@@ -1061,20 +1061,20 @@ function showPay(state) {
 <div class="dpage on" id="dp-dashboard">
 <div id="dash-onboarding">
   <div style="width:100%;padding:48px 0">
-    <h2 style="font-size: 28px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em;margin-bottom:12px">Welcome! Let's get your first lead</h2>
+    <h2 style="font-size: 16px;font-weight:800;color:#f0f2f5;letter-spacing:-.04em;margin-bottom:12px">Welcome! Let's get your first lead</h2>
     <p style="font-size: 13px;color:rgba(240,242,245,0.5);margin-bottom:40px;line-height:1.6">3 quick steps to capturing leads on autopilot.</p>
     <div style="display:flex;flex-direction:column;gap:16px">
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(210,255,29,0.3);border-left:4px solid #D2FF1D;border-radius:12px;padding:32px 36px;min-height:120px;display:flex;align-items:center;gap:24px">
         <div style="width:44px;height:44px;background:#D2FF1D;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size: 13px;font-weight:800;color:#07090c;flex-shrink:0">1</div>
-        <div style="flex:1"><p style="font-size:22px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Create your first quiz</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:14px 36px;font-size: 14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
+        <div style="flex:1"><p style="font-size: 15px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Create your first quiz</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">Paste your Squarespace URL. AI builds a branded quiz in 30 seconds.</p><button onclick="gD('editor')" style="background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:14px 36px;font-size: 14px;font-weight:700;font-family:var(--fam);cursor:pointer">Create quiz →</button></div>
       </div>
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:32px 36px;min-height:120px;display:flex;align-items:center;gap:24px;opacity:0.5">
         <div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size: 13px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">2</div>
-        <div style="flex:1"><p style="font-size:22px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Embed on your Squarespace site</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:10px;padding:14px 36px;font-size: 14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
+        <div style="flex:1"><p style="font-size: 15px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Embed on your Squarespace site</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">One code block. Your quiz goes live on any page instantly.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:10px;padding:14px 36px;font-size: 14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">Get embed code</button></div>
       </div>
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:32px 36px;min-height:120px;display:flex;align-items:center;gap:24px;opacity:0.5">
         <div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size: 13px;font-weight:800;color:rgba(240,242,245,0.5);flex-shrink:0">3</div>
-        <div style="flex:1"><p style="font-size:22px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Watch leads come in</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:10px;padding:14px 36px;font-size: 14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
+        <div style="flex:1"><p style="font-size: 15px;font-weight:700;color:#f0f2f5;margin-bottom:6px">Watch leads come in</p><p style="font-size:16px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:16px">Every quiz response becomes a lead with name, email, and score.</p><button disabled style="background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.3);border:none;border-radius:10px;padding:14px 36px;font-size: 14px;font-weight:700;font-family:var(--fam);cursor:not-allowed">View leads</button></div>
       </div>
     </div>
     <p style="text-align:center;margin-top:28px"><a onclick="document.getElementById('dash-onboarding').style.display='none';document.getElementById('dash-real').style.display='block'" style="font-size:15px;color:rgba(240,242,245,0.4);cursor:pointer;text-decoration:underline">Skip, explore dashboard →</a></p>
@@ -1082,10 +1082,10 @@ function showPay(state) {
 </div>
 <div id="dash-real" style="display:none">
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-q" style="font-size: 22px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Active Quizzes</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-l" style="font-size: 22px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Leads</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-v" style="font-size: 22px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Views</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-cvr" style="font-size: 22px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0%</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Conversion Rate</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-q" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Active Quizzes</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-l" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Leads</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-v" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Views</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-cvr" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0%</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Conversion Rate</p></div>
   </div>
   <div style="display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:24px">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px">
@@ -1159,7 +1159,7 @@ function showPay(state) {
   <!-- Analytics lock overlay for trial/starter -->
   <div id="sq-analytics-lock" style="display:none;position:absolute;inset:0;z-index:10;backdrop-filter:blur(6px);background:rgba(7,9,12,.7);border-radius:14px;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:40px">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    <p style="font-size:20px;font-weight:800;color:var(--t1);letter-spacing:-.03em">Advanced Analytics</p>
+    <p style="font-size: 14px;font-weight:800;color:var(--t1);letter-spacing:-.03em">Advanced Analytics</p>
     <p style="font-size:15px;color:var(--t3);max-width:320px">Conversion funnels, lead scoring, and AI insights are available on the Pro plan.</p>
     <button onclick="gD('pricing')" style="background:var(--acc);color:#07090c;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer">Upgrade to Pro</button>
   </div>
@@ -1168,13 +1168,13 @@ function showPay(state) {
       <p class="h4" style="margin-bottom:5px">Conversion funnel</p>
       <p class="body-sm" style="margin-bottom:18px">How visitors flow through your quiz</p>
       <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="background:rgba(210,255,29,.13);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size: 14px;font-weight:600;color:var(--t1)">Page views</span></div><span style="font-size:22px;font-weight:800;color:var(--acc)">0</span></div>
+        <div style="background:rgba(210,255,29,.13);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--acc)"></div><span style="font-size: 14px;font-weight:600;color:var(--t1)">Page views</span></div><span style="font-size: 15px;font-weight:800;color:var(--acc)">0</span></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(210,255,29,.09);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.6)"></div><span style="font-size: 14px;font-weight:600;color:var(--t1)">Quiz started</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">0</span><span style="font-size:14px;color:var(--t3);display:block">68% of views</span></div></div>
+        <div style="background:rgba(210,255,29,.09);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.6)"></div><span style="font-size: 14px;font-weight:600;color:var(--t1)">Quiz started</span></div><div style="text-align:right"><span style="font-size: 15px;font-weight:800;color:var(--t1)">0</span><span style="font-size:14px;color:var(--t3);display:block">68% of views</span></div></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(210,255,29,.05);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.35)"></div><span style="font-size: 14px;font-weight:600;color:var(--t1)">Completed</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--t1)">0</span><span style="font-size:14px;color:var(--t3);display:block">68% of starters</span></div></div>
+        <div style="background:rgba(210,255,29,.05);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:rgba(210,255,29,.35)"></div><span style="font-size: 14px;font-weight:600;color:var(--t1)">Completed</span></div><div style="text-align:right"><span style="font-size: 15px;font-weight:800;color:var(--t1)">0</span><span style="font-size:14px;color:var(--t3);display:block">68% of starters</span></div></div>
         <div style="width:1px;background:var(--b2);margin:2px auto;height:12px"></div>
-        <div style="background:rgba(74,222,128,.07);border:.5px solid rgba(74,222,128,.15);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--green)"></div><span style="font-size: 14px;font-weight:600;color:var(--green)">Email submitted</span></div><div style="text-align:right"><span style="font-size:22px;font-weight:800;color:var(--green)">0</span><span style="font-size:14px;color:var(--t3);display:block">26.8% of completers</span></div></div>
+        <div style="background:rgba(74,222,128,.07);border:.5px solid rgba(74,222,128,.15);border-radius:7px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="cdot" style="background:var(--green)"></div><span style="font-size: 14px;font-weight:600;color:var(--green)">Email submitted</span></div><div style="text-align:right"><span style="font-size: 15px;font-weight:800;color:var(--green)">0</span><span style="font-size:14px;color:var(--t3);display:block">26.8% of completers</span></div></div>
       </div>
     </div>
     <div class="glass-sm" style="padding:20px">
@@ -1254,7 +1254,7 @@ function showPay(state) {
   <!-- State A: Quiz generator (no quizzes) -->
   <div id="editor-create">
     <div style="max-width:520px;margin:0 auto;padding:40px 0">
-      <h2 style="font-size: 22px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Create your first quiz</h2>
+      <h2 style="font-size: 15px;font-weight:800;color:#f0f2f5;letter-spacing:-.03em;margin-bottom:8px">Create your first quiz</h2>
       <p style="font-size: 13px;color:rgba(240,242,245,0.5);line-height:1.6;margin-bottom:32px">Paste your Squarespace site URL. AI reads your brand and generates a quiz in 30 seconds.</p>
       <input id="editor-url-input" type="text" placeholder="https://yoursite.squarespace.com" style="width:100%;height:60px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#f0f2f5;font-size: 13px;padding:0 24px;outline:none;font-family:var(--fam);box-sizing:border-box;margin-bottom:12px"/>
       <button id="editor-gen-btn" onclick="window.__editorGenerate()" style="width:100%;height:60px;background:#D2FF1D;color:#07090c;border:none;border-radius:12px;font-size: 13px;font-weight:700;font-family:var(--fam);cursor:pointer">Generate quiz →</button>
@@ -1327,10 +1327,10 @@ function showPay(state) {
 <div style="max-width:1100px">
   <div style="text-align:center;margin-bottom:48px">
     <p style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,242,245,0.4);margin-bottom:12px">SIMPLE PRICING</p>
-    <h2 style="font-size: 28px;font-weight:800;color:#f0f2f5;letter-spacing:-0.04em;margin-bottom:16px">Start free. Scale as you grow.</h2>
+    <h2 style="font-size: 16px;font-weight:800;color:#f0f2f5;letter-spacing:-0.04em;margin-bottom:16px">Start free. Scale as you grow.</h2>
     <div style="display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:40px;padding:6px 6px 6px 16px">
       <span style="font-size:14px;color:rgba(240,242,245,0.6)">Monthly</span>
-      <div id="dash-billing-toggle" onclick="window.__toggleBilling&&window.__toggleBilling()" style="width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:24px;cursor:pointer;position:relative;transition:background .2s">
+      <div id="dash-billing-toggle" onclick="window.__toggleBilling&&window.__toggleBilling()" style="width:44px;height: 16px;background:rgba(255,255,255,0.1);border-radius:24px;cursor:pointer;position:relative;transition:background .2s">
         <div style="position:absolute;top:2px;left:2px;width: 16px;height: 16px;background:#f0f2f5;border-radius:50%;transition:transform .2s"></div>
       </div>
       <span style="font-size:14px;color:rgba(240,242,245,0.6)">Annual <span style="background:rgba(210,255,29,0.15);color:#D2FF1D;border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700">20% off</span></span>
@@ -1411,7 +1411,7 @@ function showPay(state) {
       <p style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:4px">Email notifications</p>
       <p style="font-size:14px;color:rgba(240,242,245,0.5)">Get notified when a new lead is captured</p>
     </div>
-    <div id="notif-toggle" onclick="this.classList.toggle('on');window.__saveNotifPref&&window.__saveNotifPref(this.classList.contains('on'))" style="width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:24px;cursor:pointer;position:relative;transition:background .2s">
+    <div id="notif-toggle" onclick="this.classList.toggle('on');window.__saveNotifPref&&window.__saveNotifPref(this.classList.contains('on'))" style="width:44px;height: 16px;background:rgba(255,255,255,0.1);border-radius:24px;cursor:pointer;position:relative;transition:background .2s">
       <div style="position:absolute;top:2px;left:2px;width: 16px;height: 16px;background:#f0f2f5;border-radius:50%;transition:transform .2s"></div>
     </div>
   </div>
@@ -1777,7 +1777,7 @@ function showPay(state) {
 <div id="sq-quiz-limit-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;font-family:var(--fam)">
   <div style="background:#0d1018;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:32px;max-width:420px;text-align:center">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    <p style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.03em">Quiz limit reached</p>
+    <p style="font-size: 14px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.03em">Quiz limit reached</p>
     <p id="sq-limit-msg" style="font-size:15px;color:var(--t3);line-height:1.6;margin-bottom:24px">You've reached your quiz limit. Upgrade for more.</p>
     <div style="display:flex;gap:10px;justify-content:center">
       <button onclick="gD('pricing');document.getElementById('sq-quiz-limit-modal').style.display='none'" style="background:var(--acc);color:#07090c;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;font-family:var(--fam);cursor:pointer">Upgrade plan</button>

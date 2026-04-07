@@ -105,7 +105,7 @@ export default function TryPage() {
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80' }} />
                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#4ade80' }}>Live preview</span>
               </div>
-              <p style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '20px', color: '#f0f2f5' }}>{quizTitle}</p>
+              <p style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '20px', color: '#f0f2f5' }}>{quizTitle}</p>
               {['Getting more qualified leads', 'Improving my conversion rate', 'Building a stronger brand presence'].map((opt, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: i === 0 ? 'rgba(210,255,29,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${i === 0 ? 'rgba(210,255,29,0.2)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '10px', marginBottom: '8px', cursor: 'pointer' }}>
                   <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: i === 0 ? ACC : 'rgba(255,255,255,0.06)', border: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, color: i === 0 ? BG : 'rgba(240,242,245,0.4)', flexShrink: 0 }}>
