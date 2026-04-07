@@ -17,8 +17,8 @@
   --green:#4ade80;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;
   --fam:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
 }
-body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100vh;font-size:16px;line-height:1.6}
-p{font-size:16px;line-height:1.6;margin:0}
+body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100vh;font-size:14px;line-height:1.6}
+p{font-size:14px;line-height:1.6;margin:0}
 /* NAV */
 .gnav{position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(7,9,12,.88);backdrop-filter:blur(32px);border-bottom:.5px solid var(--b2);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px}
 .gnav-logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex-shrink:0}
@@ -55,10 +55,10 @@ p{font-size:16px;line-height:1.6;margin:0}
 .glass-sm{background:rgba(255,255,255,0.04);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.08);border-radius:12px}
 /* SIDEBAR */
 .dsidebar{position:fixed;top:96px;left:0;bottom:0;width:210px;background:var(--bg2);border-right:.5px solid var(--b2);padding:16px 10px;z-index:100;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none}
-.dsi{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:17px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative}
+.dsi{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:13px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative}
 .dsi:hover{background:var(--g1);color:var(--t2)}
 .dsi.on{background:var(--acc-dim);border:.5px solid var(--acc-b);color:var(--acc)}
-.dsi svg{flex-shrink:0;opacity:.7}
+.dsi svg{flex-shrink:0;opacity:.7;width:16px;height:16px}
 .dsi.on svg{opacity:1}
 .dsec{font-size:14px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.1em;padding:12px 10px 5px}
 .dnotif{width:5px;height:5px;border-radius:50%;background:var(--acc);position:absolute;right:9px;top:50%;transform:translateY(-50%)}
@@ -127,7 +127,7 @@ p{font-size:16px;line-height:1.6;margin:0}
 .p-cross{display:flex;gap:8px;align-items:flex-start;font-size:17px;color:var(--t4);margin-bottom:8px}
 /* BILLING TOGGLE */
 .bill-tog{display:flex;background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:3px;gap:2px}
-.bt-opt{font-size:17px;font-weight:500;color:var(--t4);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+.bt-opt{font-size:13px;font-weight:500;color:var(--t4);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
 .bt-opt.on{background:var(--g1);color:var(--t1);border:.5px solid var(--b1)}
 .bt-save{background:var(--acc);color:#07090c;font-size:13px;font-weight:800;border-radius:20px;padding:2px 7px}
 /* TABLE */
@@ -201,7 +201,7 @@ p{font-size:16px;line-height:1.6;margin:0}
 .me{font-size:13px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em}
 .mbp{background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:13px;font-size:18px;font-weight:700;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
 .mbp:hover{background:#c8f517}
-.mbs{background:var(--g1);border:.5px solid var(--b1);color:var(--t1);border-radius:11px;padding:12px;font-size:17px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center}
+.mbs{background:var(--g1);border:.5px solid var(--b1);color:var(--t1);border-radius:11px;padding:12px;font-size:13px;font-weight:500;font-family:var(--fam);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center}
 .mopt{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:11px;cursor:pointer;margin-bottom:7px;transition:all .15s}
 .mopt.on{background:var(--acc-dim);border-color:var(--acc-b)}
 .mopt-k{width:24px;height:24px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--t3);flex-shrink:0}
