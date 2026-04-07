@@ -22,7 +22,8 @@ export default function SignInPage() {
         router.push('/dashboard')
       }
     } catch (err: any) {
-      setError(err?.errors?.[0]?.message || 'Sign in failed. Please try again.')
+      const msg = err?.errors?.[0]?.message || 'Incorrect email or password.'
+      setError(msg)
     } finally {
       setLoading(false)
     }
