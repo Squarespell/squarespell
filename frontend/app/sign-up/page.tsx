@@ -19,22 +19,20 @@ function SignUpContent() {
 
   const handleGoogleSignUp = async () => {
     if (!signUpLoaded) return
-    try {
-      await signUp.authenticateWithPopup({ strategy: 'oauth_google' })
-      router.push(fromTry ? '/dashboard?new=true' : '/dashboard')
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message || 'Google sign up failed.')
-    }
+    await signUp.authenticateWithRedirect({
+      strategy: 'oauth_google',
+      redirectUrl: '/sso-callback',
+      redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
+    })
   }
 
   const handleAppleSignUp = async () => {
     if (!signUpLoaded) return
-    try {
-      await signUp.authenticateWithPopup({ strategy: 'oauth_apple' })
-      router.push(fromTry ? '/dashboard?new=true' : '/dashboard')
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message || 'Apple sign up failed.')
-    }
+    await signUp.authenticateWithRedirect({
+      strategy: 'oauth_apple',
+      redirectUrl: '/sso-callback',
+      redirectUrlComplete: fromTry ? '/dashboard?new=true' : '/dashboard',
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
