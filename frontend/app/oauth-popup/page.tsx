@@ -8,19 +8,18 @@ function OAuthPopupContent() {
   const { signUp, isLoaded } = useSignUp()
   const searchParams = useSearchParams()
   const strategy = searchParams.get('strategy') || 'oauth_google'
-  const dest = searchParams.get('dest') || '/dashboard'
 
   useEffect(() => {
     if (!isLoaded || !signUp) return
     signUp.authenticateWithRedirect({
       strategy: strategy as any,
       redirectUrl: '/sso-callback',
-      redirectUrlComplete: dest,
+      redirectUrlComplete: '/sso-popup-done',
     }).catch(() => {
       if (window.opener) window.opener.postMessage('oauth_error', '*')
       window.close()
     })
-  }, [isLoaded, signUp, strategy, dest])
+  }, [isLoaded, signUp, strategy])
 
   return (
     <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", system-ui, sans-serif' }}>
