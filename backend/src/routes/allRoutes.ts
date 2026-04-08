@@ -21,8 +21,9 @@ export const generateRouter = Router();
 generateRouter.post('/generate', requireAuth, attachUser, guardQuizCreation, async (req: AuthenticatedRequest, res) => {
   const { url, business_type, goal } = req.body;
   if (!url || !business_type || !goal) return res.status(400).json({ error: 'url, business_type, and goal required' });
-  try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
-  try { res.json(await generateQuiz(url, business_type, goal)); }
+  let normalizedUrl: string;
+  try { normalizedUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
+  try { res.json(await generateQuiz(normalizedUrl, business_type, goal)); }
   catch (err: any) { res.status(500).json({ error: err.message ?? 'Generation failed' }); }
 });
 
@@ -99,8 +100,9 @@ export const scrapeBrandRouter = Router();
 scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
-  try { new URL(url); } catch { return res.status(400).json({ error: 'invalid url' }); }
-  res.json(await scrapeBrand(url));
+  let normalizedBrandUrl: string;
+  try { normalizedBrandUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'invalid url' }); }
+  res.json(await scrapeBrand(normalizedBrandUrl));
 });
 
 // ── User ──────────────────────────────────────────────────────────────────────

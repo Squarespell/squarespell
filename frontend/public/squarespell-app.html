@@ -468,6 +468,9 @@ input::placeholder { color: rgba(240,242,245,0.3); }
   };
   window.__realGenerate = function(url, goal) {
     if (!url) { alert("Enter your website URL first"); return; }
+    // Normalize URL — accept squarespell.com, www.squarespell.com, etc.
+    url = url.trim().replace(/\/+$/, "");
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
     apiFetch("/api/generate", { method: "POST", body: JSON.stringify({ url: url, business_type: "coaching", goal: goal || "Generate more leads" }) })
       .then(function(r){ return r.json(); })
       .then(function(data) {
