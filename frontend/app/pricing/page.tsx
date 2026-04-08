@@ -169,7 +169,7 @@ export default function PricingPage() {
         /* HERO */
         .hero { max-width:800px; margin:0 auto; text-align:center; padding:80px 0 56px; }
         .badge { display:inline-flex; align-items:center; background:rgba(210,255,29,.08); border:1px solid rgba(210,255,29,.2); border-radius:100px; padding:5px 14px; margin-bottom:28px; font-size:11px; font-weight:700; color:var(--acc); letter-spacing:.08em; text-transform:uppercase; }
-        .hero h1 { font-size:clamp(34px,5vw,54px); font-weight:800; letter-spacing:-.04em; line-height:1.08; color:var(--t1); margin-bottom:20px; }
+        .hero h1 { font-size:clamp(24px,4vw,32px); font-weight:800; letter-spacing:-.04em; line-height:1.08; color:var(--t1); margin-bottom:20px; }
         .hero h1 em { color:var(--acc); font-style:normal; }
         .hero p { font-size:clamp(16px,2vw,18px); color:var(--t3); line-height:1.65; max-width:500px; margin:0 auto 28px; }
         .trust { display:flex; justify-content:center; gap:28px; flex-wrap:wrap; }
@@ -189,12 +189,12 @@ export default function PricingPage() {
         .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px 28px; display:flex; flex-direction:column; position:relative; }
         .card.pro { background:rgba(210,255,29,.05); border-color:rgba(210,255,29,.25); }
         .pop { position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--acc); color:#07090c; font-size:11px; font-weight:800; padding:4px 16px; border-radius:100px; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
-        .cname { font-size:26px; font-weight:700; margin-bottom:8px; }
+        .cname { font-size:18px; font-weight:700; margin-bottom:8px; }
         .cname.a { color:var(--acc); }
         .cdesc { font-size:17px; color:var(--t3); line-height:1.55; margin-bottom:28px; min-height:44px; }
         .prow { display:flex; align-items:baseline; gap:3px; margin-bottom:6px; }
         .pold { font-size:16px; color:var(--t4); text-decoration:line-through; margin-right:4px; }
-        .pnum { font-size:48px; font-weight:800; letter-spacing:-.04em; color:var(--t1); line-height:1; }
+        .pnum { font-size:32px; font-weight:800; letter-spacing:-.04em; color:var(--t1); line-height:1; }
         .pper { font-size:16px; color:var(--t3); }
         .pbill { font-size:13px; color:var(--t4); margin-bottom:4px; } .psave { font-size:15px; font-weight:600; color:#4ade80; margin-bottom:20px; }
         .cta { width:100%; padding:14px 20px; border-radius:10px; border:none; font-size:16px; font-weight:700; margin-bottom:28px; transition:all .15s; letter-spacing:-.01em; }
@@ -212,7 +212,7 @@ export default function PricingPage() {
 
         /* TABLE */
         .mtbl-wrap { max-width:1400px; margin:0 auto 80px; padding:0 48px; width:100%; box-sizing:border-box; }
-        .sec-title { font-size:32px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
+        .sec-title { font-size:24px; font-weight:800; letter-spacing:-.04em; text-align:center; margin-bottom:10px; }
         .sec-sub { font-size:17px; color:var(--t3); text-align:center; margin-bottom:36px; }
         .tscroll { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
         .mtbl { width:100%; min-width:580px; border-collapse:collapse; font-size:17px; }
@@ -236,14 +236,14 @@ export default function PricingPage() {
         .faq-item { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; }
         .faq-item:hover { border-color:rgba(255,255,255,.14); }
         .faq-q { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; gap:16px; }
-        .faq-qt { font-size:19px; font-weight:600; color:var(--t1); flex:1; line-height:1.4; }
+        .faq-qt { font-size:16px; font-weight:600; color:var(--t1); flex:1; line-height:1.4; }
         .faq-chev { flex-shrink:0; transition:transform .2s; color:var(--t4); }
         .faq-chev.o { transform:rotate(180deg); }
         .faq-a { padding:0 24px 20px; font-size:17px; color:var(--t3); line-height:1.7; }
 
         /* CTA BOX */
         .ctabox { width:100%; background:#07090c; border-top:1px solid rgba(255,255,255,.08); padding:80px 48px; display:flex; flex-direction:column; align-items:flex-start; gap:28px; }
-        .ctabox h2 { font-size:clamp(56px,8vw,96px); font-weight:800; letter-spacing:-.04em; line-height:1.0; margin:0; max-width:800px; }
+        .ctabox h2 { font-size:clamp(24px,4vw,32px); font-weight:800; letter-spacing:-.04em; line-height:1.0; margin:0; max-width:800px; }
         .ctabox-right { display:flex; flex-direction:column; align-items:flex-start; gap:12px; } .ctabox p { font-size:17px; color:var(--t3); line-height:1.65; margin:0; }
         .ctabtn { background:var(--acc); color:#07090c; border:none; border-radius:12px; padding:16px 40px; font-size:17px; font-weight:700; cursor:pointer; transition:background .15s; }
         .ctabtn:hover { background:#c8f200; }
@@ -256,14 +256,14 @@ export default function PricingPage() {
           .grid { grid-template-columns:1fr; gap:16px; padding:0; }
           .card { padding:28px 24px; }
           .card.pro { margin-top:8px; }
-          .sec-title,.ctabox h2 { font-size:26px; }
+          .sec-title,.ctabox h2 { font-size:20px; }
           .ctabox { padding:40px 24px; }
           .trust { gap:16px; }
           .trust span { font-size:13px; }
         }
         @media(max-width:600px){ .mtbl-wrap { padding:0; } .tscroll { background:transparent; border:none; border-radius:0; } .mtbl { min-width:0; width:100%; } .mtbl thead { display:none; } .mtbl,.mtbl tbody { display:block; width:100%; } .mtbl tr.cat { display:block; } .mtbl tr.dr { display:block; background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:10px; overflow:hidden; } .mtbl tr.dr td { display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-top:1px solid rgba(255,255,255,.05); font-size:15px; } .mtbl tr.dr td:first-child { font-weight:600; color:var(--t1); background:rgba(255,255,255,.03); border-top:none; display:block; } .mtbl tr.dr td:nth-child(2)::before { content:"Starter · "; color:var(--t4); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl tr.dr td:nth-child(3) { background:rgba(210,255,29,.04); } .mtbl tr.dr td:nth-child(3)::before { content:"Pro · "; color:var(--acc); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl tr.dr td:nth-child(4)::before { content:"Agency · "; color:var(--t4); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl th:nth-child(2),.mtbl td:nth-child(2),.mtbl th:nth-child(4),.mtbl td:nth-child(4) { display:none; } .mtbl th:first-child { width:60%; } .ctabox { flex-direction:column; padding:48px 20px; text-align:center; } .ctabox-right { align-items:center; width:100%; } .ctabtn { width:100%; } 
           .toggle-wrap { flex-direction:column; gap:8px; }
-          .pnum { font-size:40px; }
+          .pnum { font-size:28px; }
           .ctabox { border-radius:16px; padding:36px 20px; }
           .ctabtn { padding:15px 32px; font-size:16px; }
           .faq-q { padding:18px 20px; }

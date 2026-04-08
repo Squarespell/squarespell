@@ -126,9 +126,9 @@ p{font-size:16px;line-height:1.5;margin:0}
 .p-check svg{flex-shrink:0;margin-top:1px}
 .p-cross{display:flex;gap:8px;align-items:flex-start;font-size: 14px;color:var(--t4);margin-bottom:8px}
 /* BILLING TOGGLE */
-.bill-tog{display:flex;background:var(--g2);border:.5px solid var(--b2);border-radius:9px;padding:3px;gap:2px}
-.bt-opt{font-size:13px;font-weight:500;color:var(--t4);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
-.bt-opt.on{background:var(--g1);color:var(--t1);border:.5px solid var(--b1)}
+.bill-tog{display:inline-flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:2px;gap:2px}
+.bt-opt{font-size:14px;font-weight:500;color:rgba(240,242,245,0.5);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;border:none;background:transparent}
+.bt-opt.on{background:rgba(255,255,255,0.08);color:#f0f2f5}
 .bt-save{background:var(--acc);color:#07090c;font-size:13px;font-weight:800;border-radius:20px;padding:2px 7px}
 /* TABLE */
 .d-table{width:100%;border-collapse:collapse}
@@ -171,8 +171,8 @@ p{font-size:16px;line-height:1.5;margin:0}
 /* TRUST */
 .trust-b{display:flex;align-items:center;gap:7px;background:var(--g2);border:.5px solid var(--b2);border-radius:20px;padding:5px 12px}
 /* TMPL */
-.tmpl-card{background:var(--g1);border:.5px solid var(--b1);border-radius:13px;padding:16px;cursor:pointer;transition:all .2s}
-.tmpl-card:hover{border-color:var(--acc-b);transform:translateY(-2px)}
+.tmpl-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:20px;cursor:pointer;transition:border-color .15s}
+.tmpl-card:hover{border-color:rgba(210,255,29,0.18)}
 /* AVROW */
 .avrow{display:flex}
 .av{width: 16px;height: 16px;border-radius:50%;background:rgba(210,255,29,.13);border:2px solid var(--bg);margin-right:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--acc)}
@@ -296,6 +296,9 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 .dcontent input, .dcontent textarea { font-size: 14px !important; height: 36px !important; padding: 0 12px !important; border-radius: 4px !important; }
 .dcontent .dsi { font-size: 14px !important; padding: 4px 10px !important; }
 .dcontent .stat-v { font-size:18px !important; }
+
+
+#dp-connect > div, #dp-install > div, #dp-embed > div { max-width: 640px; }
 
 /* ═══ FINAL LAYOUT LOCK ═══ */
 .dsi { font-size: 14px !important; padding: 4px 10px !important; border-radius: 4px !important; }
@@ -1417,7 +1420,7 @@ function showPay(state) {
       <div style="position:absolute;top:2px;left:2px;width: 16px;height: 16px;background:#f0f2f5;border-radius:50%;transition:transform .2s"></div>
     </div>
   </div>
-  <style>#notif-toggle.on{background:#D2FF1D!important}#notif-toggle.on div{transform:translateX(20px)}</style>
+  <style>#notif-toggle.on{background:#D2FF1D!important}#notif-toggle.on>div{transform:translateX(20px)}</style>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div class="glass" style="padding:20px">
       <p class="h4" style="margin-bottom:16px">Profile</p>
