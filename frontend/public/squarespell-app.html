@@ -17,8 +17,8 @@
   --green:#4ade80;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;
   --fam:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
 }
-body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100vh;font-size:14px;line-height:1.6}
-p{font-size:14px;line-height:1.6;margin:0}
+body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100vh;font-size:16px;line-height:1.5}
+p{font-size:16px;line-height:1.5;margin:0}
 /* NAV */
 .gnav{position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(7,9,12,.88);backdrop-filter:blur(32px);border-bottom:.5px solid var(--b2);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px}
 .gnav-logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex-shrink:0}
@@ -55,7 +55,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 .glass-sm{background:rgba(255,255,255,0.04);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.08);border-radius:12px}
 /* SIDEBAR */
 .dsidebar{position:fixed;top:96px;left:0;bottom:0;width:210px;background:var(--bg2);border-right:.5px solid var(--b2);padding:16px 10px;z-index:100;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none}
-.dsi{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:14px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative}
+.dsi{display:flex;align-items:center;gap:8px;padding:4px 10px;border-radius:4px;cursor:pointer;color:var(--t3);font-size:14px;font-weight:500;transition:all .15s;border:none;background:transparent;font-family:var(--fam);width:100%;text-align:left;position:relative}
 .dsi:hover{background:var(--g1);color:var(--t2)}
 .dsi.on{background:var(--acc-dim);border:.5px solid var(--acc-b);color:var(--acc)}
 .dsi svg{flex-shrink:0;opacity:.7;width:16px;height:16px}
@@ -64,28 +64,28 @@ p{font-size:14px;line-height:1.6;margin:0}
 .dnotif{width:5px;height:5px;border-radius:50%;background:var(--acc);position:absolute;right:9px;top:50%;transform:translateY(-50%)}
 /* DCONTENT */
 .dcontent{margin-left:210px;padding:28px 36px;min-height:calc(100vh - 96px)}
-.dpage{display:none;padding:40px 48px;max-width:960px;margin:0 auto}
+.dpage{display:none;padding:40px 48px;max-width:900px;margin:0 auto}
 .dpage.on{display:block}
 /* TYPOGRAPHY */
-.disp{font-size:22px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
+.disp{font-size:32px;font-weight:800;color:var(--t1);line-height:1.04;letter-spacing:-.055em}
 .disp span{color:var(--acc)}
-.h1{font-size:20px;font-weight:800;letter-spacing:-.04em;line-height:1.1;color:#f0f2f5}
-.h2{font-size:18px;font-weight:700;color:#f0f2f5;line-height:1.2;letter-spacing:-.02em}
+.h1{font-size:32px;font-weight:800;letter-spacing:-.04em;line-height:1.1;color:#f0f2f5}
+.h2{font-size:24px;font-weight:600;color:#f0f2f5;line-height:1.2;letter-spacing:-.02em}
 .h2 span{color:var(--acc)}
-.h3{font-size:20px;font-weight:700;color:#f0f2f5;letter-spacing:-.02em;line-height:1.3}
+.h3{font-size:18px;font-weight:600;color:#f0f2f5;letter-spacing:-.02em;line-height:1.3}
 .h4{font-size:16px;font-weight:600;color:#f0f2f5;letter-spacing:-.01em}
 .body-lg{font-size:16px;color:rgba(240,242,245,0.7);line-height:1.6}
-.body{font-size:14px;color:rgba(240,242,245,0.7);line-height:1.6}
-.body-sm{font-size:13px;color:rgba(240,242,245,0.6);line-height:1.5}
+.body{font-size:16px;color:rgba(240,242,245,0.7);line-height:1.6}
+.body-sm{font-size:14px;color:rgba(240,242,245,0.6);line-height:1.5}
 .label{font-size:11px;font-weight:700;color:rgba(240,242,245,0.4);letter-spacing:.08em;text-transform:uppercase}
 .caption{font-size:12px;color:rgba(240,242,245,0.5);line-height:1.4}
 .mono{font-family:var(--mono)}
 /* BUTTONS */
-.btn-p{background:#D2FF1D;color:#07090c;border:none;border-radius:10px;padding:12px 28px;font-size:16px;font-weight:700;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:opacity .15s}
+.btn-p{background:#D2FF1D;color:#07090c;border:none;border-radius:8px;padding:0 16px;font-size:14px;font-weight:600;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:32px;transition:opacity .15s}
 .btn-p:hover{opacity:.88}
 .btn-p-lg{padding:15px 30px;font-size: 13px;border-radius:12px}
-.btn-s{background:rgba(255,255,255,0.06);color:rgba(240,242,245,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 24px;font-size:15px;font-weight:500;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s}
-.btn-s:hover{background:rgba(255,255,255,0.1)}
+.btn-s{background:rgba(255,255,255,0.05);color:rgba(240,242,245,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0 16px;font-size:14px;font-weight:500;font-family:var(--fam);cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:32px;transition:background .15s}
+.btn-s:hover{background:rgba(255,255,255,0.08)}
 .btn-s-lg{padding:14px 28px;font-size: 14px;border-radius:12px}
 .btn-sm{padding:8px 16px;font-size:14px;border-radius:8px}
 /* BADGES */
@@ -110,9 +110,9 @@ p{font-size:14px;line-height:1.6;margin:0}
 .auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--g1);border:.5px solid var(--b1);border-radius:11px;padding:12px 18px;cursor:pointer;font-size: 14px;color:var(--t2);font-weight:500;font-family:var(--fam);width:100%;margin-bottom:9px;letter-spacing:-.01em;transition:all .15s}
 .auth-btn:hover{border-color:rgba(255,255,255,.16);color:var(--t1)}
 /* STAT CARD */
-.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;transition:all .2s;cursor:default}
-.stat-card:hover{border-color:var(--acc-b);transform:translateY(-1px)}
-.stat-v{font-size:18px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
+.stat-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px 20px;transition:border-color .15s;cursor:default}
+.stat-card:hover{border-color:rgba(210,255,29,0.18)}
+.stat-v{font-size:32px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
 .stat-l{font-size:11px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em}
 .stat-d{font-size:15px;font-weight:600;margin-top:4px}
 .stat-d.up{color:var(--green)}
@@ -132,10 +132,10 @@ p{font-size:14px;line-height:1.6;margin:0}
 .bt-save{background:var(--acc);color:#07090c;font-size:13px;font-weight:800;border-radius:20px;padding:2px 7px}
 /* TABLE */
 .d-table{width:100%;border-collapse:collapse}
-.d-table th{font-size:12px;font-weight:700;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.07em;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06)}
-.d-table td{font-size:15px;color:rgba(240,242,245,0.8);padding:14px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.d-table th{font-size:12px;font-weight:600;color:rgba(240,242,245,0.4);text-transform:uppercase;letter-spacing:.06em;padding:8px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06)}
+.d-table td{font-size:14px;color:rgba(240,242,245,0.8);padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
 .d-table tr:last-child td{border-bottom:none}
-.d-table tr:hover td{background:rgba(255,255,255,0.03);cursor:pointer}
+.d-table tr:hover td{background:rgba(255,255,255,0.03)}
 /* FUNNEL */
 .funnel-step{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:10px}
 .f-bar-wrap{flex:1;background:rgba(255,255,255,.05);border-radius:20px;height:4px;overflow:hidden}
@@ -229,7 +229,7 @@ p{font-size:14px;line-height:1.6;margin:0}
 /* RESPONSIVE */
 @media(max-width:1100px){.dcontent{margin-left:0!important}.dsidebar{display:none!important}}
 @media(max-width:768px){.gnav-pages{display:none}.footer-grid{grid-template-columns:1fr 1fr!important}}
-@media(max-width:480px){.disp{font-size:18px}.h2{font-size:18px}}
+@media(max-width:480px){.disp{font-size:32px}.h2{font-size:18px}}
 /* MINI CHART BARS */
 .mini-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px}
 
@@ -244,7 +244,7 @@ body { background: #07090c !important; }
 
 /* Top nav bar */
 .sq-topbar {
-  position: fixed; top: 0; left: 0; right: 0; height: 48px; z-index: 500;
+  position: fixed; top: 0; left: 0; right: 0; height: 44px; z-index: 500;
   background: rgba(255,255,255,0.03); backdrop-filter: blur(32px);
   border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
@@ -252,7 +252,7 @@ body { background: #07090c !important; }
 
 /* Sidebar */
 html, body { height: 100%; overflow: hidden; }
-.dsidebar { position: fixed; top: 48px; left: 0; bottom: 0; width: 240px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.06); padding: 0 8px 64px; z-index: 100; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.dsidebar { position: fixed; top: 44px; left: 0; bottom: 0; width: 240px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.06); padding: 0 8px 64px; z-index: 100; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
 .dsi { display:flex; align-items:center; gap:10px; padding:9px 12px !important; border-radius:6px; font-size: 13px !important; font-weight:500; color:rgba(240,242,245,0.65) !important; cursor:pointer; transition:background .1s,color .1s; margin-bottom:1px; width:100%; text-align:left; border:none; background:transparent; font-family:var(--fam); }
 .dsi:hover { background:rgba(255,255,255,0.06) !important; color:#f0f2f5 !important; }
 .dsi.on { background:rgba(255,255,255,0.08) !important; color:#f0f2f5 !important; font-weight:600 !important; }
@@ -260,7 +260,7 @@ html, body { height: 100%; overflow: hidden; }
 .dsec { font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:rgba(240,242,245,0.28); padding:16px 10px 4px; display:block; }
 
 /* Content area */
-.dcontent { position: fixed; top: 48px; left: 240px; right: 0; bottom: 0; overflow-y: auto; overflow-x: hidden; padding: 0 !important; }
+.dcontent { position: fixed; top: 44px; left: 240px; right: 0; bottom: 0; overflow-y: auto; overflow-x: hidden; padding: 0 !important; }
 .dpage { display: none; padding: 40px 48px; max-width: 1200px; min-height: 100%; box-sizing: border-box; }
 .dpage.on { display: block; }
 
@@ -286,24 +286,24 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 
 /* ═══ DESIGN SYSTEM OVERRIDE — MUST BE LAST IN STYLE BLOCK ═══ */
 .dpage { padding: 40px 48px !important; }
-.dcontent p { font-size: 14px !important; line-height: 1.6 !important; }
+.dcontent p { font-size: 16px !important; line-height: 1.6 !important; }
 .dcontent .caption { font-size: 12px !important; }
 .dcontent .label, .dcontent th { font-size: 11px !important; }
-.dcontent .h3 { font-size: 20px !important; font-weight: 700 !important; letter-spacing: -0.03em !important; }
+.dcontent .h3 { font-size: 18px !important; font-weight: 600 !important; letter-spacing: -0.03em !important; }
 .dcontent .h4 { font-size: 16px !important; font-weight: 600 !important; }
-.dcontent .body-sm { font-size: 13px !important; }
-.dcontent td { font-size: 14px !important; padding: 14px 16px !important; }
-.dcontent input, .dcontent textarea { font-size: 14px !important; padding: 14px 18px !important; }
-.dcontent .dsi { font-size: 13px !important; padding: 9px 12px !important; }
+.dcontent .body-sm { font-size: 14px !important; }
+.dcontent td { font-size: 14px !important; padding: 12px 16px !important; }
+.dcontent input, .dcontent textarea { font-size: 14px !important; height: 36px !important; padding: 0 12px !important; border-radius: 4px !important; }
+.dcontent .dsi { font-size: 14px !important; padding: 4px 10px !important; }
 .dcontent .stat-v { font-size:18px !important; }
 
 /* ═══ FINAL LAYOUT LOCK ═══ */
-.dsi { font-size: 14px !important; padding: 8px 12px !important; }
+.dsi { font-size: 14px !important; padding: 4px 10px !important; border-radius: 4px !important; }
 .dsi svg { width: 16px !important; height: 16px !important; flex-shrink: 0; }
 
 #dContent {
   position: fixed !important;
-  top: 48px !important;
+  top: 44px !important;
   left: 240px !important;
   right: 0 !important;
   bottom: 0 !important;
@@ -314,7 +314,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 
 .dsidebar {
   position: fixed !important;
-  top: 48px !important;
+  top: 44px !important;
   left: 0 !important;
   width: 240px !important;
   bottom: 0 !important;
@@ -326,7 +326,8 @@ input::placeholder { color: rgba(240,242,245,0.3); }
   padding: 40px 48px !important;
   min-height: 100% !important;
   box-sizing: border-box !important;
-  max-width: 960px !important;
+  max-width: 900px !important;
+  margin: 0 auto !important;
 }
 
 /* ═══ FINAL POLISH — GLOBAL SIZING ═══ */
@@ -391,13 +392,13 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 
 /* Editor page */
 #dp-editor h2, #dp-editor .h2 { font-size:15px !important; }
-#dp-editor input[type="text"], #dp-editor input[type="url"] { height: 60px !important; font-size: 13px !important; }
-#dp-editor .btn-p { height: 60px !important; font-size: 13px !important; }
+#dp-editor input { height: 36px !important; font-size: 14px !important; padding: 0 12px !important; }
+#dp-editor .btn-p, #dp-editor button[onclick*="generate"] { height: 36px !important; font-size: 14px !important; }
 
 /* Leads page */
-#dp-leads input { height: 52px !important; font-size: 14px !important; }
-#dp-leads .d-table td { font-size: 14px !important; padding: 16px 14px !important; }
-#dp-leads .d-table th { font-size: 13px !important; padding: 12px 14px !important; }
+#dp-leads input { height: 36px !important; font-size: 14px !important; }
+#dp-leads h2, #dp-leads .h2, #dp-leads .h3 { font-size: 24px !important; padding: 16px 14px !important; }
+#dp-leads h2, #dp-leads .h2, #dp-leads .h3 { font-size: 24px !important; padding: 12px 14px !important; }
 #dp-leads h2, #dp-leads .h2 { font-size:15px !important; }
 
 /* Analytics page */
@@ -409,17 +410,17 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 
 /* Account page */
 #dp-account h2, #dp-account .h2 { font-size:15px !important; }
-#dp-account input { height: 52px !important; font-size: 14px !important; }
+#dp-account input { height: 36px !important; font-size: 14px !important; }
 
 /* Connect page */
 #dp-connect h2, #dp-connect .h2, #dp-connect .h3 { font-size:15px !important; }
-#dp-connect #sqsp-disconnected button { height: 60px !important; font-size: 13px !important; font-weight: 700 !important; min-width: 280px !important; }
-#dp-connect p { font-size: 14px !important; }
+#dp-connect #sqsp-disconnected button { height: 36px !important; font-size: 14px !important; font-weight: 600 !important; padding: 0 24px !important; }
+#dp-connect h2, #dp-connect .h2, #dp-connect .h3 { font-size: 24px !important; }
 
 /* Install + Embed pages */
 #dp-install h2, #dp-install .h2, #dp-install .h3 { font-size:15px !important; }
 #dp-embed h2, #dp-embed .h2, #dp-embed .h3 { font-size:15px !important; }
-#dp-install p, #dp-embed p { font-size: 14px !important; }
+#dp-install h2, #dp-install .h2, #dp-install .h3 { font-size: 24px !important; }
 
 /* Templates page */
 #dp-templates h2, #dp-templates .h2 { font-size:15px !important; }
@@ -428,14 +429,14 @@ input::placeholder { color: rgba(240,242,245,0.3); }
 .dpage > div > p:first-of-type { font-size: 14px !important; color: rgba(240,242,245,0.5) !important; }
 
 /* All primary buttons globally */
-.btn-p { min-height: 44px !important; font-size: 14px !important; font-weight: 700 !important; padding: 0 24px !important; border-radius: 8px !important; }
+.btn-p { min-height: 32px !important; font-size: 14px !important; font-weight: 600 !important; padding: 0 16px !important; border-radius: 8px !important; }
 
 /* All secondary buttons */
-.btn-s { min-height: 44px !important; font-size: 14px !important; padding: 0 20px !important; border-radius: 8px !important; }
+.btn-s { min-height: 32px !important; font-size: 14px !important; padding: 0 16px !important; border-radius: 8px !important; }
 
-#dp-editor input[type="text"], #dp-editor input[type="url"], #dp-editor input { height: 60px !important; font-size: 13px !important; padding: 0 24px !important; }
-#dp-editor button.btn-p, #dp-editor button[onclick*="generate"], #dp-editor button[onclick*="Generate"] { height: 60px !important; font-size: 13px !important; }
-#sqsp-disconnected button { height: 60px !important; font-size: 13px !important; font-weight: 700 !important; padding: 0 40px !important; }
+#dp-editor input { height: 36px !important; font-size: 14px !important; padding: 0 12px !important; }
+#dp-editor .btn-p, #dp-editor button[onclick*="generate"] { height: 36px !important; font-size: 14px !important; }
+#sqsp-disconnected button { height: 36px !important; font-size: 14px !important; font-weight: 600 !important; padding: 0 24px !important; }
 
 #dash-onboarding > div { max-width: 100% !important; padding: 48px 0 !important; }
 #dash-onboarding > div > div { gap: 16px !important; }
@@ -1083,10 +1084,10 @@ function showPay(state) {
 </div>
 <div id="dash-real" style="display:none">
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-q" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Active Quizzes</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-l" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Leads</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-v" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Total Views</p></div>
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-cvr" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0%</p><p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(240,242,245,0.4);margin-top:6px">Conversion Rate</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-q" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(240,242,245,0.4);margin-top:6px">Active Quizzes</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-l" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(240,242,245,0.4);margin-top:6px">Total Leads</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-v" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0</p><p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(240,242,245,0.4);margin-top:6px">Total Views</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px"><p class="sq-cvr" style="font-size: 15px;font-weight:800;color:#D2FF1D;letter-spacing:-.04em;line-height:1">0%</p><p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(240,242,245,0.4);margin-top:6px">Conversion Rate</p></div>
   </div>
   <div style="display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:24px">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px">
@@ -1798,11 +1799,11 @@ function showPay(state) {
 (function applyFixes() {
   var style = document.createElement('style');
   style.textContent = [
-    '.dsi { font-size: 14px !important; padding: 9px 12px !important; }',
+    '.dsi { font-size: 14px !important; padding: 4px 10px !important; border-radius: 4px !important; }',
     '.dsi svg { width: 16px !important; height: 16px !important; }',
-    '#dContent { position: fixed !important; top: 48px !important; left: 240px !important; right: 0 !important; bottom: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; margin: 0 !important; }',
-    '.dsidebar { position: fixed !important; top: 48px !important; left: 0 !important; width: 240px !important; bottom: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; }',
-    '.dpage { padding: 40px 48px !important; min-height: 100% !important; box-sizing: border-box !important; }',
+    '#dContent { position: fixed !important; top: 44px !important; left: 240px !important; right: 0 !important; bottom: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; margin: 0 !important; }',
+    '.dsidebar { position: fixed !important; top: 44px !important; left: 0 !important; width: 240px !important; bottom: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; }',
+    '.dpage { padding: 40px 48px !important; min-height: 100% !important; box-sizing: border-box !important; max-width: 900px !important; margin: 0 auto !important; }',
   ].join('\n');
   document.head.appendChild(style);
 })();
