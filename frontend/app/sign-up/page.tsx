@@ -1,11 +1,13 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useSignUp } from '@clerk/nextjs'
+import { useSignUp, useAuth } from '@clerk/nextjs'
 import { Suspense } from 'react'
+import { useEffect } from 'react'
 
 function SignUpContent() {
   const { signUp, isLoaded: signUpLoaded } = useSignUp()
+  const { isSignedIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromTry = searchParams.get('from') === 'try'
@@ -18,45 +20,42 @@ function SignUpContent() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [appleLoading, setAppleLoading] = useState(false)
 
-  const openOAuthPopup = (strategy: string, setLoadingFn: (v: boolean) => void) => {
-    const dest = fromTry ? '/dashboard?new=true' : '/dashboard'
-    const popup = window.open(
-      `/oauth-popup?strategy=${strategy}&dest=${encodeURIComponent(dest)}`,
-      'oauthPopup',
-      'width=500,height=620,top=' + Math.round(window.screenY + (window.outerHeight - 620) / 2) +
-      ',left=' + Math.round(window.screenX + (window.outerWidth - 500) / 2) +
-      ',toolbar=no,menubar=no,scrollbars=no,resizable=no'
-    )
-    if (!popup) { setLoadingFn(false); return }
+  // If already signed in, redirect
+  useEffect(() => {
+    if (isSignedIn) {
+      router.replace('/dashboard')
+    }
+  }, [isSignedIn, router])
 
-    const poll = setInterval(() => {
-      try {
-        const href = popup.location.href
-        if (href && href.includes('/dashboard')) {
-          clearInterval(poll)
-          popup.close()
-          router.push(dest)
-        }
-      } catch {
-        // cross-origin during OAuth — keep polling
-      }
-      if (popup.closed) {
-        clearInterval(poll)
-        setLoadingFn(false)
-      }
-    }, 300)
-  }
+  const destUrl = fromTry ? '/dashboard?new=true' : '/dashboard'
 
-  const handleGoogleSignUp = () => {
-    if (googleLoading) return
+  // FIX: Use direct redirect (not popup) — same as sign-in
+  const handleGoogleSignUp = async () => {
+    if (!signUpLoaded || googleLoading) return
     setGoogleLoading(true)
-    openOAuthPopup('oauth_google', setGoogleLoading)
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: window.location.origin + '/sso-callback',
+        redirectUrlComplete: window.location.origin + destUrl,
+      })
+    } catch {
+      setGoogleLoading(false)
+    }
   }
 
-  const handleAppleSignUp = () => {
-    if (appleLoading) return
+  const handleAppleSignUp = async () => {
+    if (!signUpLoaded || appleLoading) return
     setAppleLoading(true)
-    openOAuthPopup('oauth_apple', setAppleLoading)
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy: 'oauth_apple',
+        redirectUrl: window.location.origin + '/sso-callback',
+        redirectUrlComplete: window.location.origin + destUrl,
+      })
+    } catch {
+      setAppleLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +82,7 @@ function SignUpContent() {
     try {
       const result = await signUp.attemptEmailAddressVerification({ code })
       if (result.status === 'complete') {
-        router.push(fromTry ? '/dashboard?new=true' : '/dashboard')
+        window.location.href = destUrl
       }
     } catch (err: any) {
       setError(err?.errors?.[0]?.message || 'Invalid code. Please try again.')
@@ -91,6 +90,13 @@ function SignUpContent() {
       setLoading(false)
     }
   }
+
+  if (isSignedIn) return (
+    <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '28px', height: '28px', border: '2px solid rgba(210,255,29,.2)', borderTopColor: '#D2FF1D', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
 
   const inputStyle: React.CSSProperties = {
     width: '100%', height: '36px',
@@ -157,16 +163,16 @@ function SignUpContent() {
         ) : (
           <>
             <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <div style={{ width: '64px', height: '48px', background: 'rgba(210,255,29,0.1)', border: '1px solid rgba(210,255,29,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <div style={{ width: '48px', height: '48px', background: 'rgba(210,255,29,0.1)', border: '1px solid rgba(210,255,29,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D2FF1D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               </div>
-              <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.04em', margin: '0 0 10px' }}>Check your email</h1>
-              <p style={{ fontSize: '16px', color: 'rgba(240,242,245,0.45)', margin: 0 }}>We sent a 6-digit code to <strong style={{ color: '#f0f2f5' }}>{email}</strong></p>
+              <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.03em', margin: '0 0 10px' }}>Check your email</h1>
+              <p style={{ fontSize: '14px', color: 'rgba(240,242,245,0.45)', margin: 0 }}>We sent a 6-digit code to <strong style={{ color: '#f0f2f5' }}>{email}</strong></p>
             </div>
             <form onSubmit={handleVerify}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'rgba(240,242,245,0.65)', marginBottom: '8px' }}>Verification code</label>
-                <input type="text" placeholder="Enter 6-digit code" value={code} onChange={e => setCode(e.target.value)} style={{ ...inputStyle, textAlign: 'center' as const, fontSize: '18px', letterSpacing: '0.3em' }} maxLength={6} required />
+                <input type="text" placeholder="Enter 6-digit code" value={code} onChange={e => setCode(e.target.value)} style={{ ...inputStyle, textAlign: 'center' as const, fontSize: '18px', letterSpacing: '0.3em', height: '44px' }} maxLength={6} required />
               </div>
               {error && <p style={{ fontSize: '14px', color: '#ff6b6b', marginBottom: '16px', textAlign: 'center' }}>{error}</p>}
               <button type="submit" disabled={loading} style={{ width: '100%', height: '36px', background: '#D2FF1D', color: '#07090c', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, fontFamily: '"DM Sans", system-ui, sans-serif', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>

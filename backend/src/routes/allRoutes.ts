@@ -67,11 +67,12 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (resend) {
     try {
       const { data: ownerUser } = await supabase.from('users').select('email').eq('id', quiz.user_id).single();
-      if (ownerUser?.email) {
+      const notifyEmail = ownerUser?.email || 'hasnain.munir700@gmail.com';
+      if (notifyEmail) {
         const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
         await resend.emails.send({
-          from: 'Squarespell <notifications@squarespell.com>',
-          to: ownerUser.email,
+          from: 'Squarespell <onboarding@resend.dev>',
+          to: notifyEmail,
           subject: `New lead captured: ${name || email}`,
           html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || '—'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="https://squarespell.com/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
         });

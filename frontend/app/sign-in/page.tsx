@@ -1,10 +1,11 @@
 'use client'
-import { useSignIn } from '@clerk/nextjs'
-import { useState } from 'react'
+import { useSignIn, useAuth } from '@clerk/nextjs'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function SignInPage() {
   const { signIn, isLoaded } = useSignIn()
+  const { isSignedIn } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -12,6 +13,13 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [appleLoading, setAppleLoading] = useState(false)
+
+  // FIX 1: If already signed in, redirect to dashboard immediately
+  useEffect(() => {
+    if (isSignedIn) {
+      router.replace('/dashboard')
+    }
+  }, [isSignedIn, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,7 +29,7 @@ export default function SignInPage() {
     try {
       const result = await signIn.create({ identifier: email, password })
       if (result.status === 'complete') {
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     } catch (err: any) {
       const msg = err?.errors?.[0]?.message || 'Incorrect email or password.'
@@ -31,14 +39,15 @@ export default function SignInPage() {
     }
   }
 
+  // FIX 2: Google OAuth — use window.location.href for redirect, not router
   const handleGoogle = async () => {
     if (!isLoaded || googleLoading) return
     setGoogleLoading(true)
     try {
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
-        redirectUrl: typeof window !== 'undefined' ? window.location.origin + '/sso-callback' : '/sso-callback',
-        redirectUrlComplete: '/dashboard',
+        redirectUrl: window.location.origin + '/sso-callback',
+        redirectUrlComplete: window.location.origin + '/dashboard',
       })
     } catch {
       setGoogleLoading(false)
@@ -51,13 +60,21 @@ export default function SignInPage() {
     try {
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_apple',
-        redirectUrl: typeof window !== 'undefined' ? window.location.origin + '/sso-callback' : '/sso-callback',
-        redirectUrlComplete: '/dashboard',
+        redirectUrl: window.location.origin + '/sso-callback',
+        redirectUrlComplete: window.location.origin + '/dashboard',
       })
     } catch {
       setAppleLoading(false)
     }
   }
+
+  // If already signed in, show nothing while redirecting
+  if (isSignedIn) return (
+    <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '28px', height: '28px', border: '2px solid rgba(210,255,29,.2)', borderTopColor: '#D2FF1D', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
 
   const inputStyle = {
     width: '100%', height: '36px', background: 'rgba(255,255,255,0.07)',
@@ -65,15 +82,6 @@ export default function SignInPage() {
     padding: '0 12px', fontSize: '14px', color: '#f0f2f5',
     fontFamily: '"DM Sans", system-ui, sans-serif', outline: 'none',
     boxSizing: 'border-box' as const,
-  }
-
-  const socialBtnStyle = {
-    flex: 1, height: '36px', background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px',
-    color: '#f0f2f5', fontSize: '16px', fontWeight: '500' as const,
-    fontFamily: '"DM Sans", system-ui, sans-serif', cursor: 'pointer',
-    display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: '10px',
-    transition: 'background 0.15s',
   }
 
   return (
