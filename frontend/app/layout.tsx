@@ -33,8 +33,9 @@ const hover = (c: string) => ({
 });
 
 function Footer() {
+  // No footer on app domain — marketing site (squarespell.com) has its own footer
+  return null;
   const pathname = usePathname();
-  if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/sign-in') || pathname?.startsWith('/sign-up') || pathname?.startsWith('/try')) return null;
 
   return (
     <footer style={{width:'100%',background:'#07090c',borderTop:'1px solid rgba(255,255,255,0.08)',marginTop:'80px',fontFamily:'"DM Sans",system-ui,sans-serif'}}>
