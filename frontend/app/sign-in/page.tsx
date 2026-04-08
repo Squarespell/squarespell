@@ -37,7 +37,7 @@ export default function SignInPage() {
     try {
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',
+        redirectUrl: typeof window !== 'undefined' ? window.location.origin + '/sso-callback' : '/sso-callback',
         redirectUrlComplete: '/dashboard',
       })
     } catch {
@@ -51,7 +51,7 @@ export default function SignInPage() {
     try {
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_apple',
-        redirectUrl: '/sso-callback',
+        redirectUrl: typeof window !== 'undefined' ? window.location.origin + '/sso-callback' : '/sso-callback',
         redirectUrlComplete: '/dashboard',
       })
     } catch {
