@@ -461,7 +461,7 @@ input::placeholder { color: rgba(240,242,245,0.3); }
       headers: Object.assign({"Authorization":"Bearer "+token,"Content-Type":"application/json"}, (opts||{}).headers)
     }));
   }
-  window.__realSignOut = function() { try { localStorage.removeItem("sq_token"); } catch(e){} window.location.href = "/"; };
+  window.__realSignOut = function() { try { localStorage.removeItem("sq_token"); } catch(e){} window.top.location.href = "/sign-out"; };
   window.__connectSquarespace = function() {
     if (!token) { alert("Please sign in first"); return; }
     window.location.href = API + "/auth/squarespace/connect?token=" + encodeURIComponent(token);
