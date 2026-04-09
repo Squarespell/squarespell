@@ -63,7 +63,7 @@ export default function HomePage() {
       `}</style>
 
       {/* NAV BAR */}
-      <nav style={{ background: DARK_BG, borderBottom: `1px solid ${BORDER_COLOR}`, position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(10px)', background: 'rgba(7,9,12,0.8)' }}>
+      <nav style={{ borderBottom: `1px solid ${BORDER_COLOR}`, position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(10px)', background: 'rgba(7,9,12,0.8)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
