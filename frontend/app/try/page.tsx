@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -47,7 +47,7 @@ const loadingMessages = [
   'Almost ready...',
 ];
 
-export default function TryPage() {
+function TryPageInner() {
   const searchParams = useSearchParams();
   const urlParam = searchParams.get('url') || '';
 
@@ -457,5 +457,17 @@ export default function TryPage() {
 
       </main>
     </div>
+  );
+}
+
+export default function TryPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'rgba(240,242,245,0.5)', fontFamily: '"DM Sans",system-ui,sans-serif', fontSize: '15px' }}>Loading...</div>
+      </div>
+    }>
+      <TryPageInner />
+    </Suspense>
   );
 }
