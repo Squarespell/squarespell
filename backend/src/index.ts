@@ -11,8 +11,14 @@ const PORT = process.env.PORT || 3001;
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/clerk/webhook', express.raw({ type: 'application/json' }));
+// Allow public preview endpoint from any origin (rate-limited, no auth)
+app.use('/api/preview-generate', cors());
+// Main CORS for authenticated endpoints
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
+
+// Public preview endpoint (no auth, rate-limited) — registered BEFORE auth routes
+app.use('/api', previewRouter);
 
 app.use('/api/quizzes', quizRoutes);
 app.use('/api', generateRouter);
@@ -27,7 +33,6 @@ app.use('/auth/squarespace', squarespaceRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/cron', cronRouter);
 app.use('/api/cron', trialReminderRouter);
-app.use('/api', previewRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
