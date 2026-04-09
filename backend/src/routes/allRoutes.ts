@@ -27,6 +27,59 @@ generateRouter.post('/generate', requireAuth, attachUser, guardQuizCreation, asy
   catch (err: any) { res.status(500).json({ error: err.message ?? 'Generation failed' }); }
 });
 
+// ── Save Preview Quiz (for users coming from /try → sign-up) ─────────────────
+generateRouter.post('/save-preview', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { quiz, brand, url } = req.body;
+    if (!quiz || !url) return res.status(400).json({ error: 'quiz and url required' });
+
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    // Check if user already has a quiz (don't duplicate)
+    const { data: existing } = await supabase
+      .from('quizzes')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return res.json({ saved: false, message: 'Quiz already exists', quiz_id: existing[0].id });
+    }
+
+    // Generate a unique slug
+    const slug = (brand?.site_name || 'quiz')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 30) + '-' + Math.random().toString(36).slice(2, 8);
+
+    // Save the quiz as a draft
+    const { data, error } = await supabase.from('quizzes').insert({
+      user_id: userId,
+      title: quiz.title || 'My Quiz',
+      slug,
+      questions: quiz.questions || [],
+      outcomes: quiz.outcomes || quiz.results || [],
+      branding: {
+        colors: brand?.colors || {},
+        font_family: brand?.font_family || 'sans-serif',
+        site_name: brand?.site_name || '',
+        favicon_url: brand?.favicon_url || '',
+      },
+      settings: quiz.settings || {},
+      website_url: url,
+      status: 'live',
+    }).select('id, slug').single();
+
+    if (error) throw error;
+    res.json({ saved: true, quiz_id: data.id, slug: data.slug });
+  } catch (err: any) {
+    console.error('save-preview error:', err);
+    res.status(500).json({ error: 'Failed to save quiz' });
+  }
+});
+
 // ── Public Preview Generate (no auth, rate-limited by IP) ────────────────────
 const previewRateMap = new Map<string, { count: number; resetAt: number }>();
 export const previewRouter = Router();

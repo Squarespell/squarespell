@@ -51,6 +51,24 @@ export default function Dashboard() {
         return;
       }
 
+      // Auto-save preview quiz if coming from /try → sign-up flow
+      try {
+        const raw = localStorage.getItem('squarespell_preview');
+        if (raw) {
+          const preview = JSON.parse(raw);
+          // Only save if created within the last 30 minutes
+          if (preview.quiz && preview.url && Date.now() - preview.createdAt < 1800000) {
+            setLoadMsg('Saving your quiz...');
+            await fetch(`${API}/api/save-preview`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ quiz: preview.quiz, brand: preview.brand, url: preview.url }),
+            }).catch(() => {});
+          }
+          localStorage.removeItem('squarespell_preview');
+        }
+      } catch {}
+
       // Fetch plan info with retry
       for (let i = 0; i < 3 && !cancelled; i++) {
         try {

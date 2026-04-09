@@ -11,8 +11,9 @@ const PORT = process.env.PORT || 3001;
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/clerk/webhook', express.raw({ type: 'application/json' }));
-// Allow public preview endpoint from any origin (rate-limited, no auth)
+// Allow public endpoints from any origin (rate-limited, no auth)
 app.use('/api/preview-generate', cors());
+app.use('/api/quiz', cors());
 // Main CORS for authenticated endpoints
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());

@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
 interface QuizOption { id: string; text: string; result_id?: string; }
-interface QuizQuestion { id: string; question: string; options: QuizOption[]; }
+interface QuizQuestion { id: string; question?: string; text?: string; options: QuizOption[]; }
 interface QuizResult { id: string; title: string; description: string; recommendation?: string; }
 interface Quiz {
   id: string; slug: string; title: string;
@@ -50,6 +50,19 @@ export default function QuizPage() {
   const [result, setResult] = useState<QuizResult | null>(null);
   const leadScore = 78 + Math.floor(Math.random() * 20);
 
+  // Notify embed parent of height changes
+  useEffect(() => {
+    if (window.parent === window) return;
+    const notify = () => {
+      const h = document.documentElement.scrollHeight;
+      window.parent.postMessage({ source: 'squarespell', type: 'resize', height: h }, '*');
+    };
+    const ro = new ResizeObserver(notify);
+    ro.observe(document.body);
+    notify();
+    return () => ro.disconnect();
+  }, [stage]);
+
   useEffect(() => {
     if (!slug) return;
     fetch(`${API}/api/quiz/${slug}`)
@@ -58,6 +71,10 @@ export default function QuizPage() {
         if (data.error) { setError(data.error); setStage('error'); return; }
         setQuiz(data);
         setStage('question');
+        // Notify embed parent quiz started
+        if (window.parent !== window) {
+          window.parent.postMessage({ source: 'squarespell', type: 'start' }, '*');
+        }
         // track view
         fetch(`${API}/api/quiz/${slug}/event`, {
           method: 'POST',
@@ -230,7 +247,7 @@ export default function QuizPage() {
               <span style={{ fontSize:10, color:'var(--t4)', fontWeight:600 }}>{progress}% done</span>
             </div>
             <p className="qlabel">Question {currentQ+1}</p>
-            <p className="qtext">{currentQuestion.question}</p>
+            <p className="qtext">{currentQuestion.text || currentQuestion.question}</p>
             <div style={{ flex:1 }}>
               {currentQuestion.options.map((opt, i) => (
                 <div key={opt.id} className={`opt${selected===opt.id?' on':''}`} onClick={() => selectOption(opt.id)}>

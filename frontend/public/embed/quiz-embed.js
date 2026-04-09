@@ -4,7 +4,7 @@
  */
 (function(){
 'use strict';
-var BASE_URL='https://squarespell.com';
+var BASE_URL='https://app.squarespell.com';
 var scripts=document.querySelectorAll('script[data-quiz]');
 var currentScript=scripts[scripts.length-1];
 if(!currentScript){console.warn('[Squarespell] Missing data-quiz attribute.');return;}
