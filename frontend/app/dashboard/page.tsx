@@ -1,21 +1,31 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 const ACC = '#D2FF1D';
 const BG = '#07090c';
 
-export default function Dashboard() {
+function getCookie(name: string): string {
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+function clearCookie(name: string) {
+  document.cookie = `${name}=;path=/;max-age=0`;
+}
+
+function DashboardInner() {
   const { getToken, isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [src, setSrc] = useState('');
   const [status, setStatus] = useState<'loading' | 'trial' | 'active' | 'expired'>('loading');
   const [daysLeft, setDaysLeft] = useState(0);
   const [loadMsg, setLoadMsg] = useState('Loading your dashboard...');
 
-  // Redirect to sign-in if not authenticated (after Clerk finishes loading)
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
       router.replace('/sign-in');
@@ -44,7 +54,6 @@ export default function Dashboard() {
 
       if (cancelled || !token) {
         if (!cancelled) {
-          // Check if we already tried reloading (prevent infinite loop)
           const reloadCount = parseInt(sessionStorage.getItem('sq_reload_count') || '0');
           if (reloadCount < 2) {
             sessionStorage.setItem('sq_reload_count', String(reloadCount + 1));
@@ -52,55 +61,93 @@ export default function Dashboard() {
             await new Promise(r => setTimeout(r, 1000));
             window.location.reload();
           } else {
-            // Give up on auto-reload, show manual option
             sessionStorage.removeItem('sq_reload_count');
             setLoadMsg('Could not connect. Please try signing out and back in.');
           }
         }
         return;
       }
-      // Clear reload counter on success
       try { sessionStorage.removeItem('sq_reload_count'); } catch {}
 
-      // Auto-save preview quiz if coming from /try → sign-up flow
-      let previewSaved = false;
+      // ── Claim preview quiz if coming from /try → sign-up flow ──────────
+      let quizClaimed = false;
       try {
-        // Check both localStorage and sessionStorage (belt and suspenders)
-        const raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
-        console.log('[Squarespell] Preview data found:', !!raw);
-        if (raw) {
-          const preview = JSON.parse(raw);
-          // Only save if created within the last 4 hours
-          if (preview.quiz && preview.url && Date.now() - preview.createdAt < 14400000) {
-            setLoadMsg('Publishing your quiz...');
-            console.log('[Squarespell] Saving preview quiz for:', preview.url);
-            const saveRes = await fetch(`${API}/api/save-preview`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ quiz: preview.quiz, brand: preview.brand, url: preview.url }),
-            });
-            const saveData = await saveRes.json();
-            console.log('[Squarespell] Save response:', saveRes.status, saveData);
-            if (saveRes.ok) {
-              previewSaved = saveData.saved === true;
-              if (previewSaved) setLoadMsg('Quiz published! Loading dashboard...');
+        // Strategy 1: Claim token from URL param (most reliable)
+        let claimToken = searchParams.get('claim') || '';
+
+        // Strategy 2: Claim token from cookie (survives OAuth redirects)
+        if (!claimToken) {
+          claimToken = getCookie('sq_claim');
+        }
+
+        // Strategy 3: Claim token from sessionStorage
+        if (!claimToken) {
+          claimToken = sessionStorage.getItem('sq_claim_token') || '';
+        }
+
+        // Strategy 4: From localStorage preview data
+        if (!claimToken) {
+          try {
+            const raw = localStorage.getItem('squarespell_preview');
+            if (raw) {
+              const preview = JSON.parse(raw);
+              claimToken = preview.claim_token || '';
             }
-          } else {
-            console.log('[Squarespell] Preview data too old or missing quiz/url');
+          } catch {}
+        }
+
+        console.log('[Squarespell] Claim token found:', !!claimToken);
+
+        if (claimToken) {
+          setLoadMsg('Publishing your quiz...');
+          console.log('[Squarespell] Claiming quiz with token:', claimToken.slice(0, 8) + '...');
+
+          const claimRes = await fetch(`${API}/api/claim-quiz`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ claim_token: claimToken }),
+          });
+          const claimData = await claimRes.json();
+          console.log('[Squarespell] Claim response:', claimRes.status, claimData);
+
+          if (claimRes.ok && claimData.claimed) {
+            quizClaimed = true;
+            setLoadMsg('Quiz published! Loading dashboard...');
           }
-          // Only remove AFTER successful save
-          if (previewSaved) {
+
+          // Clean up all claim token storage
+          clearCookie('sq_claim');
+          try { sessionStorage.removeItem('sq_claim_token'); } catch {}
+          try { localStorage.removeItem('squarespell_preview'); } catch {}
+        } else {
+          // Fallback: try the old localStorage save-preview approach
+          const raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
+          if (raw) {
+            const preview = JSON.parse(raw);
+            if (preview.quiz && preview.url && Date.now() - preview.createdAt < 14400000) {
+              setLoadMsg('Publishing your quiz...');
+              const saveRes = await fetch(`${API}/api/save-preview`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ quiz: preview.quiz, brand: preview.brand, url: preview.url }),
+              });
+              const saveData = await saveRes.json();
+              if (saveRes.ok && saveData.saved) {
+                quizClaimed = true;
+                setLoadMsg('Quiz published! Loading dashboard...');
+              }
+            }
             localStorage.removeItem('squarespell_preview');
             sessionStorage.removeItem('squarespell_preview');
           }
         }
       } catch (e) {
-        console.error('[Squarespell] Preview save failed:', e);
+        console.error('[Squarespell] Claim/save failed:', e);
       }
 
-      // Wait for DB write to propagate before iframe fetches quizzes
-      if (previewSaved) {
-        await new Promise(r => setTimeout(r, 1200));
+      // Wait for DB to propagate
+      if (quizClaimed) {
+        await new Promise(r => setTimeout(r, 1500));
       }
 
       // Fetch plan info with retry
@@ -133,7 +180,7 @@ export default function Dashboard() {
           }
 
           setSrc(`/squarespell-app.html?t=${encodeURIComponent(token)}`);
-          return; // Success
+          return;
         } catch {
           if (i < 2) {
             setLoadMsg('Connecting to server...');
@@ -142,7 +189,6 @@ export default function Dashboard() {
         }
       }
 
-      // All retries failed — still show the dashboard, just default to trial
       if (!cancelled) {
         setStatus('trial');
         setDaysLeft(7);
@@ -152,7 +198,7 @@ export default function Dashboard() {
 
     init();
     return () => { cancelled = true; };
-  }, [isLoaded, isSignedIn, getToken]);
+  }, [isLoaded, isSignedIn, getToken, searchParams]);
 
   // Loading state
   if (status === 'loading') return (
@@ -231,5 +277,18 @@ export default function Dashboard() {
         />
       )}
     </>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div style={{ background: '#07090c', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '32px', height: '32px', border: '2.5px solid rgba(210,255,29,.15)', borderTopColor: '#D2FF1D', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    }>
+      <DashboardInner />
+    </Suspense>
   );
 }
