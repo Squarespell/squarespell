@@ -43,31 +43,55 @@ export default function Dashboard() {
       }
 
       if (cancelled || !token) {
-        if (!cancelled) setLoadMsg('Having trouble loading. Refreshing...');
-        // Last resort: hard refresh to let Clerk fully initialize
-        if (!cancelled && attempts >= 8) {
-          window.location.reload();
+        if (!cancelled) {
+          // Check if we already tried reloading (prevent infinite loop)
+          const reloadCount = parseInt(sessionStorage.getItem('sq_reload_count') || '0');
+          if (reloadCount < 2) {
+            sessionStorage.setItem('sq_reload_count', String(reloadCount + 1));
+            setLoadMsg('Having trouble loading. Refreshing...');
+            await new Promise(r => setTimeout(r, 1000));
+            window.location.reload();
+          } else {
+            // Give up on auto-reload, show manual option
+            sessionStorage.removeItem('sq_reload_count');
+            setLoadMsg('Could not connect. Please try signing out and back in.');
+          }
         }
         return;
       }
+      // Clear reload counter on success
+      try { sessionStorage.removeItem('sq_reload_count'); } catch {}
 
       // Auto-save preview quiz if coming from /try → sign-up flow
+      let previewSaved = false;
       try {
         const raw = localStorage.getItem('squarespell_preview');
         if (raw) {
           const preview = JSON.parse(raw);
-          // Only save if created within the last 30 minutes
-          if (preview.quiz && preview.url && Date.now() - preview.createdAt < 1800000) {
-            setLoadMsg('Saving your quiz...');
-            await fetch(`${API}/api/save-preview`, {
+          // Only save if created within the last 2 hours
+          if (preview.quiz && preview.url && Date.now() - preview.createdAt < 7200000) {
+            setLoadMsg('Publishing your quiz...');
+            const saveRes = await fetch(`${API}/api/save-preview`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ quiz: preview.quiz, brand: preview.brand, url: preview.url }),
-            }).catch(() => {});
+            });
+            if (saveRes.ok) {
+              const saveData = await saveRes.json();
+              previewSaved = saveData.saved === true;
+              if (previewSaved) setLoadMsg('Quiz published! Loading dashboard...');
+            }
           }
           localStorage.removeItem('squarespell_preview');
         }
-      } catch {}
+      } catch (e) {
+        console.error('Preview save failed:', e);
+      }
+
+      // Small delay after save to ensure DB write propagates before iframe fetches
+      if (previewSaved) {
+        await new Promise(r => setTimeout(r, 800));
+      }
 
       // Fetch plan info with retry
       for (let i = 0; i < 3 && !cancelled; i++) {

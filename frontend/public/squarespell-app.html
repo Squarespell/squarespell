@@ -559,6 +559,21 @@ input::placeholder { color: rgba(240,242,245,0.3); }
         if (typeof renderEditorQuizzes === "function") renderEditorQuizzes(quizzes);
         if (typeof renderQuizzesPage === "function") renderQuizzesPage(quizzes);
 
+        // Auto-populate embed code with actual quiz slug
+        var embedBlock = document.getElementById("embed-code-block");
+        var installBlock = document.getElementById("install-code-block");
+        if (quizzes.length > 0) {
+          var firstQuiz = quizzes[0];
+          var slug = firstQuiz.slug || firstQuiz.id;
+          var embedCode = '<!-- Squarespell Quiz Embed -->\n<script src="https://app.squarespell.com/embed/quiz-embed.js"\n  data-quiz="' + slug + '" async><\/script>';
+          if (embedBlock) embedBlock.textContent = embedCode;
+          if (installBlock) installBlock.textContent = embedCode;
+        } else {
+          var msg = '<!-- Create a quiz first, then your embed code will appear here -->';
+          if (embedBlock) embedBlock.textContent = msg;
+          if (installBlock) installBlock.textContent = msg;
+        }
+
         // Account page
         if (plan) {
           var acctEmail = document.getElementById("sq-acct-email");
@@ -879,6 +894,61 @@ input::placeholder { color: rgba(240,242,245,0.3); }
     });
     renderLeadsTable(filtered);
   };
+
+  // Webhook management
+  window.__webhooks = [];
+  function loadWebhooks() {
+    apiFetch("/api/integrations").then(function(r) { return r.ok ? r.json() : []; }).then(function(data) {
+      window.__webhooks = data || [];
+      renderWebhooks(data || []);
+    }).catch(function() {});
+  }
+  function renderWebhooks(hooks) {
+    var container = document.getElementById("webhook-list");
+    if (!container) return;
+    if (!hooks.length) { container.innerHTML = ""; return; }
+    container.innerHTML = hooks.filter(function(h) { return h.type === "webhook"; }).map(function(h) {
+      var url = (h.config && h.config.url) || "—";
+      var shortUrl = url.length > 50 ? url.slice(0, 50) + "..." : url;
+      return '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;margin-bottom:8px">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:' + (h.active ? 'var(--green)' : 'var(--t4)') + ';flex-shrink:0"></div>' +
+        '<span style="flex:1;font-size:13px;color:var(--t2);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + url + '">' + shortUrl + '</span>' +
+        '<button onclick="window.__testWebhook(\'' + h.id + '\')" style="background:transparent;color:var(--t3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;font-family:var(--fam);cursor:pointer">Test</button>' +
+        '<button onclick="window.__deleteWebhook(\'' + h.id + '\')" style="background:transparent;color:var(--red);border:1px solid rgba(248,113,113,0.15);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;font-family:var(--fam);cursor:pointer">Remove</button>' +
+      '</div>';
+    }).join("");
+  }
+  window.__saveWebhook = function() {
+    var input = document.getElementById("webhook-url-input");
+    var status = document.getElementById("webhook-status");
+    var btn = document.getElementById("webhook-save-btn");
+    var url = (input && input.value || "").trim();
+    if (!url) { if (status) status.textContent = "Please enter a webhook URL"; return; }
+    if (!/^https?:\/\/.+/.test(url)) { if (status) status.textContent = "URL must start with http:// or https://"; return; }
+    if (btn) { btn.textContent = "Saving..."; btn.disabled = true; }
+    apiFetch("/api/integrations", { method: "POST", body: JSON.stringify({ type: "webhook", config: { url: url } }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) { if (status) status.textContent = data.error; }
+        else { if (status) status.textContent = "Webhook saved!"; if (input) input.value = ""; loadWebhooks(); }
+      })
+      .catch(function() { if (status) status.textContent = "Failed to save. Try again."; })
+      .finally(function() { if (btn) { btn.textContent = "Save"; btn.disabled = false; } });
+  };
+  window.__testWebhook = function(id) {
+    apiFetch("/api/integrations/test/" + id, { method: "POST" })
+      .then(function(r) { return r.json(); })
+      .then(function(data) { alert(data.success ? "Test webhook sent!" : "Test failed: " + (data.error || "Unknown error")); })
+      .catch(function() { alert("Test failed."); });
+  };
+  window.__deleteWebhook = function(id) {
+    if (!confirm("Remove this webhook?")) return;
+    apiFetch("/api/integrations/" + id, { method: "DELETE" })
+      .then(function() { loadWebhooks(); })
+      .catch(function() { alert("Failed to remove."); });
+  };
+  // Load webhooks on page init
+  if (token) loadWebhooks();
 
   window.__saveNotifPref = function(enabled) {
     apiFetch("/api/user/notifications", { method: "POST", body: JSON.stringify({ enabled: enabled }) }).catch(function(){});
@@ -1707,6 +1777,34 @@ function showPay(state) {
         </div>
       </div>
     </div>
+
+    <!-- Webhook / Zapier Integration -->
+    <div style="margin-top:36px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <p style="font-size:16px;font-weight:700;color:var(--t1)">Webhook / Zapier</p>
+      </div>
+      <p style="font-size:14px;color:var(--t3);line-height:1.6;margin-bottom:16px">Send new leads to Zapier, Mailchimp, HubSpot, or any tool that accepts webhooks. Every time someone completes your quiz, we'll POST their data to your URL.</p>
+
+      <div id="webhook-list" style="margin-bottom:16px"></div>
+
+      <div id="webhook-add-form" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px">
+        <p style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:12px">Add webhook URL</p>
+        <div style="display:flex;gap:8px">
+          <input id="webhook-url-input" type="url" placeholder="https://hooks.zapier.com/..." style="flex:1;height:44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:var(--t1);font-size:14px;padding:0 14px;outline:none;font-family:var(--fam);box-sizing:border-box" />
+          <button id="webhook-save-btn" onclick="window.__saveWebhook()" style="background:var(--acc);color:#07090c;border:none;border-radius:8px;padding:0 20px;font-size:14px;font-weight:700;font-family:var(--fam);cursor:pointer;white-space:nowrap">Save</button>
+        </div>
+        <p id="webhook-status" style="font-size:13px;color:var(--t4);margin-top:8px"></p>
+      </div>
+
+      <div style="margin-top:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:16px">
+        <p style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:8px">Webhook payload format:</p>
+        <pre style="font-family:var(--mono);font-size:12px;color:var(--acc);line-height:1.6;margin:0;white-space:pre-wrap">{ "event": "lead.captured",
+  "lead": { "name", "email", "outcome_id", "answers", "captured_at" },
+  "quiz": { "id", "title", "slug" }
+}</pre>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1737,11 +1835,7 @@ function showPay(state) {
           Copy code
         </button>
       </div>
-      <div id="install-code-block" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:14px;color:var(--acc);line-height:1.7;word-break:break-all;white-space:pre-wrap">&lt;!-- Squarespell Quiz --&gt;
-&lt;div id="squarespell-quiz"&gt;&lt;/div&gt;
-&lt;script src="https://app.squarespell.com/embed/quiz-embed.js"
-  data-quiz-id="YOUR_QUIZ_ID"&gt;
-&lt;/script&gt;</div>
+      <div id="install-code-block" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:14px;color:var(--acc);line-height:1.7;word-break:break-all;white-space:pre-wrap">Loading your embed code...</div>
     </div>
 
     <!-- Quick install steps -->
@@ -1802,12 +1896,7 @@ function showPay(state) {
           Copy code
         </button>
       </div>
-      <div id="embed-code-block" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:14px;color:var(--acc);line-height:1.7;word-break:break-all;white-space:pre-wrap">&lt;!-- Squarespell Quiz Embed --&gt;
-&lt;div id="squarespell-quiz"&gt;&lt;/div&gt;
-&lt;script src="https://app.squarespell.com/embed/quiz-embed.js"
-  data-quiz-id="YOUR_QUIZ_ID"
-  data-accent="#D2FF1D"&gt;
-&lt;/script&gt;</div>
+      <div id="embed-code-block" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:14px;color:var(--acc);line-height:1.7;word-break:break-all;white-space:pre-wrap">Loading your embed code...</div>
     </div>
 
     <!-- Steps -->
@@ -1834,7 +1923,7 @@ function showPay(state) {
         <div style="width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:800;color:#07090c">3</div>
         <div>
           <p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:4px">Paste the code</p>
-          <p style="font-size:14px;color:var(--t3);line-height:1.55">Paste the embed code above into the code block. Replace <strong style="color:var(--acc)">YOUR_QUIZ_ID</strong> with your actual quiz ID from the Editor tab.</p>
+          <p style="font-size:14px;color:var(--t3);line-height:1.55">Paste the embed code above into the code block. Your quiz slug is already included — just paste and save.</p>
         </div>
       </div>
 

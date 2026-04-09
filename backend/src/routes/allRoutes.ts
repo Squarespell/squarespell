@@ -36,15 +36,16 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-    // Check if user already has a quiz (don't duplicate)
+    // Check if user already has a quiz with the same URL (don't duplicate same site)
     const { data: existing } = await supabase
       .from('quizzes')
-      .select('id')
+      .select('id, slug')
       .eq('user_id', userId)
+      .eq('website_url', url)
       .limit(1);
 
     if (existing && existing.length > 0) {
-      return res.json({ saved: false, message: 'Quiz already exists', quiz_id: existing[0].id });
+      return res.json({ saved: true, quiz_id: existing[0].id, slug: existing[0].slug, message: 'Quiz already exists for this URL' });
     }
 
     // Generate a unique slug
