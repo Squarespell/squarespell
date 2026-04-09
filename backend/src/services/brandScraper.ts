@@ -13,7 +13,11 @@ export async function scrapeBrand(url: string) {
   try {
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Squarespell/1.0; +https://squarespell.com)' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
     });
     const html = await res.text();
 
@@ -30,13 +34,12 @@ export async function scrapeBrand(url: string) {
       : `${new URL(url).origin}${faviconPath.startsWith('/') ? '' : '/'}${faviconPath}`;
 
     // ── Business context extraction ────────────────────────────────────────
-    // Strip scripts, styles, and HTML tags to get readable text
+    // Strip ONLY scripts, styles, and footer — keep header, nav, main content
     const textContent = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<nav[\s\S]*?<\/nav>/gi, '')
       .replace(/<footer[\s\S]*?<\/footer>/gi, '')
-      .replace(/<header[\s\S]*?<\/header>/gi, '')
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
       .replace(/<[^>]+>/g, ' ')
       .replace(/&[a-z]+;/gi, ' ')
       .replace(/\s+/g, ' ')
@@ -78,17 +81,39 @@ export async function scrapeBrand(url: string) {
     // Detect keywords/services from the page
     const fullText = [metaDescription, ogDescription, ...headings, ...paragraphs].join(' ').toLowerCase();
 
-    // Build a business summary (max ~800 chars to send to Claude)
+    // Also extract link texts to understand site structure/services
+    const linkTexts: string[] = [];
+    const linkRegex = /<a[^>]*>([\s\S]*?)<\/a>/gi;
+    while ((match = linkRegex.exec(html)) !== null && linkTexts.length < 20) {
+      const clean = match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      if (clean.length > 2 && clean.length < 60 && !/^(home|menu|close|skip|#)/i.test(clean)) linkTexts.push(clean);
+    }
+
+    // Extract list items — often contain services, features, benefits
+    const listItems: string[] = [];
+    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+    while ((match = liRegex.exec(html)) !== null && listItems.length < 15) {
+      const clean = match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      if (clean.length > 5 && clean.length < 200) listItems.push(clean);
+    }
+
+    // Extract text from body (first ~2000 chars of readable text for richer context)
+    const bodyText = textContent.slice(0, 2000);
+
+    // Build a richer business summary (max ~2000 chars to send to Claude)
     const businessSummary = [
       ogTitle && `Title: ${ogTitle}`,
       metaDescription && `Description: ${metaDescription}`,
       ogDescription && ogDescription !== metaDescription && `About: ${ogDescription}`,
-      headings.length > 0 && `Key headings: ${headings.slice(0, 6).join(' | ')}`,
-      paragraphs.length > 0 && `Key content: ${paragraphs.slice(0, 3).join(' ')}`,
+      headings.length > 0 && `Key headings: ${headings.slice(0, 8).join(' | ')}`,
+      paragraphs.length > 0 && `Key content: ${paragraphs.slice(0, 5).join(' ')}`,
+      listItems.length > 0 && `Services/features listed: ${listItems.slice(0, 10).join(' | ')}`,
+      linkTexts.length > 0 && `Site navigation/links: ${[...new Set(linkTexts)].slice(0, 12).join(' | ')}`,
+      bodyText.length > 200 && `Page text excerpt: ${bodyText.slice(0, 600)}`,
     ]
       .filter(Boolean)
       .join('\n')
-      .slice(0, 1200);
+      .slice(0, 2000);
 
     // ── Brand visuals extraction ───────────────────────────────────────────
     const inlineStyles = (html.match(/<style[^>]*>([\s\S]*?)<\/style>/gi) || [])

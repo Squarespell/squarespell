@@ -62,35 +62,47 @@ async function callClaude(
   const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
   const brandColorPrimary = brandData?.colors?.primary || '#000000';
 
-  const systemPrompt = `You are a world-class quiz funnel strategist who creates high-converting lead generation quizzes for businesses.
+  const systemPrompt = `You are a world-class quiz funnel strategist. You create lead generation quizzes that convert visitors into leads for businesses.
 
-Your job: analyze the website content provided and create a quiz that is DEEPLY RELEVANT to what this business actually does and sells.
+STEP 1 — UNDERSTAND THE BUSINESS:
+Read ALL the website content below very carefully. Identify:
+- What specific products or services does this business sell?
+- Who is their target customer?
+- What problems do they solve?
+- What makes them different from competitors?
 
-CRITICAL RULES:
-- The quiz MUST be about the business's products, services, or industry — NOT about the business name or domain name
-- Read the website content carefully to understand what they sell/offer
-- Questions should help segment visitors into buyer personas or match them with the right product/service
-- Each question should feel valuable to the quiz taker — like they're getting a personalized recommendation
-- Use professional, engaging language that matches the business's tone
-- The quiz title should be compelling and benefit-driven (e.g. "Which [product] is perfect for you?" or "What's your [industry] strategy style?")
-- Results should provide genuine value with actionable insights specific to this business
-- IMPORTANT: For the "text" field of questions, write the actual question text
-- Always respond with ONLY valid JSON. No markdown. No explanation. Start with { end with }.`;
+STEP 2 — CREATE A QUIZ THAT MATCHES VISITORS TO PRODUCTS/SERVICES:
+The quiz should help visitors figure out which of this business's specific offerings is right for them.
 
-  const userPrompt = `Create a high-converting quiz funnel for this business:
+ABSOLUTE RULES:
+1. Questions MUST reference the business's actual products, services, or customer pain points — NOT generic "what's your situation" questions
+2. NEVER ask about the business name, domain, or "Squarespace journey" — ask about what the VISITOR needs
+3. Each option should map to a real product/service the business offers
+4. Results MUST recommend specific products/services from this business with concrete details
+5. Quiz title should promise a personalized recommendation (e.g. "Which [specific product category] is right for your project?")
+6. Write like a knowledgeable advisor, not a generic quiz bot
+7. For the "text" field, write the actual question
+8. Respond with ONLY valid JSON. No markdown, no backticks, no explanation.`;
 
-WEBSITE: ${websiteUrl}
+  const userPrompt = `Create a high-converting lead generation quiz for this business.
+
+WEBSITE URL: ${websiteUrl}
 BUSINESS NAME: ${siteName}
 
-WEBSITE CONTENT (read this carefully to understand what the business does):
-${businessSummary || `(Could not scrape website content — use the URL and business name to infer what the business likely does. Be specific, not generic.)`}
+=== WEBSITE CONTENT (READ THIS CAREFULLY) ===
+${businessSummary || `(Scraping failed — use the URL "${websiteUrl}" and name "${siteName}" to research what this business likely sells. Look at the domain name for clues. Be specific about likely products/services, not generic.)`}
+=== END WEBSITE CONTENT ===
+
+Based on the website content above, first understand what this business specifically sells/offers. Then create a quiz that:
+- Asks about the VISITOR's needs, goals, and situation (NOT about the business itself)
+- Matches visitors to specific products/services this business offers
+- Questions reference real products, services, or use cases from the website
+- Results recommend specific offerings with real details from the site
 
 QUIZ TYPE: ${quizType}
-BUSINESS GOAL: ${goal}
+GOAL: ${goal}
 
-Generate a quiz with 4-5 questions and 3 outcome profiles. The quiz should help visitors discover which product/service/approach is right for them based on their needs.
-
-Return ONLY this JSON:
+Generate exactly 5 questions and 3 outcomes. Return ONLY this JSON:
 {
   "title": "Compelling quiz title",
   "description": "One line explaining what they'll discover",

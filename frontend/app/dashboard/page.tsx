@@ -65,32 +65,42 @@ export default function Dashboard() {
       // Auto-save preview quiz if coming from /try → sign-up flow
       let previewSaved = false;
       try {
-        const raw = localStorage.getItem('squarespell_preview');
+        // Check both localStorage and sessionStorage (belt and suspenders)
+        const raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
+        console.log('[Squarespell] Preview data found:', !!raw);
         if (raw) {
           const preview = JSON.parse(raw);
-          // Only save if created within the last 2 hours
-          if (preview.quiz && preview.url && Date.now() - preview.createdAt < 7200000) {
+          // Only save if created within the last 4 hours
+          if (preview.quiz && preview.url && Date.now() - preview.createdAt < 14400000) {
             setLoadMsg('Publishing your quiz...');
+            console.log('[Squarespell] Saving preview quiz for:', preview.url);
             const saveRes = await fetch(`${API}/api/save-preview`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ quiz: preview.quiz, brand: preview.brand, url: preview.url }),
             });
+            const saveData = await saveRes.json();
+            console.log('[Squarespell] Save response:', saveRes.status, saveData);
             if (saveRes.ok) {
-              const saveData = await saveRes.json();
               previewSaved = saveData.saved === true;
               if (previewSaved) setLoadMsg('Quiz published! Loading dashboard...');
             }
+          } else {
+            console.log('[Squarespell] Preview data too old or missing quiz/url');
           }
-          localStorage.removeItem('squarespell_preview');
+          // Only remove AFTER successful save
+          if (previewSaved) {
+            localStorage.removeItem('squarespell_preview');
+            sessionStorage.removeItem('squarespell_preview');
+          }
         }
       } catch (e) {
-        console.error('Preview save failed:', e);
+        console.error('[Squarespell] Preview save failed:', e);
       }
 
-      // Small delay after save to ensure DB write propagates before iframe fetches
+      // Wait for DB write to propagate before iframe fetches quizzes
       if (previewSaved) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 1200));
       }
 
       // Fetch plan info with retry
