@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import quizRoutes from './routes/quiz';
-import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter } from './routes/allRoutes';
+import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter } from './routes/allRoutes';
 import clerkWebhookRoute from './routes/clerkWebhook';
 import squarespaceRouter from './routes/squarespace';
 
@@ -24,6 +24,9 @@ app.use('/api/clerk', clerkWebhookRoute);
 app.use('/api/quiz', publicQuizRouter);
 app.use('/api/user', userRouter);
 app.use('/auth/squarespace', squarespaceRouter);
+app.use('/api/integrations', integrationsRouter);
+app.use('/api/cron', cronRouter);
+app.use('/api/cron', trialReminderRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 

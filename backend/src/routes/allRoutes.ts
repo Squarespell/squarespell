@@ -81,7 +81,73 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     } catch (e) { console.log('Email notification failed:', e); }
   }
 
+  // Fire Zapier/webhook integrations
+  try {
+    const { data: integrations } = await supabase.from('integrations').select('id,type,config').eq('user_id', quiz.user_id).eq('active', true);
+    if (integrations && integrations.length > 0) {
+      const { data: quizMeta } = await supabase.from('quizzes').select('title,slug').eq('id', quiz.id).single();
+      const webhookPayload = {
+        event: 'lead.captured',
+        lead: { name: name ?? '', email, outcome_id: outcome_id ?? '', answers: answers ?? {}, captured_at: new Date().toISOString() },
+        quiz: { id: quiz.id, title: quizMeta?.title ?? '', slug: quizMeta?.slug ?? '' },
+      };
+      for (const integration of integrations) {
+        if (integration.type === 'webhook' && integration.config?.url) {
+          fetch(integration.config.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(webhookPayload) }).catch(() => {});
+        }
+      }
+    }
+  } catch (e) { console.log('Webhook dispatch failed:', e); }
+
   res.status(201).json({ success: true });
+});
+
+// ── Integrations ─────────────────────────────────────────────────────────────
+export const integrationsRouter = Router();
+integrationsRouter.use(requireAuth, attachUser);
+
+integrationsRouter.get('/', async (req: AuthenticatedRequest, res) => {
+  const { data, error } = await supabase.from('integrations').select('id,type,config,active,created_at').eq('user_id', req.dbUserId).order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data ?? []);
+});
+
+integrationsRouter.post('/', async (req: AuthenticatedRequest, res) => {
+  const { type, config } = req.body;
+  if (!type || !config) return res.status(400).json({ error: 'type and config required' });
+  if (type === 'webhook' && !config.url) return res.status(400).json({ error: 'Webhook URL required' });
+  const { data, error } = await supabase.from('integrations').insert({ user_id: req.dbUserId, type, config, active: true }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+integrationsRouter.patch('/:id', async (req: AuthenticatedRequest, res) => {
+  const allowed = ['config', 'active'];
+  const updates: Record<string, any> = {};
+  allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
+  const { data, error } = await supabase.from('integrations').update(updates).eq('id', req.params.id).eq('user_id', req.dbUserId).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+integrationsRouter.delete('/:id', async (req: AuthenticatedRequest, res) => {
+  const { error } = await supabase.from('integrations').delete().eq('id', req.params.id).eq('user_id', req.dbUserId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+integrationsRouter.post('/test/:id', async (req: AuthenticatedRequest, res) => {
+  const { data: integration } = await supabase.from('integrations').select('type,config').eq('id', req.params.id).eq('user_id', req.dbUserId).single();
+  if (!integration) return res.status(404).json({ error: 'Integration not found' });
+  if (integration.type === 'webhook' && integration.config?.url) {
+    try {
+      const testPayload = { event: 'test', lead: { name: 'Test User', email: 'test@example.com', outcome_id: 'test', answers: {}, captured_at: new Date().toISOString() }, quiz: { id: 'test', title: 'Test Quiz', slug: 'test' } };
+      const response = await fetch(integration.config.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(testPayload) });
+      res.json({ success: response.ok, status: response.status });
+    } catch (e: any) { res.json({ success: false, error: e.message }); }
+  } else {
+    res.status(400).json({ error: 'Unsupported integration type for testing' });
+  }
 });
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
@@ -93,6 +159,95 @@ analyticsRouter.get('/:quizId', async (req: AuthenticatedRequest, res) => {
   const { count: completions } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'complete');
   const views = quiz.view_count ?? 0; const leads = quiz.lead_count ?? 0; const comp = completions ?? 0;
   res.json({ views, completions: comp, leads, completion_rate: views > 0 ? Math.round((comp/views)*100) : 0, lead_rate: comp > 0 ? Math.round((leads/comp)*100) : 0 });
+});
+
+analyticsRouter.get('/:quizId/timeseries', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase.from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+  const period = req.query.period ?? '30d';
+  let daysBack = 30;
+  if (period === '7d') daysBack = 7;
+  else if (period === '90d') daysBack = 90;
+  else if (period === 'all') daysBack = 3650;
+  const fromDate = new Date();
+  fromDate.setDate(fromDate.getDate() - daysBack);
+  const { data: events } = await supabase.from('analytics_events').select('created_at,event_type').eq('quiz_id', req.params.quizId).gte('created_at', fromDate.toISOString());
+  const { data: leads } = await supabase.from('leads').select('created_at').eq('quiz_id', req.params.quizId).gte('created_at', fromDate.toISOString());
+  const dateMap: Record<string, { views: number; completions: number; leads: number }> = {};
+  (events ?? []).forEach((e: any) => {
+    const d = new Date(e.created_at).toISOString().split('T')[0];
+    if (!dateMap[d]) dateMap[d] = { views: 0, completions: 0, leads: 0 };
+    if (e.event_type === 'view') dateMap[d].views++;
+    else if (e.event_type === 'complete') dateMap[d].completions++;
+  });
+  (leads ?? []).forEach((l: any) => {
+    const d = new Date(l.created_at).toISOString().split('T')[0];
+    if (!dateMap[d]) dateMap[d] = { views: 0, completions: 0, leads: 0 };
+    dateMap[d].leads++;
+  });
+  const dates = Object.keys(dateMap).sort();
+  const views = dates.map(d => dateMap[d].views);
+  const completions = dates.map(d => dateMap[d].completions);
+  const leadsArray = dates.map(d => dateMap[d].leads);
+  res.json({ dates, views, completions, leads: leadsArray });
+});
+
+analyticsRouter.get('/:quizId/funnel', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase.from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+  const { count: viewed } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'view');
+  const { count: started } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'start');
+  const { count: completed } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'complete');
+  const { count: lead_captured } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId);
+  res.json({ viewed: viewed ?? 0, started: started ?? 0, completed: completed ?? 0, lead_captured: lead_captured ?? 0 });
+});
+
+analyticsRouter.get('/:quizId/dropoff', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase.from('quizzes').select('id,questions').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+  const questionCount = (quiz.questions ?? []).length;
+  const { data: events } = await supabase.from('analytics_events').select('event_type,metadata').eq('quiz_id', req.params.quizId).like('event_type', 'question_%');
+  const questionStats: Record<number, { started: number; completed: number }> = {};
+  for (let i = 0; i < questionCount; i++) {
+    questionStats[i] = { started: 0, completed: 0 };
+  }
+  (events ?? []).forEach((e: any) => {
+    const match = e.event_type.match(/question_(\d+)_([a-z]+)/);
+    if (match) {
+      const qIndex = parseInt(match[1]);
+      const action = match[2];
+      if (qIndex >= 0 && qIndex < questionCount) {
+        if (action === 'view') questionStats[qIndex].started++;
+        else if (action === 'answer') questionStats[qIndex].completed++;
+      }
+    }
+  });
+  const result = Object.keys(questionStats).map(idx => {
+    const i = parseInt(idx);
+    const st = questionStats[i].started;
+    return { question_index: i, started: st, completed: questionStats[i].completed, dropoff_rate: st > 0 ? Math.round(((st - questionStats[i].completed) / st) * 100) : 0 };
+  });
+  res.json(result);
+});
+
+analyticsRouter.get('/:quizId/results', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase.from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+  const { data: leadsData } = await supabase.from('leads').select('outcome_id').eq('quiz_id', req.params.quizId);
+  const outcomeMap: Record<string, number> = {};
+  let totalLeads = 0;
+  (leadsData ?? []).forEach((l: any) => {
+    if (l.outcome_id) {
+      outcomeMap[l.outcome_id] = (outcomeMap[l.outcome_id] ?? 0) + 1;
+      totalLeads++;
+    }
+  });
+  const result = Object.keys(outcomeMap).map(oid => ({
+    outcome_id: oid,
+    count: outcomeMap[oid],
+    percentage: totalLeads > 0 ? Math.round((outcomeMap[oid] / totalLeads) * 100) : 0,
+  }));
+  res.json(result);
 });
 
 // ── Scrape Brand ──────────────────────────────────────────────────────────────
@@ -155,4 +310,276 @@ stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRe
   if (!user?.stripe_customer_id) return res.redirect(`${process.env.FRONTEND_URL}/pricing`);
   const portal = await stripe.billingPortal.sessions.create({ customer: user.stripe_customer_id, return_url: `${process.env.FRONTEND_URL}/dashboard` });
   res.redirect(portal.url);
+});
+
+// ── Cron: Weekly Digest ───────────────────────────────────────────────────────
+export const cronRouter = Router();
+cronRouter.post('/weekly-digest', async (req, res) => {
+  // Verify cron job secret
+  const cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (!resend) {
+    return res.status(500).json({ error: 'Resend not configured' });
+  }
+
+  try {
+    // Get all non-free users (active subscribers + trials)
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id,email,first_name')
+      .neq('plan', 'free');
+
+    if (usersError) throw usersError;
+
+    let emailsSent = 0;
+    let skipped = 0;
+
+    for (const user of users ?? []) {
+      try {
+        // Get user's quizzes
+        const { data: quizzes } = await supabase
+          .from('quizzes')
+          .select('id,title,view_count,lead_count')
+          .eq('user_id', user.id);
+
+        // Calculate stats for last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        let totalViews = 0;
+        let totalCompletions = 0;
+        let totalLeads = 0;
+        let topQuiz = { title: 'No activity', views: 0 };
+
+        for (const quiz of quizzes ?? []) {
+          const { count: weekViews } = await supabase
+            .from('analytics_events')
+            .select('id', { count: 'exact', head: true })
+            .eq('quiz_id', quiz.id)
+            .eq('event_type', 'view')
+            .gte('created_at', sevenDaysAgo.toISOString());
+
+          const { count: weekCompletions } = await supabase
+            .from('analytics_events')
+            .select('id', { count: 'exact', head: true })
+            .eq('quiz_id', quiz.id)
+            .eq('event_type', 'complete')
+            .gte('created_at', sevenDaysAgo.toISOString());
+
+          const { count: weekLeads } = await supabase
+            .from('leads')
+            .select('id', { count: 'exact', head: true })
+            .eq('quiz_id', quiz.id)
+            .gte('created_at', sevenDaysAgo.toISOString());
+
+          const views = weekViews ?? 0;
+          totalViews += views;
+          totalCompletions += (weekCompletions ?? 0);
+          totalLeads += (weekLeads ?? 0);
+
+          if (views > topQuiz.views) {
+            topQuiz = { title: quiz.title, views };
+          }
+        }
+
+        // Skip if no activity
+        if (totalViews === 0 && totalCompletions === 0 && totalLeads === 0) {
+          skipped++;
+          continue;
+        }
+
+        // Build HTML email
+        const html = `
+          <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
+            <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Weekly Summary</h1>
+            <p style="margin:0 0 24px;color:#888;font-size:14px">Here's how your quizzes performed this week</p>
+
+            <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                <div>
+                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">Total Views</p>
+                  <p style="margin:0;font-size:28px;color:#D2FF1D;font-weight:700">${totalViews}</p>
+                </div>
+                <div>
+                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">Completions</p>
+                  <p style="margin:0;font-size:28px;color:#D2FF1D;font-weight:700">${totalCompletions}</p>
+                </div>
+                <div>
+                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">New Leads</p>
+                  <p style="margin:0;font-size:28px;color:#D2FF1D;font-weight:700">${totalLeads}</p>
+                </div>
+                <div>
+                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">Top Quiz</p>
+                  <p style="margin:0;font-size:14px;color:#f0f2f5">${topQuiz.title}</p>
+                </div>
+              </div>
+            </div>
+
+            <a href="https://squarespell.com/dashboard" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box">View Dashboard</a>
+
+            <p style="margin:20px 0 0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">This is your weekly quiz performance summary from Squarespell</p>
+          </div>
+        `;
+
+        await resend.emails.send({
+          from: 'Squarespell <onboarding@resend.dev>',
+          to: user.email,
+          subject: `Your weekly quiz summary — ${totalViews} views this week`,
+          html,
+        });
+
+        emailsSent++;
+      } catch (e) {
+        console.error(`Failed to send digest to user ${user.id}:`, e);
+      }
+    }
+
+    res.json({ success: true, sent: emailsSent, skipped });
+  } catch (err: any) {
+    console.error('Weekly digest error:', err);
+    res.status(500).json({ error: err.message ?? 'Failed to send digests' });
+  }
+});
+
+// ── Cron: Trial Reminders ─────────────────────────────────────────────────────
+export const trialReminderRouter = Router();
+trialReminderRouter.post('/trial-reminders', async (req, res) => {
+  // Verify cron job secret
+  const cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (!resend) {
+    return res.status(500).json({ error: 'Resend not configured' });
+  }
+
+  try {
+    // Get all trial and free users
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id,email,first_name,created_at,plan');
+
+    if (usersError) throw usersError;
+
+    let emailsSent = 0;
+
+    for (const user of users ?? []) {
+      try {
+        const createdAt = new Date(user.created_at);
+        const now = new Date();
+        const daysSinceSignup = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Day 1: Welcome email
+        if (daysSinceSignup === 1 && (user.plan === 'trial' || user.plan === 'free')) {
+          const { count: quizCount } = await supabase
+            .from('quizzes')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+
+          // Only send if no quizzes created yet
+          if ((quizCount ?? 0) === 0) {
+            const html = `
+              <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
+                <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Welcome to Squarespell!</h1>
+                <p style="margin:0 0 24px;color:#888;font-size:14px">Your 7-day free trial starts now</p>
+
+                <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
+                  <h2 style="margin:0 0 12px;color:#f0f2f5;font-size:16px;font-weight:600">Get started in 3 steps</h2>
+                  <ol style="margin:0;padding-left:20px;color:#f0f2f5;font-size:14px;line-height:1.8">
+                    <li>Create your first quiz from your website URL</li>
+                    <li>Share it with your audience</li>
+                    <li>Collect leads and insights in real-time</li>
+                  </ol>
+                </div>
+
+                <a href="https://squarespell.com/dashboard?tab=create" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Create Your First Quiz</a>
+
+                <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Questions? We're here to help</p>
+              </div>
+            `;
+
+            await resend.emails.send({
+              from: 'Squarespell <onboarding@resend.dev>',
+              to: user.email,
+              subject: 'Welcome to Squarespell — Create your first quiz',
+              html,
+            });
+
+            emailsSent++;
+          }
+        }
+
+        // Day 5: Trial ending soon (2 days left)
+        if (daysSinceSignup === 5 && (user.plan === 'trial' || user.plan === 'free')) {
+          const html = `
+            <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
+              <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Your trial ends in 2 days</h1>
+              <p style="margin:0 0 24px;color:#888;font-size:14px">Upgrade to keep your quizzes and continue collecting leads</p>
+
+              <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
+                <h2 style="margin:0 0 12px;color:#f0f2f5;font-size:16px;font-weight:600">What you'll keep with Squarespell Pro</h2>
+                <ul style="margin:0;padding-left:20px;color:#f0f2f5;font-size:14px;line-height:1.8;list-style:none">
+                  <li style="margin-bottom:8px">✓ Unlimited quizzes</li>
+                  <li style="margin-bottom:8px">✓ Advanced analytics</li>
+                  <li style="margin-bottom:8px">✓ Unlimited lead collection</li>
+                  <li style="margin-bottom:8px">✓ Priority support</li>
+                </ul>
+              </div>
+
+              <a href="https://squarespell.com/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade Now</a>
+
+              <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Don't lose access to your quizzes</p>
+            </div>
+          `;
+
+          await resend.emails.send({
+            from: 'Squarespell <onboarding@resend.dev>',
+            to: user.email,
+            subject: 'Your Squarespell trial ends in 2 days',
+            html,
+          });
+
+          emailsSent++;
+        }
+
+        // Day 7: Trial expired
+        if (daysSinceSignup === 7 && (user.plan === 'trial' || user.plan === 'free')) {
+          const html = `
+            <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
+              <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Your trial has expired</h1>
+              <p style="margin:0 0 24px;color:#888;font-size:14px">Upgrade now to keep your quizzes and continue collecting leads</p>
+
+              <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
+                <p style="margin:0;color:#f0f2f5;font-size:14px">Your quizzes are still here, but they're currently offline. Upgrade to your plan to reactivate them immediately.</p>
+              </div>
+
+              <a href="https://squarespell.com/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade to Pro</a>
+
+              <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Save your quiz data by upgrading today</p>
+            </div>
+          `;
+
+          await resend.emails.send({
+            from: 'Squarespell <onboarding@resend.dev>',
+            to: user.email,
+            subject: 'Restore your Squarespell quizzes — Upgrade now',
+            html,
+          });
+
+          emailsSent++;
+        }
+      } catch (e) {
+        console.error(`Failed to send trial reminder to user ${user.id}:`, e);
+      }
+    }
+
+    res.json({ success: true, sent: emailsSent });
+  } catch (err: any) {
+    console.error('Trial reminder error:', err);
+    res.status(500).json({ error: err.message ?? 'Failed to send trial reminders' });
+  }
 });

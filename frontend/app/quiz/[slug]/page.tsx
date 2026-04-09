@@ -52,17 +52,17 @@ export default function QuizPage() {
 
   useEffect(() => {
     if (!slug) return;
-    fetch(`${API}/api/quiz/public/${slug}`)
+    fetch(`${API}/api/quiz/${slug}`)
       .then(r => r.json())
       .then(data => {
         if (data.error) { setError(data.error); setStage('error'); return; }
         setQuiz(data);
         setStage('question');
         // track view
-        fetch(`${API}/api/analytics/event`, {
+        fetch(`${API}/api/quiz/${slug}/event`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quiz_id: data.id, event: 'view' }),
+          body: JSON.stringify({ event_type: 'view', session_id: crypto.randomUUID?.() || Math.random().toString(36).slice(2) }),
         }).catch(() => {});
       })
       .catch(() => { setError('Failed to load quiz.'); setStage('error'); });
@@ -99,8 +99,19 @@ export default function QuizPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: firstName, email, answers, outcome_id: getResult(quiz, answers).id }),
       });
-      setResult(getResult(quiz, answers));
+      const resultData = getResult(quiz, answers);
+      setResult(resultData);
       setStage('result');
+      // Track completion event
+      fetch(`${API}/api/quiz/${slug}/event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_type: 'complete', session_id: crypto.randomUUID?.() || Math.random().toString(36).slice(2), metadata: { outcome_id: resultData.id } }),
+      }).catch(() => {});
+      // Notify parent iframe (for embed)
+      if (window.parent !== window) {
+        window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: resultData.id }, '*');
+      }
     } catch {
       setLeadError('Something went wrong. Please try again.');
     } finally {
