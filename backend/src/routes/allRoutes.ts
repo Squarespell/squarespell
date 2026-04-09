@@ -27,6 +27,40 @@ generateRouter.post('/generate', requireAuth, attachUser, guardQuizCreation, asy
   catch (err: any) { res.status(500).json({ error: err.message ?? 'Generation failed' }); }
 });
 
+// ── Public Preview Generate (no auth, rate-limited by IP) ────────────────────
+const previewRateMap = new Map<string, { count: number; resetAt: number }>();
+export const previewRouter = Router();
+previewRouter.post('/preview-generate', async (req, res) => {
+  // Simple rate limit: 5 previews per IP per hour
+  const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim();
+  const now = Date.now();
+  const entry = previewRateMap.get(ip);
+  if (entry && entry.resetAt > now && entry.count >= 5) {
+    return res.status(429).json({ error: 'Too many previews. Please try again later or sign up for unlimited access.' });
+  }
+  if (!entry || entry.resetAt <= now) {
+    previewRateMap.set(ip, { count: 1, resetAt: now + 3600000 });
+  } else {
+    entry.count++;
+  }
+
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  let normalizedUrl: string;
+  try { normalizedUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
+
+  try {
+    // Step 1: Scrape brand
+    const brand = await scrapeBrand(normalizedUrl);
+    // Step 2: Generate quiz with AI
+    const quiz = await generateQuiz(normalizedUrl, 'general', 'Generate more leads', brand);
+    // Return both brand + quiz data (not saved to DB)
+    res.json({ brand, quiz });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message ?? 'Preview generation failed' });
+  }
+});
+
 // ── Public Quiz ───────────────────────────────────────────────────────────────
 export const publicQuizRouter = Router();
 publicQuizRouter.get('/:slug', async (req, res) => {
