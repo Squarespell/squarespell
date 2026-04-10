@@ -194,14 +194,22 @@ function TryPageInner() {
     }
   }, [urlParam]);
 
-  // Simulate build step progression during API call
+  // Simulate build step progression during API call.
+  // Stop advancing once the quiz arrives so the completion handler (which sets
+  // completedSteps = BUILD_STEPS.length) is not clobbered by the next tick.
   useEffect(() => {
     if (stage !== 'building') return;
+    if (quiz) return; // quiz arrived — leave final state untouched
     const interval = setInterval(() => {
-      setCompletedSteps((prev) => Math.min(prev + 1, BUILD_STEPS.length - 1));
+      setCompletedSteps((prev) => {
+        // Cap one step before the last so "Finalizing" stays active until the
+        // quiz actually arrives; the success handler will bump it to done.
+        if (prev >= BUILD_STEPS.length - 1) return prev;
+        return prev + 1;
+      });
     }, 1200);
     return () => clearInterval(interval);
-  }, [stage]);
+  }, [stage, quiz]);
 
   const startGeneration = useCallback(async (siteUrl: string) => {
     setStage('building');
@@ -537,12 +545,63 @@ function TryPageInner() {
                   <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT, marginBottom: '16px', lineHeight: 1.4 }}>
                     {quiz.questions[0].text}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                    {quiz.questions[0].options.slice(0, 4).map((opt, i) => (
-                      <div key={opt.id} className="fade-in" style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER}`, fontSize: '14px', color: TEXT_MUTED, animationDelay: `${i * 150}ms` }}>
-                        {opt.text}
-                      </div>
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {quiz.questions[0].options.slice(0, 4).map((opt, i) => {
+                      const qId = quiz.questions[0].id;
+                      const isSelected = selectedOptions[qId] === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          className="fade-in"
+                          onClick={() => setSelectedOptions((prev) => ({ ...prev, [qId]: opt.id }))}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '12px 14px',
+                            background: isSelected ? ACCENT_DIM : 'transparent',
+                            border: `1.5px solid ${isSelected ? 'rgba(210,255,29,0.4)' : BORDER}`,
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            color: isSelected ? TEXT : TEXT_MUTED,
+                            fontFamily: 'inherit',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            animationDelay: `${i * 150}ms`,
+                            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.18)';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = BORDER;
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              border: `2px solid ${isSelected ? ACCENT : 'rgba(255,255,255,0.2)'}`,
+                              background: isSelected ? ACCENT : 'transparent',
+                              flexShrink: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            {isSelected && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={BG} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </div>
+                          <span style={{ flex: 1 }}>{opt.text}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
