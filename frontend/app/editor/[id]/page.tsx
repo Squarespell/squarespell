@@ -2,7 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense, useRef } from 'react';
 /* Inline icon components */
 function ArrowLeftIcon({ size = 20 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
@@ -90,7 +90,7 @@ function EditorContent() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleInput, setTitleInput] = useState('');
-  const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch quiz on mount
   useEffect(() => {
@@ -552,11 +552,9 @@ function EditorContent() {
                           marginBottom: '16px',
                         }}
                       >
-                        <DragHandleIcon
-                          size={20}
-                          color={COLORS.TEXT_MUTED}
-                          style={{ marginTop: '6px', cursor: 'grab' }}
-                        />
+                        <div style={{ marginTop: '6px', cursor: 'grab' }}>
+                          <DragHandleIcon size={20} color={COLORS.TEXT_MUTED} />
+                        </div>
                         <span
                           style={{
                             backgroundColor: COLORS.BORDER,
