@@ -236,27 +236,44 @@ export async function scrapeBrand(url: string) {
       .join('\n');
 
     // Try to fetch up to 4 external stylesheets for better color extraction.
-    // For Squarespace we specifically want site.css and any stylesheet on static1.squarespace.com
-    const sheetHrefs: string[] = [];
-    const sheetRegex = /<link[^>]+rel="stylesheet"[^>]+href="([^"]+\.css[^"]*)"/gi;
+    // For Squarespace we specifically want site.css and any stylesheet on static1.squarespace.com.
+    // Some sites put href BEFORE rel so try both regex orderings.
+    const sheetHrefs = new Set<string>();
+    const sheetRegex1 = /<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+\.css[^"']*)["']/gi;
+    const sheetRegex2 = /<link[^>]+href=["']([^"']+\.css[^"']*)["'][^>]+rel=["']stylesheet["']/gi;
     let sheetMatch;
-    while ((sheetMatch = sheetRegex.exec(html)) !== null && sheetHrefs.length < 6) {
-      sheetHrefs.push(sheetMatch[1]);
-    }
-    // Rank: prefer Squarespace site css, then local css, then external
-    sheetHrefs.sort((a, b) => {
-      const aSite = /site\.css|static1\.squarespace\.com/i.test(a) ? 0 : 1;
-      const bSite = /site\.css|static1\.squarespace\.com/i.test(b) ? 0 : 1;
-      return aSite - bSite;
+    while ((sheetMatch = sheetRegex1.exec(html)) !== null) sheetHrefs.add(sheetMatch[1]);
+    while ((sheetMatch = sheetRegex2.exec(html)) !== null) sheetHrefs.add(sheetMatch[1]);
+    // Rank: prefer Squarespace site.css first, then any squarespace CDN, then others.
+    const rankedHrefs = Array.from(sheetHrefs).sort((a, b) => {
+      const score = (s: string) => {
+        if (/site\.css/i.test(s)) return 0;
+        if (/static1\.squarespace\.com|sqspcdn\.com|squarespace\.com/i.test(s)) return 1;
+        return 2;
+      };
+      return score(a) - score(b);
     });
+    // Absolute URL builder that handles protocol-relative `//cdn.x.com/foo.css` correctly.
+    const absolutize = (href: string): string => {
+      const h = href.trim();
+      if (h.startsWith('http://') || h.startsWith('https://')) return h;
+      if (h.startsWith('//')) return `https:${h}`; // protocol-relative
+      const base = new URL(url);
+      if (h.startsWith('/')) return `${base.origin}${h}`;
+      return `${base.origin}/${h}`;
+    };
     let externalCss = '';
-    for (const href of sheetHrefs.slice(0, 4)) {
-      const sheetUrl = href.startsWith('http') ? href : `${new URL(url).origin}${href.startsWith('/') ? '' : '/'}${href}`;
+    let fetchedSheets = 0;
+    for (const href of rankedHrefs.slice(0, 5)) {
+      const sheetUrl = absolutize(href);
       try {
         const r = await fetch(sheetUrl, { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0' } });
-        externalCss += (await r.text()).slice(0, 120000) + '\n';
+        // Raise truncation cap so large Squarespace site.css files (1MB+) still include the :root HSL triples at the top
+        externalCss += (await r.text()).slice(0, 300000) + '\n';
+        fetchedSheets++;
       } catch {}
     }
+    console.log(`[Scraper] External stylesheets fetched: ${fetchedSheets}/${rankedHrefs.length} (top: ${rankedHrefs[0] || 'none'})`);
 
     const allCss = inlineStyles + '\n' + externalCss;
 
@@ -264,16 +281,93 @@ export async function scrapeBrand(url: string) {
     // Colors can appear as hex (#rgb, #rrggbb, #rrggbbaa), rgb(), rgba(), or hsl()
     const COLOR_VAL = '(?:#[0-9a-fA-F]{3,8}|rgba?\\([^)]+\\)|hsla?\\([^)]+\\))';
 
-    // Extract ALL CSS custom property declarations and count their values
-    // Multiple occurrences of the same --var with the same value means it's used in many sections
+    // Squarespace 7.1 defines HSL triples (H,S%,L%) at :root that get referenced
+    // by hsla(var(--accent-hsl), 1) elsewhere. Extract these first so we can
+    // inline the var() references into concrete colors.
+    //   e.g.  --lightAccent-hsl: 72,100%,56%
+    //         --accent-hsl:      0,0%,0%
+    const hslTriples: Record<string, string> = {};
+    const hslTripleRegex = /--([a-zA-Z][\w-]*-hsl)\s*:\s*([0-9.]+\s*,\s*[0-9.]+%\s*,\s*[0-9.]+%)/g;
+    let hm;
+    while ((hm = hslTripleRegex.exec(allCss)) !== null) {
+      const name = hm[1];
+      const triple = hm[2].replace(/\s+/g, '');
+      // First occurrence wins (theme root declaration is usually first)
+      if (!hslTriples[name]) hslTriples[name] = triple;
+    }
+    console.log(`[Scraper] HSL triples found: ${Object.keys(hslTriples).length} (e.g. ${Object.entries(hslTriples).slice(0, 3).map(([k, v]) => `${k}=${v}`).join(', ')})`);
+
+    // Pre-process CSS: flatten `hsla(var(--foo-hsl), ALPHA)` → `hsla(H,S%,L%,ALPHA)`
+    // so the main COLOR_VAL regex (which doesn't handle nested parens) can pick
+    // them up as concrete colors. Same for hsl(...) and rgba(var(--foo-rgb), A).
+    const resolvedCss = allCss.replace(
+      /hsla?\(\s*var\(--([a-zA-Z][\w-]*-hsl)\)\s*,\s*([^)]+)\)/gi,
+      (original, name: string, alpha: string) => {
+        const triple = hslTriples[name];
+        if (!triple) return original;
+        return `hsla(${triple},${alpha.trim()})`;
+      }
+    );
+
+    // Extract the alpha channel from a CSS color (returns 1 for fully opaque, 0 for fully transparent).
+    const getAlpha = (color: string): number => {
+      const s = color.toLowerCase().replace(/\s+/g, '');
+      // rgba(r,g,b,A) or hsla(h,s%,l%,A)
+      const fnMatch = s.match(/^(?:rgba|hsla)\([^)]*,\s*([0-9.]+)\s*\)$/i);
+      if (fnMatch) return parseFloat(fnMatch[1]);
+      // 8-digit hex #rrggbbaa
+      const hex8 = s.match(/^#([0-9a-f]{8})$/i);
+      if (hex8) return parseInt(hex8[1].slice(6, 8), 16) / 255;
+      // 4-digit hex #rgba
+      const hex4 = s.match(/^#([0-9a-f]{4})$/i);
+      if (hex4) {
+        const a = hex4[1][3];
+        return parseInt(a + a, 16) / 255;
+      }
+      return 1;
+    };
+
+    // "Colorful" test — used to prefer saturated colors over greyscale when picking primary.
+    // Rejects low-alpha values (< 0.5) because a 14%-alpha lime renders invisible as a CTA.
+    const isColorful = (color: string): boolean => {
+      if (getAlpha(color) < 0.5) return false;
+      const s = color.toLowerCase().replace(/\s+/g, '');
+      const hslMatch = s.match(/hsla?\(([0-9.]+),([0-9.]+)%,([0-9.]+)%/);
+      if (hslMatch) {
+        const sat = parseFloat(hslMatch[2]);
+        const light = parseFloat(hslMatch[3]);
+        // Greyscale: sat < 12%, OR near-black (light<8%), OR near-white (light>95%)
+        return sat >= 12 && light > 8 && light < 95;
+      }
+      const hexMatch = s.match(/^#([0-9a-f]{6})$/i);
+      if (hexMatch) {
+        const r = parseInt(hexMatch[1].slice(0, 2), 16);
+        const g = parseInt(hexMatch[1].slice(2, 4), 16);
+        const b = parseInt(hexMatch[1].slice(4, 6), 16);
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        return (max - min) > 25 && max > 20 && min < 240;
+      }
+      const rgbMatch = s.match(/rgba?\((\d+),(\d+),(\d+)/);
+      if (rgbMatch) {
+        const r = +rgbMatch[1], g = +rgbMatch[2], b = +rgbMatch[3];
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        return (max - min) > 25 && max > 20 && min < 240;
+      }
+      return false;
+    };
+
+    // Extract ALL CSS custom property declarations and count their values.
+    // Multiple occurrences of the same --var with the same value means it's used in many sections.
     const varOccurrences: Record<string, Record<string, number>> = {};
     const varRegex = new RegExp(`--([a-zA-Z][\\w-]*)\\s*:\\s*(${COLOR_VAL})`, 'g');
     let vm;
-    while ((vm = varRegex.exec(allCss)) !== null) {
+    while ((vm = varRegex.exec(resolvedCss)) !== null) {
       const name = vm[1];
-      const value = vm[2].toLowerCase().replace(/\s+/g, '');
+      const raw = vm[2].toLowerCase().replace(/\s+/g, '');
+      // Skip any remaining unresolved var() references — they'd render as broken CSS in the preview
+      if (raw.includes('var(')) continue;
       if (!varOccurrences[name]) varOccurrences[name] = {};
-      varOccurrences[name][value] = (varOccurrences[name][value] || 0) + 1;
+      varOccurrences[name][raw] = (varOccurrences[name][raw] || 0) + 1;
     }
     // Helper: return the most frequent value for a given var name
     const pickVar = (name: string): string | null => {
@@ -299,6 +393,31 @@ export async function scrapeBrand(url: string) {
       return null;
     };
 
+    // Like pickVarAny, but across ALL matching var names it prefers colorful values
+    // over greyscale, then by frequency. Critical for sites whose --primaryButtonBackgroundColor
+    // resolves to black but whose --lightAccentColor resolves to a vibrant brand color.
+    const pickColorfulVarAny = (...names: string[]): string | null => {
+      const wanted = names.map(n => n.toLowerCase());
+      const candidates: Array<{ value: string; count: number; colorful: boolean; priority: number }> = [];
+      for (const [name, values] of Object.entries(varOccurrences)) {
+        const idx = wanted.indexOf(name.toLowerCase());
+        if (idx === -1) continue;
+        for (const [val, cnt] of Object.entries(values)) {
+          candidates.push({ value: val, count: cnt, colorful: isColorful(val), priority: idx });
+        }
+      }
+      if (candidates.length === 0) return null;
+      candidates.sort((a, b) => {
+        // 1. Colorful wins over greyscale
+        if (a.colorful !== b.colorful) return a.colorful ? -1 : 1;
+        // 2. Within same colorfulness, prefer earlier priority (order passed to pickColorfulVarAny)
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        // 3. Tiebreak by frequency
+        return b.count - a.count;
+      });
+      return candidates[0].value;
+    };
+
     console.log(`[Scraper] CSS custom props found: ${Object.keys(varOccurrences).length}`);
     const sqspCandidates = Object.keys(varOccurrences).filter(n =>
       /^(site|heading|paragraph|navigationLink|primaryButton|secondaryButton|tertiaryButton|accent|colorAccent|logoColor|tweak)/i.test(n)
@@ -310,7 +429,7 @@ export async function scrapeBrand(url: string) {
       return pickVar(bareName);
     };
     const extractProp = (sel: string, prop: string) =>
-      allCss.match(new RegExp(`${sel}[^{]*{[^}]*${prop}\\s*:\\s*(${COLOR_VAL})`, 'i'))?.[1] ?? null;
+      resolvedCss.match(new RegExp(`${sel}[^{]*{[^}]*${prop}\\s*:\\s*(${COLOR_VAL})`, 'i'))?.[1] ?? null;
 
     // Extract theme-color meta tag (many sites set this)
     const themeColor = html.match(/<meta[^>]+name="theme-color"[^>]+content="([^"]+)"/i)?.[1] ||
@@ -321,7 +440,7 @@ export async function scrapeBrand(url: string) {
     const allHexColors: Record<string, number> = {};
     const hexRegex = /#([0-9a-fA-F]{3,8})\b/g;
     let hexMatch;
-    while ((hexMatch = hexRegex.exec(allCss)) !== null) {
+    while ((hexMatch = hexRegex.exec(resolvedCss)) !== null) {
       const hex = hexMatch[0].toLowerCase();
       if (/^#(fff|000|[0-9a-f])\1*$/i.test(hex)) continue;
       if (/^#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3$/i.test(hex)) continue;
@@ -334,14 +453,14 @@ export async function scrapeBrand(url: string) {
 
     // Font detection: prefer Squarespace heading font, then body font, then any custom prop
     const fontFamily =
-      allCss.match(/--heading-font-font-family\s*:\s*['"]?([^'";,]+)/i)?.[1]?.trim() ||
-      allCss.match(/--body-font-font-family\s*:\s*['"]?([^'";,]+)/i)?.[1]?.trim() ||
+      resolvedCss.match(/--heading-font-font-family\s*:\s*['"]?([^'";,]+)/i)?.[1]?.trim() ||
+      resolvedCss.match(/--body-font-font-family\s*:\s*['"]?([^'";,]+)/i)?.[1]?.trim() ||
       extractVar('--heading-font-font-family') ||
       extractVar('--body-font-font-family') ||
       extractVar('--base-font') ||
       extractVar('--font-family') ||
       extractVar('--body-font') ||
-      allCss.match(/font-family\s*:\s*['"]?([A-Za-z][\w\s]+)['"]?\s*[,;]/)?.[1]?.trim() ||
+      resolvedCss.match(/font-family\s*:\s*['"]?([A-Za-z][\w\s]+)['"]?\s*[,;]/)?.[1]?.trim() ||
       'sans-serif';
 
     // ── Color picking strategy (Squarespace → generic → fallback) ──────
@@ -349,11 +468,29 @@ export async function scrapeBrand(url: string) {
     // --headingLargeColor, --paragraphMediumColor, --accentColor
     // Older 7.1 tweaks: --tweak-site-background-color, --tweak-color-button-primary-background
 
+    // IMPORTANT: prefer a *colorful* brand var over greyscale. On squarespell.com
+    // --primaryButtonBackgroundColor resolves to black but --lightAccent-hsl is lime.
+    // pickColorfulVarAny picks the lime.
     const primaryColor =
+      pickColorfulVarAny(
+        'lightAccentColor',
+        'primaryButtonBackgroundColor',
+        'accentColor',
+        'colorAccent',
+        'darkAccentColor',
+        'secondaryButtonBackgroundColor',
+        'tertiaryButtonBackgroundColor'
+      ) ||
+      pickColorfulVarAny(
+        'tweak-color-button-primary-background',
+        'tweak-global-accent-color',
+        'tweak-accent-color',
+        'tweak-site-accent-color'
+      ) ||
       pickVarAny('primaryButtonBackgroundColor', 'accentColor', 'colorAccent', 'lightAccentColor', 'darkAccentColor') ||
       pickVarAny('tweak-color-button-primary-background', 'tweak-global-accent-color', 'tweak-accent-color', 'tweak-site-accent-color') ||
-      themeColor ||
-      tileColor ||
+      (themeColor && isColorful(themeColor) ? themeColor : null) ||
+      (tileColor && isColorful(tileColor) ? tileColor : null) ||
       extractVar('--primary-color') ||
       extractVar('--primary') ||
       extractVar('--accent-color') ||
@@ -366,6 +503,8 @@ export async function scrapeBrand(url: string) {
       extractProp('\\.sqs-block-button-element', 'background-color') ||
       extractProp('\\.sqs-block-button-element', 'background') ||
       extractProp('a', 'color') ||
+      themeColor ||
+      tileColor ||
       (topColors.length > 0 ? topColors[0] : '#000000');
 
     const bgColor =

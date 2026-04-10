@@ -37,18 +37,6 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
     const userId = req.dbUserId;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-    // Check if user already has a quiz with the same URL (don't duplicate same site)
-    const { data: existing } = await supabase
-      .from('quizzes')
-      .select('id, slug')
-      .eq('user_id', userId)
-      .eq('website_url', url)
-      .limit(1);
-
-    if (existing && existing.length > 0) {
-      return res.json({ saved: true, quiz_id: existing[0].id, slug: existing[0].slug, message: 'Quiz already exists for this URL' });
-    }
-
     // Generate a unique slug
     const slug = (brand?.site_name || 'quiz')
       .toLowerCase()
@@ -56,7 +44,8 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
       .replace(/^-|-$/g, '')
       .slice(0, 30) + '-' + Math.random().toString(36).slice(2, 8);
 
-    // Save the quiz as a draft
+    // Save the quiz. NOTE: the `quizzes` table has no `website_url` column —
+    // we stash the source URL inside the `settings` JSONB instead.
     const { data, error } = await supabase.from('quizzes').insert({
       user_id: userId,
       title: quiz.title || 'My Quiz',
@@ -69,8 +58,7 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
         site_name: brand?.site_name || '',
         favicon_url: brand?.favicon_url || '',
       },
-      settings: quiz.settings || {},
-      website_url: url,
+      settings: { ...(quiz.settings || {}), website_url: url },
       status: 'live',
     }).select('id, slug').single();
 
@@ -290,20 +278,10 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
       return res.status(404).json({ error: 'Quiz not found or expired. Please generate a new one.' });
     }
 
-    // Check if user already has a quiz for this URL
-    const { data: existing } = await supabase
-      .from('quizzes')
-      .select('id, slug')
-      .eq('user_id', userId)
-      .eq('website_url', url)
-      .limit(1);
-
-    if (existing && existing.length > 0) {
-      previewQuizCache.delete(claim_token);
-      return res.json({ claimed: true, quiz_id: existing[0].id, slug: existing[0].slug, message: 'Quiz already exists' });
-    }
-
-    // Save to DB with user's ID
+    // Save to DB with user's ID. We intentionally DON'T dedup by URL — claim tokens
+    // are single-use and every publish should produce a distinct live quiz.
+    // Also note: the `quizzes` table has no `website_url` column; we store the URL
+    // inside the `settings` JSONB.
     const slug = (brand?.site_name || 'quiz')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -322,21 +300,23 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
         site_name: brand?.site_name || '',
         favicon_url: brand?.favicon_url || '',
       },
-      settings: quiz.settings || {},
-      website_url: url,
+      settings: { ...(quiz.settings || {}), website_url: url },
       status: 'live',
     }).select('id, slug').single();
 
-    if (saveErr) throw saveErr;
+    if (saveErr) {
+      console.error('[Claim] Supabase insert error:', saveErr);
+      throw saveErr;
+    }
 
     // Remove from cache
-    previewQuizCache.delete(claim_token);
+    if (claim_token) previewQuizCache.delete(claim_token);
 
     console.log(`[Claim] Quiz ${saved.id} saved for user ${userId}, slug: ${saved.slug}`);
     res.json({ claimed: true, quiz_id: saved.id, slug: saved.slug });
   } catch (err: any) {
     console.error('[Claim] Error:', err);
-    res.status(500).json({ error: 'Failed to claim quiz' });
+    res.status(500).json({ error: 'Failed to claim quiz', details: err?.message || String(err) });
   }
 });
 

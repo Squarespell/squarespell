@@ -426,10 +426,26 @@ export function TryFlowInner({
 
   // Stage 4 visitor-site brand: build CSS custom properties from the scraped brand.
   // These inject into the mock visitor site inside the device frame.
-  const brandBg = brand?.colors?.background || '#ffffff';
-  const brandSurface = brand?.colors?.background || '#ffffff';
-  const brandText = brand?.colors?.text || '#1a1a1a';
-  const brandPrimary = brand?.colors?.primary || '#000000';
+  //
+  // Defensive sanitisation: the scraper *should* return concrete colors, but if it
+  // ever returns a broken value (empty string, an unresolved `var(--foo)` reference,
+  // a pure-greyscale "primary" like #000 on a white bg, or just nonsense) we fall
+  // back to a safe default so the visitor-preview CTA is always visible.
+  const isUsableColor = (v: unknown): v is string => {
+    if (typeof v !== 'string' || v.length < 3) return false;
+    if (v.includes('var(')) return false;
+    return /^#[0-9a-f]{3,8}$|^rgba?\(|^hsla?\(/i.test(v.trim());
+  };
+  const safeColor = (v: unknown, fallback: string): string =>
+    isUsableColor(v) ? (v as string) : fallback;
+
+  const brandBg = safeColor(brand?.colors?.background, '#ffffff');
+  const brandSurface = brandBg;
+  const brandText = safeColor(brand?.colors?.text, '#1a1a1a');
+  // Primary: prefer scraped primary, then scraped accent, then a safe dark default.
+  const rawPrimary = isUsableColor(brand?.colors?.primary) ? brand!.colors!.primary : null;
+  const rawAccent = isUsableColor(brand?.colors?.accent) ? brand!.colors!.accent : null;
+  const brandPrimary = rawPrimary || rawAccent || '#111111';
   const brandBorder = 'rgba(0,0,0,0.10)';
   const brandFont = brand?.font_family && brand.font_family !== 'sans-serif'
     ? `'${brand.font_family}', system-ui, sans-serif`
@@ -438,13 +454,24 @@ export function TryFlowInner({
   const brandFontLabel = brand?.font_family && brand.font_family !== 'sans-serif'
     ? brand.font_family
     : 'Default sans-serif';
+  // Build a low-alpha tint of the primary for backgrounds/hovers.
+  // Works for hex (#rrggbb), rgb(...), and hsl(...) inputs.
+  const dimPrimary = (c: string): string => {
+    const s = c.trim();
+    if (/^#[0-9a-f]{6}$/i.test(s)) return s + '1a'; // 10% alpha via hex
+    const rgbM = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+    if (rgbM) return `rgba(${rgbM[1]}, ${rgbM[2]}, ${rgbM[3]}, 0.1)`;
+    const hslM = s.match(/^hsla?\(\s*([\d.]+)\s*,\s*([\d.]+%)\s*,\s*([\d.]+%)/i);
+    if (hslM) return `hsla(${hslM[1]}, ${hslM[2]}, ${hslM[3]}, 0.1)`;
+    return 'rgba(0,0,0,0.06)';
+  };
   const s4VisitorVars: React.CSSProperties = {
     ['--site-bg' as any]: brandBg,
     ['--site-surface' as any]: brandSurface,
     ['--site-text' as any]: brandText,
     ['--site-border' as any]: brandBorder,
     ['--site-primary' as any]: brandPrimary,
-    ['--site-primary-dim' as any]: brandPrimary + '1a',
+    ['--site-primary-dim' as any]: dimPrimary(brandPrimary),
     ['--site-heading-font' as any]: brandFont,
     ['--site-body-font' as any]: brandFont,
     ['--site-radius' as any]: '16px',
@@ -805,7 +832,14 @@ export function TryFlowInner({
                   </svg>
                 </button>
               </div>
-              <button className="btn btn-ghost" onClick={() => setStage(3)} type="button">Exit preview</button>
+              <button className="btn btn-ghost s4-exit" onClick={() => setStage(3)} type="button">Exit preview</button>
+              <button
+                className="btn btn-primary s4-publish"
+                onClick={() => setStage(mode === 'authed' ? 6 : 5)}
+                type="button"
+              >
+                Publish
+              </button>
             </div>
           </div>
         </div>
@@ -822,6 +856,7 @@ export function TryFlowInner({
             </div>
 
             <div className={`s4-frame ${s4Device}`}>
+              <div className="s4-frame-inner">
               <div className="s4-chrome">
                 <div className="s4-dots"><span /><span /><span /></div>
                 <div className="s4-addr">
@@ -893,6 +928,7 @@ export function TryFlowInner({
                     )}
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           </div>
