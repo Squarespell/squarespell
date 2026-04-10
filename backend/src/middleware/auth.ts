@@ -63,7 +63,7 @@ export async function attachUser(
       return next();
     }
 
-    // Auto-create user — do NOT set id, let Supabase auto-generate the UUID
+    // Auto-create user  -  do NOT set id, let Supabase auto-generate the UUID
     let email = '';
     try {
       const clerkUser = await clerkClient.users.getUser(req.userId);

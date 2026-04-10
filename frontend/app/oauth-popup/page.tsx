@@ -15,7 +15,7 @@ function OAuthPopupContent() {
   useEffect(() => {
     if (!isLoaded) return
 
-    // Already signed in — send popup straight to dest, poll will catch it
+    // Already signed in  -  send popup straight to dest, poll will catch it
     if (isSignedIn) {
       router.replace(dest)
       return

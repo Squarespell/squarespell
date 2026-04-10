@@ -30,7 +30,7 @@ const DEMO = {
     {
       id: "q3",
       text: "What's your budget range?",
-      subtitle: "No judgment — we have options for every budget",
+      subtitle: "No judgment  -  we have options for every budget",
       options: [
         { id: "a", label: "Under $500", icon: "💰", desc: "Essential coverage" },
         { id: "b", label: "$500–$1,500", icon: "💎", desc: "Most popular range" },
@@ -54,7 +54,7 @@ const DEMO = {
       text: "When's your date?",
       subtitle: "So we can check availability for you",
       options: [
-        { id: "a", label: "This month", icon: "🔥", desc: "ASAP — let's do this" },
+        { id: "a", label: "This month", icon: "🔥", desc: "ASAP  -  let's do this" },
         { id: "b", label: "1–3 months", icon: "📆", desc: "Some time to plan" },
         { id: "c", label: "3–6 months", icon: "🗓️", desc: "Plenty of time" },
         { id: "d", label: "Just exploring", icon: "👀", desc: "No date yet" },
@@ -73,14 +73,14 @@ const DEMO = {
       id: "r2",
       title: "The Portrait Experience",
       score: 78,
-      description: "You'd love our 2-hour portrait session — includes wardrobe guidance, 2 outfit changes, 30+ edited images, and an online gallery to share with family.",
+      description: "You'd love our 2-hour portrait session  -  includes wardrobe guidance, 2 outfit changes, 30+ edited images, and an online gallery to share with family.",
       cta: "See portrait pricing",
     },
     {
       id: "r3",
       title: "The Brand Storyteller",
       score: 85,
-      description: "Our brand photography package is built for businesses like yours — product photography, lifestyle shots, headshots, and social media content all in one session.",
+      description: "Our brand photography package is built for businesses like yours  -  product photography, lifestyle shots, headshots, and social media content all in one session.",
       cta: "View brand portfolio",
     },
   ],
@@ -409,7 +409,7 @@ export default function QuizPrototype() {
             </p>
           </div>
 
-          {/* Option cards — 2x2 grid */}
+          {/* Option cards  -  2x2 grid */}
           <div
             key={`grid-${currentQ}`}
             style={{
@@ -613,7 +613,7 @@ export default function QuizPrototype() {
               textAlign: "center",
             }}
           >
-            We'll send your recommendation — no spam, ever.
+            We'll send your recommendation  -  no spam, ever.
           </p>
         </div>
       )}
@@ -626,7 +626,7 @@ export default function QuizPrototype() {
             animation: "fadeUp 0.6s cubic-bezier(.16,1,.3,1) both",
           }}
         >
-          {/* Score ring — animated */}
+          {/* Score ring  -  animated */}
           <div style={{ position: "relative", marginBottom: "24px" }}>
             <svg width="160" height="160" viewBox="0 0 160 160">
               <circle

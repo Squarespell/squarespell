@@ -256,7 +256,7 @@ export default function QuizPage() {
                 </div>
               ))}
             </div>
-            <p style={{ fontSize:10, color:'var(--t4)', textAlign:'center', margin:'8px 0 16px', fontFamily:'monospace' }}>press A–D to select · Enter to continue</p>
+            <p style={{ fontSize:10, color:'var(--t4)', textAlign:'center', margin:'8px 0 16px', fontFamily:'monospace' }}>press A-D to select · Enter to continue</p>
             <button className="btn-p" onClick={next} disabled={!selected || animating}>
               {currentQ+1 < quiz.questions.length ? 'Next' : 'See my results'}
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>

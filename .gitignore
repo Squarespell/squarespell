@@ -7,3 +7,5 @@ dist/
 .DS_Store
 .vercel/
 frontend/tsconfig.tsbuildinfo
+.fuse_hidden*
+.claude/settings.local.json

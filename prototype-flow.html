@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Squarespell — flow prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07090c;
+    --surface: #0d1117;
+    --surface-2: #11161f;
+    --border: #1b1f27;
+    --text: #ffffff;
+    --text-muted: #8891a3;
+    --accent: #D2FF1D;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; }
+  .stage { display: none; min-height: 100vh; padding: 48px 24px; }
+  .stage.active { display: block; }
+  .container { max-width: 960px; margin: 0 auto; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 24px 32px; max-width: 1200px; margin: 0 auto; }
+  .logo { font-weight: 800; letter-spacing: -0.02em; font-size: 18px; }
+  .stage-indicator { display: flex; gap: 8px; font-size: 12px; color: var(--text-muted); }
+  .stage-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.3s var(--ease); }
+  .stage-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+  /* ---------- Stage 1: URL input ---------- */
+  .hero { text-align: center; padding-top: 80px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border: 1px solid var(--border); border-radius: 100px; font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+  .eyebrow-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  h1 { font-size: 56px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; margin: 0 0 20px; }
+  h1 .accent { color: var(--accent); }
+  .sub { font-size: 18px; color: var(--text-muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.5; }
+  .url-row { display: flex; gap: 10px; max-width: 560px; margin: 0 auto; }
+  .url-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 18px 24px; color: var(--text); font-size: 16px; outline: none; transition: all 0.25s var(--ease); }
+  .url-input:focus { border-color: var(--accent); }
+  .url-input::placeholder { color: #555e6e; }
+  .btn { border: none; cursor: pointer; font-weight: 600; transition: all 0.25s var(--ease); }
+  .btn-primary { background: var(--accent); color: var(--bg); border-radius: 100px; padding: 18px 32px; font-size: 15px; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(210,255,29,0.25); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: 100px; padding: 12px 20px; font-size: 14px; }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ---------- Stage 2: Analyzing ---------- */
+  .analyze { max-width: 560px; margin: 120px auto 0; text-align: center; }
+  .spinner-ring { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); margin: 0 auto 32px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .analyze h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .analyze p { color: var(--text-muted); font-size: 15px; margin: 0 0 32px; }
+  .checks { display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 360px; margin: 0 auto; }
+  .check { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-muted); padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; opacity: 0.4; transition: all 0.4s var(--ease); }
+  .check.done { opacity: 1; color: var(--text); border-color: rgba(210,255,29,0.3); }
+  .check-icon { width: 20px; height: 20px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; }
+  .check.done .check-icon { background: var(--accent); color: var(--bg); }
+
+  /* ---------- Stage 3: Onboarding (5 questions) ---------- */
+  .onboard { max-width: 640px; margin: 60px auto 0; }
+  .progress-label { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 13px; margin-bottom: 10px; }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 100px; overflow: hidden; margin-bottom: 40px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 100px; transition: width 0.4s var(--ease); }
+  .q-label { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; font-weight: 500; }
+  .q-title { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 12px; }
+  .q-sub { color: var(--text-muted); font-size: 15px; margin: 0 0 32px; }
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+  .option { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s var(--ease); }
+  .option:hover { border-color: rgba(210,255,29,0.4); transform: translateX(2px); }
+  .option.selected { border-color: var(--accent); background: rgba(210,255,29,0.06); }
+  .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s var(--ease); }
+  .option.selected .radio { border-color: var(--accent); }
+  .option.selected .radio::after { content: ''; width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+  .option-text { font-size: 15px; font-weight: 500; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; }
+
+  /* ---------- Stage 4: Building ---------- */
+  .build { max-width: 520px; margin: 140px auto 0; text-align: center; }
+  .build-ring { width: 120px; height: 120px; margin: 0 auto 32px; position: relative; }
+  .build-ring svg { transform: rotate(-90deg); }
+  .build-ring circle { fill: none; stroke-width: 6; }
+  .build-ring .track { stroke: var(--border); }
+  .build-ring .fill { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.5s var(--ease); }
+  .build-pct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; }
+  .build h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .build p { color: var(--text-muted); font-size: 15px; margin: 0; }
+
+  /* ---------- Stage 5: Preview (compact mockup) ---------- */
+  .preview-header { display: flex; align-items: center; justify-content: space-between; max-width: 1100px; margin: 0 auto 32px; }
+  .preview-title { display: flex; align-items: center; gap: 12px; }
+  .live-pulse { width: 8px; height: 8px; background: #34d399; border-radius: 50%; position: relative; }
+  .live-pulse::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; background: #34d399; opacity: 0.3; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.5); opacity: 0; } }
+  .preview-title h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .preview-title span { color: var(--text-muted); font-size: 13px; }
+  .preview-actions { display: flex; gap: 10px; align-items: center; }
+  .device-toggle { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 4px; }
+  .device-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 12px; border-radius: 100px; cursor: pointer; font-size: 13px; }
+  .device-btn.active { background: var(--accent); color: var(--bg); }
+
+  /* Website mockup - NOT full screen, contained and compact */
+  .mockup-wrap { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+  .mockup-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .mockup-chrome { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .dots { display: flex; gap: 6px; }
+  .dots span { width: 11px; height: 11px; border-radius: 50%; }
+  .dots .red { background: #ff5f57; }
+  .dots .yellow { background: #ffbd2e; }
+  .dots .green { background: #28ca42; }
+  .mockup-url { flex: 1; background: var(--bg); border-radius: 6px; padding: 5px 12px; font-size: 12px; color: var(--text-muted); font-family: ui-monospace, Menlo, monospace; text-align: center; }
+  .mockup-body { background: var(--site-bg, #ffffff); color: var(--site-text, #111827); min-height: 480px; max-height: 560px; overflow-y: auto; position: relative; }
+
+  /* Mock site content */
+  .site-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 13px; }
+  .site-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--site-text); }
+  .site-logo-box { width: 26px; height: 26px; background: var(--site-primary, #7c3aed); border-radius: 6px; }
+  .site-nav-links { display: flex; gap: 20px; color: #6b7280; }
+  .site-nav-cta { background: var(--site-primary, #7c3aed); color: #fff; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+  .site-hero { padding: 28px 24px 20px; text-align: center; }
+  .site-hero h4 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 6px; color: var(--site-text); }
+  .site-hero p { font-size: 13px; color: #6b7280; margin: 0; }
+
+  /* Quiz widget embedded in mock site - compact */
+  .quiz-widget { margin: 18px 24px 24px; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; }
+  .quiz-header { padding: 16px 20px 12px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .quiz-progress-row { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+  .quiz-progress-pct { background: var(--site-primary, #7c3aed); color: #fff; padding: 2px 10px; border-radius: 100px; font-weight: 600; }
+  .quiz-progress-bar { height: 4px; background: #f3f4f6; border-radius: 100px; overflow: hidden; }
+  .quiz-progress-fill { height: 100%; background: var(--site-primary, #7c3aed); transition: width 0.4s var(--ease); }
+  .quiz-body { padding: 18px 20px; }
+  .quiz-q { font-size: 16px; font-weight: 700; color: var(--site-text); margin: 0 0 16px; line-height: 1.3; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; cursor: pointer; font-size: 13px; color: var(--site-text); transition: all 0.15s var(--ease); display: flex; align-items: center; gap: 10px; background: #fff; }
+  .quiz-opt:hover { border-color: var(--site-primary, #7c3aed); }
+  .quiz-opt.selected { border-color: var(--site-primary, #7c3aed); background: color-mix(in srgb, var(--site-primary, #7c3aed) 6%, #fff); }
+  .quiz-radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #d1d5db; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .quiz-opt.selected .quiz-radio { border-color: var(--site-primary, #7c3aed); }
+  .quiz-opt.selected .quiz-radio::after { content: ''; width: 8px; height: 8px; background: var(--site-primary, #7c3aed); border-radius: 50%; }
+  .quiz-footer { padding: 12px 20px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .quiz-back { background: transparent; border: none; color: #6b7280; font-size: 12px; cursor: pointer; }
+  .quiz-dots { display: flex; gap: 4px; }
+  .quiz-dot { width: 5px; height: 5px; border-radius: 50%; background: #e5e7eb; }
+  .quiz-dot.on { background: var(--site-primary, #7c3aed); width: 16px; border-radius: 100px; }
+
+  /* Side panel next to mockup */
+  .side-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; position: sticky; top: 20px; }
+  .side-panel h4 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+  .side-panel .side-sub { color: var(--text-muted); font-size: 12px; margin: 0 0 18px; }
+  .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .stat-row:last-of-type { border-bottom: none; }
+  .stat-label { color: var(--text-muted); }
+  .stat-value { font-weight: 600; }
+  .publish-btn { width: 100%; margin-top: 18px; }
+  .brand-chips { display: flex; gap: 6px; margin: 12px 0 18px; flex-wrap: wrap; }
+  .chip { padding: 4px 10px; border-radius: 100px; font-size: 11px; display: flex; align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); }
+  .chip-swatch { width: 10px; height: 10px; border-radius: 50%; }
+
+  @media (max-width: 900px) {
+    .mockup-wrap { grid-template-columns: 1fr; }
+    h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">squarespell</div>
+  <div class="stage-indicator">
+    <div class="stage-dot active" data-s="1"></div>
+    <div class="stage-dot" data-s="2"></div>
+    <div class="stage-dot" data-s="3"></div>
+    <div class="stage-dot" data-s="4"></div>
+    <div class="stage-dot" data-s="5"></div>
+  </div>
+  <button class="btn btn-ghost" onclick="goTo(1)">Restart</button>
+</div>
+
+<!-- ============ STAGE 1: URL ============ -->
+<div class="stage active" id="stage-1">
+  <div class="container hero">
+    <div class="eyebrow"><span class="eyebrow-dot"></span> AI quiz builder</div>
+    <h1>Turn your website into a<br/><span class="accent">lead machine.</span></h1>
+    <p class="sub">Paste your site — we analyze your brand, ask you 5 quick questions, and build a 10-question quiz that captures leads. Free to try.</p>
+    <div class="url-row">
+      <input class="url-input" id="url-input" type="text" placeholder="https://yoursite.com" value="https://example.com" />
+      <button class="btn btn-primary" onclick="goTo(2)">Analyze →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STAGE 2: Analyzing ============ -->
+<div class="stage" id="stage-2">
+  <div class="container">
+    <div class="analyze">
+      <div class="spinner-ring"></div>
+      <h2>Analyzing your website</h2>
+      <p>We're reading your brand colors, fonts, and voice.</p>
+      <div class="checks">
+        <div class="check" id="c1"><div class="check-icon">✓</div> Fetching your homepage</div>
+        <div class="check" id="c2"><div class="check-icon">✓</div> Detecting brand colors</div>
+        <div class="check" id="c3"><div class="check-icon">✓</div> Extracting typography</div>
+        <div class="check" id="c4"><div class="check-icon">✓</div> Understanding your voice</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STAGE 3: Onboarding questions ============ -->
+<div class="stage" id="stage-3">
+  <div class="container onboard">
+    <div class="progress-label"><span id="onb-label">Question 1 of 5</span><span id="onb-pct">20%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="onb-fill" style="width: 20%"></div></div>
+
+    <div id="onb-content"></div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="onbBack()">← Back</button>
+      <button class="btn btn-primary" id="onb-next" onclick="onbNext()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STAGE 4: Building ============ -->
+<div class="stage" id="stage-4">
+  <div class="container">
+    <div class="build">
+      <div class="build-ring">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle class="track" cx="60" cy="60" r="54"></circle>
+          <circle class="fill" id="build-circle" cx="60" cy="60" r="54" stroke-dasharray="339.3" stroke-dashoffset="339.3"></circle>
+        </svg>
+        <div class="build-pct" id="build-pct">0%</div>
+      </div>
+      <h2 id="build-title">Writing your quiz</h2>
+      <p id="build-sub">Generating 10 questions tailored to your business…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STAGE 5: Preview — compact mockup ============ -->
+<div class="stage" id="stage-5">
+  <div class="preview-header">
+    <div class="preview-title">
+      <div class="live-pulse"></div>
+      <div>
+        <h3>Live preview</h3>
+        <span id="preview-domain">example.com</span>
+      </div>
+    </div>
+    <div class="preview-actions">
+      <div class="device-toggle">
+        <button class="device-btn active" onclick="setDevice('desktop', this)">Desktop</button>
+        <button class="device-btn" onclick="setDevice('tablet', this)">Tablet</button>
+        <button class="device-btn" onclick="setDevice('mobile', this)">Mobile</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup-wrap">
+    <div class="mockup-frame" id="mockup-frame">
+      <div class="mockup-chrome">
+        <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+        <div class="mockup-url" id="mockup-url">https://example.com</div>
+      </div>
+      <div class="mockup-body">
+        <div class="site-nav">
+          <div class="site-logo"><div class="site-logo-box"></div><span>Example Co</span></div>
+          <div class="site-nav-links"><span>Home</span><span>About</span><span>Work</span></div>
+          <div class="site-nav-cta">Get started</div>
+        </div>
+        <div class="site-hero">
+          <h4>Find your perfect fit in 60 seconds</h4>
+          <p>Take the quiz. Get personalized recommendations.</p>
+        </div>
+
+        <!-- The REAL 10-question quiz, embedded inside the compact mockup -->
+        <div class="quiz-widget">
+          <div class="quiz-header">
+            <div class="quiz-progress-row">
+              <span id="quiz-step-label">Question 1 of 10</span>
+              <span class="quiz-progress-pct" id="quiz-pct">10%</span>
+            </div>
+            <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-fill" style="width: 10%"></div></div>
+          </div>
+          <div class="quiz-body">
+            <h5 class="quiz-q" id="quiz-q">What best describes your current situation?</h5>
+            <div class="quiz-options" id="quiz-opts"></div>
+          </div>
+          <div class="quiz-footer">
+            <button class="quiz-back" onclick="quizBack()">← Back</button>
+            <div class="quiz-dots" id="quiz-dots"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <h4>Your quiz is ready</h4>
+      <p class="side-sub">Sign up free to publish and start collecting leads.</p>
+      <div class="brand-chips">
+        <div class="chip"><div class="chip-swatch" style="background:#7c3aed"></div>Primary</div>
+        <div class="chip"><div class="chip-swatch" style="background:#ffffff;border:1px solid #333"></div>Background</div>
+        <div class="chip"><div class="chip-swatch" style="background:#111827"></div>Text</div>
+      </div>
+      <div class="stat-row"><span class="stat-label">Questions</span><span class="stat-value">10</span></div>
+      <div class="stat-row"><span class="stat-label">Outcomes</span><span class="stat-value">4</span></div>
+      <div class="stat-row"><span class="stat-label">Est. completion</span><span class="stat-value">60s</span></div>
+      <div class="stat-row"><span class="stat-label">Brand-matched</span><span class="stat-value">Yes</span></div>
+      <button class="btn btn-primary publish-btn" onclick="alert('→ sign-up')">Publish for free</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============ Navigation ============
+  function goTo(n) {
+    document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+    document.getElementById('stage-' + n).classList.add('active');
+    document.querySelectorAll('.stage-dot').forEach(d => {
+      d.classList.toggle('active', Number(d.dataset.s) <= n);
+    });
+    if (n === 2) runAnalyze();
+    if (n === 3) { onbIdx = 0; renderOnb(); }
+    if (n === 4) runBuild();
+    if (n === 5) { quizIdx = 0; renderQuiz(); document.getElementById('preview-domain').textContent = cleanDomain(); document.getElementById('mockup-url').textContent = 'https://' + cleanDomain(); }
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function cleanDomain() {
+    const url = document.getElementById('url-input').value || 'https://example.com';
+    try { return new URL(url.startsWith('http') ? url : 'https://' + url).hostname.replace(/^www\./, ''); }
+    catch { return 'example.com'; }
+  }
+
+  // ============ Stage 2: analyze animation ============
+  function runAnalyze() {
+    ['c1','c2','c3','c4'].forEach((id, i) => {
+      setTimeout(() => document.getElementById(id).classList.add('done'), 400 + i * 450);
+    });
+    setTimeout(() => goTo(3), 2600);
+  }
+
+  // ============ Stage 3: 5 onboarding questions ============
+  const onbQs = [
+    {
+      q: "What kind of business do you run?",
+      sub: "This helps us write questions that match your audience.",
+      opts: ["E-commerce / product", "Service business (consulting, coaching)", "SaaS / software", "Agency / marketing", "Something else"]
+    },
+    {
+      q: "What's your #1 goal with this quiz?",
+      sub: "Pick the outcome that matters most to you right now.",
+      opts: ["Capture more leads", "Recommend the right product", "Qualify sales prospects", "Grow my email list", "Entertain and engage"]
+    },
+    {
+      q: "Who are you trying to reach?",
+      sub: "Tell us about your ideal customer.",
+      opts: ["Small business owners", "Consumers (B2C)", "Enterprise / decision makers", "Creatives / marketers", "Students / general audience"]
+    },
+    {
+      q: "What's the outcome at the end of the quiz?",
+      sub: "What does the user get?",
+      opts: ["A personalized product recommendation", "A diagnosis / category they fit in", "A custom plan or roadmap", "A discount or free offer", "A free resource / download"]
+    },
+    {
+      q: "What tone should the quiz have?",
+      sub: "We'll match this with your website's voice.",
+      opts: ["Playful and casual", "Professional and warm", "Authoritative and confident", "Minimal and direct", "Bold and edgy"]
+    }
+  ];
+  let onbIdx = 0;
+  const onbAnswers = {};
+
+  function renderOnb() {
+    const q = onbQs[onbIdx];
+    const html = `
+      <div class="q-label">Question ${onbIdx+1} of 5</div>
+      <h2 class="q-title">${q.q}</h2>
+      <p class="q-sub">${q.sub}</p>
+      <div class="options">
+        ${q.opts.map((o, i) => `
+          <div class="option ${onbAnswers[onbIdx] === i ? 'selected' : ''}" onclick="pickOnb(${i})">
+            <div class="radio"></div>
+            <div class="option-text">${o}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    document.getElementById('onb-content').innerHTML = html;
+    const pct = Math.round(((onbIdx+1)/5)*100);
+    document.getElementById('onb-fill').style.width = pct + '%';
+    document.getElementById('onb-label').textContent = `Question ${onbIdx+1} of 5`;
+    document.getElementById('onb-pct').textContent = pct + '%';
+    document.getElementById('onb-next').textContent = onbIdx === 4 ? 'Build my quiz →' : 'Continue →';
+  }
+
+  function pickOnb(i) {
+    onbAnswers[onbIdx] = i;
+    renderOnb();
+  }
+
+  function onbNext() {
+    if (onbAnswers[onbIdx] === undefined) {
+      // soft-block: flash a border
+      document.querySelectorAll('#onb-content .option').forEach(o => o.style.borderColor = '#ff5f57');
+      setTimeout(() => document.querySelectorAll('#onb-content .option').forEach(o => o.style.borderColor = ''), 800);
+      return;
+    }
+    if (onbIdx < 4) { onbIdx++; renderOnb(); }
+    else { goTo(4); }
+  }
+  function onbBack() {
+    if (onbIdx === 0) { goTo(1); return; }
+    onbIdx--; renderOnb();
+  }
+
+  // ============ Stage 4: build animation ============
+  function runBuild() {
+    const circle = document.getElementById('build-circle');
+    const pctEl = document.getElementById('build-pct');
+    const titleEl = document.getElementById('build-title');
+    const subEl = document.getElementById('build-sub');
+    const steps = [
+      { pct: 20, title: "Writing your quiz", sub: "Drafting the first 3 questions…" },
+      { pct: 45, title: "Matching your brand", sub: "Applying your colors and voice…" },
+      { pct: 70, title: "Building outcomes", sub: "Crafting 4 personalized results…" },
+      { pct: 100, title: "Polishing details", sub: "Final touches — almost there…" }
+    ];
+    let i = 0;
+    const total = 339.3;
+    function tick() {
+      if (i >= steps.length) { setTimeout(() => goTo(5), 500); return; }
+      const s = steps[i];
+      circle.style.strokeDashoffset = total * (1 - s.pct/100);
+      pctEl.textContent = s.pct + '%';
+      titleEl.textContent = s.title;
+      subEl.textContent = s.sub;
+      i++;
+      setTimeout(tick, 900);
+    }
+    tick();
+  }
+
+  // ============ Stage 5: embedded 10-question quiz ============
+  const quizQs = [
+    { q: "What best describes your current situation?", opts: ["Just getting started","Building momentum","Scaling fast","Stuck and need help"] },
+    { q: "How big is your team right now?", opts: ["Just me","2-5 people","6-20 people","20+ people"] },
+    { q: "What's your biggest bottleneck today?", opts: ["Finding customers","Converting leads","Retention","Team capacity"] },
+    { q: "How do you currently capture leads?", opts: ["Contact form","Newsletter signup","Demo requests","Not sure"] },
+    { q: "What's your monthly traffic range?", opts: ["Under 1k","1k-10k","10k-100k","100k+"] },
+    { q: "Which channel drives the most visitors?", opts: ["Organic search","Paid ads","Social","Referrals"] },
+    { q: "How much time can you spend on marketing weekly?", opts: ["Under 2 hours","2-5 hours","5-10 hours","10+ hours"] },
+    { q: "What's your budget for new tools?", opts: ["$0","$1-50","$50-200","$200+"] },
+    { q: "How soon do you want results?", opts: ["This week","This month","This quarter","No rush"] },
+    { q: "What matters most in a solution?", opts: ["Speed","Simplicity","Flexibility","Price"] }
+  ];
+  let quizIdx = 0;
+  const quizAnswers = {};
+
+  function renderQuiz() {
+    const q = quizQs[quizIdx];
+    document.getElementById('quiz-q').textContent = q.q;
+    document.getElementById('quiz-opts').innerHTML = q.opts.map((o, i) => `
+      <div class="quiz-opt ${quizAnswers[quizIdx] === i ? 'selected' : ''}" onclick="pickQuiz(${i})">
+        <div class="quiz-radio"></div>
+        <div>${o}</div>
+      </div>
+    `).join('');
+    const pct = Math.round(((quizIdx+1)/10)*100);
+    document.getElementById('quiz-fill').style.width = pct + '%';
+    document.getElementById('quiz-pct').textContent = pct + '%';
+    document.getElementById('quiz-step-label').textContent = `Question ${quizIdx+1} of 10`;
+    document.getElementById('quiz-dots').innerHTML = Array.from({length:10},(_,i)=>`<div class="quiz-dot ${i===quizIdx?'on':''}"></div>`).join('');
+  }
+  function pickQuiz(i) {
+    quizAnswers[quizIdx] = i;
+    renderQuiz();
+    if (quizIdx < 9) { setTimeout(() => { quizIdx++; renderQuiz(); }, 260); }
+  }
+  function quizBack() {
+    if (quizIdx > 0) { quizIdx--; renderQuiz(); }
+  }
+
+  // ============ Device toggle ============
+  function setDevice(d, btn) {
+    document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const frame = document.getElementById('mockup-frame');
+    if (d === 'mobile') frame.style.maxWidth = '320px';
+    else if (d === 'tablet') frame.style.maxWidth = '560px';
+    else frame.style.maxWidth = '';
+  }
+
+  // init
+  renderOnb();
+  renderQuiz();
+</script>
+</body>
+</html>

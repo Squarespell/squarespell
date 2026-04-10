@@ -246,6 +246,7 @@ function DashboardContent() {
       setToken(retrievedToken);
 
       let quizClaimed = false;
+      let claimedQuizId = '';
       try {
         let claimToken = searchParams.get('claim') || '';
         if (!claimToken) claimToken = getCookie('sq_claim');
@@ -280,6 +281,7 @@ function DashboardContent() {
           console.log('[Squarespell] Claim response', claimRes.status, claimData);
           if (claimRes.ok && claimData.claimed) {
             quizClaimed = true;
+            claimedQuizId = claimData.quiz_id || '';
           } else if (previewPayload) {
             // Last-ditch fallback: save-preview endpoint
             const saveRes = await fetch(`${API}/api/save-preview`, {
@@ -289,7 +291,10 @@ function DashboardContent() {
             });
             const saveData = await saveRes.json().catch(() => ({}));
             console.log('[Squarespell] Save-preview response', saveRes.status, saveData);
-            if (saveRes.ok && saveData.saved) quizClaimed = true;
+            if (saveRes.ok && saveData.saved) {
+              quizClaimed = true;
+              claimedQuizId = saveData.quiz_id || '';
+            }
           }
 
           clearCookie('sq_claim');
@@ -301,6 +306,11 @@ function DashboardContent() {
       }
 
       if (quizClaimed) {
+        // Stage 6: route the user straight into the editor for publishing.
+        if (claimedQuizId) {
+          router.replace(`/editor/${claimedQuizId}?justClaimed=1`);
+          return;
+        }
         await new Promise(r => setTimeout(r, 1500));
       }
 

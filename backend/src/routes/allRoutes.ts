@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
-import { generateQuiz, processOtherAnswer } from '../services/claudeService';
+import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz } from '../services/claudeService';
 import { scrapeBrand } from '../services/brandScraper';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
@@ -85,6 +85,11 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
 // ── In-memory cache for preview quizzes (before user signs up) ───────────────
 const previewQuizCache = new Map<string, { quiz: any; brand: any; url: string; createdAt: number }>();
 
+// ── In-memory cache for onboarding sessions (stage 2 state) ──────────────────
+// Keyed by session_token. Stores the scraped brand + the owner's answers so
+// build-quiz can use them without re-scraping.
+const previewSessionCache = new Map<string, { brand: any; url: string; onboarding_questions: any[]; answers: Record<string, string>; createdAt: number }>();
+
 // ── Public Preview Generate (no auth, rate-limited by IP) ────────────────────
 const previewRateMap = new Map<string, { count: number; resetAt: number }>();
 export const previewRouter = Router();
@@ -135,6 +140,116 @@ previewRouter.post('/preview-generate', async (req, res) => {
     console.error('[Preview] Generation failed:', err);
     res.status(500).json({ error: err.message ?? 'Preview generation failed' });
   }
+});
+
+// ── Stage 1 → Stage 2: Analyze the site and return 5 onboarding questions ───
+previewRouter.post('/preview-analyze', async (req, res) => {
+  const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim();
+  const now = Date.now();
+  const entry = previewRateMap.get(ip);
+  if (entry && entry.resetAt > now && entry.count >= 5) {
+    return res.status(429).json({ error: 'Too many previews. Please try again later or sign up for unlimited access.' });
+  }
+  if (!entry || entry.resetAt <= now) {
+    previewRateMap.set(ip, { count: 1, resetAt: now + 3600000 });
+  } else {
+    entry.count++;
+  }
+
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  let normalizedUrl: string;
+  try { normalizedUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
+
+  try {
+    console.log(`[PreviewAnalyze] Scraping: ${normalizedUrl}`);
+    const brand = await scrapeBrand(normalizedUrl);
+    console.log(`[PreviewAnalyze] Scrape done. Summary: ${brand.business?.summary?.length || 0} chars`);
+
+    const { questions: onboardingQuestions } = await generateOnboardingQuestions(normalizedUrl, brand);
+    console.log(`[PreviewAnalyze] Onboarding questions generated: ${onboardingQuestions.length}`);
+
+    const sessionToken = crypto.randomBytes(16).toString('hex');
+    previewSessionCache.set(sessionToken, {
+      brand,
+      url: normalizedUrl,
+      onboarding_questions: onboardingQuestions,
+      answers: {},
+      createdAt: Date.now(),
+    });
+    for (const [k, v] of previewSessionCache.entries()) {
+      if (Date.now() - v.createdAt > 86400000) previewSessionCache.delete(k);
+    }
+
+    res.json({ brand, onboarding_questions: onboardingQuestions, session_token: sessionToken, url: normalizedUrl });
+  } catch (err: any) {
+    console.error('[PreviewAnalyze] Failed:', err);
+    res.status(500).json({ error: err.message ?? 'Analyze failed' });
+  }
+});
+
+// ── Stage 2 → Stage 3: Build the 10-question quiz using onboarding answers ───
+previewRouter.post('/preview-build-quiz', async (req, res) => {
+  const { session_token, answers } = req.body as { session_token?: string; answers?: Record<string, string> };
+  if (!session_token) return res.status(400).json({ error: 'session_token required' });
+  const session = previewSessionCache.get(session_token);
+  if (!session) return res.status(404).json({ error: 'Session not found or expired. Please start again.' });
+
+  if (answers && typeof answers === 'object') {
+    session.answers = { ...session.answers, ...answers };
+  }
+
+  // Map answers back to full question text + selected option text
+  const onboardingPairs: { question: string; answer: string }[] = session.onboarding_questions.map((q: any) => {
+    const selectedIdxRaw = session.answers[q.id];
+    const selectedIdx = selectedIdxRaw === undefined ? -1 : parseInt(String(selectedIdxRaw), 10);
+    const answerText = (selectedIdx >= 0 && Array.isArray(q.options)) ? (q.options[selectedIdx] ?? '') : '';
+    return { question: q.text, answer: answerText };
+  }).filter((p: any) => p.answer);
+
+  try {
+    console.log(`[PreviewBuildQuiz] Building quiz for ${session.url} with ${onboardingPairs.length} answers`);
+    const quiz = await generateTailoredQuiz(session.url, session.brand, onboardingPairs);
+    console.log(`[PreviewBuildQuiz] Quiz generated: "${quiz.title}"`);
+
+    const claimToken = crypto.randomBytes(16).toString('hex');
+    previewQuizCache.set(claimToken, {
+      quiz,
+      brand: session.brand,
+      url: session.url,
+      createdAt: Date.now(),
+    });
+    for (const [k, v] of previewQuizCache.entries()) {
+      if (Date.now() - v.createdAt > 86400000) previewQuizCache.delete(k);
+    }
+
+    res.json({ quiz, brand: session.brand, claim_token: claimToken, url: session.url });
+  } catch (err: any) {
+    console.error('[PreviewBuildQuiz] Failed:', err);
+    res.status(500).json({ error: err.message ?? 'Quiz build failed' });
+  }
+});
+
+// ── Patch a cached draft quiz (edits made before sign up) ────────────────────
+previewRouter.patch('/preview-quiz/:token', async (req, res) => {
+  const token = req.params.token;
+  const cached = previewQuizCache.get(token);
+  if (!cached) return res.status(404).json({ error: 'Draft not found or expired' });
+  const allowed = ['title', 'questions', 'outcomes', 'branding', 'settings'];
+  const updated = { ...cached.quiz };
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) updated[key] = req.body[key];
+  }
+  previewQuizCache.set(token, { ...cached, quiz: updated });
+  res.json({ ok: true, quiz: updated });
+});
+
+// ── Read a cached draft quiz back (for stage 4 visitor preview) ──────────────
+previewRouter.get('/preview-quiz/:token', async (req, res) => {
+  const token = req.params.token;
+  const cached = previewQuizCache.get(token);
+  if (!cached) return res.status(404).json({ error: 'Draft not found or expired' });
+  res.json({ quiz: cached.quiz, brand: cached.brand, url: cached.url });
 });
 
 // ── Claim a preview quiz (save from cache to DB for authenticated user) ──────

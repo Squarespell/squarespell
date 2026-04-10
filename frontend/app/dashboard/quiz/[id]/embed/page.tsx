@@ -85,7 +85,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
               <div style={{ width:26, height:26, background:'var(--acc)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:'#07090c', flexShrink:0 }}>1</div>
               <div>
                 <p style={{ fontSize:15, fontWeight:700, letterSpacing:'-.02em' }}>Embed code</p>
-                <p style={{ fontSize:12, color:'var(--t3)' }}>Recommended — paste into a Code Block in Squarespace</p>
+                <p style={{ fontSize:12, color:'var(--t3)' }}>Recommended  -  paste into a Code Block in Squarespace</p>
               </div>
             </div>
             <button

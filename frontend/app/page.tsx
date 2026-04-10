@@ -407,7 +407,7 @@ export default function HomePage() {
           <div className="faq-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
             {[
               { q: 'How does AI understand my brand?', a: 'We analyze your Squarespace site\'s design, colors, fonts, and content to create perfectly branded quizzes that feel like a natural extension of your site.' },
-              { q: 'Can I customize the quiz questions?', a: 'Yes! You can edit every aspect of your quiz—questions, answers, scoring logic, and results pages.' },
+              { q: 'Can I customize the quiz questions?', a: 'Yes! You can edit every aspect of your quiz - questions, answers, scoring logic, and results pages.' },
               { q: 'How do I embed the quiz on my site?', a: 'We provide embed codes and full Squarespace integration. Just paste the code into a code block on your page.' },
               { q: 'What happens to the leads I capture?', a: 'Leads are stored in your dashboard, exported to CSV, or integrated with email platforms like Mailchimp, Zapier, and more.' },
               { q: 'Do you offer a refund if I don\'t like it?', a: 'Yes, we offer a 30-day money-back guarantee on all plans. No questions asked.' },

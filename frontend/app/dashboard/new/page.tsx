@@ -155,7 +155,7 @@ body{font-family:var(--fam);background:var(--bg);color:var(--t1);min-height:100v
   <!-- AI Generator -->
   <div style="background:var(--acc-dim);border:.5px solid var(--acc-b);border-radius:16px;padding:36px;text-align:center">
     <p class="h3" style="margin-bottom:12px">AI Quiz Generator</p>
-    <p class="body" style="max-width:480px;margin:0 auto 26px">Paste your Squarespace URL. AI reads your brand, industry, and audience — then builds a complete quiz in 30 seconds.</p>
+    <p class="body" style="max-width:480px;margin:0 auto 26px">Paste your Squarespace URL. AI reads your brand, industry, and audience  -  then builds a complete quiz in 30 seconds.</p>
     <div id="goal-tag" style="display:inline-flex;align-items:center;gap:6px;background:rgba(210,255,29,.08);border:.5px solid var(--acc-b);border-radius:20px;padding:5px 14px;margin-bottom:20px">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       <span id="goal-label" style="font-size:13px;font-weight:700;color:var(--acc)">Generate more leads</span>

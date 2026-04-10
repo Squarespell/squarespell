@@ -9,7 +9,7 @@ const SQSP_CLIENT_SECRET = process.env.SQUARESPACE_CLIENT_SECRET || '';
 const SQSP_REDIRECT_URI = 'https://squarespell-backend.onrender.com/auth/squarespace/callback';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://squarespell.com';
 
-// GET /auth/squarespace/connect — redirect to Squarespace OAuth
+// GET /auth/squarespace/connect  -  redirect to Squarespace OAuth
 // Uses token query param since browser redirects can't set Authorization header
 router.get('/connect', async (req, res) => {
   const token = req.query.token as string;
@@ -40,7 +40,7 @@ router.get('/connect', async (req, res) => {
   res.redirect(`https://login.squarespace.com/api/1/login/oauth/provider/authorize?${params}`);
 });
 
-// GET /auth/squarespace/callback — exchange code for token
+// GET /auth/squarespace/callback  -  exchange code for token
 router.get('/callback', async (req, res) => {
   const { code, state: userId } = req.query;
 
@@ -105,7 +105,7 @@ router.get('/callback', async (req, res) => {
   }
 });
 
-// GET /auth/squarespace/status — check if user has connected
+// GET /auth/squarespace/status  -  check if user has connected
 router.get('/status', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   const { data } = await supabase
     .from('users')

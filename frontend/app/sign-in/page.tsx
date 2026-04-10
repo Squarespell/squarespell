@@ -104,7 +104,7 @@ export default function SignInPage() {
 
         <style>{`@keyframes spin{to{transform:rotate(360deg)}} input:focus{border-color:rgba(210,255,29,0.4)!important}`}</style>
 
-        {/* Google — primary CTA */}
+        {/* Google  -  primary CTA */}
         <button onClick={handleGoogle} disabled={googleLoading} style={{
           width: '100%', height: '52px',
           background: googleLoading ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)',

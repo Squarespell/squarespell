@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState, useCallback, Suspense, useRef } from 'react';
 
 /* Inline icon components */
@@ -58,7 +58,15 @@ function EditorContent() {
   const { getToken } = useAuth();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const quizId = params?.id as string;
+  const justClaimed = searchParams?.get('justClaimed') === '1';
+  const [showClaimBanner, setShowClaimBanner] = useState(justClaimed);
+  useEffect(() => {
+    if (!justClaimed) return;
+    const t = setTimeout(() => setShowClaimBanner(false), 8000);
+    return () => clearTimeout(t);
+  }, [justClaimed]);
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -259,8 +267,24 @@ function EditorContent() {
         </div>
       </div>
 
+      {/* ═══ JUST CLAIMED BANNER (Stage 6) ═══ */}
+      {showClaimBanner && (
+        <div style={{ background: 'linear-gradient(90deg, rgba(52,211,153,0.14), rgba(210,255,29,0.1))', borderBottom: `1px solid rgba(52,211,153,0.3)`, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: C.TEXT, fontSize: 14, fontWeight: 600 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 10, background: '#34d399' }} />
+            <strong style={{ fontWeight: 700 }}>Signed in.</strong>
+            Your quiz is ready to publish.
+          </div>
+          {quiz.status === 'draft' && (
+            <button onClick={handlePublish} style={{ height: 34, padding: '0 20px', borderRadius: 100, border: 'none', background: C.ACCENT, color: C.BG, fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>
+              Publish now
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ═══ MAIN SPLIT ═══ */}
-      <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }}>
+      <div style={{ display: 'flex', height: showClaimBanner ? 'calc(100vh - 56px - 50px)' : 'calc(100vh - 56px)' }}>
 
         {/* ═══ LEFT: EDITOR PANEL ═══ */}
         <div style={{ width: '50%', borderRight: `1px solid ${C.BORDER}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

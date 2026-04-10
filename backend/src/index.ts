@@ -19,7 +19,7 @@ app.use('/api/quiz', cors());
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
 
-// Public preview endpoint (no auth, rate-limited) — registered BEFORE auth routes
+// Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
 
 app.use('/api/quizzes', quizRoutes);

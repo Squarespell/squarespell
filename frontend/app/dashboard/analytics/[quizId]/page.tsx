@@ -45,7 +45,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
       <div className={styles.leadsCard}>
         <div className={styles.leadsHeader}><h2 className={styles.sectionTitle}>Leads</h2>{leads.length>0&&<button className={styles.exportBtnSmall} onClick={exportCsv} disabled={exporting}>{exporting?'...':'Export CSV'}</button>}</div>
         {leads.length===0?<div className={styles.empty}>No leads yet. Share your quiz to start collecting emails.</div>:(
-          <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Name</th><th>Email</th><th>Outcome</th><th>Date</th></tr></thead><tbody>{leads.map((lead:any)=><tr key={lead.id}><td>{lead.name||'—'}</td><td>{lead.email}</td><td><span className={styles.outcomePill}>{lead.outcome_id?quiz?.outcomes?.find((o:any)=>o.id===lead.outcome_id)?.title??lead.outcome_id:'—'}</span></td><td>{new Date(lead.created_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>
+          <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Name</th><th>Email</th><th>Outcome</th><th>Date</th></tr></thead><tbody>{leads.map((lead:any)=><tr key={lead.id}><td>{lead.name||' - '}</td><td>{lead.email}</td><td><span className={styles.outcomePill}>{lead.outcome_id?quiz?.outcomes?.find((o:any)=>o.id===lead.outcome_id)?.title??lead.outcome_id:' - '}</span></td><td>{new Date(lead.created_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>
         )}
       </div>
     </div>

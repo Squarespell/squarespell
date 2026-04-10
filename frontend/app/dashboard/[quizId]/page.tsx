@@ -71,7 +71,7 @@ export default function QuizEditorPage({ params }: { params: { quizId: string } 
             <div key={o.id} className={styles.outcomeCard}>
               <input className={styles.qText} value={o.title} onChange={e => { const outcomes=[...quiz.outcomes]; outcomes[oi]={...outcomes[oi],title:e.target.value}; save({outcomes}); }} placeholder="Outcome title" />
               <textarea className={styles.outcomeSubtitle} value={o.subtitle} rows={2} onChange={e => { const outcomes=[...quiz.outcomes]; outcomes[oi]={...outcomes[oi],subtitle:e.target.value}; save({outcomes}); }} placeholder="Subtitle shown to the visitor" />
-              <div className={styles.scoreRange}>Score range: {o.score_range?.min} – {o.score_range?.max}</div>
+              <div className={styles.scoreRange}>Score range: {o.score_range?.min} to {o.score_range?.max}</div>
               <div className={styles.optionsLabel}>CTA</div>
               <input className={styles.optionInput} style={{marginBottom:8}} value={o.recommendation?.cta_text??''} onChange={e => { const outcomes=[...quiz.outcomes]; outcomes[oi].recommendation={...outcomes[oi].recommendation,cta_text:e.target.value}; save({outcomes}); }} placeholder="CTA button text" />
               <input className={styles.optionInput} value={o.recommendation?.cta_url??''} onChange={e => { const outcomes=[...quiz.outcomes]; outcomes[oi].recommendation={...outcomes[oi].recommendation,cta_url:e.target.value}; save({outcomes}); }} placeholder="CTA URL" />

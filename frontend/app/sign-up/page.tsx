@@ -34,7 +34,7 @@ function SignUpContent() {
     if (isSignedIn) router.replace(destUrl)
   }, [isSignedIn, router, destUrl])
 
-  // Google OAuth — try popup first, fall back to redirect
+  // Google OAuth  -  try popup first, fall back to redirect
   const handleGoogle = useCallback(async () => {
     if (!signUpLoaded || !signInLoaded || googleLoading) return
     setGoogleLoading(true)
@@ -176,13 +176,13 @@ function SignUpContent() {
             {fromTry && (
               <div style={{ marginBottom: '20px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.15)', borderRadius: '12px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                <span style={{ fontSize: '14px', color: '#4ade80', fontWeight: 600 }}>Your quiz is ready — sign up to publish it</span>
+                <span style={{ fontSize: '14px', color: '#4ade80', fontWeight: 600 }}>Your quiz is ready  -  sign up to publish it</span>
               </div>
             )}
 
             <style>{`@keyframes spin{to{transform:rotate(360deg)}} input:focus{border-color:rgba(210,255,29,0.4)!important}`}</style>
 
-            {/* Google — primary CTA */}
+            {/* Google  -  primary CTA */}
             <button onClick={handleGoogle} disabled={googleLoading} style={{
               width: '100%', height: '52px',
               background: googleLoading ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)',

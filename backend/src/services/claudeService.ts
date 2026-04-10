@@ -69,8 +69,8 @@ CRITICAL INSTRUCTIONS:
 4. Every outcome must recommend a specific product/service/solution from THIS business.
 
 BANNED CONTENT (instant failure if included):
-- "Squarespace" — NEVER mention Squarespace, website building, templates, plugins, or web design unless the business ACTUALLY sells those things
-- "journey" — do not ask "where are you in your [X] journey"
+- "Squarespace"  -  NEVER mention Squarespace, website building, templates, plugins, or web design unless the business ACTUALLY sells those things
+- "journey"  -  do not ask "where are you in your [X] journey"
 - Generic personality quiz questions that don't relate to the business
 - Questions about the visitor's experience with the business's platform/tools
 - Questions about website design, SEO, or marketing unless the business sells those services
@@ -90,14 +90,14 @@ BUSINESS: ${siteName}
 URL: ${websiteUrl}
 
 ${'='.repeat(60)}
-WEBSITE CONTENT — READ THIS CAREFULLY:
+WEBSITE CONTENT  -  READ THIS CAREFULLY:
 ${'='.repeat(60)}
-${businessSummary || `Could not scrape the website. Based on the URL "${websiteUrl}" and business name "${siteName}", research what this business likely sells. Create a quiz about their probable products/services. Be specific — guess based on the domain name and business name.`}
+${businessSummary || `Could not scrape the website. Based on the URL "${websiteUrl}" and business name "${siteName}", research what this business likely sells. Create a quiz about their probable products/services. Be specific  -  guess based on the domain name and business name.`}
 ${'='.repeat(60)}
 
 TASK: Based on the content above, identify what ${siteName} sells or offers. Then create a quiz that:
 1. Helps visitors figure out which of ${siteName}'s products/services is right for them
-2. Asks about the VISITOR's needs, goals, situation — NOT about the business itself
+2. Asks about the VISITOR's needs, goals, situation  -  NOT about the business itself
 3. Uses language and terminology from the website content
 4. Recommends specific products/services from ${siteName} in the outcomes
 
@@ -170,6 +170,153 @@ Generate exactly 10 questions with 4 options each, and 3-5 outcomes. Return this
 }
 
 /**
+ * Generate 5 onboarding questions asked to the business owner.
+ * These questions are tailored to what the scraped business appears to be,
+ * so the owner's answers can steer the 10-question visitor quiz.
+ */
+async function generateOnboardingQuestions(
+  websiteUrl: string,
+  brandData?: any
+): Promise<{ questions: { id: string; text: string; options: string[] }[] }> {
+  const businessSummary = brandData?.business?.summary || '';
+  const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
+
+  const systemPrompt = `You generate 5 onboarding questions that a quiz platform asks a BUSINESS OWNER about their own business. The owner's answers will then tailor a visitor-facing lead-generation quiz for their site.
+
+RULES:
+- Exactly 5 single-select questions.
+- Each question has 3 to 5 short option labels.
+- Questions are about the owner's goal, audience, offers, tone, and desired outcome, tailored to this specific business based on the scraped website content.
+- Do not ask about Squarespace, templates, or website builders unless that is literally what the business sells.
+- Keep question text under 90 characters. Keep option labels under 44 characters.
+- Return ONLY valid JSON. No markdown, no backticks.`;
+
+  const userPrompt = `BUSINESS: ${siteName}
+URL: ${websiteUrl}
+
+WEBSITE CONTENT:
+${businessSummary || `No scraped content. Infer from domain ${siteName}.`}
+
+Return this exact JSON structure:
+{
+  "questions": [
+    { "id": "o1", "text": "What is the primary goal of this quiz for your visitors?", "options": ["Capture qualified leads","Recommend the right product","Grow my email list","Segment by intent"] },
+    { "id": "o2", "text": "...", "options": ["...","..."] },
+    { "id": "o3", "text": "...", "options": ["...","..."] },
+    { "id": "o4", "text": "...", "options": ["...","..."] },
+    { "id": "o5", "text": "...", "options": ["...","..."] }
+  ]
+}
+
+Make every question specific to ${siteName}. The first question should confirm the main goal. The others should ask about audience, offers, desired outcome, and tone, phrased for THIS business.`;
+
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2048,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+
+  const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+  try {
+    const parsed = JSON.parse(extractJSON(raw));
+    const questions = Array.isArray(parsed?.questions) ? parsed.questions : [];
+    const normalized = questions.slice(0, 5).map((q: any, i: number) => ({
+      id: q.id || `o${i + 1}`,
+      text: String(q.text || q.question || '').slice(0, 160),
+      options: (Array.isArray(q.options) ? q.options : []).slice(0, 5).map((o: any) => typeof o === 'string' ? o : (o?.text || o?.label || '')).filter(Boolean),
+    })).filter((q: any) => q.text && q.options.length >= 2);
+
+    if (normalized.length < 5) {
+      const fallback = [
+        { id: 'o1', text: 'What is the main goal of this quiz?', options: ['Capture qualified leads','Recommend the right product','Grow my email list','Segment by intent'] },
+        { id: 'o2', text: 'Who are your typical visitors?', options: ['Small business owners','Consumers','Creators and freelancers','Enterprise teams'] },
+        { id: 'o3', text: 'What will visitors get at the end?', options: ['A personalized recommendation','A free resource or download','A tailored plan','A discount or offer'] },
+        { id: 'o4', text: 'Which tone best matches your brand?', options: ['Warm and friendly','Confident and expert','Playful and casual','Minimal and direct'] },
+        { id: 'o5', text: 'What kind of business do you run?', options: ['Wellness or coaching','E-commerce or product','Service business','SaaS or software','Agency or studio'] },
+      ];
+      for (let i = normalized.length; i < 5; i++) normalized.push(fallback[i]);
+    }
+    return { questions: normalized };
+  } catch {
+    console.error('[Claude] Onboarding parse failed, raw:', raw.slice(0, 400));
+    return {
+      questions: [
+        { id: 'o1', text: 'What is the main goal of this quiz?', options: ['Capture qualified leads','Recommend the right product','Grow my email list','Segment by intent'] },
+        { id: 'o2', text: 'Who are your typical visitors?', options: ['Small business owners','Consumers','Creators and freelancers','Enterprise teams'] },
+        { id: 'o3', text: 'What will visitors get at the end?', options: ['A personalized recommendation','A free resource or download','A tailored plan','A discount or offer'] },
+        { id: 'o4', text: 'Which tone best matches your brand?', options: ['Warm and friendly','Confident and expert','Playful and casual','Minimal and direct'] },
+        { id: 'o5', text: 'What kind of business do you run?', options: ['Wellness or coaching','E-commerce or product','Service business','SaaS or software','Agency or studio'] },
+      ],
+    };
+  }
+}
+
+/**
+ * Generate a 10-question quiz using the scraped brand PLUS the owner's
+ * onboarding answers so the quiz is tailored to what the owner actually wants.
+ */
+async function generateTailoredQuiz(
+  websiteUrl: string,
+  brandData: any,
+  onboarding: { question: string; answer: string }[]
+): Promise<any> {
+  const goal = onboarding.find(x => /goal|objective/i.test(x.question))?.answer || 'Generate more leads';
+  const businessSummary = brandData?.business?.summary || '';
+  const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
+  const brandColorPrimary = brandData?.colors?.primary || '#000000';
+
+  const onboardingBlock = onboarding.map((o, i) => `${i + 1}. ${o.question}\n   Answer: ${o.answer}`).join('\n');
+
+  const systemPrompt = `You are an expert lead-generation quiz creator. Read the business website content AND the owner's onboarding answers carefully. Create a quiz that matches the owner's stated goal, audience, tone, and outcome. Return ONLY valid JSON.`;
+
+  const userPrompt = `BUSINESS: ${siteName}
+URL: ${websiteUrl}
+
+WEBSITE CONTENT:
+${businessSummary || `Could not scrape. Infer from domain ${siteName}.`}
+
+OWNER ANSWERS (use these to shape every question, option, tone, and outcome):
+${onboardingBlock}
+
+TASK: Generate exactly 10 questions with 4 options each, and 3 to 5 outcomes, tailored to ${siteName}. Every question maps visitors to the owner's actual offers. Every outcome names a specific product or service. Tone matches the owner's answer.
+
+Return this JSON:
+{
+  "title": "Short promise title for the visitor",
+  "description": "One line promising a personalized recommendation",
+  "questions": [
+    { "id": "q1", "type": "single", "text": "Question about visitor needs", "subtitle": "", "options": [
+      { "id": "a", "text": "Option A", "score": 3 },
+      { "id": "b", "text": "Option B", "score": 2 },
+      { "id": "c", "text": "Option C", "score": 1 },
+      { "id": "d", "text": "Option D", "score": 0 }
+    ]}
+  ],
+  "outcomes": [
+    { "id": "r1", "title": "Specific offer from ${siteName}", "description": "2 to 3 sentences", "minScore": 10, "maxScore": 15, "ctaText": "Explore", "ctaUrl": "" }
+  ],
+  "leadGate": { "headline": "Your result is ready", "subtext": "Enter your email to see it", "buttonText": "Show my result" },
+  "settings": { "primaryColor": "${brandColorPrimary}", "showProgressBar": true, "requireEmail": true }
+}`;
+
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 8192,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+
+  const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+  try {
+    return normalizeQuiz(JSON.parse(extractJSON(raw)));
+  } catch {
+    console.error('[Claude] Tailored quiz parse failed, falling back. Raw:', raw.slice(0, 400));
+    return callClaude(websiteUrl, 'general', goal, brandData);
+  }
+}
+
+/**
  * Process an "Other" free-text answer by matching it to the closest outcome.
  */
 async function processOtherAnswer(
@@ -182,7 +329,7 @@ async function processOtherAnswer(
     system: 'You match free-text quiz answers to the best outcome. Respond with ONLY JSON.',
     messages: [{
       role: 'user',
-      content: `The user wrote: "${freeText}"\n\nAvailable outcomes:\n${availableOutcomes.map(o => `- ${o.id}: ${o.title} — ${o.description || ''}`).join('\n')}\n\nReturn: { "matched_outcome_id": "...", "personalised_insight": "1 sentence of personalized insight" }`,
+      content: `The user wrote: "${freeText}"\n\nAvailable outcomes:\n${availableOutcomes.map(o => `- ${o.id}: ${o.title}  -  ${o.description || ''}`).join('\n')}\n\nReturn: { "matched_outcome_id": "...", "personalised_insight": "1 sentence of personalized insight" }`,
     }],
   });
 
@@ -194,7 +341,7 @@ async function processOtherAnswer(
   }
 }
 
-export { processOtherAnswer };
+export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz };
 export const generateQuizWithClaude = callClaude;
 export const generateQuiz = callClaude;
 export const generateQuizContent = callClaude;

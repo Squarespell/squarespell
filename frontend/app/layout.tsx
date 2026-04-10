@@ -33,7 +33,7 @@ const hover = (c: string) => ({
 });
 
 function Footer() {
-  // No footer on app domain — marketing site (squarespell.com) has its own footer
+  // No footer on app domain  -  marketing site (squarespell.com) has its own footer
   return null;
   const pathname = usePathname();
 
