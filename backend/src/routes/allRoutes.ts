@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz } from '../services/claudeService';
-import { scrapeBrand } from '../services/brandScraper';
+import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
@@ -137,6 +137,14 @@ previewRouter.post('/preview-generate', async (req, res) => {
     console.log(`[Preview] Quiz cached with claim token: ${claimToken.slice(0, 8)}...`);
     res.json({ brand, quiz, claim_token: claimToken });
   } catch (err: any) {
+    if (err instanceof NotSquarespaceError) {
+      console.warn(`[Preview] Rejected non-Squarespace site: ${err.hostname}`);
+      return res.status(422).json({
+        error: err.message,
+        code: 'NOT_SQUARESPACE',
+        hostname: err.hostname,
+      });
+    }
     console.error('[Preview] Generation failed:', err);
     res.status(500).json({ error: err.message ?? 'Preview generation failed' });
   }
@@ -183,6 +191,14 @@ previewRouter.post('/preview-analyze', async (req, res) => {
 
     res.json({ brand, onboarding_questions: onboardingQuestions, session_token: sessionToken, url: normalizedUrl });
   } catch (err: any) {
+    if (err instanceof NotSquarespaceError) {
+      console.warn(`[PreviewAnalyze] Rejected non-Squarespace site: ${err.hostname}`);
+      return res.status(422).json({
+        error: err.message,
+        code: 'NOT_SQUARESPACE',
+        hostname: err.hostname,
+      });
+    }
     console.error('[PreviewAnalyze] Failed:', err);
     res.status(500).json({ error: err.message ?? 'Analyze failed' });
   }
@@ -554,7 +570,15 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
   if (!url) return res.status(400).json({ error: 'url required' });
   let normalizedBrandUrl: string;
   try { normalizedBrandUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'invalid url' }); }
-  res.json(await scrapeBrand(normalizedBrandUrl));
+  try {
+    res.json(await scrapeBrand(normalizedBrandUrl));
+  } catch (err: any) {
+    if (err instanceof NotSquarespaceError) {
+      return res.status(422).json({ error: err.message, code: 'NOT_SQUARESPACE', hostname: err.hostname });
+    }
+    console.error('[ScrapeBrand] Failed:', err);
+    res.status(500).json({ error: err.message ?? 'Scrape failed' });
+  }
 });
 
 // ── User ──────────────────────────────────────────────────────────────────────

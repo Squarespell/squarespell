@@ -308,7 +308,7 @@ function DashboardContent() {
       if (quizClaimed) {
         // Stage 6: route the user straight into the editor for publishing.
         if (claimedQuizId) {
-          router.replace(`/editor/${claimedQuizId}?justClaimed=1`);
+          router.replace(`/dashboard/${claimedQuizId}?justClaimed=1`);
           return;
         }
         await new Promise(r => setTimeout(r, 1500));
@@ -767,7 +767,7 @@ function DashboardContent() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                       <a
-                        href={`/editor/${quiz.id}`}
+                        href={`/dashboard/${quiz.id}`}
                         style={{
                           padding: '10px 16px',
                           background: COLORS.SURFACE,

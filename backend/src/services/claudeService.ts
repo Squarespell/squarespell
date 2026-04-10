@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { buildFallbackQuiz } from './fallbackQuiz';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -300,19 +301,24 @@ Return this JSON:
   "settings": { "primaryColor": "${brandColorPrimary}", "showProgressBar": true, "requireEmail": true }
 }`;
 
-  const message = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 8192,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
-
-  const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+  // Per product decision (Q5): API failures must NEVER block the user.
+  // Claude call + parse are wrapped in a single try; any failure silently
+  // returns the prototype-v4 hardcoded fallback quiz with the scraped primary
+  // color applied. The user flow continues to Stage 3 without error UI.
   try {
-    return normalizeQuiz(JSON.parse(extractJSON(raw)));
-  } catch {
-    console.error('[Claude] Tailored quiz parse failed, falling back. Raw:', raw.slice(0, 400));
-    return callClaude(websiteUrl, 'general', goal, brandData);
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 8192,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+    const parsed = JSON.parse(extractJSON(raw));
+    return normalizeQuiz(parsed);
+  } catch (err: any) {
+    console.error(`[Claude] Tailored quiz generation failed for ${siteName}, using fallback quiz. Error:`, err?.message || err);
+    return buildFallbackQuiz(brandColorPrimary);
   }
 }
 

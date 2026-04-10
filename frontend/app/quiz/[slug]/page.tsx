@@ -1,35 +1,86 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+/**
+ * Public hosted quiz page — rendered in the visitor's Squarespace brand.
+ *
+ * This is what visitors see when they land on squarespell.com/q/{slug} OR when
+ * the <script src="/embed.js"> embed iframes this URL into a Squarespace page.
+ *
+ * Per the prototype-v4 restoration decision, this page mirrors the Stage 4
+ * visitor preview from /try: brand colors, brand font, light aesthetic, and a
+ * score-based outcome matcher (minScore/maxScore) — NOT the old dark
+ * Squarespell-branded theme.
+ *
+ * Container queries (@container) make the layout responsive to the iframe
+ * width, not the device viewport, so the embed looks right at any width.
+ */
+
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
-interface QuizOption { id: string; text: string; result_id?: string; }
-interface QuizQuestion { id: string; question?: string; text?: string; options: QuizOption[]; }
-interface QuizResult { id: string; title: string; description: string; recommendation?: string; }
+interface QuizOption {
+  id: string;
+  text: string;
+  score?: number;
+}
+interface QuizQuestion {
+  id: string;
+  text?: string;
+  question?: string;
+  subtitle?: string;
+  options: QuizOption[];
+}
+interface QuizOutcome {
+  id: string;
+  title: string;
+  description: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  minScore?: number;
+  maxScore?: number;
+}
+interface QuizBranding {
+  colors?: Record<string, string>;
+  font_family?: string;
+  site_name?: string;
+}
 interface Quiz {
-  id: string; slug: string; title: string;
-  questions: QuizQuestion[]; results: QuizResult[];
-  settings?: { primary_color?: string; cta_text?: string; cta_url?: string; show_branding?: boolean; };
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  questions: QuizQuestion[];
+  outcomes?: QuizOutcome[];
+  results?: QuizOutcome[]; // backward compat
+  branding?: QuizBranding;
+  settings?: {
+    primary_color?: string;
+    primaryColor?: string;
+    cta_text?: string;
+    cta_url?: string;
+    show_branding?: boolean;
+    requireEmail?: boolean;
+  };
+  leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
 
 type Stage = 'loading' | 'error' | 'question' | 'leadgate' | 'result';
 
-function getResult(quiz: Quiz, answers: Record<string, string>): QuizResult {
-  const counts: Record<string, number> = {};
-  quiz.results.forEach(r => { counts[r.id] = 0; });
-  Object.values(answers).forEach(optId => {
-    quiz.questions.forEach(q => {
-      q.options.forEach(opt => {
-        if (opt.id === optId && opt.result_id) {
-          counts[opt.result_id] = (counts[opt.result_id] || 0) + 1;
-        }
-      });
-    });
+function getOutcome(quiz: Quiz, answers: Record<number, number>): QuizOutcome | null {
+  const outcomes = quiz.outcomes || quiz.results || [];
+  if (outcomes.length === 0) return null;
+  let total = 0;
+  Object.entries(answers).forEach(([qi, oi]) => {
+    const q = quiz.questions[Number(qi)];
+    const opt = q?.options?.[Number(oi)];
+    if (opt?.score !== undefined) total += Number(opt.score);
   });
-  const topId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  return quiz.results.find(r => r.id === topId) || quiz.results[0];
+  const matched = outcomes.find(
+    (o) => o.minScore !== undefined && o.maxScore !== undefined && total >= o.minScore && total <= o.maxScore
+  );
+  return matched || outcomes[0];
 }
 
 export default function QuizPage() {
@@ -39,20 +90,20 @@ export default function QuizPage() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [stage, setStage] = useState<Stage>('loading');
   const [error, setError] = useState('');
-  const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [selected, setSelected] = useState<string | null>(null);
-  const [animating, setAnimating] = useState(false);
-  const [firstName, setFirstName] = useState('');
+  const [qIdx, setQIdx] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [leadError, setLeadError] = useState('');
-  const [result, setResult] = useState<QuizResult | null>(null);
-  const leadScore = 78 + Math.floor(Math.random() * 20);
+  const [outcome, setOutcome] = useState<QuizOutcome | null>(null);
+  const sessionIdRef = useRef<string>(
+    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+  );
 
   // Notify embed parent of height changes
   useEffect(() => {
-    if (window.parent === window) return;
+    if (typeof window === 'undefined' || window.parent === window) return;
     const notify = () => {
       const h = document.documentElement.scrollHeight;
       window.parent.postMessage({ source: 'squarespell', type: 'resize', height: h }, '*');
@@ -61,73 +112,106 @@ export default function QuizPage() {
     ro.observe(document.body);
     notify();
     return () => ro.disconnect();
-  }, [stage]);
+  }, [stage, qIdx]);
 
+  // Load quiz
   useEffect(() => {
     if (!slug) return;
     fetch(`${API}/api/quiz/${slug}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) { setError(data.error); setStage('error'); return; }
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) {
+          setError(data.error);
+          setStage('error');
+          return;
+        }
         setQuiz(data);
         setStage('question');
-        // Notify embed parent quiz started
         if (window.parent !== window) {
           window.parent.postMessage({ source: 'squarespell', type: 'start' }, '*');
         }
-        // track view
         fetch(`${API}/api/quiz/${slug}/event`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ event_type: 'view', session_id: crypto.randomUUID?.() || Math.random().toString(36).slice(2) }),
+          body: JSON.stringify({ event_type: 'view', session_id: sessionIdRef.current }),
         }).catch(() => {});
       })
-      .catch(() => { setError('Failed to load quiz.'); setStage('error'); });
+      .catch(() => {
+        setError('Failed to load quiz.');
+        setStage('error');
+      });
   }, [slug]);
 
-  const selectOption = useCallback((id: string) => {
-    if (!animating) setSelected(id);
-  }, [animating]);
+  const totalQs = quiz?.questions.length || 0;
+  const currentQ = quiz?.questions[qIdx];
+  const requireEmail = quiz?.settings?.requireEmail !== false;
+  const progress =
+    stage === 'question' ? Math.round(((qIdx + 1) / Math.max(totalQs, 1)) * 100) :
+    stage === 'leadgate' ? 95 : 100;
 
-  const next = useCallback(() => {
-    if (!quiz || !selected || animating) return;
-    const q = quiz.questions[currentQ];
-    const newAnswers = { ...answers, [q.id]: selected };
-    setAnswers(newAnswers);
-    setAnimating(true);
-    setTimeout(() => {
-      if (currentQ + 1 < quiz.questions.length) {
-        setCurrentQ(c => c + 1);
-        setSelected(null);
+  const pickOption = useCallback(
+    (oi: number) => {
+      if (!quiz) return;
+      setAnswers((prev) => ({ ...prev, [qIdx]: oi }));
+      if (qIdx < (quiz.questions.length - 1)) {
+        setQIdx(qIdx + 1);
       } else {
-        setStage('leadgate');
+        if (requireEmail) {
+          setStage('leadgate');
+        } else {
+          const o = getOutcome(quiz, { ...answers, [qIdx]: oi });
+          setOutcome(o);
+          setStage('result');
+          fetch(`${API}/api/quiz/${slug}/event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event_type: 'complete', session_id: sessionIdRef.current, metadata: { outcome_id: o?.id } }),
+          }).catch(() => {});
+          if (window.parent !== window) {
+            window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
+          }
+        }
       }
-      setAnimating(false);
-    }, 240);
-  }, [quiz, selected, animating, currentQ, answers]);
+    },
+    [quiz, qIdx, answers, requireEmail, slug]
+  );
+
+  const goBack = () => { if (qIdx > 0) setQIdx(qIdx - 1); };
 
   const submitLead = useCallback(async () => {
-    if (!quiz || !email.trim()) { setLeadError('Please enter your email'); return; }
+    if (!quiz) return;
+    if (!email.trim() || !email.includes('@')) {
+      setLeadError('Please enter a valid email');
+      return;
+    }
     setSubmitting(true);
     setLeadError('');
+    const o = getOutcome(quiz, answers);
     try {
       await fetch(`${API}/api/quiz/${slug}/lead`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: firstName, email, answers, outcome_id: getResult(quiz, answers).id }),
+        body: JSON.stringify({
+          name: firstName,
+          email,
+          answers,
+          outcome_id: o?.id,
+          session_id: sessionIdRef.current,
+        }),
       });
-      const resultData = getResult(quiz, answers);
-      setResult(resultData);
+      setOutcome(o);
       setStage('result');
-      // Track completion event
       fetch(`${API}/api/quiz/${slug}/event`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_type: 'complete', session_id: crypto.randomUUID?.() || Math.random().toString(36).slice(2), metadata: { outcome_id: resultData.id } }),
+        body: JSON.stringify({
+          event_type: 'complete',
+          session_id: sessionIdRef.current,
+          metadata: { outcome_id: o?.id },
+        }),
       }).catch(() => {});
-      // Notify parent iframe (for embed)
       if (window.parent !== window) {
-        window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: resultData.id }, '*');
+        window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
       }
     } catch {
       setLeadError('Something went wrong. Please try again.');
@@ -136,221 +220,408 @@ export default function QuizPage() {
     }
   }, [quiz, slug, email, firstName, answers]);
 
-  useEffect(() => {
-    if (stage !== 'question' || !quiz) return;
-    const q = quiz.questions[currentQ];
-    const handler = (e: KeyboardEvent) => {
-      const idx = ['a','b','c','d'].indexOf(e.key.toLowerCase());
-      if (idx >= 0 && idx < q.options.length) selectOption(q.options[idx].id);
-      if (e.key === 'Enter' && selected) next();
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [stage, quiz, currentQ, selected, selectOption, next]);
-
-  const accent = quiz?.settings?.primary_color || '#D2FF1D';
+  /* ---------- brand derivation (matches try/page Stage 4) ---------- */
+  const brand = quiz?.branding;
+  const brandBg = brand?.colors?.background || '#ffffff';
+  const brandSurface = brand?.colors?.surface || brandBg;
+  const brandText = brand?.colors?.text || '#1a1a1a';
+  const brandPrimary =
+    brand?.colors?.primary || quiz?.settings?.primary_color || quiz?.settings?.primaryColor || '#0a0a0a';
+  const brandBorder = 'rgba(0,0,0,0.10)';
+  const brandFont =
+    brand?.font_family && brand.font_family !== 'sans-serif'
+      ? `'${brand.font_family}', system-ui, sans-serif`
+      : "'Inter', system-ui, sans-serif";
+  const brandName = brand?.site_name || '';
   const showBranding = quiz?.settings?.show_branding !== false;
-  const progress = stage === 'question'
-    ? Math.round((currentQ / (quiz?.questions.length || 1)) * 100)
-    : stage === 'leadgate' ? 90 : 100;
-  const letters = ['A','B','C','D','E'];
+  const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-  if (stage === 'loading') return (
-    <div style={{ background:'#07090c', minHeight:'100svh', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ textAlign:'center' }}>
-        <div style={{ display:'flex', gap:6, justifyContent:'center', marginBottom:12 }}>
-          {[0,1,2].map(i => (
-            <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:accent, animation:`bounce 1.2s ${i*0.2}s infinite` }} />
-          ))}
+  /* ---------- render ---------- */
+  if (stage === 'loading') {
+    return (
+      <div style={{ minHeight: '100svh', background: brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: brandFont, color: brandText, fontSize: 14, opacity: 0.6 }}>
+        Loading…
+      </div>
+    );
+  }
+  if (stage === 'error') {
+    return (
+      <div style={{ minHeight: '100svh', background: brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: brandFont, color: brandText, padding: 24, textAlign: 'center' }}>
+        <div style={{ maxWidth: 340 }}>
+          <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Quiz not found</p>
+          <p style={{ fontSize: 13, opacity: 0.6 }}>{error || 'This quiz may have been removed.'}</p>
         </div>
-        <p style={{ fontSize:12, color:'rgba(240,242,245,.3)', fontFamily:'DM Sans, sans-serif' }}>Loading quiz...</p>
       </div>
-      <style>{`@keyframes bounce{0%,80%,100%{transform:scale(0);opacity:.4}40%{transform:scale(1);opacity:1}}`}</style>
-    </div>
-  );
-
-  if (stage === 'error') return (
-    <div style={{ background:'#07090c', minHeight:'100svh', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-      <div style={{ textAlign:'center', maxWidth:340 }}>
-        <div style={{ fontSize:40, marginBottom:14 }}>😕</div>
-        <p style={{ fontSize:17, fontWeight:800, color:'#f0f2f5', marginBottom:8, letterSpacing:'-.04em', fontFamily:'DM Sans, sans-serif' }}>Quiz not found</p>
-        <p style={{ fontSize:13, color:'rgba(240,242,245,.42)', lineHeight:1.6, fontFamily:'DM Sans, sans-serif' }}>{error || 'This quiz may have been removed.'}</p>
-      </div>
-    </div>
-  );
-
+    );
+  }
   if (!quiz) return null;
-
-  const currentQuestion = quiz.questions[currentQ];
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-        body{font-family:'DM Sans',system-ui,sans-serif;background:#07090c;color:#f0f2f5}
-        :root{--acc:${accent};--bg:#07090c;--g1:rgba(255,255,255,.055);--g2:rgba(255,255,255,.034);--b1:rgba(255,255,255,.09);--b2:rgba(255,255,255,.058);--t1:#f0f2f5;--t2:rgba(240,242,245,.68);--t3:rgba(240,242,245,.42);--t4:rgba(240,242,245,.22);--green:#4ade80}
-        .wrap{min-height:100svh;display:flex;flex-direction:column;max-width:540px;margin:0 auto;position:relative}
-        .prog{height:2px;background:rgba(255,255,255,.06)}
-        .prog-fill{height:2px;background:var(--acc);transition:width .4s cubic-bezier(.4,0,.2,1)}
-        .status{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;font-size:11px;color:var(--t3)}
-        .content{padding:8px 20px 24px;flex:1;display:flex;flex-direction:column}
-        .xp-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;padding:8px 12px;background:var(--g2);border:.5px solid var(--b2);border-radius:9px}
-        .xp-bar-bg{flex:1;background:rgba(255,255,255,.06);border-radius:20px;height:3px}
-        .xp-bar{height:3px;border-radius:20px;background:var(--acc);transition:width .4s}
-        .qlabel{font-size:9px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
-        .qtext{font-size:18px;font-weight:800;color:var(--t1);margin-bottom:20px;letter-spacing:-.04em;line-height:1.22}
-        .opt{display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--g2);border:.5px solid var(--b2);border-radius:11px;cursor:pointer;margin-bottom:8px;transition:all .15s;user-select:none}
-        .opt:hover{background:var(--g1);border-color:var(--b1);transform:translateY(-1px)}
-        .opt.on{background:rgba(210,255,29,.09);border-color:rgba(210,255,29,.18)}
-        .key{width:24px;height:24px;background:var(--g1);border:.5px solid var(--b1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--t3);flex-shrink:0;transition:all .15s}
-        .opt.on .key{background:var(--acc);color:#07090c;border-color:transparent}
-        .opt-lbl{font-size:13px;color:var(--t2);line-height:1.35;transition:color .15s}
-        .opt.on .opt-lbl{color:var(--t1);font-weight:600}
-        .btn-p{background:var(--acc);color:#07090c;border:none;border-radius:11px;padding:14px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .15s;letter-spacing:-.02em}
-        .btn-p:hover:not(:disabled){background:#c8f517;transform:translateY(-1px)}
-        .btn-p:disabled{opacity:.5;cursor:not-allowed}
-        .btn-s{background:var(--g1);color:var(--t1);border:.5px solid var(--b1);border-radius:11px;padding:13px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .15s}
-        .glass{background:var(--g1);border:.5px solid var(--b1);border-radius:16px}
-        .inp-row{background:var(--g2);border:.5px solid var(--b2);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:9px;transition:border-color .15s}
-        .inp-row:focus-within{border-color:rgba(210,255,29,.18)}
-        .inp{background:transparent;border:none;outline:none;font-size:13px;color:var(--t1);font-family:'DM Sans',sans-serif;flex:1}
-        .inp::placeholder{color:var(--t4)}
-        .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
-        .stat{background:var(--g1);border:.5px solid var(--b1);border-radius:11px;padding:12px;text-align:center}
-        .stat-v{font-size:20px;font-weight:800;color:var(--acc);letter-spacing:-.05em;line-height:1}
-        .stat-l{font-size:8px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
-        .ai-box{background:rgba(210,255,29,.09);border:.5px solid rgba(210,255,29,.18);border-radius:11px;padding:13px 14px;margin-bottom:14px}
-        .branding{padding:16px 20px;text-align:center;border-top:.5px solid var(--b2);margin-top:auto}
-        .slide{animation:slideIn .24s cubic-bezier(.4,0,.2,1) both}
-        @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
-        .fade{animation:fadeIn .3s ease both}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-        .err{font-size:11px;color:#f87171;margin-top:6px;text-align:center}
-        .safe{height:28px}
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        html, body { height: 100%; }
+        body {
+          font-family: ${brandFont};
+          background: ${brandBg};
+          color: ${brandText};
+        }
+        .sq-root {
+          container-type: inline-size;
+          min-height: 100svh;
+          background: ${brandBg};
+          color: ${brandText};
+          padding: 28px 20px 40px;
+          font-family: ${brandFont};
+        }
+        .sq-inner {
+          max-width: 720px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 22px;
+        }
+        .sq-head {
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          padding-bottom: 4px;
+        }
+        .sq-eyebrow {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: ${brandPrimary};
+        }
+        .sq-title {
+          font-size: 26px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          line-height: 1.15;
+        }
+        .sq-sub {
+          font-size: 14px;
+          opacity: 0.64;
+          line-height: 1.55;
+        }
+        .sq-card {
+          background: ${brandSurface};
+          border: 1px solid ${brandBorder};
+          border-radius: 18px;
+          padding: 26px 22px 26px;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+        }
+        .sq-prog {
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          font-weight: 600;
+          opacity: 0.55;
+          margin-bottom: 10px;
+          letter-spacing: 0.02em;
+        }
+        .sq-bar {
+          height: 4px;
+          background: ${brandBorder};
+          border-radius: 100px;
+          overflow: hidden;
+          margin-bottom: 22px;
+        }
+        .sq-bar-fill {
+          height: 100%;
+          background: ${brandPrimary};
+          border-radius: 100px;
+          transition: width 0.45s cubic-bezier(0.16,1,0.3,1);
+        }
+        .sq-qlabel {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: ${brandPrimary};
+          margin-bottom: 8px;
+        }
+        .sq-q {
+          font-size: 22px;
+          font-weight: 800;
+          letter-spacing: -0.025em;
+          line-height: 1.22;
+          margin-bottom: 20px;
+        }
+        .sq-opts {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .sq-opt {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          width: 100%;
+          text-align: left;
+          padding: 14px 16px;
+          background: ${brandBg};
+          border: 1.5px solid ${brandBorder};
+          border-radius: 12px;
+          font-family: ${brandFont};
+          font-size: 14px;
+          color: ${brandText};
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+        }
+        .sq-opt:hover {
+          border-color: ${brandPrimary};
+          transform: translateY(-1px);
+        }
+        .sq-opt.picked {
+          border-color: ${brandPrimary};
+          background: ${brandPrimary}14;
+        }
+        .sq-opt-letter {
+          width: 26px;
+          height: 26px;
+          border-radius: 7px;
+          background: ${brandBorder};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          flex-shrink: 0;
+        }
+        .sq-opt.picked .sq-opt-letter {
+          background: ${brandPrimary};
+          color: ${brandBg};
+        }
+        .sq-back {
+          margin-top: 16px;
+          font-size: 12px;
+          opacity: 0.5;
+          cursor: pointer;
+          display: inline-block;
+        }
+        .sq-back:hover { opacity: 0.9; }
 
-      <div className="wrap">
-        <div className="prog"><div className="prog-fill" style={{ width:`${progress}%` }} /></div>
+        .sq-lead {
+          text-align: center;
+        }
+        .sq-lead-title {
+          font-size: 24px;
+          font-weight: 800;
+          letter-spacing: -0.025em;
+          margin-bottom: 8px;
+        }
+        .sq-lead-sub {
+          font-size: 14px;
+          opacity: 0.64;
+          margin-bottom: 22px;
+        }
+        .sq-field {
+          text-align: left;
+          margin-bottom: 12px;
+        }
+        .sq-field label {
+          display: block;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          opacity: 0.6;
+          margin-bottom: 6px;
+        }
+        .sq-input {
+          width: 100%;
+          padding: 13px 14px;
+          background: ${brandBg};
+          border: 1.5px solid ${brandBorder};
+          border-radius: 12px;
+          font-family: ${brandFont};
+          font-size: 14px;
+          color: ${brandText};
+          outline: none;
+        }
+        .sq-input:focus { border-color: ${brandPrimary}; }
+        .sq-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+          padding: 14px 22px;
+          background: ${brandPrimary};
+          color: ${brandBg};
+          border: 0;
+          border-radius: 100px;
+          font-family: ${brandFont};
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
+        }
+        .sq-btn:hover { transform: translateY(-1px); }
+        .sq-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        <div className="status">
-          <span style={{ fontWeight:700, color:'var(--t2)', fontSize:13, letterSpacing:'-.02em' }}>{quiz.title}</span>
-          {stage === 'question' && <span style={{ color:'var(--acc)', fontWeight:700, fontSize:11 }}>{currentQ+1} of {quiz.questions.length}</span>}
-          {stage === 'leadgate' && <span style={{ color:'var(--acc)', fontWeight:700, fontSize:11 }}>Almost done!</span>}
-          {stage === 'result' && <span style={{ background:'rgba(248,113,113,.12)', border:'.5px solid rgba(248,113,113,.25)', borderRadius:20, padding:'2px 8px', fontSize:10, fontWeight:700, color:'#fca5a5' }}>Hot lead</span>}
-        </div>
+        .sq-result {
+          text-align: center;
+        }
+        .sq-result-badge {
+          display: inline-block;
+          padding: 6px 12px;
+          background: ${brandPrimary}1a;
+          color: ${brandPrimary};
+          border-radius: 100px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          margin-bottom: 12px;
+        }
+        .sq-result-title {
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          margin-bottom: 10px;
+        }
+        .sq-result-desc {
+          font-size: 15px;
+          opacity: 0.72;
+          line-height: 1.6;
+          margin-bottom: 20px;
+        }
+        .sq-err {
+          font-size: 12px;
+          color: #d44;
+          margin-top: 8px;
+          text-align: center;
+        }
+        .sq-brand-foot {
+          text-align: center;
+          margin-top: 22px;
+          font-size: 11px;
+          opacity: 0.45;
+        }
+        .sq-brand-foot a { color: inherit; text-decoration: none; }
 
-        {stage === 'question' && currentQuestion && (
-          <div className="content slide" key={currentQ}>
-            <div className="xp-row">
-              <div className="xp-bar-bg"><div className="xp-bar" style={{ width:`${progress}%` }} /></div>
-              <span style={{ fontSize:10, color:'var(--t4)', fontWeight:600 }}>{progress}% done</span>
-            </div>
-            <p className="qlabel">Question {currentQ+1}</p>
-            <p className="qtext">{currentQuestion.text || currentQuestion.question}</p>
-            <div style={{ flex:1 }}>
-              {currentQuestion.options.map((opt, i) => (
-                <div key={opt.id} className={`opt${selected===opt.id?' on':''}`} onClick={() => selectOption(opt.id)}>
-                  <div className="key">{letters[i]}</div>
-                  <span className="opt-lbl">{opt.text}</span>
-                </div>
-              ))}
-            </div>
-            <p style={{ fontSize:10, color:'var(--t4)', textAlign:'center', margin:'8px 0 16px', fontFamily:'monospace' }}>press A-D to select · Enter to continue</p>
-            <button className="btn-p" onClick={next} disabled={!selected || animating}>
-              {currentQ+1 < quiz.questions.length ? 'Next' : 'See my results'}
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </button>
-            <div className="safe" />
-          </div>
-        )}
+        @container (max-width: 540px) {
+          .sq-root { padding: 20px 14px 32px; }
+          .sq-card { padding: 22px 18px; border-radius: 14px; }
+          .sq-title { font-size: 22px; }
+          .sq-q { font-size: 19px; }
+          .sq-result-title { font-size: 24px; }
+        }
+        @container (max-width: 420px) {
+          .sq-opt { padding: 12px 13px; font-size: 13px; }
+          .sq-q { font-size: 18px; }
+          .sq-title { font-size: 20px; }
+        }
+      ` }} />
 
-        {stage === 'leadgate' && (
-          <div className="content fade" style={{ textAlign:'center' }}>
-            <div style={{ fontSize:44, marginBottom:13 }}>🎯</div>
-            <p style={{ fontSize:20, fontWeight:800, color:'var(--t1)', letterSpacing:'-.04em', marginBottom:7 }}>Your results are ready!</p>
-            <p style={{ fontSize:12, color:'var(--t3)', lineHeight:1.65, marginBottom:20 }}>Enter your details to unlock your personalised profile and action plan.</p>
-            <div className="glass" style={{ padding:16, textAlign:'left', marginBottom:12 }}>
-              <div style={{ marginBottom:9 }}>
-                <label style={{ fontSize:10, fontWeight:500, color:'var(--t4)', display:'block', marginBottom:5 }}>First name</label>
-                <div className="inp-row"><input className="inp" placeholder="Your first name" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+      <div className="sq-root">
+        <div className="sq-inner">
+          {stage === 'question' && currentQ && (
+            <>
+              <div className="sq-head">
+                {brandName && <div className="sq-eyebrow">{brandName} · Free quiz</div>}
+                <div className="sq-title">{quiz.title}</div>
+                {quiz.description && <div className="sq-sub">{quiz.description}</div>}
               </div>
-              <div style={{ marginBottom:16 }}>
-                <label style={{ fontSize:10, fontWeight:500, color:'var(--t4)', display:'block', marginBottom:5 }}>Email address</label>
-                <div className="inp-row">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.22)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  <input className="inp" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key==='Enter' && submitLead()} />
+
+              <div className="sq-card">
+                <div className="sq-prog">
+                  <span>Question {qIdx + 1} of {totalQs}</span>
+                  <span>{progress}%</span>
                 </div>
+                <div className="sq-bar"><div className="sq-bar-fill" style={{ width: `${progress}%` }} /></div>
+
+                <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
+                <div className="sq-q">{currentQ.text || currentQ.question}</div>
+
+                <div className="sq-opts">
+                  {currentQ.options.map((opt, oi) => (
+                    <button
+                      key={opt.id + oi}
+                      className={`sq-opt${answers[qIdx] === oi ? ' picked' : ''}`}
+                      onClick={() => pickOption(oi)}
+                      type="button"
+                    >
+                      <div className="sq-opt-letter">{LETTERS[oi]}</div>
+                      <div>{opt.text}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {qIdx > 0 && (
+                  <span className="sq-back" onClick={goBack}>← Previous question</span>
+                )}
               </div>
-              <button className="btn-p" onClick={submitLead} disabled={submitting || !email.trim()} style={{ marginBottom:10 }}>
-                {submitting ? 'Loading...' : 'Show my personalised results 🎉'}
+            </>
+          )}
+
+          {stage === 'leadgate' && (
+            <div className="sq-card sq-lead">
+              <div className="sq-lead-title">{quiz.leadGate?.headline || 'Your result is ready'}</div>
+              <div className="sq-lead-sub">{quiz.leadGate?.subtext || 'Enter your email to see it'}</div>
+
+              <div className="sq-field">
+                <label>First name <span style={{ opacity: 0.5, fontWeight: 500 }}>(optional)</span></label>
+                <input className="sq-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              </div>
+              <div className="sq-field">
+                <label>Email</label>
+                <input
+                  className="sq-input"
+                  type="email"
+                  value={email}
+                  placeholder="you@yoursite.com"
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') submitLead(); }}
+                />
+              </div>
+
+              <button className="sq-btn" onClick={submitLead} disabled={submitting || !email.trim()} type="button" style={{ marginTop: 10 }}>
+                {submitting ? 'Loading…' : (quiz.leadGate?.buttonText || 'Show my result')}
               </button>
-              {leadError && <p className="err">{leadError}</p>}
-              <p style={{ textAlign:'center', fontSize:10, color:'var(--t4)' }}>No spam. Unsubscribe anytime.</p>
+              {leadError && <div className="sq-err">{leadError}</div>}
             </div>
-            <div style={{ display:'flex', justifyContent:'center', gap:14, flexWrap:'wrap' }}>
-              {['GDPR compliant','No spam','Secure'].map(t => (
-                <span key={t} style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, color:'var(--t4)' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}
-                </span>
-              ))}
-            </div>
-            <div className="safe" />
-          </div>
-        )}
+          )}
 
-        {stage === 'result' && result && (
-          <div className="content fade" style={{ textAlign:'center' }}>
-            <div style={{ fontSize:50, marginBottom:14 }}>🚀</div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:12 }}>
-              <span style={{ background:'rgba(248,113,113,.12)', border:'.5px solid rgba(248,113,113,.25)', borderRadius:20, padding:'2px 8px', fontSize:10, fontWeight:700, color:'#fca5a5' }}>Hot lead score</span>
-              <span style={{ background:'rgba(210,255,29,.09)', border:'.5px solid rgba(210,255,29,.18)', borderRadius:20, padding:'3px 10px', fontSize:11, color:'var(--acc)', fontWeight:600 }}>{leadScore} / 100</span>
-            </div>
-            <p style={{ fontSize:9, fontWeight:700, color:'var(--acc)', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:7 }}>Your result</p>
-            <p style={{ fontSize:20, fontWeight:800, color:'var(--t1)', marginBottom:10, letterSpacing:'-.04em' }}>{result.title}</p>
-            <p style={{ fontSize:12, color:'var(--t3)', lineHeight:1.65, marginBottom:16 }}>{result.description}</p>
-            {result.recommendation && (
-              <div className="ai-box" style={{ textAlign:'left' }}>
-                <p style={{ fontSize:11, fontWeight:700, color:'var(--acc)', marginBottom:5, display:'flex', alignItems:'center', gap:5 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                  AI Recommendation
-                </p>
-                <p style={{ fontSize:12, color:'rgba(240,242,245,.68)', lineHeight:1.6 }}>{result.recommendation}</p>
-              </div>
-            )}
-            <div className="stat-grid">
-              <div className="stat"><p className="stat-v">{leadScore}</p><p className="stat-l">Lead score</p></div>
-              <div className="stat"><p className="stat-v">14%</p><p className="stat-l">Avg conversion</p></div>
-              <div className="stat"><p className="stat-v">4x</p><p className="stat-l">vs contact form</p></div>
-            </div>
-            {quiz.settings?.cta_url ? (
-              <a href={quiz.settings.cta_url} style={{ textDecoration:'none', display:'block', marginBottom:9 }}>
-                <button className="btn-p">{quiz.settings?.cta_text || 'Get started'}
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          {stage === 'result' && outcome && (
+            <div className="sq-card sq-result">
+              <div className="sq-result-badge">Your result</div>
+              <div className="sq-result-title">{outcome.title}</div>
+              <div className="sq-result-desc">{outcome.description}</div>
+
+              {outcome.ctaUrl ? (
+                <a href={outcome.ctaUrl} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  <button className="sq-btn" type="button">
+                    {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
+                  </button>
+                </a>
+              ) : quiz.settings?.cta_url ? (
+                <a href={quiz.settings.cta_url} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  <button className="sq-btn" type="button">
+                    {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
+                  </button>
+                </a>
+              ) : (
+                <button className="sq-btn" type="button">
+                  {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                 </button>
-              </a>
-            ) : (
-              <button className="btn-p" style={{ marginBottom:9 }} onClick={() => window.open('https://squarespell.com','_blank')}>
-                {quiz.settings?.cta_text || 'Get my free quiz template'}
-              </button>
-            )}
-            <button className="btn-s" onClick={() => navigator.share ? navigator.share({title:result.title,url:window.location.href}) : navigator.clipboard?.writeText(window.location.href)}>
-              Share my result
-            </button>
-            <div className="safe" />
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
-        {showBranding && (
-          <div className="branding">
-            <a href="https://squarespell.com" target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'var(--t4)', textDecoration:'none', display:'inline-flex', alignItems:'center', gap:4 }}>
-              <span style={{ width:14, height:14, background:'var(--acc)', borderRadius:4, display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#07090c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              </span>
-              Powered by Squarespell
-            </a>
-          </div>
-        )}
+          {showBranding && (
+            <div className="sq-brand-foot">
+              <a href="https://squarespell.com" target="_top" rel="noopener noreferrer">
+                Powered by Squarespell
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
