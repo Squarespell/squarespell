@@ -1,21 +1,39 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useAuth } from '@clerk/nextjs';
+/**
+ * /dashboard — Quizzes list (primary landing page after sign-in).
+ *
+ * Responsibilities:
+ *  1. Quiz claim flow for users arriving from /try (?claim=... or localStorage
+ *     preview payload). Preserves all retry + fallback logic from the original
+ *     single-file dashboard — this is the ONLY page that runs that logic, and
+ *     all other dashboard pages assume the claim has already happened.
+ *  2. Fetches the user plan + trial state for the banner.
+ *  3. Shows the quiz list + rollup stats.
+ *
+ * Visual chrome is delegated to DashboardShell so the sidebar + topbar stay
+ * consistent with every other dashboard page.
+ */
+
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useClerk } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import Link from 'next/link';
+
+import { DashboardShell, DASHBOARD_COLORS as C } from './_components/DashboardShell';
+import { useDashboardAuth } from './_components/useDashboardAuth';
+import {
+  PageHeader,
+  Card,
+  StatCard,
+  EmptyState,
+  PrimaryButton,
+  GhostButton,
+  Pill,
+  PageLoading,
+} from './_components/PageShell';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
-const COLORS = {
-  BG: '#07090c',
-  SURFACE: '#0d1117',
-  ELEVATED: '#161b22',
-  BORDER: '#1b1f27',
-  TEXT: '#f0f2f5',
-  TEXT_MUTED: '#8b919a',
-  ACCENT: '#D2FF1D',
-};
 
 type Quiz = {
   id: string;
@@ -66,7 +84,6 @@ function formatDate(dateStr: string): string {
   const diffDays = Math.floor(diffMs / 86400000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffMins = Math.floor(diffMs / 60000);
-
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
@@ -75,184 +92,228 @@ function formatDate(dateStr: string): string {
   return `${Math.floor(diffDays / 365)}y ago`;
 }
 
-function LoadingSpinner() {
+function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () => void }) {
+  const urgent = daysLeft <= 3;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', height: '100%' }}>
-      <div style={{ width: '32px', height: '32px', border: `2.5px solid rgba(210,255,29,0.15)`, borderTopColor: COLORS.ACCENT, borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div
+      style={{
+        background: urgent ? 'rgba(210,255,29,0.06)' : C.ELEVATED,
+        border: `1px solid ${urgent ? 'rgba(210,255,29,0.18)' : C.BORDER}`,
+        borderRadius: 14,
+        padding: '14px 20px',
+        marginBottom: 22,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 14,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div style={{ fontSize: 14, color: 'rgba(240,242,245,0.75)' }}>
+        {urgent ? (
+          <>
+            Trial ends in{' '}
+            <strong style={{ color: C.ACCENT }}>
+              {daysLeft} day{daysLeft !== 1 ? 's' : ''}
+            </strong>{' '}
+            — upgrade to keep access.
+          </>
+        ) : (
+          <>
+            You're on a free trial. <strong style={{ color: C.TEXT }}>{daysLeft} days</strong> remaining.
+          </>
+        )}
+      </div>
+      <button
+        onClick={onUpgrade}
+        style={{
+          background: urgent ? C.ACCENT : 'rgba(255,255,255,0.08)',
+          color: urgent ? C.BG : C.TEXT,
+          border: 'none',
+          borderRadius: 100,
+          padding: '9px 20px',
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: 'pointer',
+          fontFamily: '"DM Sans",system-ui,sans-serif',
+        }}
+      >
+        {urgent ? 'Upgrade now' : 'View plans'}
+      </button>
     </div>
   );
 }
 
-function SkeletonCard() {
+function ExpiredState() {
   return (
-    <div style={{
-      padding: '20px',
-      borderRadius: '12px',
-      background: COLORS.ELEVATED,
-      border: `1px solid ${COLORS.BORDER}`,
-      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-    }}>
-      <div style={{ height: '24px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', marginBottom: '12px' }} />
-      <div style={{ height: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', width: '60%' }} />
-      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: C.BG,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: '"DM Sans",system-ui,sans-serif',
+      }}
+    >
+      <div style={{ maxWidth: 440, width: '100%', padding: '48px 32px', textAlign: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            marginBottom: 36,
+          }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              background: C.ACCENT,
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          </div>
+          <span style={{ fontSize: 18, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.03em' }}>Squarespell</span>
+        </div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.TEXT, letterSpacing: '-0.04em', marginBottom: 12 }}>
+          Your free trial has ended
+        </h1>
+        <p
+          style={{
+            fontSize: 15,
+            color: 'rgba(240,242,245,0.5)',
+            lineHeight: 1.6,
+            marginBottom: 32,
+          }}
+        >
+          Upgrade to keep access to your quizzes, leads, and analytics. Your data is safe.
+        </p>
+        <Link
+          href="/pricing"
+          style={{
+            display: 'block',
+            padding: 16,
+            background: C.ACCENT,
+            borderRadius: 12,
+            color: C.BG,
+            textDecoration: 'none',
+            fontSize: 15,
+            fontWeight: 700,
+          }}
+        >
+          View plans
+        </Link>
+      </div>
     </div>
   );
 }
 
 function EmbedModal({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const embedCode = `<script src="https://app.squarespell.com/embed.js" data-quiz="${slug}"><\/script>`;
-
+  const embedCode = `<script src="https://app.squarespell.com/embed.js" data-quiz="${slug}"></script>`;
   const handleCopy = () => {
     navigator.clipboard.writeText(embedCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0,0,0,0.6)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 50,
-      fontFamily: '"DM Sans",system-ui,sans-serif',
-    }}>
-      <div style={{
-        background: COLORS.ELEVATED,
-        border: `1px solid ${COLORS.BORDER}`,
-        borderRadius: '12px',
-        padding: '32px',
-        maxWidth: '500px',
-        width: '90%',
-      }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 700, color: COLORS.TEXT }}>Embed this quiz</h2>
-        <p style={{ fontSize: '14px', color: COLORS.TEXT_MUTED, marginBottom: '20px' }}>Copy and paste this snippet into your website</p>
-        <div style={{
-          background: COLORS.SURFACE,
-          border: `1px solid ${COLORS.BORDER}`,
-          borderRadius: '8px',
-          padding: '14px',
-          marginBottom: '20px',
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          color: COLORS.TEXT_MUTED,
-          overflowX: 'auto',
-          wordBreak: 'break-all',
-        }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.7)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 60,
+        fontFamily: '"DM Sans",system-ui,sans-serif',
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: C.ELEVATED,
+          border: `1px solid ${C.BORDER}`,
+          borderRadius: 16,
+          padding: 32,
+          maxWidth: 520,
+          width: '90%',
+        }}
+      >
+        <h2 style={{ margin: '0 0 10px 0', fontSize: 20, fontWeight: 700, color: C.TEXT }}>Embed this quiz</h2>
+        <p style={{ fontSize: 14, color: C.TEXT_MUTED, marginBottom: 18 }}>
+          Paste this snippet into any page on your Squarespace site.
+        </p>
+        <div
+          style={{
+            background: C.SURFACE,
+            border: `1px solid ${C.BORDER}`,
+            borderRadius: 10,
+            padding: 14,
+            marginBottom: 20,
+            fontFamily: 'monospace',
+            fontSize: 12.5,
+            color: C.TEXT_MUTED,
+            overflowX: 'auto',
+            wordBreak: 'break-all',
+          }}
+        >
           {embedCode}
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={handleCopy}
-            style={{
-              flex: 1,
-              padding: '12px 24px',
-              background: COLORS.ACCENT,
-              color: COLORS.BG,
-              border: 'none',
-              borderRadius: 100,
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontFamily: '"DM Sans",system-ui,sans-serif',
-            }}
-          >
-            {copied ? 'Copied!' : 'Copy code'}
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1,
-              padding: '12px 24px',
-              background: COLORS.SURFACE,
-              color: COLORS.TEXT,
-              border: `1px solid ${COLORS.BORDER}`,
-              borderRadius: 100,
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: '"DM Sans",system-ui,sans-serif',
-            }}
-          >
-            Close
-          </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <PrimaryButton onClick={handleCopy}>{copied ? 'Copied!' : 'Copy code'}</PrimaryButton>
+          <GhostButton onClick={onClose}>Close</GhostButton>
         </div>
       </div>
     </div>
   );
 }
 
-function DashboardContent() {
-  const { getToken, isSignedIn, isLoaded } = useAuth();
+function QuizzesInner() {
   const { signOut } = useClerk();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { token, status: authStatus } = useDashboardAuth();
 
-  const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'trial' | 'active' | 'expired'>('loading');
   const [daysLeft, setDaysLeft] = useState(0);
-  const [userEmail, setUserEmail] = useState('');
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [analytics, setAnalytics] = useState<Analytics>({ views: 0, completions: 0, leads: 0, completion_rate: 0, lead_rate: 0 });
   const [loadingQuizzes, setLoadingQuizzes] = useState(false);
-  const [activeTab, setActiveTab] = useState<'quizzes' | 'analytics' | 'settings'>('quizzes');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [analytics, setAnalytics] = useState<Analytics>({
+    views: 0,
+    completions: 0,
+    leads: 0,
+    completion_rate: 0,
+    lead_rate: 0,
+  });
   const [embedSlug, setEmbedSlug] = useState<string | null>(null);
   const initRef = useRef(false);
 
+  // Claim flow + plan fetch — runs once when token becomes available
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.replace('/sign-in');
-    }
-  }, [isLoaded, isSignedIn, router]);
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn || initRef.current) return;
+    if (!token || initRef.current) return;
     initRef.current = true;
-
     let cancelled = false;
 
-    async function init() {
-      let retrievedToken: string | null = null;
-      let attempts = 0;
-
-      while (!retrievedToken && attempts < 8 && !cancelled) {
-        attempts++;
-        try {
-          retrievedToken = await getToken();
-        } catch {}
-        if (!retrievedToken) {
-          await new Promise(r => setTimeout(r, 1500));
-        }
-      }
-
-      if (cancelled || !retrievedToken) {
-        if (!cancelled) {
-          const reloadCount = parseInt(sessionStorage.getItem('sq_reload_count') || '0');
-          if (reloadCount < 2) {
-            sessionStorage.setItem('sq_reload_count', String(reloadCount + 1));
-            await new Promise(r => setTimeout(r, 1000));
-            window.location.reload();
-          }
-        }
-        return;
-      }
-
-      try { sessionStorage.removeItem('sq_reload_count'); } catch {}
-      setToken(retrievedToken);
-
+    (async () => {
+      // --- 1) Claim flow ---
       let quizClaimed = false;
       let claimedQuizId = '';
       try {
-        let claimToken = searchParams.get('claim') || '';
+        let claimToken = searchParams?.get('claim') || '';
         if (!claimToken) claimToken = getCookie('sq_claim');
         if (!claimToken) claimToken = sessionStorage.getItem('sq_claim_token') || '';
 
-        // Always read full preview payload as a fallback in case cache is gone on the backend
         let previewPayload: any = null;
         try {
           const raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
@@ -266,10 +327,12 @@ function DashboardContent() {
         } catch {}
 
         if (claimToken || previewPayload) {
-          console.log('[Squarespell] Attempting claim-quiz', { hasToken: !!claimToken, hasPayload: !!previewPayload });
           const claimRes = await fetch(`${API}/api/claim-quiz`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${retrievedToken}` },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({
               claim_token: claimToken,
               quiz: previewPayload?.quiz,
@@ -278,19 +341,19 @@ function DashboardContent() {
             }),
           });
           const claimData = await claimRes.json().catch(() => ({}));
-          console.log('[Squarespell] Claim response', claimRes.status, claimData);
           if (claimRes.ok && claimData.claimed) {
             quizClaimed = true;
             claimedQuizId = claimData.quiz_id || '';
           } else if (previewPayload) {
-            // Last-ditch fallback: save-preview endpoint
             const saveRes = await fetch(`${API}/api/save-preview`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${retrievedToken}` },
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
               body: JSON.stringify({ quiz: previewPayload.quiz, brand: previewPayload.brand, url: previewPayload.url }),
             });
             const saveData = await saveRes.json().catch(() => ({}));
-            console.log('[Squarespell] Save-preview response', saveRes.status, saveData);
             if (saveRes.ok && saveData.saved) {
               quizClaimed = true;
               claimedQuizId = saveData.quiz_id || '';
@@ -298,55 +361,49 @@ function DashboardContent() {
           }
 
           clearCookie('sq_claim');
-          try { sessionStorage.removeItem('sq_claim_token'); } catch {}
-          try { localStorage.removeItem('squarespell_preview'); sessionStorage.removeItem('squarespell_preview'); } catch {}
+          try {
+            sessionStorage.removeItem('sq_claim_token');
+          } catch {}
+          try {
+            localStorage.removeItem('squarespell_preview');
+            sessionStorage.removeItem('squarespell_preview');
+          } catch {}
         }
       } catch (e) {
         console.error('[Squarespell] Claim/save failed:', e);
       }
 
-      if (quizClaimed) {
-        // Stage 6: route the user straight into the editor for publishing.
-        if (claimedQuizId) {
-          router.replace(`/dashboard/${claimedQuizId}?justClaimed=1`);
-          return;
-        }
-        await new Promise(r => setTimeout(r, 1500));
+      if (quizClaimed && claimedQuizId) {
+        router.replace(`/dashboard/${claimedQuizId}?justClaimed=1`);
+        return;
       }
 
+      // --- 2) Plan / trial state ---
       for (let i = 0; i < 3 && !cancelled; i++) {
         try {
           const ctrl = new AbortController();
           const timeout = setTimeout(() => ctrl.abort(), 15000);
           const res = await fetch(`${API}/api/user/plan`, {
-            headers: { Authorization: `Bearer ${retrievedToken}` },
+            headers: { Authorization: `Bearer ${token}` },
             signal: ctrl.signal,
           });
           clearTimeout(timeout);
-
           if (!res.ok) throw new Error(`${res.status}`);
           const data: UserPlan = await res.json();
           if (cancelled) return;
 
-          setUserEmail(data.email);
-          const plan = data.plan;
           const trialEnds = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
           const now = new Date();
-
-          if (plan !== 'trial') {
-            setStatus('active');
-          } else if (trialEnds && now > trialEnds) {
-            setStatus('expired');
-          } else {
+          if (data.plan !== 'trial') setStatus('active');
+          else if (trialEnds && now > trialEnds) setStatus('expired');
+          else {
             const days = trialEnds ? Math.ceil((trialEnds.getTime() - now.getTime()) / 86400000) : 7;
             setDaysLeft(Math.max(days, 0));
             setStatus('trial');
           }
           return;
         } catch {
-          if (i < 2) {
-            await new Promise(r => setTimeout(r, 3000));
-          }
+          if (i < 2) await new Promise((r) => setTimeout(r, 2500));
         }
       }
 
@@ -354,626 +411,242 @@ function DashboardContent() {
         setStatus('trial');
         setDaysLeft(7);
       }
-    }
+    })();
 
-    init();
-    return () => { cancelled = true; };
-  }, [isLoaded, isSignedIn, getToken, searchParams]);
+    return () => {
+      cancelled = true;
+    };
+  }, [token, router, searchParams]);
 
+  // Fetch quizzes + rollup analytics
   useEffect(() => {
-    if (!token || status === 'expired' || status === 'loading') return;
-
-    setLoadingQuizzes(true);
+    if (!token || status === 'loading' || status === 'expired') return;
     let cancelled = false;
+    setLoadingQuizzes(true);
 
-    async function fetchData() {
+    (async () => {
       try {
-        const ctrl = new AbortController();
-        const timeout = setTimeout(() => ctrl.abort(), 15000);
-
-        const quizzesRes = await fetch(`${API}/api/quizzes`, {
+        const res = await fetch(`${API}/api/quizzes`, {
           headers: { Authorization: `Bearer ${token}` },
-          signal: ctrl.signal,
         });
-        clearTimeout(timeout);
-
-        if (!quizzesRes.ok) throw new Error('Failed to fetch quizzes');
-        const quizzesData: Quiz[] = await quizzesRes.json();
-
+        if (!res.ok) throw new Error('Failed to fetch quizzes');
+        const data: Quiz[] = await res.json();
         if (cancelled) return;
-        setQuizzes(quizzesData);
+        setQuizzes(data);
 
-        if (quizzesData.length > 0) {
+        if (data.length > 0) {
           let totalViews = 0;
           let totalLeads = 0;
           let totalCompletions = 0;
-
-          for (const quiz of quizzesData) {
+          for (const quiz of data) {
             try {
-              const analyticsRes = await fetch(`${API}/api/analytics/${quiz.id}`, {
+              const ar = await fetch(`${API}/api/analytics/${quiz.id}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
-              if (analyticsRes.ok) {
-                const analyticsData: Analytics = await analyticsRes.json();
-                totalViews += analyticsData.views;
-                totalLeads += analyticsData.leads;
-                totalCompletions += analyticsData.completions;
+              if (ar.ok) {
+                const ad: Analytics = await ar.json();
+                totalViews += ad.views;
+                totalLeads += ad.leads;
+                totalCompletions += ad.completions;
               }
             } catch {}
           }
-
           if (!cancelled) {
-            const completionRate = totalViews > 0 ? (totalCompletions / totalViews) * 100 : 0;
             setAnalytics({
               views: totalViews,
               completions: totalCompletions,
               leads: totalLeads,
-              completion_rate: completionRate,
+              completion_rate: totalViews > 0 ? (totalCompletions / totalViews) * 100 : 0,
               lead_rate: totalViews > 0 ? (totalLeads / totalViews) * 100 : 0,
             });
           }
         }
       } catch (e) {
-        console.error('Error fetching data:', e);
+        console.error('Error fetching quizzes:', e);
       } finally {
         if (!cancelled) setLoadingQuizzes(false);
       }
-    }
+    })();
 
-    fetchData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [token, status]);
 
-  if (status === 'loading') {
+  if (authStatus === 'loading' || status === 'loading') {
     return (
-      <div style={{ background: COLORS.BG, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', fontFamily: '"DM Sans",system-ui,sans-serif' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-          <div style={{ width: '32px', height: '32px', background: COLORS.ACCENT, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.03em' }}>Squarespell</span>
-        </div>
-        <LoadingSpinner />
-      </div>
+      <DashboardShell title="Quizzes">
+        <PageLoading />
+      </DashboardShell>
     );
   }
 
   if (status === 'expired') {
-    return (
-      <div style={{ minHeight: '100vh', background: COLORS.BG, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans",system-ui,sans-serif' }}>
-        <div style={{ maxWidth: '440px', width: '100%', padding: '48px 32px', textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '40px' }}>
-            <div style={{ width: '32px', height: '32px', background: COLORS.ACCENT, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COLORS.BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-            </div>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.03em' }}>Squarespell</span>
-          </div>
-          <h1 style={{ fontSize: '26px', fontWeight: 800, color: COLORS.TEXT, letterSpacing: '-0.04em', marginBottom: '12px' }}>Your free trial has ended</h1>
-          <p style={{ fontSize: '15px', color: 'rgba(240,242,245,0.5)', lineHeight: 1.6, marginBottom: '36px' }}>Upgrade to keep access to your quizzes, leads, and analytics. Your data is safe.</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '32px' }}>
-            <a href="/pricing" style={{ display: 'block', padding: '16px', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: COLORS.TEXT, textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>Starter · $19/mo</a>
-            <a href="/pricing" style={{ display: 'block', padding: '16px', background: COLORS.ACCENT, border: 'none', borderRadius: '12px', color: COLORS.BG, textDecoration: 'none', fontSize: '15px', fontWeight: 700 }}>Pro · $39/mo · Recommended</a>
-            <a href="/pricing" style={{ display: 'block', padding: '16px', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: COLORS.TEXT, textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>Agency · $79/mo</a>
-          </div>
-          <p style={{ fontSize: '13px', color: 'rgba(240,242,245,0.25)' }}>Questions? <a href="mailto:info@squarespell.com" style={{ color: 'rgba(240,242,245,0.4)', textDecoration: 'none' }}>info@squarespell.com</a></p>
-        </div>
-      </div>
-    );
+    return <ExpiredState />;
   }
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
   return (
-    <div style={{ background: COLORS.BG, minHeight: '100vh', display: 'flex', fontFamily: '"DM Sans",system-ui,sans-serif' }}>
+    <DashboardShell
+      title="Quizzes"
+      topbarRight={<PrimaryButton href="/try">+ New quiz</PrimaryButton>}
+    >
       {embedSlug && <EmbedModal slug={embedSlug} onClose={() => setEmbedSlug(null)} />}
 
-      <div style={{
-        width: isMobile ? (sidebarOpen ? '100%' : '0') : '240px',
-        background: COLORS.SURFACE,
-        borderRight: `1px solid ${COLORS.BORDER}`,
-        display: 'flex',
-        flexDirection: 'column',
-        position: isMobile ? 'absolute' : 'relative',
-        height: '100vh',
-        zIndex: sidebarOpen ? 40 : 0,
-        transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}>
-        <div style={{ padding: '20px 16px', borderBottom: `1px solid ${COLORS.BORDER}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '28px', height: '28px', background: COLORS.ACCENT, borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={COLORS.BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-            </div>
-            <span style={{ fontSize: '16px', fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.02em' }}>Squarespell</span>
-          </div>
-        </div>
+      {status === 'trial' && <TrialBanner daysLeft={daysLeft} onUpgrade={() => router.push('/pricing')} />}
 
-        <nav style={{ flex: 1, padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {['quizzes', 'analytics', 'settings'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => { setActiveTab(tab as any); if (isMobile) setSidebarOpen(false); }}
-              style={{
-                padding: '12px 16px',
-                background: activeTab === tab ? 'rgba(210,255,29,0.1)' : 'transparent',
-                color: activeTab === tab ? COLORS.ACCENT : COLORS.TEXT_MUTED,
-                border: 'none',
-                borderLeft: activeTab === tab ? `3px solid ${COLORS.ACCENT}` : '3px solid transparent',
-                fontSize: '14px',
-                fontWeight: activeTab === tab ? 700 : 600,
-                cursor: 'pointer',
-                fontFamily: '"DM Sans",system-ui,sans-serif',
-                textAlign: 'left',
-                transition: 'all 0.2s ease',
-                textTransform: 'capitalize',
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </nav>
+      <PageHeader
+        title="Your quizzes"
+        subtitle="Create and manage your AI-powered quiz funnels"
+      />
 
-        <div style={{
-          padding: '16px',
-          borderTop: `1px solid ${COLORS.BORDER}`,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}>
-          <div style={{
-            padding: '12px',
-            background: COLORS.ELEVATED,
-            borderRadius: '8px',
-            border: `1px solid ${COLORS.BORDER}`,
-          }}>
-            <p style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Account</p>
-            <p style={{ margin: 0, fontSize: '13px', color: COLORS.TEXT, wordBreak: 'break-word' }}>{userEmail}</p>
-          </div>
-          <button
-            onClick={() => signOut()}
-            style={{
-              padding: '10px 16px',
-              background: 'transparent',
-              color: COLORS.TEXT_MUTED,
-              border: `1px solid ${COLORS.BORDER}`,
-              borderRadius: 100,
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: '"DM Sans",system-ui,sans-serif',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(210,255,29,0.08)';
-              e.currentTarget.style.color = COLORS.ACCENT;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = COLORS.TEXT_MUTED;
-            }}
-          >
-            Sign out
-          </button>
-        </div>
+      {/* Stats row */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 14,
+          marginBottom: 28,
+        }}
+      >
+        <StatCard label="Total views" value={formatNumber(analytics.views)} />
+        <StatCard label="Total leads" value={formatNumber(analytics.leads)} />
+        <StatCard label="Completion rate" value={`${analytics.completion_rate.toFixed(1)}%`} accent />
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {!isMobile && <div style={{ height: '0' }} />}
-        {isMobile && (
-          <div style={{
-            padding: '12px 16px',
-            background: COLORS.ELEVATED,
-            borderBottom: `1px solid ${COLORS.BORDER}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <span style={{ fontSize: '16px', fontWeight: 700, color: COLORS.TEXT, textTransform: 'capitalize' }}>{activeTab}</span>
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: COLORS.TEXT,
-                cursor: 'pointer',
-                fontSize: '24px',
-                padding: '0',
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={COLORS.TEXT} strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-            </button>
-          </div>
-        )}
-
-        {status === 'trial' && (
-          <div style={{
-            background: daysLeft <= 3 ? 'rgba(210,255,29,0.06)' : COLORS.ELEVATED,
-            borderBottom: `1px solid ${daysLeft <= 3 ? 'rgba(210,255,29,0.15)' : COLORS.BORDER}`,
-            padding: '12px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}>
-            <span style={{ fontSize: '14px', color: 'rgba(240,242,245,0.7)' }}>
-              Free trial {daysLeft <= 3 ? <span style={{ color: COLORS.ACCENT, fontWeight: 700 }}>{daysLeft} day{daysLeft !== 1 ? 's' : ''} left</span> : <><strong style={{ color: COLORS.TEXT }}>{daysLeft} days</strong> remaining</>}
-            </span>
-            <button
-              onClick={() => router.push('/pricing')}
-              style={{
-                background: daysLeft <= 3 ? COLORS.ACCENT : 'rgba(255,255,255,0.08)',
-                color: daysLeft <= 3 ? COLORS.BG : COLORS.TEXT,
-                border: 'none',
-                borderRadius: 100,
-                padding: '8px 20px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                fontFamily: '"DM Sans",system-ui,sans-serif',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {daysLeft <= 3 ? 'Upgrade now' : 'View plans'}
-            </button>
-          </div>
-        )}
-
-        <div style={{ flex: 1, overflow: 'auto', padding: '32px' }}>
-          {activeTab === 'quizzes' && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+      {loadingQuizzes ? (
+        <PageLoading />
+      ) : quizzes.length === 0 ? (
+        <EmptyState
+          icon={
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          }
+          title="Create your first quiz"
+          body="Get started with an AI-built quiz funnel that captures qualified leads in minutes."
+          action={<PrimaryButton href="/try">Build your first quiz</PrimaryButton>}
+        />
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {quizzes.map((quiz) => (
+            <Card key={quiz.id} padding={20}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <h1 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 800, color: COLORS.TEXT, letterSpacing: '-0.02em' }}>Quizzes</h1>
-                  <p style={{ margin: 0, fontSize: '14px', color: COLORS.TEXT_MUTED }}>Create and manage your AI quizzes</p>
-                </div>
-                <a
-                  href="/try"
-                  style={{
-                    padding: '12px 28px',
-                    background: COLORS.ACCENT,
-                    color: COLORS.BG,
-                    border: 'none',
-                    borderRadius: 100,
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    fontFamily: '"DM Sans",system-ui,sans-serif',
-                    display: 'inline-block',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                >
-                  Create quiz
-                </a>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '40px' }}>
-                {loadingQuizzes ? (
-                  <>
-                    <SkeletonCard />
-                    <SkeletonCard />
-                    <SkeletonCard />
-                  </>
-                ) : (
-                  <>
-                    <div style={{ padding: '20px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Total Views</p>
-                      <p style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: COLORS.TEXT }}>{formatNumber(analytics.views)}</p>
-                    </div>
-                    <div style={{ padding: '20px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Total Leads</p>
-                      <p style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: COLORS.TEXT }}>{formatNumber(analytics.leads)}</p>
-                    </div>
-                    <div style={{ padding: '20px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Conv. Rate</p>
-                      <p style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: COLORS.TEXT }}>{analytics.completion_rate.toFixed(1)}%</p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {quizzes.length === 0 && !loadingQuizzes && (
-                <div style={{
-                  padding: '60px 32px',
-                  background: COLORS.ELEVATED,
-                  borderRadius: '16px',
-                  border: `1px solid ${COLORS.BORDER}`,
-                  textAlign: 'center',
-                }}>
-                  <div style={{ width: '56px', height: '56px', background: 'rgba(210,255,29,0.08)', border: `1px solid rgba(210,255,29,0.15)`, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={COLORS.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-                  </div>
-                  <h2 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 700, color: COLORS.TEXT }}>Create your first quiz</h2>
-                  <p style={{ margin: '0 0 32px 0', fontSize: '15px', color: COLORS.TEXT_MUTED, maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>Get started building AI-powered quizzes that capture leads and engage your audience.</p>
-                  <a
-                    href="/try"
+                  <h3
                     style={{
-                      padding: '12px 28px',
-                      background: COLORS.ACCENT,
-                      color: COLORS.BG,
-                      border: 'none',
-                      borderRadius: 100,
-                      fontSize: '14px',
+                      margin: '0 0 10px 0',
+                      fontSize: 16,
                       fontWeight: 700,
-                      cursor: 'pointer',
-                      textDecoration: 'none',
-                      fontFamily: '"DM Sans",system-ui,sans-serif',
-                      display: 'inline-block',
+                      color: C.TEXT,
+                      lineHeight: 1.25,
                     }}
                   >
-                    Build your first quiz
-                  </a>
-                </div>
-              )}
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                {quizzes.map((quiz) => (
-                  <div
-                    key={quiz.id}
-                    style={{
-                      padding: '20px',
-                      borderRadius: '12px',
-                      background: COLORS.ELEVATED,
-                      border: `1px solid ${COLORS.BORDER}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '16px',
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = COLORS.ACCENT;
-                      e.currentTarget.style.background = 'rgba(210,255,29,0.02)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = COLORS.BORDER;
-                      e.currentTarget.style.background = COLORS.ELEVATED;
-                    }}
-                  >
-                    <div>
-                      <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 700, color: COLORS.TEXT }}>{quiz.title}</h3>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <span style={{
-                          padding: '4px 12px',
-                          borderRadius: 100,
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          background: quiz.status === 'live' ? 'rgba(76,175,80,0.15)' : 'rgba(156,163,175,0.15)',
-                          color: quiz.status === 'live' ? '#4cb150' : '#9ca3af',
-                        }}>
-                          {quiz.status}
-                        </span>
-                        <span style={{ fontSize: '12px', color: COLORS.TEXT_MUTED }}>{formatDate(quiz.created_at)}</span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                      <div style={{ padding: '12px', background: COLORS.SURFACE, borderRadius: '8px', border: `1px solid ${COLORS.BORDER}` }}>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Views</p>
-                        <p style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: COLORS.TEXT }}>{formatNumber(quiz.view_count)}</p>
-                      </div>
-                      <div style={{ padding: '12px', background: COLORS.SURFACE, borderRadius: '8px', border: `1px solid ${COLORS.BORDER}` }}>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Leads</p>
-                        <p style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: COLORS.TEXT }}>{formatNumber(quiz.lead_count)}</p>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                      <a
-                        href={`/dashboard/${quiz.id}`}
-                        style={{
-                          padding: '10px 16px',
-                          background: COLORS.SURFACE,
-                          color: COLORS.TEXT,
-                          border: `1px solid ${COLORS.BORDER}`,
-                          borderRadius: 100,
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          textDecoration: 'none',
-                          textAlign: 'center',
-                          fontFamily: '"DM Sans",system-ui,sans-serif',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(210,255,29,0.1)';
-                          e.currentTarget.style.borderColor = COLORS.ACCENT;
-                          e.currentTarget.style.color = COLORS.ACCENT;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = COLORS.SURFACE;
-                          e.currentTarget.style.borderColor = COLORS.BORDER;
-                          e.currentTarget.style.color = COLORS.TEXT;
-                        }}
-                      >
-                        Edit
-                      </a>
-                      <a
-                        href={`/quiz/${quiz.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          padding: '10px 16px',
-                          background: COLORS.SURFACE,
-                          color: COLORS.TEXT,
-                          border: `1px solid ${COLORS.BORDER}`,
-                          borderRadius: 100,
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          textDecoration: 'none',
-                          textAlign: 'center',
-                          fontFamily: '"DM Sans",system-ui,sans-serif',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(210,255,29,0.1)';
-                          e.currentTarget.style.borderColor = COLORS.ACCENT;
-                          e.currentTarget.style.color = COLORS.ACCENT;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = COLORS.SURFACE;
-                          e.currentTarget.style.borderColor = COLORS.BORDER;
-                          e.currentTarget.style.color = COLORS.TEXT;
-                        }}
-                      >
-                        View live
-                      </a>
-                      <button
-                        onClick={() => setEmbedSlug(quiz.slug)}
-                        style={{
-                          padding: '10px 16px',
-                          background: COLORS.SURFACE,
-                          color: COLORS.TEXT,
-                          border: `1px solid ${COLORS.BORDER}`,
-                          borderRadius: 100,
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontFamily: '"DM Sans",system-ui,sans-serif',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(210,255,29,0.1)';
-                          e.currentTarget.style.borderColor = COLORS.ACCENT;
-                          e.currentTarget.style.color = COLORS.ACCENT;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = COLORS.SURFACE;
-                          e.currentTarget.style.borderColor = COLORS.BORDER;
-                          e.currentTarget.style.color = COLORS.TEXT;
-                        }}
-                      >
-                        Embed
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!token || !confirm('Delete this quiz? This action cannot be undone.')) return;
-                          try {
-                            const res = await fetch(`${API}/api/quizzes/${quiz.id}`, {
-                              method: 'DELETE',
-                              headers: { Authorization: `Bearer ${token}` },
-                            });
-                            if (res.ok) {
-                              setQuizzes(quizzes.filter(q => q.id !== quiz.id));
-                            }
-                          } catch (e) {
-                            console.error('Delete failed:', e);
-                          }
-                        }}
-                        style={{
-                          padding: '10px 16px',
-                          background: COLORS.SURFACE,
-                          color: '#ef4444',
-                          border: `1px solid ${COLORS.BORDER}`,
-                          borderRadius: 100,
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontFamily: '"DM Sans",system-ui,sans-serif',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(239,68,68,0.1)';
-                          e.currentTarget.style.borderColor = '#ef4444';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = COLORS.SURFACE;
-                          e.currentTarget.style.borderColor = COLORS.BORDER;
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    {quiz.title}
+                  </h3>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Pill variant={quiz.status === 'live' ? 'live' : 'draft'}>{quiz.status}</Pill>
+                    <span style={{ fontSize: 12, color: C.TEXT_MUTED }}>{formatDate(quiz.created_at)}</span>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
+                </div>
 
-          {activeTab === 'analytics' && (
-            <div>
-              <h1 style={{ margin: '0 0 24px 0', fontSize: '32px', fontWeight: 800, color: COLORS.TEXT, letterSpacing: '-0.02em' }}>Analytics</h1>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                <div style={{ padding: '24px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Total Views</p>
-                  <p style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: COLORS.TEXT }}>{formatNumber(analytics.views)}</p>
-                </div>
-                <div style={{ padding: '24px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Total Completions</p>
-                  <p style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: COLORS.TEXT }}>{formatNumber(analytics.completions)}</p>
-                </div>
-                <div style={{ padding: '24px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Total Leads</p>
-                  <p style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: COLORS.TEXT }}>{formatNumber(analytics.leads)}</p>
-                </div>
-                <div style={{ padding: '24px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Completion Rate</p>
-                  <p style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: COLORS.ACCENT }}>{analytics.completion_rate.toFixed(1)}%</p>
-                </div>
-                <div style={{ padding: '24px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '12px', fontWeight: 700, color: COLORS.TEXT_MUTED, textTransform: 'uppercase' }}>Lead Rate</p>
-                  <p style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: COLORS.ACCENT }}>{analytics.lead_rate.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'settings' && (
-            <div>
-              <h1 style={{ margin: '0 0 24px 0', fontSize: '32px', fontWeight: 800, color: COLORS.TEXT, letterSpacing: '-0.02em' }}>Settings</h1>
-              <div style={{ maxWidth: '500px' }}>
-                <div style={{ padding: '20px', borderRadius: '12px', background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}` }}>
-                  <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 700, color: COLORS.TEXT }}>Account</h3>
-                  <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: COLORS.TEXT_MUTED }}>Email: {userEmail}</p>
-                  <button
-                    onClick={() => signOut()}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div
                     style={{
-                      padding: '10px 20px',
-                      background: '#ef4444',
-                      color: 'white',
-                      border: 'none',
+                      padding: 12,
+                      background: C.SURFACE,
+                      borderRadius: 10,
+                      border: `1px solid ${C.BORDER}`,
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                      Views
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT }}>{formatNumber(quiz.view_count)}</div>
+                  </div>
+                  <div
+                    style={{
+                      padding: 12,
+                      background: C.SURFACE,
+                      borderRadius: 10,
+                      border: `1px solid ${C.BORDER}`,
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                      Leads
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT }}>{formatNumber(quiz.lead_count)}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                  <GhostButton href={`/dashboard/${quiz.id}`}>Edit</GhostButton>
+                  <GhostButton href={`/quiz/${quiz.slug}`} target="_blank">
+                    View live
+                  </GhostButton>
+                  <GhostButton onClick={() => setEmbedSlug(quiz.slug)}>Embed</GhostButton>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!token || !confirm('Delete this quiz? This action cannot be undone.')) return;
+                      try {
+                        const res = await fetch(`${API}/api/quizzes/${quiz.id}`, {
+                          method: 'DELETE',
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        if (res.ok) setQuizzes(quizzes.filter((q) => q.id !== quiz.id));
+                      } catch (e) {
+                        console.error('Delete failed:', e);
+                      }
+                    }}
+                    style={{
+                      padding: '11px 20px',
+                      background: 'transparent',
+                      color: '#ef4444',
+                      border: `1px solid ${C.BORDER}`,
                       borderRadius: 100,
-                      fontSize: '14px',
+                      fontSize: 13,
                       fontWeight: 600,
                       cursor: 'pointer',
                       fontFamily: '"DM Sans",system-ui,sans-serif',
-                      transition: 'all 0.2s ease',
+                      transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#dc2626';
+                      e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
+                      e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#ef4444';
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.borderColor = C.BORDER;
                     }}
                   >
-                    Sign out
+                    Delete
                   </button>
                 </div>
               </div>
-            </div>
-          )}
+            </Card>
+          ))}
         </div>
-      </div>
-    </div>
+      )}
+    </DashboardShell>
   );
 }
 
-export default function Dashboard() {
+export default function DashboardPage() {
   return (
-    <Suspense fallback={
-      <div style={{ background: COLORS.BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans",system-ui,sans-serif' }}>
-        <LoadingSpinner />
-      </div>
-    }>
-      <DashboardContent />
+    <Suspense
+      fallback={
+        <DashboardShell title="Quizzes">
+          <PageLoading />
+        </DashboardShell>
+      }
+    >
+      <QuizzesInner />
     </Suspense>
   );
 }
