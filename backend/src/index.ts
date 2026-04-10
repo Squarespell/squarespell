@@ -13,7 +13,6 @@ app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/clerk/webhook', express.raw({ type: 'application/json' }));
 // Allow public endpoints from any origin (rate-limited, no auth)
 app.use('/api/preview-generate', cors());
-app.use('/api/claim-quiz', cors());
 app.use('/api/quiz', cors());
 // Main CORS for authenticated endpoints
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));

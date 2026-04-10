@@ -14,7 +14,6 @@ function SignUpContent() {
   const searchParams = useSearchParams()
   const fromTry = searchParams.get('from') === 'try'
   const tryUrl = searchParams.get('url') || ''
-  const claimParam = searchParams.get('claim') || ''
 
   const [step, setStep] = useState<'form' | 'verify'>('form')
   const [email, setEmail] = useState('')
@@ -24,10 +23,7 @@ function SignUpContent() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  // Pass claim token through to dashboard so it survives OAuth redirect
-  const destUrl = fromTry
-    ? `/dashboard?new=true${claimParam ? `&claim=${claimParam}` : ''}`
-    : '/dashboard'
+  const destUrl = fromTry ? '/dashboard?new=true' : '/dashboard'
 
   useEffect(() => {
     if (isSignedIn) router.replace(destUrl)
