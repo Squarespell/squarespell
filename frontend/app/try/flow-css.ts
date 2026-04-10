@@ -458,70 +458,153 @@ export const FLOW_CSS = `
     width: 8px; height: 8px; background: var(--success);
     border-radius: 50%; animation: livepulse 2s ease-in-out infinite;
   }
-  .s4-top-right { display: flex; align-items: center; gap: 12px; }
+  .s4-top-right { display: flex; align-items: center; gap: 14px; }
+
+  /* Premium segmented device switch with lit active state + subtle inset */
   .s4-device-switch {
-    display: inline-flex; background: var(--surface);
-    border: 1px solid var(--border); border-radius: 12px;
-    padding: 4px; gap: 2px;
+    display: inline-flex;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.18));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 5px;
+    gap: 2px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      inset 0 0 0 1px rgba(0,0,0,0.25),
+      0 1px 2px rgba(0,0,0,0.3);
   }
   .s4-device-btn {
-    width: 38px; height: 32px; border-radius: 8px;
+    position: relative;
+    width: 42px; height: 34px; border-radius: 10px;
     color: var(--text-muted); display: flex;
     align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.2s var(--ease);
+    cursor: pointer; transition: all 0.22s var(--ease);
+    background: transparent; border: 0;
   }
-  .s4-device-btn:hover { color: var(--text); }
-  .s4-device-btn.active { background: var(--accent); color: var(--bg); }
-  .s4-device-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .s4-device-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .s4-device-btn.active {
+    background: linear-gradient(180deg, #e8ff4a, var(--accent) 70%);
+    color: #0a0f05;
+    box-shadow:
+      0 0 0 1px rgba(210,255,29,0.4),
+      0 6px 14px -4px rgba(210,255,29,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.55);
+  }
+  .s4-device-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; position: relative; z-index: 1; }
+
+  .s4-publish { padding: 10px 20px; }
+  .s4-exit { padding: 10px 16px; }
 
   .s4-canvas {
     display: flex; justify-content: center;
-    padding: 40px 24px 80px;
+    padding: 48px 28px 100px;
     min-height: calc(100vh - 90px);
     background:
-      radial-gradient(circle at 50% 0%, rgba(210,255,29,0.04), transparent 60%),
+      radial-gradient(ellipse at 50% -10%, rgba(210,255,29,0.07), transparent 55%),
+      radial-gradient(ellipse at 50% 110%, rgba(210,255,29,0.025), transparent 50%),
       var(--bg);
   }
+
+  /* Premium device frame: tiered bezels, inner rings, and a soft ground shadow.
+     Uses two nested radii so the OS chrome sits inside a visible bezel. */
   .s4-frame {
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-    overflow: hidden;
-    transition: width 0.4s var(--ease), max-width 0.4s var(--ease);
+    position: relative;
+    background:
+      linear-gradient(180deg, #1e2415 0%, #141a08 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 10px;
+    overflow: visible;
+    transition: max-width 0.45s var(--ease), padding 0.35s var(--ease), border-radius 0.35s var(--ease);
     width: 100%;
+    box-shadow:
+      /* outer shadow */
+      0 50px 120px -20px rgba(0,0,0,0.65),
+      0 20px 40px -10px rgba(0,0,0,0.45),
+      /* inner highlight */
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      inset 0 -1px 0 rgba(0,0,0,0.4);
+  }
+  .s4-frame::before {
+    /* soft reflected "screen glow" under the frame */
+    content: '';
+    position: absolute;
+    left: 8%; right: 8%; bottom: -28px; height: 30px;
+    background: radial-gradient(ellipse at center, rgba(210,255,29,0.18), transparent 70%);
+    filter: blur(14px);
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .s4-frame-inner {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      inset 0 0 0 2px rgba(0,0,0,0.5);
+    background: var(--bg-2);
   }
   .s4-frame.desktop { max-width: 1180px; }
-  .s4-frame.tablet  { max-width: 820px; }
-  .s4-frame.mobile  { max-width: 400px; }
+  .s4-frame.tablet  {
+    max-width: 820px;
+    padding: 14px;
+    border-radius: 30px;
+  }
+  .s4-frame.tablet .s4-frame-inner { border-radius: 18px; }
+  .s4-frame.mobile  {
+    max-width: 390px;
+    padding: 10px 8px;
+    border-radius: 44px;
+  }
+  .s4-frame.mobile .s4-frame-inner { border-radius: 34px; }
+  .s4-frame.mobile::after {
+    /* Faux home indicator bar, iOS-style */
+    content: '';
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    bottom: 6px;
+    width: 120px; height: 4px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.35);
+    pointer-events: none;
+  }
 
   .s4-chrome {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 18px;
+    background: linear-gradient(180deg, #f7f7f8 0%, #eeeef0 100%);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03);
   }
-  .s4-dots { display: flex; gap: 6px; }
+  .s4-dots { display: flex; gap: 8px; }
   .s4-dots span {
-    width: 11px; height: 11px; border-radius: 50%;
+    width: 12px; height: 12px; border-radius: 50%;
     background: var(--border-2);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -1px 0 rgba(0,0,0,0.12),
+      0 0 0 0.5px rgba(0,0,0,0.08);
   }
-  .s4-dots span:nth-child(1) { background: #ff5f57; }
-  .s4-dots span:nth-child(2) { background: #febc2e; }
-  .s4-dots span:nth-child(3) { background: #28c840; }
+  .s4-dots span:nth-child(1) { background: radial-gradient(circle at 35% 30%, #ff8278, #ff5f57); }
+  .s4-dots span:nth-child(2) { background: radial-gradient(circle at 35% 30%, #ffd04d, #febc2e); }
+  .s4-dots span:nth-child(3) { background: radial-gradient(circle at 35% 30%, #5ddb6e, #28c840); }
   .s4-addr {
     flex: 1; display: flex; align-items: center; gap: 8px;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 100px; padding: 6px 14px;
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 12px; color: var(--text-muted);
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 100px; padding: 7px 16px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 12px; color: #666;
     overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    max-width: 460px;
+    margin: 0 auto;
   }
-  .s4-addr svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
-  .s4-addr-host { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .s4-addr svg { width: 12px; height: 12px; stroke: #3aa564; fill: none; stroke-width: 2.2; flex-shrink: 0; }
+  .s4-addr-host { color: #222; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
   .s4-chrome-right {
     display: flex; gap: 4px;
-    color: var(--text-dim);
+    color: #888;
   }
   .s4-chrome-right span {
     width: 4px; height: 4px; background: currentColor; border-radius: 50%;
