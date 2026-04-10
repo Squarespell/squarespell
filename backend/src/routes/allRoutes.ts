@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer } from '../services/claudeService';
@@ -81,6 +82,9 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
   }
 });
 
+// ── In-memory cache for preview quizzes (before user signs up) ───────────────
+const previewQuizCache = new Map<string, { quiz: any; brand: any; url: string; createdAt: number }>();
+
 // ── Public Preview Generate (no auth, rate-limited by IP) ────────────────────
 const previewRateMap = new Map<string, { count: number; resetAt: number }>();
 export const previewRouter = Router();
@@ -105,13 +109,97 @@ previewRouter.post('/preview-generate', async (req, res) => {
 
   try {
     // Step 1: Scrape brand
+    console.log(`[Preview] Starting scrape for: ${normalizedUrl}`);
     const brand = await scrapeBrand(normalizedUrl);
+    console.log(`[Preview] Scrape complete. Business summary: ${brand.business?.summary?.length || 0} chars`);
+
     // Step 2: Generate quiz with AI
     const quiz = await generateQuiz(normalizedUrl, 'general', 'Generate more leads', brand);
-    // Return both brand + quiz data (not saved to DB)
-    res.json({ brand, quiz });
+    console.log(`[Preview] Quiz generated: "${quiz.title}"`);
+
+    // Step 3: Generate a claim token and store quiz in memory cache
+    // (We can't save to DB without a user_id due to NOT NULL constraint)
+    const claimToken = crypto.randomBytes(16).toString('hex');
+    previewQuizCache.set(claimToken, {
+      quiz, brand, url: normalizedUrl,
+      createdAt: Date.now(),
+    });
+    // Clean old entries (older than 4 hours)
+    for (const [k, v] of previewQuizCache.entries()) {
+      if (Date.now() - v.createdAt > 14400000) previewQuizCache.delete(k);
+    }
+
+    console.log(`[Preview] Quiz cached with claim token: ${claimToken.slice(0, 8)}...`);
+    res.json({ brand, quiz, claim_token: claimToken });
   } catch (err: any) {
+    console.error('[Preview] Generation failed:', err);
     res.status(500).json({ error: err.message ?? 'Preview generation failed' });
+  }
+});
+
+// ── Claim a preview quiz (save from cache to DB for authenticated user) ──────
+previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { claim_token } = req.body;
+    const userId = req.user?.id;
+    if (!claim_token || !userId) return res.status(400).json({ error: 'claim_token and auth required' });
+
+    // Look up quiz in memory cache
+    const cached = previewQuizCache.get(claim_token);
+    if (!cached) {
+      console.log(`[Claim] Token not found in cache: ${claim_token.slice(0, 8)}...`);
+      return res.status(404).json({ error: 'Quiz not found or expired. Please generate a new one.' });
+    }
+
+    const { quiz, brand, url } = cached;
+
+    // Check if user already has a quiz for this URL
+    const { data: existing } = await supabase
+      .from('quizzes')
+      .select('id, slug')
+      .eq('user_id', userId)
+      .eq('website_url', url)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      previewQuizCache.delete(claim_token);
+      return res.json({ claimed: true, quiz_id: existing[0].id, slug: existing[0].slug, message: 'Quiz already exists' });
+    }
+
+    // Save to DB with user's ID
+    const slug = (brand?.site_name || 'quiz')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 30) + '-' + Math.random().toString(36).slice(2, 8);
+
+    const { data: saved, error: saveErr } = await supabase.from('quizzes').insert({
+      user_id: userId,
+      title: quiz.title || 'My Quiz',
+      slug,
+      questions: quiz.questions || [],
+      outcomes: quiz.outcomes || quiz.results || [],
+      branding: {
+        colors: brand?.colors || {},
+        font_family: brand?.font_family || 'sans-serif',
+        site_name: brand?.site_name || '',
+        favicon_url: brand?.favicon_url || '',
+      },
+      settings: quiz.settings || {},
+      website_url: url,
+      status: 'live',
+    }).select('id, slug').single();
+
+    if (saveErr) throw saveErr;
+
+    // Remove from cache
+    previewQuizCache.delete(claim_token);
+
+    console.log(`[Claim] Quiz ${saved.id} saved for user ${userId}, slug: ${saved.slug}`);
+    res.json({ claimed: true, quiz_id: saved.id, slug: saved.slug });
+  } catch (err: any) {
+    console.error('[Claim] Error:', err);
+    res.status(500).json({ error: 'Failed to claim quiz' });
   }
 });
 

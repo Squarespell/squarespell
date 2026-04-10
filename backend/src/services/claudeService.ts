@@ -16,10 +16,8 @@ function extractJSON(text: string): string {
 
 /**
  * Normalize quiz JSON from Claude into a consistent shape the frontend expects.
- * Claude sometimes uses "question" vs "text", "results" vs "outcomes", etc.
  */
 function normalizeQuiz(raw: any): any {
-  // Normalize questions
   if (raw.questions) {
     raw.questions = raw.questions.map((q: any, i: number) => ({
       id: q.id || `q${i + 1}`,
@@ -34,7 +32,6 @@ function normalizeQuiz(raw: any): any {
     }));
   }
 
-  // Normalize outcomes/results
   const outcomes = raw.outcomes || raw.results || [];
   raw.outcomes = outcomes.map((r: any, i: number) => ({
     id: r.id || `r${i + 1}`,
@@ -46,9 +43,7 @@ function normalizeQuiz(raw: any): any {
     ctaUrl: r.ctaUrl || r.cta_url || '',
   }));
 
-  // Keep results for backward compat
   raw.results = raw.outcomes;
-
   return raw;
 }
 
@@ -62,78 +57,82 @@ async function callClaude(
   const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
   const brandColorPrimary = brandData?.colors?.primary || '#000000';
 
-  const systemPrompt = `You are a world-class quiz funnel strategist. You create lead generation quizzes that convert visitors into leads for businesses.
+  console.log(`[Claude] Generating quiz for: ${siteName} (${websiteUrl})`);
+  console.log(`[Claude] Business summary available: ${businessSummary.length} chars`);
 
-STEP 1 — UNDERSTAND THE BUSINESS:
-Read ALL the website content below very carefully. Identify:
-- What specific products or services does this business sell?
-- Who is their target customer?
-- What problems do they solve?
-- What makes them different from competitors?
+  const systemPrompt = `You are an expert lead-generation quiz creator. Your job is to create quizzes that help website visitors discover which product or service from a specific business is right for them.
 
-STEP 2 — CREATE A QUIZ THAT MATCHES VISITORS TO PRODUCTS/SERVICES:
-The quiz should help visitors figure out which of this business's specific offerings is right for them.
+CRITICAL INSTRUCTIONS:
+1. You will receive scraped content from a real business website. READ IT CAREFULLY.
+2. Your quiz MUST be 100% specific to this exact business and what they sell/offer.
+3. Every question must help segment visitors based on the business's actual products, services, or solutions.
+4. Every outcome must recommend a specific product/service/solution from THIS business.
 
-ABSOLUTE RULES:
-1. Questions MUST reference the business's actual products, services, or customer pain points — NOT generic "what's your situation" questions
-2. NEVER ask about the business name, domain, or "Squarespace journey" — ask about what the VISITOR needs
-3. Each option should map to a real product/service the business offers
-4. Results MUST recommend specific products/services from this business with concrete details
-5. Quiz title should promise a personalized recommendation (e.g. "Which [specific product category] is right for your project?")
-6. Write like a knowledgeable advisor, not a generic quiz bot
-7. For the "text" field, write the actual question
-8. Respond with ONLY valid JSON. No markdown, no backticks, no explanation.`;
+BANNED CONTENT (instant failure if included):
+- "Squarespace" — NEVER mention Squarespace, website building, templates, plugins, or web design unless the business ACTUALLY sells those things
+- "journey" — do not ask "where are you in your [X] journey"
+- Generic personality quiz questions that don't relate to the business
+- Questions about the visitor's experience with the business's platform/tools
+- Questions about website design, SEO, or marketing unless the business sells those services
 
-  const userPrompt = `Create a high-converting lead generation quiz for this business.
+HOW TO CREATE A GREAT QUIZ:
+- Read the website content to identify: what they sell, who they serve, what problems they solve
+- Title should promise a personalized recommendation for the visitor (e.g., "Which [product category] fits your needs?")
+- Questions should uncover the visitor's situation, needs, budget, timeline, or preferences
+- Each answer option should map to different products/services the business offers
+- Results should name specific offerings and explain why they're the best fit
 
-WEBSITE URL: ${websiteUrl}
-BUSINESS NAME: ${siteName}
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
 
-=== WEBSITE CONTENT (READ THIS CAREFULLY) ===
-${businessSummary || `(Scraping failed — use the URL "${websiteUrl}" and name "${siteName}" to research what this business likely sells. Look at the domain name for clues. Be specific about likely products/services, not generic.)`}
-=== END WEBSITE CONTENT ===
+  const userPrompt = `Create a lead-generation quiz for this business. Read the website content below, then generate a quiz that matches visitors to this business's specific products/services.
 
-Based on the website content above, first understand what this business specifically sells/offers. Then create a quiz that:
-- Asks about the VISITOR's needs, goals, and situation (NOT about the business itself)
-- Matches visitors to specific products/services this business offers
-- Questions reference real products, services, or use cases from the website
-- Results recommend specific offerings with real details from the site
+BUSINESS: ${siteName}
+URL: ${websiteUrl}
 
-QUIZ TYPE: ${quizType}
-GOAL: ${goal}
+${'='.repeat(60)}
+WEBSITE CONTENT — READ THIS CAREFULLY:
+${'='.repeat(60)}
+${businessSummary || `Could not scrape the website. Based on the URL "${websiteUrl}" and business name "${siteName}", research what this business likely sells. Create a quiz about their probable products/services. Be specific — guess based on the domain name and business name.`}
+${'='.repeat(60)}
 
-Generate exactly 5 questions and 3 outcomes. Return ONLY this JSON:
+TASK: Based on the content above, identify what ${siteName} sells or offers. Then create a quiz that:
+1. Helps visitors figure out which of ${siteName}'s products/services is right for them
+2. Asks about the VISITOR's needs, goals, situation — NOT about the business itself
+3. Uses language and terminology from the website content
+4. Recommends specific products/services from ${siteName} in the outcomes
+
+Generate exactly 5 questions with 4 options each, and 3 outcomes. Return this JSON structure:
 {
-  "title": "Compelling quiz title",
-  "description": "One line explaining what they'll discover",
+  "title": "Which [specific product/service category from ${siteName}] is right for you?",
+  "description": "One line promising personalized recommendation",
   "questions": [
     {
       "id": "q1",
       "type": "single",
-      "text": "The actual question text that reveals visitor's situation or need?",
-      "subtitle": "Optional helpful context",
+      "text": "Question about the visitor's needs that maps to products/services?",
+      "subtitle": "Optional context",
       "options": [
-        { "id": "a", "text": "Option specific to this business", "score": 3 },
-        { "id": "b", "text": "Another option", "score": 2 },
-        { "id": "c", "text": "Third option", "score": 1 },
-        { "id": "d", "text": "Fourth option", "score": 0 }
+        { "id": "a", "text": "Option mapping to product/service A", "score": 3 },
+        { "id": "b", "text": "Option mapping to product/service B", "score": 2 },
+        { "id": "c", "text": "Option mapping to product/service C", "score": 1 },
+        { "id": "d", "text": "Option for unsure visitors", "score": 0 }
       ]
     }
   ],
   "outcomes": [
     {
       "id": "r1",
-      "title": "Result name",
-      "description": "2-3 sentences of personalized insight referencing this business's specific products/services.",
+      "title": "Specific product/service name from ${siteName}",
+      "description": "2-3 sentences explaining why this is the best fit, referencing specific features/benefits from the website.",
       "minScore": 10,
       "maxScore": 15,
-      "ctaText": "Get Started",
+      "ctaText": "Explore [product name]",
       "ctaUrl": ""
     }
   ],
   "leadGate": {
-    "headline": "Your personalized results are ready!",
-    "subtext": "Enter your email to see your recommendation",
+    "headline": "Your personalized recommendation is ready!",
+    "subtext": "Enter your email to see which ${siteName} solution fits you best",
     "buttonText": "Show my results"
   },
   "settings": {
@@ -155,11 +154,17 @@ Generate exactly 5 questions and 3 outcomes. Return ONLY this JSON:
     .map((b: any) => b.text)
     .join('');
 
+  console.log(`[Claude] Response length: ${raw.length} chars`);
+  console.log(`[Claude] First 200 chars: ${raw.slice(0, 200)}`);
+
   try {
     const parsed = JSON.parse(extractJSON(raw));
-    return normalizeQuiz(parsed);
+    const normalized = normalizeQuiz(parsed);
+    console.log(`[Claude] Quiz title: "${normalized.title}"`);
+    console.log(`[Claude] Questions: ${normalized.questions?.length}, Outcomes: ${normalized.outcomes?.length}`);
+    return normalized;
   } catch {
-    console.error('Parse failed, raw:', raw.substring(0, 300));
+    console.error('[Claude] Parse failed, raw:', raw.substring(0, 500));
     throw new Error('Failed to generate quiz. Please try again.');
   }
 }
