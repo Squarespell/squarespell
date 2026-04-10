@@ -395,6 +395,25 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   res.status(201).json({ success: true });
 });
 
+// GET /api/leads — list all leads for the authenticated user across every
+// quiz they own, joined with quiz title + slug. Used by the /dashboard/leads
+// unified inbox.
+leadsRouter.get('/leads', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const limit = Math.min(parseInt((req.query.limit as string) || '200', 10) || 200, 1000);
+    const { data, error } = await supabase
+      .from('leads')
+      .select('id, name, email, answers, outcome_id, created_at, quiz_id, quizzes(id, title, slug)')
+      .eq('user_id', req.dbUserId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ?? []);
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to load leads' });
+  }
+});
+
 // ── Integrations ─────────────────────────────────────────────────────────────
 export const integrationsRouter = Router();
 integrationsRouter.use(requireAuth, attachUser);
