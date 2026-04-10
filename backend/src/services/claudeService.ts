@@ -101,7 +101,7 @@ TASK: Based on the content above, identify what ${siteName} sells or offers. The
 3. Uses language and terminology from the website content
 4. Recommends specific products/services from ${siteName} in the outcomes
 
-Generate exactly 5 questions with 4 options each, and 3 outcomes. Return this JSON structure:
+Generate exactly 10 questions with 4 options each, and 3-5 outcomes. Return this JSON structure:
 {
   "title": "Which [specific product/service category from ${siteName}] is right for you?",
   "description": "One line promising personalized recommendation",
@@ -144,7 +144,7 @@ Generate exactly 5 questions with 4 options each, and 3 outcomes. Return this JS
 
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 4096,
+    max_tokens: 8192,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
   });

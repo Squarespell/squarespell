@@ -204,44 +204,118 @@ export async function scrapeBrand(url: string) {
       .map((s: string) => s.replace(/<\/?style[^>]*>/gi, ''))
       .join('\n');
 
-    // Try to fetch first external stylesheet
-    const sheetHref = html.match(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+\.css[^"]*)"/i)?.[1];
+    // Try to fetch up to 3 external stylesheets for better color extraction
+    const sheetHrefs: string[] = [];
+    const sheetRegex = /<link[^>]+rel="stylesheet"[^>]+href="([^"]+\.css[^"]*)"/gi;
+    let sheetMatch;
+    while ((sheetMatch = sheetRegex.exec(html)) !== null && sheetHrefs.length < 3) {
+      sheetHrefs.push(sheetMatch[1]);
+    }
     let externalCss = '';
-    if (sheetHref) {
-      const sheetUrl = sheetHref.startsWith('http') ? sheetHref : `${new URL(url).origin}${sheetHref}`;
+    for (const href of sheetHrefs) {
+      const sheetUrl = href.startsWith('http') ? href : `${new URL(url).origin}${href.startsWith('/') ? '' : '/'}${href}`;
       try {
-        const r = await fetch(sheetUrl, { signal: controller.signal });
-        externalCss = (await r.text()).slice(0, 50000);
+        const r = await fetch(sheetUrl, { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0' } });
+        externalCss += (await r.text()).slice(0, 50000) + '\n';
       } catch {}
     }
 
     const allCss = inlineStyles + '\n' + externalCss;
-    const HEX = /(?:#[0-9a-fA-F]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\))/;
+    const HEX = /(?:#[0-9a-fA-F]{3,8}|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*[\d.]+)?\s*\))/;
     const extractVar = (v: string) =>
       allCss.match(new RegExp(`${v}\\s*:\\s*(${HEX.source})`, 'i'))?.[1] ?? null;
     const extractProp = (sel: string, prop: string) =>
       allCss.match(new RegExp(`${sel}[^{]*{[^}]*${prop}\\s*:\\s*(${HEX.source})`, 'i'))?.[1] ?? null;
 
+    // Extract theme-color meta tag (many sites set this)
+    const themeColor = html.match(/<meta[^>]+name="theme-color"[^>]+content="([^"]+)"/i)?.[1] ||
+      html.match(/<meta[^>]+content="([^"]+)"[^>]+name="theme-color"/i)?.[1] || '';
+
+    // Extract msapplication-TileColor
+    const tileColor = html.match(/<meta[^>]+name="msapplication-TileColor"[^>]+content="([^"]+)"/i)?.[1] || '';
+
+    // Extract all unique hex colors from CSS, sorted by frequency
+    const allHexColors: Record<string, number> = {};
+    const hexRegex = /#([0-9a-fA-F]{3,8})\b/g;
+    let hexMatch;
+    while ((hexMatch = hexRegex.exec(allCss)) !== null) {
+      const hex = hexMatch[0].toLowerCase();
+      // Skip near-white, near-black, and grays
+      if (/^#(fff|000|[0-9a-f])\1*$/i.test(hex)) continue;
+      if (/^#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3$/i.test(hex)) continue; // grays like #333, #666
+      allHexColors[hex] = (allHexColors[hex] || 0) + 1;
+    }
+    const topColors = Object.entries(allHexColors)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([c]) => c);
+
+    // Also extract colors from inline style attributes in HTML
+    const inlineColorRegex = /style="[^"]*(?:background-color|background|color)\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/gi;
+    const inlineColors: string[] = [];
+    let icm;
+    while ((icm = inlineColorRegex.exec(html)) !== null && inlineColors.length < 10) {
+      inlineColors.push(icm[1]);
+    }
+
     const fontFamily =
       extractVar('--base-font') ||
+      extractVar('--font-family') ||
+      extractVar('--body-font') ||
       allCss.match(/font-family\s*:\s*['"]?([A-Za-z\s]+)['"]?\s*[,;]/)?.[1]?.trim() ||
       'sans-serif';
+
+    // Determine colors with priority: meta theme > CSS vars > inline > frequency analysis
+    const primaryColor =
+      themeColor ||
+      tileColor ||
+      extractVar('--tweak-color-button-primary-background') ||
+      extractVar('--primary-color') ||
+      extractVar('--primary') ||
+      extractVar('--accent-color') ||
+      extractVar('--accent') ||
+      extractVar('--brand-color') ||
+      extractVar('--color-primary') ||
+      extractVar('--wp--preset--color--primary') ||
+      extractProp('\\.btn-primary', 'background-color') ||
+      extractProp('\\.btn-primary', 'background') ||
+      extractProp('a', 'color') ||
+      (topColors.length > 0 ? topColors[0] : '#000000');
+
+    const bgColor =
+      extractVar('--black') ||
+      extractVar('--bg-color') ||
+      extractVar('--background') ||
+      extractVar('--color-background') ||
+      extractProp('body', 'background-color') ||
+      extractProp('body', 'background') ||
+      extractProp(':root', 'background') ||
+      '#ffffff';
+
+    const textColor =
+      extractVar('--white') ||
+      extractVar('--text-color') ||
+      extractVar('--color-text') ||
+      extractProp('body', 'color') ||
+      '#000000';
+
+    const accentColor =
+      extractVar('--tweak-color-button-primary-text') ||
+      extractVar('--accent') ||
+      extractVar('--secondary') ||
+      extractVar('--color-accent') ||
+      (topColors.length > 1 ? topColors[1] : primaryColor);
+
+    console.log(`[Scraper] Colors detected — primary: ${primaryColor}, bg: ${bgColor}, text: ${textColor}, accent: ${accentColor}`);
+    console.log(`[Scraper] Theme-color meta: ${themeColor || 'none'}, Top CSS colors: ${topColors.slice(0, 5).join(', ')}`);
 
     return {
       detected: true,
       colors: {
-        background:
-          extractVar('--black') || extractProp('body', 'background-color') || '#ffffff',
-        primary:
-          extractVar('--tweak-color-button-primary-background') ||
-          extractVar('--accent-color') ||
-          extractProp('a', 'color') ||
-          '#000000',
-        text: extractVar('--white') || extractProp('body', 'color') || '#000000',
-        accent:
-          extractVar('--tweak-color-button-primary-text') ||
-          extractVar('--accent-color') ||
-          '#000000',
+        background: bgColor,
+        primary: primaryColor,
+        text: textColor,
+        accent: accentColor,
       },
       font_family: fontFamily,
       font_fallback: 'sans-serif',

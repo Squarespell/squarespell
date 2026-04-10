@@ -183,6 +183,7 @@ function TryPageInner() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [claimToken, setClaimToken] = useState('');
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const hasAutoStarted = useRef(false);
 
   // Auto-start if URL param present
@@ -535,110 +536,80 @@ function TryPageInner() {
                   minHeight: '400px',
                 }}
               >
-                {/* Animated quiz title */}
-                {completedSteps >= 1 && (
-                  <div className="slide-up" style={{ marginBottom: '28px' }}>
-                    <div
-                      style={{
-                        fontSize: '14px',
-                        color: TEXT_MUTED,
-                        marginBottom: '8px',
-                      }}
-                    >
-                      Quiz Preview
+                {/* Stage label */}
+                <div style={{ fontSize: '12px', color: TEXT_MUTED, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                  Live Preview
+                </div>
+
+                {/* Scanning indicator */}
+                {completedSteps < 2 && (
+                  <div className="slide-up">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: ACCENT_DIM, border: `1px solid rgba(210,255,29,0.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: `2px solid ${ACCENT}`, borderTopColor: 'transparent', animation: 'spin 0.6s linear infinite' }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT }}>Scanning {domain}</div>
+                        <div style={{ fontSize: '13px', color: TEXT_MUTED }}>Extracting brand and content...</div>
+                      </div>
                     </div>
-                    <h2
-                      className="typewriter"
-                      style={{
-                        fontSize: '28px',
-                        fontWeight: 800,
-                        letterSpacing: '-0.04em',
-                        lineHeight: 1.1,
-                        color: TEXT,
-                      }}
-                    >
-                      {quiz?.title || 'Building...'}
+                    {/* Skeleton lines */}
+                    {[1, 2, 3].map(i => (
+                      <div key={i} style={{ height: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', marginBottom: '12px', width: `${90 - i * 15}%`, animation: 'pulse 2s ease infinite', animationDelay: `${i * 200}ms` }} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Brand detected */}
+                {completedSteps >= 2 && !quiz && (
+                  <div className="slide-up">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT }}>Brand detected</div>
+                        <div style={{ fontSize: '13px', color: TEXT_MUTED }}>Generating personalized quiz...</div>
+                      </div>
+                    </div>
+                    {/* Animated typing skeleton for questions */}
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="fade-in" style={{ padding: '14px 16px', background: ELEVATED, border: `1px solid ${BORDER}`, borderRadius: '10px', marginBottom: '8px', animationDelay: `${i * 300}ms` }}>
+                        <div style={{ height: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', width: `${70 + Math.random() * 25}%`, animation: 'pulse 1.5s ease infinite' }} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quiz title + questions appearing */}
+                {quiz && (
+                  <div className="slide-up">
+                    <h2 className="typewriter" style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, color: TEXT, marginBottom: '8px' }}>
+                      {quiz.title}
                     </h2>
-                  </div>
-                )}
+                    {quiz.description && (
+                      <p className="fade-in" style={{ fontSize: '14px', color: TEXT_MUTED, marginBottom: '20px', animationDelay: '200ms' }}>{quiz.description}</p>
+                    )}
 
-                {/* Brand colors preview */}
-                {completedSteps >= 2 && brand?.colors && (
-                  <div className="scale-in" style={{ marginBottom: '28px' }}>
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        color: TEXT_MUTED,
-                        marginBottom: '8px',
-                      }}
-                    >
-                      Brand Colors
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {Object.values(brand.colors)
-                        .filter(Boolean)
-                        .slice(0, 4)
-                        .map((color, i) => (
-                          <div
-                            key={i}
-                            className="scale-in"
-                            style={{
-                              width: '44px',
-                              height: '44px',
-                              borderRadius: '12px',
-                              background: color as string,
-                              border: `1px solid ${BORDER}`,
-                              animationDelay: `${i * 100}ms`,
-                            }}
-                          />
+                    {/* Brand colors */}
+                    {brand?.colors && (
+                      <div className="scale-in" style={{ display: 'flex', gap: '6px', marginBottom: '20px', animationDelay: '300ms' }}>
+                        {Object.values(brand.colors).filter(Boolean).slice(0, 4).map((color, i) => (
+                          <div key={i} style={{ width: '36px', height: '36px', borderRadius: '8px', background: color as string, border: `1px solid ${BORDER}` }} />
                         ))}
-                    </div>
-                  </div>
-                )}
+                      </div>
+                    )}
 
-                {/* Sample questions preview */}
-                {completedSteps >= 3 && quiz?.questions && (
-                  <div className="slide-up" style={{ marginBottom: '28px' }}>
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        color: TEXT_MUTED,
-                        marginBottom: '8px',
-                      }}
-                    >
-                      Sample Questions
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {quiz.questions.slice(0, 2).map((q, i) => (
-                        <div
-                          key={q.id}
-                          className="fade-in"
-                          style={{
-                            padding: '12px 16px',
-                            background: ELEVATED,
-                            border: `1px solid ${BORDER}`,
-                            borderRadius: '10px',
-                            fontSize: '13px',
-                            color: TEXT,
-                            animationDelay: `${i * 150}ms`,
-                          }}
-                        >
-                          {q.text}
-                        </div>
-                      ))}
-                      {quiz.questions.length > 2 && (
-                        <div
-                          style={{
-                            padding: '12px 16px',
-                            background: ELEVATED,
-                            border: `1px solid ${BORDER}`,
-                            borderRadius: '10px',
-                            fontSize: '13px',
-                            color: TEXT_MUTED,
-                            textAlign: 'center',
-                          }}
-                        >
-                          +{quiz.questions.length - 2} more questions
+                    {/* Question count */}
+                    <div className="fade-in" style={{ display: 'flex', gap: '16px', animationDelay: '400ms' }}>
+                      <div style={{ padding: '10px 14px', background: ELEVATED, borderRadius: '8px', border: `1px solid ${BORDER}` }}>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: ACCENT }}>{quiz.questions.length}</div>
+                        <div style={{ fontSize: '11px', color: TEXT_MUTED }}>Questions</div>
+                      </div>
+                      {quiz.outcomes && (
+                        <div style={{ padding: '10px 14px', background: ELEVATED, borderRadius: '8px', border: `1px solid ${BORDER}` }}>
+                          <div style={{ fontSize: '20px', fontWeight: 800, color: ACCENT }}>{quiz.outcomes.length}</div>
+                          <div style={{ fontSize: '11px', color: TEXT_MUTED }}>Outcomes</div>
                         </div>
                       )}
                     </div>
@@ -876,21 +847,50 @@ function TryPageInner() {
 
                     {/* Options */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '44px' }}>
-                      {question.options.map((option) => (
-                        <div
-                          key={option.id}
-                          style={{
-                            padding: '10px 12px',
-                            background: ELEVATED,
-                            border: `1px solid ${BORDER}`,
-                            borderRadius: '8px',
-                            fontSize: '13px',
-                            color: TEXT_MUTED,
-                          }}
-                        >
-                          {option.text}
-                        </div>
-                      ))}
+                      {question.options.map((option) => {
+                        const isSelected = selectedOptions[question.id] === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() => setSelectedOptions(prev => ({ ...prev, [question.id]: option.id }))}
+                            className="option-card"
+                            style={{
+                              padding: '12px 14px',
+                              background: isSelected ? ACCENT_DIM : ELEVATED,
+                              border: `1.5px solid ${isSelected ? ACCENT : BORDER}`,
+                              borderRadius: '10px',
+                              fontSize: '13px',
+                              color: isSelected ? ACCENT : TEXT_MUTED,
+                              fontWeight: isSelected ? 600 : 400,
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              fontFamily: 'inherit',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
+                          >
+                            <div style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              border: `2px solid ${isSelected ? ACCENT : 'rgba(255,255,255,0.15)'}`,
+                              background: isSelected ? ACCENT : 'transparent',
+                              flexShrink: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s',
+                            }}>
+                              {isSelected && (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={BG} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                              )}
+                            </div>
+                            {option.text}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
