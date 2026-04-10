@@ -52,19 +52,16 @@ interface OnboardingQ {
 }
 
 /* ========================================================================= */
-/* Inline SVG icons (no emoji)                                               */
+/* SVG icons                                                                 */
 /* ========================================================================= */
-const SvgBolt = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+const SvgArrowRight = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
 );
-const SvgArrowRight = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+const SvgArrowLeft = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
 );
-const SvgArrowLeft = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
-);
-const SvgCheck = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+const SvgCheck = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
 );
 const SvgPlus = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
@@ -75,6 +72,12 @@ const SvgTrash = () => (
 const SvgDrag = () => (
   <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.4" /><circle cx="9" cy="12" r="1.4" /><circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="6" r="1.4" /><circle cx="15" cy="12" r="1.4" /><circle cx="15" cy="18" r="1.4" /></svg>
 );
+const SvgClose = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+);
+const SvgRefresh = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+);
 
 /* ========================================================================= */
 /* Main component                                                            */
@@ -84,10 +87,9 @@ function TryFlowInner() {
   const router = useRouter();
   const urlParam = searchParams.get('url') || '';
 
-  // Navigation
   const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5>(1);
 
-  // Stage 1 state
+  // Stage 1
   const [url, setUrl] = useState(urlParam);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -97,25 +99,25 @@ function TryFlowInner() {
   const [sessionToken, setSessionToken] = useState('');
   const [claimToken, setClaimToken] = useState('');
 
-  // Stage 2 state
+  // Stage 2
   const [onboardingQs, setOnboardingQs] = useState<OnboardingQ[]>([]);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, number>>({});
   const [buildingQuiz, setBuildingQuiz] = useState(false);
 
-  // Stage 3 state (editor)
+  // Stage 3 editor
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Stage 4 state (visitor preview)
+  // Stage 4 visitor preview
   const [s4Idx, setS4Idx] = useState(0);
   const [s4Answers, setS4Answers] = useState<Record<number, number>>({});
   const [s4ShowResult, setS4ShowResult] = useState(false);
 
   const hasAutoStarted = useRef(false);
 
-  /* ======================== STAGE 1 → STAGE 2 ======================== */
+  /* ======================== STAGE 1 -> STAGE 2 ======================== */
   const goAnalyze = useCallback(async (siteUrl: string) => {
     if (!siteUrl) return;
     setLoading(true);
@@ -146,7 +148,6 @@ function TryFlowInner() {
     }
   }, []);
 
-  // Auto-start if URL param is present
   useEffect(() => {
     if (urlParam && !hasAutoStarted.current) {
       hasAutoStarted.current = true;
@@ -154,7 +155,7 @@ function TryFlowInner() {
     }
   }, [urlParam, goAnalyze]);
 
-  /* ======================== STAGE 2 → STAGE 3 ======================== */
+  /* ======================== STAGE 2 -> STAGE 3 ======================== */
   const onboardingCount = Object.keys(onboardingAnswers).length;
   const buildQuiz = useCallback(async () => {
     if (onboardingCount < 5 || !sessionToken) return;
@@ -255,6 +256,7 @@ function TryFlowInner() {
     if (!quiz) return;
     const qs = quiz.questions.map((q, i) => {
       if (i !== qi) return q;
+      if (q.options.length >= 6) return q;
       const nextLetter = String.fromCharCode(97 + q.options.length);
       return { ...q, options: [...q.options, { id: nextLetter, text: 'New answer', score: 0 }] };
     });
@@ -264,12 +266,14 @@ function TryFlowInner() {
     if (!quiz) return;
     const qs = quiz.questions.map((q, i) => {
       if (i !== qi) return q;
+      if (q.options.length <= 2) return q;
       return { ...q, options: q.options.filter((_, j) => j !== oi) };
     });
     updateQuiz({ ...quiz, questions: qs });
   };
   const deleteQuestion = (qi: number) => {
     if (!quiz) return;
+    if (quiz.questions.length <= 1) return;
     const qs = quiz.questions.filter((_, i) => i !== qi);
     const next = { ...quiz, questions: qs };
     updateQuiz(next);
@@ -282,16 +286,17 @@ function TryFlowInner() {
       text: 'New question',
       subtitle: '',
       options: [
-        { id: 'a', text: 'Option A', score: 3 },
-        { id: 'b', text: 'Option B', score: 2 },
-        { id: 'c', text: 'Option C', score: 1 },
-        { id: 'd', text: 'Option D', score: 0 },
+        { id: 'a', text: 'Answer A', score: 3 },
+        { id: 'b', text: 'Answer B', score: 2 },
+        { id: 'c', text: 'Answer C', score: 1 },
+        { id: 'd', text: 'Answer D', score: 0 },
       ],
     };
     const qs = [...quiz.questions, newQ];
     updateQuiz({ ...quiz, questions: qs });
     setSelectedIdx(qs.length - 1);
   };
+  const deselect = () => setSelectedIdx(-1);
 
   /* ======================== STAGE 4 helpers =========================== */
   const resetS4 = () => {
@@ -307,13 +312,12 @@ function TryFlowInner() {
     } else {
       setS4ShowResult(true);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const s4Back = () => {
     if (s4Idx > 0) setS4Idx(s4Idx - 1);
   };
 
-  // Pick the matched outcome by summing scores and matching minScore/maxScore
   const s4Outcome = (() => {
     if (!quiz || !quiz.outcomes || quiz.outcomes.length === 0) return null;
     let total = 0;
@@ -330,17 +334,22 @@ function TryFlowInner() {
   })();
 
   /* ======================== Derived values =========================== */
-  const domain = url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') || 'your site';
+  const domain = (url || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '') || 'your site';
   const siteLetter = (brand?.site_name || domain || 'B').charAt(0).toUpperCase();
   const accent = brand?.colors?.primary || '#D2FF1D';
 
-  const currentQ = quiz && quiz.questions[selectedIdx];
+  const currentQ = quiz && selectedIdx >= 0 ? quiz.questions[selectedIdx] : null;
 
-  /* ======================== Sign in → claim flow ====================== */
+  /* ======================== Sign in -> claim flow ====================== */
   const goSignUp = () => {
     const claim = claimToken || (typeof window !== 'undefined' ? sessionStorage.getItem('sq_claim_token') || '' : '');
     router.push(`/sign-up?from=try&url=${encodeURIComponent(url)}${claim ? `&claim=${claim}` : ''}`);
   };
+
+  const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const totalQs = quiz?.questions.length || 0;
+  const s4Total = totalQs || 1;
+  const s4Pct = Math.round(((s4Idx + 1) / s4Total) * 100);
 
   /* ===================================================================== */
   /* RENDER                                                                */
@@ -348,95 +357,98 @@ function TryFlowInner() {
   return (
     <div className="flow-root" style={{ '--accent': accent } as React.CSSProperties}>
       <style dangerouslySetInnerHTML={{ __html: FLOW_CSS }} />
+
       {/* ============ STAGE 1: URL HOOK ============ */}
       <div className={`stage${stage === 1 ? ' active' : ''}`} id="stage-1">
         <div className="topbar">
           <Link href="/" className="brand">
-            <div className="brand-dot"><SvgBolt /></div>
-            <span>squarespell</span>
+            <div className="brand-dot" /> squarespell
           </Link>
-          <Link href="/sign-in" className="nav-signin">
-            Have an account? <span>Log in</span>
-          </Link>
-        </div>
-        <div className="s1-hero">
-          <div className="s1-eyebrow">
-            <span className="s1-dot" /> AI quiz builder, live in seconds
+          <div className="top-links">
+            <span>Pricing</span>
+            <span>Examples</span>
+            <span>Docs</span>
           </div>
-          <h1 className="s1-title">
-            Turn visitors into <span className="s1-title-accent">leads</span>.
-          </h1>
-          <p className="s1-sub">
-            Drop your URL. We read your site, ask you 5 quick questions, and build a quiz that captures real leads on autopilot.
-          </p>
-          <form
-            className="s1-input-row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              goAnalyze(url);
-            }}
-          >
-            <input
-              type="text"
-              className="s1-input"
-              placeholder="yourwebsite.com"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              disabled={loading}
-              autoFocus
-            />
-            <button type="submit" className="btn btn-primary s1-btn" disabled={loading || !url}>
-              {loading ? 'Analyzing...' : (<><span>Generate quiz</span><span className="btn-icon"><SvgArrowRight /></span></>)}
-            </button>
-          </form>
-          {errorMsg && <div className="s1-error">{errorMsg}</div>}
-          <div className="s1-meta">
-            <span><span className="dot-dot" /> No sign up needed</span>
-            <span><span className="dot-dot" /> 60 seconds</span>
-            <span><span className="dot-dot" /> Free preview</span>
+          <div className="top-right">
+            <Link href="/sign-in" className="btn btn-ghost">Sign in</Link>
+            <Link href="/sign-up" className="btn btn-primary">Get started</Link>
+          </div>
+        </div>
+
+        <div className="hook">
+          <div className="hook-card">
+            <div className="stage-tag">
+              <span>STEP 1</span>
+              <span className="tag-dot">·</span>
+              <span>THE HOOK</span>
+            </div>
+            <div className="url-panel">
+              <div className="url-panel-title">Turn visitors<br />into leads</div>
+              <div className="url-panel-sub">Paste your URL. AI does the rest.</div>
+              <form
+                className="url-field"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  goAnalyze(url);
+                }}
+              >
+                <span className="url-prefix">https://</span>
+                <input
+                  id="site-url"
+                  type="text"
+                  placeholder="yourwebsite.com"
+                  value={url.replace(/^https?:\/\//i, '')}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={loading}
+                  autoFocus
+                />
+                <button type="submit" className="btn btn-primary" disabled={loading || !url}>
+                  {loading ? 'Analyzing...' : 'Generate'}
+                </button>
+              </form>
+              {errorMsg && <div style={{ marginTop: 18, color: '#ff6b6b', fontSize: 14 }}>{errorMsg}</div>}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ============ STAGE 2: 5 ONBOARDING QUESTIONS ============ */}
+      {/* ============ STAGE 2: FIVE QUESTIONS FOR OWNER ============ */}
       <div className={`stage${stage === 2 ? ' active' : ''}`} id="stage-2">
         <div className="topbar">
-          <div className="brand">
-            <div className="brand-dot"><SvgBolt /></div>
-            <span>squarespell</span>
-          </div>
-          <div className="s2-status">
-            <span className="s2-status-dot" /> Brand captured
+          <div className="brand"><div className="brand-dot" /> squarespell</div>
+          <div className="top-right">
+            <button className="btn btn-ghost" onClick={() => setStage(1)}>Start over</button>
           </div>
         </div>
+
         <div className="s2-wrap">
           <div className="s2-head">
-            <div className="s2-head-left">
-              <div className="s2-site-card">
-                <div className="s2-site-letter" style={{ background: accent }}>{siteLetter}</div>
-                <div>
-                  <div className="s2-site-label">Site detected</div>
-                  <div className="s2-site-domain">{brand?.site_name || domain}</div>
-                </div>
-              </div>
+            <div className="stage-tag">
+              <span>STEP 2</span>
+              <span className="tag-dot">·</span>
+              <span>TELL US ABOUT YOUR BUSINESS</span>
             </div>
-            <div className="s2-head-right">
-              <h2 className="s2-title">A few quick questions about your business</h2>
-              <p className="s2-sub">These shape the quiz your visitors will see.</p>
-            </div>
+            <h1>5 quick questions,<br />then we build your quiz</h1>
+            <p>Your answers shape the tone, flow, and outcomes of the 10 question quiz we generate for your visitors.</p>
           </div>
-          <div className="s2-progress">
-            <div className="s2-progress-text">{onboardingCount} of 5 answered</div>
-            <div className="s2-progress-bar">
-              <div className="s2-progress-fill" style={{ width: `${(onboardingCount / 5) * 100}%`, background: accent }} />
+
+          <div className="s2-site-card">
+            <div className="s2-site-icon">{siteLetter}</div>
+            <div className="s2-site-info">
+              <div className="s2-site-label">Analyzing</div>
+              <div className="s2-site-domain">{domain}</div>
+            </div>
+            <div className="s2-site-check">
+              <SvgCheck size={16} />
+              Brand captured
             </div>
           </div>
 
-          <div className="s2-list">
+          <div id="s2-list">
             {onboardingQs.map((q, qi) => {
               const answered = onboardingAnswers[q.id] !== undefined;
               return (
-                <div key={q.id} className={`s2-question${answered ? ' answered' : ''}`}>
+                <div className={`s2-question${answered ? ' answered' : ''}`} key={q.id}>
                   <div className="s2-q-head">
                     <div className="s2-q-num">{qi + 1}</div>
                     <div className="s2-q-text">{q.text}</div>
@@ -447,9 +459,9 @@ function TryFlowInner() {
                       return (
                         <button
                           key={oi}
-                          type="button"
                           className={`s2-opt${selected ? ' selected' : ''}`}
                           onClick={() => setOnboardingAnswers((prev) => ({ ...prev, [q.id]: oi }))}
+                          type="button"
                         >
                           <div className="s2-opt-radio" />
                           <div>{opt}</div>
@@ -462,16 +474,27 @@ function TryFlowInner() {
             })}
           </div>
 
-          {errorMsg && <div className="s1-error" style={{ marginTop: 20 }}>{errorMsg}</div>}
-          <div className="s2-footer">
+          <div className="s2-foot">
+            <div className="s2-progress">
+              <span>{onboardingCount} of {Math.max(onboardingQs.length, 5)} answered</span>
+              <div className="s2-progress-bar">
+                <div
+                  className="s2-progress-fill"
+                  style={{ width: `${(onboardingCount / Math.max(onboardingQs.length, 1)) * 100}%` }}
+                />
+              </div>
+            </div>
             <button
-              className="btn btn-primary btn-large"
+              className="btn btn-primary btn-lg"
               disabled={onboardingCount < 5 || buildingQuiz}
               onClick={buildQuiz}
+              type="button"
             >
-              {buildingQuiz ? 'Building your quiz...' : (<><span>Build my quiz</span><span className="btn-icon"><SvgArrowRight /></span></>)}
+              {buildingQuiz ? 'Building your quiz...' : 'Build my quiz'}
+              {!buildingQuiz && <SvgArrowRight size={16} />}
             </button>
           </div>
+          {errorMsg && <div style={{ marginTop: 12, color: '#ff6b6b', fontSize: 14, textAlign: 'center' }}>{errorMsg}</div>}
         </div>
       </div>
 
@@ -479,215 +502,272 @@ function TryFlowInner() {
       <div className={`stage${stage === 3 ? ' active' : ''}`} id="stage-3">
         <div className="s3-top">
           <div className="s3-top-left">
-            <button className="icon-btn" onClick={() => setStage(2)} aria-label="Back">
+            <button className="icon-btn" onClick={() => setStage(2)} title="Back" type="button">
               <SvgArrowLeft />
             </button>
             <div className="s3-title-wrap">
-              <input
-                className="s3-title"
-                value={quiz?.title || ''}
-                onChange={(e) => quiz && updateQuiz({ ...quiz, title: e.target.value })}
-                placeholder="Untitled quiz"
-              />
+              <div className="s3-title">{quiz?.title || 'Your quiz'}</div>
               <div className="s3-title-meta">
-                <span className="s3-live-pill"><span className="s3-live-dot" /> DRAFT</span>
+                <span className="live-pill">LIVE</span>
                 <span className="s3-saved">
-                  {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'All changes saved' : ''}
+                  {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'All changes saved' : 'All changes saved'}
                 </span>
               </div>
             </div>
           </div>
           <div className="s3-top-right">
-            <button className="btn btn-dark" onClick={() => { resetS4(); setStage(4); }}>Preview my quiz</button>
-            <button className="btn btn-primary" onClick={() => setStage(5)}>Publish</button>
+            <button className="btn btn-dark" onClick={() => { resetS4(); setStage(4); }} type="button">Preview my quiz</button>
+            <button className="btn btn-primary" onClick={() => setStage(5)} type="button">Publish</button>
           </div>
         </div>
 
-        <div className="s3-main">
-          <div className="s3-left">
-            <div className="qc-list" id="qc-list">
-              {quiz && quiz.questions.map((q, i) => {
-                const selected = i === selectedIdx;
+        <div className="s3-body">
+          <div className="s3-main">
+            <div className="s3-main-head">
+              <h2>Your quiz</h2>
+              <div className="s3-count">
+                <span>{quiz?.questions.length || 0}</span> questions · {quiz?.outcomes?.length || 0} outcomes
+              </div>
+            </div>
+
+            <div id="qc-list">
+              {quiz?.questions.map((q, i) => {
+                const isSel = i === selectedIdx;
                 return (
-                  <div key={q.id + i} className={`qc${selected ? ' selected' : ''}`} onClick={() => setSelectedIdx(i)}>
+                  <div key={q.id} className={`qc${isSel ? ' selected' : ''}`} onClick={() => setSelectedIdx(i)}>
                     <div className="qc-head">
                       <div className="qc-num">{i + 1}</div>
                       <div className="qc-head-main">
                         <div className="qc-q">{q.text}</div>
-                        <div className="qc-meta">{q.options.length} answers &middot; single select</div>
+                        <div className="qc-meta">{q.options.length} answers · single select</div>
                       </div>
                       <div className="qc-drag" onClick={(e) => e.stopPropagation()}><SvgDrag /></div>
                     </div>
-                    {selected && (
-                      <div className="qc-body">
-                        {q.options.map((o, oi) => (
-                          <div key={o.id + oi} className="qc-opt">
-                            <div className="qc-opt-letter">{String.fromCharCode(65 + oi)}</div>
-                            <div className="qc-opt-text">{o.text}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="qc-body">
+                      {q.options.map((o, oi) => (
+                        <div className="qc-opt-row" key={o.id}>
+                          <div className="qc-opt-letter">{LETTERS[oi]}</div>
+                          <div className="qc-opt-text">{o.text}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
-              <button className="qc-add" onClick={addQuestion}>
-                <span className="qc-add-icon"><SvgPlus /></span>
-                Add new question
-              </button>
             </div>
+
+            <button className="add-q-btn" onClick={addQuestion} type="button">
+              <SvgPlus />
+              Add new question
+            </button>
           </div>
 
-          <aside className="s3-right">
-            <div className="side-head">
-              <div className="side-title">Edit question</div>
-              <div className="side-sub">Click any answer to edit it</div>
-            </div>
-            {currentQ ? (
-              <>
-                <div className="side-field">
-                  <label className="side-label">Question text</label>
-                  <textarea
-                    className="side-textarea"
-                    value={currentQ.text}
-                    onChange={(e) => updateQuestionText(selectedIdx, e.target.value)}
-                    rows={3}
-                  />
-                </div>
-                <div className="side-field">
-                  <label className="side-label">Answers</label>
-                  <div className="side-answers">
-                    {currentQ.options.map((opt, oi) => (
-                      <div key={opt.id + oi} className="side-answer-row">
-                        <div className="side-answer-letter">{String.fromCharCode(65 + oi)}</div>
+          <div className="s3-side">
+            <div id="side-content">
+              {currentQ ? (
+                <>
+                  <div className="s3-side-head">
+                    <div className="s3-side-label">EDITING QUESTION {selectedIdx + 1}</div>
+                    <button className="s3-side-close" title="Deselect" onClick={deselect} type="button"><SvgClose /></button>
+                  </div>
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">Question</div>
+                    <textarea
+                      className="field-textarea"
+                      value={currentQ.text}
+                      onChange={(e) => updateQuestionText(selectedIdx, e.target.value)}
+                    />
+                  </div>
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">
+                      <span>Answers</span>
+                      <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{currentQ.options.length}</span>
+                    </div>
+                    {currentQ.options.map((o, oi) => (
+                      <div className="answer-row" key={o.id + oi}>
+                        <div className="answer-letter">{LETTERS[oi]}</div>
                         <input
-                          className="side-answer-input"
-                          value={opt.text}
+                          className="answer-input"
+                          value={o.text}
                           onChange={(e) => updateOptionText(selectedIdx, oi, e.target.value)}
                         />
-                        <button
-                          className="side-answer-trash"
-                          type="button"
-                          onClick={() => deleteOption(selectedIdx, oi)}
-                          aria-label="Delete answer"
-                        >
+                        <button className="answer-del" onClick={() => deleteOption(selectedIdx, oi)} title="Remove answer" type="button">
                           <SvgTrash />
                         </button>
                       </div>
                     ))}
-                    <button className="side-add-answer" onClick={() => addOption(selectedIdx)}>
+                    <button className="add-answer-btn" onClick={() => addOption(selectedIdx)} type="button">
                       <SvgPlus /> Add answer
                     </button>
                   </div>
-                </div>
-                <div className="side-stats">
-                  <div className="side-stat">
-                    <div className="side-stat-val">{quiz?.questions.length || 0}</div>
-                    <div className="side-stat-label">Questions</div>
+
+                  <div className="divider" />
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">Quiz overview</div>
+                    <div className="stat-row"><span className="stat-label">Total questions</span><span className="stat-value">{quiz?.questions.length || 0}</span></div>
+                    <div className="stat-row"><span className="stat-label">Outcomes</span><span className="stat-value">{quiz?.outcomes?.length || 0}</span></div>
+                    <div className="stat-row"><span className="stat-label">Email gate</span><span className="stat-value">On</span></div>
+                    <div className="stat-row"><span className="stat-label">Brand match</span><span className="stat-value">Auto</span></div>
                   </div>
-                  <div className="side-stat">
-                    <div className="side-stat-val">{quiz?.outcomes?.length || 0}</div>
-                    <div className="side-stat-label">Outcomes</div>
+
+                  <div className="divider" />
+
+                  <button className="danger-btn" onClick={() => deleteQuestion(selectedIdx)} type="button">
+                    <SvgTrash /> Delete this question
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="s3-side-head">
+                    <div className="s3-side-label">QUIZ OVERVIEW</div>
                   </div>
-                </div>
-                <button className="side-danger" onClick={() => deleteQuestion(selectedIdx)}>
-                  <SvgTrash /> Delete this question
-                </button>
-              </>
-            ) : (
-              <div className="side-empty">Select a question to edit</div>
-            )}
-          </aside>
+                  <div className="empty-panel">
+                    <h4>No question selected</h4>
+                    <p>Click any question on the left to edit it.</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ============ STAGE 4: VISITOR PREVIEW ============ */}
       <div className={`stage${stage === 4 ? ' active' : ''}`} id="stage-4">
         <div className="s4-top">
-          <button className="icon-btn" onClick={() => { resetS4(); setStage(3); }} aria-label="Back">
+          <button className="icon-btn" onClick={() => setStage(3)} title="Back to editor" type="button">
             <SvgArrowLeft />
           </button>
-          <div className="s4-note"><div className="s4-note-dot" /> This is how your visitors will see the quiz</div>
-          <button className="btn btn-ghost" onClick={() => { resetS4(); setStage(3); }}>Exit preview</button>
+          <div className="s4-note">
+            <div className="s4-note-dot" />
+            This is how your visitors will see the quiz
+          </div>
+          <button className="btn btn-ghost" onClick={() => setStage(3)} type="button">Exit preview</button>
         </div>
 
-        {quiz && !s4ShowResult && (
-          <div className="s4-stage" id="s4-quiz-view">
-            <div className="s4-progress-row">
-              <div className="s4-step-label">Question {s4Idx + 1} of {quiz.questions.length}</div>
-              <div className="s4-pct">{Math.round(((s4Idx + 1) / quiz.questions.length) * 100)}%</div>
-            </div>
-            <div className="s4-bar">
-              <div className="s4-fill" style={{ width: `${((s4Idx + 1) / quiz.questions.length) * 100}%`, background: accent }} />
-            </div>
-            <div className="s4-q-num-label">QUESTION {String(s4Idx + 1).padStart(2, '0')}</div>
-            <div className="s4-q">{quiz.questions[s4Idx]?.text}</div>
-            <div className="s4-opts">
-              {quiz.questions[s4Idx]?.options.map((o, oi) => (
-                <button
-                  key={o.id + oi}
-                  className={`s4-opt${s4Answers[s4Idx] === oi ? ' selected' : ''}`}
-                  onClick={() => s4Pick(oi)}
-                >
-                  <div className="s4-opt-letter">{String.fromCharCode(65 + oi)}</div>
-                  <div>{o.text}</div>
-                </button>
-              ))}
-            </div>
-            {s4Idx > 0 && (
-              <button className="s4-back-btn" onClick={s4Back}>
-                <SvgArrowLeft /> Back
+        <div id="s4-stage-wrap">
+          {!s4ShowResult ? (
+            <div className="s4-stage">
+              <div className="s4-progress-row">
+                <div className="s4-step-label">Question {s4Idx + 1} of {totalQs || 10}</div>
+                <div className="s4-pct">{s4Pct}%</div>
+              </div>
+              <div className="s4-bar"><div className="s4-fill" style={{ width: `${s4Pct}%` }} /></div>
+              <div className="s4-q-num-label">QUESTION {String(s4Idx + 1).padStart(2, '0')}</div>
+              <div className="s4-q">{quiz?.questions[s4Idx]?.text || 'Loading'}</div>
+              <div className="s4-opts">
+                {quiz?.questions[s4Idx]?.options.map((o, oi) => (
+                  <button
+                    key={o.id + oi}
+                    className={`s4-opt${s4Answers[s4Idx] === oi ? ' selected' : ''}`}
+                    onClick={() => s4Pick(oi)}
+                    type="button"
+                  >
+                    <div className="s4-opt-letter">{LETTERS[oi]}</div>
+                    <div>{o.text}</div>
+                  </button>
+                ))}
+              </div>
+              <button
+                className="s4-back-btn"
+                onClick={s4Back}
+                type="button"
+                style={{ visibility: s4Idx === 0 ? 'hidden' : 'visible' }}
+              >
+                <SvgArrowLeft />
+                Previous question
               </button>
-            )}
-          </div>
-        )}
+            </div>
+          ) : (
+            <div className="s4-result">
+              <div className="s4-result-badge">YOUR RESULT</div>
+              <div className="s4-result-title">{s4Outcome?.title || 'Your result'}</div>
+              <div className="s4-result-desc">{s4Outcome?.description || ''}</div>
 
-        {quiz && s4ShowResult && s4Outcome && (
-          <div className="s4-result">
-            <div className="s4-result-badge">YOUR RESULT</div>
-            <div className="s4-result-title">{s4Outcome.title}</div>
-            <div className="s4-result-desc">{s4Outcome.description}</div>
-            <div className="s4-result-card">
-              <h4>Why this fits you</h4>
-              <div className="s4-result-points">
-                <div className="s4-result-point">
-                  <div className="s4-result-point-check"><SvgCheck /></div>
-                  <div>Matches the goal you picked during onboarding</div>
-                </div>
-                <div className="s4-result-point">
-                  <div className="s4-result-point-check"><SvgCheck /></div>
-                  <div>Tuned to your audience and tone</div>
-                </div>
-                <div className="s4-result-point">
-                  <div className="s4-result-point-check"><SvgCheck /></div>
-                  <div>Ready to embed on {brand?.site_name || domain}</div>
+              <div className="s4-result-card">
+                <h4>Your personalized plan includes</h4>
+                <p>A tailored next step based on your exact answers.</p>
+                <div className="s4-result-points">
+                  <div className="s4-result-point">
+                    <div className="s4-result-point-check"><SvgCheck /></div>
+                    <div>Matched outcome based on your quiz score</div>
+                  </div>
+                  <div className="s4-result-point">
+                    <div className="s4-result-point-check"><SvgCheck /></div>
+                    <div>Lead capture on your domain, ready to publish</div>
+                  </div>
+                  <div className="s4-result-point">
+                    <div className="s4-result-point-check"><SvgCheck /></div>
+                    <div>Auto branded to match your site colors</div>
+                  </div>
                 </div>
               </div>
+
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={() => setStage(5)}
+                type="button"
+                style={{ padding: '18px 36px', fontSize: 15 }}
+              >
+                Sign in to publish this quiz
+                <SvgArrowRight />
+              </button>
+              <div style={{ marginTop: 18 }}>
+                <button className="s4-back-btn" onClick={resetS4} type="button">
+                  <SvgRefresh />
+                  Take the quiz again
+                </button>
+              </div>
             </div>
-            <button className="btn btn-primary btn-large" onClick={() => setStage(5)}>Sign in to publish this quiz</button>
-            <button className="s4-back-btn" onClick={resetS4}>Take quiz again</button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* ============ STAGE 5: SIGN IN ============ */}
       <div className={`stage${stage === 5 ? ' active' : ''}`} id="stage-5">
         <div className="s5">
           <div className="s5-card">
-            <div className="s5-brand">
-              <div className="brand-dot"><SvgBolt /></div>
-              <span>squarespell</span>
-            </div>
+            <div className="s5-brand"><div className="brand-dot" /> squarespell</div>
+
             <div className="s5-banner">
-              <SvgCheck /> Your quiz is saved. Sign in to publish it.
+              <SvgCheck size={16} />
+              Your quiz is saved. Sign in to publish it.
             </div>
+
             <div className="s5-title">Sign in to publish</div>
             <div className="s5-sub">One more step, then your quiz goes live.</div>
-            <button type="button" className="btn btn-primary btn-block s5-submit" onClick={goSignUp}>
-              Continue to sign up
+
+            <div className="s5-social">
+              <button className="s5-social-btn" onClick={goSignUp} type="button">
+                <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.3c0-.78-.07-1.53-.2-2.25H12v4.26h5.9a5.04 5.04 0 0 1-2.18 3.3v2.75h3.53c2.06-1.9 3.25-4.7 3.25-8.06z"/><path fill="#34A853" d="M12 23c2.94 0 5.4-.97 7.2-2.64l-3.53-2.74c-.98.65-2.23 1.04-3.67 1.04-2.82 0-5.2-1.9-6.06-4.46H2.3v2.84A10.97 10.97 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.94 14.2a6.6 6.6 0 0 1 0-4.2V7.16H2.3a11 11 0 0 0 0 9.68l3.64-2.64z"/><path fill="#EA4335" d="M12 5.38c1.6 0 3.03.55 4.15 1.62l3.12-3.12C17.4 2.1 14.93 1 12 1a10.97 10.97 0 0 0-9.7 6.16l3.64 2.84C6.8 7.28 9.18 5.38 12 5.38z"/></svg>
+                Continue with Google
+              </button>
+              <button className="s5-social-btn" onClick={goSignUp} type="button">
+                <svg viewBox="0 0 24 24" fill="#ffffff"><path d="M17.6 12.8c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.2.8-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3-.1-.1-2-.8-2-3.6zM15.4 6.5c.6-.7 1-1.6.9-2.5-.9.1-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.5 1-.1 2-.6 2.5-1.3z"/></svg>
+                Continue with Apple
+              </button>
+            </div>
+
+            <div className="s5-divider">or continue with email</div>
+
+            <div className="s5-field">
+              <label>Email</label>
+              <input className="s5-input" type="email" placeholder="you@yourcompany.com" />
+            </div>
+            <div className="s5-field">
+              <label>Password</label>
+              <input className="s5-input" type="password" placeholder="••••••••••" />
+            </div>
+
+            <button className="btn btn-primary btn-block s5-submit" onClick={goSignUp} type="button">
+              Sign in and publish
             </button>
-            <div className="s5-tiny">
-              Already have an account? <Link href="/sign-in">Log in</Link>
+
+            <div className="s5-foot">
+              Don&apos;t have an account? <a onClick={goSignUp} style={{ cursor: 'pointer' }}>Create one</a>
             </div>
           </div>
         </div>
