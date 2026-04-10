@@ -23,11 +23,13 @@ import { useClerk, useUser } from '@clerk/nextjs';
 
 const COLORS = {
   BG: '#07090c',
-  SURFACE: '#0d1117',
-  ELEVATED: '#161b22',
-  BORDER: '#1b1f27',
-  TEXT: '#f0f2f5',
-  TEXT_MUTED: '#8b919a',
+  SURFACE: '#0a0d12',
+  ELEVATED: '#0f1319',
+  BORDER: '#1a1f29',
+  HAIRLINE: 'rgba(255,255,255,0.05)',
+  TEXT: '#f4f6f8',
+  TEXT_MUTED: '#8a919c',
+  TEXT_SUBTLE: '#5e6470',
   ACCENT: '#D2FF1D',
 };
 
@@ -214,14 +216,14 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
   const userEmail = user?.primaryEmailAddress?.emailAddress || '';
   const userInitial = (userEmail[0] || 'S').toUpperCase();
 
-  const sidebarWidth = 248;
+  const sidebarWidth = 252;
 
   const sidebar = (
     <aside
       style={{
         width: sidebarWidth,
         background: COLORS.SURFACE,
-        borderRight: `1px solid ${COLORS.BORDER}`,
+        borderRight: `1px solid ${COLORS.HAIRLINE}`,
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
@@ -231,37 +233,37 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
         zIndex: 50,
         transition: 'left 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
         fontFamily: '"DM Sans",system-ui,sans-serif',
-        boxShadow: isMobile && mobileOpen ? '0 24px 64px rgba(0,0,0,0.5)' : 'none',
+        boxShadow: isMobile && mobileOpen ? '0 24px 64px rgba(0,0,0,0.5)' : 'inset -1px 0 0 rgba(255,255,255,0.02)',
       }}
     >
       {/* Brand + New quiz */}
-      <div style={{ padding: '22px 18px 18px', borderBottom: `1px solid ${COLORS.BORDER}` }}>
+      <div style={{ padding: '24px 20px 20px', borderBottom: `1px solid ${COLORS.HAIRLINE}` }}>
         <Link
           href="/dashboard"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 11,
             textDecoration: 'none',
-            marginBottom: 18,
+            marginBottom: 22,
           }}
         >
           <div
             style={{
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               background: COLORS.ACCENT,
-              borderRadius: 8,
+              borderRadius: 9,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 0 18px rgba(210,255,29,0.25)',
+              boxShadow: '0 0 22px rgba(210,255,29,0.22)',
             }}
           >
             {icons.logo}
           </div>
-          <span style={{ fontSize: 17, fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.02em' }}>
+          <span style={{ fontSize: 18, fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.035em' }}>
             Squarespell
           </span>
         </Link>
@@ -299,7 +301,19 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
       </div>
 
       {/* Primary nav */}
-      <nav style={{ flex: 1, padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '18px 12px 14px', display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
+        <div
+          style={{
+            fontSize: 10.5,
+            fontWeight: 700,
+            color: COLORS.TEXT_SUBTLE,
+            textTransform: 'uppercase',
+            letterSpacing: '0.09em',
+            padding: '4px 14px 10px',
+          }}
+        >
+          Workspace
+        </div>
         {PRIMARY_NAV.map((item) => {
           const active = isActive(item, pathname || '');
           return (
@@ -313,16 +327,17 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
                 padding: '10px 14px',
                 borderRadius: 10,
                 textDecoration: 'none',
-                color: active ? COLORS.ACCENT : COLORS.TEXT_MUTED,
-                background: active ? 'rgba(210,255,29,0.08)' : 'transparent',
+                color: active ? COLORS.TEXT : COLORS.TEXT_MUTED,
+                background: active ? 'rgba(210,255,29,0.09)' : 'transparent',
+                boxShadow: active ? 'inset 0 0 0 1px rgba(210,255,29,0.18)' : 'none',
                 fontSize: 13.5,
-                fontWeight: active ? 700 : 600,
-                position: 'relative',
-                transition: 'background 0.15s ease, color 0.15s ease',
+                fontWeight: active ? 600 : 500,
+                letterSpacing: '-0.005em',
+                transition: 'background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 if (!active) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
                   e.currentTarget.style.color = COLORS.TEXT;
                 }
               }}
@@ -333,21 +348,18 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
                 }
               }}
             >
-              {active && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: -10,
-                    top: 6,
-                    bottom: 6,
-                    width: 3,
-                    background: COLORS.ACCENT,
-                    borderRadius: '0 3px 3px 0',
-                    boxShadow: '0 0 10px rgba(210,255,29,0.5)',
-                  }}
-                />
-              )}
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, flexShrink: 0 }}>
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 18,
+                  height: 18,
+                  flexShrink: 0,
+                  color: active ? COLORS.ACCENT : 'currentColor',
+                  transition: 'color 0.15s ease',
+                }}
+              >
                 {item.icon}
               </span>
               <span>{item.label}</span>
@@ -355,7 +367,18 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
           );
         })}
 
-        <div style={{ height: 1, background: COLORS.BORDER, margin: '12px 14px' }} />
+        <div
+          style={{
+            fontSize: 10.5,
+            fontWeight: 700,
+            color: COLORS.TEXT_SUBTLE,
+            textTransform: 'uppercase',
+            letterSpacing: '0.09em',
+            padding: '20px 14px 10px',
+          }}
+        >
+          Resources
+        </div>
 
         {BOTTOM_NAV.map((item) => {
           const isExternal = item.href.startsWith('http');
@@ -376,11 +399,12 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
                 textDecoration: 'none',
                 color: COLORS.TEXT_MUTED,
                 fontSize: 13,
-                fontWeight: 600,
+                fontWeight: 500,
+                letterSpacing: '-0.005em',
                 transition: 'background 0.15s ease, color 0.15s ease',
               }}
               onMouseEnter={(e: any) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
                 e.currentTarget.style.color = COLORS.TEXT;
               }}
               onMouseLeave={(e: any) => {
@@ -398,15 +422,15 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
       </nav>
 
       {/* Account footer */}
-      <div style={{ padding: '14px 14px 18px', borderTop: `1px solid ${COLORS.BORDER}` }}>
+      <div style={{ padding: '14px 14px 18px', borderTop: `1px solid ${COLORS.HAIRLINE}` }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 10,
-            padding: '10px 12px',
-            background: COLORS.ELEVATED,
-            border: `1px solid ${COLORS.BORDER}`,
+            padding: '11px 12px',
+            background: 'rgba(255,255,255,0.025)',
+            border: `1px solid ${COLORS.HAIRLINE}`,
             borderRadius: 12,
           }}
         >
@@ -520,15 +544,16 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
             position: 'sticky',
             top: 0,
             zIndex: 20,
-            background: 'rgba(7,9,12,0.85)',
-            backdropFilter: 'blur(12px)',
-            borderBottom: `1px solid ${COLORS.BORDER}`,
-            padding: '14px 28px',
+            background: 'rgba(7,9,12,0.78)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            borderBottom: `1px solid ${COLORS.HAIRLINE}`,
+            padding: '16px 36px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 16,
-            minHeight: 64,
+            minHeight: 68,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
@@ -558,10 +583,10 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
               <h1
                 style={{
                   margin: 0,
-                  fontSize: 18,
+                  fontSize: 19,
                   fontWeight: 700,
                   color: COLORS.TEXT,
-                  letterSpacing: '-0.01em',
+                  letterSpacing: '-0.025em',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -575,7 +600,7 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
         </header>
 
         {/* Page content */}
-        <main style={{ flex: 1, padding: '28px', minWidth: 0 }}>{children}</main>
+        <main style={{ flex: 1, padding: '36px 36px 56px', minWidth: 0 }}>{children}</main>
       </div>
     </div>
   );

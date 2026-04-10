@@ -24,26 +24,36 @@ export function PageHeader({
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
-        gap: 20,
+        gap: 24,
         flexWrap: 'wrap',
-        marginBottom: 28,
+        marginBottom: 36,
       }}
     >
       <div style={{ minWidth: 0 }}>
         <h1
           style={{
             margin: 0,
-            fontSize: 30,
-            fontWeight: 800,
+            fontSize: 38,
+            fontWeight: 700,
             color: C.TEXT,
-            letterSpacing: '-0.025em',
-            lineHeight: 1.1,
+            letterSpacing: '-0.04em',
+            lineHeight: 1.05,
           }}
         >
           {title}
         </h1>
         {subtitle && (
-          <p style={{ margin: '8px 0 0 0', fontSize: 14, color: C.TEXT_MUTED }}>{subtitle}</p>
+          <p
+            style={{
+              margin: '12px 0 0 0',
+              fontSize: 15,
+              color: C.TEXT_MUTED,
+              lineHeight: 1.5,
+              maxWidth: 620,
+            }}
+          >
+            {subtitle}
+          </p>
         )}
       </div>
       {actions && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{actions}</div>}
@@ -53,7 +63,7 @@ export function PageHeader({
 
 export function Card({
   children,
-  padding = 24,
+  padding = 26,
   style,
 }: {
   children: ReactNode;
@@ -64,9 +74,10 @@ export function Card({
     <div
       style={{
         background: C.ELEVATED,
-        border: `1px solid ${C.BORDER}`,
-        borderRadius: 14,
+        border: `1px solid ${C.HAIRLINE}`,
+        borderRadius: 16,
         padding,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.025)',
         ...style,
       }}
     >
@@ -77,25 +88,26 @@ export function Card({
 
 export function StatCard({ label, value, accent }: { label: string; value: ReactNode; accent?: boolean }) {
   return (
-    <Card padding={20}>
+    <Card padding={22}>
       <div
         style={{
-          fontSize: 11,
-          fontWeight: 700,
+          fontSize: 12.5,
+          fontWeight: 600,
           color: C.TEXT_MUTED,
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          marginBottom: 10,
+          letterSpacing: '-0.005em',
+          marginBottom: 14,
         }}
       >
         {label}
       </div>
       <div
         style={{
-          fontSize: 28,
-          fontWeight: 800,
+          fontSize: 36,
+          fontWeight: 700,
           color: accent ? C.ACCENT : C.TEXT,
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.035em',
+          lineHeight: 1,
+          fontVariantNumeric: 'tabular-nums',
         }}
       >
         {value}
@@ -116,26 +128,27 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <Card padding={48} style={{ textAlign: 'center' }}>
+    <Card padding={56} style={{ textAlign: 'center' }}>
       {icon && (
         <div
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: 16,
+            width: 60,
+            height: 60,
+            borderRadius: 18,
             background: 'rgba(210,255,29,0.08)',
-            border: '1px solid rgba(210,255,29,0.15)',
+            border: '1px solid rgba(210,255,29,0.18)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 18px',
+            margin: '0 auto 22px',
             color: C.ACCENT,
+            boxShadow: 'inset 0 0 30px rgba(210,255,29,0.06)',
           }}
         >
           {icon}
         </div>
       )}
-      <h2 style={{ margin: '0 0 10px 0', fontSize: 22, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.01em' }}>
+      <h2 style={{ margin: '0 0 12px 0', fontSize: 26, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.03em' }}>
         {title}
       </h2>
       {body && (
@@ -296,14 +309,15 @@ export function Pill({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        padding: '4px 12px',
+        padding: '4px 11px',
         borderRadius: 100,
         fontSize: 11,
-        fontWeight: 700,
+        fontWeight: 600,
         textTransform: 'uppercase',
-        letterSpacing: '0.05em',
+        letterSpacing: '0.07em',
         background: colors.bg,
         color: colors.fg,
+        boxShadow: `inset 0 0 0 1px ${colors.fg}1a`,
       }}
     >
       {children}
