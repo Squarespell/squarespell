@@ -77,6 +77,15 @@ export async function scrapeBrand(url: string) {
 
     // ── Strategy 2: Squarespace-specific data ─────────────────────────────
     let squarespaceContext = '';
+    let isSquarespace = false;
+    let sqspColors: Record<string, string> = {};
+
+    // Detect Squarespace
+    if (html.includes('squarespace') || html.includes('static.squarespace') || html.includes('SQUARESPACE_CONTEXT')) {
+      isSquarespace = true;
+      console.log('[Scraper] Squarespace site detected');
+    }
+
     const sqspMatch = html.match(/Static\.SQUARESPACE_CONTEXT\s*=\s*(\{[\s\S]*?\});/);
     if (sqspMatch) {
       try {
@@ -86,13 +95,65 @@ export async function scrapeBrand(url: string) {
       } catch {}
     }
 
+    // Squarespace Design Data (contains all theme colors)
+    const designDataMatch = html.match(/Static\.SQUARESPACE_DESIGN\s*=\s*(\{[\s\S]*?\});/) ||
+      html.match(/"siteData"\s*:\s*(\{[\s\S]*?"colors"[\s\S]*?\})/);
+    if (designDataMatch) {
+      try {
+        const designData = JSON.parse(designDataMatch[1]);
+        if (designData.colors) {
+          Object.entries(designData.colors).forEach(([key, val]: [string, any]) => {
+            if (typeof val === 'string' && val.startsWith('#')) {
+              sqspColors[key] = val;
+            }
+          });
+        }
+        console.log('[Scraper] Squarespace design data colors:', Object.keys(sqspColors).length);
+      } catch {}
+    }
+
+    // Squarespace CSS tweaks (--tweak-*) - the main way Squarespace stores colors
+    const sqspTweakRegex = /--tweak-([a-zA-Z-]+)\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/gi;
+    let sqspTweak;
+    while ((sqspTweak = sqspTweakRegex.exec(html)) !== null) {
+      sqspColors[`--tweak-${sqspTweak[1]}`] = sqspTweak[2];
+    }
+
+    // Squarespace site color palette CSS vars
+    const sqspPaletteRegex = /--siteBackgroundColor\s*:\s*(#[0-9a-fA-F]{3,8})|--siteTitleColor\s*:\s*(#[0-9a-fA-F]{3,8})|--navigationLinkColor\s*:\s*(#[0-9a-fA-F]{3,8})|--primaryButtonBackgroundColor\s*:\s*(#[0-9a-fA-F]{3,8})|--primaryButtonTextColor\s*:\s*(#[0-9a-fA-F]{3,8})|--headingLargeColor\s*:\s*(#[0-9a-fA-F]{3,8})|--paragraphMediumColor\s*:\s*(#[0-9a-fA-F]{3,8})|--accentColor\s*:\s*(#[0-9a-fA-F]{3,8})/gi;
+    let sqspPM;
+    while ((sqspPM = sqspPaletteRegex.exec(html)) !== null) {
+      const val = sqspPM.slice(1).find(Boolean);
+      if (val) {
+        const key = sqspPM[0].split(':')[0].trim();
+        sqspColors[key] = val;
+      }
+    }
+
+    // Also extract Squarespace palette from individual CSS var declarations
+    const sqspVarPatterns = [
+      'siteBackgroundColor', 'siteTitleColor', 'navigationLinkColor',
+      'primaryButtonBackgroundColor', 'primaryButtonTextColor',
+      'headingLargeColor', 'paragraphMediumColor', 'accentColor',
+      'lightAccentColor', 'darkAccentColor', 'colorAccent',
+    ];
+    for (const varName of sqspVarPatterns) {
+      const re = new RegExp(`--${varName}\\s*:\\s*(#[0-9a-fA-F]{3,8})`, 'i');
+      const m = html.match(re);
+      if (m) sqspColors[`--${varName}`] = m[1];
+    }
+
+    if (Object.keys(sqspColors).length > 0) {
+      console.log('[Scraper] Squarespace colors extracted:', JSON.stringify(sqspColors).slice(0, 300));
+    }
+
     // Try Squarespace collection data
     const collectionMatch = html.match(/"collection"\s*:\s*(\{[\s\S]*?\})\s*[,}]/);
     let sqspCollectionInfo = '';
     if (collectionMatch) {
       try {
         const coll = JSON.parse(collectionMatch[1]);
-        sqspCollectionInfo = `Collection: ${coll.title || ''} — ${coll.description || ''}`;
+        sqspCollectionInfo = `Collection: ${coll.title || ''} - ${coll.description || ''}`;
       } catch {}
     }
 
@@ -265,11 +326,15 @@ export async function scrapeBrand(url: string) {
       allCss.match(/font-family\s*:\s*['"]?([A-Za-z\s]+)['"]?\s*[,;]/)?.[1]?.trim() ||
       'sans-serif';
 
-    // Determine colors with priority: meta theme > CSS vars > inline > frequency analysis
+    // Determine colors with priority: Squarespace-specific > meta theme > CSS vars > frequency
     const primaryColor =
+      sqspColors['--primaryButtonBackgroundColor'] ||
+      sqspColors['--accentColor'] ||
+      sqspColors['--colorAccent'] ||
+      sqspColors['--tweak-color-button-primary-background'] ||
+      sqspColors['--tweak-global-accent-color'] ||
       themeColor ||
       tileColor ||
-      extractVar('--tweak-color-button-primary-background') ||
       extractVar('--primary-color') ||
       extractVar('--primary') ||
       extractVar('--accent-color') ||
@@ -279,10 +344,14 @@ export async function scrapeBrand(url: string) {
       extractVar('--wp--preset--color--primary') ||
       extractProp('\\.btn-primary', 'background-color') ||
       extractProp('\\.btn-primary', 'background') ||
+      extractProp('\\.sqs-block-button-element', 'background-color') ||
+      extractProp('\\.sqs-block-button-element', 'background') ||
       extractProp('a', 'color') ||
       (topColors.length > 0 ? topColors[0] : '#000000');
 
     const bgColor =
+      sqspColors['--siteBackgroundColor'] ||
+      sqspColors['--tweak-site-background-color'] ||
       extractVar('--black') ||
       extractVar('--bg-color') ||
       extractVar('--background') ||
@@ -293,6 +362,10 @@ export async function scrapeBrand(url: string) {
       '#ffffff';
 
     const textColor =
+      sqspColors['--paragraphMediumColor'] ||
+      sqspColors['--headingLargeColor'] ||
+      sqspColors['--siteTitleColor'] ||
+      sqspColors['--tweak-paragraph-medium-color'] ||
       extractVar('--white') ||
       extractVar('--text-color') ||
       extractVar('--color-text') ||
@@ -300,7 +373,9 @@ export async function scrapeBrand(url: string) {
       '#000000';
 
     const accentColor =
-      extractVar('--tweak-color-button-primary-text') ||
+      sqspColors['--primaryButtonTextColor'] ||
+      sqspColors['--lightAccentColor'] ||
+      sqspColors['--tweak-color-button-primary-text'] ||
       extractVar('--accent') ||
       extractVar('--secondary') ||
       extractVar('--color-accent') ||

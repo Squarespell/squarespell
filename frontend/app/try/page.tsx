@@ -252,8 +252,7 @@ function TryPageInner() {
       setCompletedSteps(BUILD_STEPS.length);
       setProgress(100);
 
-      // Delay transition to show completion
-      setTimeout(() => setStage('preview'), 800);
+      // Quiz is ready — user clicks "Preview your quiz" button to proceed
     } catch (err: any) {
       setErrorMsg(err.message || 'Something went wrong. Please try again.');
       setStage('error');
@@ -495,221 +494,115 @@ function TryPageInner() {
 
       {/* ════════════════════════ BUILDING STAGE ════════════════════════ */}
       {stage === 'building' && (
-        <main
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 'calc(100vh - 60px)',
-            padding: '40px 20px',
-          }}
-        >
+        <main style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)', padding: '40px 20px' }}>
           {/* Progress bar at top */}
-          <div
-            className="progress-bar"
-            style={{
-              position: 'fixed',
-              top: 60,
-              left: 0,
-              width: `${(completedSteps / BUILD_STEPS.length) * 100}%`,
-              zIndex: 100,
-            }}
-          />
+          <div className="progress-bar" style={{ position: 'fixed', top: 60, left: 0, width: `${(completedSteps / BUILD_STEPS.length) * 100}%`, zIndex: 100 }} />
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '40px',
-              width: '100%',
-              maxWidth: '1200px',
-            }}
-          >
-            {/* ── Left: Quiz preview ────────────────────────────────────── */}
-            <div className="fade-in">
-              <div
-                style={{
-                  padding: '32px',
-                  background: SURFACE,
-                  border: `1px solid ${BORDER}`,
-                  borderRadius: '16px',
-                  minHeight: '400px',
-                }}
-              >
-                {/* Stage label */}
-                <div style={{ fontSize: '12px', color: TEXT_MUTED, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-                  Live Preview
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: '0', width: '100%', maxWidth: '1000px', background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '20px', overflow: 'hidden', minHeight: '480px' }}>
+            {/* ── Left: Quiz assembling live ──────────────────────────── */}
+            <div style={{ padding: '36px 32px', display: 'flex', flexDirection: 'column' }}>
+              {/* Quiz title - shows as soon as quiz arrives, skeleton before */}
+              {quiz ? (
+                <div className="slide-up">
+                  <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.15, color: TEXT, marginBottom: '16px' }}>
+                    {quiz.title}
+                  </h2>
                 </div>
+              ) : (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ height: '28px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', width: '85%', marginBottom: '10px', animation: 'pulse 2s ease infinite' }} />
+                  <div style={{ height: '28px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', width: '60%', animation: 'pulse 2s ease infinite', animationDelay: '200ms' }} />
+                </div>
+              )}
 
-                {/* Scanning indicator */}
-                {completedSteps < 2 && (
-                  <div className="slide-up">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: ACCENT_DIM, border: `1px solid rgba(210,255,29,0.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: `2px solid ${ACCENT}`, borderTopColor: 'transparent', animation: 'spin 0.6s linear infinite' }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT }}>Scanning {domain}</div>
-                        <div style={{ fontSize: '13px', color: TEXT_MUTED }}>Extracting brand and content...</div>
-                      </div>
-                    </div>
-                    {/* Skeleton lines */}
-                    {[1, 2, 3].map(i => (
-                      <div key={i} style={{ height: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', marginBottom: '12px', width: `${90 - i * 15}%`, animation: 'pulse 2s ease infinite', animationDelay: `${i * 200}ms` }} />
-                    ))}
+              {/* Brand colors + site name */}
+              {brand?.colors ? (
+                <div className="fade-in" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+                  {Object.values(brand.colors).filter(Boolean).slice(0, 3).map((color, i) => (
+                    <div key={i} style={{ width: '14px', height: '14px', borderRadius: '50%', background: color as string, border: `1px solid ${BORDER}` }} />
+                  ))}
+                  <span style={{ fontSize: '13px', color: TEXT_MUTED, marginLeft: '4px' }}>{brand?.site_name || domain}</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+                  <div style={{ height: '12px', width: '100px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', marginLeft: '4px' }} />
+                </div>
+              )}
+
+              {/* First question assembling */}
+              {quiz?.questions?.[0] ? (
+                <div className="slide-up" style={{ flex: 1 }}>
+                  <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT, marginBottom: '16px', lineHeight: 1.4 }}>
+                    {quiz.questions[0].text}
                   </div>
-                )}
-
-                {/* Brand detected */}
-                {completedSteps >= 2 && !quiz && (
-                  <div className="slide-up">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '16px', fontWeight: 700, color: TEXT }}>Brand detected</div>
-                        <div style={{ fontSize: '13px', color: TEXT_MUTED }}>Generating personalized quiz...</div>
-                      </div>
-                    </div>
-                    {/* Animated typing skeleton for questions */}
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="fade-in" style={{ padding: '14px 16px', background: ELEVATED, border: `1px solid ${BORDER}`, borderRadius: '10px', marginBottom: '8px', animationDelay: `${i * 300}ms` }}>
-                        <div style={{ height: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', width: `${70 + Math.random() * 25}%`, animation: 'pulse 1.5s ease infinite' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {quiz.questions[0].options.slice(0, 4).map((opt, i) => (
+                      <div key={opt.id} className="fade-in" style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER}`, fontSize: '14px', color: TEXT_MUTED, animationDelay: `${i * 150}ms` }}>
+                        {opt.text}
                       </div>
                     ))}
                   </div>
-                )}
-
-                {/* Quiz title + questions appearing */}
-                {quiz && (
-                  <div className="slide-up">
-                    <h2 className="typewriter" style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, color: TEXT, marginBottom: '8px' }}>
-                      {quiz.title}
-                    </h2>
-                    {quiz.description && (
-                      <p className="fade-in" style={{ fontSize: '14px', color: TEXT_MUTED, marginBottom: '20px', animationDelay: '200ms' }}>{quiz.description}</p>
-                    )}
-
-                    {/* Brand colors */}
-                    {brand?.colors && (
-                      <div className="scale-in" style={{ display: 'flex', gap: '6px', marginBottom: '20px', animationDelay: '300ms' }}>
-                        {Object.values(brand.colors).filter(Boolean).slice(0, 4).map((color, i) => (
-                          <div key={i} style={{ width: '36px', height: '36px', borderRadius: '8px', background: color as string, border: `1px solid ${BORDER}` }} />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Question count */}
-                    <div className="fade-in" style={{ display: 'flex', gap: '16px', animationDelay: '400ms' }}>
-                      <div style={{ padding: '10px 14px', background: ELEVATED, borderRadius: '8px', border: `1px solid ${BORDER}` }}>
-                        <div style={{ fontSize: '20px', fontWeight: 800, color: ACCENT }}>{quiz.questions.length}</div>
-                        <div style={{ fontSize: '11px', color: TEXT_MUTED }}>Questions</div>
-                      </div>
-                      {quiz.outcomes && (
-                        <div style={{ padding: '10px 14px', background: ELEVATED, borderRadius: '8px', border: `1px solid ${BORDER}` }}>
-                          <div style={{ fontSize: '20px', fontWeight: 800, color: ACCENT }}>{quiz.outcomes.length}</div>
-                          <div style={{ fontSize: '11px', color: TEXT_MUTED }}>Outcomes</div>
-                        </div>
-                      )}
+                </div>
+              ) : (
+                <div style={{ flex: 1 }}>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <div style={{ height: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', width: `${80 - i * 10}%`, animation: 'pulse 2s ease infinite', animationDelay: `${i * 300}ms` }} />
                     </div>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Outcomes badge */}
+              {quiz?.outcomes && quiz.outcomes.length > 0 && (
+                <div className="scale-in" style={{ marginTop: '20px', padding: '10px 16px', background: ACCENT_DIM, border: `1px solid rgba(210,255,29,0.2)`, borderRadius: '10px', fontSize: '14px', fontWeight: 600, color: ACCENT, display: 'inline-block', alignSelf: 'flex-start' }}>
+                  {quiz.outcomes.length} outcomes ready
+                </div>
+              )}
             </div>
 
-            {/* ── Right: Build steps ────────────────────────────────────── */}
-            <div className="fade-in">
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}
-              >
+            {/* ── Divider ──────────────────────────────────────────────── */}
+            <div style={{ background: BORDER, width: '1px' }} />
+
+            {/* ── Right: Build steps + domain ─────────────────────────── */}
+            <div style={{ padding: '36px 32px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                Building for
+              </div>
+              <div style={{ fontSize: 'clamp(18px, 2.5vw, 24px)', fontWeight: 800, color: TEXT, letterSpacing: '-0.03em', marginBottom: '32px', wordBreak: 'break-word' }}>
+                {domain}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0', flex: 1 }}>
                 {BUILD_STEPS.map((step, i) => {
                   const isDone = i < completedSteps;
                   const isActive = i === completedSteps;
-
                   return (
-                    <div
-                      key={i}
-                      className="scale-in"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '14px',
-                        padding: '14px 16px',
-                        background: isActive ? ACCENT_DIM : 'transparent',
-                        border: `1px solid ${isActive ? ACCENT : BORDER}`,
-                        borderRadius: '12px',
-                        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                        animationDelay: `${i * 100}ms`,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '8px',
-                          flexShrink: 0,
-                          background: isDone ? ACCENT : isActive ? `${ACCENT}20` : ELEVATED,
-                          border: `1px solid ${isDone ? ACCENT : isActive ? ACCENT : BORDER}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                        }}
-                      >
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: i < BUILD_STEPS.length - 1 ? `1px solid ${BORDER}` : 'none', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0, background: isDone ? ACCENT : 'transparent', border: `2px solid ${isDone ? ACCENT : isActive ? ACCENT : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
                         {isDone ? (
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke={BG}
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                         ) : isActive ? (
-                          <div
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              border: `1.5px solid ${ACCENT}`,
-                              borderTopColor: 'transparent',
-                              animation: 'spin 0.6s linear infinite',
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: '4px',
-                              height: '4px',
-                              borderRadius: '50%',
-                              background: TEXT_MUTED,
-                            }}
-                          />
-                        )}
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', border: `2px solid ${ACCENT}`, borderTopColor: 'transparent', animation: 'spin 0.6s linear infinite' }} />
+                        ) : null}
                       </div>
-                      <span
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: isActive ? 600 : isDone ? 500 : 400,
-                          color: isDone ? ACCENT : isActive ? TEXT : TEXT_MUTED,
-                          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                        }}
-                      >
-                        {step}
+                      <span style={{ fontSize: '15px', fontWeight: isDone ? 500 : isActive ? 600 : 400, color: isDone ? TEXT : isActive ? TEXT : TEXT_MUTED, transition: 'all 0.3s' }}>
+                        {isActive ? step + '...' : step}
                       </span>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Preview button - appears when quiz is ready */}
+              {quiz && (
+                <button className="scale-in" onClick={() => setStage('preview')} style={{ marginTop: '24px', height: '48px', background: ACCENT_DIM, border: `1.5px solid rgba(210,255,29,0.3)`, borderRadius: '100px', color: ACCENT, fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+                  Preview your quiz
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              )}
             </div>
           </div>
         </main>
