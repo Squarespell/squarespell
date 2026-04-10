@@ -56,6 +56,37 @@ interface OnboardingQ {
 }
 
 /* ========================================================================= */
+/* Stage 2: five static onboarding questions (byte-faithful prototype-v4)    */
+/* ========================================================================= */
+const STATIC_ONBOARDING: OnboardingQ[] = [
+  {
+    id: 'business_type',
+    text: 'What kind of business do you run?',
+    options: ['Wellness or coaching', 'E-commerce or product', 'Service business', 'SaaS or software', 'Agency or studio', 'Something else'],
+  },
+  {
+    id: 'audience',
+    text: 'Who are your typical visitors?',
+    options: ['Small business owners', 'Consumers', 'Creators and freelancers', 'Enterprise teams'],
+  },
+  {
+    id: 'goal',
+    text: 'What is the main goal of this quiz?',
+    options: ['Capture qualified leads', 'Recommend the right product', 'Grow my email list', 'Segment by intent'],
+  },
+  {
+    id: 'outcome',
+    text: 'What will visitors get at the end?',
+    options: ['A personalized recommendation', 'A free resource or download', 'A tailored plan', 'A discount or offer'],
+  },
+  {
+    id: 'tone',
+    text: 'What tone best matches your brand?',
+    options: ['Warm and friendly', 'Confident and expert', 'Playful and casual', 'Minimal and direct'],
+  },
+];
+
+/* ========================================================================= */
 /* SVG icons                                                                 */
 /* ========================================================================= */
 const SvgArrowRight = ({ size = 16 }: { size?: number }) => (
@@ -127,8 +158,8 @@ export function TryFlowInner({
   const [sessionToken, setSessionToken] = useState('');
   const [claimToken, setClaimToken] = useState('');
 
-  // Stage 2
-  const [onboardingQs, setOnboardingQs] = useState<OnboardingQ[]>([]);
+  // Stage 2 — questions are static (prototype-v4), only answers are stateful
+  const onboardingQs = STATIC_ONBOARDING;
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, number>>({});
   const [buildingQuiz, setBuildingQuiz] = useState(false);
 
@@ -169,7 +200,6 @@ export function TryFlowInner({
       const data = await res.json();
       setBrand(data.brand);
       setSessionToken(data.session_token);
-      setOnboardingQs(data.onboarding_questions || []);
       setOnboardingAnswers({});
       setUrl(normalized);
       setStage(2);
@@ -356,7 +386,11 @@ export function TryFlowInner({
     } else {
       setS4ShowResult(true);
     }
-    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll only the inner visitor preview to top — never the outer editor page.
+    if (typeof document !== 'undefined') {
+      const chrome = document.querySelector('.s4-chrome') as HTMLElement | null;
+      if (chrome) chrome.scrollTop = 0;
+    }
   };
   const s4Back = () => {
     if (s4Idx > 0) setS4Idx(s4Idx - 1);
@@ -380,7 +414,6 @@ export function TryFlowInner({
   /* ======================== Derived values =========================== */
   const domain = (url || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '') || 'your site';
   const siteLetter = (brand?.site_name || domain || 'B').charAt(0).toUpperCase();
-  const accent = brand?.colors?.primary || '#D2FF1D';
 
   // Slug derived from quiz title — used in Stage 6 public URL and embed snippet
   const quizSlug = (quiz?.title || 'your-quiz')
@@ -442,7 +475,7 @@ export function TryFlowInner({
   /* RENDER                                                                */
   /* ===================================================================== */
   return (
-    <div className="flow-root" style={{ '--accent': accent } as React.CSSProperties}>
+    <div className="flow-root">
       <style dangerouslySetInnerHTML={{ __html: FLOW_CSS }} />
 
       {/* ============ STAGE 1: EMBEDDABLE HOOK WIDGET (per prototype-v4) ============
@@ -550,11 +583,11 @@ export function TryFlowInner({
 
           <div className="s2-foot">
             <div className="s2-progress">
-              <span>{onboardingCount} of {Math.max(onboardingQs.length, 5)} answered</span>
+              <span>{onboardingCount} of 5 answered</span>
               <div className="s2-progress-bar">
                 <div
                   className="s2-progress-fill"
-                  style={{ width: `${(onboardingCount / Math.max(onboardingQs.length, 1)) * 100}%` }}
+                  style={{ width: `${(onboardingCount / 5) * 100}%` }}
                 />
               </div>
             </div>
