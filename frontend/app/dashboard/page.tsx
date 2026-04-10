@@ -250,47 +250,51 @@ function DashboardContent() {
         let claimToken = searchParams.get('claim') || '';
         if (!claimToken) claimToken = getCookie('sq_claim');
         if (!claimToken) claimToken = sessionStorage.getItem('sq_claim_token') || '';
-        if (!claimToken) {
-          try {
-            const raw = localStorage.getItem('squarespell_preview');
-            if (raw) {
-              const preview = JSON.parse(raw);
-              claimToken = preview.claim_token || '';
-            }
-          } catch {}
-        }
 
-        if (claimToken) {
+        // Always read full preview payload as a fallback in case cache is gone on the backend
+        let previewPayload: any = null;
+        try {
+          const raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.quiz && parsed?.url && Date.now() - (parsed.createdAt || 0) < 14400000) {
+              previewPayload = parsed;
+              if (!claimToken) claimToken = parsed.claim_token || '';
+            }
+          }
+        } catch {}
+
+        if (claimToken || previewPayload) {
+          console.log('[Squarespell] Attempting claim-quiz', { hasToken: !!claimToken, hasPayload: !!previewPayload });
           const claimRes = await fetch(`${API}/api/claim-quiz`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${retrievedToken}` },
-            body: JSON.stringify({ claim_token: claimToken }),
+            body: JSON.stringify({
+              claim_token: claimToken,
+              quiz: previewPayload?.quiz,
+              brand: previewPayload?.brand,
+              url: previewPayload?.url,
+            }),
           });
-          const claimData = await claimRes.json();
+          const claimData = await claimRes.json().catch(() => ({}));
+          console.log('[Squarespell] Claim response', claimRes.status, claimData);
           if (claimRes.ok && claimData.claimed) {
             quizClaimed = true;
+          } else if (previewPayload) {
+            // Last-ditch fallback: save-preview endpoint
+            const saveRes = await fetch(`${API}/api/save-preview`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${retrievedToken}` },
+              body: JSON.stringify({ quiz: previewPayload.quiz, brand: previewPayload.brand, url: previewPayload.url }),
+            });
+            const saveData = await saveRes.json().catch(() => ({}));
+            console.log('[Squarespell] Save-preview response', saveRes.status, saveData);
+            if (saveRes.ok && saveData.saved) quizClaimed = true;
           }
+
           clearCookie('sq_claim');
           try { sessionStorage.removeItem('sq_claim_token'); } catch {}
-          try { localStorage.removeItem('squarespell_preview'); } catch {}
-        } else {
-          const raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
-          if (raw) {
-            const preview = JSON.parse(raw);
-            if (preview.quiz && preview.url && Date.now() - preview.createdAt < 14400000) {
-              const saveRes = await fetch(`${API}/api/save-preview`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${retrievedToken}` },
-                body: JSON.stringify({ quiz: preview.quiz, brand: preview.brand, url: preview.url }),
-              });
-              const saveData = await saveRes.json();
-              if (saveRes.ok && saveData.saved) {
-                quizClaimed = true;
-              }
-            }
-            localStorage.removeItem('squarespell_preview');
-            sessionStorage.removeItem('squarespell_preview');
-          }
+          try { localStorage.removeItem('squarespell_preview'); sessionStorage.removeItem('squarespell_preview'); } catch {}
         }
       } catch (e) {
         console.error('[Squarespell] Claim/save failed:', e);

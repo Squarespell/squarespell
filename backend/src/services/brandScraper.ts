@@ -27,13 +27,13 @@ export async function scrapeBrand(url: string) {
       redirect: 'follow',
     });
     const html = await res.text();
-    console.log(`[Scraper] Fetched ${url} — ${html.length} chars, status ${res.status}`);
+    console.log(`[Scraper] Fetched ${url}  -  ${html.length} chars, status ${res.status}`);
 
     // ── Site identity ──────────────────────────────────────────────────────
     const siteName =
       html.match(/<meta[^>]+property="og:site_name"[^>]+content="([^"]+)"/i)?.[1] ||
       html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:site_name"/i)?.[1] ||
-      html.match(/<title>([^<|–—]+)/i)?.[1]?.trim() ||
+      html.match(/<title>([^<|]+)/i)?.[1]?.trim() ||
       new URL(url).hostname.replace('www.', '');
 
     const faviconPath =
@@ -78,10 +78,9 @@ export async function scrapeBrand(url: string) {
     // ── Strategy 2: Squarespace-specific data ─────────────────────────────
     let squarespaceContext = '';
     let isSquarespace = false;
-    let sqspColors: Record<string, string> = {};
 
     // Detect Squarespace
-    if (html.includes('squarespace') || html.includes('static.squarespace') || html.includes('SQUARESPACE_CONTEXT')) {
+    if (html.includes('squarespace') || html.includes('static.squarespace') || html.includes('SQUARESPACE_CONTEXT') || html.includes('static1.squarespace.com')) {
       isSquarespace = true;
       console.log('[Scraper] Squarespace site detected');
     }
@@ -95,58 +94,6 @@ export async function scrapeBrand(url: string) {
       } catch {}
     }
 
-    // Squarespace Design Data (contains all theme colors)
-    const designDataMatch = html.match(/Static\.SQUARESPACE_DESIGN\s*=\s*(\{[\s\S]*?\});/) ||
-      html.match(/"siteData"\s*:\s*(\{[\s\S]*?"colors"[\s\S]*?\})/);
-    if (designDataMatch) {
-      try {
-        const designData = JSON.parse(designDataMatch[1]);
-        if (designData.colors) {
-          Object.entries(designData.colors).forEach(([key, val]: [string, any]) => {
-            if (typeof val === 'string' && val.startsWith('#')) {
-              sqspColors[key] = val;
-            }
-          });
-        }
-        console.log('[Scraper] Squarespace design data colors:', Object.keys(sqspColors).length);
-      } catch {}
-    }
-
-    // Squarespace CSS tweaks (--tweak-*) - the main way Squarespace stores colors
-    const sqspTweakRegex = /--tweak-([a-zA-Z-]+)\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/gi;
-    let sqspTweak;
-    while ((sqspTweak = sqspTweakRegex.exec(html)) !== null) {
-      sqspColors[`--tweak-${sqspTweak[1]}`] = sqspTweak[2];
-    }
-
-    // Squarespace site color palette CSS vars
-    const sqspPaletteRegex = /--siteBackgroundColor\s*:\s*(#[0-9a-fA-F]{3,8})|--siteTitleColor\s*:\s*(#[0-9a-fA-F]{3,8})|--navigationLinkColor\s*:\s*(#[0-9a-fA-F]{3,8})|--primaryButtonBackgroundColor\s*:\s*(#[0-9a-fA-F]{3,8})|--primaryButtonTextColor\s*:\s*(#[0-9a-fA-F]{3,8})|--headingLargeColor\s*:\s*(#[0-9a-fA-F]{3,8})|--paragraphMediumColor\s*:\s*(#[0-9a-fA-F]{3,8})|--accentColor\s*:\s*(#[0-9a-fA-F]{3,8})/gi;
-    let sqspPM;
-    while ((sqspPM = sqspPaletteRegex.exec(html)) !== null) {
-      const val = sqspPM.slice(1).find(Boolean);
-      if (val) {
-        const key = sqspPM[0].split(':')[0].trim();
-        sqspColors[key] = val;
-      }
-    }
-
-    // Also extract Squarespace palette from individual CSS var declarations
-    const sqspVarPatterns = [
-      'siteBackgroundColor', 'siteTitleColor', 'navigationLinkColor',
-      'primaryButtonBackgroundColor', 'primaryButtonTextColor',
-      'headingLargeColor', 'paragraphMediumColor', 'accentColor',
-      'lightAccentColor', 'darkAccentColor', 'colorAccent',
-    ];
-    for (const varName of sqspVarPatterns) {
-      const re = new RegExp(`--${varName}\\s*:\\s*(#[0-9a-fA-F]{3,8})`, 'i');
-      const m = html.match(re);
-      if (m) sqspColors[`--${varName}`] = m[1];
-    }
-
-    if (Object.keys(sqspColors).length > 0) {
-      console.log('[Scraper] Squarespace colors extracted:', JSON.stringify(sqspColors).slice(0, 300));
-    }
-
     // Try Squarespace collection data
     const collectionMatch = html.match(/"collection"\s*:\s*(\{[\s\S]*?\})\s*[,}]/);
     let sqspCollectionInfo = '';
@@ -158,7 +105,7 @@ export async function scrapeBrand(url: string) {
     }
 
     // ── Strategy 3: Standard HTML extraction ──────────────────────────────
-    // Strip ONLY scripts, styles, footer, noscript — keep everything else
+    // Strip ONLY scripts, styles, footer, noscript  -  keep everything else
     const textContent = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -181,7 +128,7 @@ export async function scrapeBrand(url: string) {
     const ogTitle =
       html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i)?.[1] || '';
 
-    // Extract ALL headings (h1-h4) — these reveal core value props
+    // Extract ALL headings (h1-h4)  -  these reveal core value props
     const headings: string[] = [];
     const headingRegex = /<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/gi;
     let match;
@@ -190,7 +137,7 @@ export async function scrapeBrand(url: string) {
       if (clean.length > 3 && clean.length < 200) headings.push(clean);
     }
 
-    // Extract paragraphs — main content
+    // Extract paragraphs  -  main content
     const paragraphs: string[] = [];
     const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
     while ((match = pRegex.exec(html)) !== null && paragraphs.length < 12) {
@@ -208,7 +155,7 @@ export async function scrapeBrand(url: string) {
       }
     }
 
-    // Extract list items — often contain services, features, benefits
+    // Extract list items  -  often contain services, features, benefits
     const listItems: string[] = [];
     const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
     while ((match = liRegex.exec(html)) !== null && listItems.length < 20) {
@@ -216,7 +163,7 @@ export async function scrapeBrand(url: string) {
       if (clean.length > 5 && clean.length < 200) listItems.push(clean);
     }
 
-    // Extract button/CTA text — reveals key actions
+    // Extract button/CTA text  -  reveals key actions
     const ctaTexts: string[] = [];
     const btnRegex = /<(?:button|a)[^>]*class="[^"]*(?:btn|button|cta)[^"]*"[^>]*>([\s\S]*?)<\/(?:button|a)>/gi;
     while ((match = btnRegex.exec(html)) !== null && ctaTexts.length < 10) {
@@ -224,14 +171,14 @@ export async function scrapeBrand(url: string) {
       if (clean.length > 2 && clean.length < 60) ctaTexts.push(clean);
     }
 
-    // Extract image alt texts — describe products/services
+    // Extract image alt texts  -  describe products/services
     const altTexts: string[] = [];
     const imgRegex = /<img[^>]+alt="([^"]{5,120})"/gi;
     while ((match = imgRegex.exec(html)) !== null && altTexts.length < 10) {
       altTexts.push(match[1].trim());
     }
 
-    // Body text excerpt — first ~2500 chars of clean text
+    // Body text excerpt  -  first ~2500 chars of clean text
     const bodyText = textContent.slice(0, 2500);
 
     // ── Build comprehensive business summary ──────────────────────────────
@@ -265,45 +212,96 @@ export async function scrapeBrand(url: string) {
       .map((s: string) => s.replace(/<\/?style[^>]*>/gi, ''))
       .join('\n');
 
-    // Try to fetch up to 3 external stylesheets for better color extraction
+    // Try to fetch up to 4 external stylesheets for better color extraction.
+    // For Squarespace we specifically want site.css and any stylesheet on static1.squarespace.com
     const sheetHrefs: string[] = [];
     const sheetRegex = /<link[^>]+rel="stylesheet"[^>]+href="([^"]+\.css[^"]*)"/gi;
     let sheetMatch;
-    while ((sheetMatch = sheetRegex.exec(html)) !== null && sheetHrefs.length < 3) {
+    while ((sheetMatch = sheetRegex.exec(html)) !== null && sheetHrefs.length < 6) {
       sheetHrefs.push(sheetMatch[1]);
     }
+    // Rank: prefer Squarespace site css, then local css, then external
+    sheetHrefs.sort((a, b) => {
+      const aSite = /site\.css|static1\.squarespace\.com/i.test(a) ? 0 : 1;
+      const bSite = /site\.css|static1\.squarespace\.com/i.test(b) ? 0 : 1;
+      return aSite - bSite;
+    });
     let externalCss = '';
-    for (const href of sheetHrefs) {
+    for (const href of sheetHrefs.slice(0, 4)) {
       const sheetUrl = href.startsWith('http') ? href : `${new URL(url).origin}${href.startsWith('/') ? '' : '/'}${href}`;
       try {
         const r = await fetch(sheetUrl, { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0' } });
-        externalCss += (await r.text()).slice(0, 50000) + '\n';
+        externalCss += (await r.text()).slice(0, 120000) + '\n';
       } catch {}
     }
 
     const allCss = inlineStyles + '\n' + externalCss;
-    const HEX = /(?:#[0-9a-fA-F]{3,8}|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*[\d.]+)?\s*\))/;
-    const extractVar = (v: string) =>
-      allCss.match(new RegExp(`${v}\\s*:\\s*(${HEX.source})`, 'i'))?.[1] ?? null;
+
+    // ── Squarespace / generic CSS custom property extraction ─────────────
+    // Colors can appear as hex (#rgb, #rrggbb, #rrggbbaa), rgb(), rgba(), or hsl()
+    const COLOR_VAL = '(?:#[0-9a-fA-F]{3,8}|rgba?\\([^)]+\\)|hsla?\\([^)]+\\))';
+
+    // Extract ALL CSS custom property declarations and count their values
+    // Multiple occurrences of the same --var with the same value means it's used in many sections
+    const varOccurrences: Record<string, Record<string, number>> = {};
+    const varRegex = new RegExp(`--([a-zA-Z][\\w-]*)\\s*:\\s*(${COLOR_VAL})`, 'g');
+    let vm;
+    while ((vm = varRegex.exec(allCss)) !== null) {
+      const name = vm[1];
+      const value = vm[2].toLowerCase().replace(/\s+/g, '');
+      if (!varOccurrences[name]) varOccurrences[name] = {};
+      varOccurrences[name][value] = (varOccurrences[name][value] || 0) + 1;
+    }
+    // Helper: return the most frequent value for a given var name
+    const pickVar = (name: string): string | null => {
+      const values = varOccurrences[name];
+      if (!values) return null;
+      const entries = Object.entries(values).sort((a, b) => b[1] - a[1]);
+      return entries[0]?.[0] || null;
+    };
+    // Case-insensitive lookup because Squarespace uses camelCase but other sites kebab-case
+    const pickVarAny = (...names: string[]): string | null => {
+      for (const n of names) {
+        const v = pickVar(n);
+        if (v) return v;
+      }
+      // Try case-insensitive fallback across all var names
+      const wanted = names.map(n => n.toLowerCase());
+      for (const [name, values] of Object.entries(varOccurrences)) {
+        if (wanted.includes(name.toLowerCase())) {
+          const entries = Object.entries(values).sort((a, b) => b[1] - a[1]);
+          if (entries[0]) return entries[0][0];
+        }
+      }
+      return null;
+    };
+
+    console.log(`[Scraper] CSS custom props found: ${Object.keys(varOccurrences).length}`);
+    const sqspCandidates = Object.keys(varOccurrences).filter(n =>
+      /^(site|heading|paragraph|navigationLink|primaryButton|secondaryButton|tertiaryButton|accent|colorAccent|logoColor|tweak)/i.test(n)
+    );
+    console.log(`[Scraper] Squarespace-style vars matched: ${sqspCandidates.slice(0, 20).join(', ')}`);
+
+    const extractVar = (v: string) => {
+      const bareName = v.replace(/^--/, '');
+      return pickVar(bareName);
+    };
     const extractProp = (sel: string, prop: string) =>
-      allCss.match(new RegExp(`${sel}[^{]*{[^}]*${prop}\\s*:\\s*(${HEX.source})`, 'i'))?.[1] ?? null;
+      allCss.match(new RegExp(`${sel}[^{]*{[^}]*${prop}\\s*:\\s*(${COLOR_VAL})`, 'i'))?.[1] ?? null;
 
     // Extract theme-color meta tag (many sites set this)
     const themeColor = html.match(/<meta[^>]+name="theme-color"[^>]+content="([^"]+)"/i)?.[1] ||
       html.match(/<meta[^>]+content="([^"]+)"[^>]+name="theme-color"/i)?.[1] || '';
-
-    // Extract msapplication-TileColor
     const tileColor = html.match(/<meta[^>]+name="msapplication-TileColor"[^>]+content="([^"]+)"/i)?.[1] || '';
 
-    // Extract all unique hex colors from CSS, sorted by frequency
+    // Extract all hex colors from CSS, sorted by frequency (excluding pure white/black/grays)
     const allHexColors: Record<string, number> = {};
     const hexRegex = /#([0-9a-fA-F]{3,8})\b/g;
     let hexMatch;
     while ((hexMatch = hexRegex.exec(allCss)) !== null) {
       const hex = hexMatch[0].toLowerCase();
-      // Skip near-white, near-black, and grays
       if (/^#(fff|000|[0-9a-f])\1*$/i.test(hex)) continue;
-      if (/^#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3$/i.test(hex)) continue; // grays like #333, #666
+      if (/^#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3$/i.test(hex)) continue;
       allHexColors[hex] = (allHexColors[hex] || 0) + 1;
     }
     const topColors = Object.entries(allHexColors)
@@ -311,28 +309,26 @@ export async function scrapeBrand(url: string) {
       .slice(0, 10)
       .map(([c]) => c);
 
-    // Also extract colors from inline style attributes in HTML
-    const inlineColorRegex = /style="[^"]*(?:background-color|background|color)\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/gi;
-    const inlineColors: string[] = [];
-    let icm;
-    while ((icm = inlineColorRegex.exec(html)) !== null && inlineColors.length < 10) {
-      inlineColors.push(icm[1]);
-    }
-
+    // Font detection: prefer Squarespace heading font, then body font, then any custom prop
     const fontFamily =
+      allCss.match(/--heading-font-font-family\s*:\s*['"]?([^'";,]+)/i)?.[1]?.trim() ||
+      allCss.match(/--body-font-font-family\s*:\s*['"]?([^'";,]+)/i)?.[1]?.trim() ||
+      extractVar('--heading-font-font-family') ||
+      extractVar('--body-font-font-family') ||
       extractVar('--base-font') ||
       extractVar('--font-family') ||
       extractVar('--body-font') ||
-      allCss.match(/font-family\s*:\s*['"]?([A-Za-z\s]+)['"]?\s*[,;]/)?.[1]?.trim() ||
+      allCss.match(/font-family\s*:\s*['"]?([A-Za-z][\w\s]+)['"]?\s*[,;]/)?.[1]?.trim() ||
       'sans-serif';
 
-    // Determine colors with priority: Squarespace-specific > meta theme > CSS vars > frequency
+    // ── Color picking strategy (Squarespace → generic → fallback) ──────
+    // Squarespace 7.1: --siteBackgroundColor, --primaryButtonBackgroundColor,
+    // --headingLargeColor, --paragraphMediumColor, --accentColor
+    // Older 7.1 tweaks: --tweak-site-background-color, --tweak-color-button-primary-background
+
     const primaryColor =
-      sqspColors['--primaryButtonBackgroundColor'] ||
-      sqspColors['--accentColor'] ||
-      sqspColors['--colorAccent'] ||
-      sqspColors['--tweak-color-button-primary-background'] ||
-      sqspColors['--tweak-global-accent-color'] ||
+      pickVarAny('primaryButtonBackgroundColor', 'accentColor', 'colorAccent', 'lightAccentColor', 'darkAccentColor') ||
+      pickVarAny('tweak-color-button-primary-background', 'tweak-global-accent-color', 'tweak-accent-color', 'tweak-site-accent-color') ||
       themeColor ||
       tileColor ||
       extractVar('--primary-color') ||
@@ -350,9 +346,8 @@ export async function scrapeBrand(url: string) {
       (topColors.length > 0 ? topColors[0] : '#000000');
 
     const bgColor =
-      sqspColors['--siteBackgroundColor'] ||
-      sqspColors['--tweak-site-background-color'] ||
-      extractVar('--black') ||
+      pickVarAny('siteBackgroundColor') ||
+      pickVarAny('tweak-site-background-color', 'tweak-global-bg-color', 'tweak-background-color') ||
       extractVar('--bg-color') ||
       extractVar('--background') ||
       extractVar('--color-background') ||
@@ -362,27 +357,24 @@ export async function scrapeBrand(url: string) {
       '#ffffff';
 
     const textColor =
-      sqspColors['--paragraphMediumColor'] ||
-      sqspColors['--headingLargeColor'] ||
-      sqspColors['--siteTitleColor'] ||
-      sqspColors['--tweak-paragraph-medium-color'] ||
-      extractVar('--white') ||
+      pickVarAny('headingLargeColor', 'headingMediumColor', 'paragraphMediumColor', 'paragraphLargeColor', 'siteTitleColor', 'navigationLinkColor') ||
+      pickVarAny('tweak-paragraph-medium-color', 'tweak-heading-large-color', 'tweak-heading-color-on-background', 'tweak-text-color') ||
       extractVar('--text-color') ||
       extractVar('--color-text') ||
       extractProp('body', 'color') ||
       '#000000';
 
     const accentColor =
-      sqspColors['--primaryButtonTextColor'] ||
-      sqspColors['--lightAccentColor'] ||
-      sqspColors['--tweak-color-button-primary-text'] ||
+      pickVarAny('primaryButtonTextColor', 'lightAccentColor', 'darkAccentColor', 'secondaryButtonBackgroundColor') ||
+      pickVarAny('tweak-color-button-primary-text', 'tweak-secondary-color') ||
       extractVar('--accent') ||
       extractVar('--secondary') ||
       extractVar('--color-accent') ||
       (topColors.length > 1 ? topColors[1] : primaryColor);
 
-    console.log(`[Scraper] Colors detected — primary: ${primaryColor}, bg: ${bgColor}, text: ${textColor}, accent: ${accentColor}`);
+    console.log(`[Scraper] Colors detected - primary: ${primaryColor}, bg: ${bgColor}, text: ${textColor}, accent: ${accentColor}`);
     console.log(`[Scraper] Theme-color meta: ${themeColor || 'none'}, Top CSS colors: ${topColors.slice(0, 5).join(', ')}`);
+    console.log(`[Scraper] Font family: ${fontFamily}`);
 
     return {
       detected: true,

@@ -34,7 +34,7 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
     const { quiz, brand, url } = req.body;
     if (!quiz || !url) return res.status(400).json({ error: 'quiz and url required' });
 
-    const userId = req.user?.id;
+    const userId = req.dbUserId;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
     // Check if user already has a quiz with the same URL (don't duplicate same site)
@@ -124,9 +124,9 @@ previewRouter.post('/preview-generate', async (req, res) => {
       quiz, brand, url: normalizedUrl,
       createdAt: Date.now(),
     });
-    // Clean old entries (older than 4 hours)
+    // Clean old entries (older than 24 hours so OAuth roundtrip never loses them)
     for (const [k, v] of previewQuizCache.entries()) {
-      if (Date.now() - v.createdAt > 14400000) previewQuizCache.delete(k);
+      if (Date.now() - v.createdAt > 86400000) previewQuizCache.delete(k);
     }
 
     console.log(`[Preview] Quiz cached with claim token: ${claimToken.slice(0, 8)}...`);
@@ -140,18 +140,24 @@ previewRouter.post('/preview-generate', async (req, res) => {
 // ── Claim a preview quiz (save from cache to DB for authenticated user) ──────
 previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
-    const { claim_token } = req.body;
-    const userId = req.user?.id;
-    if (!claim_token || !userId) return res.status(400).json({ error: 'claim_token and auth required' });
+    const { claim_token, quiz: bodyQuiz, brand: bodyBrand, url: bodyUrl } = req.body;
+    const userId = req.dbUserId;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+    if (!claim_token && !bodyQuiz) return res.status(400).json({ error: 'claim_token or quiz payload required' });
 
-    // Look up quiz in memory cache
-    const cached = previewQuizCache.get(claim_token);
-    if (!cached) {
-      console.log(`[Claim] Token not found in cache: ${claim_token.slice(0, 8)}...`);
+    // Look up quiz in memory cache, fall back to body payload if cache miss
+    // (cache is lost if the backend restarts between generate and claim)
+    let quiz: any, brand: any, url: string;
+    const cached = claim_token ? previewQuizCache.get(claim_token) : null;
+    if (cached) {
+      quiz = cached.quiz; brand = cached.brand; url = cached.url;
+    } else if (bodyQuiz && bodyUrl) {
+      console.log(`[Claim] Cache miss; using body payload fallback`);
+      quiz = bodyQuiz; brand = bodyBrand || {}; url = bodyUrl;
+    } else {
+      console.log(`[Claim] Token not found in cache and no fallback payload: ${(claim_token || '').slice(0, 8)}...`);
       return res.status(404).json({ error: 'Quiz not found or expired. Please generate a new one.' });
     }
-
-    const { quiz, brand, url } = cached;
 
     // Check if user already has a quiz for this URL
     const { data: existing } = await supabase
@@ -251,7 +257,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           from: 'Squarespell <onboarding@resend.dev>',
           to: notifyEmail,
           subject: `New lead captured: ${name || email}`,
-          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || '—'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="https://squarespell.com/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
+          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="https://squarespell.com/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
         });
       }
     } catch (e) { console.log('Email notification failed:', e); }
@@ -603,7 +609,7 @@ cronRouter.post('/weekly-digest', async (req, res) => {
         await resend.emails.send({
           from: 'Squarespell <onboarding@resend.dev>',
           to: user.email,
-          subject: `Your weekly quiz summary — ${totalViews} views this week`,
+          subject: `Your weekly quiz summary  -  ${totalViews} views this week`,
           html,
         });
 
@@ -681,7 +687,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
             await resend.emails.send({
               from: 'Squarespell <onboarding@resend.dev>',
               to: user.email,
-              subject: 'Welcome to Squarespell — Create your first quiz',
+              subject: 'Welcome to Squarespell  -  Create your first quiz',
               html,
             });
 
@@ -742,7 +748,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
           await resend.emails.send({
             from: 'Squarespell <onboarding@resend.dev>',
             to: user.email,
-            subject: 'Restore your Squarespell quizzes — Upgrade now',
+            subject: 'Restore your Squarespell quizzes  -  Upgrade now',
             html,
           });
 

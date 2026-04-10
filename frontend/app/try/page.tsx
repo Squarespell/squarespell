@@ -171,6 +171,583 @@ button:active {
 }
 `;
 
+/* ──────────────────────────────────────────────────────────────────────────
+   PreviewStage - shows the full interactive quiz rendered INSIDE a live
+   mockup of the user's actual website, using their auto-detected brand
+   colors and font. All questions are navigable.
+   ────────────────────────────────────────────────────────────────────────── */
+type DeviceType = 'desktop' | 'tablet' | 'mobile';
+function PreviewStage({
+  quiz,
+  brand,
+  domain,
+  signUpUrl,
+  onBack,
+}: {
+  quiz: Quiz;
+  brand: Brand | null;
+  domain: string;
+  signUpUrl: string;
+  onBack: () => void;
+}) {
+  const [device, setDevice] = useState<DeviceType>('desktop');
+  const [step, setStep] = useState(0); // 0..questions.length-1 = question, questions.length = lead gate, +1 = result
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [leadName, setLeadName] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+
+  // Extract brand colors (with sensible defaults if not detected)
+  const colors = brand?.colors || {};
+  const sitePrimary = (colors as any).primary || '#1a1a1a';
+  const siteBg = (colors as any).background || '#ffffff';
+  const siteText = (colors as any).text || '#111111';
+  const accentOnPrimary = (colors as any).accent || '#ffffff';
+
+  const rawFont = brand?.font_family || 'Inter';
+  const siteFont = rawFont.replace(/['"]/g, '').split(',')[0].trim();
+  const siteName = brand?.site_name || domain.replace(/^www\./, '').split('.')[0];
+  const siteInitial = (siteName || 'S').charAt(0).toUpperCase() + (siteName || '').slice(1);
+
+  const totalQuestions = quiz.questions.length;
+  const leadGateEnabled = !!quiz.leadGate || !!(quiz as any).settings?.leadGate;
+  const progressPct = ((step + 1) / (totalQuestions + (leadGateEnabled ? 2 : 1))) * 100;
+  const isLeadGate = leadGateEnabled && step === totalQuestions;
+  const isResult = step >= totalQuestions + (leadGateEnabled ? 1 : 0);
+  const currentQ = step < totalQuestions ? quiz.questions[step] : null;
+
+  // Pick an outcome based on answers (simple: just first outcome for preview)
+  const resultOutcome = quiz.outcomes && quiz.outcomes.length > 0 ? quiz.outcomes[0] : null;
+
+  const frameWidth = device === 'mobile' ? 380 : device === 'tablet' ? 700 : 1100;
+  const mobileBezel = device === 'mobile';
+
+  function advance() {
+    if (step < totalQuestions + (leadGateEnabled ? 1 : 0)) {
+      setStep(s => s + 1);
+    }
+  }
+  function reset() {
+    setStep(0);
+    setAnswers({});
+    setLeadName('');
+    setLeadEmail('');
+  }
+
+  return (
+    <main
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 'calc(100vh - 60px)',
+        padding: '20px 20px 40px',
+      }}
+    >
+      {/* ── Top action bar ─────────────────────────────────────────────── */}
+      <div
+        className="fade-in"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          maxWidth: '1400px',
+          width: '100%',
+          margin: '0 auto 20px',
+          gap: '16px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={onBack}
+            style={{
+              height: '40px',
+              padding: '0 18px',
+              background: 'transparent',
+              color: TEXT_MUTED,
+              border: `1px solid ${BORDER}`,
+              borderRadius: '100px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Start over
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4cb150', animation: 'pulse 2s ease infinite' }} />
+            <span style={{ fontSize: '12px', fontWeight: 700, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Live preview on {siteName}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Device toggle */}
+          <div style={{ display: 'flex', gap: '2px', background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '3px' }}>
+            {([
+              { d: 'desktop' as DeviceType, icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+              { d: 'tablet' as DeviceType, icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
+              { d: 'mobile' as DeviceType, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
+            ]).map(({ d, icon }) => (
+              <button
+                key={d}
+                onClick={() => setDevice(d)}
+                style={{
+                  width: '34px',
+                  height: '30px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: device === d ? ACCENT : 'transparent',
+                  color: device === d ? BG : TEXT_MUTED,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
+
+          <Link
+            href={signUpUrl}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              height: '40px',
+              padding: '0 22px',
+              background: ACCENT,
+              color: BG,
+              textDecoration: 'none',
+              borderRadius: '100px',
+              fontSize: '13px',
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Publish for free
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Live website mockup frame ──────────────────────────────────── */}
+      <div
+        className="scale-in"
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          width: '100%',
+          padding: '0 20px',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: `${frameWidth}px`,
+            background: '#ffffff',
+            borderRadius: mobileBezel ? '36px' : '14px',
+            overflow: 'hidden',
+            boxShadow: mobileBezel
+              ? '0 0 0 10px #1a1a1a, 0 0 0 12px #2b2b2b, 0 30px 90px rgba(0,0,0,0.55)'
+              : '0 0 0 1px rgba(255,255,255,0.06), 0 30px 90px rgba(0,0,0,0.55), 0 8px 32px rgba(0,0,0,0.3)',
+            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        >
+          {/* Browser chrome / mobile notch */}
+          {mobileBezel ? (
+            <div style={{ height: '30px', background: '#f6f6f8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '90px', height: '5px', background: '#ddd', borderRadius: '3px' }} />
+            </div>
+          ) : (
+            <div style={{ height: '44px', background: '#ededf0', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#ff5f57' }} />
+                <div style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#febc2e' }} />
+                <div style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#28c840' }} />
+              </div>
+              <div style={{ flex: 1, height: '28px', background: '#e0e0e5', borderRadius: '7px', display: 'flex', alignItems: 'center', padding: '0 12px', fontSize: '11px', color: '#666', margin: '0 60px 0 10px', overflow: 'hidden' }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" style={{ marginRight: '6px', flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                {domain}
+              </div>
+            </div>
+          )}
+
+          {/* Mock website body using brand colors + font */}
+          <div
+            style={{
+              fontFamily: `'${siteFont}', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif`,
+              color: siteText,
+              background: siteBg,
+              minHeight: '680px',
+            }}
+          >
+            {/* Mock Nav */}
+            <div style={{
+              height: mobileBezel ? '52px' : '64px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: mobileBezel ? '0 18px' : '0 40px',
+              borderBottom: '1px solid rgba(0,0,0,0.08)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: mobileBezel ? '28px' : '32px',
+                  height: mobileBezel ? '28px' : '32px',
+                  borderRadius: '7px',
+                  background: sitePrimary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: accentOnPrimary,
+                  fontSize: mobileBezel ? '14px' : '16px',
+                  fontWeight: 800,
+                  fontFamily: 'inherit',
+                }}>
+                  {siteInitial.charAt(0)}
+                </div>
+                <span style={{ fontSize: mobileBezel ? '15px' : '17px', fontWeight: 800, color: siteText, letterSpacing: '-0.02em' }}>
+                  {siteInitial}
+                </span>
+              </div>
+              {!mobileBezel && (
+                <div style={{ display: 'flex', gap: '28px', fontSize: '13px', color: 'rgba(0,0,0,0.6)', fontWeight: 500 }}>
+                  <span>Products</span>
+                  <span>Pricing</span>
+                  <span>About</span>
+                  <span>Contact</span>
+                </div>
+              )}
+            </div>
+
+            {/* Mock Hero */}
+            <div style={{
+              padding: mobileBezel ? '28px 18px 12px' : '56px 40px 24px',
+              textAlign: 'center',
+            }}>
+              <h1 style={{
+                fontFamily: 'inherit',
+                fontSize: mobileBezel ? '24px' : device === 'tablet' ? '30px' : '38px',
+                fontWeight: 800,
+                color: siteText,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.15,
+                margin: '0 auto 10px',
+                maxWidth: '620px',
+              }}>
+                {quiz.title}
+              </h1>
+              <p style={{
+                fontFamily: 'inherit',
+                fontSize: mobileBezel ? '13px' : '15px',
+                color: 'rgba(0,0,0,0.55)',
+                lineHeight: 1.6,
+                maxWidth: '520px',
+                margin: '0 auto',
+              }}>
+                {quiz.description || 'Take our quick quiz to get a personalized recommendation.'}
+              </p>
+            </div>
+
+            {/* THE QUIZ WIDGET */}
+            <div style={{
+              margin: mobileBezel ? '12px 14px 24px' : device === 'tablet' ? '20px 40px 40px' : '24px auto 56px',
+              maxWidth: '640px',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              border: '1px solid rgba(0,0,0,0.08)',
+              background: siteBg,
+              boxShadow: '0 4px 28px rgba(0,0,0,0.07)',
+            }}>
+              {/* Widget Header */}
+              <div style={{
+                padding: mobileBezel ? '16px 18px 14px' : '22px 26px 18px',
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+              }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: 'inherit', fontSize: mobileBezel ? '15px' : '17px', fontWeight: 800, color: siteText, letterSpacing: '-0.02em', marginBottom: '4px' }}>
+                    {isResult ? 'Your result' : isLeadGate ? 'Almost done' : quiz.title}
+                  </div>
+                  <div style={{ fontFamily: 'inherit', fontSize: '12px', color: 'rgba(0,0,0,0.5)' }}>
+                    {isResult ? 'Personalized for you' : isLeadGate ? 'Enter details to see your result' : `Question ${step + 1} of ${totalQuestions}`}
+                  </div>
+                </div>
+                {!isResult && (
+                  <div style={{ fontFamily: 'inherit', fontSize: '11px', fontWeight: 700, color: sitePrimary, padding: '4px 10px', borderRadius: '100px', background: `color-mix(in srgb, ${sitePrimary} 10%, transparent)`, whiteSpace: 'nowrap' }}>
+                    {Math.round(progressPct)}%
+                  </div>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ height: '3px', background: 'rgba(0,0,0,0.06)' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${progressPct}%`,
+                  background: sitePrimary,
+                  transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                }} />
+              </div>
+
+              {/* Widget body */}
+              <div style={{ padding: mobileBezel ? '18px' : '28px 26px' }}>
+                {currentQ && (
+                  <div key={currentQ.id} className="fade-in">
+                    <div style={{ fontFamily: 'inherit', fontSize: mobileBezel ? '16px' : '19px', fontWeight: 700, color: siteText, marginBottom: currentQ.subtitle ? '6px' : '18px', lineHeight: 1.35 }}>
+                      {currentQ.text}
+                    </div>
+                    {currentQ.subtitle && (
+                      <div style={{ fontFamily: 'inherit', fontSize: '13px', color: 'rgba(0,0,0,0.55)', marginBottom: '18px' }}>
+                        {currentQ.subtitle}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {currentQ.options.map((opt) => {
+                        const isSelected = answers[currentQ.id] === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setAnswers(prev => ({ ...prev, [currentQ.id]: opt.id }));
+                              setTimeout(() => advance(), 220);
+                            }}
+                            style={{
+                              width: '100%',
+                              textAlign: 'left',
+                              padding: mobileBezel ? '13px 16px' : '15px 18px',
+                              background: isSelected ? `color-mix(in srgb, ${sitePrimary} 8%, ${siteBg})` : siteBg,
+                              border: `1.5px solid ${isSelected ? sitePrimary : 'rgba(0,0,0,0.1)'}`,
+                              borderRadius: '12px',
+                              color: siteText,
+                              fontFamily: 'inherit',
+                              fontSize: mobileBezel ? '14px' : '15px',
+                              fontWeight: isSelected ? 600 : 500,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
+                          >
+                            <div style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              border: `2px solid ${isSelected ? sitePrimary : 'rgba(0,0,0,0.18)'}`,
+                              background: isSelected ? sitePrimary : 'transparent',
+                              flexShrink: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s',
+                            }}>
+                              {isSelected && (
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={accentOnPrimary} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              )}
+                            </div>
+                            <span style={{ flex: 1 }}>{opt.text}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {isLeadGate && (
+                  <div className="fade-in">
+                    <div style={{ fontFamily: 'inherit', fontSize: mobileBezel ? '16px' : '19px', fontWeight: 700, color: siteText, marginBottom: '6px', lineHeight: 1.35 }}>
+                      Enter your details to see your result
+                    </div>
+                    <div style={{ fontFamily: 'inherit', fontSize: '13px', color: 'rgba(0,0,0,0.55)', marginBottom: '18px' }}>
+                      We'll email your personalized recommendation.
+                    </div>
+                    <input
+                      type="text"
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      placeholder="Your name"
+                      style={{
+                        width: '100%',
+                        padding: '13px 16px',
+                        borderRadius: '12px',
+                        border: '1.5px solid rgba(0,0,0,0.1)',
+                        background: siteBg,
+                        color: siteText,
+                        fontFamily: 'inherit',
+                        fontSize: '14px',
+                        marginBottom: '10px',
+                        outline: 'none',
+                      }}
+                    />
+                    <input
+                      type="email"
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      placeholder="you@email.com"
+                      style={{
+                        width: '100%',
+                        padding: '13px 16px',
+                        borderRadius: '12px',
+                        border: '1.5px solid rgba(0,0,0,0.1)',
+                        background: siteBg,
+                        color: siteText,
+                        fontFamily: 'inherit',
+                        fontSize: '14px',
+                        marginBottom: '16px',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      onClick={advance}
+                      disabled={!leadName || !leadEmail}
+                      style={{
+                        width: '100%',
+                        padding: '14px',
+                        background: sitePrimary,
+                        color: accentOnPrimary,
+                        border: 'none',
+                        borderRadius: '100px',
+                        fontFamily: 'inherit',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        cursor: leadName && leadEmail ? 'pointer' : 'not-allowed',
+                        opacity: leadName && leadEmail ? 1 : 0.5,
+                      }}
+                    >
+                      See my result
+                    </button>
+                  </div>
+                )}
+
+                {isResult && (
+                  <div className="fade-in" style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      background: `color-mix(in srgb, ${sitePrimary} 15%, ${siteBg})`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '4px auto 18px',
+                    }}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={sitePrimary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div style={{ fontFamily: 'inherit', fontSize: mobileBezel ? '20px' : '24px', fontWeight: 800, color: siteText, letterSpacing: '-0.02em', marginBottom: '8px' }}>
+                      {resultOutcome?.title || 'Your personalized result'}
+                    </div>
+                    <div style={{ fontFamily: 'inherit', fontSize: '14px', color: 'rgba(0,0,0,0.6)', lineHeight: 1.6, marginBottom: '22px', maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      {resultOutcome?.description || 'Based on your answers, here is what we recommend.'}
+                    </div>
+                    <button
+                      onClick={reset}
+                      style={{
+                        padding: '12px 28px',
+                        background: sitePrimary,
+                        color: accentOnPrimary,
+                        border: 'none',
+                        borderRadius: '100px',
+                        fontFamily: 'inherit',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        marginRight: '10px',
+                      }}
+                    >
+                      {resultOutcome?.ctaText || 'Restart quiz'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Widget Footer - step dots */}
+              {!isResult && !isLeadGate && totalQuestions > 0 && (
+                <div style={{ padding: mobileBezel ? '0 18px 18px' : '0 26px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {quiz.questions.map((_, i) => (
+                      <div
+                        key={i}
+                        onClick={() => setStep(i)}
+                        style={{
+                          width: i === step ? '20px' : '6px',
+                          height: '6px',
+                          borderRadius: i === step ? '3px' : '50%',
+                          background: i === step ? sitePrimary : 'rgba(0,0,0,0.12)',
+                          transition: 'all 0.2s',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {step > 0 && (
+                    <button
+                      onClick={() => setStep(s => Math.max(0, s - 1))}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(0,0,0,0.5)',
+                        fontFamily: 'inherit',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: '6px 10px',
+                      }}
+                    >
+                      ← Back
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Mock Footer */}
+            <div style={{ padding: mobileBezel ? '20px 18px' : '36px 40px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: mobileBezel ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: '20px' }}>
+                {[1,2,3,4].slice(0, mobileBezel ? 2 : 4).map(i => (
+                  <div key={i}>
+                    <div style={{ height: '10px', width: '60%', background: 'rgba(0,0,0,0.08)', borderRadius: '4px', marginBottom: '10px' }} />
+                    <div style={{ height: '6px', width: '80%', background: 'rgba(0,0,0,0.05)', borderRadius: '4px', marginBottom: '6px' }} />
+                    <div style={{ height: '6px', width: '70%', background: 'rgba(0,0,0,0.05)', borderRadius: '4px' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Footer reassurance ─────────────────────────────────────────── */}
+      <div
+        className="fade-in"
+        style={{
+          textAlign: 'center',
+          marginTop: '28px',
+          fontSize: '13px',
+          color: TEXT_MUTED,
+        }}
+      >
+        This is how the quiz will look on your site. Sign up to publish and get the embed code.
+      </div>
+    </main>
+  );
+}
+
 function TryPageInner() {
   const searchParams = useSearchParams();
   const urlParam = searchParams.get('url') || '';
@@ -199,7 +776,7 @@ function TryPageInner() {
   // completedSteps = BUILD_STEPS.length) is not clobbered by the next tick.
   useEffect(() => {
     if (stage !== 'building') return;
-    if (quiz) return; // quiz arrived — leave final state untouched
+    if (quiz) return; // quiz arrived  -  leave final state untouched
     const interval = setInterval(() => {
       setCompletedSteps((prev) => {
         // Cap one step before the last so "Finalizing" stays active until the
@@ -260,7 +837,7 @@ function TryPageInner() {
       setCompletedSteps(BUILD_STEPS.length);
       setProgress(100);
 
-      // Quiz is ready — user clicks "Preview your quiz" button to proceed
+      // Quiz is ready  -  user clicks "Preview your quiz" button to proceed
     } catch (err: any) {
       setErrorMsg(err.message || 'Something went wrong. Please try again.');
       setStage('error');
@@ -667,409 +1244,15 @@ function TryPageInner() {
         </main>
       )}
 
-      {/* ════════════════════════ PREVIEW STAGE ════════════════════════ */}
+      {/* ════════════════════════ PREVIEW STAGE - LIVE WEBSITE MOCKUP ════════════════════════ */}
       {stage === 'preview' && quiz && (
-        <main
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 'calc(100vh - 60px)',
-            padding: '40px 20px 60px',
-          }}
-        >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 380px',
-              gap: '40px',
-              maxWidth: '1400px',
-              margin: '0 auto',
-              width: '100%',
-            }}
-          >
-            {/* ── Left: Questions list ───────────────────────────────────── */}
-            <div className="slide-up">
-              {/* Quiz header */}
-              <div style={{ marginBottom: '32px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '12px',
-                  }}
-                >
-                  {brand?.favicon_url && (
-                    <img
-                      src={brand.favicon_url}
-                      alt=""
-                      width={20}
-                      height={20}
-                      style={{ borderRadius: '4px' }}
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
-                  )}
-                  <span style={{ fontSize: '13px', color: TEXT_MUTED }}>
-                    {brand?.site_name || domain}
-                  </span>
-                </div>
-
-                <h1
-                  style={{
-                    fontSize: '32px',
-                    fontWeight: 800,
-                    letterSpacing: '-0.05em',
-                    lineHeight: 1.1,
-                    marginBottom: '8px',
-                  }}
-                >
-                  {quiz.title}
-                </h1>
-
-                {quiz.description && (
-                  <p
-                    style={{
-                      fontSize: '15px',
-                      color: TEXT_MUTED,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {quiz.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Questions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px' }}>
-                {quiz.questions.map((question, qIdx) => (
-                  <div
-                    key={question.id}
-                    className="scale-in"
-                    style={{
-                      padding: '20px',
-                      background: SURFACE,
-                      border: `1px solid ${BORDER}`,
-                      borderRadius: '14px',
-                      animationDelay: `${qIdx * 50}ms`,
-                    }}
-                  >
-                    {/* Question number and text */}
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                      <div
-                        style={{
-                          minWidth: '32px',
-                          height: '32px',
-                          background: ACCENT,
-                          color: BG,
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '14px',
-                          fontWeight: 700,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {qIdx + 1}
-                      </div>
-                      <div>
-                        <h3
-                          style={{
-                            fontSize: '15px',
-                            fontWeight: 600,
-                            color: TEXT,
-                            marginBottom: '4px',
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {question.text}
-                        </h3>
-                        {question.subtitle && (
-                          <p
-                            style={{
-                              fontSize: '13px',
-                              color: TEXT_MUTED,
-                            }}
-                          >
-                            {question.subtitle}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Options */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '44px' }}>
-                      {question.options.map((option) => {
-                        const isSelected = selectedOptions[question.id] === option.id;
-                        return (
-                          <button
-                            key={option.id}
-                            onClick={() => setSelectedOptions(prev => ({ ...prev, [question.id]: option.id }))}
-                            className="option-card"
-                            style={{
-                              padding: '12px 14px',
-                              background: isSelected ? ACCENT_DIM : ELEVATED,
-                              border: `1.5px solid ${isSelected ? ACCENT : BORDER}`,
-                              borderRadius: '10px',
-                              fontSize: '13px',
-                              color: isSelected ? ACCENT : TEXT_MUTED,
-                              fontWeight: isSelected ? 600 : 400,
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              fontFamily: 'inherit',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '10px',
-                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                            }}
-                          >
-                            <div style={{
-                              width: '18px',
-                              height: '18px',
-                              borderRadius: '50%',
-                              border: `2px solid ${isSelected ? ACCENT : 'rgba(255,255,255,0.15)'}`,
-                              background: isSelected ? ACCENT : 'transparent',
-                              flexShrink: 0,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s',
-                            }}>
-                              {isSelected && (
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={BG} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                              )}
-                            </div>
-                            {option.text}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Outcomes section */}
-              {quiz.outcomes && quiz.outcomes.length > 0 && (
-                <div className="slide-up" style={{ animationDelay: '150ms' }}>
-                  <h2
-                    style={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      letterSpacing: '-0.03em',
-                      marginBottom: '16px',
-                      color: TEXT,
-                    }}
-                  >
-                    Outcomes ({quiz.outcomes.length})
-                  </h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {quiz.outcomes.map((outcome, idx) => (
-                      <div
-                        key={outcome.id}
-                        style={{
-                          padding: '16px',
-                          background: SURFACE,
-                          border: `1px solid ${BORDER}`,
-                          borderRadius: '12px',
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: ACCENT,
-                            marginBottom: '4px',
-                          }}
-                        >
-                          Outcome {idx + 1}
-                        </div>
-                        <h3
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: TEXT,
-                            marginBottom: '4px',
-                          }}
-                        >
-                          {outcome.title}
-                        </h3>
-                        <p
-                          style={{
-                            fontSize: '13px',
-                            color: TEXT_MUTED,
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {outcome.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── Right: Summary and CTA ────────────────────────────────── */}
-            <div style={{ marginTop: '0px' }}>
-              <div
-                className="scale-in"
-                style={{
-                  padding: '28px',
-                  background: SURFACE,
-                  border: `1px solid ${BORDER}`,
-                  borderRadius: '16px',
-                  position: 'sticky',
-                  top: '20px',
-                  maxHeight: 'calc(100vh - 100px)',
-                  overflow: 'auto',
-                }}
-              >
-                {/* Summary */}
-                <div style={{ marginBottom: '28px' }}>
-                  <div style={{ fontSize: '12px', color: TEXT_MUTED, marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Quiz Summary
-                  </div>
-
-                  <div style={{ marginBottom: '20px' }}>
-                    <div style={{ fontSize: '13px', color: TEXT_MUTED, marginBottom: '4px' }}>
-                      Questions
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '24px',
-                        fontWeight: 800,
-                        color: TEXT,
-                      }}
-                    >
-                      {quiz.questions.length}
-                    </div>
-                  </div>
-
-                  {quiz.outcomes && quiz.outcomes.length > 0 && (
-                    <div style={{ marginBottom: '20px' }}>
-                      <div style={{ fontSize: '13px', color: TEXT_MUTED, marginBottom: '4px' }}>
-                        Outcomes
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '24px',
-                          fontWeight: 800,
-                          color: TEXT,
-                        }}
-                      >
-                        {quiz.outcomes.length}
-                      </div>
-                    </div>
-                  )}
-
-                  {quiz.leadGate && (
-                    <div>
-                      <div style={{ fontSize: '13px', color: TEXT_MUTED, marginBottom: '4px' }}>
-                        Lead Gate
-                      </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '13px',
-                          color: ACCENT,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            background: ACCENT,
-                          }}
-                        />
-                        Enabled
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Brand colors */}
-                {brand?.colors && (
-                  <div style={{ marginBottom: '28px' }}>
-                    <div style={{ fontSize: '12px', color: TEXT_MUTED, marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Brand Colors
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      {Object.values(brand.colors)
-                        .filter(Boolean)
-                        .slice(0, 4)
-                        .map((color, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              flex: 1,
-                              height: '40px',
-                              borderRadius: '8px',
-                              background: color as string,
-                              border: `1px solid ${BORDER}`,
-                            }}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Divider */}
-                <div
-                  style={{
-                    height: '1px',
-                    background: BORDER,
-                    marginBottom: '28px',
-                  }}
-                />
-
-                {/* CTAs */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <Link
-                    href={signUpUrl}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '48px',
-                      background: ACCENT,
-                      color: BG,
-                      textDecoration: 'none',
-                      borderRadius: '100px',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    Publish for free
-                  </Link>
-
-                  <button
-                    onClick={() => setStage('input')}
-                    style={{
-                      height: '48px',
-                      background: 'transparent',
-                      color: TEXT,
-                      border: `1.5px solid ${BORDER}`,
-                      borderRadius: '100px',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    Edit before publishing
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
+        <PreviewStage
+          quiz={quiz}
+          brand={brand}
+          domain={domain}
+          signUpUrl={signUpUrl}
+          onBack={() => setStage('input')}
+        />
       )}
 
       {/* ════════════════════════ ERROR STAGE ════════════════════════ */}
