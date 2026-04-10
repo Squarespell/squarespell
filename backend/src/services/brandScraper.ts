@@ -1,15 +1,26 @@
 import fetch from 'node-fetch';
 
 /**
- * Scrapes a website to extract:
- * 1. Brand visuals (colors, fonts, favicon, site name)
- * 2. Business context (what the company actually does)
+ * Thrown when the URL is not a Squarespace site.
+ * Squarespell is Squarespace-ONLY by design (per product decision).
+ * Route handlers catch this and return HTTP 422 with a user-facing message.
+ */
+export class NotSquarespaceError extends Error {
+  readonly hostname: string;
+  readonly code = 'NOT_SQUARESPACE' as const;
+  constructor(hostname: string) {
+    super(`${hostname} is not a Squarespace site. Squarespell only works with Squarespace websites.`);
+    this.name = 'NotSquarespaceError';
+    this.hostname = hostname;
+  }
+}
+
+/**
+ * Scrapes a SQUARESPACE website to extract:
+ * 1. Brand visuals (colors, fonts, favicon, site name) from Squarespace CSS vars
+ * 2. Business context (what the company does) from meta, headings, paragraphs, JSON-LD
  *
- * Uses multiple strategies:
- * - HTML meta tags, headings, paragraphs
- * - JSON-LD structured data
- * - Squarespace-specific data extraction
- * - Link/nav analysis for services
+ * Hard-fails with NotSquarespaceError if the URL is not a Squarespace site.
  */
 export async function scrapeBrand(url: string) {
   const controller = new AbortController();
@@ -79,10 +90,22 @@ export async function scrapeBrand(url: string) {
     let squarespaceContext = '';
     let isSquarespace = false;
 
-    // Detect Squarespace
-    if (html.includes('squarespace') || html.includes('static.squarespace') || html.includes('SQUARESPACE_CONTEXT') || html.includes('static1.squarespace.com')) {
+    // Detect Squarespace — Squarespell is Squarespace-ONLY, hard-fail otherwise
+    if (
+      html.includes('Static.SQUARESPACE_CONTEXT') ||
+      html.includes('static1.squarespace.com') ||
+      html.includes('static.squarespace') ||
+      /<meta[^>]+content="[^"]*Squarespace[^"]*"/i.test(html) ||
+      /generator"[^>]+content="Squarespace/i.test(html)
+    ) {
       isSquarespace = true;
       console.log('[Scraper] Squarespace site detected');
+    }
+
+    if (!isSquarespace) {
+      const hostname = new URL(url).hostname.replace(/^www\./, '');
+      console.warn(`[Scraper] HARD FAIL: ${hostname} is not a Squarespace site`);
+      throw new NotSquarespaceError(hostname);
     }
 
     const sqspMatch = html.match(/Static\.SQUARESPACE_CONTEXT\s*=\s*(\{[\s\S]*?\});/);
@@ -397,7 +420,11 @@ export async function scrapeBrand(url: string) {
       },
     };
   } catch (err: any) {
+    // NotSquarespaceError bubbles up so routes can return a clean 422
+    if (err instanceof NotSquarespaceError) throw err;
     console.error(`[Scraper] FAILED for ${url}:`, err.message);
+    // Network/parse failures fall through to a detected:false result so the
+    // frontend can show a neutral dark theme and continue (no hard block here)
     return {
       detected: false,
       colors: { background: '#0a0f05', primary: '#D2FF1D', text: '#e8f5c8', accent: '#D2FF1D' },

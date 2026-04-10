@@ -67,7 +67,7 @@ router.get('/callback', async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/dashboard?sqsp_error=token_failed`);
     }
 
-    const tokenData = await tokenRes.json();
+    const tokenData = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenData.access_token;
 
     // Get the connected site info
@@ -77,7 +77,7 @@ router.get('/callback', async (req, res) => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (siteRes.ok) {
-        const siteData = await siteRes.json();
+        const siteData = (await siteRes.json()) as { siteUrl?: string; url?: string };
         siteUrl = siteData.siteUrl || siteData.url || '';
       }
     } catch {
