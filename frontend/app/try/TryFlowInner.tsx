@@ -114,6 +114,21 @@ const SvgClose = () => (
 const SvgRefresh = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
 );
+const SvgCopy = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+);
+const SvgChevronUp = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
+);
+const SvgChevronDown = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+);
+const SvgLink = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+);
+const SvgPencil = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+);
 
 /* ========================================================================= */
 /* Main component                                                            */
@@ -178,6 +193,12 @@ export function TryFlowInner({
 
   // Stage 6 publish
   const [copyState, setCopyState] = useState<'idle' | 'copied-link' | 'copied-embed'>('idle');
+  const [editorToast, setEditorToast] = useState<string>('');
+  const flashToast = useCallback((msg: string) => {
+    setEditorToast(msg);
+    window.setTimeout(() => setEditorToast((t) => (t === msg ? '' : t)), 1800);
+  }, []);
+  const [titleEditing, setTitleEditing] = useState(false);
 
   const hasAutoStarted = useRef(false);
 
@@ -371,7 +392,93 @@ export function TryFlowInner({
     updateQuiz({ ...quiz, questions: qs });
     setSelectedIdx(qs.length - 1);
   };
+  const duplicateQuestion = (qi: number) => {
+    if (!quiz) return;
+    const src = quiz.questions[qi];
+    if (!src) return;
+    const suffix = Math.random().toString(36).slice(2, 6);
+    const copy: Question = {
+      ...src,
+      id: `${src.id}_copy_${suffix}`,
+      text: `${src.text} (copy)`,
+      options: src.options.map((o, idx) => ({ ...o, id: `${o.id}_${suffix}_${idx}` })),
+    };
+    const qs = [
+      ...quiz.questions.slice(0, qi + 1),
+      copy,
+      ...quiz.questions.slice(qi + 1),
+    ];
+    updateQuiz({ ...quiz, questions: qs });
+    setSelectedIdx(qi + 1);
+  };
+  const moveQuestion = (qi: number, dir: -1 | 1) => {
+    if (!quiz) return;
+    const target = qi + dir;
+    if (target < 0 || target >= quiz.questions.length) return;
+    const qs = [...quiz.questions];
+    const [moved] = qs.splice(qi, 1);
+    qs.splice(target, 0, moved);
+    updateQuiz({ ...quiz, questions: qs });
+    setSelectedIdx(target);
+  };
+  const moveOption = (qi: number, oi: number, dir: -1 | 1) => {
+    if (!quiz) return;
+    const q = quiz.questions[qi];
+    if (!q) return;
+    const target = oi + dir;
+    if (target < 0 || target >= q.options.length) return;
+    const opts = [...q.options];
+    const [moved] = opts.splice(oi, 1);
+    opts.splice(target, 0, moved);
+    const qs = quiz.questions.map((qq, i) => (i === qi ? { ...qq, options: opts } : qq));
+    updateQuiz({ ...quiz, questions: qs });
+  };
+  const updateQuizTitle = (title: string) => {
+    if (!quiz) return;
+    updateQuiz({ ...quiz, title });
+  };
   const deselect = () => setSelectedIdx(-1);
+
+  /* ======================== Stage 3 keyboard shortcuts =============== */
+  // Cmd/Ctrl+N new question, Alt+ArrowUp/Down move selected question,
+  // Cmd/Ctrl+D duplicate selected question, Esc to deselect.
+  useEffect(() => {
+    if (stage !== 3) return;
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const typing = tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable;
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod && !typing && e.key === 'Escape') {
+        setSelectedIdx(-1);
+        return;
+      }
+      if (mod && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        addQuestion();
+        flashToast('New question added');
+        return;
+      }
+      if (mod && e.key.toLowerCase() === 'd' && selectedIdx >= 0) {
+        e.preventDefault();
+        duplicateQuestion(selectedIdx);
+        flashToast('Question duplicated');
+        return;
+      }
+      if (e.altKey && e.key === 'ArrowUp' && selectedIdx > 0) {
+        e.preventDefault();
+        moveQuestion(selectedIdx, -1);
+        return;
+      }
+      if (e.altKey && e.key === 'ArrowDown' && quiz && selectedIdx < quiz.questions.length - 1) {
+        e.preventDefault();
+        moveQuestion(selectedIdx, 1);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, selectedIdx, quiz]);
 
   /* ======================== STAGE 4 helpers =========================== */
   const resetS4 = () => {
@@ -656,16 +763,62 @@ export function TryFlowInner({
               <SvgArrowLeft />
             </button>
             <div className="s3-title-wrap">
-              <div className="s3-title">{quiz?.title || 'Your quiz'}</div>
+              {titleEditing ? (
+                <input
+                  className="s3-title-input"
+                  autoFocus
+                  value={quiz?.title || ''}
+                  onChange={(e) => updateQuizTitle(e.target.value)}
+                  onBlur={() => setTitleEditing(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === 'Escape') {
+                      e.preventDefault();
+                      setTitleEditing(false);
+                    }
+                  }}
+                  placeholder="Untitled quiz"
+                />
+              ) : (
+                <button
+                  className="s3-title s3-title-button"
+                  type="button"
+                  onClick={() => setTitleEditing(true)}
+                  title="Click to rename"
+                >
+                  {quiz?.title || 'Your quiz'}
+                  <span className="s3-title-edit"><SvgPencil /></span>
+                </button>
+              )}
               <div className="s3-title-meta">
                 <span className="live-pill">LIVE</span>
-                <span className="s3-saved">
-                  {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'All changes saved' : 'All changes saved'}
+                <span className="s3-saved" data-status={saveStatus}>
+                  {saveStatus === 'saving' ? (
+                    <>
+                      <span className="s3-save-dot" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      <SvgCheck size={12} /> All changes saved
+                    </>
+                  )}
                 </span>
               </div>
             </div>
           </div>
           <div className="s3-top-right">
+            {mode === 'authed' && (
+              <button
+                className="btn btn-ghost"
+                onClick={async () => {
+                  await copyText(publicQuizUrlValue, 'copied-link');
+                  flashToast('Live link copied');
+                }}
+                type="button"
+                title="Copy the public quiz URL"
+              >
+                <SvgLink /> Copy live link
+              </button>
+            )}
             <button className="btn btn-dark" onClick={() => { resetS4(); setStage(4); }} type="button">Preview my quiz</button>
             <button
               className="btn btn-primary"
@@ -686,9 +839,15 @@ export function TryFlowInner({
               </div>
             </div>
 
+            <div className="s3-shortcut-hint">
+              <kbd>⌘N</kbd> new <span className="dot-sep">·</span> <kbd>⌘D</kbd> duplicate <span className="dot-sep">·</span> <kbd>⌥↑</kbd><kbd>⌥↓</kbd> reorder <span className="dot-sep">·</span> <kbd>Esc</kbd> deselect
+            </div>
+
             <div id="qc-list">
               {quiz?.questions.map((q, i) => {
                 const isSel = i === selectedIdx;
+                const isFirst = i === 0;
+                const isLast = quiz ? i === quiz.questions.length - 1 : true;
                 return (
                   <div key={q.id} className={`qc${isSel ? ' selected' : ''}`} onClick={() => setSelectedIdx(i)}>
                     <div className="qc-head">
@@ -697,7 +856,43 @@ export function TryFlowInner({
                         <div className="qc-q">{q.text}</div>
                         <div className="qc-meta">{q.options.length} answers · single select</div>
                       </div>
-                      <div className="qc-drag" onClick={(e) => e.stopPropagation()}><SvgDrag /></div>
+                      <div className="qc-actions" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="qc-action-btn"
+                          type="button"
+                          title="Move up"
+                          disabled={isFirst}
+                          onClick={(e) => { e.stopPropagation(); moveQuestion(i, -1); }}
+                        >
+                          <SvgChevronUp />
+                        </button>
+                        <button
+                          className="qc-action-btn"
+                          type="button"
+                          title="Move down"
+                          disabled={isLast}
+                          onClick={(e) => { e.stopPropagation(); moveQuestion(i, 1); }}
+                        >
+                          <SvgChevronDown />
+                        </button>
+                        <button
+                          className="qc-action-btn"
+                          type="button"
+                          title="Duplicate question"
+                          onClick={(e) => { e.stopPropagation(); duplicateQuestion(i); flashToast('Question duplicated'); }}
+                        >
+                          <SvgCopy />
+                        </button>
+                        <button
+                          className="qc-action-btn qc-action-danger"
+                          type="button"
+                          title="Delete question"
+                          disabled={!quiz || quiz.questions.length <= 1}
+                          onClick={(e) => { e.stopPropagation(); deleteQuestion(i); flashToast('Question deleted'); }}
+                        >
+                          <SvgTrash />
+                        </button>
+                      </div>
                     </div>
                     <div className="qc-body">
                       {q.options.map((o, oi) => (
@@ -739,23 +934,59 @@ export function TryFlowInner({
                   <div className="edit-group">
                     <div className="edit-group-label">
                       <span>Answers</span>
-                      <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{currentQ.options.length}</span>
+                      <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{currentQ.options.length} / 6</span>
                     </div>
-                    {currentQ.options.map((o, oi) => (
-                      <div className="answer-row" key={o.id + oi}>
-                        <div className="answer-letter">{LETTERS[oi]}</div>
-                        <input
-                          className="answer-input"
-                          value={o.text}
-                          onChange={(e) => updateOptionText(selectedIdx, oi, e.target.value)}
-                        />
-                        <button className="answer-del" onClick={() => deleteOption(selectedIdx, oi)} title="Remove answer" type="button">
-                          <SvgTrash />
-                        </button>
-                      </div>
-                    ))}
-                    <button className="add-answer-btn" onClick={() => addOption(selectedIdx)} type="button">
-                      <SvgPlus /> Add answer
+                    {currentQ.options.map((o, oi) => {
+                      const isFirstAns = oi === 0;
+                      const isLastAns = oi === currentQ.options.length - 1;
+                      return (
+                        <div className="answer-row" key={o.id + oi}>
+                          <div className="answer-letter">{LETTERS[oi]}</div>
+                          <input
+                            className="answer-input"
+                            value={o.text}
+                            onChange={(e) => updateOptionText(selectedIdx, oi, e.target.value)}
+                            placeholder="Answer text"
+                          />
+                          <div className="answer-reorder">
+                            <button
+                              className="answer-reorder-btn"
+                              type="button"
+                              disabled={isFirstAns}
+                              title="Move up"
+                              onClick={() => moveOption(selectedIdx, oi, -1)}
+                            >
+                              <SvgChevronUp />
+                            </button>
+                            <button
+                              className="answer-reorder-btn"
+                              type="button"
+                              disabled={isLastAns}
+                              title="Move down"
+                              onClick={() => moveOption(selectedIdx, oi, 1)}
+                            >
+                              <SvgChevronDown />
+                            </button>
+                          </div>
+                          <button
+                            className="answer-del"
+                            onClick={() => deleteOption(selectedIdx, oi)}
+                            title={currentQ.options.length <= 2 ? 'Questions need at least 2 answers' : 'Remove answer'}
+                            type="button"
+                            disabled={currentQ.options.length <= 2}
+                          >
+                            <SvgTrash />
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button
+                      className="add-answer-btn"
+                      onClick={() => addOption(selectedIdx)}
+                      type="button"
+                      disabled={currentQ.options.length >= 6}
+                    >
+                      <SvgPlus /> {currentQ.options.length >= 6 ? 'Max 6 answers' : 'Add answer'}
                     </button>
                   </div>
 
@@ -771,9 +1002,23 @@ export function TryFlowInner({
 
                   <div className="divider" />
 
-                  <button className="danger-btn" onClick={() => deleteQuestion(selectedIdx)} type="button">
-                    <SvgTrash /> Delete this question
-                  </button>
+                  <div className="s3-side-actions">
+                    <button
+                      className="side-btn"
+                      onClick={() => { duplicateQuestion(selectedIdx); flashToast('Question duplicated'); }}
+                      type="button"
+                    >
+                      <SvgCopy /> Duplicate question
+                    </button>
+                    <button
+                      className="danger-btn"
+                      onClick={() => { deleteQuestion(selectedIdx); flashToast('Question deleted'); }}
+                      type="button"
+                      disabled={!quiz || quiz.questions.length <= 1}
+                    >
+                      <SvgTrash /> Delete this question
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -782,13 +1027,19 @@ export function TryFlowInner({
                   </div>
                   <div className="empty-panel">
                     <h4>No question selected</h4>
-                    <p>Click any question on the left to edit it.</p>
+                    <p>Click any question on the left to edit it, or press <kbd>⌘N</kbd> to add a new question.</p>
                   </div>
                 </>
               )}
             </div>
           </div>
         </div>
+
+        {editorToast && (
+          <div className="editor-toast" role="status" aria-live="polite">
+            <SvgCheck size={14} /> {editorToast}
+          </div>
+        )}
       </div>
 
       {/* ============ STAGE 4: VISITOR PREVIEW (REBUILT per prototype-v4) ============
