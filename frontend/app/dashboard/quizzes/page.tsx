@@ -20,6 +20,7 @@ import {
   Pill,
   PageLoading,
 } from '../_components/PageShell';
+import { embedSnippet, publicQuizUrl } from '@/lib/urls';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
@@ -55,7 +56,7 @@ function formatDate(dateStr: string): string {
 
 function EmbedModal({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const embedCode = `<script src="https://app.squarespell.com/embed.js" data-quiz="${slug}"></script>`;
+  const embedCode = embedSnippet(slug);
   const handleCopy = () => {
     navigator.clipboard.writeText(embedCode);
     setCopied(true);

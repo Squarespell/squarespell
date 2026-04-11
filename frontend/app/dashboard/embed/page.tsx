@@ -20,6 +20,7 @@ import {
   Pill,
   PageLoading,
 } from '../_components/PageShell';
+import { embedSnippet, publicQuizUrl } from '@/lib/urls';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
@@ -31,7 +32,7 @@ type Quiz = {
 };
 
 function buildSnippet(slug: string): string {
-  return `<script src="https://app.squarespell.com/embed.js" data-quiz="${slug}"></script>`;
+  return embedSnippet(slug);
 }
 
 function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
@@ -87,7 +88,7 @@ function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <PrimaryButton onClick={handleCopy}>{copied ? 'Copied!' : 'Copy snippet'}</PrimaryButton>
         <a
-          href={`https://app.squarespell.com/q/${quiz.slug}`}
+          href={publicQuizUrl(quiz.slug)}
           target="_blank"
           rel="noopener noreferrer"
           style={{

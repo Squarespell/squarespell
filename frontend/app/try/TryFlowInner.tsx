@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FLOW_CSS from './flow-css';
 import { api } from '@/lib/api';
+import { publicQuizUrl, embedSnippet } from '@/lib/urls';
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
@@ -421,8 +422,8 @@ export function TryFlowInner({
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60) || 'your-quiz';
-  const publicQuizUrl = `https://squarespell.com/q/${quizSlug}`;
-  const embedSnippet = `<script src="https://squarespell.com/embed.js"\n  data-quiz="${quizSlug}"><\/script>`;
+  const publicQuizUrlValue = publicQuizUrl(quizSlug);
+  const embedSnippetValue = embedSnippet(quizSlug).replace(' data-quiz=', '\n  data-quiz=');
 
   // Stage 4 visitor-site brand: build CSS custom properties from the scraped brand.
   // These inject into the mock visitor site inside the device frame.
@@ -1021,8 +1022,8 @@ export function TryFlowInner({
             <div className="s6-card">
               <h3>Public link</h3>
               <div className="s6-url-row">
-                <div className="s6-url">{publicQuizUrl}</div>
-                <button className="s6-copy-btn" onClick={() => copyText(publicQuizUrl, 'copied-link')} type="button">
+                <div className="s6-url">{publicQuizUrlValue}</div>
+                <button className="s6-copy-btn" onClick={() => copyText(publicQuizUrlValue, 'copied-link')} type="button">
                   <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                   {copyState === 'copied-link' ? 'Copied' : 'Copy'}
                 </button>
@@ -1030,7 +1031,7 @@ export function TryFlowInner({
               <div className="s6-quick-row">
                 <button
                   className="s6-quick-btn"
-                  onClick={() => { if (typeof window !== 'undefined') window.location.href = `mailto:?subject=${encodeURIComponent(quiz?.title || 'My quiz')}&body=${encodeURIComponent(publicQuizUrl)}`; }}
+                  onClick={() => { if (typeof window !== 'undefined') window.location.href = `mailto:?subject=${encodeURIComponent(quiz?.title || 'My quiz')}&body=${encodeURIComponent(publicQuizUrlValue)}`; }}
                   type="button"
                 >
                   <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
@@ -1038,7 +1039,7 @@ export function TryFlowInner({
                 </button>
                 <button
                   className="s6-quick-btn"
-                  onClick={() => { if (typeof window !== 'undefined') window.open(publicQuizUrl, '_blank', 'noopener'); }}
+                  onClick={() => { if (typeof window !== 'undefined') window.open(publicQuizUrlValue, '_blank', 'noopener'); }}
                   type="button"
                 >
                   <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
@@ -1049,10 +1050,10 @@ export function TryFlowInner({
 
             <div className="s6-card">
               <h3>Embed on your Squarespace site</h3>
-              <div className="s6-embed-code">{embedSnippet}</div>
+              <div className="s6-embed-code">{embedSnippetValue}</div>
               <div className="s6-embed-foot">
                 <span>Paste this in a Code block on your Squarespace page.</span>
-                <button className="s6-copy-btn" onClick={() => copyText(embedSnippet, 'copied-embed')} type="button">
+                <button className="s6-copy-btn" onClick={() => copyText(embedSnippetValue, 'copied-embed')} type="button">
                   <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                   {copyState === 'copied-embed' ? 'Copied' : 'Copy'}
                 </button>

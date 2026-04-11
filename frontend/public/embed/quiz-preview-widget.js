@@ -1,13 +1,13 @@
 /*!
- * Squarespell Quiz Preview Widget v1.0.0
+ * Squarespell Quiz Preview Widget v1.1.0
  * Drop this into any Squarespace Code Block to add a "Paste your URL" input
- * that sends visitors to app.squarespell.com/try to preview a quiz
+ * that sends visitors to quiz.squarespell.com/try to preview a quiz
  *
- * Usage: <script src="https://app.squarespell.com/embed/quiz-preview-widget.js" async></script>
+ * Usage: <script src="https://quiz.squarespell.com/embed/quiz-preview-widget.js" async></script>
  */
 (function(){
 'use strict';
-var APP_URL = 'https://app.squarespell.com';
+var APP_URL = 'https://quiz.squarespell.com';
 
 function init() {
   // Find the script tag to insert widget after it

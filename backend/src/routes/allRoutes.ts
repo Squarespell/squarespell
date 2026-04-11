@@ -10,6 +10,10 @@ import { Resend } from 'resend';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
+// Canonical URLs used in outgoing emails. Set APP_URL/MARKETING_URL in env to swap domains.
+const APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
+const MARKETING_URL = process.env.MARKETING_URL || 'https://squarespell.com';
+
 function normalizeUrl(input: string): string {
   let url = input.trim().replace(/\/+$/, '');
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -368,7 +372,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           from: 'Squarespell <onboarding@resend.dev>',
           to: notifyEmail,
           subject: `New lead captured: ${name || email}`,
-          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="https://squarespell.com/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
+          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
         });
       }
     } catch (e) { console.log('Email notification failed:', e); }
@@ -738,7 +742,7 @@ cronRouter.post('/weekly-digest', async (req, res) => {
               </div>
             </div>
 
-            <a href="https://squarespell.com/dashboard" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box">View Dashboard</a>
+            <a href="${APP_URL}/dashboard" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box">View Dashboard</a>
 
             <p style="margin:20px 0 0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">This is your weekly quiz performance summary from Squarespell</p>
           </div>
@@ -816,7 +820,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
                   </ol>
                 </div>
 
-                <a href="https://squarespell.com/dashboard?tab=create" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Create Your First Quiz</a>
+                <a href="${APP_URL}/dashboard?tab=create" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Create Your First Quiz</a>
 
                 <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Questions? We're here to help</p>
               </div>
@@ -850,7 +854,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
                 </ul>
               </div>
 
-              <a href="https://squarespell.com/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade Now</a>
+              <a href="${MARKETING_URL}/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade Now</a>
 
               <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Don't lose access to your quizzes</p>
             </div>
@@ -877,7 +881,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
                 <p style="margin:0;color:#f0f2f5;font-size:14px">Your quizzes are still here, but they're currently offline. Upgrade to your plan to reactivate them immediately.</p>
               </div>
 
-              <a href="https://squarespell.com/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade to Pro</a>
+              <a href="${MARKETING_URL}/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade to Pro</a>
 
               <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Save your quiz data by upgrading today</p>
             </div>
