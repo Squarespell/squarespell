@@ -23,10 +23,19 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const TRY_URL = '/try';
 const SIGN_IN_URL = '/sign-in';
+
+/** Normalize a user-typed URL (tolerates "acme.com", "www.acme.com", etc.). */
+function normalizeUrl(raw: string): string {
+  let u = raw.trim();
+  if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  return u;
+}
 
 type Plan = {
   name: string;
@@ -116,14 +125,26 @@ const FAQS = [
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [scrollY, setScrollY] = useState(0);
+  const [heroUrl, setHeroUrl] = useState('');
+  const [heroSubmitting, setHeroSubmitting] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const handleGenerate = (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalized = normalizeUrl(heroUrl);
+    if (!normalized) return;
+    setHeroSubmitting(true);
+    // TryFlowInner already reads ?url= and auto-kicks off generation.
+    router.push(`/try?url=${encodeURIComponent(normalized)}`);
+  };
 
   // Parallax on the floating mockup
   const mockupOffset = useMemo(() => Math.min(scrollY * 0.08, 40), [scrollY]);
@@ -173,14 +194,37 @@ export default function LandingPage() {
             captures email, and drops leads straight into your dashboard. No designer.
             No developer. No friction.
           </p>
-          <div className="ssp-hero-ctas">
-            <Link href={TRY_URL} className="ssp-btn ssp-btn-primary ssp-btn-lg">
-              Generate my quiz free →
-            </Link>
-            <a href="#how" className="ssp-btn ssp-btn-ghost ssp-btn-lg">
-              See how it works
-            </a>
-          </div>
+
+          {/* Inline URL generator — mirrors the /try Stage 1 hook widget. */}
+          <form className="ssp-hero-gen" onSubmit={handleGenerate}>
+            <div className="ssp-hero-gen-field">
+              <span className="ssp-hero-gen-prefix">https://</span>
+              <input
+                type="text"
+                inputMode="url"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="yoursite.com"
+                value={heroUrl}
+                onChange={(e) => setHeroUrl(e.target.value.replace(/^https?:\/\//i, ''))}
+                className="ssp-hero-gen-input"
+                disabled={heroSubmitting}
+                aria-label="Your website URL"
+              />
+              <button
+                type="submit"
+                className="ssp-hero-gen-btn"
+                disabled={heroSubmitting || !heroUrl.trim()}
+              >
+                {heroSubmitting ? 'Generating…' : 'Generate →'}
+              </button>
+            </div>
+            <div className="ssp-hero-gen-hint">
+              Drops into your Squarespace site as{' '}
+              <code>&lt;script src=&quot;/embed/squarespell-hook.js&quot;&gt;&lt;/script&gt;</code>
+            </div>
+          </form>
+
           <div className="ssp-hero-trust">
             <span className="ssp-hero-trust-check">✓</span> No credit card
             <span className="ssp-hero-trust-dot" />
@@ -188,6 +232,7 @@ export default function LandingPage() {
             <span className="ssp-hero-trust-dot" />
             <span className="ssp-hero-trust-check">✓</span> Free forever tier
           </div>
+          <a href="#how" className="ssp-hero-secondary">See how it works ↓</a>
         </div>
 
         {/* Animated floating mockup (bombon-inspired) */}
@@ -753,6 +798,123 @@ const CSS = `
   display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
   margin-bottom: 28px;
 }
+
+/* Inline URL generator form (mirrors /try Stage 1 hook widget) */
+.ssp-hero-gen {
+  max-width: 620px;
+  margin: 0 auto 22px;
+}
+.ssp-hero-gen-field {
+  display: flex; align-items: center;
+  background: rgba(14,17,22,0.85);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 8px 8px 8px 22px;
+  gap: 6px;
+  transition: all 0.22s;
+  box-shadow:
+    0 20px 50px -20px rgba(0,0,0,0.6),
+    0 0 0 0 rgba(210,255,29,0);
+}
+.ssp-hero-gen-field:focus-within {
+  border-color: rgba(210,255,29,0.45);
+  box-shadow:
+    0 20px 50px -20px rgba(0,0,0,0.6),
+    0 0 0 4px rgba(210,255,29,0.12);
+}
+.ssp-hero-gen-prefix {
+  color: var(--dim);
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 15px;
+  user-select: none;
+  flex-shrink: 0;
+}
+.ssp-hero-gen-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0; outline: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 16px 10px;
+  letter-spacing: -0.005em;
+}
+.ssp-hero-gen-input::placeholder { color: var(--dim); }
+.ssp-hero-gen-input:disabled { opacity: 0.6; }
+.ssp-hero-gen-btn {
+  background: var(--accent);
+  color: #0a0d10;
+  border: 0;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  padding: 14px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px -8px rgba(210,255,29,0.6);
+}
+.ssp-hero-gen-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -8px rgba(210,255,29,0.8);
+}
+.ssp-hero-gen-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.ssp-hero-gen-hint {
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--dim);
+  text-align: center;
+}
+.ssp-hero-gen-hint code {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  margin-left: 4px;
+}
+.ssp-hero-secondary {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+.ssp-hero-secondary:hover { color: var(--accent); }
+
+@media (max-width: 640px) {
+  .ssp-hero-gen-field {
+    flex-wrap: wrap;
+    padding: 14px;
+  }
+  .ssp-hero-gen-prefix { padding-left: 8px; }
+  .ssp-hero-gen-input {
+    width: 100%;
+    padding: 10px 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ssp-hero-gen-btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+  .ssp-hero-gen-hint code {
+    display: block;
+    margin: 8px auto 0;
+    width: fit-content;
+    word-break: break-all;
+  }
+}
+
 .ssp-hero-trust {
   display: flex; justify-content: center; align-items: center;
   gap: 10px; flex-wrap: wrap;
