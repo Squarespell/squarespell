@@ -439,7 +439,128 @@ export const FLOW_CSS = `
   .danger-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
   .empty-panel { text-align: center; padding: 40px 20px; color: var(--text-dim); }
   .empty-panel h4 { font-size: 15px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
-  .empty-panel p { font-size: 13px; }
+  .empty-panel p { font-size: 13px; line-height: 1.55; }
+  .empty-panel kbd {
+    display: inline-block; padding: 1px 6px; margin: 0 1px;
+    background: var(--surface); border: 1px solid var(--border); border-bottom-width: 2px;
+    border-radius: 5px; font-family: inherit; font-size: 11px; color: var(--text-muted);
+  }
+
+  /* ============ STAGE 3 EDITOR ENHANCEMENTS (reorder, duplicate, toast, shortcuts) ============ */
+  .s3-title-button {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; border: 0; padding: 0;
+    font-size: 16px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.01em; cursor: text;
+    max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.15s var(--ease);
+  }
+  .s3-title-button:hover { color: var(--accent); }
+  .s3-title-button:hover .s3-title-edit { opacity: 1; }
+  .s3-title-edit {
+    display: inline-flex; opacity: 0.45; color: var(--text-dim);
+    transition: opacity 0.15s var(--ease);
+  }
+  .s3-title-input {
+    background: var(--surface); border: 1px solid var(--accent); color: var(--text);
+    padding: 6px 12px; border-radius: 8px; font-size: 15px; font-weight: 700;
+    letter-spacing: -0.01em; outline: none; min-width: 260px; max-width: 420px;
+    font-family: inherit;
+  }
+  .s3-saved {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-dim);
+    transition: color 0.2s var(--ease);
+  }
+  .s3-saved[data-status="saving"] { color: var(--accent); }
+  .s3-saved[data-status="saved"] { color: var(--success); }
+  .s3-saved svg { stroke-width: 2.5; }
+  .s3-save-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); display: inline-block;
+    animation: savedot 1s ease-in-out infinite;
+  }
+  @keyframes savedot {
+    0%, 100% { opacity: 0.35; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  .s3-shortcut-hint {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 10px 14px; margin-bottom: 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .s3-shortcut-hint kbd {
+    display: inline-block; padding: 2px 7px;
+    background: var(--bg); border: 1px solid var(--border-2); border-bottom-width: 2px;
+    border-radius: 5px; font-family: inherit; font-size: 11px; color: var(--text-muted);
+    font-weight: 600;
+  }
+  .s3-shortcut-hint .dot-sep { color: var(--border-2); }
+  .qc-actions {
+    display: flex; align-items: center; gap: 4px;
+    opacity: 0; transition: opacity 0.15s var(--ease);
+  }
+  .qc:hover .qc-actions, .qc.selected .qc-actions { opacity: 1; }
+  .qc-action-btn {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: all 0.15s var(--ease);
+  }
+  .qc-action-btn:hover:not(:disabled) {
+    background: var(--surface-3); border-color: var(--border-2); color: var(--text);
+  }
+  .qc-action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .qc-action-btn.qc-action-danger:hover:not(:disabled) {
+    color: var(--danger); border-color: rgba(255,107,107,0.35); background: rgba(255,107,107,0.06);
+  }
+  .qc-action-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .answer-row { align-items: center; }
+  .answer-reorder {
+    display: flex; flex-direction: column; gap: 2px; flex-shrink: 0;
+  }
+  .answer-reorder-btn {
+    width: 22px; height: 15px; border-radius: 4px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0;
+  }
+  .answer-reorder-btn:hover:not(:disabled) { color: var(--text); border-color: var(--border-2); }
+  .answer-reorder-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+  .answer-reorder-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+  .answer-del:disabled { opacity: 0.35; cursor: not-allowed; }
+  .add-answer-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .s3-side-actions { display: flex; flex-direction: column; gap: 10px; }
+  .side-btn {
+    width: 100%; background: var(--surface);
+    border: 1px solid var(--border); color: var(--text-muted);
+    padding: 11px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer; transition: all 0.15s var(--ease);
+  }
+  .side-btn:hover { color: var(--text); border-color: var(--border-2); background: var(--surface-2); }
+  .side-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .danger-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .editor-toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 18px;
+    background: var(--surface); border: 1px solid var(--accent);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 3px rgba(210,255,29,0.08);
+    border-radius: 100px; color: var(--text); font-size: 13px; font-weight: 600;
+    z-index: 80;
+    animation: toastin 0.22s var(--ease);
+  }
+  .editor-toast svg { color: var(--accent); }
+  @keyframes toastin {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
 
   /* ============ STAGE 4 (REBUILT): Visitor preview with device switcher + faux browser + brand ============ */
   .s4-top {

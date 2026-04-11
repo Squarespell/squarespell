@@ -56,6 +56,12 @@ const icons = {
       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
     </svg>
   ),
+  editor: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  ),
   leads: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -144,9 +150,10 @@ const icons = {
   ),
 };
 
-// Sections other than the main Overview/Quizzes routes that own their own sub-route tree.
+// Sections other than the main Overview/Quizzes/Editor routes that own their own sub-route tree.
 const OTHER_SECTION_PREFIXES = [
   '/dashboard/quizzes',
+  '/dashboard/editor',
   '/dashboard/leads',
   '/dashboard/analytics',
   '/dashboard/integrations',
@@ -161,15 +168,23 @@ function isOverviewRoute(pathname: string): boolean {
   return pathname === '/dashboard';
 }
 
-// Quizzes = /dashboard/quizzes AND any quiz detail route (e.g. /dashboard/<id>).
-function isQuizzesRoute(pathname: string): boolean {
-  if (pathname === '/dashboard/quizzes' || pathname.startsWith('/dashboard/quizzes/')) return true;
+// Quiz editor = /dashboard/editor OR any quiz detail route (e.g. /dashboard/<id>).
+// Both surfaces open the same editor chrome, so we highlight the same sidebar
+// item whether the user clicked the sidebar link or clicked a quiz card.
+function isEditorRoute(pathname: string): boolean {
+  if (pathname === '/dashboard/editor' || pathname.startsWith('/dashboard/editor/')) return true;
   if (pathname === '/dashboard') return false;
-  if (OTHER_SECTION_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))) {
+  if (pathname === '/dashboard/quizzes' || pathname.startsWith('/dashboard/quizzes/')) return false;
+  if (OTHER_SECTION_PREFIXES.some((prefix) => prefix !== '/dashboard/editor' && (pathname === prefix || pathname.startsWith(prefix + '/')))) {
     return false;
   }
   // Any other /dashboard/<something> is a quiz detail route
   return pathname.startsWith('/dashboard/');
+}
+
+// Quizzes list = /dashboard/quizzes only (the management grid).
+function isQuizzesRoute(pathname: string): boolean {
+  return pathname === '/dashboard/quizzes' || pathname.startsWith('/dashboard/quizzes/');
 }
 
 type NavSection = {
@@ -182,6 +197,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Workspace',
     items: [
       { href: '/dashboard', label: 'Overview', icon: icons.overview, match: isOverviewRoute },
+      { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
       { href: '/dashboard/quizzes', label: 'Quizzes', icon: icons.quizzes, match: isQuizzesRoute },
       { href: '/dashboard/leads', label: 'Leads', icon: icons.leads },
       {
@@ -223,9 +239,21 @@ interface DashboardShellProps {
   title?: string;
   /** Optional right-side topbar content (e.g. page-level actions) */
   topbarRight?: ReactNode;
+  /** Override the default 36px main-column padding. Useful for full-bleed
+   *  pages (e.g. the quiz editor) that render their own internal chrome.
+   *  Accepts any valid CSS padding value — e.g. "0" or "0 0 36px". */
+  contentPadding?: string;
+  /** Hide the sticky topbar entirely (quiz editor has its own topbar). */
+  hideTopbar?: boolean;
 }
 
-export function DashboardShell({ children, title, topbarRight }: DashboardShellProps) {
+export function DashboardShell({
+  children,
+  title,
+  topbarRight,
+  contentPadding = '36px 36px 56px',
+  hideTopbar = false,
+}: DashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useClerk();
@@ -268,8 +296,11 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
         boxShadow: isMobile && mobileOpen ? '0 24px 64px rgba(0,0,0,0.5)' : 'inset -1px 0 0 rgba(255,255,255,0.02)',
       }}
     >
-      {/* Brand + New quiz */}
-      <div style={{ padding: '24px 20px 20px', borderBottom: `1px solid ${COLORS.HAIRLINE}` }}>
+      {/* Brand wordmark — the "New quiz" button used to live here but was
+          removed: it duplicated the one on the /dashboard overview page and
+          made the sidebar feel top-heavy. The dedicated "Quiz editor" nav
+          item below handles opening the current editor. */}
+      <div style={{ padding: '24px 20px 18px', borderBottom: `1px solid ${COLORS.HAIRLINE}` }}>
         <Link
           href="/dashboard"
           style={{
@@ -277,7 +308,6 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
             alignItems: 'center',
             gap: 11,
             textDecoration: 'none',
-            marginBottom: 22,
           }}
         >
           <div
@@ -298,37 +328,6 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
           <span style={{ fontSize: 18, fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.035em' }}>
             Squarespell
           </span>
-        </Link>
-
-        <Link
-          href="/try"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            width: '100%',
-            padding: '11px 16px',
-            background: COLORS.ACCENT,
-            color: COLORS.BG,
-            borderRadius: 100,
-            fontSize: 13.5,
-            fontWeight: 700,
-            textDecoration: 'none',
-            boxShadow: '0 0 0 0 rgba(210,255,29,0)',
-            transition: 'transform 0.15s ease, box-shadow 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.boxShadow = '0 0 24px rgba(210,255,29,0.25)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(210,255,29,0)';
-          }}
-        >
-          {icons.plus}
-          <span>New quiz</span>
         </Link>
       </div>
 
@@ -576,6 +575,7 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
         }}
       >
         {/* Topbar */}
+        {!hideTopbar && (
         <header
           style={{
             position: 'sticky',
@@ -635,9 +635,10 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{topbarRight}</div>
         </header>
+        )}
 
         {/* Page content */}
-        <main style={{ flex: 1, padding: '36px 36px 56px', minWidth: 0 }}>{children}</main>
+        <main style={{ flex: 1, padding: contentPadding, minWidth: 0 }}>{children}</main>
       </div>
     </div>
   );
