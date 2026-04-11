@@ -1,12 +1,20 @@
 'use client';
 
 /**
- * /landing — Public marketing landing page for Squarespell.
+ * /tools/quiz-funnel — Public marketing landing page for Squarespell's
+ * AI Quiz Funnel product. Lives inside the /tools hub.
  *
- * Standalone, shareable URL designed to be embedded as a link from the
- * Squarespace marketing site. Hosted at:
- *   - https://squarespell.com/landing
- *   - https://app.squarespell.com/landing
+ * Standalone, shareable URL designed to be linked from the Squarespace
+ * marketing site. Hosted at:
+ *   - https://squarespell.com/tools/quiz-funnel
+ *   - https://app.squarespell.com/tools/quiz-funnel
+ *
+ * Site structure:
+ *   squarespell.com/                  main site (plugins, templates, services)
+ *   squarespell.com/tools              tools hub
+ *   squarespell.com/tools/quiz-funnel  this page
+ *   quiz.squarespell.com               public quiz builder (Stage 1 → 6)
+ *   app.squarespell.com/dashboard      authenticated dashboard
  *
  * Design direction (user-requested mix of Framer templates):
  *   1. Hero structure   → saasta-pro.framer.website/home-02
