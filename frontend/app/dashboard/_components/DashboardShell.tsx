@@ -42,9 +42,18 @@ type NavItem = {
 
 // Inline primitive icons — keeps us free of an icon library dep
 const icons = {
+  overview: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="9" />
+      <rect x="14" y="3" width="7" height="5" />
+      <rect x="14" y="12" width="7" height="9" />
+      <rect x="3" y="16" width="7" height="5" />
+    </svg>
+  ),
   quizzes: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
     </svg>
   ),
   leads: (
@@ -135,9 +144,9 @@ const icons = {
   ),
 };
 
-// Sections other than Quizzes that own their own sub-route tree.
-// We use this to disambiguate the Quizzes matcher.
+// Sections other than the main Overview/Quizzes routes that own their own sub-route tree.
 const OTHER_SECTION_PREFIXES = [
+  '/dashboard/quizzes',
   '/dashboard/leads',
   '/dashboard/analytics',
   '/dashboard/integrations',
@@ -147,33 +156,56 @@ const OTHER_SECTION_PREFIXES = [
   '/dashboard/settings',
 ];
 
+// Overview = exact /dashboard only.
+function isOverviewRoute(pathname: string): boolean {
+  return pathname === '/dashboard';
+}
+
+// Quizzes = /dashboard/quizzes AND any quiz detail route (e.g. /dashboard/<id>).
 function isQuizzesRoute(pathname: string): boolean {
-  if (pathname === '/dashboard') return true;
+  if (pathname === '/dashboard/quizzes' || pathname.startsWith('/dashboard/quizzes/')) return true;
+  if (pathname === '/dashboard') return false;
   if (OTHER_SECTION_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))) {
     return false;
   }
-  // Everything else under /dashboard/... is a quiz detail route
+  // Any other /dashboard/<something> is a quiz detail route
   return pathname.startsWith('/dashboard/');
 }
 
-const PRIMARY_NAV: NavItem[] = [
+type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
+const NAV_SECTIONS: NavSection[] = [
   {
-    href: '/dashboard',
-    label: 'Quizzes',
-    icon: icons.quizzes,
-    match: isQuizzesRoute,
+    label: 'Workspace',
+    items: [
+      { href: '/dashboard', label: 'Overview', icon: icons.overview, match: isOverviewRoute },
+      { href: '/dashboard/quizzes', label: 'Quizzes', icon: icons.quizzes, match: isQuizzesRoute },
+      { href: '/dashboard/leads', label: 'Leads', icon: icons.leads },
+      {
+        href: '/dashboard/analytics',
+        label: 'Analytics',
+        icon: icons.analytics,
+        match: (p) => p === '/dashboard/analytics' || p.startsWith('/dashboard/analytics/'),
+      },
+    ],
   },
-  { href: '/dashboard/leads', label: 'Leads', icon: icons.leads },
   {
-    href: '/dashboard/analytics',
-    label: 'Analytics',
-    icon: icons.analytics,
-    match: (p) => p === '/dashboard/analytics' || p.startsWith('/dashboard/analytics/'),
+    label: 'Growth',
+    items: [
+      { href: '/dashboard/embed', label: 'Embed & install', icon: icons.embed },
+      { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
+      { href: '/dashboard/brand-kit', label: 'Brand kit', icon: icons.brand },
+    ],
   },
-  { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
-  { href: '/dashboard/embed', label: 'Embed & install', icon: icons.embed },
-  { href: '/dashboard/brand-kit', label: 'Brand kit', icon: icons.brand },
-  { href: '/dashboard/billing', label: 'Billing & plan', icon: icons.billing },
+  {
+    label: 'Account',
+    items: [
+      { href: '/dashboard/billing', label: 'Billing & plan', icon: icons.billing },
+    ],
+  },
 ];
 
 const BOTTOM_NAV: NavItem[] = [
@@ -301,71 +333,76 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
       </div>
 
       {/* Primary nav */}
-      <nav style={{ flex: 1, padding: '18px 12px 14px', display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
-        <div
-          style={{
-            fontSize: 10.5,
-            fontWeight: 700,
-            color: COLORS.TEXT_SUBTLE,
-            textTransform: 'uppercase',
-            letterSpacing: '0.09em',
-            padding: '4px 14px 10px',
-          }}
-        >
-          Workspace
-        </div>
-        {PRIMARY_NAV.map((item) => {
-          const active = isActive(item, pathname || '');
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
+      <nav style={{ flex: 1, padding: '16px 12px 14px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+        {NAV_SECTIONS.map((section, sectionIdx) => (
+          <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 14 }}>
+            <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '10px 14px',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: active ? COLORS.TEXT : COLORS.TEXT_MUTED,
-                background: active ? 'rgba(210,255,29,0.09)' : 'transparent',
-                boxShadow: active ? 'inset 0 0 0 1px rgba(210,255,29,0.18)' : 'none',
-                fontSize: 13.5,
-                fontWeight: active ? 600 : 500,
-                letterSpacing: '-0.005em',
-                transition: 'background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
-                  e.currentTarget.style.color = COLORS.TEXT;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = COLORS.TEXT_MUTED;
-                }
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: COLORS.TEXT_SUBTLE,
+                textTransform: 'uppercase',
+                letterSpacing: '0.09em',
+                padding: '4px 14px 8px',
               }}
             >
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 18,
-                  height: 18,
-                  flexShrink: 0,
-                  color: active ? COLORS.ACCENT : 'currentColor',
-                  transition: 'color 0.15s ease',
-                }}
-              >
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+              {section.label}
+            </div>
+            {section.items.map((item) => {
+              const active = isActive(item, pathname || '');
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '9px 14px',
+                    margin: '1px 0',
+                    borderRadius: 10,
+                    textDecoration: 'none',
+                    color: active ? COLORS.TEXT : COLORS.TEXT_MUTED,
+                    background: active ? 'rgba(210,255,29,0.09)' : 'transparent',
+                    boxShadow: active ? 'inset 0 0 0 1px rgba(210,255,29,0.18)' : 'none',
+                    fontSize: 13.5,
+                    fontWeight: active ? 600 : 500,
+                    letterSpacing: '-0.005em',
+                    transition: 'background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
+                      e.currentTarget.style.color = COLORS.TEXT;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = COLORS.TEXT_MUTED;
+                    }
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 18,
+                      height: 18,
+                      flexShrink: 0,
+                      color: active ? COLORS.ACCENT : 'currentColor',
+                      transition: 'color 0.15s ease',
+                    }}
+                  >
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
 
         <div
           style={{
@@ -374,7 +411,7 @@ export function DashboardShell({ children, title, topbarRight }: DashboardShellP
             color: COLORS.TEXT_SUBTLE,
             textTransform: 'uppercase',
             letterSpacing: '0.09em',
-            padding: '20px 14px 10px',
+            padding: '20px 14px 8px',
           }}
         >
           Resources
