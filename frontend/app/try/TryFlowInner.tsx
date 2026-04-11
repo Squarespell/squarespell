@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FLOW_CSS from './flow-css';
 import { api } from '@/lib/api';
-import { publicQuizUrl, embedSnippet } from '@/lib/urls';
+import { publicQuizUrl, embedSnippet, APP_URL } from '@/lib/urls';
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
@@ -489,9 +489,19 @@ export function TryFlowInner({
   const currentQ = quiz && selectedIdx >= 0 ? quiz.questions[selectedIdx] : null;
 
   /* ======================== Sign in -> claim flow ====================== */
+  // Sign-up must happen on app.squarespell.com so Clerk session cookies land on
+  // the right origin. If we push a relative /sign-up from quiz.squarespell.com
+  // Clerk will set the session cookie on quiz.* and the dashboard (on app.*)
+  // won't see it — user ends up stuck on quiz.*/dashboard with no sidebar.
   const goSignUp = () => {
     const claim = claimToken || (typeof window !== 'undefined' ? sessionStorage.getItem('sq_claim_token') || '' : '');
-    router.push(`/sign-up?from=try&url=${encodeURIComponent(url)}${claim ? `&claim=${claim}` : ''}`);
+    const params = new URLSearchParams({ from: 'try', url });
+    if (claim) params.set('claim', claim);
+    if (typeof window !== 'undefined') {
+      window.location.href = `${APP_URL}/sign-up?${params.toString()}`;
+    } else {
+      router.push(`/sign-up?${params.toString()}`);
+    }
   };
 
   const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
