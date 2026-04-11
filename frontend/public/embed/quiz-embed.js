@@ -1,10 +1,10 @@
 /*!
- * Squarespell Quiz Embed v1.0.0
- * Usage: <script src="https://squarespell.com/embed/quiz-embed.js" data-quiz="YOUR_SLUG" async></script>
+ * Squarespell Quiz Embed v1.1.0
+ * Usage: <script src="https://quiz.squarespell.com/embed/quiz-embed.js" data-quiz="YOUR_SLUG" async></script>
  */
 (function(){
 'use strict';
-var BASE_URL='https://app.squarespell.com';
+var BASE_URL='https://quiz.squarespell.com';
 var scripts=document.querySelectorAll('script[data-quiz]');
 var currentScript=scripts[scripts.length-1];
 if(!currentScript){console.warn('[Squarespell] Missing data-quiz attribute.');return;}

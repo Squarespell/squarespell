@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { embedScriptUrl, publicQuizUrl } from '@/lib/urls';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
@@ -29,11 +30,11 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
     });
   }, []);
 
-  const quizUrl = quiz ? `https://app.squarespell.com/quiz/${quiz.slug}` : '';
+  const quizUrl = quiz ? publicQuizUrl(quiz.slug) : '';
 
   const embedScript = quiz
     ? `<div id="squarespell-quiz"></div>
-<script src="https://app.squarespell.com/embed.js" data-quiz="${quiz.slug}"></script>`
+<script src="${embedScriptUrl()}" data-quiz="${quiz.slug}"></script>`
     : '';
 
   const iframeEmbed = quiz
@@ -96,7 +97,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
             </button>
           </div>
           <div style={{ background:'#07090c', borderRadius:10, padding:18, fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(240,242,245,.7)', lineHeight:1.7, overflowX:'auto', border:'.5px solid var(--b2)', whiteSpace:'pre' }}>
-            {`<div id="squarespell-quiz"></div>\n<script src="https://app.squarespell.com/embed.js"\n  data-quiz="${quiz.slug}">\n<\/script>`}
+            {`<div id="squarespell-quiz"></div>\n<script src="${embedScriptUrl()}"\n  data-quiz="${quiz.slug}">\n<\/script>`}
           </div>
         </div>
 
