@@ -33,6 +33,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { tryFlowUrl } from '@/lib/urls';
 
 const TRY_URL = '/try';
 const SIGN_IN_URL = '/sign-in';
@@ -150,8 +151,13 @@ export default function LandingPage() {
     const normalized = normalizeUrl(heroUrl);
     if (!normalized) return;
     setHeroSubmitting(true);
-    // TryFlowInner already reads ?url= and auto-kicks off generation.
-    router.push(`/try?url=${encodeURIComponent(normalized)}`);
+    // Send the visitor to the BRANDED quiz subdomain (quiz.squarespell.com),
+    // not app.squarespell.com. The middleware on quiz.* rewrites `/` → `/try`,
+    // and TryFlowInner reads `?url=` to skip Stage 1 entirely. We do a full
+    // page navigation (not router.push) because we're crossing subdomains.
+    if (typeof window !== 'undefined') {
+      window.location.href = tryFlowUrl(normalized);
+    }
   };
 
   // Parallax on the floating mockup
