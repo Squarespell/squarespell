@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { TryFlowInner } from '@/app/try/TryFlowInner';
+import { TryFlowInner } from '@/app/tools/quiz-funnel/build/TryFlowInner';
 import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 
 interface DbQuiz {
@@ -156,7 +156,7 @@ function EditorEmpty() {
           Start by generating a quiz from any site URL. The editor opens automatically once your first quiz is built.
         </p>
         <Link
-          href="/try"
+          href="/tools/quiz-funnel/build"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

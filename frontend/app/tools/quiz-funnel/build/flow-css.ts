@@ -292,6 +292,32 @@ export const FLOW_CSS = `
     margin-left: auto; display: flex; align-items: center; gap: 8px;
     color: var(--success); font-size: 13px; font-weight: 600;
   }
+  .s2-site-check-loading {
+    color: var(--accent);
+  }
+  .s2-analyze-err {
+    margin: 14px 0 24px;
+    padding: 14px 16px;
+    background: rgba(255, 107, 107, 0.08);
+    border: 1px solid rgba(255, 107, 107, 0.35);
+    border-radius: 12px;
+    color: #ff9a9a;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  }
+  .s2-analyze-err .hook-err-retry {
+    background: rgba(255, 107, 107, 0.18);
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    color: #ffd4d4;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .s2-analyze-err .hook-err-retry:hover {
+    background: rgba(255, 107, 107, 0.28);
+  }
   .s2-question { margin-bottom: 36px; }
   .s2-q-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
   .s2-q-num {

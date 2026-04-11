@@ -613,7 +613,7 @@ function OverviewInner() {
   return (
     <DashboardShell
       title="Overview"
-      topbarRight={<PrimaryButton href="/try">+ New quiz</PrimaryButton>}
+      topbarRight={<PrimaryButton href="/tools/quiz-funnel/build">+ New quiz</PrimaryButton>}
     >
       {status === 'trial' && <TrialBanner daysLeft={daysLeft} onUpgrade={() => router.push('/pricing')} />}
 
@@ -825,7 +825,7 @@ function OverviewInner() {
               }}
             >
               No quizzes yet —{' '}
-              <Link href="/try" style={{ color: C.ACCENT, textDecoration: 'none', fontWeight: 600 }}>
+              <Link href="/tools/quiz-funnel/build" style={{ color: C.ACCENT, textDecoration: 'none', fontWeight: 600 }}>
                 create your first quiz
               </Link>
             </div>

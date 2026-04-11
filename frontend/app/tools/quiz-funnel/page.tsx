@@ -33,8 +33,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { QUIZ_BUILDER_PATH } from '@/lib/urls';
 
-const TRY_URL = '/try';
+const TRY_URL = QUIZ_BUILDER_PATH;
 const SIGN_IN_URL = '/sign-in';
 
 /** Normalize a user-typed URL (tolerates "acme.com", "www.acme.com", etc.). */
@@ -150,8 +151,11 @@ export default function LandingPage() {
     const normalized = normalizeUrl(heroUrl);
     if (!normalized) return;
     setHeroSubmitting(true);
-    // TryFlowInner already reads ?url= and auto-kicks off generation.
-    router.push(`/try?url=${encodeURIComponent(normalized)}`);
+    // Same-host client-side push — the builder lives at
+    // /tools/quiz-funnel/build on the same app.squarespell.com origin.
+    // TryFlowInner reads `?url=` and skips Stage 1 entirely, dropping the
+    // visitor straight onto the questions page.
+    router.push(`${QUIZ_BUILDER_PATH}?url=${encodeURIComponent(normalized)}`);
   };
 
   // Parallax on the floating mockup

@@ -240,7 +240,7 @@ export default function EmbedPage() {
           }
           title="No quizzes to embed yet"
           body="Create a quiz first and you'll get a ready-to-paste embed snippet here."
-          action={<PrimaryButton href="/try">+ Create a quiz</PrimaryButton>}
+          action={<PrimaryButton href="/tools/quiz-funnel/build">+ Create a quiz</PrimaryButton>}
         />
       ) : (
         <div

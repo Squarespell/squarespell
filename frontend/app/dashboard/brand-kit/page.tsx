@@ -193,7 +193,7 @@ export default function BrandKitPage() {
           }
           title="No brand kit yet"
           body="When you create a quiz from your website, Squarespell scrapes your palette, fonts, logo, and brand name. Start a quiz to see your brand kit here."
-          action={<PrimaryButton href="/try">+ Create a quiz</PrimaryButton>}
+          action={<PrimaryButton href="/tools/quiz-funnel/build">+ Create a quiz</PrimaryButton>}
         />
       ) : (
         <div style={{ display: 'grid', gap: 20 }}>

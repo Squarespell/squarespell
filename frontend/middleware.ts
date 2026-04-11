@@ -4,70 +4,65 @@ import { NextResponse } from 'next/server'
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
 
 /**
- * Host allow-list for routing.
+ * Host + path routing rules.
  *
- * Both `app.squarespell.com` and `quiz.squarespell.com` point at the same Next.js
- * deployment on Vercel. The routing rules are:
+ * Single-subdomain architecture: everything user-facing in the Squarespell
+ * product lives under app.squarespell.com. The marketing site
+ * (squarespell.com) is hosted on Squarespace.
  *
- *  quiz.squarespell.com
- *    /                 → rewrite to /try  (the Stage 1 hook widget)
- *    /try(/*)          → serve as-is
- *    /q/:slug          → serve as-is      (public published quiz)
- *    /embed*           → serve as-is      (embed script + assets)
- *    /api/*            → serve as-is
- *    /_next/*, assets  → serve as-is      (already excluded by matcher)
- *    ANYTHING ELSE     → 308 redirect to app.squarespell.com<path>
+ *   app.squarespell.com
+ *     /                              redirect → /tools/quiz-funnel
+ *     /tools                         tools hub
+ *     /tools/quiz-funnel             quiz tool marketing landing
+ *     /tools/quiz-funnel/build       public no-login quiz builder
+ *     /q/:slug                       public published quiz
+ *     /embed.js, /embed/*            embed loader assets
+ *     /sign-in, /sign-up             Clerk auth
+ *     /dashboard, /dashboard/*       authenticated dashboard (Clerk-protected)
  *
- *    This includes /dashboard, /sign-in, /sign-up, /billing, etc. — those
- *    belong on the app subdomain because Clerk session cookies are scoped
- *    to that origin. Without this redirect, signing in on quiz.* creates
- *    the session on the wrong host and the dashboard sidebar never mounts.
+ *   quiz.squarespell.com (legacy subdomain — will be sunset)
+ *     ALL paths                      301 → app.squarespell.com<path>
+ *     This keeps every old embed snippet, every shared quiz link, and every
+ *     piece of marketing collateral that mentions quiz.squarespell.com
+ *     working forever, while consolidating the canonical URL on the app host.
  *
- *  app.squarespell.com / squarespell.com
- *    Served as-is; protected routes use Clerk middleware.
+ *   /try (legacy app-host path)      308 → /tools/quiz-funnel/build
+ *     Same idea: anyone who saved /try in a bookmark or has it in old code
+ *     gets transparently moved to the canonical URL.
  */
-const HOST_SUFFIX = '.squarespell.com'
 const APP_HOST = 'app.squarespell.com'
-const QUIZ_SUBDOMAIN = 'quiz'
+const QUIZ_HOST_PREFIX = 'quiz.'
 
 function isQuizHost(host: string | null): boolean {
   if (!host) return false
   const h = host.toLowerCase()
-  return h === `${QUIZ_SUBDOMAIN}${HOST_SUFFIX}` || h.startsWith(`${QUIZ_SUBDOMAIN}.`)
-}
-
-// Paths that the quiz subdomain is allowed to serve directly.
-// Everything else on the quiz host is redirected to app.squarespell.com.
-function isQuizAllowedPath(pathname: string): boolean {
-  if (pathname === '/' || pathname === '/index') return true
-  if (pathname === '/try' || pathname.startsWith('/try/')) return true
-  if (pathname.startsWith('/q/')) return true
-  if (pathname === '/embed.js' || pathname.startsWith('/embed/')) return true
-  if (pathname.startsWith('/api/')) return true
-  return false
+  return h.startsWith(QUIZ_HOST_PREFIX)
 }
 
 export default clerkMiddleware((auth, req) => {
   const host = req.headers.get('host')
   const pathname = req.nextUrl.pathname
 
+  // 1. Legacy quiz.squarespell.com → permanent 301 to app.squarespell.com.
+  //    Preserves path, query, and hash so /q/abc?ref=foo continues to work.
   if (isQuizHost(host)) {
-    // 1. Bare root → rewrite to /try (internal, URL stays as quiz.squarespell.com)
-    if (pathname === '/' || pathname === '/index') {
-      const url = req.nextUrl.clone()
-      url.pathname = '/try'
-      return NextResponse.rewrite(url)
-    }
-
-    // 2. Anything not explicitly allowed on quiz host → redirect to app host
-    //    Preserves path, query, and hash so /dashboard/abc?justClaimed=1 works.
-    if (!isQuizAllowedPath(pathname)) {
-      const target = req.nextUrl.clone()
-      target.protocol = 'https:'
-      target.host = APP_HOST
-      return NextResponse.redirect(target, 308)
-    }
+    const target = req.nextUrl.clone()
+    target.protocol = 'https:'
+    target.host = APP_HOST
+    return NextResponse.redirect(target, 301)
   }
+
+  // 2. Legacy /try path → /tools/quiz-funnel/build (with query preserved).
+  if (pathname === '/try' || pathname.startsWith('/try/')) {
+    const target = req.nextUrl.clone()
+    target.pathname = pathname.replace(/^\/try/, '/tools/quiz-funnel/build')
+    return NextResponse.redirect(target, 308)
+  }
+
+  // 3. Bare root → tools landing (the marketing page is the de-facto home
+  //    of the app subdomain). Signed-in users on root will fall through to
+  //    page.tsx which redirects them to /dashboard.
+  //    (Handled inside app/page.tsx, not here, so we don't break SSR.)
 
   if (isProtectedRoute(req)) {
     auth().protect({

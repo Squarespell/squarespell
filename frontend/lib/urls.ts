@@ -1,29 +1,45 @@
 /**
  * Central URL configuration for Squarespell.
  *
- * Three production domains — all permanent, all hardcoded on purpose:
+ * Two production domains — both permanent, both hardcoded on purpose:
  *
- *   MARKETING_URL  — squarespell.com           (marketing site, plugins, templates, services)
- *   QUIZ_URL       — quiz.squarespell.com      (public quiz try flow, embed JS, public quiz pages)
- *   APP_URL        — app.squarespell.com       (authenticated dashboard)
+ *   MARKETING_URL  — squarespell.com           (Squarespace marketing site)
+ *   APP_URL        — app.squarespell.com       (the entire Squarespell app)
  *
- * These used to be env-var-driven via NEXT_PUBLIC_* overrides. We removed that
- * indirection because (a) these hostnames are part of the permanent product
- * architecture and will never change without a code review, and (b) a single
- * misconfigured env var in Vercel was routing /sign-up to the backend URL and
- * crashing the claim flow. Hardcoding eliminates that entire class of bug.
+ * Everything user-facing in the product lives under APP_URL on a single
+ * subdomain so visitors never see the URL bar bounce between subdomains.
+ * This matches how Linear, Vercel, Notion, and Stripe organize their apps.
+ *
+ * URL structure under APP_URL:
+ *
+ *   /tools                           tools hub (lists all Squarespell tools)
+ *   /tools/quiz-funnel               marketing landing page for the quiz tool
+ *   /tools/quiz-funnel/build         public no-login quiz builder (Stages 1-6)
+ *   /q/:slug                         public published quiz (lead capture)
+ *   /embed.js                        embed loader for site owners
+ *   /sign-in, /sign-up               Clerk auth
+ *   /dashboard, /dashboard/*         authenticated dashboard
+ *
+ * The quiz.squarespell.com subdomain is now a permanent 301 redirect to
+ * app.squarespell.com (handled in middleware.ts) so any old embed code or
+ * shared links continue to work but resolve to the canonical home.
  *
  * If you ever need to change a domain, change the constant below in a PR.
  * That's strictly better than editing a Vercel env var in the dashboard.
- *
- * Both QUIZ_URL and APP_URL route to the same Next.js app — the middleware
- * rewrites the bare quiz.squarespell.com host to /try and redirects any
- * non-quiz paths on the quiz host over to app.squarespell.com.
  */
 
 export const MARKETING_URL = 'https://squarespell.com';
-export const QUIZ_URL = 'https://quiz.squarespell.com';
 export const APP_URL = 'https://app.squarespell.com';
+
+/* ------------------------------------------------------------------ */
+/* Internal route paths (single source of truth)                       */
+/* ------------------------------------------------------------------ */
+
+/** Path to the public no-login quiz builder. */
+export const QUIZ_BUILDER_PATH = '/tools/quiz-funnel/build';
+
+/** Path to the marketing landing page for the quiz tool. */
+export const QUIZ_FUNNEL_LANDING_PATH = '/tools/quiz-funnel';
 
 /* ------------------------------------------------------------------ */
 /* Helpers for common URL shapes                                       */
@@ -31,10 +47,10 @@ export const APP_URL = 'https://app.squarespell.com';
 
 /** Public URL a visitor sees when they land on a shared quiz. */
 export const publicQuizUrl = (slug: string): string =>
-  `${QUIZ_URL}/q/${slug}`;
+  `${APP_URL}/q/${slug}`;
 
 /** URL to the JS embed loader a Squarespace site owner drops into a Code Block. */
-export const embedScriptUrl = (): string => `${QUIZ_URL}/embed.js`;
+export const embedScriptUrl = (): string => `${APP_URL}/embed.js`;
 
 /** Full <script> snippet for copy/paste install. */
 export const embedSnippet = (slug: string): string =>
@@ -43,9 +59,8 @@ export const embedSnippet = (slug: string): string =>
 /** Authenticated dashboard landing URL. */
 export const dashboardUrl = (): string => `${APP_URL}/dashboard`;
 
-/** Try / quiz preview flow entry URL. */
+/** Quiz builder entry URL (with optional ?url= autostart). */
 export const tryFlowUrl = (siteUrl?: string): string => {
-  const base = `${QUIZ_URL}/`;
-  if (!siteUrl) return base;
-  return `${QUIZ_URL}/try?url=${encodeURIComponent(siteUrl)}`;
+  if (!siteUrl) return `${APP_URL}${QUIZ_BUILDER_PATH}`;
+  return `${APP_URL}${QUIZ_BUILDER_PATH}?url=${encodeURIComponent(siteUrl)}`;
 };

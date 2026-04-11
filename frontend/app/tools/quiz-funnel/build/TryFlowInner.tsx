@@ -161,12 +161,21 @@ export function TryFlowInner({
   const router = useRouter();
   const urlParam = mode === 'preview' ? (searchParams.get('url') || '') : '';
 
-  const defaultStage: 1 | 2 | 3 | 4 | 5 | 6 = initialStage ?? (mode === 'authed' ? 3 : 1);
+  // If the visitor arrives from /tools/quiz-funnel with a `?url=...` param, they
+  // already pasted their site on the landing page. Skip the Stage 1 hook widget
+  // entirely and drop them straight into Stage 2 (the questions page). The
+  // background analyze call runs while they're reading question 1.
+  const defaultStage: 1 | 2 | 3 | 4 | 5 | 6 =
+    initialStage ??
+    (mode === 'authed' ? 3 : (urlParam ? 2 : 1));
   const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5 | 6>(defaultStage);
 
   // Stage 1
   const [url, setUrl] = useState(initialUrl || urlParam);
-  const [loading, setLoading] = useState(false);
+  // Seed `loading` to true when we have a urlParam so Stage 2 renders in the
+  // "Analyzing your site…" state on first paint (no flash of "Ready" before
+  // the background analyze call starts).
+  const [loading, setLoading] = useState<boolean>(!!(mode === 'preview' && urlParam));
   const [errorMsg, setErrorMsg] = useState('');
   /** Shown when the scraper is taking >3s (Render cold-start or slow site). */
   const [slowHint, setSlowHint] = useState(false);
@@ -747,14 +756,36 @@ export function TryFlowInner({
           <div className="s2-site-card">
             <div className="s2-site-icon">{siteLetter}</div>
             <div className="s2-site-info">
-              <div className="s2-site-label">Analyzing</div>
+              <div className="s2-site-label">
+                {loading ? 'Analyzing your site' : (brand ? 'Brand captured' : 'Ready')}
+              </div>
               <div className="s2-site-domain">{domain}</div>
             </div>
-            <div className="s2-site-check">
-              <SvgCheck size={16} />
-              Brand captured
-            </div>
+            {loading ? (
+              <div className="s2-site-check s2-site-check-loading">
+                <span className="hook-hint-spinner" />
+                {slowHint ? 'Waking server…' : 'Scanning brand…'}
+              </div>
+            ) : brand ? (
+              <div className="s2-site-check">
+                <SvgCheck size={16} />
+                Brand captured
+              </div>
+            ) : null}
           </div>
+
+          {errorMsg && (
+            <div className="s2-analyze-err">
+              <div>{errorMsg}</div>
+              <button
+                type="button"
+                className="hook-err-retry"
+                onClick={() => { setErrorMsg(''); goAnalyze(url); }}
+              >
+                Retry analyze
+              </button>
+            </div>
+          )}
 
           <div id="s2-list">
             {onboardingQs.map((q, qi) => {
@@ -798,15 +829,19 @@ export function TryFlowInner({
             </div>
             <button
               className="btn btn-primary btn-lg"
-              disabled={onboardingCount < 5 || buildingQuiz}
+              disabled={onboardingCount < 5 || buildingQuiz || !sessionToken || loading}
               onClick={buildQuiz}
               type="button"
+              title={!sessionToken && !loading ? 'Waiting for site analysis…' : undefined}
             >
-              {buildingQuiz ? 'Building your quiz...' : 'Build my quiz'}
-              {!buildingQuiz && <SvgArrowRight size={16} />}
+              {buildingQuiz
+                ? 'Building your quiz...'
+                : loading && !sessionToken
+                  ? 'Analyzing your site…'
+                  : 'Build my quiz'}
+              {!buildingQuiz && !(loading && !sessionToken) && <SvgArrowRight size={16} />}
             </button>
           </div>
-          {errorMsg && <div style={{ marginTop: 12, color: '#ff6b6b', fontSize: 14, textAlign: 'center' }}>{errorMsg}</div>}
         </div>
       </div>
 
