@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * Root route.
+ * Root route on app.squarespell.com.
  *
- * Per the prototype-v4 restoration decision: the legacy landing page is gone.
- * Squarespell has no hero — the Stage 1 embeddable hook widget IS the entry
- * point. Signed-in users go to the dashboard; everyone else goes to /try.
+ * Signed-in users go to the dashboard. Everyone else goes to the quiz-funnel
+ * marketing landing page (the de-facto home of the app subdomain), where the
+ * hero URL input drops them into the no-login quiz builder.
  */
 
 import { useEffect } from 'react';
@@ -18,7 +18,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    router.replace(isSignedIn ? '/dashboard' : '/try');
+    router.replace(isSignedIn ? '/dashboard' : '/tools/quiz-funnel');
   }, [isLoaded, isSignedIn, router]);
 
   return (

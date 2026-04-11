@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
           }
           title="No analytics yet"
           body="Once you publish a quiz and start getting visitors, you'll see views, completions, and lead capture rates here."
-          action={<PrimaryButton href="/try">+ Create your first quiz</PrimaryButton>}
+          action={<PrimaryButton href="/tools/quiz-funnel/build">+ Create your first quiz</PrimaryButton>}
         />
       ) : (
         <>

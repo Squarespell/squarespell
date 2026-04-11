@@ -1,13 +1,15 @@
 /*!
- * Squarespell Quiz Preview Widget v1.1.0
+ * Squarespell Quiz Preview Widget v1.2.0
  * Drop this into any Squarespace Code Block to add a "Paste your URL" input
- * that sends visitors to quiz.squarespell.com/try to preview a quiz
+ * that sends visitors to app.squarespell.com/tools/quiz-funnel/build to
+ * preview a quiz.
  *
- * Usage: <script src="https://quiz.squarespell.com/embed/quiz-preview-widget.js" async></script>
+ * Usage: <script src="https://app.squarespell.com/embed/quiz-preview-widget.js" async></script>
  */
 (function(){
 'use strict';
-var APP_URL = 'https://quiz.squarespell.com';
+var APP_URL = 'https://app.squarespell.com';
+var BUILDER_PATH = '/tools/quiz-funnel/build';
 
 function init() {
   // Find the script tag to insert widget after it
@@ -91,8 +93,8 @@ function init() {
     btn.disabled = true;
     btn.style.opacity = '0.7';
 
-    // Redirect to the try page
-    window.location.href = APP_URL + '/try?url=' + encodeURIComponent(url);
+    // Redirect to the quiz builder funnel
+    window.location.href = APP_URL + BUILDER_PATH + '?url=' + encodeURIComponent(url);
   }
 
   btn.addEventListener('click', go);

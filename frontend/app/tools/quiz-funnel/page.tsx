@@ -33,9 +33,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { tryFlowUrl } from '@/lib/urls';
+import { QUIZ_BUILDER_PATH } from '@/lib/urls';
 
-const TRY_URL = '/try';
+const TRY_URL = QUIZ_BUILDER_PATH;
 const SIGN_IN_URL = '/sign-in';
 
 /** Normalize a user-typed URL (tolerates "acme.com", "www.acme.com", etc.). */
@@ -151,13 +151,11 @@ export default function LandingPage() {
     const normalized = normalizeUrl(heroUrl);
     if (!normalized) return;
     setHeroSubmitting(true);
-    // Send the visitor to the BRANDED quiz subdomain (quiz.squarespell.com),
-    // not app.squarespell.com. The middleware on quiz.* rewrites `/` → `/try`,
-    // and TryFlowInner reads `?url=` to skip Stage 1 entirely. We do a full
-    // page navigation (not router.push) because we're crossing subdomains.
-    if (typeof window !== 'undefined') {
-      window.location.href = tryFlowUrl(normalized);
-    }
+    // Same-host client-side push — the builder lives at
+    // /tools/quiz-funnel/build on the same app.squarespell.com origin.
+    // TryFlowInner reads `?url=` and skips Stage 1 entirely, dropping the
+    // visitor straight onto the questions page.
+    router.push(`${QUIZ_BUILDER_PATH}?url=${encodeURIComponent(normalized)}`);
   };
 
   // Parallax on the floating mockup

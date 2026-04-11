@@ -155,7 +155,7 @@ export default function QuizzesPage() {
   return (
     <DashboardShell
       title="Quizzes"
-      topbarRight={<PrimaryButton href="/try">+ New quiz</PrimaryButton>}
+      topbarRight={<PrimaryButton href="/tools/quiz-funnel/build">+ New quiz</PrimaryButton>}
     >
       {embedSlug && <EmbedModal slug={embedSlug} onClose={() => setEmbedSlug(null)} />}
 
@@ -173,7 +173,7 @@ export default function QuizzesPage() {
           }
           title="Create your first quiz"
           body="Get started with an AI-built quiz funnel that captures qualified leads in minutes."
-          action={<PrimaryButton href="/try">Build your first quiz</PrimaryButton>}
+          action={<PrimaryButton href="/tools/quiz-funnel/build">Build your first quiz</PrimaryButton>}
         />
       ) : (
         <div

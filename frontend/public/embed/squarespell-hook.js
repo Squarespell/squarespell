@@ -1,15 +1,16 @@
 /*!
- * Squarespell Hook Widget v1.1.0
+ * Squarespell Hook Widget v1.2.0
  *
  * This is the compact "URL + Generate" input from prototype-v4 Stage 1,
  * packaged as a drop-in script tag that can be embedded anywhere
  * (squarespell.com landing page, marketing site, etc.):
  *
- *   <script src="https://quiz.squarespell.com/embed/squarespell-hook.js" async></script>
+ *   <script src="https://app.squarespell.com/embed/squarespell-hook.js" async></script>
  *
  * The widget renders inline where the script tag is placed, takes a URL,
- * and redirects the visitor to https://quiz.squarespell.com/try?url=... where
- * the full Stage 1 -> 6 funnel takes over.
+ * and redirects the visitor to
+ * https://app.squarespell.com/tools/quiz-funnel/build?url=... where the
+ * full Stage 1 -> 6 funnel takes over.
  *
  * Styling matches prototype-v4 tokens exactly — dark base, #D2FF1D accent,
  * DM Sans, 100px pill radius on the primary button. Self-contained; no
@@ -18,7 +19,8 @@
 (function () {
   'use strict';
 
-  var APP_URL = 'https://quiz.squarespell.com';
+  var APP_URL = 'https://app.squarespell.com';
+  var BUILDER_PATH = '/tools/quiz-funnel/build';
   var WIDGET_ID = 'squarespell-hook-widget';
 
   // Find the script tag that loaded this file.
@@ -187,9 +189,10 @@
       }
       btn.disabled = true;
       btn.textContent = 'Loading…';
-      // Redirect to the full /try funnel — the Stage 1 auto-start will
-      // kick off /api/preview-analyze the moment the page loads.
-      window.location.href = APP_URL + '/try?url=' + encodeURIComponent(url);
+      // Redirect to the full quiz builder funnel — TryFlowInner reads ?url=
+      // and skips Stage 1, dropping the visitor straight on the questions
+      // page while the brand analyze runs in the background.
+      window.location.href = APP_URL + BUILDER_PATH + '?url=' + encodeURIComponent(url);
     });
 
     return wrap;
