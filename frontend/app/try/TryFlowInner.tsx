@@ -168,6 +168,8 @@ export function TryFlowInner({
   const [url, setUrl] = useState(initialUrl || urlParam);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  /** Shown when the scraper is taking >3s (Render cold-start or slow site). */
+  const [slowHint, setSlowHint] = useState(false);
 
   // Brand + session
   const [brand, setBrand] = useState<Brand | null>(initialBrand);
@@ -206,28 +208,68 @@ export function TryFlowInner({
   const goAnalyze = useCallback(async (siteUrl: string) => {
     if (!siteUrl) return;
     setLoading(true);
+    setSlowHint(false);
     setErrorMsg('');
     let normalized = siteUrl.trim();
     if (!/^https?:\/\//i.test(normalized)) normalized = 'https://' + normalized;
+
+    // Surface a "waking up servers" hint after 3s so users don't think it's
+    // broken when Render's free tier is cold-starting.
+    const slowTimer = window.setTimeout(() => setSlowHint(true), 3000);
+
+    // Hard abort after 75s so the button doesn't stay disabled forever if the
+    // backend never responds.
+    const ac = new AbortController();
+    const killTimer = window.setTimeout(() => ac.abort(), 75000);
+
+    // eslint-disable-next-line no-console
+    console.info('[squarespell] analyze start', { url: normalized, api: API });
+
     try {
       const res = await fetch(`${API}/api/preview-analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: normalized }),
+        signal: ac.signal,
       });
+      // eslint-disable-next-line no-console
+      console.info('[squarespell] analyze response', { status: res.status, ok: res.ok });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `Analyze failed (${res.status})`);
       }
       const data = await res.json();
-      setBrand(data.brand);
+      // eslint-disable-next-line no-console
+      console.info('[squarespell] analyze data', {
+        hasBrand: !!data?.brand,
+        hasSession: !!data?.session_token,
+      });
+      if (!data || !data.session_token) {
+        throw new Error('Invalid response from server. Please try again.');
+      }
+      setBrand(data.brand ?? null);
       setSessionToken(data.session_token);
       setOnboardingAnswers({});
       setUrl(normalized);
       setStage(2);
+      // eslint-disable-next-line no-console
+      console.info('[squarespell] advanced to Stage 2');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Something went wrong. Please try again.');
+      // eslint-disable-next-line no-console
+      console.error('[squarespell] analyze error', err);
+      if (err?.name === 'AbortError') {
+        setErrorMsg(
+          "That took too long. Our server may be waking up — please try again in a moment.",
+        );
+      } else {
+        setErrorMsg(
+          err?.message || "We couldn't reach that site. Check the URL and try again.",
+        );
+      }
     } finally {
+      window.clearTimeout(slowTimer);
+      window.clearTimeout(killTimer);
+      setSlowHint(false);
       setLoading(false);
     }
   }, []);
@@ -655,7 +697,25 @@ export function TryFlowInner({
             </form>
           </div>
 
-          {errorMsg && <div className="hook-err show">{errorMsg}</div>}
+          {loading && slowHint && !errorMsg && (
+            <div className="hook-hint">
+              <span className="hook-hint-spinner" />
+              Waking up the server — this can take up to 30 seconds on first load.
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="hook-err show">
+              <div>{errorMsg}</div>
+              <button
+                type="button"
+                className="hook-err-retry"
+                onClick={() => { setErrorMsg(''); goAnalyze(url); }}
+              >
+                Try again
+              </button>
+            </div>
+          )}
 
           <div className="hook-embed-hint">
             Drops into squarespell.com as{' '}

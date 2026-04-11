@@ -190,7 +190,59 @@ export const FLOW_CSS = `
     max-width: 640px;
     width: 100%;
   }
-  .hook-err.show { display: block; }
+  .hook-err.show {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .hook-err-retry {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(255,107,107,0.12);
+    border: 1px solid rgba(255,107,107,0.35);
+    color: var(--danger);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .hook-err-retry:hover {
+    background: rgba(255,107,107,0.2);
+    border-color: rgba(255,107,107,0.5);
+  }
+  .hook-hint {
+    margin-top: 14px;
+    padding: 12px 18px;
+    background: rgba(210,255,29,0.05);
+    border: 1px solid rgba(210,255,29,0.22);
+    border-radius: 12px;
+    color: var(--accent);
+    font-size: 13px;
+    max-width: 640px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: hook-hint-in 0.3s ease-out;
+  }
+  @keyframes hook-hint-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hook-hint-spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(210,255,29,0.25);
+    border-top-color: var(--accent);
+    animation: hook-hint-spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes hook-hint-spin {
+    to { transform: rotate(360deg); }
+  }
   .hook-embed-hint {
     margin-top: 22px;
     color: var(--text-dim);
