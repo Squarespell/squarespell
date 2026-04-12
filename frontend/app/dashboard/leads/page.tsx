@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
@@ -28,6 +29,8 @@ type Lead = {
   email: string;
   answers: Record<string, any>;
   outcome_id: string | null;
+  score?: number | null;
+  score_label?: string;
   created_at: string;
   quiz_id: string;
   quizzes?: { id: string; title: string; slug: string } | null;
@@ -47,12 +50,14 @@ function formatDate(s: string) {
 }
 
 function downloadCsv(leads: Lead[]) {
-  const header = ['captured_at', 'name', 'email', 'quiz', 'outcome', 'answers'];
+  const header = ['captured_at', 'name', 'email', 'quiz', 'score', 'score_label', 'outcome', 'answers'];
   const rows = leads.map((l) => [
     new Date(l.created_at).toISOString(),
     l.name ?? '',
     l.email,
     l.quizzes?.title ?? '',
+    l.score ?? '',
+    l.score_label ?? '',
     l.outcome_id ?? '',
     JSON.stringify(l.answers ?? {}),
   ]);
@@ -71,10 +76,12 @@ function downloadCsv(leads: Lead[]) {
 }
 
 export default function LeadsPage() {
+  const router = useRouter();
   const { token, status: authStatus } = useDashboardAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [quizFilter, setQuizFilter] = useState<string>('all');
+  const [scoreFilter, setScoreFilter] = useState<string>('all');
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -112,6 +119,14 @@ export default function LeadsPage() {
     const q = query.trim().toLowerCase();
     return leads.filter((l) => {
       if (quizFilter !== 'all' && l.quizzes?.id !== quizFilter) return false;
+
+      // Apply score filter
+      if (scoreFilter !== 'all') {
+        if (scoreFilter === 'hot' && l.score_label !== 'Hot') return false;
+        if (scoreFilter === 'warm' && l.score_label !== 'Warm') return false;
+        if (scoreFilter === 'cold' && l.score_label !== 'Cold') return false;
+      }
+
       if (!q) return true;
       return (
         (l.name || '').toLowerCase().includes(q) ||
@@ -119,7 +134,7 @@ export default function LeadsPage() {
         (l.quizzes?.title || '').toLowerCase().includes(q)
       );
     });
-  }, [leads, quizFilter, query]);
+  }, [leads, quizFilter, scoreFilter, query]);
 
   if (authStatus === 'loading') {
     return (
@@ -211,6 +226,26 @@ export default function LeadsPage() {
                 </option>
               ))}
             </select>
+            <select
+              value={scoreFilter}
+              onChange={(e) => setScoreFilter(e.target.value)}
+              style={{
+                padding: '11px 16px',
+                background: C.SURFACE,
+                border: `1px solid ${C.BORDER}`,
+                borderRadius: 10,
+                fontSize: 13.5,
+                color: C.TEXT,
+                fontFamily: '"DM Sans",system-ui,sans-serif',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+              <option value="all">All scores</option>
+              <option value="hot">Hot (80+)</option>
+              <option value="warm">Warm (50-79)</option>
+              <option value="cold">Cold (0-49)</option>
+            </select>
           </div>
 
           <Card padding={0}>
@@ -218,7 +253,7 @@ export default function LeadsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                    {['Name', 'Email', 'Quiz', 'Captured'].map((h) => (
+                    {['Name', 'Email', 'Quiz', 'Score', 'Captured'].map((h) => (
                       <th
                         key={h}
                         style={{
@@ -238,20 +273,70 @@ export default function LeadsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((l) => (
-                    <tr key={l.id} style={{ borderBottom: `1px solid ${C.BORDER}` }}>
-                      <td style={{ padding: '14px 18px', color: C.TEXT, fontWeight: 600 }}>{l.name || '—'}</td>
-                      <td style={{ padding: '14px 18px', color: C.TEXT }}>{l.email}</td>
-                      <td style={{ padding: '14px 18px' }}>
-                        {l.quizzes ? (
-                          <Pill variant="accent">{l.quizzes.title}</Pill>
-                        ) : (
-                          <span style={{ color: C.TEXT_MUTED }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '14px 18px', color: C.TEXT_MUTED }}>{formatDate(l.created_at)}</td>
-                    </tr>
-                  ))}
+                  {filtered.map((l) => {
+                    // Determine score badge color based on label
+                    const scoreColor =
+                      l.score_label === 'Hot'
+                        ? '#22c55e'
+                        : l.score_label === 'Warm'
+                          ? '#f59e0b'
+                          : l.score_label === 'Cold'
+                            ? '#9ca3af'
+                            : '#6b7280';
+                    const scoreBg =
+                      l.score_label === 'Hot'
+                        ? 'rgba(34, 197, 94, 0.1)'
+                        : l.score_label === 'Warm'
+                          ? 'rgba(245, 158, 11, 0.1)'
+                          : l.score_label === 'Cold'
+                            ? 'rgba(156, 163, 175, 0.1)'
+                            : 'rgba(107, 114, 128, 0.1)';
+
+                    return (
+                      <tr
+                        key={l.id}
+                        style={{
+                          borderBottom: `1px solid ${C.BORDER}`,
+                          cursor: 'pointer',
+                          transition: 'background-color 0.15s ease',
+                        }}
+                        onClick={() => router.push(`/dashboard/leads/${l.id}`)}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <td style={{ padding: '14px 18px', color: C.TEXT, fontWeight: 600 }}>{l.name || '—'}</td>
+                        <td style={{ padding: '14px 18px', color: C.TEXT }}>{l.email}</td>
+                        <td style={{ padding: '14px 18px' }}>
+                          {l.quizzes ? (
+                            <Pill variant="accent">{l.quizzes.title}</Pill>
+                          ) : (
+                            <span style={{ color: C.TEXT_MUTED }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '14px 18px' }}>
+                          {l.score !== null && l.score !== undefined ? (
+                            <div
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 10px',
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: scoreColor,
+                                background: scoreBg,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {l.score_label || 'Unknown'} ({l.score})
+                            </div>
+                          ) : (
+                            <span style={{ color: C.TEXT_MUTED, fontSize: 12 }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '14px 18px', color: C.TEXT_MUTED }}>{formatDate(l.created_at)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               {filtered.length === 0 && (

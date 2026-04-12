@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { verifyToken } from '@clerk/backend';
 import { clerkClient } from '@clerk/clerk-sdk-node';
 import { createClient } from '@supabase/supabase-js';
 
@@ -12,19 +13,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function decodeJwt(token: string): any {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1];
-    const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
-    const decoded = Buffer.from(padded, 'base64').toString('utf8');
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
-
+/**
+ * Verify the JWT token using Clerk's SDK with full signature validation.
+ * Replaces the previous insecure manual base64 decode that had zero
+ * signature verification (anyone could forge tokens).
+ */
 export async function requireAuth(
   req: AuthenticatedRequest,
   res: Response,
@@ -34,13 +27,24 @@ export async function requireAuth(
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+
   const token = authHeader.substring(7);
-  const payload = decodeJwt(token);
-  if (!payload?.sub) {
+
+  try {
+    const payload = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY!,
+    });
+
+    if (!payload?.sub) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    req.userId = payload.sub;
+    next();
+  } catch (err: any) {
+    console.error('Token verification failed:', err.message || err);
     return res.status(401).json({ error: 'Invalid token' });
   }
-  req.userId = payload.sub;
-  next();
 }
 
 export async function attachUser(

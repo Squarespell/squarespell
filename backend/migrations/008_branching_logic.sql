@@ -1,0 +1,26 @@
+-- Migration 008: Branching logic support
+-- Questions can now route to different next questions based on answer
+
+-- No schema change needed - branching rules are stored in the questions JSONB array
+-- Each question object can have: next_question_rules: [{ if_answer: "option_id", goto: "question_id" }]
+-- This is documentation only; the JSONB column already supports arbitrary structure.
+
+-- Example question with branching:
+-- {
+--   "id": "q1",
+--   "text": "What is your business type?",
+--   "options": [
+--     { "id": "opt-saas", "text": "SaaS company" },
+--     { "id": "opt-service", "text": "Service business" }
+--   ],
+--   "next_question_rules": [
+--     { "if_answer": "opt-saas", "goto": "q-saas-specific" },
+--     { "if_answer": "opt-service", "goto": "q-service-specific" }
+--   ]
+-- }
+--
+-- If a question has next_question_rules, the QuizRunner will:
+-- 1. After user selects an answer, check for a matching rule based on if_answer
+-- 2. If a match is found, jump to the question with matching goto ID
+-- 3. If no match or no rules exist, fall back to the next question in array order
+-- 4. Handle edge cases: invalid goto targets, circular references (using visited set)

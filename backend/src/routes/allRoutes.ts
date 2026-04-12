@@ -4,9 +4,13 @@ import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/aut
 import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
+import { generateLeadInsight } from '../services/leadInsights';
+import { runCleanup } from '../services/databaseCleanup';
+import * as quizPaymentsService from '../services/quizPayments';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
+import { UAParser } from 'ua-parser-js';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -19,6 +23,51 @@ function normalizeUrl(input: string): string {
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   new URL(url);
   return url;
+}
+
+/**
+ * Calculate lead score from answers and quiz structure.
+ */
+function calculateLeadScore(quiz: any, answers: Record<number, number>): number | null {
+  try {
+    if (!quiz?.questions || typeof answers !== 'object') return null;
+    let total = 0;
+    Object.entries(answers).forEach(([qi, oi]) => {
+      const qIdx = Number(qi);
+      const oIdx = Number(oi);
+      const question = quiz.questions[qIdx];
+      const option = question?.options?.[oIdx];
+      if (option?.score !== undefined) {
+        total += Number(option.score);
+      }
+    });
+    return total;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get score label based on quiz settings and score thresholds.
+ */
+function getScoreLabel(score: number | null, quiz: any): string {
+  if (score === null || score === undefined) return 'Unknown';
+
+  // For client_qualifier mode, check outcome score_threshold fields
+  if (quiz?.settings?.mode === 'client_qualifier' && quiz?.outcomes) {
+    const qualifiedOutcome = quiz.outcomes.find((o: any) => o.type === 'qualified' && o.score_threshold !== undefined);
+    if (qualifiedOutcome) {
+      const threshold = Number(qualifiedOutcome.score_threshold);
+      if (score >= threshold) return 'Hot';
+      if (score >= threshold * 0.5) return 'Warm';
+      return 'Cold';
+    }
+  }
+
+  // Default scoring ranges
+  if (score >= 80) return 'Hot';
+  if (score >= 50) return 'Warm';
+  return 'Cold';
 }
 
 // ── Generate ──────────────────────────────────────────────────────────────────
@@ -349,16 +398,36 @@ publicQuizRouter.post('/:slug/process-other', async (req, res) => {
 // ── Leads ─────────────────────────────────────────────────────────────────────
 export const leadsRouter = Router();
 leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
-  const { name, email, answers, outcome_id } = req.body;
+  const { name, email, answers, outcome_id, time_to_complete_ms } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
-  const { data: quiz } = await supabase.from('quizzes').select('id,user_id').eq('slug', req.params.slug).eq('status', 'live').single();
+  const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
   const { data: owner } = await supabase.from('users').select('plan').eq('id', quiz.user_id).single();
   const { leads: leadLimit } = getPlanLimits(owner?.plan ?? 'free');
   const { count } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id);
   if ((count ?? 0) >= leadLimit) return res.status(403).json({ error: 'Lead limit reached' });
-  const { error } = await supabase.from('leads').insert({ quiz_id: quiz.id, user_id: quiz.user_id, name: name ?? null, email, answers: answers ?? {}, outcome_id: outcome_id ?? null });
+  const metadata: Record<string, any> = {};
+  if (typeof time_to_complete_ms === 'number') {
+    metadata.time_to_complete_ms = time_to_complete_ms;
+  }
+
+  // Parse User-Agent and extract device info
+  const userAgent = req.headers['user-agent'] || '';
+  const parser = new UAParser(userAgent);
+  const ua = parser.getResult();
+  if (ua.device.type) {
+    metadata.device_type = ua.device.type;
+  }
+  if (ua.browser.name) {
+    metadata.browser = ua.browser.name;
+  }
+  if (ua.os.name) {
+    metadata.os = ua.os.name;
+  }
+
+  const { data: leadData, error } = await supabase.from('leads').insert({ quiz_id: quiz.id, user_id: quiz.user_id, name: name ?? null, email, answers: answers ?? {}, outcome_id: outcome_id ?? null, metadata }).select('id, metadata, score').single();
   if (error) return res.status(500).json({ error: error.message });
+  const leadId = leadData?.id;
   await supabase.rpc('increment_lead_count', { qid: quiz.id });
 
   // Send email notification to quiz owner
@@ -396,7 +465,73 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     }
   } catch (e) { console.log('Webhook dispatch failed:', e); }
 
-  res.status(201).json({ success: true });
+  
+  // Generate AI lead insights (non-blocking)
+  if (leadId && (quiz.settings as any)?.generate_ai_insights !== false) {
+    try {
+      // Convert answers to Q&A summary for Claude
+      const answersSummary: Array<{ question: string; answer: string }> = [];
+      if (quiz.questions && Array.isArray(quiz.questions) && answers) {
+        Object.entries(answers).forEach(([qIdx, aIdx]) => {
+          const qIndex = Number(qIdx);
+          const aIndex = Number(aIdx);
+          const question = (quiz as any).questions[qIndex];
+          const selectedOption = question?.options?.[aIndex];
+          if (question && selectedOption) {
+            answersSummary.push({
+              question: question.text || '',
+              answer: selectedOption.text || ''
+            });
+          }
+        });
+      }
+
+      // Find matched outcome for context
+      const matchedOutcome = outcome_id && quiz.outcomes
+        ? (quiz.outcomes as any[]).find((o: any) => o.id === outcome_id)
+        : null;
+
+      if (answersSummary.length > 0) {
+        generateLeadInsight(
+          quiz.title,
+          (quiz as any).mode || 'lead_quiz',
+          answersSummary,
+          matchedOutcome?.title || 'No specific outcome',
+          leadData.score ?? undefined
+        ).then((aiSummary) => {
+          if (aiSummary && leadId) {
+            (async () => {
+              try {
+                const { error } = await supabase
+                  .from('leads')
+                  .update({
+                    metadata: {
+                      ...leadData.metadata,
+                      ai_summary: aiSummary
+                    }
+                  })
+                  .eq('id', leadId);
+                if (error) {
+                  console.log('[LeadInsights] Failed to store:', error.message);
+                } else {
+                  console.log('[LeadInsights] Stored for lead:', leadId);
+                }
+              } catch (err: any) {
+                console.log('[LeadInsights] Store error:', err);
+              }
+            })();
+          }
+        }).catch((err: any) => {
+          console.log('[LeadInsights] Gen error:', err);
+        });
+      }
+    } catch (e) {
+      console.log('[LeadInsights] Setup error:', e);
+    }
+  }
+
+
+  res.status(201).json({ success: true, lead_id: leadId });
 });
 
 // GET /api/leads — list all leads for the authenticated user across every
@@ -415,6 +550,50 @@ leadsRouter.get('/leads', requireAuth, attachUser, async (req: AuthenticatedRequ
     res.json(data ?? []);
   } catch (err: any) {
     res.status(500).json({ error: err?.message || 'Failed to load leads' });
+  }
+});
+
+// GET /api/leads/:id — fetch single lead detail with full quiz and metadata
+leadsRouter.get('/:id', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data: lead, error } = await supabase
+      .from('leads')
+      .select(`
+        id,
+        name,
+        email,
+        answers,
+        outcome_id,
+        score,
+        created_at,
+        qualified,
+        path_taken,
+        calculated_price,
+        metadata,
+        quiz_id,
+        quizzes(id, title, slug, mode, questions, outcomes, branding, settings)
+      `)
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    // Verify user owns this lead's quiz
+    if ((lead.quizzes as any)?.user_id !== req.dbUserId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Enrich with score_label
+    const enrichedLead = {
+      ...lead,
+      score_label: getScoreLabel(lead.score, lead.quizzes)
+    };
+
+    res.json(enrichedLead);
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to load lead' });
   }
 });
 
@@ -564,6 +743,154 @@ analyticsRouter.get('/:quizId/results', async (req: AuthenticatedRequest, res) =
     percentage: totalLeads > 0 ? Math.round((outcomeMap[oid] / totalLeads) * 100) : 0,
   }));
   res.json(result);
+});
+
+// Task 5.2: Mode-specific analytics endpoint
+analyticsRouter.get('/:quizId/mode-specific', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase.from('quizzes').select('id,mode,settings').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+
+  const { data: leadsData } = await supabase.from('leads').select('outcome_id,metadata,answers').eq('quiz_id', req.params.quizId);
+  const mode = quiz.mode || 'lead_quiz';
+
+  if (mode === 'price_calculator') {
+    const prices: number[] = [];
+    let priceSum = 0;
+    (leadsData ?? []).forEach((l: any) => {
+      const price = l.metadata?.calculated_price;
+      if (typeof price === 'number') {
+        prices.push(price);
+        priceSum += price;
+      }
+    });
+    const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
+    const avgPrice = prices.length > 0 ? priceSum / prices.length : null;
+    const mostCommonSelections: Record<string, number> = {};
+    (leadsData ?? []).forEach((l: any) => {
+      if (l.answers && typeof l.answers === 'object') {
+        Object.values(l.answers).forEach((val: any) => {
+          const key = String(val);
+          mostCommonSelections[key] = (mostCommonSelections[key] ?? 0) + 1;
+        });
+      }
+    });
+    return res.json({
+      average_estimated_price: avgPrice,
+      price_distribution: { min: minPrice, max: maxPrice, avg: avgPrice },
+      most_common_selections: mostCommonSelections
+    });
+  }
+
+  if (mode === 'service_recommender') {
+    const recommendationMap: Record<string, number> = {};
+    let ctaClickCount = 0;
+    (leadsData ?? []).forEach((l: any) => {
+      if (l.outcome_id) {
+        recommendationMap[l.outcome_id] = (recommendationMap[l.outcome_id] ?? 0) + 1;
+      }
+      if (l.metadata?.cta_clicked) {
+        ctaClickCount++;
+      }
+    });
+    const totalLeads = leadsData?.length ?? 0;
+    return res.json({
+      recommendation_distribution: recommendationMap,
+      cta_click_rate: totalLeads > 0 ? Math.round((ctaClickCount / totalLeads) * 100) : 0
+    });
+  }
+
+  if (mode === 'client_qualifier') {
+    const threshold = quiz.settings?.qualification_threshold ?? 70;
+    let qualifiedCount = 0;
+    let nurtureCount = 0;
+    (leadsData ?? []).forEach((l: any) => {
+      const qualified = l.metadata?.qualified;
+      if (qualified === true) {
+        qualifiedCount++;
+      } else if (qualified === false) {
+        nurtureCount++;
+      }
+    });
+    const totalLeads = qualifiedCount + nurtureCount;
+    const qualificationRate = totalLeads > 0 ? Math.round((qualifiedCount / totalLeads) * 100) : 0;
+    return res.json({
+      qualification_rate: qualificationRate,
+      qualified_count: qualifiedCount,
+      nurture_count: nurtureCount
+    });
+  }
+
+  if (mode === 'segmentation_quiz') {
+    const tagMap: Record<string, number> = {};
+    (leadsData ?? []).forEach((l: any) => {
+      const tags = l.metadata?.tags;
+      if (Array.isArray(tags)) {
+        tags.forEach((tag: string) => {
+          tagMap[tag] = (tagMap[tag] ?? 0) + 1;
+        });
+      }
+    });
+    return res.json({ tag_distribution: tagMap });
+  }
+
+  res.json({ message: 'Mode-specific analytics not available for this quiz mode' });
+});
+
+// Task 5.4: Device breakdown analytics endpoint
+analyticsRouter.get('/:quizId/devices', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase.from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+  const { data: leadsData } = await supabase.from('leads').select('metadata').eq('quiz_id', req.params.quizId);
+  const deviceMap: Record<string, number> = { mobile: 0, tablet: 0, desktop: 0 };
+  let totalWithDevice = 0;
+  (leadsData ?? []).forEach((l: any) => {
+    const device = l.metadata?.device_type || 'desktop';
+    if (deviceMap[device] !== undefined) {
+      deviceMap[device]++;
+      totalWithDevice++;
+    }
+  });
+  const result = Object.entries(deviceMap).map(([device, count]) => ({
+    device,
+    count,
+    percentage: totalWithDevice > 0 ? Math.round((count / totalWithDevice) * 100) : 0
+  }));
+  res.json(result);
+});
+
+// Task 5.3: Time-to-complete metrics endpoint
+analyticsRouter.get('/:quizId/time-to-complete', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase.from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+  const { data: leadsData } = await supabase.from('leads').select('metadata').eq('quiz_id', req.params.quizId);
+  const times: number[] = [];
+  (leadsData ?? []).forEach((l: any) => {
+    const ttc = l.metadata?.time_to_complete_ms;
+    if (typeof ttc === 'number') {
+      times.push(ttc);
+    }
+  });
+
+  if (times.length === 0) {
+    return res.json({ count: 0, average_ms: null, median_ms: null, min_ms: null, max_ms: null });
+  }
+
+  times.sort((a, b) => a - b);
+  const median = times.length % 2 === 0
+    ? (times[times.length / 2 - 1] + times[times.length / 2]) / 2
+    : times[Math.floor(times.length / 2)];
+
+  const sum = times.reduce((a, b) => a + b, 0);
+  const avg = Math.round(sum / times.length);
+
+  res.json({
+    count: times.length,
+    average_ms: avg,
+    median_ms: Math.round(median),
+    min_ms: Math.min(...times),
+    max_ms: Math.max(...times)
+  });
 });
 
 // ── Scrape Brand ──────────────────────────────────────────────────────────────
@@ -906,4 +1233,166 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
     console.error('Trial reminder error:', err);
     res.status(500).json({ error: err.message ?? 'Failed to send trial reminders' });
   }
+});
+
+// ── Cron: Database Cleanup ───────────────────────────────────────────────────
+export const cleanupRouter = Router();
+
+/**
+ * POST /api/admin/cleanup
+ * Requires cron secret or admin authentication
+ * Runs database cleanup operations (delete old events, archive cleanup, etc.)
+ */
+cleanupRouter.post('/cleanup', async (req: AuthenticatedRequest, res) => {
+  // Check for cron secret (for scheduled cleanup jobs)
+  const cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret && cronSecret === process.env.CRON_SECRET) {
+    // Valid cron job - proceed with cleanup
+    try {
+      const summary = await runCleanup();
+      res.json(summary);
+    } catch (err: any) {
+      console.error('Cleanup error:', err);
+      res.status(500).json({
+        success: false,
+        error: err.message ?? 'Cleanup failed',
+        cleanupTimestamp: new Date().toISOString(),
+      });
+    }
+    return;
+  }
+
+  // Check for authenticated user (admin only)
+  try {
+    // Verify user is authenticated
+    if (!req.dbUserId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get user from database to check if admin
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('id', req.dbUserId)
+      .single();
+
+    if (userError || !userData) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Check if user is admin - allow specific admin emails
+    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+    const isAdmin = adminEmails.length > 0 && adminEmails.includes(userData.email);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Forbidden - admin access required' });
+    }
+
+    const summary = await runCleanup();
+    res.json(summary);
+  } catch (err: any) {
+    console.error('Cleanup error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message ?? 'Cleanup failed',
+      cleanupTimestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// ── Quiz Payments ─────────────────────────────────────────────────────────────
+export const quizPaymentsRouter = Router();
+
+// POST /api/public/quiz/:slug/checkout - Create checkout session for payment
+quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
+  try {
+    const { lead_id, amount_cents, currency = 'usd', success_url, cancel_url } = req.body;
+
+    if (!lead_id || !amount_cents || !success_url || !cancel_url) {
+      return res.status(400).json({
+        error: 'lead_id, amount_cents, success_url, and cancel_url are required'
+      });
+    }
+
+    // Get the quiz by slug to verify it exists and get quiz_id
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .select('id')
+      .eq('slug', req.params.slug)
+      .single();
+
+    if (quizError || !quiz) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    const result = await quizPaymentsService.createCheckoutSession({
+      quizId: quiz.id,
+      leadId: lead_id,
+      amountCents: amount_cents,
+      currency: currency,
+      successUrl: success_url,
+      cancelUrl: cancel_url
+    });
+
+    res.json({ checkout_url: result.url, session_id: result.sessionId });
+  } catch (err: any) {
+    console.error('Checkout session error:', err);
+    res.status(500).json({ error: err.message ?? 'Failed to create checkout session' });
+  }
+});
+
+// POST /api/webhooks/stripe-quiz-payment - Stripe webhook for quiz payments
+quizPaymentsRouter.post('/webhooks/stripe-quiz-payment', async (req, res) => {
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      req.headers['stripe-signature'] as string,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err);
+    return res.status(400).json({ error: 'Invalid signature' });
+  }
+
+  try {
+    await quizPaymentsService.handlePaymentWebhook(event);
+    res.json({ received: true });
+  } catch (err: any) {
+    console.error('Error handling payment webhook:', err);
+    res.status(500).json({ error: err.message ?? 'Webhook processing failed' });
+  }
+});
+
+// GET /api/quizzes/:id/payments - List payments for a quiz (authenticated)
+quizPaymentsRouter.get('/quizzes/:id/payments', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Verify quiz ownership
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .select('id, user_id')
+      .eq('id', req.params.id)
+      .single();
+
+    if (quizError || !quiz) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    if (quiz.user_id !== req.dbUserId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const payments = await quizPaymentsService.getPaymentsForQuiz(req.params.id);
+    res.json(payments);
+  } catch (err: any) {
+    console.error('Get payments error:', err);
+    res.status(500).json({ error: err.message ?? 'Failed to fetch payments' });
+  }
+});
+
+// ── Templates Router (stub for now) ─────────────────────────────────────────
+export const templatesRouter = Router();
+templatesRouter.get('/', (req, res) => {
+  res.json({ templates: [] });
 });

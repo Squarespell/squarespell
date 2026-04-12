@@ -1,0 +1,16 @@
+-- Migration 009: Branding toggle
+-- No schema change needed - show_branding is stored in quiz settings JSONB
+-- This migration is documentation only.
+--
+-- quiz.settings.show_branding: boolean (default true)
+-- When true (or undefined/missing), displays "Powered by Squarespell" badge at bottom of quiz
+-- When false, hides the badge completely
+--
+-- Plan enforcement:
+-- - Free/Starter/Trial plans: always true (enforced by plan guard, ignored if user tries to set false)
+-- - Pro/Agency plans: can be set to false
+--
+-- The backend route PATCH /api/quiz/:id will enforce this by:
+-- 1. Fetching the user's plan
+-- 2. If plan is free/starter/trial, removing show_branding: false from the update
+-- 3. If plan is pro/agency, allowing the setting to be modified

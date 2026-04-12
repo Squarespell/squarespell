@@ -25,6 +25,7 @@ interface Question {
   text: string;
   subtitle?: string;
   options: Option[];
+  next_question_rules?: Array<{ if_answer: string; goto: string }>;
 }
 interface Outcome {
   id: string;
@@ -482,6 +483,33 @@ export function TryFlowInner({
     const [moved] = opts.splice(oi, 1);
     opts.splice(target, 0, moved);
     const qs = quiz.questions.map((qq, i) => (i === qi ? { ...qq, options: opts } : qq));
+    updateQuiz({ ...quiz, questions: qs });
+  };
+  const updateBranchingRule = (qi: number, oi: number, targetQuestionId: string | null) => {
+    if (!quiz) return;
+    const qs = quiz.questions.map((q, i) => {
+      if (i !== qi) return q;
+      const optionId = q.options[oi]?.id;
+      if (!optionId) return q;
+
+      // Build new rules array
+      let rules = q.next_question_rules || [];
+
+      if (targetQuestionId) {
+        // Add or update rule
+        const existingRuleIdx = rules.findIndex((r: any) => r.if_answer === optionId);
+        if (existingRuleIdx >= 0) {
+          rules[existingRuleIdx] = { if_answer: optionId, goto: targetQuestionId };
+        } else {
+          rules = [...rules, { if_answer: optionId, goto: targetQuestionId }];
+        }
+      } else {
+        // Remove rule if target is null
+        rules = rules.filter((r: any) => r.if_answer !== optionId);
+      }
+
+      return { ...q, next_question_rules: rules.length > 0 ? rules : undefined };
+    });
     updateQuiz({ ...quiz, questions: qs });
   };
   const updateQuizTitle = (title: string) => {
@@ -1034,6 +1062,8 @@ export function TryFlowInner({
                     {currentQ.options.map((o, oi) => {
                       const isFirstAns = oi === 0;
                       const isLastAns = oi === currentQ.options.length - 1;
+                      const currentBranchRule = (currentQ.next_question_rules || []).find((r: any) => r.if_answer === o.id);
+                      const currentGoto = currentBranchRule?.goto;
                       return (
                         <div className="answer-row" key={o.id + oi}>
                           <div className="answer-letter">{LETTERS[oi]}</div>
@@ -1063,6 +1093,19 @@ export function TryFlowInner({
                               <SvgChevronDown />
                             </button>
                           </div>
+                          <select
+                            className="answer-branch-select"
+                            value={currentGoto || ''}
+                            onChange={(e) => updateBranchingRule(selectedIdx, oi, e.target.value || null)}
+                            title="Choose next question (branching)"
+                            style={{ marginRight: 8, padding: '6px 8px', fontSize: 12, borderRadius: 4, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'inherit' }}
+                          >
+                            <option value="">→ Next in order</option>
+                            {quiz?.questions.map((q: any, qi: number) => {
+                              if (qi === selectedIdx) return null;
+                              return <option key={q.id} value={q.id}>→ Jump to Q{qi + 1}: {q.text.slice(0, 30)}</option>;
+                            })}
+                          </select>
                           <button
                             className="answer-del"
                             onClick={() => deleteOption(selectedIdx, oi)}
@@ -1118,11 +1161,36 @@ export function TryFlowInner({
               ) : (
                 <>
                   <div className="s3-side-head">
-                    <div className="s3-side-label">QUIZ OVERVIEW</div>
+                    <div className="s3-side-label">QUIZ SETTINGS</div>
                   </div>
-                  <div className="empty-panel">
-                    <h4>No question selected</h4>
-                    <p>Click any question on the left to edit it, or press <kbd>⌘N</kbd> to add a new question.</p>
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">Overview</div>
+                    <div className="stat-row"><span className="stat-label">Total questions</span><span className="stat-value">{quiz?.questions.length || 0}</span></div>
+                    <div className="stat-row"><span className="stat-label">Outcomes</span><span className="stat-value">{quiz?.outcomes?.length || 0}</span></div>
+                  </div>
+
+                  <div className="divider" />
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">Branding</div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+                      <input
+                        type="checkbox"
+                        id="show-branding-toggle"
+                        checked={quiz?.settings?.show_branding !== false}
+                        onChange={(e) => {
+                          const newSettings = { ...quiz?.settings, show_branding: e.target.checked };
+                          updateQuiz({ ...quiz, settings: newSettings });
+                          flashToast(e.target.checked ? 'Branding enabled' : 'Branding hidden');
+                        }}
+                        style={{ marginTop: 3, cursor: 'pointer', accentColor: 'var(--accent)' }}
+                      />
+                      <label htmlFor="show-branding-toggle" style={{ cursor: 'pointer', fontSize: 13, userSelect: 'none' }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Show Squarespell branding</div>
+                        <div style={{ fontSize: 12, opacity: 0.6, lineHeight: 1.4 }}>Display "Powered by Squarespell" badge at bottom of quiz</div>
+                      </label>
+                    </div>
                   </div>
                 </>
               )}

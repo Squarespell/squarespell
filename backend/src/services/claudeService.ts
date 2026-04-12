@@ -3,6 +3,340 @@ import { buildFallbackQuiz } from './fallbackQuiz';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+/**
+ * Generate mode-specific system prompt for Claude based on quiz mode.
+ * Different modes have different structure and output expectations.
+ */
+function getSystemPromptForMode(mode: string, businessType: string, url: string): string {
+  const baseInstruction = `You are an expert lead-generation quiz creator. Your job is to create quizzes that help website visitors discover which product or service from a specific business is right for them.
+
+CRITICAL INSTRUCTIONS:
+1. You will receive scraped content from a real business website. READ IT CAREFULLY.
+2. Your quiz MUST be 100% specific to this exact business and what they sell/offer.
+3. Every question must help segment visitors based on the business's actual products, services, or solutions.
+
+BANNED CONTENT (instant failure if included):
+- "Squarespace"  -  NEVER mention Squarespace, website building, templates, plugins, or web design unless the business ACTUALLY sells those things
+- "journey"  -  do not ask "where are you in your [X] journey"
+- Generic personality quiz questions that don't relate to the business
+- Questions about the visitor's experience with the business's platform/tools
+- Questions about website design, SEO, or marketing unless the business sells those services`;
+
+  if (mode === 'price_calculator') {
+    return `${baseInstruction}
+
+PRICE CALCULATOR MODE:
+This quiz calculates a dynamic price or cost estimate based on visitor selections.
+- Each option in a question has a numeric "value" field (e.g., {"id": "a", "text": "Option A", "value": 100})
+- The quiz totals these values to calculate a final price
+- Outcomes should explain the calculated price and why they get this pricing
+- Return score fields as "value" not "score" for price calculation
+- Results should show the calculated total price and breakdown
+
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
+  }
+
+  if (mode === 'service_recommender') {
+    return `${baseInstruction}
+
+SERVICE RECOMMENDER MODE:
+This quiz recommends specific services with pricing and calls-to-action.
+- Outcomes have "price" field (e.g., "$299/month") and "cta_url" field for action links
+- Every outcome must recommend a specific service from the business
+- Results explain why each service fits the visitor's needs, what it costs, and link to purchase/learn more
+
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
+  }
+
+  if (mode === 'client_qualifier') {
+    return `${baseInstruction}
+
+CLIENT QUALIFIER MODE:
+This quiz qualifies leads as "qualified" or "nurture" based on score thresholds.
+- Outcomes have "type" field that is either "qualified" or "nurture"
+- Outcomes have numeric "score_threshold" to determine who gets qualified vs nurture messaging
+- "Qualified" outcomes have CTA for immediate purchase/booking
+- "Nurture" outcomes have CTA for education/resources to move to qualified stage
+- Results messaging differs sharply: qualified gets urgency/action, nurture gets education/value
+
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
+  }
+
+  if (mode === 'segmentation_quiz') {
+    return `${baseInstruction}
+
+SEGMENTATION QUIZ MODE:
+This quiz segments visitors into behavioral/demographic tags for downstream marketing.
+- Outcomes have "tags" array (e.g., ["enterprise", "urgent", "price-sensitive"])
+- These tags are used to trigger different email sequences, ads, or content
+- The same visitor can have multiple tags (it's not mutually exclusive like other modes)
+- Outcomes describe the visitor segment, not a specific product recommendation
+- Results show what segment the visitor belongs to and what that means for their journey
+
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
+  }
+
+  // Default: lead_quiz mode
+  return `${baseInstruction}
+
+LEAD_QUIZ MODE (default):
+This is the standard lead-generation quiz. Every outcome recommends a specific product/service/solution from THIS business.
+
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
+}
+
+/**
+ * Generate user prompt for Claude tailored to the quiz mode.
+ */
+function getUserPromptForMode(
+  mode: string,
+  siteName: string,
+  websiteUrl: string,
+  businessSummary: string,
+  brandColorPrimary: string
+): string {
+  const basePrompt = `Create a ${mode} quiz for this business. Read the website content below, then generate a quiz that matches visitors to this business's specific products/services.
+
+BUSINESS: ${siteName}
+URL: ${websiteUrl}
+
+${'='.repeat(60)}
+WEBSITE CONTENT  -  READ THIS CAREFULLY:
+${'='.repeat(60)}
+${businessSummary || `Could not scrape the website. Based on the URL "${websiteUrl}" and business name "${siteName}", research what this business likely sells. Create a quiz about their probable products/services. Be specific  -  guess based on the domain name and business name.`}
+${'='.repeat(60)}
+
+TASK: Based on the content above, identify what ${siteName} sells or offers. Then create a quiz that:
+1. Helps visitors figure out which of ${siteName}'s products/services is right for them
+2. Asks about the VISITOR's needs, goals, situation  -  NOT about the business itself
+3. Uses language and terminology from the website content`;
+
+  if (mode === 'price_calculator') {
+    return `${basePrompt}
+
+Generate exactly 10 questions with 4 options each, and 3-5 outcomes.
+CRITICAL: Options must have "value" fields (not "score") representing cost/price numbers.
+The quiz sums these values to calculate a final price estimate.
+
+Return this JSON structure:
+{
+  "title": "What will your [service/product] cost?",
+  "description": "Get a personalized price estimate",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "text": "Question about visitor needs that affects pricing?",
+      "subtitle": "Optional context",
+      "options": [
+        { "id": "a", "text": "Option A (e.g., Basic tier)", "value": 100 },
+        { "id": "b", "text": "Option B (e.g., Pro tier)", "value": 250 },
+        { "id": "c", "text": "Option C (e.g., Enterprise tier)", "value": 500 },
+        { "id": "d", "text": "Option D (e.g., Unsure)", "value": 0 }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "r1",
+      "title": "Your estimated price",
+      "description": "Based on your selections, your estimated ${siteName} pricing is...",
+      "minScore": 0,
+      "maxScore": 500,
+      "ctaText": "Get a quote",
+      "ctaUrl": ""
+    }
+  ],
+  "leadGate": {
+    "headline": "Your price estimate is ready!",
+    "subtext": "Enter your email to get a personalized quote",
+    "buttonText": "Show my estimate"
+  },
+  "settings": {
+    "primaryColor": "${brandColorPrimary}",
+    "showProgressBar": true,
+    "requireEmail": true
+  }
+}`;
+  }
+
+  if (mode === 'service_recommender') {
+    return `${basePrompt}
+
+Generate exactly 10 questions with 4 options each, and 3-5 service outcomes.
+CRITICAL: Each outcome must have "price" field (e.g., "$299/month") and "cta_url" field.
+
+Return this JSON structure:
+{
+  "title": "Which ${siteName} service is right for you?",
+  "description": "Find your perfect match",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "text": "Question about visitor needs?",
+      "subtitle": "Optional context",
+      "options": [
+        { "id": "a", "text": "Option mapping to service A", "score": 3 },
+        { "id": "b", "text": "Option mapping to service B", "score": 2 },
+        { "id": "c", "text": "Option mapping to service C", "score": 1 },
+        { "id": "d", "text": "Unsure", "score": 0 }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "r1",
+      "title": "Specific service name from ${siteName}",
+      "description": "Why this service fits you best",
+      "price": "$299/month",
+      "cta_url": "https://example.com/service-page",
+      "ctaText": "Learn more",
+      "minScore": 10,
+      "maxScore": 15
+    }
+  ],
+  "leadGate": { "headline": "Your recommendation is ready!", "subtext": "Enter email to see it", "buttonText": "Show my recommendation" },
+  "settings": { "primaryColor": "${brandColorPrimary}", "showProgressBar": true, "requireEmail": true }
+}`;
+  }
+
+  if (mode === 'client_qualifier') {
+    return `${basePrompt}
+
+Generate exactly 10 questions with 4 options each, and 2-3 outcomes (qualified, nurture, and optionally another segment).
+CRITICAL: Each outcome must have "type" field ("qualified" or "nurture") and "score_threshold" field.
+
+Return this JSON structure:
+{
+  "title": "Are you ready for ${siteName}?",
+  "description": "Let's see if we're a good fit",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "text": "Question about visitor readiness/needs?",
+      "subtitle": "Optional context",
+      "options": [
+        { "id": "a", "text": "Option indicating qualification", "score": 3 },
+        { "id": "b", "text": "Option indicating strong interest", "score": 2 },
+        { "id": "c", "text": "Option indicating interest but not ready", "score": 1 },
+        { "id": "d", "text": "Option indicating poor fit", "score": 0 }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "r_qualified",
+      "title": "You're a great fit!",
+      "type": "qualified",
+      "score_threshold": 20,
+      "description": "Based on your answers, you're ready to move forward. Let's set up a call.",
+      "ctaText": "Book a call",
+      "ctaUrl": ""
+    },
+    {
+      "id": "r_nurture",
+      "title": "Let's build your foundation",
+      "type": "nurture",
+      "score_threshold": 0,
+      "description": "You're interested but might benefit from more info first. Check out our resources.",
+      "ctaText": "Learn more",
+      "ctaUrl": ""
+    }
+  ],
+  "leadGate": { "headline": "Let's check compatibility", "subtext": "Enter your email to see your fit", "buttonText": "Show my result" },
+  "settings": { "primaryColor": "${brandColorPrimary}", "showProgressBar": true, "requireEmail": true }
+}`;
+  }
+
+  if (mode === 'segmentation_quiz') {
+    return `${basePrompt}
+
+Generate exactly 10 questions with 4 options each, and 3-5 outcomes representing different visitor segments.
+CRITICAL: Each outcome must have "tags" array (e.g., ["enterprise", "budget-conscious", "urgent"]).
+
+Return this JSON structure:
+{
+  "title": "Let's learn about your business",
+  "description": "Help us understand your needs",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "text": "Question about visitor characteristics?",
+      "subtitle": "Optional context",
+      "options": [
+        { "id": "a", "text": "Option A", "score": 3 },
+        { "id": "b", "text": "Option B", "score": 2 },
+        { "id": "c", "text": "Option C", "score": 1 },
+        { "id": "d", "text": "Option D", "score": 0 }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "r1",
+      "title": "Enterprise segment",
+      "tags": ["enterprise", "high-budget", "needs-support"],
+      "description": "You're an enterprise buyer with specific needs",
+      "minScore": 25,
+      "maxScore": 30,
+      "ctaText": "Talk to sales",
+      "ctaUrl": ""
+    }
+  ],
+  "leadGate": { "headline": "Let's get to know you", "subtext": "Enter your email to continue", "buttonText": "Show my segment" },
+  "settings": { "primaryColor": "${brandColorPrimary}", "showProgressBar": true, "requireEmail": true }
+}`;
+  }
+
+  // Default: lead_quiz mode
+  return `${basePrompt}
+4. Recommends specific products/services from ${siteName} in the outcomes
+
+Generate exactly 10 questions with 4 options each, and 3-5 outcomes. Return this JSON structure:
+{
+  "title": "Which [specific product/service category from ${siteName}] is right for you?",
+  "description": "One line promising personalized recommendation",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "text": "Question about the visitor's needs that maps to products/services?",
+      "subtitle": "Optional context",
+      "options": [
+        { "id": "a", "text": "Option mapping to product/service A", "score": 3 },
+        { "id": "b", "text": "Option mapping to product/service B", "score": 2 },
+        { "id": "c", "text": "Option mapping to product/service C", "score": 1 },
+        { "id": "d", "text": "Option for unsure visitors", "score": 0 }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "r1",
+      "title": "Specific product/service name from ${siteName}",
+      "description": "2-3 sentences explaining why this is the best fit, referencing specific features/benefits from the website.",
+      "minScore": 10,
+      "maxScore": 15,
+      "ctaText": "Explore [product name]",
+      "ctaUrl": ""
+    }
+  ],
+  "leadGate": {
+    "headline": "Your personalized recommendation is ready!",
+    "subtext": "Enter your email to see which ${siteName} solution fits you best",
+    "buttonText": "Show my results"
+  },
+  "settings": {
+    "primaryColor": "${brandColorPrimary}",
+    "showProgressBar": true,
+    "requireEmail": true
+  }
+}`;
+}
+
 function extractJSON(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenced) return fenced[1].trim();
@@ -52,96 +386,18 @@ async function callClaude(
   websiteUrl: string,
   quizType: string,
   goal: string,
-  brandData?: any
+  brandData?: any,
+  mode: string = 'lead_quiz'
 ): Promise<any> {
   const businessSummary = brandData?.business?.summary || '';
   const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
   const brandColorPrimary = brandData?.colors?.primary || '#000000';
 
-  console.log(`[Claude] Generating quiz for: ${siteName} (${websiteUrl})`);
+  console.log(`[Claude] Generating ${mode} quiz for: ${siteName} (${websiteUrl})`);
   console.log(`[Claude] Business summary available: ${businessSummary.length} chars`);
 
-  const systemPrompt = `You are an expert lead-generation quiz creator. Your job is to create quizzes that help website visitors discover which product or service from a specific business is right for them.
-
-CRITICAL INSTRUCTIONS:
-1. You will receive scraped content from a real business website. READ IT CAREFULLY.
-2. Your quiz MUST be 100% specific to this exact business and what they sell/offer.
-3. Every question must help segment visitors based on the business's actual products, services, or solutions.
-4. Every outcome must recommend a specific product/service/solution from THIS business.
-
-BANNED CONTENT (instant failure if included):
-- "Squarespace"  -  NEVER mention Squarespace, website building, templates, plugins, or web design unless the business ACTUALLY sells those things
-- "journey"  -  do not ask "where are you in your [X] journey"
-- Generic personality quiz questions that don't relate to the business
-- Questions about the visitor's experience with the business's platform/tools
-- Questions about website design, SEO, or marketing unless the business sells those services
-
-HOW TO CREATE A GREAT QUIZ:
-- Read the website content to identify: what they sell, who they serve, what problems they solve
-- Title should promise a personalized recommendation for the visitor (e.g., "Which [product category] fits your needs?")
-- Questions should uncover the visitor's situation, needs, budget, timeline, or preferences
-- Each answer option should map to different products/services the business offers
-- Results should name specific offerings and explain why they're the best fit
-
-OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
-
-  const userPrompt = `Create a lead-generation quiz for this business. Read the website content below, then generate a quiz that matches visitors to this business's specific products/services.
-
-BUSINESS: ${siteName}
-URL: ${websiteUrl}
-
-${'='.repeat(60)}
-WEBSITE CONTENT  -  READ THIS CAREFULLY:
-${'='.repeat(60)}
-${businessSummary || `Could not scrape the website. Based on the URL "${websiteUrl}" and business name "${siteName}", research what this business likely sells. Create a quiz about their probable products/services. Be specific  -  guess based on the domain name and business name.`}
-${'='.repeat(60)}
-
-TASK: Based on the content above, identify what ${siteName} sells or offers. Then create a quiz that:
-1. Helps visitors figure out which of ${siteName}'s products/services is right for them
-2. Asks about the VISITOR's needs, goals, situation  -  NOT about the business itself
-3. Uses language and terminology from the website content
-4. Recommends specific products/services from ${siteName} in the outcomes
-
-Generate exactly 10 questions with 4 options each, and 3-5 outcomes. Return this JSON structure:
-{
-  "title": "Which [specific product/service category from ${siteName}] is right for you?",
-  "description": "One line promising personalized recommendation",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "single",
-      "text": "Question about the visitor's needs that maps to products/services?",
-      "subtitle": "Optional context",
-      "options": [
-        { "id": "a", "text": "Option mapping to product/service A", "score": 3 },
-        { "id": "b", "text": "Option mapping to product/service B", "score": 2 },
-        { "id": "c", "text": "Option mapping to product/service C", "score": 1 },
-        { "id": "d", "text": "Option for unsure visitors", "score": 0 }
-      ]
-    }
-  ],
-  "outcomes": [
-    {
-      "id": "r1",
-      "title": "Specific product/service name from ${siteName}",
-      "description": "2-3 sentences explaining why this is the best fit, referencing specific features/benefits from the website.",
-      "minScore": 10,
-      "maxScore": 15,
-      "ctaText": "Explore [product name]",
-      "ctaUrl": ""
-    }
-  ],
-  "leadGate": {
-    "headline": "Your personalized recommendation is ready!",
-    "subtext": "Enter your email to see which ${siteName} solution fits you best",
-    "buttonText": "Show my results"
-  },
-  "settings": {
-    "primaryColor": "${brandColorPrimary}",
-    "showProgressBar": true,
-    "requireEmail": true
-  }
-}`;
+  const systemPrompt = getSystemPromptForMode(mode, quizType, websiteUrl);
+  const userPrompt = getUserPromptForMode(mode, siteName, websiteUrl, businessSummary, brandColorPrimary);
 
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -260,7 +516,8 @@ Make every question specific to ${siteName}. The first question should confirm t
 async function generateTailoredQuiz(
   websiteUrl: string,
   brandData: any,
-  onboarding: { question: string; answer: string }[]
+  onboarding: { question: string; answer: string }[],
+  mode: string = 'lead_quiz'
 ): Promise<any> {
   const goal = onboarding.find(x => /goal|objective/i.test(x.question))?.answer || 'Generate more leads';
   const businessSummary = brandData?.business?.summary || '';
@@ -269,10 +526,11 @@ async function generateTailoredQuiz(
 
   const onboardingBlock = onboarding.map((o, i) => `${i + 1}. ${o.question}\n   Answer: ${o.answer}`).join('\n');
 
-  const systemPrompt = `You are an expert lead-generation quiz creator. Read the business website content AND the owner's onboarding answers carefully. Create a quiz that matches the owner's stated goal, audience, tone, and outcome. Return ONLY valid JSON.`;
+  const systemPrompt = `You are an expert ${mode} quiz creator. Read the business website content AND the owner's onboarding answers carefully. Create a quiz that matches the owner's stated goal, audience, tone, and outcome. Return ONLY valid JSON.`;
 
   const userPrompt = `BUSINESS: ${siteName}
 URL: ${websiteUrl}
+MODE: ${mode}
 
 WEBSITE CONTENT:
 ${businessSummary || `Could not scrape. Infer from domain ${siteName}.`}
@@ -280,26 +538,9 @@ ${businessSummary || `Could not scrape. Infer from domain ${siteName}.`}
 OWNER ANSWERS (use these to shape every question, option, tone, and outcome):
 ${onboardingBlock}
 
-TASK: Generate exactly 10 questions with 4 options each, and 3 to 5 outcomes, tailored to ${siteName}. Every question maps visitors to the owner's actual offers. Every outcome names a specific product or service. Tone matches the owner's answer.
+TASK: Generate exactly 10 questions with 4 options each, and 3 to 5 outcomes, tailored to ${siteName} in ${mode} mode. Every question maps visitors to the owner's actual offers. Outcomes must match the ${mode} structure (see system prompt for mode-specific fields). Tone matches the owner's answer.
 
-Return this JSON:
-{
-  "title": "Short promise title for the visitor",
-  "description": "One line promising a personalized recommendation",
-  "questions": [
-    { "id": "q1", "type": "single", "text": "Question about visitor needs", "subtitle": "", "options": [
-      { "id": "a", "text": "Option A", "score": 3 },
-      { "id": "b", "text": "Option B", "score": 2 },
-      { "id": "c", "text": "Option C", "score": 1 },
-      { "id": "d", "text": "Option D", "score": 0 }
-    ]}
-  ],
-  "outcomes": [
-    { "id": "r1", "title": "Specific offer from ${siteName}", "description": "2 to 3 sentences", "minScore": 10, "maxScore": 15, "ctaText": "Explore", "ctaUrl": "" }
-  ],
-  "leadGate": { "headline": "Your result is ready", "subtext": "Enter your email to see it", "buttonText": "Show my result" },
-  "settings": { "primaryColor": "${brandColorPrimary}", "showProgressBar": true, "requireEmail": true }
-}`;
+Return valid JSON following the ${mode} output format.`;
 
   // Per product decision (Q5): API failures must NEVER block the user.
   // Claude call + parse are wrapped in a single try; any failure silently
