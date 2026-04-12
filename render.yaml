@@ -60,5 +60,5 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
-    healthCheckPath: /api/health
+    healthCheckPath: /health
     autoDeploy: true
