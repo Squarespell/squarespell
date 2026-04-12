@@ -24,7 +24,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from './_components/DashboardSh
 import { useDashboardAuth } from './_components/useDashboardAuth';
 import { Card, PageLoading, PrimaryButton } from './_components/PageShell';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type Quiz = {
   id: string;

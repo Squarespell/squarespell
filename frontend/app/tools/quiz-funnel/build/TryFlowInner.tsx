@@ -10,7 +10,7 @@ import { publicQuizUrl, embedSnippet, APP_URL } from '@/lib/urls';
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 /* ========================================================================= */
 /* Types                                                                     */

@@ -22,7 +22,7 @@ import {
   PageLoading,
 } from '../_components/PageShell';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type Integration = {
   id: string;
