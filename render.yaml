@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: squarespell-backend
+    runtime: node
+    region: oregon
+    plan: starter
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: REPORT_SECRET
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: STRIPE_PRO_PRICE_ID
+        sync: false
+      - key: STRIPE_STARTER_PRICE_ID
+        sync: false
+      - key: STRIPE_AGENCY_PRICE_ID
+        sync: false
+      - key: STRIPE_PRO_YEARLY_PRICE_ID
+        sync: false
+      - key: STRIPE_STARTER_YEARLY_PRICE_ID
+        sync: false
+      - key: STRIPE_AGENCY_YEARLY_PRICE_ID
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
