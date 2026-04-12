@@ -554,7 +554,7 @@ leadsRouter.get('/leads', requireAuth, attachUser, async (req: AuthenticatedRequ
 });
 
 // GET /api/leads/:id — fetch single lead detail with full quiz and metadata
-leadsRouter.get('/:id', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+leadsRouter.get('/leads/:id', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
     const { data: lead, error } = await supabase
       .from('leads')
