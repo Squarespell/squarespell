@@ -438,7 +438,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       if (notifyEmail) {
         const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
         await resend.emails.send({
-          from: 'Squarespell <onboarding@resend.dev>',
+          from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
           to: notifyEmail,
           subject: `New lead captured: ${name || email}`,
           html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
@@ -1076,7 +1076,7 @@ cronRouter.post('/weekly-digest', async (req, res) => {
         `;
 
         await resend.emails.send({
-          from: 'Squarespell <onboarding@resend.dev>',
+          from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
           to: user.email,
           subject: `Your weekly quiz summary  -  ${totalViews} views this week`,
           html,
@@ -1154,7 +1154,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
             `;
 
             await resend.emails.send({
-              from: 'Squarespell <onboarding@resend.dev>',
+              from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
               to: user.email,
               subject: 'Welcome to Squarespell  -  Create your first quiz',
               html,
@@ -1188,7 +1188,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
           `;
 
           await resend.emails.send({
-            from: 'Squarespell <onboarding@resend.dev>',
+            from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
             to: user.email,
             subject: 'Your Squarespell trial ends in 2 days',
             html,
@@ -1215,7 +1215,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
           `;
 
           await resend.emails.send({
-            from: 'Squarespell <onboarding@resend.dev>',
+            from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
             to: user.email,
             subject: 'Restore your Squarespell quizzes  -  Upgrade now',
             html,
