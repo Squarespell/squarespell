@@ -21,6 +21,7 @@ import {
   Pill,
   PageLoading,
 } from '../_components/PageShell';
+import { ConfirmDialog } from '../_components/Modals';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
@@ -146,6 +147,8 @@ function IntegrationRow({
 }) {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   async function toggle() {
     const res = await fetch(`${API}/api/integrations/${integration.id}`, {
@@ -178,13 +181,21 @@ function IntegrationRow({
     }
   }
 
-  async function remove() {
-    if (!confirm('Remove this integration?')) return;
-    const res = await fetch(`${API}/api/integrations/${integration.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) onDelete(integration.id);
+  async function doRemove() {
+    setRemoving(true);
+    try {
+      const res = await fetch(`${API}/api/integrations/${integration.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) onDelete(integration.id);
+    } finally {
+      setRemoving(false);
+      setConfirmingRemove(false);
+    }
+  }
+  function remove() {
+    setConfirmingRemove(true);
   }
 
   return (
@@ -241,6 +252,16 @@ function IntegrationRow({
         <GhostButton onClick={toggle}>{integration.active ? 'Pause' : 'Resume'}</GhostButton>
         <GhostButton onClick={remove}>Remove</GhostButton>
       </div>
+      <ConfirmDialog
+        open={confirmingRemove}
+        title="Remove this integration?"
+        description="Lead deliveries to this destination will stop immediately. You can add it again later."
+        confirmLabel="Remove"
+        destructive
+        loading={removing}
+        onConfirm={doRemove}
+        onClose={() => (removing ? null : setConfirmingRemove(false))}
+      />
     </div>
   );
 }

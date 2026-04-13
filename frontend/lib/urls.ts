@@ -29,9 +29,16 @@ export const APP_URL = 'https://app.squarespell.com';
 /* Helpers for common URL shapes                                       */
 /* ------------------------------------------------------------------ */
 
-/** Public URL a visitor sees when they land on a shared quiz. */
+/**
+ * Public URL a visitor sees when they land on a shared quiz.
+ *
+ * Canonical route is `/quiz/:slug` on the quiz host. A redirect from the
+ * legacy `/q/:slug` shortlink is maintained in `app/q/[slug]/page.tsx` so
+ * pre-existing embedded links keep working, but every helper emits the
+ * canonical URL directly to avoid the extra hop.
+ */
 export const publicQuizUrl = (slug: string): string =>
-  `${QUIZ_URL}/q/${slug}`;
+  `${QUIZ_URL}/quiz/${slug}`;
 
 /** URL to the JS embed loader a Squarespace site owner drops into a Code Block. */
 export const embedScriptUrl = (): string => `${QUIZ_URL}/embed.js`;

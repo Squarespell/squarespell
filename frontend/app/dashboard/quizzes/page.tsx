@@ -20,7 +20,7 @@ import {
   Pill,
   PageLoading,
 } from '../_components/PageShell';
-import { embedSnippet, publicQuizUrl } from '@/lib/urls';
+import { ConfirmDialog, PublishModal } from '../_components/Modals';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
@@ -54,74 +54,32 @@ function formatDate(dateStr: string): string {
   return `${Math.floor(diffDays / 365)}y ago`;
 }
 
-function EmbedModal({ slug, onClose }: { slug: string; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
-  const embedCode = embedSnippet(slug);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(embedCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 60,
-        fontFamily: '"DM Sans",system-ui,sans-serif',
-      }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: C.ELEVATED,
-          border: `1px solid ${C.BORDER}`,
-          borderRadius: 16,
-          padding: 32,
-          maxWidth: 520,
-          width: '90%',
-        }}
-      >
-        <h2 style={{ margin: '0 0 10px 0', fontSize: 20, fontWeight: 700, color: C.TEXT }}>Embed this quiz</h2>
-        <p style={{ fontSize: 14, color: C.TEXT_MUTED, marginBottom: 18 }}>
-          Paste this snippet into any page on your Squarespace site.
-        </p>
-        <div
-          style={{
-            background: C.SURFACE,
-            border: `1px solid ${C.BORDER}`,
-            borderRadius: 10,
-            padding: 14,
-            marginBottom: 20,
-            fontFamily: 'monospace',
-            fontSize: 12.5,
-            color: C.TEXT_MUTED,
-            overflowX: 'auto',
-            wordBreak: 'break-all',
-          }}
-        >
-          {embedCode}
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <PrimaryButton onClick={handleCopy}>{copied ? 'Copied!' : 'Copy code'}</PrimaryButton>
-          <GhostButton onClick={onClose}>Close</GhostButton>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function QuizzesPage() {
   const { token, status: authStatus } = useDashboardAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [embedSlug, setEmbedSlug] = useState<string | null>(null);
+  const [publishQuiz, setPublishQuiz] = useState<Quiz | null>(null);
+  const [deleteQuiz, setDeleteQuiz] = useState<Quiz | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDelete = async () => {
+    if (!token || !deleteQuiz) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API}/api/quizzes/${deleteQuiz.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setQuizzes((prev) => prev.filter((q) => q.id !== deleteQuiz.id));
+      }
+    } catch (e) {
+      console.error('Delete failed:', e);
+    } finally {
+      setDeleting(false);
+      setDeleteQuiz(null);
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -157,7 +115,22 @@ export default function QuizzesPage() {
       title="Quizzes"
       topbarRight={<PrimaryButton href="/try">+ New quiz</PrimaryButton>}
     >
-      {embedSlug && <EmbedModal slug={embedSlug} onClose={() => setEmbedSlug(null)} />}
+      <PublishModal
+        open={Boolean(publishQuiz)}
+        quizTitle={publishQuiz?.title || ''}
+        slug={publishQuiz?.slug || ''}
+        onClose={() => setPublishQuiz(null)}
+      />
+      <ConfirmDialog
+        open={Boolean(deleteQuiz)}
+        title="Delete this quiz?"
+        description={`"${deleteQuiz?.title || 'Untitled quiz'}" and all its leads, events, and settings will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete quiz"
+        destructive
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onClose={() => (deleting ? null : setDeleteQuiz(null))}
+      />
 
       <PageHeader title="All quizzes" subtitle="Create, edit, and publish your AI-powered quiz funnels." />
 
@@ -238,21 +211,12 @@ export default function QuizzesPage() {
                   <GhostButton href={`/quiz/${quiz.slug}`} target="_blank">
                     View live
                   </GhostButton>
-                  <GhostButton onClick={() => setEmbedSlug(quiz.slug)}>Embed</GhostButton>
+                  <GhostButton onClick={() => setPublishQuiz(quiz)}>
+                    {quiz.status === 'live' ? 'Share' : 'Publish'}
+                  </GhostButton>
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!token || !confirm('Delete this quiz? This action cannot be undone.')) return;
-                      try {
-                        const res = await fetch(`${API}/api/quizzes/${quiz.id}`, {
-                          method: 'DELETE',
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
-                        if (res.ok) setQuizzes(quizzes.filter((q) => q.id !== quiz.id));
-                      } catch (e) {
-                        console.error('Delete failed:', e);
-                      }
-                    }}
+                    onClick={() => setDeleteQuiz(quiz)}
                     style={{
                       padding: '11px 20px',
                       background: 'transparent',

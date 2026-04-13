@@ -1,0 +1,454 @@
+'use client';
+
+/**
+ * Shared dashboard modals — ConfirmDialog (destructive actions) and
+ * PublishModal (one-click share surface with Link / Embed / Preview tabs).
+ *
+ * Both share a single backdrop + sheet primitive so the visual language is
+ * consistent. Uses the DashboardShell palette; no external UI deps.
+ */
+
+import { ReactNode, useEffect, useState } from 'react';
+import { DASHBOARD_COLORS as C } from './DashboardShell';
+import { embedSnippet, publicQuizUrl } from '@/lib/urls';
+
+/* ------------------------------------------------------------------ */
+/* Sheet — shared backdrop + centered card                             */
+/* ------------------------------------------------------------------ */
+
+function Sheet({
+  onClose,
+  children,
+  width = 520,
+  labelledBy,
+}: {
+  onClose: () => void;
+  children: ReactNode;
+  width?: number;
+  labelledBy?: string;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={labelledBy}
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.72)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 100,
+        padding: '24px 16px',
+        fontFamily: '"DM Sans", system-ui, sans-serif',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: C.ELEVATED,
+          border: `1px solid ${C.BORDER}`,
+          borderRadius: 18,
+          width: '100%',
+          maxWidth: width,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* ConfirmDialog — destructive confirmation                            */
+/* ------------------------------------------------------------------ */
+
+export function ConfirmDialog({
+  open,
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  destructive = false,
+  onConfirm,
+  onClose,
+  loading = false,
+}: {
+  open: boolean;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  destructive?: boolean;
+  onConfirm: () => void | Promise<void>;
+  onClose: () => void;
+  loading?: boolean;
+}) {
+  if (!open) return null;
+
+  const accent = destructive ? '#ef4444' : C.ACCENT;
+  const accentText = destructive ? '#ffffff' : '#07090c';
+
+  return (
+    <Sheet onClose={loading ? () => {} : onClose} labelledBy="confirm-title" width={440}>
+      <div style={{ padding: '28px 28px 24px' }}>
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: destructive ? 'rgba(239,68,68,0.12)' : 'rgba(210,255,29,0.10)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 16,
+          }}
+          aria-hidden
+        >
+          {destructive ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+          )}
+        </div>
+
+        <h3 id="confirm-title" style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.02em' }}>
+          {title}
+        </h3>
+        {description ? (
+          <p style={{ margin: 0, fontSize: 13.5, color: C.TEXT_MUTED, lineHeight: 1.55 }}>{description}</p>
+        ) : null}
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          padding: '16px 24px 22px',
+          borderTop: `1px solid ${C.BORDER}`,
+          justifyContent: 'flex-end',
+          background: C.SURFACE,
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={loading}
+          style={{
+            padding: '10px 18px',
+            borderRadius: 100,
+            background: 'transparent',
+            color: C.TEXT,
+            border: `1px solid ${C.BORDER}`,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.5 : 1,
+            fontFamily: 'inherit',
+          }}
+        >
+          {cancelLabel}
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={loading}
+          style={{
+            padding: '10px 20px',
+            borderRadius: 100,
+            background: accent,
+            color: accentText,
+            border: 0,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: loading ? 'wait' : 'pointer',
+            opacity: loading ? 0.7 : 1,
+            fontFamily: 'inherit',
+          }}
+        >
+          {loading ? 'Working…' : confirmLabel}
+        </button>
+      </div>
+    </Sheet>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* PublishModal — Link / Embed / Preview tabs                          */
+/* ------------------------------------------------------------------ */
+
+type Tab = 'link' | 'embed' | 'preview';
+
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '10px 14px',
+        background: active ? C.ELEVATED : 'transparent',
+        color: active ? C.TEXT : C.TEXT_MUTED,
+        border: 0,
+        borderBottom: active ? `2px solid ${C.ACCENT}` : '2px solid transparent',
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        transition: 'color .15s',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function CopyRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = () => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) return;
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <>
+      <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          alignItems: 'stretch',
+          background: C.SURFACE,
+          border: `1px solid ${C.BORDER}`,
+          borderRadius: 10,
+          padding: 10,
+          marginBottom: 14,
+        }}
+      >
+        <code
+          style={{
+            flex: 1,
+            minWidth: 0,
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+            fontSize: 12.5,
+            color: C.TEXT,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+            padding: '6px 4px',
+          }}
+        >
+          {value}
+        </code>
+        <button
+          type="button"
+          onClick={onCopy}
+          style={{
+            padding: '8px 14px',
+            borderRadius: 8,
+            background: copied ? 'rgba(74,222,128,0.15)' : C.ACCENT,
+            color: copied ? '#4ade80' : '#07090c',
+            border: copied ? '1px solid rgba(74,222,128,0.3)' : 0,
+            fontSize: 12.5,
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            whiteSpace: 'nowrap',
+            alignSelf: 'center',
+          }}
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+    </>
+  );
+}
+
+export function PublishModal({
+  open,
+  quizTitle,
+  slug,
+  onClose,
+}: {
+  open: boolean;
+  quizTitle: string;
+  slug: string;
+  onClose: () => void;
+}) {
+  const [tab, setTab] = useState<Tab>('link');
+
+  if (!open) return null;
+
+  const link = publicQuizUrl(slug);
+  const snippet = embedSnippet(slug);
+  const iframeFallback = `<iframe src="${link}" width="100%" height="600" frameborder="0" loading="lazy" allow="clipboard-write"></iframe>`;
+
+  return (
+    <Sheet onClose={onClose} labelledBy="publish-title" width={640}>
+      <div
+        style={{
+          padding: '22px 26px 0',
+          borderBottom: `1px solid ${C.BORDER}`,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: C.ACCENT, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+              Published
+            </p>
+            <h3 id="publish-title" style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 800, color: C.TEXT, letterSpacing: '-0.02em' }}>
+              {quizTitle || 'Your quiz is live'}
+            </h3>
+            <p style={{ margin: '6px 0 0', fontSize: 13, color: C.TEXT_MUTED }}>Share the link or drop the snippet into Squarespace.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              background: 'transparent',
+              border: 0,
+              color: C.TEXT_MUTED,
+              cursor: 'pointer',
+              padding: 6,
+              marginTop: -4,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 2, marginTop: 18, marginBottom: -1 }}>
+          <TabButton active={tab === 'link'} onClick={() => setTab('link')}>Link</TabButton>
+          <TabButton active={tab === 'embed'} onClick={() => setTab('embed')}>Embed</TabButton>
+          <TabButton active={tab === 'preview'} onClick={() => setTab('preview')}>Preview</TabButton>
+        </div>
+      </div>
+
+      <div style={{ padding: 22 }}>
+        {tab === 'link' && (
+          <>
+            <CopyRow label="Shareable URL" value={link} />
+            <p style={{ margin: 0, fontSize: 12.5, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
+              Use this URL in email campaigns, social posts, or any ad destination. It opens the
+              mobile-optimised quiz page on your branded Squarespell subdomain.
+            </p>
+          </>
+        )}
+
+        {tab === 'embed' && (
+          <>
+            <CopyRow label="Recommended — Squarespace Code Block" value={snippet} />
+            <details style={{ marginTop: 4 }}>
+              <summary style={{ cursor: 'pointer', fontSize: 12.5, color: C.TEXT_MUTED, marginBottom: 10 }}>
+                Need a plain iframe instead?
+              </summary>
+              <CopyRow label="Fallback iframe" value={iframeFallback} />
+            </details>
+            <p style={{ margin: '6px 0 0', fontSize: 12.5, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
+              Paste the top snippet into a Squarespace Code Block. It auto-mounts a responsive,
+              branded iframe and syncs height as visitors progress.
+            </p>
+          </>
+        )}
+
+        {tab === 'preview' && (
+          <div
+            style={{
+              background: C.SURFACE,
+              border: `1px solid ${C.BORDER}`,
+              borderRadius: 12,
+              overflow: 'hidden',
+              padding: 0,
+            }}
+          >
+            <iframe
+              src={`${link}?embed=1&preview=1`}
+              title="Quiz preview"
+              style={{
+                width: '100%',
+                height: 520,
+                border: 0,
+                display: 'block',
+                background: '#fff',
+              }}
+              loading="lazy"
+            />
+            <div style={{ padding: '10px 14px', fontSize: 11.5, color: C.TEXT_MUTED, background: C.SURFACE, borderTop: `1px solid ${C.BORDER}` }}>
+              Live preview — exactly what visitors will see.
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 10,
+          padding: '14px 22px 18px',
+          borderTop: `1px solid ${C.BORDER}`,
+          background: C.SURFACE,
+        }}
+      >
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: 13, color: C.TEXT_MUTED, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          Open in new tab ↗
+        </a>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            padding: '10px 20px',
+            borderRadius: 100,
+            background: C.ACCENT,
+            color: '#07090c',
+            border: 0,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Done
+        </button>
+      </div>
+    </Sheet>
+  );
+}
