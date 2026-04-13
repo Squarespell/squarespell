@@ -1008,23 +1008,38 @@ export function TryFlowInner({
                   <button
                     type="button"
                     className="hook-err-retry"
-                    onClick={() => { setErrorMsg(''); goAnalyze(url); }}
+                    onClick={() => { setErrorMsg(''); if (brand && sessionToken) buildQuiz(); else goAnalyze(url); }}
                   >
-                    Retry analyze
+                    Try again
                   </button>
                 </div>
               )}
 
-              <button
-                className={`btn-gen${selectedGoal ? ' ready' : ' disabled'}`}
-                disabled={!selectedGoal || buildingQuiz}
-                onClick={buildQuiz}
-                type="button"
-              >
-                <SvgBolt size={18} />
-                Generate my quiz
-              </button>
-              <div className="btn-hint">Takes about 30 seconds. You can edit everything after.</div>
+              {buildingQuiz ? (
+                <div className="gen-loading">
+                  <div className="gen-loading-spinner"></div>
+                  <div className="gen-loading-title">Building your quiz</div>
+                  <div className="gen-loading-sub">AI is crafting questions tailored to your website...</div>
+                  <div className="gen-skeleton-cards">
+                    <div className="gen-skel-card"><div className="gen-skel-line w70"></div><div className="gen-skel-line w50"></div></div>
+                    <div className="gen-skel-card"><div className="gen-skel-line w60"></div><div className="gen-skel-line w80"></div></div>
+                    <div className="gen-skel-card"><div className="gen-skel-line w75"></div><div className="gen-skel-line w45"></div></div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button
+                    className={`btn-gen${selectedGoal ? ' ready' : ' disabled'}`}
+                    disabled={!selectedGoal}
+                    onClick={buildQuiz}
+                    type="button"
+                  >
+                    <SvgBolt size={18} />
+                    Generate my quiz
+                  </button>
+                  <div className="btn-hint">Takes about 30 seconds. You can edit everything after.</div>
+                </>
+              )}
             </div>
           )}
         </div>

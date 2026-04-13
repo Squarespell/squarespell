@@ -270,16 +270,24 @@ previewRouter.post('/preview-build-quiz', async (req, res) => {
     session.answers = { ...session.answers, ...answers };
   }
 
-  // Map answers back to full question text + selected option text
-  const onboardingPairs: { question: string; answer: string }[] = session.onboarding_questions.map((q: any) => {
-    const selectedIdxRaw = session.answers[q.id];
-    const selectedIdx = selectedIdxRaw === undefined ? -1 : parseInt(String(selectedIdxRaw), 10);
-    const answerText = (selectedIdx >= 0 && Array.isArray(q.options)) ? (q.options[selectedIdx] ?? '') : '';
-    return { question: q.text, answer: answerText };
-  }).filter((p: any) => p.answer);
+  // New Option C flow: answers contain goal + AI-detected profile fields
+  const goal = session.answers.goal || 'capture_leads';
+  const businessType = session.answers.business_type || session.brand?.business?.type || 'unknown';
+  const audience = session.answers.audience || session.brand?.business?.audience || 'unknown';
+  const tone = session.answers.tone || session.brand?.business?.tone || 'unknown';
+  const keyOffer = session.answers.key_offer || session.brand?.business?.key_offer || 'unknown';
+
+  // Build onboarding pairs in the format generateTailoredQuiz expects
+  const onboardingPairs: { question: string; answer: string }[] = [
+    { question: 'What is the primary goal of this quiz?', answer: goal.replace(/_/g, ' ') },
+    { question: 'What type of business is this?', answer: businessType },
+    { question: 'Who is the target audience?', answer: audience },
+    { question: 'What tone should the quiz use?', answer: tone },
+    { question: 'What is the key product or service?', answer: keyOffer },
+  ].filter(p => p.answer && p.answer !== 'unknown');
 
   try {
-    console.log(`[PreviewBuildQuiz] Building quiz for ${session.url} with ${onboardingPairs.length} answers`);
+    console.log(`[PreviewBuildQuiz] Building quiz for ${session.url} | goal=${goal} | type=${businessType} | audience=${audience} | tone=${tone} | offer=${keyOffer}`);
     const quiz = await generateTailoredQuiz(session.url, session.brand, onboardingPairs);
     console.log(`[PreviewBuildQuiz] Quiz generated: "${quiz.title}"`);
 

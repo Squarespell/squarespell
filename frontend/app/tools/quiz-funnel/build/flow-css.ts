@@ -377,6 +377,21 @@ export const FLOW_CSS = `
 
   .btn-hint { text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-muted); }
 
+  /* Quiz generation loading skeleton */
+  .gen-loading { text-align: center; padding: 40px 0 20px; animation: fadeUp 0.4s ease; }
+  .gen-loading-spinner { width: 40px; height: 40px; border: 3px solid rgba(210,255,29,0.15); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+  .gen-loading-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .gen-loading-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+  .gen-skeleton-cards { display: flex; flex-direction: column; gap: 12px; }
+  .gen-skel-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .gen-skel-line { height: 14px; border-radius: 7px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; }
+  .gen-skel-line.w45 { width: 45%; }
+  .gen-skel-line.w50 { width: 50%; }
+  .gen-skel-line.w60 { width: 60%; }
+  .gen-skel-line.w70 { width: 70%; }
+  .gen-skel-line.w75 { width: 75%; }
+  .gen-skel-line.w80 { width: 80%; }
+
   .s2-analyze-err {
     margin: 14px 0 24px;
     padding: 14px 16px;
