@@ -17,6 +17,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 
+import { useAutosave } from '../../_components/useAutosave';
 /* ========================================================================= */
 /* Types                                                                     */
 /* ========================================================================= */
@@ -135,6 +136,27 @@ export default function QuizBuilderPage() {
 
   // Quiz state
   const [quiz, setQuiz] = useState<QuizData | null>(null);
+
+  /* ========================= Autosave ========================= */
+  // Debounced autosave + unsaved-changes tracking. Fires 2s after the last
+  // edit. Manual Save button calls saveNow() below, which flushes the
+  // pending debounce. beforeunload prompt installs automatically while
+  // status is 'unsaved' or 'saving'.
+  const autosave = useAutosave({
+    data: quiz,
+    enabled: !!quiz,
+    onSave: async (q) => {
+      if (!q) return;
+      await api.updateQuiz(quizId, {
+        title: q.title,
+        description: q.description,
+        questions: q.questions,
+        outcomes: q.outcomes,
+        settings: q.settings,
+      });
+    },
+  });
+
   const [originalTitle, setOriginalTitle] = useState('');
   const [editingTitle, setEditingTitle] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -330,13 +352,7 @@ export default function QuizBuilderPage() {
     if (!quiz) return;
     try {
       setSaveStatus('saving');
-      await api.updateQuiz(quizId, {
-        title: quiz.title,
-        description: quiz.description,
-        questions: quiz.questions,
-        outcomes: quiz.outcomes,
-        settings: quiz.settings,
-      });
+      await autosave.saveNow();
       setSaveStatus('saved');
       showToast('Quiz saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -344,7 +360,7 @@ export default function QuizBuilderPage() {
       setError(err?.message || 'Failed to save quiz');
       setSaveStatus('idle');
     }
-  }, [quiz, quizId, showToast]);
+  }, [quiz, autosave, showToast]);
 
   /* ========================= Outcomes ========================= */
   const addOutcome = useCallback(() => {
