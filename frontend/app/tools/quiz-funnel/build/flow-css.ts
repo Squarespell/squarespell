@@ -342,8 +342,8 @@ export const FLOW_CSS = `
   .ai-tag-content { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
   .ai-tag-label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .ai-tag-value { font-size: 14px; font-weight: 600; color: var(--text); }
-  .ai-tag-edit { font-size: 12px; color: rgba(210,255,29,0.5); cursor: pointer; font-weight: 600; transition: color 0.15s; padding: 4px; margin-left: auto; flex-shrink: 0; }
-  .ai-tag-edit:hover { color: var(--accent); }
+  .ai-tag-edit { font-size: 12px; color: rgba(210,255,29,0.5); cursor: pointer; font-weight: 600; transition: color 0.15s; padding: 6px 10px; margin-left: auto; flex-shrink: 0; background: none; border: 1px solid rgba(210,255,29,0.15); border-radius: 6px; font-family: inherit; line-height: 1; }
+  .ai-tag-edit:hover { color: var(--accent); border-color: rgba(210,255,29,0.4); background: rgba(210,255,29,0.05); }
   .ai-tag-input { background: rgba(255,255,255,0.08); border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; font-size: 14px; font-weight: 600; color: var(--text); outline: none; width: 100%; font-family: inherit; }
   .ai-tag-input:focus { box-shadow: 0 0 0 2px rgba(210,255,29,0.15); }
 

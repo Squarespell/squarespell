@@ -884,44 +884,94 @@ export function TryFlowInner({
                     <span className="ai-header-text">AI detected from your site</span>
                   </div>
                   <div className="ai-tags">
-                    {([
-                      { key: 'type', label: 'Business type' },
-                      { key: 'audience', label: 'Audience' },
-                      { key: 'tone', label: 'Tone' },
-                      { key: 'key_offer', label: 'Key offer' },
-                    ] as const).map((tag) => (
-                      <div className="ai-tag" key={tag.key}>
-                        <div className="ai-tag-content">
-                          <span className="ai-tag-label">{tag.label}</span>
-                          {editingTag === tag.key ? (
-                            <input
-                              ref={editingTag === tag.key ? editInputRef : undefined}
-                              className="ai-tag-input"
-                              value={editValues[tag.key] || ''}
-                              onChange={(e) => setEditValues((prev) => ({ ...prev, [tag.key]: e.target.value }))}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') commitEditTag(tag.key);
-                                if (e.key === 'Escape') setEditingTag(null);
-                              }}
-                              onBlur={() => commitEditTag(tag.key)}
-                              maxLength={80}
-                            />
-                          ) : (
-                            <span className="ai-tag-value">{brand.business[tag.key] || 'Unknown'}</span>
-                          )}
-                        </div>
-                        {editingTag !== tag.key && (
-                          <span
-                            className="ai-tag-edit"
-                            onClick={() => startEditTag(tag.key, brand.business[tag.key] || '')}
-                            role="button"
-                            tabIndex={0}
-                          >
-                            edit
-                          </span>
+                    {/* Business Type */}
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Business type</span>
+                        {editingTag === 'type' ? (
+                          <input
+                            ref={editInputRef}
+                            className="ai-tag-input"
+                            value={editValues['type'] || ''}
+                            onChange={(e) => setEditValues((prev) => ({ ...prev, type: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('type'); if (e.key === 'Escape') setEditingTag(null); }}
+                            onBlur={() => commitEditTag('type')}
+                            maxLength={80}
+                          />
+                        ) : (
+                          <span className="ai-tag-value">{brand.business?.type || 'Unknown'}</span>
                         )}
                       </div>
-                    ))}
+                      {editingTag !== 'type' && (
+                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('type', brand.business?.type || ''); }}>edit</button>
+                      )}
+                    </div>
+                    {/* Audience */}
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Audience</span>
+                        {editingTag === 'audience' ? (
+                          <input
+                            ref={editingTag === 'audience' ? editInputRef : undefined}
+                            className="ai-tag-input"
+                            value={editValues['audience'] || ''}
+                            onChange={(e) => setEditValues((prev) => ({ ...prev, audience: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('audience'); if (e.key === 'Escape') setEditingTag(null); }}
+                            onBlur={() => commitEditTag('audience')}
+                            maxLength={80}
+                          />
+                        ) : (
+                          <span className="ai-tag-value">{brand.business?.audience || 'Unknown'}</span>
+                        )}
+                      </div>
+                      {editingTag !== 'audience' && (
+                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('audience', brand.business?.audience || ''); }}>edit</button>
+                      )}
+                    </div>
+                    {/* Tone */}
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Tone</span>
+                        {editingTag === 'tone' ? (
+                          <input
+                            ref={editingTag === 'tone' ? editInputRef : undefined}
+                            className="ai-tag-input"
+                            value={editValues['tone'] || ''}
+                            onChange={(e) => setEditValues((prev) => ({ ...prev, tone: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('tone'); if (e.key === 'Escape') setEditingTag(null); }}
+                            onBlur={() => commitEditTag('tone')}
+                            maxLength={80}
+                          />
+                        ) : (
+                          <span className="ai-tag-value">{brand.business?.tone || 'Unknown'}</span>
+                        )}
+                      </div>
+                      {editingTag !== 'tone' && (
+                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('tone', brand.business?.tone || ''); }}>edit</button>
+                      )}
+                    </div>
+                    {/* Key Offer */}
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Key offer</span>
+                        {editingTag === 'key_offer' ? (
+                          <input
+                            ref={editingTag === 'key_offer' ? editInputRef : undefined}
+                            className="ai-tag-input"
+                            value={editValues['key_offer'] || ''}
+                            onChange={(e) => setEditValues((prev) => ({ ...prev, key_offer: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('key_offer'); if (e.key === 'Escape') setEditingTag(null); }}
+                            onBlur={() => commitEditTag('key_offer')}
+                            maxLength={80}
+                          />
+                        ) : (
+                          <span className="ai-tag-value">{brand.business?.key_offer || 'Unknown'}</span>
+                        )}
+                      </div>
+                      {editingTag !== 'key_offer' && (
+                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('key_offer', brand.business?.key_offer || ''); }}>edit</button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
