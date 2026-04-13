@@ -48,8 +48,8 @@ function normalizeUrl(raw: string): string {
 
 type Plan = {
   name: string;
-  price: string;
-  per: string;
+  monthly: number;
+  yearly: number;
   desc: string;
   features: string[];
   cta: string;
@@ -60,8 +60,8 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     name: 'Starter',
-    price: '$19',
-    per: '/month',
+    monthly: 19,
+    yearly: 15,
     desc: 'Perfect for coaches and consultants capturing their first leads.',
     features: [
       '5 live quizzes',
@@ -76,8 +76,8 @@ const PLANS: Plan[] = [
   },
   {
     name: 'Pro',
-    price: '$39',
-    per: '/month',
+    monthly: 39,
+    yearly: 31,
     desc: 'For growing businesses serious about turning visitors into clients.',
     features: [
       '20 live quizzes',
@@ -94,8 +94,8 @@ const PLANS: Plan[] = [
   },
   {
     name: 'Agency',
-    price: '$79',
-    per: '/month',
+    monthly: 79,
+    yearly: 63,
     desc: 'For agencies managing quiz funnels across multiple clients.',
     features: [
       'Unlimited quizzes',
@@ -137,6 +137,7 @@ export default function LandingPage() {
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [scrollY, setScrollY] = useState(0);
+  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [heroUrl, setHeroUrl] = useState('');
   const [heroSubmitting, setHeroSubmitting] = useState(false);
 
@@ -529,32 +530,58 @@ export default function LandingPage() {
             Start free forever. Upgrade when you're ready to remove branding and scale.
           </p>
         </div>
+        <div className="ssp-billing-toggle">
+          <button
+            className={`ssp-toggle-btn ${billing === 'monthly' ? 'ssp-toggle-active' : ''}`}
+            onClick={() => setBilling('monthly')}
+            type="button"
+          >
+            Monthly
+          </button>
+          <button
+            className={`ssp-toggle-btn ${billing === 'yearly' ? 'ssp-toggle-active' : ''}`}
+            onClick={() => setBilling('yearly')}
+            type="button"
+          >
+            Yearly
+            <span className="ssp-toggle-save">Save 20%</span>
+          </button>
+        </div>
         <div className="ssp-plans">
-          {PLANS.map((p) => (
-            <div key={p.name} className={`ssp-plan ${p.featured ? 'ssp-plan-featured' : ''}`}>
-              {p.featured && <div className="ssp-plan-badge">Most popular</div>}
-              <div className="ssp-plan-name">{p.name}</div>
-              <div className="ssp-plan-desc">{p.desc}</div>
-              <div className="ssp-plan-price">
-                <span className="ssp-plan-price-num">{p.price}</span>
-                <span className="ssp-plan-price-per">{p.per}</span>
+          {PLANS.map((p) => {
+            const price = billing === 'yearly' ? p.yearly : p.monthly;
+            return (
+              <div key={p.name} className={`ssp-plan ${p.featured ? 'ssp-plan-featured' : ''}`}>
+                {p.featured && <div className="ssp-plan-badge">Most popular</div>}
+                <div className="ssp-plan-name">{p.name}</div>
+                <div className="ssp-plan-desc">{p.desc}</div>
+                <div className="ssp-plan-price">
+                  {billing === 'yearly' && (
+                    <span className="ssp-plan-price-old">${p.monthly}</span>
+                  )}
+                  <span className="ssp-plan-price-num">${price}</span>
+                  <span className="ssp-plan-price-per">/month</span>
+                </div>
+                {billing === 'yearly' && (
+                  <div className="ssp-plan-billed">Billed ${price * 12}/year</div>
+                )}
+                <ul className="ssp-plan-features">
+                  {p.features.map((f) => (
+                    <li key={f}>
+                      <span className="ssp-plan-check">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href={p.href}
+                  className={`ssp-btn ssp-plan-cta ${p.featured ? 'ssp-btn-primary' : 'ssp-btn-ghost'}`}
+                >
+                  {p.cta}
+                </Link>
               </div>
-              <ul className="ssp-plan-features">
-                {p.features.map((f) => (
-                  <li key={f}>
-                    <span className="ssp-plan-check">✓</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href={p.href}
-                className={`ssp-btn ssp-plan-cta ${p.featured ? 'ssp-btn-primary' : 'ssp-btn-ghost'}`}
-              >
-                {p.cta}
-              </Link>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -1455,6 +1482,34 @@ const CSS = `
 }
 
 /* ----- pricing (najaf style) ----- */
+.ssp-billing-toggle {
+  display: flex; justify-content: center; align-items: center; gap: 4px;
+  margin-bottom: 48px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 4px; width: fit-content; margin-left: auto; margin-right: auto;
+}
+.ssp-toggle-btn {
+  padding: 10px 28px; border-radius: 9px; border: none;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  background: transparent; color: var(--muted);
+  transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+  font-family: inherit;
+}
+.ssp-toggle-btn.ssp-toggle-active {
+  background: var(--text); color: #0a0d10;
+}
+.ssp-toggle-save {
+  background: rgba(74,222,128,0.15); color: #4ade80;
+  font-size: 11px; font-weight: 700; padding: 2px 8px;
+  border-radius: 100px; border: 1px solid rgba(74,222,128,0.3);
+}
+.ssp-plan-price-old {
+  font-size: 20px; color: var(--muted); text-decoration: line-through;
+  margin-right: 8px; font-weight: 500;
+}
+.ssp-plan-billed {
+  font-size: 13px; color: var(--muted); margin-top: -22px; margin-bottom: 24px;
+}
 .ssp-plans {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
