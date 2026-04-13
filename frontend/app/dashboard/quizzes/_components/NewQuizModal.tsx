@@ -23,6 +23,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
+import { QUIZ_TEMPLATES, QuizTemplateId } from './quizTemplates';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -189,6 +190,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
 
   const [url, setUrl] = useState('');
   const [topic, setTopic] = useState('');
+  const [templateId, setTemplateId] = useState<QuizTemplateId | null>(null);
   const [stage, setStage] = useState<Stage>('idle');
   const [error, setError] = useState<string | null>(null);
   const [creatingBlank, setCreatingBlank] = useState(false);
@@ -201,6 +203,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
       // reset state on close
       setUrl('');
       setTopic('');
+      setTemplateId(null);
       setStage('idle');
       setError(null);
       setCreatingBlank(false);
@@ -236,7 +239,11 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ url: normalized, topic: topic.trim() || undefined }),
+        body: JSON.stringify({
+          url: normalized,
+          topic: topic.trim() || undefined,
+          template_id: templateId ?? undefined,
+        }),
       });
 
       clearTimeout(ticker);
@@ -323,7 +330,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           New quiz
         </h2>
         <p style={{ color: C.MUTED, fontSize: 14, margin: '6px 0 0' }}>
-          Paste your site URL and we'll generate a personalized quiz. Add a topic below to steer it toward a specific angle.
+          Paste your site URL and we'll generate a personalized quiz. Pick a template and add a topic to steer it.
         </p>
       </div>
 
@@ -363,6 +370,85 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           }}
         />
 
+        <div
+          style={{
+            marginTop: 18,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            marginBottom: 10,
+          }}
+        >
+          <label
+            style={{ color: C.TEXT, fontSize: 13, fontWeight: 500 }}
+          >
+            Template{' '}
+            <span style={{ color: C.MUTED, fontWeight: 400 }}>(optional)</span>
+          </label>
+          {templateId && (
+            <button
+              type="button"
+              onClick={() => setTemplateId(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: C.MUTED,
+                fontSize: 12,
+                cursor: 'pointer',
+                padding: 0,
+                fontFamily: 'inherit',
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 8,
+          }}
+        >
+          {QUIZ_TEMPLATES.map((t) => {
+            const selected = templateId === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTemplateId(selected ? null : t.id)}
+                disabled={isGenerating || creatingBlank}
+                title={t.examples.join(' • ')}
+                style={{
+                  textAlign: 'left',
+                  padding: '10px 11px',
+                  borderRadius: 10,
+                  border: `1.5px solid ${selected ? C.ACCENT : C.BORDER}`,
+                  background: selected ? 'rgba(255,255,255,0.04)' : C.SURFACE,
+                  color: C.TEXT,
+                  cursor:
+                    isGenerating || creatingBlank ? 'not-allowed' : 'pointer',
+                  transition: 'border-color 120ms, background 120ms',
+                  fontFamily: 'inherit',
+                  lineHeight: 1.35,
+                }}
+              >
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    marginBottom: 2,
+                  }}
+                >
+                  {t.name}
+                </div>
+                <div style={{ fontSize: 11, color: C.MUTED }}>{t.blurb}</div>
+              </button>
+            );
+          })}
+        </div>
+
         <label
           htmlFor="new-quiz-topic"
           style={{
@@ -370,7 +456,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
             color: C.TEXT,
             fontSize: 13,
             fontWeight: 500,
-            marginTop: 16,
+            marginTop: 18,
             marginBottom: 8,
           }}
         >
