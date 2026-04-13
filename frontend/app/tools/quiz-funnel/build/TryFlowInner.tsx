@@ -358,6 +358,12 @@ export function TryFlowInner({
       setClaimToken(data.claim_token || '');
       setSelectedIdx(0);
       setStage(3);
+      // Scroll to top of page and editor panel
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      setTimeout(() => {
+        document.getElementById('stage-3')?.scrollIntoView({ behavior: 'instant', block: 'start' });
+        document.querySelector('.s3-main')?.scrollTo({ top: 0, behavior: 'instant' });
+      }, 50);
       try {
         if (data.claim_token) {
           document.cookie = `sq_claim=${data.claim_token};path=/;max-age=86400;SameSite=Lax`;
