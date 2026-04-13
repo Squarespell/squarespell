@@ -33,6 +33,7 @@ interface Outcome {
   title: string;
   description: string;
   ctaText?: string;
+  ctaUrl?: string;
   minScore?: number;
   maxScore?: number;
 }
