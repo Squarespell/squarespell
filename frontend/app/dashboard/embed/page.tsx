@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/embed — Embed snippets + install instructions for every quiz.
+ * /dashboard/embed - Embed snippets + install instructions for every quiz.
  *
  * Central place users come to grab the code they need to paste into
  * Squarespace. Lists every quiz with a one-click copy button, plus a
@@ -124,7 +124,7 @@ function InstallGuide() {
     },
     {
       title: 'Add a Code block',
-      body: 'Click "Edit" on the page, press the "+" to add a block, and choose "Code". Paste the snippet into the code block exactly as copied — don\'t wrap it in any other HTML.',
+      body: 'Click "Edit" on the page, press the "+" to add a block, and choose "Code". Paste the snippet into the code block exactly as copied - don\'t wrap it in any other HTML.',
     },
     {
       title: 'Save and publish',

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * DashboardShell — the persistent chrome (sidebar + topbar) that wraps every
+ * DashboardShell - the persistent chrome (sidebar + topbar) that wraps every
  * top-level dashboard page: /dashboard, /dashboard/leads, /dashboard/analytics,
  * /dashboard/integrations, /dashboard/brand-kit, /dashboard/embed, and
  * /dashboard/billing.
@@ -40,7 +40,7 @@ type NavItem = {
   match?: (pathname: string) => boolean;
 };
 
-// Inline primitive icons — keeps us free of an icon library dep
+// Inline primitive icons - keeps us free of an icon library dep
 const icons = {
   overview: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -241,7 +241,7 @@ interface DashboardShellProps {
   topbarRight?: ReactNode;
   /** Override the default 36px main-column padding. Useful for full-bleed
    *  pages (e.g. the quiz editor) that render their own internal chrome.
-   *  Accepts any valid CSS padding value — e.g. "0" or "0 0 36px". */
+   *  Accepts any valid CSS padding value - e.g. "0" or "0 0 36px". */
   contentPadding?: string;
   /** Hide the sticky topbar entirely (quiz editor has its own topbar). */
   hideTopbar?: boolean;
@@ -296,7 +296,7 @@ export function DashboardShell({
         boxShadow: isMobile && mobileOpen ? '0 24px 64px rgba(0,0,0,0.5)' : 'inset -1px 0 0 rgba(255,255,255,0.02)',
       }}
     >
-      {/* Brand wordmark — the "New quiz" button used to live here but was
+      {/* Brand wordmark - the "New quiz" button used to live here but was
           removed: it duplicated the one on the /dashboard overview page and
           made the sidebar feel top-heavy. The dedicated "Quiz editor" nav
           item below handles opening the current editor. */}
@@ -500,7 +500,7 @@ export function DashboardShell({
               }}
               title={userEmail}
             >
-              {userEmail || '—'}
+              {userEmail || '-'}
             </div>
           </div>
           <button

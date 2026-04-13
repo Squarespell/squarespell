@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/billing — Plan, usage, and billing portal entrypoint.
+ * /dashboard/billing - Plan, usage, and billing portal entrypoint.
  *
  * Shows the current plan from /api/user/plan, usage bars for quizzes + leads,
  * trial countdown if applicable, and a Stripe customer-portal button for paid
@@ -35,28 +35,32 @@ type UserPlan = {
 const PLAN_CATALOG: Array<{
   id: UserPlan['plan'];
   name: string;
-  price: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
   tagline: string;
   features: string[];
 }> = [
   {
     id: 'starter',
     name: 'Starter',
-    price: '$29/mo',
+    monthlyPrice: 19,
+    yearlyPrice: 180,
     tagline: 'Perfect for a single Squarespace site',
     features: ['5 quizzes', '500 leads / month', 'All integrations', 'Email support'],
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '$79/mo',
+    monthlyPrice: 39,
+    yearlyPrice: 372,
     tagline: 'For serious lead generation',
     features: ['20 quizzes', '5,000 leads / month', 'Priority support', 'Remove "Powered by" badge'],
   },
   {
     id: 'agency',
     name: 'Agency',
-    price: '$199/mo',
+    monthlyPrice: 79,
+    yearlyPrice: 756,
     tagline: 'White-label for client work',
     features: ['Unlimited quizzes', 'Unlimited leads', 'Client sub-accounts', 'Dedicated support'],
   },
@@ -121,6 +125,7 @@ export default function BillingPage() {
   const { token, status: authStatus } = useDashboardAuth();
   const [plan, setPlan] = useState<UserPlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [yearly, setYearly] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -156,11 +161,11 @@ export default function BillingPage() {
 
   const openPortal = () => {
     if (!token) return;
-    // Stripe portal is a redirect endpoint — we open with the auth header via a GET
+    // Stripe portal is a redirect endpoint - we open with the auth header via a GET
     // through fetch won't follow cross-origin redirects; the backend route redirects
     // the browser, so we navigate directly with the token in a URL is unsafe.
     // Instead the backend /api/stripe/portal requires auth; we do a same-tab fetch
-    // to read the portal URL. But that route does res.redirect — so fetch follows
+    // to read the portal URL. But that route does res.redirect - so fetch follows
     // it and returns the final HTML. Safer: POST a helper or read location from
     // response. For now, open in a new tab via a fetch that returns the redirect
     // target URL. (Matches the existing dashboard behavior.)
@@ -255,18 +260,57 @@ export default function BillingPage() {
         </Card>
 
         <div>
-          <h2
-            style={{
-              margin: '8px 0 14px 0',
-              fontSize: 14,
-              fontWeight: 700,
-              color: C.TEXT_MUTED,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}
-          >
-            Available plans
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 14,
+                fontWeight: 700,
+                color: C.TEXT_MUTED,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Available plans
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: yearly ? 500 : 700, color: yearly ? C.TEXT_MUTED : C.TEXT }}>Monthly</span>
+              <button
+                onClick={() => setYearly(!yearly)}
+                style={{
+                  width: 44,
+                  height: 24,
+                  borderRadius: 12,
+                  border: 'none',
+                  background: yearly ? C.ACCENT : C.SURFACE,
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    background: yearly ? '#000' : C.TEXT_MUTED,
+                    position: 'absolute',
+                    top: 3,
+                    left: yearly ? 23 : 3,
+                    transition: 'left 0.2s ease',
+                  }}
+                />
+              </button>
+              <span style={{ fontSize: 13, fontWeight: yearly ? 700 : 500, color: yearly ? C.TEXT : C.TEXT_MUTED }}>
+                Yearly
+              </span>
+              {yearly && (
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#000', background: C.ACCENT, padding: '2px 8px', borderRadius: 10 }}>
+                  Save 20%
+                </span>
+              )}
+            </div>
+          </div>
           <div
             style={{
               display: 'grid',
@@ -276,6 +320,12 @@ export default function BillingPage() {
           >
             {PLAN_CATALOG.map((p) => {
               const current = plan.plan === p.id;
+              const displayPrice = yearly
+                ? `$${Math.round(p.yearlyPrice / 12)}/mo`
+                : `$${p.monthlyPrice}/mo`;
+              const billedNote = yearly
+                ? `Billed $${p.yearlyPrice}/year`
+                : null;
               return (
                 <div
                   key={p.id}
@@ -295,9 +345,14 @@ export default function BillingPage() {
                   <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
                     {p.name}
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: C.ACCENT, marginBottom: 8 }}>
-                    {p.price}
+                  <div style={{ fontSize: 22, fontWeight: 800, color: C.ACCENT, marginBottom: 2 }}>
+                    {displayPrice}
                   </div>
+                  {billedNote && (
+                    <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginBottom: 6 }}>
+                      {billedNote}
+                    </div>
+                  )}
                   <div style={{ fontSize: 12.5, color: C.TEXT_MUTED, marginBottom: 14, lineHeight: 1.5 }}>
                     {p.tagline}
                   </div>
@@ -320,7 +375,7 @@ export default function BillingPage() {
                     ))}
                   </ul>
                   {!current && (
-                    <GhostButton onClick={() => router.push('/pricing')}>Choose {p.name}</GhostButton>
+                    <GhostButton onClick={() => router.push(`/pricing${yearly ? '?interval=yearly' : ''}`)}>Choose {p.name}</GhostButton>
                   )}
                 </div>
               );

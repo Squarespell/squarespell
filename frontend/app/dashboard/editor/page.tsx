@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/editor — sidebar "Quiz editor" entry point.
+ * /dashboard/editor - sidebar "Quiz editor" entry point.
  *
  * Opens the user's most recently updated quiz inside DashboardShell. If the
  * user has no quizzes yet, QuizEditorView renders an empty state with a CTA

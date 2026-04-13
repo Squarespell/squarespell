@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * useDashboardAuth — shared auth gate for every page that lives inside
+ * useDashboardAuth - shared auth gate for every page that lives inside
  * DashboardShell. Returns a token once Clerk is ready, otherwise drives the
  * user back to /sign-in. Mirrors the retry logic that the original
- * /dashboard/page.tsx used, so we never lose tokens to the Clerk→app hand-off.
+ * /dashboard/page.tsx used, so we never lose tokens to the Clerk-app hand-off.
  */
 
 import { useEffect, useRef, useState } from 'react';

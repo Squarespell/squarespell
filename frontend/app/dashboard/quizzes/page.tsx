@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/quizzes — full management grid of every quiz the user owns.
+ * /dashboard/quizzes - full management grid of every quiz the user owns.
  *
  * The /dashboard overview shows the top-performing subset; this page owns
  * CRUD on the full set (edit, view live, embed, delete).

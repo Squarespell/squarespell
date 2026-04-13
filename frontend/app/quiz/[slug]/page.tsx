@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * Public hosted quiz page — rendered in the visitor's Squarespace brand.
+ * Public hosted quiz page - rendered in the visitor's Squarespace brand.
  *
  * This is what visitors see when they land on squarespell.com/q/{slug} OR when
  * the <script src="/embed.js"> embed iframes this URL into a Squarespace page.
  *
  * Per the prototype-v4 restoration decision, this page mirrors the Stage 4
  * visitor preview from /try: brand colors, brand font, light aesthetic, and a
- * score-based outcome matcher (minScore/maxScore) — NOT the old dark
+ * score-based outcome matcher (minScore/maxScore) - NOT the old dark
  * Squarespell-branded theme.
  *
  * Container queries (@container) make the layout responsive to the iframe

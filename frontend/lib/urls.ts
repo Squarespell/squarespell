@@ -1,10 +1,10 @@
 /**
  * Central URL configuration for Squarespell.
  *
- * Two production domains — both permanent, both hardcoded on purpose:
+ * Two production domains - both permanent, both hardcoded on purpose:
  *
- *   MARKETING_URL  — squarespell.com           (Squarespace marketing site)
- *   APP_URL        — app.squarespell.com       (the entire Squarespell app)
+ *   MARKETING_URL  - squarespell.com           (Squarespace marketing site)
+ *   APP_URL        - app.squarespell.com       (the entire Squarespell app)
  *
  * Everything user-facing in the product lives under APP_URL on a single
  * subdomain so visitors never see the URL bar bounce between subdomains.

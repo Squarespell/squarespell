@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/quizzes/[id]/builder — Quiz Builder UI with drag-and-drop
+ * /dashboard/quizzes/[id]/builder - Quiz Builder UI with drag-and-drop
  * question reordering, question editor, outcomes management, and save to API.
  *
  * Features:

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /try — the public preview funnel.
+ * /try - the public preview funnel.
  *
  * Thin wrapper around the reusable <TryFlowInner /> component (in
  * ./TryFlowInner.tsx). Next.js App Router doesn't allow extra named exports

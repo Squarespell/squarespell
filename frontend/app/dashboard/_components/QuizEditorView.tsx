@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * QuizEditorView — the authed quiz editor rendered *inside* DashboardShell.
+ * QuizEditorView - the authed quiz editor rendered *inside* DashboardShell.
  *
  * Both /dashboard/[quizId] (a specific quiz) and /dashboard/editor (latest
  * quiz or empty state) render through this component so the editor always
@@ -65,7 +65,7 @@ function brandFromQuiz(raw: DbQuiz) {
  * owns the outer page background and a sticky header), we need to:
  *   1. Stop .stage from claiming 100vh (double scroll otherwise)
  *   2. Make the s3-top of the editor stick to the top of the main column
- *      rather than behind the shell topbar — we hide the shell topbar in
+ *      rather than behind the shell topbar - we hide the shell topbar in
  *      this page via hideTopbar.
  */
 const SHELL_OVERRIDES = `

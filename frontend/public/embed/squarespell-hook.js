@@ -12,7 +12,7 @@
  * https://app.squarespell.com/tools/quiz-funnel/build?url=... where the
  * full Stage 1 -> 6 funnel takes over.
  *
- * Styling matches prototype-v4 tokens exactly — dark base, #D2FF1D accent,
+ * Styling matches prototype-v4 tokens exactly - dark base, #D2FF1D accent,
  * DM Sans, 100px pill radius on the primary button. Self-contained; no
  * external dependencies.
  */
@@ -189,7 +189,7 @@
       }
       btn.disabled = true;
       btn.textContent = 'Loading…';
-      // Redirect to the full quiz builder funnel — TryFlowInner reads ?url=
+      // Redirect to the full quiz builder funnel - TryFlowInner reads ?url=
       // and skips Stage 1, dropping the visitor straight on the questions
       // page while the brand analyze runs in the background.
       window.location.href = APP_URL + BUILDER_PATH + '?url=' + encodeURIComponent(url);

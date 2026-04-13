@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * /dashboard/brand-kit — Brand snapshot pulled from the user's quizzes.
+ * /dashboard/brand-kit - Brand snapshot pulled from the user's quizzes.
  *
- * Squarespell doesn't store a separate "brand kit" per user yet — the brand
+ * Squarespell doesn't store a separate "brand kit" per user yet - the brand
  * palette, font, logo, and site name live inside each quiz's `branding`
  * JSONB. This page picks the most recent quiz, loads its full record, and
  * shows the scraped brand so users can verify what we detected. Changing

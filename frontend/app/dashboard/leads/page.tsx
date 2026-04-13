@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/leads — Unified leads inbox across every quiz the user owns.
+ * /dashboard/leads - Unified leads inbox across every quiz the user owns.
  * Queries the backend's new GET /api/leads endpoint, which joins through to
  * quiz title + slug so we can show "Lead X captured on Quiz Y" in one list.
  */
@@ -304,13 +304,13 @@ export default function LeadsPage() {
                         onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        <td style={{ padding: '14px 18px', color: C.TEXT, fontWeight: 600 }}>{l.name || '—'}</td>
+                        <td style={{ padding: '14px 18px', color: C.TEXT, fontWeight: 600 }}>{l.name || '-'}</td>
                         <td style={{ padding: '14px 18px', color: C.TEXT }}>{l.email}</td>
                         <td style={{ padding: '14px 18px' }}>
                           {l.quizzes ? (
                             <Pill variant="accent">{l.quizzes.title}</Pill>
                           ) : (
-                            <span style={{ color: C.TEXT_MUTED }}>—</span>
+                            <span style={{ color: C.TEXT_MUTED }}>-</span>
                           )}
                         </td>
                         <td style={{ padding: '14px 18px' }}>
@@ -330,7 +330,7 @@ export default function LeadsPage() {
                               {l.score_label || 'Unknown'} ({l.score})
                             </div>
                           ) : (
-                            <span style={{ color: C.TEXT_MUTED, fontSize: 12 }}>—</span>
+                            <span style={{ color: C.TEXT_MUTED, fontSize: 12 }}>-</span>
                           )}
                         </td>
                         <td style={{ padding: '14px 18px', color: C.TEXT_MUTED }}>{formatDate(l.created_at)}</td>

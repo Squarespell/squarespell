@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/analytics — Roll-up analytics across every quiz the user owns.
+ * /dashboard/analytics - Roll-up analytics across every quiz the user owns.
  *
  * Reuses the existing per-quiz endpoint (/api/analytics/:quizId) by fanning
  * out one request per quiz and summing the results. Also shows a per-quiz

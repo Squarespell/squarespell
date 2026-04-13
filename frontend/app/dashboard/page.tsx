@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard — Overview (YouTube-Studio / MoneyPrinter-CRM-inspired)
+ * /dashboard - Overview (YouTube-Studio / MoneyPrinter-CRM-inspired)
  *
  * Responsibilities:
  *  1. Claim flow for users arriving from /try (?claim=... or localStorage
@@ -316,7 +316,7 @@ function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () 
             <strong style={{ color: C.ACCENT }}>
               {daysLeft} day{daysLeft !== 1 ? 's' : ''}
             </strong>{' '}
-            — upgrade to keep access.
+            - upgrade to keep access.
           </>
         ) : (
           <>
@@ -423,7 +423,7 @@ function OverviewInner() {
   const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
   const initRef = useRef(false);
 
-  // Claim flow + plan fetch — runs once when token becomes available
+  // Claim flow + plan fetch - runs once when token becomes available
   useEffect(() => {
     if (!token || initRef.current) return;
     initRef.current = true;
@@ -824,7 +824,7 @@ function OverviewInner() {
                 borderRadius: 12,
               }}
             >
-              No quizzes yet —{' '}
+              No quizzes yet -{' '}
               <Link href="/tools/quiz-funnel/build" style={{ color: C.ACCENT, textDecoration: 'none', fontWeight: 600 }}>
                 create your first quiz
               </Link>

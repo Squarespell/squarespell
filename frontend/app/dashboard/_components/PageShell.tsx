@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * PageShell — small reusable primitives for dashboard pages so every page has a
+ * PageShell - small reusable primitives for dashboard pages so every page has a
  * consistent header, empty state, card, pill, and stat block without pulling
  * in a UI library. Keeps every dashboard page visually identical to /try.
  */

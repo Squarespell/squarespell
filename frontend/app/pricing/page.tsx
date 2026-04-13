@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -124,7 +124,9 @@ function Cross() {
 }
 
 export default function PricingPage() {
-  const [billing, setBilling] = useState<Billing>('monthly');
+  const searchParams = useSearchParams();
+  const initialInterval = searchParams.get('interval') === 'yearly' ? 'yearly' : 'monthly';
+  const [billing, setBilling] = useState<Billing>(initialInterval);
   const [loading, setLoading] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { getToken, isSignedIn } = useAuth();

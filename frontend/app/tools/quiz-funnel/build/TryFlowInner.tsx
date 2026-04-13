@@ -186,7 +186,7 @@ export function TryFlowInner({
   const [sessionToken, setSessionToken] = useState('');
   const [claimToken, setClaimToken] = useState('');
 
-  // Stage 2 — questions are static (prototype-v4), only answers are stateful
+  // Stage 2 - questions are static (prototype-v4), only answers are stateful
   const onboardingQs = STATIC_ONBOARDING;
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, number>>({});
   const [buildingQuiz, setBuildingQuiz] = useState(false);
@@ -269,7 +269,7 @@ export function TryFlowInner({
       console.error('[squarespell] analyze error', err);
       if (err?.name === 'AbortError') {
         setErrorMsg(
-          "That took too long. Our server may be waking up — please try again in a moment.",
+          "That took too long. Our server may be waking up - please try again in a moment.",
         );
       } else {
         setErrorMsg(
@@ -573,7 +573,7 @@ export function TryFlowInner({
     } else {
       setS4ShowResult(true);
     }
-    // Scroll only the inner visitor preview to top — never the outer editor page.
+    // Scroll only the inner visitor preview to top - never the outer editor page.
     if (typeof document !== 'undefined') {
       const chrome = document.querySelector('.s4-chrome') as HTMLElement | null;
       if (chrome) chrome.scrollTop = 0;
@@ -602,7 +602,7 @@ export function TryFlowInner({
   const domain = (url || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '') || 'your site';
   const siteLetter = (brand?.site_name || domain || 'B').charAt(0).toUpperCase();
 
-  // Slug derived from quiz title — used in Stage 6 public URL and embed snippet
+  // Slug derived from quiz title - used in Stage 6 public URL and embed snippet
   const quizSlug = (quiz?.title || 'your-quiz')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -678,7 +678,7 @@ export function TryFlowInner({
   // Sign-up must happen on app.squarespell.com so Clerk session cookies land on
   // the right origin. If we push a relative /sign-up from quiz.squarespell.com
   // Clerk will set the session cookie on quiz.* and the dashboard (on app.*)
-  // won't see it — user ends up stuck on quiz.*/dashboard with no sidebar.
+  // won't see it - user ends up stuck on quiz.*/dashboard with no sidebar.
   const goSignUp = () => {
     const claim = claimToken || (typeof window !== 'undefined' ? sessionStorage.getItem('sq_claim_token') || '' : '');
     const params = new URLSearchParams({ from: 'try', url });
@@ -704,7 +704,7 @@ export function TryFlowInner({
 
       {/* ============ STAGE 1: EMBEDDABLE HOOK WIDGET (per prototype-v4) ============
           NO hero, NO nav, NO "Turn visitors into leads" headline.
-          Just the URL input — same component that gets embedded on squarespell.com
+          Just the URL input - same component that gets embedded on squarespell.com
           via /embed/squarespell-hook.js. */}
       <div className={`stage${stage === 1 ? ' active' : ''}`} id="stage-1">
         <div className="hook">
@@ -737,7 +737,7 @@ export function TryFlowInner({
           {loading && slowHint && !errorMsg && (
             <div className="hook-hint">
               <span className="hook-hint-spinner" />
-              Waking up the server — this can take up to 30 seconds on first load.
+              Waking up the server - this can take up to 30 seconds on first load.
             </div>
           )}
 

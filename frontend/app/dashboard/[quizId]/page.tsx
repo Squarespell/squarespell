@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/[quizId] — quiz editor for a specific quiz.
+ * /dashboard/[quizId] - quiz editor for a specific quiz.
  *
  * Thin wrapper over QuizEditorView which handles the fetch + DashboardShell
  * mounting. Both this route (quiz cards → editor) and /dashboard/editor

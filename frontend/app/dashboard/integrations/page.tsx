@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard/integrations — Where users connect lead delivery destinations.
+ * /dashboard/integrations - Where users connect lead delivery destinations.
  *
  * Backed by /api/integrations (GET/POST/PATCH/DELETE). Today we ship a
  * fully-working webhook integration (the only one with a /test endpoint in

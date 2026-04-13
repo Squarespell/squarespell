@@ -20,7 +20,7 @@ const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
  *     /sign-in, /sign-up             Clerk auth
  *     /dashboard, /dashboard/*       authenticated dashboard (Clerk-protected)
  *
- *   quiz.squarespell.com (legacy subdomain — will be sunset)
+ *   quiz.squarespell.com (legacy subdomain - will be sunset)
  *     ALL paths                      301 → app.squarespell.com<path>
  *     This keeps every old embed snippet, every shared quiz link, and every
  *     piece of marketing collateral that mentions quiz.squarespell.com

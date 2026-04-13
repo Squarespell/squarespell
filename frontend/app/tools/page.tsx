@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /tools — Tools hub.
+ * /tools - Tools hub.
  *
  * Lightweight index page listing all Squarespell tools. For now, only the
  * AI Quiz Funnel lives here, but this is where future products (templates,

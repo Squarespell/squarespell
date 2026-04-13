@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /tools/quiz-funnel — Public marketing landing page for Squarespell's
+ * /tools/quiz-funnel - Public marketing landing page for Squarespell's
  * AI Quiz Funnel product. Lives inside the /tools hub.
  *
  * Standalone, shareable URL designed to be linked from the Squarespace
@@ -121,7 +121,7 @@ const FAQS = [
   },
   {
     q: 'Will it match my brand?',
-    a: "Yes. Colors, fonts, and tone are pulled from your site on generation. You can override everything in the editor — or just ship what the AI proposes.",
+    a: "Yes. Colors, fonts, and tone are pulled from your site on generation. You can override everything in the editor - or just ship what the AI proposes.",
   },
   {
     q: 'What happens to leads I collect?',
@@ -129,7 +129,7 @@ const FAQS = [
   },
   {
     q: 'Can I try it without signing up?',
-    a: "Yes — the whole generator is free to use without an account. You only sign in if you want to save, publish, and start collecting leads.",
+    a: "Yes - the whole generator is free to use without an account. You only sign in if you want to save, publish, and start collecting leads.",
   },
 ];
 
@@ -151,7 +151,7 @@ export default function LandingPage() {
     const normalized = normalizeUrl(heroUrl);
     if (!normalized) return;
     setHeroSubmitting(true);
-    // Same-host client-side push — the builder lives at
+    // Same-host client-side push - the builder lives at
     // /tools/quiz-funnel/build on the same app.squarespell.com origin.
     // TryFlowInner reads `?url=` and skips Stage 1 entirely, dropping the
     // visitor straight onto the questions page.
@@ -207,7 +207,7 @@ export default function LandingPage() {
             No developer. No friction.
           </p>
 
-          {/* Inline URL generator — mirrors the /try Stage 1 hook widget. */}
+          {/* Inline URL generator - mirrors the /try Stage 1 hook widget. */}
           <form className="ssp-hero-gen" onSubmit={handleGenerate}>
             <div className="ssp-hero-gen-field">
               <span className="ssp-hero-gen-prefix">https://</span>
@@ -363,7 +363,7 @@ export default function LandingPage() {
             Built for Squarespace. <span className="ssp-h2-muted">Not retrofitted for it.</span>
           </h2>
           <p className="ssp-sub">
-            Every decision — from the embed snippet to the brand-matching AI — was made
+            Every decision - from the embed snippet to the brand-matching AI - was made
             with Squarespace in mind. Not a generic form builder bolted on.
           </p>
         </div>
@@ -393,7 +393,7 @@ export default function LandingPage() {
           />
           <FeatureCard
             title="Smart lead gate"
-            body="Collect email when intent is highest — after they've answered, before they see results."
+            body="Collect email when intent is highest - after they've answered, before they see results."
             visual={
               <div className="ssp-feature-pill">
                 <span className="ssp-feature-pill-dot" />
@@ -415,7 +415,7 @@ export default function LandingPage() {
           <FeatureCard
             span={2}
             title="No branding. No limits."
-            body="On Pro, every trace of Squarespell is gone. Looks like native product, because from your visitors' perspective — it is."
+            body="On Pro, every trace of Squarespell is gone. Looks like native product, because from your visitors' perspective - it is."
             visual={
               <div className="ssp-feature-toggle">
                 <div className="ssp-feature-toggle-track">
