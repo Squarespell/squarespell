@@ -1583,7 +1583,7 @@ export function TryFlowInner({
                           ))}
                         </div>
                         {s4Idx > 0 && (
-                          <span className="s4-quiz-back" onClick={s4Back}>&larr; Previous question</span>
+                          <span className="s4-quiz-back" onClick={s4Back}>{'\u2190'} Previous question</span>
                         )}
                       </>
                     ) : s4LeadGate ? (
@@ -1594,8 +1594,8 @@ export function TryFlowInner({
                             <path d="M22 7l-10 7L2 7" />
                           </svg>
                         </div>
-                        <div className="s4-lead-gate-title">Your personalized results are ready!</div>
-                        <div className="s4-lead-gate-sub">Enter your email to see which {brandName} solution is the best fit for you.</div>
+                        <div className="s4-lead-gate-title">Your personalized recommendation is ready!</div>
+                        <div className="s4-lead-gate-sub">Enter your email to unlock your custom {brandName} recommendation and get exclusive tips.</div>
                         <input
                           className="s4-lead-gate-input"
                           type="email"
@@ -1610,19 +1610,42 @@ export function TryFlowInner({
                           type="button"
                           disabled={!s4Email.includes('@')}
                         >
-                          Show my results
+                          See my recommendation
                         </button>
                         <div className="s4-lead-gate-skip" onClick={s4SubmitLead}>Skip for now</div>
-                        <div className="s4-lead-gate-privacy">We respect your privacy. No spam, ever.</div>
+                        <div className="s4-lead-gate-privacy">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                          {' '}We respect your privacy. Unsubscribe anytime.
+                        </div>
                       </div>
                     ) : (
                       <div className="s4-quiz-result">
-                        <div className="s4-quiz-result-badge">Your result</div>
+                        <div className="s4-quiz-result-badge">{'\u2728'} Your personalized result</div>
                         <div className="s4-quiz-result-title">{s4Outcome?.title || 'Your result'}</div>
                         <div className="s4-quiz-result-desc">{s4Outcome?.description || ''}</div>
-                        <div className="s4-quiz-result-cta">{s4Outcome?.ctaText || 'Get my personalized plan'} &rarr;</div>
+                        <a
+                          className="s4-quiz-result-cta"
+                          href={s4Outcome?.ctaUrl || (url ? `https://${domain}` : '#')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => { if (!s4Outcome?.ctaUrl) e.preventDefault(); }}
+                        >
+                          {s4Outcome?.ctaText || 'Get my personalized plan'} {'\u2192'}
+                        </a>
+                        <div className="s4-quiz-result-share">
+                          <span className="s4-share-label">Share your result:</span>
+                          <button className="s4-share-btn" type="button" title="Share on X" onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I got "${s4Outcome?.title}" on the ${brandName} quiz!`)}&url=${encodeURIComponent(`https://${domain}`)}`, '_blank')}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                          </button>
+                          <button className="s4-share-btn" type="button" title="Share on Facebook" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://${domain}`)}`, '_blank')}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                          </button>
+                          <button className="s4-share-btn" type="button" title="Copy link" onClick={() => { navigator.clipboard?.writeText(`https://${domain}/quiz`); }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                          </button>
+                        </div>
                         <div style={{ marginTop: 14 }}>
-                          <span className="s4-quiz-result-restart" onClick={resetS4}>&larrhk; Take the quiz again</span>
+                          <span className="s4-quiz-result-restart" onClick={resetS4}>{'\u21A9'} Take the quiz again</span>
                         </div>
                       </div>
                     )}

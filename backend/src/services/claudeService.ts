@@ -612,10 +612,11 @@ Generate a quiz with this EXACT JSON structure:
     {
       "id": "r1",
       "title": "Outcome title - a real product/service from this business",
-      "description": "2-3 sentences explaining why this is the right fit",
+      "description": "2-3 sentences explaining why this is the right fit for the visitor based on their answers",
       "minScore": 0,
       "maxScore": 10,
-      "ctaText": "Learn More"
+      "ctaText": "Explore [Product Name]",
+      "ctaUrl": "https://example.com/relevant-product-page"
     }
   ]
 }
@@ -626,6 +627,8 @@ REQUIREMENTS:
 - Every question and option must reference THIS business's actual offers, product names, or service categories
 - Score values: 0 (low fit), 1 (slight fit), 2 (good fit), 3 (best fit)
 - Outcomes should map to real products/services/packages from the website
+- Each outcome MUST have a "ctaUrl" linking to the relevant page on ${websiteUrl} (e.g. ${websiteUrl}/products, ${websiteUrl}/services, ${websiteUrl}/contact)
+- Each outcome MUST have a specific "ctaText" like "Browse Templates", "Book a Call", "Shop Now", "Get Started" - not generic "Learn More"
 - NEVER use em dashes (--). Use commas or hyphens (-) instead
 - Questions 1-3: engaging questions about what the visitor is looking for (reference real products/services)
 - Questions 4-7: deeper questions about their specific situation and needs

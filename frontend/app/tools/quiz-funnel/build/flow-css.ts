@@ -987,12 +987,12 @@ export const FLOW_CSS = `
     min-height: 100%;
     object-fit: cover; object-position: top center;
     pointer-events: none; z-index: 0;
-    opacity: 0.10;
-    filter: grayscale(20%) blur(0.5px);
+    opacity: 0.18;
+    filter: blur(1px);
   }
   .s4-site-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(180deg, var(--site-bg, #ffffff) 0%, rgba(255,255,255,0.85) 30%, rgba(255,255,255,0.7) 100%);
+    background: linear-gradient(180deg, var(--site-bg, #ffffff) 0%, rgba(255,255,255,0.75) 25%, rgba(255,255,255,0.6) 100%);
     z-index: 1;
   }
   .s4-site-nav {
@@ -1210,16 +1210,35 @@ export const FLOW_CSS = `
   }
   .s4-quiz-result-cta {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 14px 28px;
-    background: var(--site-primary, #5a7a4a);
-    color: #ffffff;
+    padding: 16px 32px;
+    background: var(--site-primary, #111);
+    color: var(--site-bg, #fff);
     border-radius: 100px;
-    font-weight: 600; font-size: 14px;
+    font-weight: 600; font-size: 15px;
     cursor: pointer;
     transition: all 0.2s var(--ease);
     font-family: var(--site-body-font, 'Inter', sans-serif);
+    text-decoration: none;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
-  .s4-quiz-result-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,0.15); }
+  .s4-quiz-result-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.2); }
+  .s4-quiz-result-share {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 20px; justify-content: center;
+  }
+  .s4-share-label {
+    font-size: 12px; color: var(--site-text, #1a1a1a); opacity: 0.45;
+    font-family: var(--site-body-font, 'Inter', sans-serif);
+  }
+  .s4-share-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.08);
+    color: var(--site-text, #1a1a1a); opacity: 0.5;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .s4-share-btn:hover { opacity: 1; background: rgba(0,0,0,0.1); transform: translateY(-1px); }
   .s4-quiz-result-restart {
     margin-top: 16px;
     display: inline-block;
@@ -1257,27 +1276,29 @@ export const FLOW_CSS = `
   }
   .s4-lead-gate-input {
     display: block; width: 100%; max-width: 320px; margin: 0 auto 14px;
-    padding: 13px 16px; border-radius: 10px;
+    padding: 14px 20px; border-radius: 100px;
     border: 2px solid var(--site-border, rgba(0,0,0,0.12));
     background: var(--site-surface, #fff);
     color: var(--site-text, #1a1a1a);
     font-size: 15px; font-family: var(--site-body-font, 'Inter', sans-serif);
     outline: none; transition: border-color 0.2s;
+    text-align: center;
   }
   .s4-lead-gate-input:focus {
     border-color: var(--site-primary, #111);
   }
   .s4-lead-gate-btn {
     display: block; width: 100%; max-width: 320px; margin: 0 auto 12px;
-    padding: 14px 24px; border-radius: 10px; border: none;
+    padding: 15px 24px; border-radius: 100px; border: none;
     background: var(--site-primary, #111);
     color: var(--site-bg, #fff);
     font-size: 15px; font-weight: 600; cursor: pointer;
     font-family: var(--site-body-font, 'Inter', sans-serif);
-    transition: opacity 0.2s, transform 0.15s;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
-  .s4-lead-gate-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
-  .s4-lead-gate-btn:disabled { opacity: 0.4; cursor: default; }
+  .s4-lead-gate-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+  .s4-lead-gate-btn:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
   .s4-lead-gate-skip {
     font-size: 13px; color: var(--site-text, #1a1a1a); opacity: 0.45;
     cursor: pointer; margin-top: 4px;
