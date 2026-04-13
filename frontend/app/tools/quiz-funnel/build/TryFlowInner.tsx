@@ -1144,58 +1144,60 @@ export function TryFlowInner({
                 const isFirst = i === 0;
                 const isLast = quiz ? i === quiz.questions.length - 1 : true;
                 return (
-                  <div key={q.id} className={`qc${isSel ? ' selected' : ''}`} onClick={() => setSelectedIdx(i)}>
-                    <div className="qc-head">
-                      <div className="qc-num">{i + 1}</div>
-                      <div className="qc-head-main">
-                        <div className="qc-q">{q.text}</div>
-                        <div className="qc-meta">{q.options.length} answers · single select</div>
-                      </div>
-                      <div className="qc-actions" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          className="qc-action-btn"
-                          type="button"
-                          title="Move up"
-                          disabled={isFirst}
-                          onClick={(e) => { e.stopPropagation(); moveQuestion(i, -1); }}
-                        >
-                          <SvgChevronUp />
-                        </button>
-                        <button
-                          className="qc-action-btn"
-                          type="button"
-                          title="Move down"
-                          disabled={isLast}
-                          onClick={(e) => { e.stopPropagation(); moveQuestion(i, 1); }}
-                        >
-                          <SvgChevronDown />
-                        </button>
-                        <button
-                          className="qc-action-btn"
-                          type="button"
-                          title="Duplicate question"
-                          onClick={(e) => { e.stopPropagation(); duplicateQuestion(i); flashToast('Question duplicated'); }}
-                        >
-                          <SvgCopy />
-                        </button>
-                        <button
-                          className="qc-action-btn qc-action-danger"
-                          type="button"
-                          title="Delete question"
-                          disabled={!quiz || quiz.questions.length <= 1}
-                          onClick={(e) => { e.stopPropagation(); deleteQuestion(i); flashToast('Question deleted'); }}
-                        >
-                          <SvgTrash />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="qc-body">
-                      {q.options.map((o, oi) => (
-                        <div className="qc-opt-row" key={o.id}>
-                          <div className="qc-opt-letter">{LETTERS[oi]}</div>
-                          <div className="qc-opt-text">{o.text}</div>
+                  <div className="qc-wrapper" key={q.id}>
+                    <div className={`qc${isSel ? ' selected' : ''}`} onClick={() => setSelectedIdx(i)}>
+                      <div className="qc-head">
+                        <div className="qc-num">Q{i + 1}</div>
+                        <div className="qc-head-main">
+                          {isSel ? (
+                            <textarea
+                              className="qc-q-edit"
+                              value={q.text}
+                              onChange={(e) => updateQuestionText(i, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              rows={2}
+                              placeholder="Type your question..."
+                            />
+                          ) : (
+                            <div className="qc-q">{q.text || 'Untitled question'}</div>
+                          )}
+                          <div className="qc-meta">
+                            <span className="qc-type-badge">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                              {q.type === 'multiple' ? 'Multi select' : 'Single select'}
+                            </span>
+                            <span>{q.options.length} options</span>
+                          </div>
                         </div>
-                      ))}
+                        <div className="qc-drag" title="Drag to reorder"><SvgDrag /></div>
+                        <div className="qc-actions" onClick={(e) => e.stopPropagation()}>
+                          <button className="qc-action-btn" type="button" title="Move up" disabled={isFirst} onClick={(e) => { e.stopPropagation(); moveQuestion(i, -1); }}><SvgChevronUp /></button>
+                          <button className="qc-action-btn" type="button" title="Move down" disabled={isLast} onClick={(e) => { e.stopPropagation(); moveQuestion(i, 1); }}><SvgChevronDown /></button>
+                          <button className="qc-action-btn" type="button" title="Duplicate" onClick={(e) => { e.stopPropagation(); duplicateQuestion(i); flashToast('Question duplicated'); }}><SvgCopy /></button>
+                          <button className="qc-action-btn qc-action-danger" type="button" title="Delete" disabled={!quiz || quiz.questions.length <= 1} onClick={(e) => { e.stopPropagation(); deleteQuestion(i); flashToast('Question deleted'); }}><SvgTrash /></button>
+                        </div>
+                      </div>
+                      <div className="qc-body">
+                        {q.options.map((o, oi) => (
+                          <div className="qc-opt-row" key={o.id}>
+                            <div className="qc-opt-letter">{LETTERS[oi]}</div>
+                            {isSel ? (
+                              <input
+                                className="qc-opt-edit"
+                                value={o.text}
+                                onChange={(e) => updateOptionText(i, oi, e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                placeholder="Option text..."
+                              />
+                            ) : (
+                              <div className="qc-opt-text">{o.text}</div>
+                            )}
+                            <span className={`qc-opt-score${(o.score || 0) >= 3 ? ' high' : (o.score || 0) === 0 ? ' zero' : ''}`}>
+                              +{o.score || 0}pts
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1340,7 +1342,29 @@ export function TryFlowInner({
                     <div className="edit-group-label">Overview</div>
                     <div className="stat-row"><span className="stat-label">Total questions</span><span className="stat-value">{quiz?.questions.length || 0}</span></div>
                     <div className="stat-row"><span className="stat-label">Outcomes</span><span className="stat-value">{quiz?.outcomes?.length || 0}</span></div>
+                    <div className="stat-row"><span className="stat-label">Email gate</span><span className="stat-value">On</span></div>
+                    <div className="stat-row"><span className="stat-label">Brand match</span><span className="stat-value">Auto</span></div>
                   </div>
+
+                  <div className="divider" />
+
+                  {/* Brand colors preview */}
+                  {brand?.colors && (
+                    <div className="edit-group">
+                      <div className="edit-group-label">Brand Colors (auto-detected)</div>
+                      <div className="brand-preview">
+                        <div className="brand-preview-bar" style={{ background: brand.colors.primary || '#D2FF1D' }}>
+                          <span className="brand-preview-text" style={{ color: brand.colors.background || '#0a0f05' }}>{brand?.site_name || 'Your Site'}</span>
+                        </div>
+                        <div className="brand-preview-body" style={{ background: brand.colors.background || '#0a0f05' }}>
+                          <div className="brand-preview-q" style={{ color: brand.colors.text || '#fff' }}>Sample question here?</div>
+                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#D2FF1D', color: brand.colors.text || '#fff' }}>Option A</div>
+                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#D2FF1D', color: brand.colors.text || '#fff' }}>Option B</div>
+                          <div className="brand-preview-btn" style={{ background: brand.colors.primary || '#D2FF1D', color: brand.colors.background || '#0a0f05' }}>Next</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="divider" />
 
@@ -1353,7 +1377,7 @@ export function TryFlowInner({
                         checked={quiz?.settings?.show_branding !== false}
                         onChange={(e) => {
                           const newSettings = { ...quiz?.settings, show_branding: e.target.checked };
-                          updateQuiz({ ...quiz, settings: newSettings });
+                          updateQuiz({ ...quiz, settings: newSettings } as Quiz);
                           flashToast(e.target.checked ? 'Branding enabled' : 'Branding hidden');
                         }}
                         style={{ marginTop: 3, cursor: 'pointer', accentColor: 'var(--accent)' }}
@@ -1362,6 +1386,21 @@ export function TryFlowInner({
                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Show Squarespell branding</div>
                         <div style={{ fontSize: 12, opacity: 0.6, lineHeight: 1.4 }}>Display "Powered by Squarespell" badge at bottom of quiz</div>
                       </label>
+                    </div>
+                  </div>
+
+                  <div className="divider" />
+
+                  {/* Email integration hint */}
+                  <div className="edit-group">
+                    <div className="edit-group-label">Integrations</div>
+                    <div className="integration-hint">
+                      <SvgMail size={18} />
+                      <div className="integration-hint-body">
+                        <div className="integration-hint-title">Email auto-segmentation</div>
+                        <div className="integration-hint-desc">Connect Klaviyo or Mailchimp to auto-tag leads by quiz result</div>
+                      </div>
+                      <span className="integration-badge">Soon</span>
                     </div>
                   </div>
                 </>

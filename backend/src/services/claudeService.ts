@@ -353,33 +353,59 @@ function extractJSON(text: string): string {
  * Normalize quiz JSON from Claude into a consistent shape the frontend expects.
  */
 function normalizeQuiz(raw: any): any {
-  if (raw.questions) {
-    raw.questions = raw.questions.map((q: any, i: number) => ({
+  console.log('[normalizeQuiz] Input keys:', Object.keys(raw || {}));
+
+  // Handle case where AI wraps in { quiz: { ... } }
+  const data = raw?.quiz || raw;
+
+  // Normalize questions - handle various AI output formats
+  const rawQuestions = data.questions || data.quiz_questions || [];
+  console.log(`[normalizeQuiz] Raw questions count: ${rawQuestions.length}`);
+
+  data.title = data.title || data.quiz_title || 'Your Quiz';
+  data.description = data.description || data.quiz_description || '';
+
+  data.questions = rawQuestions.map((q: any, i: number) => {
+    // Handle options as strings OR objects
+    const rawOptions = q.options || q.answers || q.choices || [];
+    const options = rawOptions.map((o: any, j: number) => {
+      if (typeof o === 'string') {
+        return { id: String.fromCharCode(97 + j), text: o, score: 0 };
+      }
+      return {
+        id: o.id || String.fromCharCode(97 + j),
+        text: o.text || o.label || o.answer || String(o),
+        score: o.score ?? o.value ?? o.points ?? 0,
+      };
+    });
+
+    return {
       id: q.id || `q${i + 1}`,
       type: q.type || 'single',
-      text: q.text || q.question || '',
-      subtitle: q.subtitle || '',
-      options: (q.options || []).map((o: any, j: number) => ({
-        id: o.id || String.fromCharCode(97 + j),
-        text: o.text || o.label || '',
-        score: o.score ?? o.value ?? 0,
-      })),
-    }));
-  }
+      text: q.text || q.question || q.title || '',
+      subtitle: q.subtitle || q.sub || '',
+      options,
+    };
+  });
 
-  const outcomes = raw.outcomes || raw.results || [];
-  raw.outcomes = outcomes.map((r: any, i: number) => ({
+  // Normalize outcomes - handle various AI output formats
+  const rawOutcomes = data.outcomes || data.results || data.quiz_outcomes || data.quiz_results || [];
+  console.log(`[normalizeQuiz] Raw outcomes count: ${rawOutcomes.length}`);
+
+  data.outcomes = rawOutcomes.map((r: any, i: number) => ({
     id: r.id || `r${i + 1}`,
-    title: r.title || `Result ${i + 1}`,
-    description: r.description || '',
-    minScore: r.minScore ?? 0,
-    maxScore: r.maxScore ?? 100,
-    ctaText: r.ctaText || r.cta_text || 'Learn More',
-    ctaUrl: r.ctaUrl || r.cta_url || '',
+    title: r.title || r.name || `Result ${i + 1}`,
+    description: r.description || r.text || r.summary || '',
+    minScore: r.minScore ?? r.min_score ?? 0,
+    maxScore: r.maxScore ?? r.max_score ?? 100,
+    ctaText: r.ctaText || r.cta_text || r.cta || 'Learn More',
+    ctaUrl: r.ctaUrl || r.cta_url || r.url || '',
   }));
 
-  raw.results = raw.outcomes;
-  return raw;
+  data.results = data.outcomes;
+
+  console.log(`[normalizeQuiz] Final: ${data.questions.length} questions, ${data.outcomes.length} outcomes`);
+  return data;
 }
 
 async function callClaude(
@@ -520,27 +546,76 @@ async function generateTailoredQuiz(
   mode: string = 'lead_quiz'
 ): Promise<any> {
   const goal = onboarding.find(x => /goal|objective/i.test(x.question))?.answer || 'Generate more leads';
+  const businessType = onboarding.find(x => /type|business/i.test(x.question))?.answer || '';
+  const audience = onboarding.find(x => /audience/i.test(x.question))?.answer || '';
+  const tone = onboarding.find(x => /tone/i.test(x.question))?.answer || 'Professional';
+  const keyOffer = onboarding.find(x => /product|service|offer/i.test(x.question))?.answer || '';
   const businessSummary = brandData?.business?.summary || '';
   const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
   const brandColorPrimary = brandData?.colors?.primary || '#000000';
 
   const onboardingBlock = onboarding.map((o, i) => `${i + 1}. ${o.question}\n   Answer: ${o.answer}`).join('\n');
 
-  const systemPrompt = `You are an expert ${mode} quiz creator. Read the business website content AND the owner's onboarding answers carefully. Create a quiz that matches the owner's stated goal, audience, tone, and outcome. Return ONLY valid JSON.`;
+  const systemPrompt = `You are an expert lead-generation quiz creator for ${siteName}. You create quizzes that help website visitors discover which product, service, or solution is right for them.
+
+CRITICAL RULES:
+1. Every question MUST be specific to this exact business and what they sell/offer.
+2. Questions should segment visitors based on the business's actual products and services.
+3. Each option has a "score" value (0-3) that maps to outcomes.
+4. Outcomes represent the business's real products, services, or recommendations.
+5. The tone should be: ${tone}
+6. The quiz goal is: ${goal}
+7. Target audience: ${audience}
+8. NEVER mention Squarespace, website builders, or templates unless the business actually sells those.
+9. Return ONLY valid JSON. No markdown, no backticks, no explanation.`;
 
   const userPrompt = `BUSINESS: ${siteName}
 URL: ${websiteUrl}
-MODE: ${mode}
+BUSINESS TYPE: ${businessType}
+KEY OFFER: ${keyOffer}
 
 WEBSITE CONTENT:
-${businessSummary || `Could not scrape. Infer from domain ${siteName}.`}
+${businessSummary.slice(0, 3000) || `Could not scrape. Infer from domain ${siteName}.`}
 
-OWNER ANSWERS (use these to shape every question, option, tone, and outcome):
+OWNER'S PREFERENCES:
 ${onboardingBlock}
 
-TASK: Generate exactly 10 questions with 4 options each, and 3 to 5 outcomes, tailored to ${siteName} in ${mode} mode. Every question maps visitors to the owner's actual offers. Outcomes must match the ${mode} structure (see system prompt for mode-specific fields). Tone matches the owner's answer.
+Generate a quiz with this EXACT JSON structure:
+{
+  "title": "Find Your Perfect [Thing] - specific to ${siteName}",
+  "description": "Short 1-sentence description of what this quiz helps visitors discover",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "text": "Question text here - specific to the business",
+      "subtitle": "",
+      "options": [
+        { "id": "a", "text": "Option text", "score": 2 },
+        { "id": "b", "text": "Option text", "score": 1 },
+        { "id": "c", "text": "Option text", "score": 3 },
+        { "id": "d", "text": "Option text", "score": 0 }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "r1",
+      "title": "Outcome title - a real product/service from this business",
+      "description": "2-3 sentences explaining why this is the right fit",
+      "minScore": 0,
+      "maxScore": 10,
+      "ctaText": "Learn More"
+    }
+  ]
+}
 
-Return valid JSON following the ${mode} output format.`;
+REQUIREMENTS:
+- Exactly 10 questions, each with exactly 4 options
+- 3 to 5 outcomes with non-overlapping score ranges
+- Every question and option must reference THIS business's actual offers
+- Score values: 0 (low fit), 1 (slight fit), 2 (good fit), 3 (best fit)
+- Outcomes should map to real products/services/packages from the website`;
 
   // Per product decision (Q5): API failures must NEVER block the user.
   // Claude call + parse are wrapped in a single try; any failure silently
