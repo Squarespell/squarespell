@@ -1263,56 +1263,59 @@ export function TryFlowInner({
                       const currentBranchRule = (currentQ.next_question_rules || []).find((r: any) => r.if_answer === o.id);
                       const currentGoto = currentBranchRule?.goto;
                       return (
-                        <div className="answer-row" key={o.id + oi}>
-                          <div className="answer-letter">{LETTERS[oi]}</div>
-                          <input
-                            className="answer-input"
-                            value={o.text}
-                            onChange={(e) => updateOptionText(selectedIdx, oi, e.target.value)}
-                            placeholder="Answer text"
-                          />
-                          <div className="answer-reorder">
+                        <div className="answer-block" key={o.id + oi}>
+                          <div className="answer-row">
+                            <div className="answer-letter">{LETTERS[oi]}</div>
+                            <input
+                              className="answer-input"
+                              value={o.text}
+                              onChange={(e) => updateOptionText(selectedIdx, oi, e.target.value)}
+                              placeholder="Answer text"
+                            />
+                            <div className="answer-reorder">
+                              <button
+                                className="answer-reorder-btn"
+                                type="button"
+                                disabled={isFirstAns}
+                                title="Move up"
+                                onClick={() => moveOption(selectedIdx, oi, -1)}
+                              >
+                                <SvgChevronUp />
+                              </button>
+                              <button
+                                className="answer-reorder-btn"
+                                type="button"
+                                disabled={isLastAns}
+                                title="Move down"
+                                onClick={() => moveOption(selectedIdx, oi, 1)}
+                              >
+                                <SvgChevronDown />
+                              </button>
+                            </div>
                             <button
-                              className="answer-reorder-btn"
+                              className="answer-del"
+                              onClick={() => deleteOption(selectedIdx, oi)}
+                              title={currentQ.options.length <= 2 ? 'Questions need at least 2 answers' : 'Remove answer'}
                               type="button"
-                              disabled={isFirstAns}
-                              title="Move up"
-                              onClick={() => moveOption(selectedIdx, oi, -1)}
+                              disabled={currentQ.options.length <= 2}
                             >
-                              <SvgChevronUp />
-                            </button>
-                            <button
-                              className="answer-reorder-btn"
-                              type="button"
-                              disabled={isLastAns}
-                              title="Move down"
-                              onClick={() => moveOption(selectedIdx, oi, 1)}
-                            >
-                              <SvgChevronDown />
+                              <SvgTrash />
                             </button>
                           </div>
-                          <select
-                            className="answer-branch-select"
-                            value={currentGoto || ''}
-                            onChange={(e) => updateBranchingRule(selectedIdx, oi, e.target.value || null)}
-                            title="Choose next question (branching)"
-                            style={{ marginRight: 8, padding: '6px 8px', fontSize: 12, borderRadius: 4, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'inherit' }}
-                          >
-                            <option value="">→ Next in order</option>
-                            {quiz?.questions.map((q: any, qi: number) => {
-                              if (qi === selectedIdx) return null;
-                              return <option key={q.id} value={q.id}>→ Jump to Q{qi + 1}: {q.text.slice(0, 30)}</option>;
-                            })}
-                          </select>
-                          <button
-                            className="answer-del"
-                            onClick={() => deleteOption(selectedIdx, oi)}
-                            title={currentQ.options.length <= 2 ? 'Questions need at least 2 answers' : 'Remove answer'}
-                            type="button"
-                            disabled={currentQ.options.length <= 2}
-                          >
-                            <SvgTrash />
-                          </button>
+                          <div className="answer-branch-row">
+                            <select
+                              className="answer-branch-select"
+                              value={currentGoto || ''}
+                              onChange={(e) => updateBranchingRule(selectedIdx, oi, e.target.value || null)}
+                              title="Choose next question (branching)"
+                            >
+                              <option value="">&rarr; Next in order</option>
+                              {quiz?.questions.map((q: any, qi: number) => {
+                                if (qi === selectedIdx) return null;
+                                return <option key={q.id} value={q.id}>&rarr; Jump to Q{qi + 1}: {q.text.slice(0, 25)}</option>;
+                              })}
+                            </select>
+                          </div>
                         </div>
                       );
                     })}
@@ -1530,14 +1533,14 @@ export function TryFlowInner({
               </div>
 
               <div className="s4-site" style={s4VisitorVars}>
-                {/* Real website iframe background */}
+                {/* Real website screenshot background via thumbnail API */}
                 {url && (
-                  <iframe
-                    className="s4-site-iframe"
-                    src={url.startsWith('http') ? url : `https://${url}`}
-                    title="Your website"
-                    sandbox="allow-same-origin"
+                  <img
+                    className="s4-site-screenshot"
+                    src={`https://image.thum.io/get/width/1200/crop/800/https://${domain}`}
+                    alt=""
                     loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                 )}
                 <div className="s4-site-overlay" />

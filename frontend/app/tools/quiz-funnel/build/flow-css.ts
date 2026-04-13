@@ -451,7 +451,7 @@ export const FLOW_CSS = `
   }
   .s3-saved { font-size: 12px; color: var(--text-dim); }
   .s3-top-right { display: flex; gap: 10px; }
-  .s3-body { display: grid; grid-template-columns: 1fr 400px; min-height: calc(100vh - 90px); }
+  .s3-body { display: grid; grid-template-columns: 1fr 340px; min-height: calc(100vh - 90px); overflow: hidden; }
   .s3-main { padding: 32px 40px 80px; overflow-y: auto; max-width: 880px; width: 100%; margin: 0 auto; }
   .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
   .s3-main-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
@@ -572,8 +572,9 @@ export const FLOW_CSS = `
   .add-q-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   .s3-side {
     background: var(--bg-2); border-left: 1px solid var(--border);
-    padding: 24px 24px 60px; position: sticky; top: 0;
-    height: calc(100vh - 90px); overflow-y: auto;
+    padding: 24px 20px 60px; position: sticky; top: 0;
+    height: calc(100vh - 90px); overflow-y: auto; overflow-x: hidden;
+    min-width: 0;
   }
   .s3-side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .s3-side-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
@@ -598,7 +599,17 @@ export const FLOW_CSS = `
   }
   .field-input:focus, .field-textarea:focus { border-color: var(--accent); }
   .field-textarea { min-height: 76px; line-height: 1.4; }
-  .answer-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .answer-block { margin-bottom: 12px; }
+  .answer-row { display: flex; align-items: center; gap: 6px; }
+  .answer-branch-row {
+    margin-left: 32px; margin-top: 4px;
+  }
+  .answer-branch-select {
+    width: 100%; padding: 5px 8px; font-size: 11px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-muted); outline: none; cursor: pointer;
+  }
+  .answer-branch-select:focus { border-color: var(--accent); color: var(--text); }
   .answer-letter {
     width: 26px; height: 26px; border-radius: 7px;
     background: var(--surface); border: 1px solid var(--border);
@@ -971,11 +982,13 @@ export const FLOW_CSS = `
     position: relative;
     overflow: hidden;
   }
-  .s4-site-iframe {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    border: none; pointer-events: none; z-index: 0;
-    opacity: 0.12;
-    filter: grayscale(30%);
+  .s4-site-screenshot {
+    position: absolute; top: 0; left: 0; width: 100%; height: auto;
+    min-height: 100%;
+    object-fit: cover; object-position: top center;
+    pointer-events: none; z-index: 0;
+    opacity: 0.10;
+    filter: grayscale(20%) blur(0.5px);
   }
   .s4-site-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -987,6 +1000,8 @@ export const FLOW_CSS = `
     display: flex; align-items: center; justify-content: space-between;
     padding: 22px 40px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
+    gap: 16px;
+    overflow: hidden;
   }
   .s4-site-logo {
     display: flex; align-items: center; gap: 10px;
@@ -995,6 +1010,8 @@ export const FLOW_CSS = `
     font-size: 20px;
     letter-spacing: -0.01em;
     color: var(--site-text, #1a1a1a);
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   .s4-site-logo-mark {
     width: 30px; height: 30px; border-radius: 8px;
@@ -1005,13 +1022,24 @@ export const FLOW_CSS = `
     font-family: 'DM Sans', sans-serif;
   }
   .s4-site-links {
-    display: flex; gap: 28px;
-    font-size: 14px;
+    display: flex; gap: 24px;
+    font-size: 13px;
     color: var(--site-text, #1a1a1a);
     opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .s4-site-links span {
+    flex-shrink: 0;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .s4-frame.mobile .s4-site-links { display: none; }
   .s4-frame.mobile .s4-site-nav { padding: 18px 22px; }
+  .s4-frame.tablet .s4-site-links { gap: 16px; font-size: 12px; }
+  .s4-frame.tablet .s4-site-links span { max-width: 110px; }
+  .s4-frame.tablet .s4-site-nav { padding: 18px 24px; }
 
   .s4-site-body {
     position: relative; z-index: 2;
