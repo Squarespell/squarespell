@@ -354,7 +354,7 @@ function extractJSON(text: string): string {
 /**
  * Normalize quiz JSON from Claude into a consistent shape the frontend expects.
  */
-function normalizeQuiz(raw: any): any {
+function normalizeQuiz(raw: any, ctx?: { websiteUrl?: string; navPages?: { text: string; url: string }[] }): any {
   console.log('[normalizeQuiz] Input keys:', Object.keys(raw || {}));
 
   // Handle case where AI wraps in { quiz: { ... } }
@@ -397,15 +397,64 @@ function normalizeQuiz(raw: any): any {
   const rawOutcomes = data.outcomes || data.results || data.quiz_outcomes || data.quiz_results || [];
   console.log(`[normalizeQuiz] Raw outcomes count: ${rawOutcomes.length}`);
 
-  data.outcomes = rawOutcomes.map((r: any, i: number) => ({
-    id: r.id || `r${i + 1}`,
-    title: stripEmDash(r.title || r.name || `Result ${i + 1}`),
-    description: stripEmDash(r.description || r.text || r.summary || ''),
-    minScore: r.minScore ?? r.min_score ?? 0,
-    maxScore: r.maxScore ?? r.max_score ?? 100,
-    ctaText: stripEmDash(r.ctaText || r.cta_text || r.cta || 'Learn More'),
-    ctaUrl: r.ctaUrl || r.cta_url || r.url || '',
-  }));
+  // Build a set of real URLs we can validate against. If Claude returns
+  // anything NOT in this list, fall back to the best-matching nav page or
+  // the website root so CTA clicks never land on a 404.
+  const realUrls = new Set<string>();
+  let siteOrigin = '';
+  if (ctx?.websiteUrl) {
+    try { siteOrigin = new URL(ctx.websiteUrl).origin; } catch {}
+  }
+  if (ctx?.navPages) {
+    for (const p of ctx.navPages) realUrls.add(p.url);
+  }
+  const siteRoot = siteOrigin || ctx?.websiteUrl || '';
+
+  const matchCtaUrl = (rawUrl: string, ctaText: string, outcomeTitle: string): string => {
+    const url = (rawUrl || '').trim();
+    if (!url) return siteRoot;
+    // Absolute URL that's on-site and in our real list - keep it
+    if (/^https?:\/\//i.test(url)) {
+      if (siteOrigin && url.startsWith(siteOrigin) && realUrls.has(url)) return url;
+      // Off-site URL - reject (Claude guessed a URL that may 404)
+      // Off-origin and not explicitly scraped - reject
+    }
+    // Relative URL - absolutize then check
+    if (url.startsWith('/') && siteOrigin) {
+      const abs = siteOrigin + url;
+      if (realUrls.has(abs)) return abs;
+    }
+    // Try to fuzzy-match by text (ctaText or title) against nav page texts
+    const needle = `${ctaText} ${outcomeTitle}`.toLowerCase();
+    if (ctx?.navPages?.length) {
+      let best: { url: string; score: number } | null = null;
+      for (const p of ctx.navPages) {
+        const t = (p.text || '').toLowerCase();
+        if (!t) continue;
+        const words = t.split(/\s+/).filter(w => w.length > 2);
+        let score = 0;
+        for (const w of words) if (needle.includes(w)) score += w.length;
+        if (score > 0 && (!best || score > best.score)) best = { url: p.url, score };
+      }
+      if (best) return best.url;
+    }
+    return siteRoot;
+  };
+
+  data.outcomes = rawOutcomes.map((r: any, i: number) => {
+    const rawCta = r.ctaUrl || r.cta_url || r.url || '';
+    const ctaText = stripEmDash(r.ctaText || r.cta_text || r.cta || 'Learn More');
+    const title = stripEmDash(r.title || r.name || `Result ${i + 1}`);
+    return {
+      id: r.id || `r${i + 1}`,
+      title,
+      description: stripEmDash(r.description || r.text || r.summary || ''),
+      minScore: r.minScore ?? r.min_score ?? 0,
+      maxScore: r.maxScore ?? r.max_score ?? 100,
+      ctaText,
+      ctaUrl: ctx ? matchCtaUrl(rawCta, ctaText, title) : rawCta,
+    };
+  });
 
   data.results = data.outcomes;
 
@@ -447,7 +496,10 @@ async function callClaude(
 
   try {
     const parsed = JSON.parse(extractJSON(raw));
-    const normalized = normalizeQuiz(parsed);
+    const normalized = normalizeQuiz(parsed, {
+      websiteUrl,
+      navPages: Array.isArray(brandData?.business?.nav_pages) ? brandData.business.nav_pages : [],
+    });
     console.log(`[Claude] Quiz title: "${normalized.title}"`);
     console.log(`[Claude] Questions: ${normalized.questions?.length}, Outcomes: ${normalized.outcomes?.length}`);
     return normalized;
@@ -559,6 +611,15 @@ async function generateTailoredQuiz(
   const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
   const brandColorPrimary = brandData?.colors?.primary || '#000000';
 
+  // Real scraped pages from the website (text + actual URL). The Claude prompt
+  // must pick ctaUrl from this list so outcomes never link to guessed/404 pages.
+  const navPages: { text: string; url: string }[] = Array.isArray(brandData?.business?.nav_pages)
+    ? brandData.business.nav_pages
+    : [];
+  const navPagesBlock = navPages.length > 0
+    ? navPages.map(p => `- "${p.text}" -> ${p.url}`).join('\n')
+    : `- "Home" -> ${websiteUrl}`;
+
   const onboardingBlock = onboarding.map((o, i) => `${i + 1}. ${o.question}\n   Answer: ${o.answer}`).join('\n');
 
   const systemPrompt = `You are an expert lead-generation quiz creator for ${siteName}. You create quizzes that help website visitors discover which product, service, or solution is right for them.
@@ -586,6 +647,9 @@ KEY OFFER: ${keyOffer}
 
 WEBSITE CONTENT:
 ${businessSummary.slice(0, 3000) || `Could not scrape. Infer from domain ${siteName}.`}
+
+REAL PAGES ON THIS WEBSITE (you MUST pick ctaUrl from this list - nothing else):
+${navPagesBlock}
 
 OWNER'S PREFERENCES:
 ${onboardingBlock}
@@ -627,7 +691,7 @@ REQUIREMENTS:
 - Every question and option must reference THIS business's actual offers, product names, or service categories
 - Score values: 0 (low fit), 1 (slight fit), 2 (good fit), 3 (best fit)
 - Outcomes should map to real products/services/packages from the website
-- Each outcome MUST have a "ctaUrl" linking to the relevant page on ${websiteUrl} (e.g. ${websiteUrl}/products, ${websiteUrl}/services, ${websiteUrl}/contact)
+- Each outcome's "ctaUrl" MUST be one of the real URLs listed under REAL PAGES above. Do NOT invent URLs. Do NOT guess paths like /templates or /pricing - if they are not in the list, use the closest matching real URL or fall back to ${websiteUrl}
 - Each outcome MUST have a specific "ctaText" like "Browse Templates", "Book a Call", "Shop Now", "Get Started" - not generic "Learn More"
 - NEVER use em dashes (--). Use commas or hyphens (-) instead
 - Questions 1-3: engaging questions about what the visitor is looking for (reference real products/services)
@@ -649,7 +713,7 @@ REQUIREMENTS:
 
     const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
     const parsed = JSON.parse(extractJSON(raw));
-    return normalizeQuiz(parsed);
+    return normalizeQuiz(parsed, { websiteUrl, navPages });
   } catch (err: any) {
     console.error(`[Claude] Tailored quiz generation failed for ${siteName}, using fallback quiz. Error:`, err?.message || err);
     return buildFallbackQuiz(brandColorPrimary);

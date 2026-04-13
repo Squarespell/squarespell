@@ -992,14 +992,14 @@ export const FLOW_CSS = `
   }
   .s4-site-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(180deg, var(--site-bg, #ffffff) 0%, rgba(255,255,255,0.75) 25%, rgba(255,255,255,0.6) 100%);
+    background: linear-gradient(180deg, var(--site-overlay-start, var(--site-bg, #ffffff)) 0%, var(--site-overlay-mid, rgba(255,255,255,0.75)) 25%, var(--site-overlay-end, rgba(255,255,255,0.6)) 100%);
     z-index: 1;
   }
   .s4-site-nav {
     position: relative; z-index: 2;
     display: flex; align-items: center; justify-content: space-between;
     padding: 22px 40px;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 1px solid var(--site-border, rgba(0,0,0,0.06));
     gap: 16px;
     overflow: hidden;
   }
@@ -1079,8 +1079,8 @@ export const FLOW_CSS = `
 
   /* --- The quiz inside the visitor's site (brand-styled) --- */
   .s4-quiz {
-    background: var(--site-surface, #ffffff);
-    border: 1px solid var(--site-border, rgba(0,0,0,0.08));
+    background: var(--site-card-bg, var(--site-surface, #ffffff));
+    border: 1px solid var(--site-card-border, var(--site-border, rgba(0,0,0,0.08)));
     border-radius: var(--site-radius, 16px);
     padding: 32px 34px;
     box-shadow: 0 14px 40px rgba(0,0,0,0.08);
@@ -1131,8 +1131,8 @@ export const FLOW_CSS = `
   .s4-quiz-opt {
     display: flex; align-items: center; gap: 14px;
     padding: 16px 20px;
-    background: var(--site-surface, #ffffff);
-    border: 1.5px solid var(--site-border, rgba(0,0,0,0.1));
+    background: var(--site-card-bg, var(--site-surface, #ffffff));
+    border: 1.5px solid var(--site-card-border, var(--site-border, rgba(0,0,0,0.1)));
     border-radius: calc(var(--site-radius, 16px) - 4px);
     color: var(--site-text, #1a1a1a);
     font-family: var(--site-body-font, 'Inter', sans-serif);
@@ -1155,8 +1155,8 @@ export const FLOW_CSS = `
   .s4-quiz-opt-letter {
     width: 30px; height: 30px;
     border-radius: 8px;
-    background: rgba(0,0,0,0.04);
-    border: 1px solid rgba(0,0,0,0.08);
+    background: var(--site-share-bg, rgba(0,0,0,0.04));
+    border: 1px solid var(--site-share-border, rgba(0,0,0,0.08));
     color: var(--site-text, #1a1a1a);
     font-weight: 700;
     font-size: 12px;
@@ -1169,7 +1169,7 @@ export const FLOW_CSS = `
   .s4-quiz-opt.picked .s4-quiz-opt-letter {
     background: var(--site-primary, #5a7a4a);
     border-color: var(--site-primary, #5a7a4a);
-    color: #ffffff;
+    color: var(--site-btn-text, #ffffff);
   }
   .s4-quiz-back {
     margin-top: 22px;
@@ -1212,7 +1212,7 @@ export const FLOW_CSS = `
     display: inline-flex; align-items: center; gap: 8px;
     padding: 16px 32px;
     background: var(--site-primary, #111);
-    color: var(--site-bg, #fff);
+    color: var(--site-btn-text, #fff);
     border-radius: 100px;
     font-weight: 600; font-size: 15px;
     cursor: pointer;
@@ -1233,12 +1233,13 @@ export const FLOW_CSS = `
   }
   .s4-share-btn {
     width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.08);
+    background: var(--site-share-bg, rgba(0,0,0,0.06));
+    border: 1px solid var(--site-share-border, rgba(0,0,0,0.08));
     color: var(--site-text, #1a1a1a); opacity: 0.5;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: all 0.2s;
   }
-  .s4-share-btn:hover { opacity: 1; background: rgba(0,0,0,0.1); transform: translateY(-1px); }
+  .s4-share-btn:hover { opacity: 1; transform: translateY(-1px); }
   .s4-quiz-result-restart {
     margin-top: 16px;
     display: inline-block;
@@ -1277,8 +1278,8 @@ export const FLOW_CSS = `
   .s4-lead-gate-input {
     display: block; width: 100%; max-width: 320px; margin: 0 auto 14px;
     padding: 14px 20px; border-radius: 100px;
-    border: 2px solid var(--site-border, rgba(0,0,0,0.12));
-    background: var(--site-surface, #fff);
+    border: 2px solid var(--site-card-border, var(--site-border, rgba(0,0,0,0.12)));
+    background: var(--site-card-bg, var(--site-surface, #fff));
     color: var(--site-text, #1a1a1a);
     font-size: 15px; font-family: var(--site-body-font, 'Inter', sans-serif);
     outline: none; transition: border-color 0.2s;
@@ -1291,7 +1292,7 @@ export const FLOW_CSS = `
     display: block; width: 100%; max-width: 320px; margin: 0 auto 12px;
     padding: 15px 24px; border-radius: 100px; border: none;
     background: var(--site-primary, #111);
-    color: var(--site-bg, #fff);
+    color: var(--site-btn-text, #fff);
     font-size: 15px; font-weight: 600; cursor: pointer;
     font-family: var(--site-body-font, 'Inter', sans-serif);
     transition: all 0.2s;

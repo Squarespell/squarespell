@@ -709,16 +709,42 @@ export function TryFlowInner({
     if (hslM) return `hsla(${hslM[1]}, ${hslM[2]}, ${hslM[3]}, 0.1)`;
     return 'rgba(0,0,0,0.06)';
   };
+
+  // Calculate luminance to determine if a color is dark or light
+  const hexToLuminance = (hex: string): number => {
+    const c = hex.replace('#', '');
+    if (c.length < 6) return 0.5;
+    const r = parseInt(c.slice(0, 2), 16) / 255;
+    const g = parseInt(c.slice(2, 4), 16) / 255;
+    const b = parseInt(c.slice(4, 6), 16) / 255;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  };
+  const bgIsDark = hexToLuminance(brandBg) < 0.4;
+  const primaryIsDark = hexToLuminance(brandPrimary) < 0.4;
+  // Button text: pick white or black for best contrast against the primary color
+  const btnTextColor = primaryIsDark ? '#ffffff' : '#000000';
+  // Border color adapts to dark/light backgrounds
+  const adaptiveBorder = bgIsDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)';
+
   const s4VisitorVars: React.CSSProperties = {
     ['--site-bg' as any]: brandBg,
-    ['--site-surface' as any]: brandSurface,
+    ['--site-surface' as any]: bgIsDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
     ['--site-text' as any]: brandText,
-    ['--site-border' as any]: brandBorder,
+    ['--site-border' as any]: adaptiveBorder,
     ['--site-primary' as any]: brandPrimary,
     ['--site-primary-dim' as any]: dimPrimary(brandPrimary),
+    ['--site-btn-text' as any]: btnTextColor,
     ['--site-heading-font' as any]: brandFont,
     ['--site-body-font' as any]: brandFont,
     ['--site-radius' as any]: '16px',
+    ['--site-overlay-start' as any]: brandBg,
+    ['--site-overlay-mid' as any]: bgIsDark ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.75)',
+    ['--site-overlay-end' as any]: bgIsDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
+    ['--site-card-bg' as any]: bgIsDark ? 'rgba(255,255,255,0.08)' : '#ffffff',
+    ['--site-card-border' as any]: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    ['--site-muted' as any]: bgIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+    ['--site-share-bg' as any]: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+    ['--site-share-border' as any]: bgIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
   };
 
   const copyText = async (text: string, kind: 'copied-link' | 'copied-embed') => {

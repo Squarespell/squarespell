@@ -168,13 +168,44 @@ export async function scrapeBrand(url: string) {
       if (clean.length > 20 && clean.length < 600) paragraphs.push(clean);
     }
 
-    // Extract link texts (navigation, services, products)
+    // Extract link texts + hrefs (navigation, services, products)
     const linkTexts: string[] = [];
-    const linkRegex = /<a[^>]*>([\s\S]*?)<\/a>/gi;
-    while ((match = linkRegex.exec(html)) !== null && linkTexts.length < 25) {
-      const clean = match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-      if (clean.length > 2 && clean.length < 80 && !/^(home|menu|close|skip|#|back|top)/i.test(clean)) {
-        linkTexts.push(clean);
+    const navPages: { text: string; url: string }[] = [];
+    const seenHrefs = new Set<string>();
+    // Parse origin for absolutizing relative links
+    let siteOrigin = '';
+    try {
+      const parsed = new URL(url);
+      siteOrigin = `${parsed.protocol}//${parsed.host}`;
+    } catch {}
+    const linkFullRegex = /<a\b[^>]*?href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    while ((match = linkFullRegex.exec(html)) !== null && linkTexts.length < 40) {
+      const rawHref = match[1].trim();
+      const clean = match[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      if (!(clean.length > 2 && clean.length < 80)) continue;
+      if (/^(home|menu|close|skip|#|back|top)$/i.test(clean)) continue;
+      // Skip anchor-only, mailto, tel, javascript
+      if (/^(#|mailto:|tel:|javascript:)/i.test(rawHref)) continue;
+      // Absolutize relative URL
+      let absHref = rawHref;
+      try {
+        if (/^https?:\/\//i.test(rawHref)) {
+          absHref = rawHref;
+        } else if (rawHref.startsWith('//')) {
+          absHref = `https:${rawHref}`;
+        } else if (rawHref.startsWith('/')) {
+          absHref = siteOrigin + rawHref;
+        } else if (siteOrigin) {
+          absHref = siteOrigin + '/' + rawHref.replace(/^\.\//, '');
+        }
+      } catch {}
+      // Only keep same-origin links for CTAs (no offsite)
+      if (siteOrigin && !absHref.startsWith(siteOrigin)) continue;
+      linkTexts.push(clean);
+      const dedupeKey = absHref.replace(/[#?].*$/, '').toLowerCase();
+      if (!seenHrefs.has(dedupeKey)) {
+        seenHrefs.add(dedupeKey);
+        navPages.push({ text: clean, url: absHref });
       }
     }
 
@@ -557,7 +588,8 @@ export async function scrapeBrand(url: string) {
         key_content: paragraphs.slice(0, 6),
         json_ld: jsonLdBlocks.length > 0 ? jsonLdBlocks[0]?.slice(0, 500) : null,
         nav_links: [...new Set(linkTexts)].slice(0, 6),
-      },
+        nav_pages: navPages.slice(0, 12),
+      } as Record<string, any>,
     };
   } catch (err: any) {
     // NotSquarespaceError bubbles up so routes can return a clean 422
@@ -572,7 +604,7 @@ export async function scrapeBrand(url: string) {
       font_fallback: 'sans-serif',
       site_name: '',
       favicon_url: '',
-      business: { summary: '', meta_description: '', headings: [], key_content: [], json_ld: null, nav_links: [] },
+      business: { summary: '', meta_description: '', headings: [], key_content: [], json_ld: null, nav_links: [], nav_pages: [] } as Record<string, any>,
     };
   } finally {
     clearTimeout(timeout);
