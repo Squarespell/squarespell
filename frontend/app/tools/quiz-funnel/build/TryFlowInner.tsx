@@ -58,34 +58,13 @@ interface OnboardingQ {
 }
 
 /* ========================================================================= */
-/* Stage 2: five static onboarding questions (byte-faithful prototype-v4)    */
+/* Stage 2: Goal selection (Option C - AI analyzes site, user picks goal)    */
 /* ========================================================================= */
-const STATIC_ONBOARDING: OnboardingQ[] = [
-  {
-    id: 'business_type',
-    text: 'What kind of business do you run?',
-    options: ['Wellness or coaching', 'E-commerce or product', 'Service business', 'SaaS or software', 'Agency or studio', 'Something else'],
-  },
-  {
-    id: 'audience',
-    text: 'Who are your typical visitors?',
-    options: ['Small business owners', 'Consumers', 'Creators and freelancers', 'Enterprise teams'],
-  },
-  {
-    id: 'goal',
-    text: 'What is the main goal of this quiz?',
-    options: ['Capture qualified leads', 'Recommend the right product', 'Grow my email list', 'Segment by intent'],
-  },
-  {
-    id: 'outcome',
-    text: 'What will visitors get at the end?',
-    options: ['A personalized recommendation', 'A free resource or download', 'A tailored plan', 'A discount or offer'],
-  },
-  {
-    id: 'tone',
-    text: 'What tone best matches your brand?',
-    options: ['Warm and friendly', 'Confident and expert', 'Playful and casual', 'Minimal and direct'],
-  },
+const GOAL_OPTIONS = [
+  { id: 'capture_leads', label: 'Capture leads', description: 'Qualify visitors and collect emails before showing personalized results' },
+  { id: 'recommend_service', label: 'Recommend a service', description: 'Guide visitors to the right product, plan, or package for them' },
+  { id: 'score_segment', label: 'Score and segment', description: 'Score visitors by intent and readiness to buy, then segment automatically' },
+  { id: 'grow_email', label: 'Grow email list', description: 'Offer a free result or resource in exchange for email signup' },
 ];
 
 /* ========================================================================= */
@@ -129,6 +108,24 @@ const SvgLink = () => (
 );
 const SvgPencil = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+);
+const SvgBolt = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+);
+const SvgUsers = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+);
+const SvgPackage = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
+);
+const SvgBarChart = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
+);
+const SvgMail = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
+);
+const SvgSpark = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" /></svg>
 );
 
 /* ========================================================================= */
@@ -186,8 +183,9 @@ export function TryFlowInner({
   const [sessionToken, setSessionToken] = useState('');
   const [claimToken, setClaimToken] = useState('');
 
-  // Stage 2 - questions are static (prototype-v4), only answers are stateful
-  const onboardingQs = STATIC_ONBOARDING;
+  // Stage 2 - goal selection (Option C)
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [analysisStep, setAnalysisStep] = useState(0);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, number>>({});
   const [buildingQuiz, setBuildingQuiz] = useState(false);
 
@@ -293,16 +291,17 @@ export function TryFlowInner({
   }, [mode, urlParam, goAnalyze]);
 
   /* ======================== STAGE 2 -> STAGE 3 ======================== */
-  const onboardingCount = Object.keys(onboardingAnswers).length;
   const buildQuiz = useCallback(async () => {
-    if (onboardingCount < 5 || !sessionToken) return;
+    if (!selectedGoal || !sessionToken) return;
     setBuildingQuiz(true);
     setErrorMsg('');
     try {
-      const payload: Record<string, string> = {};
-      for (const q of onboardingQs) {
-        if (onboardingAnswers[q.id] !== undefined) payload[q.id] = String(onboardingAnswers[q.id]);
-      }
+      const payload: Record<string, string> = {
+        goal: selectedGoal,
+        business_type: brand?.business?.type || 'unknown',
+        audience: brand?.business?.audience || 'unknown',
+        tone: brand?.business?.tone || 'unknown',
+      };
       const res = await fetch(`${API}/api/preview-build-quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -343,7 +342,7 @@ export function TryFlowInner({
     } finally {
       setBuildingQuiz(false);
     }
-  }, [onboardingAnswers, onboardingQs, sessionToken, brand, url, onboardingCount]);
+  }, [selectedGoal, sessionToken, brand, url]);
 
   /* ======================== STAGE 3 editor helpers ==================== */
   const scheduleSave = useCallback((nextQuiz: Quiz) => {
@@ -761,7 +760,7 @@ export function TryFlowInner({
         </div>
       </div>
 
-      {/* ============ STAGE 2: FIVE QUESTIONS FOR OWNER ============ */}
+      {/* ============ STAGE 2: GOAL SELECTION (OPTION C) ============ */}
       <div className={`stage${stage === 2 ? ' active' : ''}`} id="stage-2">
         <div className="topbar">
           <div className="brand"><div className="brand-dot" /> squarespell</div>
@@ -771,105 +770,170 @@ export function TryFlowInner({
         </div>
 
         <div className="s2-wrap">
-          <div className="s2-head">
-            <div className="stage-tag">
-              <span>STEP 2</span>
-              <span className="tag-dot">·</span>
-              <span>TELL US ABOUT YOUR BUSINESS</span>
-            </div>
-            <h1>5 quick questions,<br />then we build your quiz</h1>
-            <p>Your answers shape the tone, flow, and outcomes of the 10 question quiz we generate for your visitors.</p>
-          </div>
+          {/* Loading skeleton state */}
+          {(loading || !sessionToken) && (
+            <div className="s2-skeleton">
+              <div className="analysis-status">
+                <div className="analysis-spinner"></div>
+                <div className="analysis-text">Reading your website...</div>
+                <div className="analysis-detail">Extracting brand, copy, and offers</div>
+              </div>
 
-          <div className="s2-site-card">
-            <div className="s2-site-icon">{siteLetter}</div>
-            <div className="s2-site-info">
-              <div className="s2-site-label">
-                {loading ? 'Analyzing your site' : (brand ? 'Brand captured' : 'Ready')}
+              <div className="skel-header">
+                <div className="skel-badge shimmer"></div>
+                <div className="skel-title shimmer"></div>
+                <div className="skel-title-2 shimmer"></div>
+                <div className="skel-sub shimmer"></div>
+                <div className="skel-sub-2 shimmer"></div>
               </div>
-              <div className="s2-site-domain">{domain}</div>
-            </div>
-            {loading ? (
-              <div className="s2-site-check s2-site-check-loading">
-                <span className="hook-hint-spinner" />
-                {slowHint ? 'Waking server…' : 'Scanning brand…'}
-              </div>
-            ) : brand ? (
-              <div className="s2-site-check">
-                <SvgCheck size={16} />
-                Brand captured
-              </div>
-            ) : null}
-          </div>
 
-          {errorMsg && (
-            <div className="s2-analyze-err">
-              <div>{errorMsg}</div>
-              <button
-                type="button"
-                className="hook-err-retry"
-                onClick={() => { setErrorMsg(''); goAnalyze(url); }}
-              >
-                Retry analyze
-              </button>
+              <div className="skel-brand shimmer">
+                <div className="skel-brand-icon"></div>
+                <div className="skel-brand-lines">
+                  <div className="skel-brand-line1"></div>
+                  <div className="skel-brand-line2"></div>
+                </div>
+              </div>
+
+              <div className="skel-analysis">
+                <div className="skel-analysis-header">
+                  <div className="skel-analysis-icon shimmer"></div>
+                  <div className="skel-analysis-title shimmer"></div>
+                </div>
+                <div className="skel-tags">
+                  <div className="skel-tag skel-tag-1 shimmer"></div>
+                  <div className="skel-tag skel-tag-2 shimmer"></div>
+                  <div className="skel-tag skel-tag-3 shimmer"></div>
+                  <div className="skel-tag skel-tag-4 shimmer"></div>
+                </div>
+              </div>
+
+              <div className="skel-goal-label shimmer"></div>
+              <div className="skel-goal-title shimmer"></div>
+              <div className="skel-goals">
+                <div className="skel-goal shimmer"></div>
+                <div className="skel-goal shimmer"></div>
+                <div className="skel-goal shimmer"></div>
+                <div className="skel-goal shimmer"></div>
+              </div>
+              <div className="skel-btn shimmer"></div>
             </div>
           )}
 
-          <div id="s2-list">
-            {onboardingQs.map((q, qi) => {
-              const answered = onboardingAnswers[q.id] !== undefined;
-              return (
-                <div className={`s2-question${answered ? ' answered' : ''}`} key={q.id}>
-                  <div className="s2-q-head">
-                    <div className="s2-q-num">{qi + 1}</div>
-                    <div className="s2-q-text">{q.text}</div>
+          {/* Loaded state */}
+          {!loading && sessionToken && (
+            <div className="s2-loaded">
+              <div className="step-badge">
+                <SvgBolt size={14} />
+                SITE ANALYZED
+              </div>
+              <h1 className="step-title">Here's what we found.<br /><span className="step-title-acc">Pick your goal, we do the rest.</span></h1>
+              <p className="step-sub">Our AI read your site in seconds. Confirm below, choose one goal, and we generate a full branded quiz.</p>
+
+              {/* Brand card */}
+              <div className="brand-card">
+                <div className="brand-icon">{siteLetter}</div>
+                <div className="brand-info">
+                  <div className="brand-label">Brand captured</div>
+                  <div className="brand-url">{domain}</div>
+                </div>
+                <div className="brand-check">
+                  <SvgCheck size={16} />
+                  Verified
+                </div>
+              </div>
+
+              {/* AI Detected panel */}
+              {brand && brand.business && (
+                <div className="ai-panel">
+                  <div className="ai-header">
+                    <SvgSpark size={18} />
+                    <span className="ai-header-text">AI detected from your site</span>
                   </div>
-                  <div className="s2-opts">
-                    {q.options.map((opt, oi) => {
-                      const selected = onboardingAnswers[q.id] === oi;
-                      return (
-                        <button
-                          key={oi}
-                          className={`s2-opt${selected ? ' selected' : ''}`}
-                          onClick={() => setOnboardingAnswers((prev) => ({ ...prev, [q.id]: oi }))}
-                          type="button"
-                        >
-                          <div className="s2-opt-radio" />
-                          <div>{opt}</div>
-                        </button>
-                      );
-                    })}
+                  <div className="ai-tags">
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Business type</span>
+                        <span className="ai-tag-value">{brand.business.type || 'Unknown'}</span>
+                      </div>
+                      <span className="ai-tag-edit">edit</span>
+                    </div>
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Audience</span>
+                        <span className="ai-tag-value">{brand.business.audience || 'Unknown'}</span>
+                      </div>
+                      <span className="ai-tag-edit">edit</span>
+                    </div>
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Tone</span>
+                        <span className="ai-tag-value">{brand.business.tone || 'Unknown'}</span>
+                      </div>
+                      <span className="ai-tag-edit">edit</span>
+                    </div>
+                    <div className="ai-tag">
+                      <div className="ai-tag-content">
+                        <span className="ai-tag-label">Key offer</span>
+                        <span className="ai-tag-value">{brand.business.key_offer || 'Unknown'}</span>
+                      </div>
+                      <span className="ai-tag-edit">edit</span>
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              )}
 
-          <div className="s2-foot">
-            <div className="s2-progress">
-              <span>{onboardingCount} of 5 answered</span>
-              <div className="s2-progress-bar">
-                <div
-                  className="s2-progress-fill"
-                  style={{ width: `${(onboardingCount / 5) * 100}%` }}
-                />
+              {/* Goal selection */}
+              <div className="goal-intro">One last thing</div>
+              <div className="goal-question">What should this quiz do for your business?</div>
+
+              <div className="goal-grid">
+                {GOAL_OPTIONS.map((goal) => (
+                  <div
+                    key={goal.id}
+                    className={`goal-card${selectedGoal === goal.id ? ' selected' : ''}`}
+                    onClick={() => setSelectedGoal(goal.id)}
+                  >
+                    <div className="goal-check">
+                      <SvgCheck size={12} />
+                    </div>
+                    <div className={`goal-icon goal-icon-${goal.id.replace(/_/g, '-')}`}>
+                      {goal.id === 'capture_leads' && <SvgUsers size={22} />}
+                      {goal.id === 'recommend_service' && <SvgPackage size={22} />}
+                      {goal.id === 'score_segment' && <SvgBarChart size={22} />}
+                      {goal.id === 'grow_email' && <SvgMail size={22} />}
+                    </div>
+                    <div className="goal-title">{goal.label}</div>
+                    <div className="goal-desc">{goal.description}</div>
+                  </div>
+                ))}
               </div>
+
+              {errorMsg && (
+                <div className="s2-analyze-err">
+                  <div>{errorMsg}</div>
+                  <button
+                    type="button"
+                    className="hook-err-retry"
+                    onClick={() => { setErrorMsg(''); goAnalyze(url); }}
+                  >
+                    Retry analyze
+                  </button>
+                </div>
+              )}
+
+              <button
+                className={`btn-gen${selectedGoal ? ' ready' : ' disabled'}`}
+                disabled={!selectedGoal || buildingQuiz}
+                onClick={buildQuiz}
+                type="button"
+              >
+                <SvgBolt size={18} />
+                Generate my quiz
+              </button>
+              <div className="btn-hint">Takes about 30 seconds. You can edit everything after.</div>
             </div>
-            <button
-              className="btn btn-primary btn-lg"
-              disabled={onboardingCount < 5 || buildingQuiz || !sessionToken || loading}
-              onClick={buildQuiz}
-              type="button"
-              title={!sessionToken && !loading ? 'Waiting for site analysis…' : undefined}
-            >
-              {buildingQuiz
-                ? 'Building your quiz...'
-                : loading && !sessionToken
-                  ? 'Analyzing your site…'
-                  : 'Build my quiz'}
-              {!buildingQuiz && !(loading && !sessionToken) && <SvgArrowRight size={16} />}
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
