@@ -749,41 +749,109 @@ export function TryFlowInner({
     return 'rgba(0,0,0,0.06)';
   };
 
-  // Calculate luminance to determine if a color is dark or light
-  const hexToLuminance = (hex: string): number => {
-    const c = hex.replace('#', '');
-    if (c.length < 6) return 0.5;
-    const r = parseInt(c.slice(0, 2), 16) / 255;
-    const g = parseInt(c.slice(2, 4), 16) / 255;
-    const b = parseInt(c.slice(4, 6), 16) / 255;
-    return 0.299 * r + 0.587 * g + 0.114 * b;
+  // ── Senior-grade color system ───────────────────────────────────────────
+  // Parses any CSS color input into normalized RGB so we can do real WCAG
+  // contrast math instead of hand-waving. Handles #rgb, #rrggbb, rgb(), rgba()
+  // and returns null for values we can't reason about.
+  const parseColor = (c: string): { r: number; g: number; b: number } | null => {
+    if (!c) return null;
+    const s = c.trim();
+    if (/^#[0-9a-f]{3}$/i.test(s)) {
+      const h = s.slice(1);
+      return { r: parseInt(h[0] + h[0], 16), g: parseInt(h[1] + h[1], 16), b: parseInt(h[2] + h[2], 16) };
+    }
+    if (/^#[0-9a-f]{6}$/i.test(s)) {
+      return { r: parseInt(s.slice(1, 3), 16), g: parseInt(s.slice(3, 5), 16), b: parseInt(s.slice(5, 7), 16) };
+    }
+    const rgb = s.match(/^rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (rgb) return { r: +rgb[1], g: +rgb[2], b: +rgb[3] };
+    return null;
   };
-  const bgIsDark = hexToLuminance(brandBg) < 0.4;
-  const primaryIsDark = hexToLuminance(brandPrimary) < 0.4;
-  // Button text: pick white or black for best contrast against the primary color
-  const btnTextColor = primaryIsDark ? '#ffffff' : '#000000';
-  // Border color adapts to dark/light backgrounds
-  const adaptiveBorder = bgIsDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)';
+  // WCAG relative luminance (0..1). Darker color = lower number.
+  const relLum = (c: string): number => {
+    const rgb = parseColor(c);
+    if (!rgb) return 0.5;
+    const chan = (v: number) => {
+      const x = v / 255;
+      return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * chan(rgb.r) + 0.7152 * chan(rgb.g) + 0.0722 * chan(rgb.b);
+  };
+  // WCAG contrast ratio between two colors (1..21).
+  const contrast = (a: string, b: string): number => {
+    const la = relLum(a);
+    const lb = relLum(b);
+    const hi = Math.max(la, lb);
+    const lo = Math.min(la, lb);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  // Mix two hex/rgb colors by ratio (0..1). Returns #rrggbb.
+  const mix = (a: string, b: string, t: number): string => {
+    const ca = parseColor(a) || { r: 0, g: 0, b: 0 };
+    const cb = parseColor(b) || { r: 255, g: 255, b: 255 };
+    const m = (x: number, y: number) => Math.round(x + (y - x) * t);
+    const hex = (n: number) => n.toString(16).padStart(2, '0');
+    return '#' + hex(m(ca.r, cb.r)) + hex(m(ca.g, cb.g)) + hex(m(ca.b, cb.b));
+  };
+
+  const bgIsDark = relLum(brandBg) < 0.5;
+  const primaryIsDark = relLum(brandPrimary) < 0.5;
+  // Button text: pick white or black for best contrast against the primary.
+  const btnTextColor = primaryIsDark ? '#ffffff' : '#0a0a0a';
+
+  // ── Surface tint ────────────────────────────────────────────────────────
+  // The card is never the same color as the page (Stripe/Linear/Notion
+  // pattern). On light pages the card is pure white, on dark pages it's
+  // slightly lighter than the bg so it reads as an elevated surface.
+  const cardBg = bgIsDark ? mix(brandBg, '#ffffff', 0.06) : '#ffffff';
+  // Softer hairline border (WCAG-agnostic; visual only)
+  const hairlineBorder = bgIsDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)';
+  // Subtle dual-layer ambient shadow — tight + diffuse, low alpha, no "chunk".
+  // On dark surfaces the shadow is effectively invisible; the border + tint
+  // do the lifting instead.
+  const cardShadow = bgIsDark
+    ? '0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.25)'
+    : '0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)';
+
+  // ── Typography contrast safeguards ──────────────────────────────────────
+  // Seniors don't trust scraped text colors for headings. Compute a high-
+  // contrast heading color against the PAGE bg and against the CARD bg; if
+  // the scraped value doesn't clear WCAG AA (4.5:1) for normal text, fall
+  // back to near-black or near-white.
+  const aaAgainst = (target: string, scraped: string): string => {
+    if (contrast(scraped, target) >= 4.5) return scraped;
+    return relLum(target) > 0.5 ? '#0a0a0a' : '#ffffff';
+  };
+  const headingOnBg = bgIsDark ? '#ffffff' : '#0a0a0a';
+  const bodyOnBg = aaAgainst(brandBg, brandText);
+  const headingOnCard = bgIsDark ? '#ffffff' : '#0a0a0a';
+  const bodyOnCard = aaAgainst(cardBg, brandText);
+  // Secondary / muted text — 60% of the body color, keeping contrast >= 3:1.
+  const mutedOnCard = bgIsDark ? 'rgba(255,255,255,0.62)' : 'rgba(0,0,0,0.56)';
 
   const s4VisitorVars: React.CSSProperties = {
     ['--site-bg' as any]: brandBg,
-    ['--site-surface' as any]: bgIsDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
-    ['--site-text' as any]: brandText,
-    ['--site-border' as any]: adaptiveBorder,
+    ['--site-surface' as any]: cardBg,
+    ['--site-text' as any]: bodyOnBg,
+    ['--site-heading' as any]: headingOnBg,
+    ['--site-border' as any]: hairlineBorder,
     ['--site-primary' as any]: brandPrimary,
     ['--site-primary-dim' as any]: dimPrimary(brandPrimary),
     ['--site-btn-text' as any]: btnTextColor,
     ['--site-heading-font' as any]: brandFont,
     ['--site-body-font' as any]: brandFont,
     ['--site-radius' as any]: '16px',
-    ['--site-overlay-start' as any]: brandBg,
-    ['--site-overlay-mid' as any]: bgIsDark ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.75)',
-    ['--site-overlay-end' as any]: bgIsDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
-    ['--site-card-bg' as any]: bgIsDark ? 'rgba(255,255,255,0.08)' : '#ffffff',
-    ['--site-card-border' as any]: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-    ['--site-muted' as any]: bgIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-    ['--site-share-bg' as any]: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-    ['--site-share-border' as any]: bgIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+    ['--site-card-bg' as any]: cardBg,
+    ['--site-card-border' as any]: hairlineBorder,
+    ['--site-card-shadow' as any]: cardShadow,
+    ['--site-card-heading' as any]: headingOnCard,
+    ['--site-card-text' as any]: bodyOnCard,
+    ['--site-muted' as any]: mutedOnCard,
+    // Option row uses an even subtler inset surface on the card
+    ['--site-option-bg' as any]: bgIsDark ? 'rgba(255,255,255,0.04)' : '#fafafa',
+    ['--site-option-border' as any]: hairlineBorder,
+    ['--site-share-bg' as any]: bgIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    ['--site-share-border' as any]: hairlineBorder,
   };
 
   const copyText = async (text: string, kind: 'copied-link' | 'copied-embed') => {
@@ -1217,6 +1285,7 @@ export function TryFlowInner({
 
         <div className="s3-body">
           <div className="s3-main">
+           <div className="s3-main-inner">
             <div className="s3-main-head">
               <h2>Your quiz</h2>
               <div className="s3-count">
@@ -1298,6 +1367,7 @@ export function TryFlowInner({
               <SvgPlus />
               Add new question
             </button>
+           </div>
           </div>
 
           <div className="s3-side">

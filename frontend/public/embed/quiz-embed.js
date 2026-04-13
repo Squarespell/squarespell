@@ -1,19 +1,19 @@
 /*!
- * Squarespell Quiz Embed v2.0.0
+ * Squarespell Quiz Embed v2.1.0
  * Rewritten for Squarespace 7.1 AJAX navigation compatibility.
  *
  * Usage (Code Block):
  *   <div data-squarespell-quiz="YOUR_SLUG"></div>
- *   <script src="https://quiz.squarespell.com/embed/quiz-embed.js" async></script>
+ *   <script src="https://app.squarespell.com/embed.js" async></script>
  *
  * Legacy usage still supported:
- *   <script src="https://quiz.squarespell.com/embed/quiz-embed.js" data-quiz="YOUR_SLUG" async></script>
+ *   <script src="https://app.squarespell.com/embed.js" data-quiz="YOUR_SLUG" async></script>
  */
 (function () {
   'use strict';
 
-  var BASE_URL = 'https://quiz.squarespell.com';
-  var EMBED_VERSION = '2.0.0';
+  var BASE_URL = 'https://app.squarespell.com';
+  var EMBED_VERSION = '2.1.0';
   var INIT_ATTR = 'data-squarespell-init';
 
   // ── Utility helpers ──────────────────────────────────────────────────────
@@ -56,7 +56,7 @@
     if (brand.text) p.push('fg=' + encodeURIComponent(brand.text));
     if (brand.accent) p.push('accent=' + encodeURIComponent(brand.accent));
     if (brand.font) p.push('font=' + encodeURIComponent(brand.font));
-    return BASE_URL + '/quiz/' + encodeURIComponent(slug) + '?' + p.join('&');
+    return BASE_URL + '/embed/' + encodeURIComponent(slug) + '?' + p.join('&');
   }
 
   // ── Styles (injected once) ───────────────────────────────────────────────
@@ -66,6 +66,10 @@
     var css = document.createElement('style');
     css.id = 'squarespell-styles';
     css.textContent = [
+      /* Hide Squarespace "Embedded Scripts disabled" placeholder when previewing
+         in the editor and collapse removed-script blocks so the layout doesn't
+         reserve phantom space around our quiz. */
+      'html.squarespace-damask .sqs-blockStatus,.sqs-block .removed-script{display:none !important}',
       '.squarespell-wrapper{width:100%;max-width:640px;margin:0 auto;display:block}',
       '.squarespell-wrapper iframe{width:100%;border:none;border-radius:16px;display:block;transition:height 0.3s ease}',
       '.squarespell-fallback{display:none;text-align:center;padding:20px;font-size:14px}',

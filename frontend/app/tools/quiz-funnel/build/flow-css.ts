@@ -452,7 +452,8 @@ export const FLOW_CSS = `
   .s3-saved { font-size: 12px; color: var(--text-dim); }
   .s3-top-right { display: flex; gap: 10px; }
   .s3-body { display: grid; grid-template-columns: 1fr 340px; height: calc(100vh - 90px); overflow: hidden; }
-  .s3-main { padding: 32px 40px 80px; overflow-y: auto; height: 100%; max-width: 880px; width: 100%; margin: 0 auto; }
+  .s3-main { overflow-y: auto; overflow-x: hidden; height: 100%; width: 100%; }
+  .s3-main-inner { padding: 32px 40px 80px; max-width: 880px; width: 100%; margin: 0 auto; }
   .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
   .s3-main-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
   .s3-count {
@@ -1052,7 +1053,7 @@ export const FLOW_CSS = `
     font-weight: 700;
     letter-spacing: -0.01em;
     line-height: 1.1;
-    color: var(--site-text, #1a1a1a);
+    color: var(--site-heading, var(--site-text, #0a0a0a));
     margin-bottom: 14px;
   }
   .s4-frame.mobile .s4-site-title { font-size: 26px; }
@@ -1060,7 +1061,7 @@ export const FLOW_CSS = `
     font-size: 15px;
     line-height: 1.5;
     color: var(--site-text, #1a1a1a);
-    opacity: 0.7;
+    opacity: 0.8;
     margin-bottom: 32px;
   }
 
@@ -1070,7 +1071,7 @@ export const FLOW_CSS = `
     border: 1px solid var(--site-card-border, var(--site-border, rgba(0,0,0,0.08)));
     border-radius: var(--site-radius, 16px);
     padding: 32px 34px;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.08);
+    box-shadow: var(--site-card-shadow, 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04));
   }
   .s4-frame.mobile .s4-quiz { padding: 24px 22px; }
 
@@ -1078,13 +1079,12 @@ export const FLOW_CSS = `
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 10px;
     font-size: 12px;
-    color: var(--site-text, #1a1a1a);
-    opacity: 0.7;
+    color: var(--site-muted, rgba(0,0,0,0.56));
     font-family: 'Inter', 'DM Sans', sans-serif;
   }
   .s4-quiz-bar {
     height: 4px;
-    background: rgba(0,0,0,0.08);
+    background: var(--site-option-border, rgba(0,0,0,0.08));
     border-radius: 100px;
     overflow: hidden;
     margin-bottom: 28px;
@@ -1110,7 +1110,7 @@ export const FLOW_CSS = `
     font-weight: 700;
     letter-spacing: -0.01em;
     line-height: 1.2;
-    color: var(--site-text, #1a1a1a);
+    color: var(--site-card-heading, var(--site-text, #0a0a0a));
     margin-bottom: 24px;
   }
   .s4-frame.mobile .s4-quiz-q { font-size: 22px; }
@@ -1118,10 +1118,10 @@ export const FLOW_CSS = `
   .s4-quiz-opt {
     display: flex; align-items: center; gap: 14px;
     padding: 16px 20px;
-    background: var(--site-card-bg, var(--site-surface, #ffffff));
-    border: 1.5px solid var(--site-card-border, var(--site-border, rgba(0,0,0,0.1)));
+    background: var(--site-option-bg, var(--site-card-bg, #fafafa));
+    border: 1.5px solid var(--site-option-border, var(--site-card-border, rgba(0,0,0,0.08)));
     border-radius: calc(var(--site-radius, 16px) - 4px);
-    color: var(--site-text, #1a1a1a);
+    color: var(--site-card-text, var(--site-text, #1a1a1a));
     font-family: var(--site-body-font, 'Inter', sans-serif);
     font-size: 15px;
     font-weight: 500;
@@ -1142,9 +1142,9 @@ export const FLOW_CSS = `
   .s4-quiz-opt-letter {
     width: 30px; height: 30px;
     border-radius: 8px;
-    background: var(--site-share-bg, rgba(0,0,0,0.04));
-    border: 1px solid var(--site-share-border, rgba(0,0,0,0.08));
-    color: var(--site-text, #1a1a1a);
+    background: var(--site-option-bg, rgba(0,0,0,0.04));
+    border: 1px solid var(--site-option-border, rgba(0,0,0,0.08));
+    color: var(--site-card-text, var(--site-text, #1a1a1a));
     font-weight: 700;
     font-size: 12px;
     display: flex; align-items: center; justify-content: center;
@@ -1161,8 +1161,7 @@ export const FLOW_CSS = `
   .s4-quiz-back {
     margin-top: 22px;
     font-size: 13px;
-    color: var(--site-text, #1a1a1a);
-    opacity: 0.6;
+    color: var(--site-muted, rgba(0,0,0,0.56));
     display: inline-flex; align-items: center; gap: 6px;
     cursor: pointer;
     font-family: var(--site-body-font, 'Inter', sans-serif);
@@ -1183,14 +1182,13 @@ export const FLOW_CSS = `
     font-family: var(--site-heading-font, 'Playfair Display', serif);
     font-size: 34px; font-weight: 700;
     letter-spacing: -0.01em; line-height: 1.1;
-    color: var(--site-text, #1a1a1a);
+    color: var(--site-card-heading, var(--site-text, #0a0a0a));
     margin-bottom: 14px;
   }
   .s4-frame.mobile .s4-quiz-result-title { font-size: 26px; }
   .s4-quiz-result-desc {
     font-size: 15px;
-    color: var(--site-text, #1a1a1a);
-    opacity: 0.7;
+    color: var(--site-muted, rgba(0,0,0,0.56));
     line-height: 1.5;
     margin-bottom: 24px;
     font-family: var(--site-body-font, 'Inter', sans-serif);
@@ -1215,24 +1213,23 @@ export const FLOW_CSS = `
     margin-top: 20px; justify-content: center;
   }
   .s4-share-label {
-    font-size: 12px; color: var(--site-text, #1a1a1a); opacity: 0.45;
+    font-size: 12px; color: var(--site-muted, rgba(0,0,0,0.56));
     font-family: var(--site-body-font, 'Inter', sans-serif);
   }
   .s4-share-btn {
     width: 32px; height: 32px; border-radius: 50%;
-    background: var(--site-share-bg, rgba(0,0,0,0.06));
-    border: 1px solid var(--site-share-border, rgba(0,0,0,0.08));
-    color: var(--site-text, #1a1a1a); opacity: 0.5;
+    background: var(--site-option-bg, rgba(0,0,0,0.04));
+    border: 1px solid var(--site-option-border, rgba(0,0,0,0.08));
+    color: var(--site-muted, rgba(0,0,0,0.56));
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: all 0.2s;
   }
-  .s4-share-btn:hover { opacity: 1; transform: translateY(-1px); }
+  .s4-share-btn:hover { color: var(--site-card-text, var(--site-text, #1a1a1a)); transform: translateY(-1px); }
   .s4-quiz-result-restart {
     margin-top: 16px;
     display: inline-block;
     font-size: 13px;
-    color: var(--site-text, #1a1a1a);
-    opacity: 0.55;
+    color: var(--site-muted, rgba(0,0,0,0.56));
     cursor: pointer;
     font-family: var(--site-body-font, 'Inter', sans-serif);
   }
@@ -1253,21 +1250,21 @@ export const FLOW_CSS = `
   }
   .s4-lead-gate-title {
     font-size: 20px; font-weight: 700;
-    color: var(--site-text, #1a1a1a);
+    color: var(--site-card-heading, var(--site-text, #0a0a0a));
     font-family: var(--site-body-font, 'Inter', sans-serif);
     margin-bottom: 8px;
   }
   .s4-lead-gate-sub {
-    font-size: 14px; color: var(--site-text, #1a1a1a); opacity: 0.65;
+    font-size: 14px; color: var(--site-muted, rgba(0,0,0,0.56));
     font-family: var(--site-body-font, 'Inter', sans-serif);
     margin-bottom: 24px; line-height: 1.5;
   }
   .s4-lead-gate-input {
     display: block; width: 100%; max-width: 320px; margin: 0 auto 14px;
     padding: 14px 20px; border-radius: 100px;
-    border: 2px solid var(--site-card-border, var(--site-border, rgba(0,0,0,0.12)));
-    background: var(--site-card-bg, var(--site-surface, #fff));
-    color: var(--site-text, #1a1a1a);
+    border: 2px solid var(--site-option-border, var(--site-card-border, rgba(0,0,0,0.12)));
+    background: var(--site-option-bg, var(--site-card-bg, #fff));
+    color: var(--site-card-text, var(--site-text, #1a1a1a));
     font-size: 15px; font-family: var(--site-body-font, 'Inter', sans-serif);
     outline: none; transition: border-color 0.2s;
     text-align: center;
@@ -1288,15 +1285,17 @@ export const FLOW_CSS = `
   .s4-lead-gate-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
   .s4-lead-gate-btn:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
   .s4-lead-gate-skip {
-    font-size: 13px; color: var(--site-text, #1a1a1a); opacity: 0.45;
+    font-size: 13px; color: var(--site-muted, rgba(0,0,0,0.56));
     cursor: pointer; margin-top: 4px;
     font-family: var(--site-body-font, 'Inter', sans-serif);
+    opacity: 0.8;
   }
-  .s4-lead-gate-skip:hover { opacity: 0.7; }
+  .s4-lead-gate-skip:hover { opacity: 1; }
   .s4-lead-gate-privacy {
-    font-size: 11px; color: var(--site-text, #1a1a1a); opacity: 0.35;
+    font-size: 11px; color: var(--site-muted, rgba(0,0,0,0.56));
     margin-top: 16px;
     font-family: var(--site-body-font, 'Inter', sans-serif);
+    opacity: 0.7;
   }
 
   /* Detected brand badge above frame */
