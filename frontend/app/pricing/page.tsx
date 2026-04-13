@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -124,6 +124,14 @@ function Cross() {
 }
 
 export default function PricingPage() {
+  return (
+    <Suspense>
+      <PricingInner />
+    </Suspense>
+  );
+}
+
+function PricingInner() {
   const searchParams = useSearchParams();
   const initialInterval = searchParams.get('interval') === 'yearly' ? 'yearly' : 'monthly';
   const [billing, setBilling] = useState<Billing>(initialInterval);
