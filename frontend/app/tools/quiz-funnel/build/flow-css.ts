@@ -968,8 +968,22 @@ export const FLOW_CSS = `
     color: var(--site-text, #1a1a1a);
     font-family: var(--site-body-font, 'Inter', sans-serif);
     min-height: 620px;
+    position: relative;
+    overflow: hidden;
+  }
+  .s4-site-iframe {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    border: none; pointer-events: none; z-index: 0;
+    opacity: 0.12;
+    filter: grayscale(30%);
+  }
+  .s4-site-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(180deg, var(--site-bg, #ffffff) 0%, rgba(255,255,255,0.85) 30%, rgba(255,255,255,0.7) 100%);
+    z-index: 1;
   }
   .s4-site-nav {
+    position: relative; z-index: 2;
     display: flex; align-items: center; justify-content: space-between;
     padding: 22px 40px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
@@ -1000,6 +1014,7 @@ export const FLOW_CSS = `
   .s4-frame.mobile .s4-site-nav { padding: 18px 22px; }
 
   .s4-site-body {
+    position: relative; z-index: 2;
     padding: 40px 40px 60px;
     max-width: 720px;
     margin: 0 auto;
@@ -1184,6 +1199,66 @@ export const FLOW_CSS = `
     color: var(--site-text, #1a1a1a);
     opacity: 0.55;
     cursor: pointer;
+    font-family: var(--site-body-font, 'Inter', sans-serif);
+  }
+
+  /* ---- Lead capture gate ---- */
+  .s4-lead-gate {
+    text-align: center;
+    padding: 32px 24px;
+    animation: qcEnter 0.4s ease both;
+  }
+  .s4-lead-gate-icon {
+    margin: 0 auto 16px;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--site-primary-dim, rgba(0,0,0,0.06));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--site-primary, #111);
+  }
+  .s4-lead-gate-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--site-text, #1a1a1a);
+    font-family: var(--site-body-font, 'Inter', sans-serif);
+    margin-bottom: 8px;
+  }
+  .s4-lead-gate-sub {
+    font-size: 14px; color: var(--site-text, #1a1a1a); opacity: 0.65;
+    font-family: var(--site-body-font, 'Inter', sans-serif);
+    margin-bottom: 24px; line-height: 1.5;
+  }
+  .s4-lead-gate-input {
+    display: block; width: 100%; max-width: 320px; margin: 0 auto 14px;
+    padding: 13px 16px; border-radius: 10px;
+    border: 2px solid var(--site-border, rgba(0,0,0,0.12));
+    background: var(--site-surface, #fff);
+    color: var(--site-text, #1a1a1a);
+    font-size: 15px; font-family: var(--site-body-font, 'Inter', sans-serif);
+    outline: none; transition: border-color 0.2s;
+  }
+  .s4-lead-gate-input:focus {
+    border-color: var(--site-primary, #111);
+  }
+  .s4-lead-gate-btn {
+    display: block; width: 100%; max-width: 320px; margin: 0 auto 12px;
+    padding: 14px 24px; border-radius: 10px; border: none;
+    background: var(--site-primary, #111);
+    color: var(--site-bg, #fff);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: var(--site-body-font, 'Inter', sans-serif);
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .s4-lead-gate-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  .s4-lead-gate-btn:disabled { opacity: 0.4; cursor: default; }
+  .s4-lead-gate-skip {
+    font-size: 13px; color: var(--site-text, #1a1a1a); opacity: 0.45;
+    cursor: pointer; margin-top: 4px;
+    font-family: var(--site-body-font, 'Inter', sans-serif);
+  }
+  .s4-lead-gate-skip:hover { opacity: 0.7; }
+  .s4-lead-gate-privacy {
+    font-size: 11px; color: var(--site-text, #1a1a1a); opacity: 0.35;
+    margin-top: 16px;
     font-family: var(--site-body-font, 'Inter', sans-serif);
   }
 

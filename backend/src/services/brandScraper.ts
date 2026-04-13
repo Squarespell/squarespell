@@ -556,6 +556,7 @@ export async function scrapeBrand(url: string) {
         headings: headings.slice(0, 10),
         key_content: paragraphs.slice(0, 6),
         json_ld: jsonLdBlocks.length > 0 ? jsonLdBlocks[0]?.slice(0, 500) : null,
+        nav_links: [...new Set(linkTexts)].slice(0, 6),
       },
     };
   } catch (err: any) {
@@ -571,7 +572,7 @@ export async function scrapeBrand(url: string) {
       font_fallback: 'sans-serif',
       site_name: '',
       favicon_url: '',
-      business: { summary: '', meta_description: '', headings: [], key_content: [], json_ld: null },
+      business: { summary: '', meta_description: '', headings: [], key_content: [], json_ld: null, nav_links: [] },
     };
   } finally {
     clearTimeout(timeout);

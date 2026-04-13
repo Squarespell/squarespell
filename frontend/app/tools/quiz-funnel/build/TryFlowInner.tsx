@@ -599,10 +599,14 @@ export function TryFlowInner({
   }, [stage, selectedIdx, quiz]);
 
   /* ======================== STAGE 4 helpers =========================== */
+  const [s4LeadGate, setS4LeadGate] = useState(false);
+  const [s4Email, setS4Email] = useState('');
   const resetS4 = () => {
     setS4Idx(0);
     setS4Answers({});
     setS4ShowResult(false);
+    setS4LeadGate(false);
+    setS4Email('');
   };
   const s4Pick = (oi: number) => {
     if (!quiz) return;
@@ -610,7 +614,8 @@ export function TryFlowInner({
     if (s4Idx < quiz.questions.length - 1) {
       setS4Idx(s4Idx + 1);
     } else {
-      setS4ShowResult(true);
+      // Show lead gate before results
+      setS4LeadGate(true);
     }
     // Scroll only the inner visitor preview to top - never the outer editor page.
     if (typeof document !== 'undefined') {
@@ -618,8 +623,16 @@ export function TryFlowInner({
       if (chrome) chrome.scrollTop = 0;
     }
   };
+  const s4SubmitLead = () => {
+    setS4LeadGate(false);
+    setS4ShowResult(true);
+  };
   const s4Back = () => {
-    if (s4Idx > 0) setS4Idx(s4Idx - 1);
+    if (s4LeadGate) {
+      setS4LeadGate(false);
+    } else if (s4Idx > 0) {
+      setS4Idx(s4Idx - 1);
+    }
   };
 
   const s4Outcome = (() => {
@@ -677,6 +690,10 @@ export function TryFlowInner({
     ? `'${brand.font_family}', system-ui, sans-serif`
     : "'Inter', system-ui, sans-serif";
   const brandName = brand?.site_name || domain.replace(/\.[^.]+$/, '').replace(/^\w/, c => c.toUpperCase());
+  // Real navigation links scraped from the website (falls back to generic)
+  const navLinks: string[] = (brand?.business as any)?.nav_links?.length > 0
+    ? (brand.business as any).nav_links.slice(0, 4)
+    : ['Shop', 'About', 'Journal', 'Contact'];
   const brandFontLabel = brand?.font_family && brand.font_family !== 'sans-serif'
     ? brand.font_family
     : 'Default sans-serif';
@@ -1513,16 +1530,24 @@ export function TryFlowInner({
               </div>
 
               <div className="s4-site" style={s4VisitorVars}>
+                {/* Real website iframe background */}
+                {url && (
+                  <iframe
+                    className="s4-site-iframe"
+                    src={url.startsWith('http') ? url : `https://${url}`}
+                    title="Your website"
+                    sandbox="allow-same-origin"
+                    loading="lazy"
+                  />
+                )}
+                <div className="s4-site-overlay" />
                 <div className="s4-site-nav">
                   <div className="s4-site-logo">
                     <div className="s4-site-logo-mark">{siteLetter}</div>
                     <span>{brandName}</span>
                   </div>
                   <div className="s4-site-links">
-                    <span>Shop</span>
-                    <span>About</span>
-                    <span>Journal</span>
-                    <span>Contact</span>
+                    {navLinks.map((link, li) => <span key={li}>{link}</span>)}
                   </div>
                 </div>
 
@@ -1532,7 +1557,7 @@ export function TryFlowInner({
                   <div className="s4-site-sub">{quiz?.description || 'Answer a few questions and get a personalized recommendation.'}</div>
 
                   <div className="s4-quiz">
-                    {!s4ShowResult ? (
+                    {!s4ShowResult && !s4LeadGate ? (
                       <>
                         <div className="s4-quiz-prog">
                           <span>Question {s4Idx + 1} of {totalQs || 10}</span>
@@ -1540,7 +1565,7 @@ export function TryFlowInner({
                         </div>
                         <div className="s4-quiz-bar"><div className="s4-quiz-fill" style={{ width: `${s4Pct}%` }} /></div>
                         <div className="s4-quiz-qlabel">Question {String(s4Idx + 1).padStart(2, '0')}</div>
-                        <div className="s4-quiz-q">{quiz?.questions[s4Idx]?.text || 'Loading…'}</div>
+                        <div className="s4-quiz-q">{quiz?.questions[s4Idx]?.text || 'Loading...'}</div>
                         <div className="s4-quiz-opts">
                           {quiz?.questions[s4Idx]?.options.map((o, oi) => (
                             <button
@@ -1555,17 +1580,46 @@ export function TryFlowInner({
                           ))}
                         </div>
                         {s4Idx > 0 && (
-                          <span className="s4-quiz-back" onClick={s4Back}>← Previous question</span>
+                          <span className="s4-quiz-back" onClick={s4Back}>&larr; Previous question</span>
                         )}
                       </>
+                    ) : s4LeadGate ? (
+                      <div className="s4-lead-gate">
+                        <div className="s4-lead-gate-icon">
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2" />
+                            <path d="M22 7l-10 7L2 7" />
+                          </svg>
+                        </div>
+                        <div className="s4-lead-gate-title">Your personalized results are ready!</div>
+                        <div className="s4-lead-gate-sub">Enter your email to see which {brandName} solution is the best fit for you.</div>
+                        <input
+                          className="s4-lead-gate-input"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={s4Email}
+                          onChange={(e) => setS4Email(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && s4Email.includes('@')) s4SubmitLead(); }}
+                        />
+                        <button
+                          className="s4-lead-gate-btn"
+                          onClick={s4SubmitLead}
+                          type="button"
+                          disabled={!s4Email.includes('@')}
+                        >
+                          Show my results
+                        </button>
+                        <div className="s4-lead-gate-skip" onClick={s4SubmitLead}>Skip for now</div>
+                        <div className="s4-lead-gate-privacy">We respect your privacy. No spam, ever.</div>
+                      </div>
                     ) : (
                       <div className="s4-quiz-result">
                         <div className="s4-quiz-result-badge">Your result</div>
                         <div className="s4-quiz-result-title">{s4Outcome?.title || 'Your result'}</div>
                         <div className="s4-quiz-result-desc">{s4Outcome?.description || ''}</div>
-                        <div className="s4-quiz-result-cta">{s4Outcome?.ctaText || 'Get my personalized plan'} →</div>
+                        <div className="s4-quiz-result-cta">{s4Outcome?.ctaText || 'Get my personalized plan'} &rarr;</div>
                         <div style={{ marginTop: 14 }}>
-                          <span className="s4-quiz-result-restart" onClick={resetS4}>↺ Take the quiz again</span>
+                          <span className="s4-quiz-result-restart" onClick={resetS4}>&larrhk; Take the quiz again</span>
                         </div>
                       </div>
                     )}

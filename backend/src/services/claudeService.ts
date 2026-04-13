@@ -20,7 +20,9 @@ BANNED CONTENT (instant failure if included):
 - "journey"  -  do not ask "where are you in your [X] journey"
 - Generic personality quiz questions that don't relate to the business
 - Questions about the visitor's experience with the business's platform/tools
-- Questions about website design, SEO, or marketing unless the business sells those services`;
+- Questions about website design, SEO, or marketing unless the business sells those services
+- Em dashes (--) - NEVER use em dashes anywhere. Use commas, periods, or hyphens (-) instead
+- Vague filler questions like "What is your biggest challenge?" or "What matters most to you?" - every question must reference a SPECIFIC product, service, or use case from the website`;
 
   if (mode === 'price_calculator') {
     return `${baseInstruction}
@@ -73,7 +75,7 @@ This quiz segments visitors into behavioral/demographic tags for downstream mark
 - Outcomes describe the visitor segment, not a specific product recommendation
 - Results show what segment the visitor belongs to and what that means for their journey
 
-OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text. NEVER use em dashes (--).`;
   }
 
   // Default: lead_quiz mode
@@ -82,7 +84,7 @@ OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`
 LEAD_QUIZ MODE (default):
 This is the standard lead-generation quiz. Every outcome recommends a specific product/service/solution from THIS business.
 
-OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text.`;
+OUTPUT: Return ONLY valid JSON. No markdown, no backticks, no explanation text. NEVER use em dashes (--).`;
 }
 
 /**
@@ -365,16 +367,19 @@ function normalizeQuiz(raw: any): any {
   data.title = data.title || data.quiz_title || 'Your Quiz';
   data.description = data.description || data.quiz_description || '';
 
+  // Strip em dashes from any text
+  const stripEmDash = (s: string) => s.replace(/\u2014/g, ' - ').replace(/\u2013/g, '-').replace(/\s*--\s*/g, ' - ');
+
   data.questions = rawQuestions.map((q: any, i: number) => {
     // Handle options as strings OR objects
     const rawOptions = q.options || q.answers || q.choices || [];
     const options = rawOptions.map((o: any, j: number) => {
       if (typeof o === 'string') {
-        return { id: String.fromCharCode(97 + j), text: o, score: 0 };
+        return { id: String.fromCharCode(97 + j), text: stripEmDash(o), score: 0 };
       }
       return {
         id: o.id || String.fromCharCode(97 + j),
-        text: o.text || o.label || o.answer || String(o),
+        text: stripEmDash(o.text || o.label || o.answer || String(o)),
         score: o.score ?? o.value ?? o.points ?? 0,
       };
     });
@@ -382,8 +387,8 @@ function normalizeQuiz(raw: any): any {
     return {
       id: q.id || `q${i + 1}`,
       type: q.type || 'single',
-      text: q.text || q.question || q.title || '',
-      subtitle: q.subtitle || q.sub || '',
+      text: stripEmDash(q.text || q.question || q.title || ''),
+      subtitle: stripEmDash(q.subtitle || q.sub || ''),
       options,
     };
   });
@@ -394,11 +399,11 @@ function normalizeQuiz(raw: any): any {
 
   data.outcomes = rawOutcomes.map((r: any, i: number) => ({
     id: r.id || `r${i + 1}`,
-    title: r.title || r.name || `Result ${i + 1}`,
-    description: r.description || r.text || r.summary || '',
+    title: stripEmDash(r.title || r.name || `Result ${i + 1}`),
+    description: stripEmDash(r.description || r.text || r.summary || ''),
     minScore: r.minScore ?? r.min_score ?? 0,
     maxScore: r.maxScore ?? r.max_score ?? 100,
-    ctaText: r.ctaText || r.cta_text || r.cta || 'Learn More',
+    ctaText: stripEmDash(r.ctaText || r.cta_text || r.cta || 'Learn More'),
     ctaUrl: r.ctaUrl || r.cta_url || r.url || '',
   }));
 
@@ -559,7 +564,7 @@ async function generateTailoredQuiz(
   const systemPrompt = `You are an expert lead-generation quiz creator for ${siteName}. You create quizzes that help website visitors discover which product, service, or solution is right for them.
 
 CRITICAL RULES:
-1. Every question MUST be specific to this exact business and what they sell/offer.
+1. Every question MUST be specific to this exact business and what they sell/offer. Reference REAL product names, service tiers, or categories from the website content.
 2. Questions should segment visitors based on the business's actual products and services.
 3. Each option has a "score" value (0-3) that maps to outcomes.
 4. Outcomes represent the business's real products, services, or recommendations.
@@ -567,7 +572,12 @@ CRITICAL RULES:
 6. The quiz goal is: ${goal}
 7. Target audience: ${audience}
 8. NEVER mention Squarespace, website builders, or templates unless the business actually sells those.
-9. Return ONLY valid JSON. No markdown, no backticks, no explanation.`;
+9. Return ONLY valid JSON. No markdown, no backticks, no explanation.
+10. NEVER use em dashes (--) anywhere in question text or option text. Use commas, periods, or short hyphens instead.
+11. NEVER write vague generic questions like "What is your biggest challenge?" or "What matters most to you?" - every single question must reference a SPECIFIC product, feature, service, price tier, or use case directly from the website.
+12. For lead generation quizzes: questions should qualify the visitor (budget, timeline, team size, current tools, specific needs) so the business owner gets actionable lead data.
+13. Options should be concrete and specific (e.g. "Under $500/month" not "Budget-friendly", "Team of 2-5" not "Small team").
+14. The first 2-3 questions should be easy/engaging. The last 2-3 should be more qualifying (budget, timeline, decision stage).`;
 
   const userPrompt = `BUSINESS: ${siteName}
 URL: ${websiteUrl}
@@ -613,9 +623,14 @@ Generate a quiz with this EXACT JSON structure:
 REQUIREMENTS:
 - Exactly 10 questions, each with exactly 4 options
 - 3 to 5 outcomes with non-overlapping score ranges
-- Every question and option must reference THIS business's actual offers
+- Every question and option must reference THIS business's actual offers, product names, or service categories
 - Score values: 0 (low fit), 1 (slight fit), 2 (good fit), 3 (best fit)
-- Outcomes should map to real products/services/packages from the website`;
+- Outcomes should map to real products/services/packages from the website
+- NEVER use em dashes (--). Use commas or hyphens (-) instead
+- Questions 1-3: engaging questions about what the visitor is looking for (reference real products/services)
+- Questions 4-7: deeper questions about their specific situation and needs
+- Questions 8-10: qualifying questions (budget range, timeline, decision stage) for lead generation
+- Option text must be concrete and specific, not abstract. Use real numbers, product names, and service tiers from the website content`;
 
   // Per product decision (Q5): API failures must NEVER block the user.
   // Claude call + parse are wrapped in a single try; any failure silently
