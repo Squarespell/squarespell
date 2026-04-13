@@ -23,6 +23,7 @@ interface Option {
 interface Question {
   id: string;
   text: string;
+  type?: string;
   subtitle?: string;
   options: Option[];
   next_question_rules?: Array<{ if_answer: string; goto: string }>;
