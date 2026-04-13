@@ -655,6 +655,45 @@ export function TryFlowInner({
   const domain = (url || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '') || 'your site';
   const siteLetter = (brand?.site_name || domain || 'B').charAt(0).toUpperCase();
 
+  // Safe CTA URL: validates the outcome's ctaUrl against the real pages scraped
+  // from the site. If it's a hallucinated/off-site/empty URL, fall back to the
+  // best text-matching real page, then to the site root. This guarantees the
+  // result CTA always lands somewhere real for the visitor.
+  const safeCtaUrl = (() => {
+    const navPages: { text: string; url: string }[] = Array.isArray((brand?.business as any)?.nav_pages)
+      ? (brand!.business as any).nav_pages
+      : [];
+    const siteRoot = url ? `https://${domain}` : '#';
+    const realUrls = new Set(navPages.map(p => p.url));
+    let siteOrigin = '';
+    try { if (url) siteOrigin = new URL(`https://${domain}`).origin; } catch {}
+
+    const raw = (s4Outcome?.ctaUrl || '').trim();
+    if (raw) {
+      if (/^https?:\/\//i.test(raw)) {
+        if (siteOrigin && raw.startsWith(siteOrigin) && realUrls.has(raw)) return raw;
+      } else if (raw.startsWith('/') && siteOrigin) {
+        const abs = siteOrigin + raw;
+        if (realUrls.has(abs)) return abs;
+      }
+    }
+    // Fuzzy match by cta text + outcome title against nav page labels
+    const needle = `${s4Outcome?.ctaText || ''} ${s4Outcome?.title || ''}`.toLowerCase();
+    if (navPages.length && needle.trim()) {
+      let best: { url: string; score: number } | null = null;
+      for (const p of navPages) {
+        const t = (p.text || '').toLowerCase();
+        if (!t) continue;
+        const words = t.split(/\s+/).filter(w => w.length > 2);
+        let score = 0;
+        for (const w of words) if (needle.includes(w)) score += w.length;
+        if (score > 0 && (!best || score > best.score)) best = { url: p.url, score };
+      }
+      if (best) return best.url;
+    }
+    return siteRoot;
+  })();
+
   // Slug derived from quiz title - used in Stage 6 public URL and embed snippet
   const quizSlug = (quiz?.title || 'your-quiz')
     .toLowerCase()
@@ -1560,17 +1599,7 @@ export function TryFlowInner({
               </div>
 
               <div className="s4-site" style={s4VisitorVars}>
-                {/* Real website screenshot background via thumbnail API */}
-                {url && (
-                  <img
-                    className="s4-site-screenshot"
-                    src={`https://image.thum.io/get/width/1200/crop/800/https://${domain}`}
-                    alt=""
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                )}
-                <div className="s4-site-overlay" />
+                {/* Clean mockup: actual scraped brand background color + real header, no screenshot. */}
                 <div className="s4-site-nav">
                   <div className="s4-site-logo">
                     <div className="s4-site-logo-mark">{siteLetter}</div>
@@ -1652,10 +1681,10 @@ export function TryFlowInner({
                         <div className="s4-quiz-result-desc">{s4Outcome?.description || ''}</div>
                         <a
                           className="s4-quiz-result-cta"
-                          href={s4Outcome?.ctaUrl || (url ? `https://${domain}` : '#')}
+                          href={safeCtaUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          onClick={(e) => { if (!s4Outcome?.ctaUrl) e.preventDefault(); }}
+                          onClick={(e) => { if (!safeCtaUrl || safeCtaUrl === '#') e.preventDefault(); }}
                         >
                           {s4Outcome?.ctaText || 'Get my personalized plan'} {'\u2192'}
                         </a>

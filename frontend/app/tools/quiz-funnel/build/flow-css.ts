@@ -451,8 +451,8 @@ export const FLOW_CSS = `
   }
   .s3-saved { font-size: 12px; color: var(--text-dim); }
   .s3-top-right { display: flex; gap: 10px; }
-  .s3-body { display: grid; grid-template-columns: 1fr 340px; min-height: calc(100vh - 90px); overflow: hidden; }
-  .s3-main { padding: 32px 40px 80px; overflow-y: auto; max-width: 880px; width: 100%; margin: 0 auto; }
+  .s3-body { display: grid; grid-template-columns: 1fr 340px; height: calc(100vh - 90px); overflow: hidden; }
+  .s3-main { padding: 32px 40px 80px; overflow-y: auto; height: 100%; max-width: 880px; width: 100%; margin: 0 auto; }
   .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
   .s3-main-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
   .s3-count {
@@ -572,8 +572,8 @@ export const FLOW_CSS = `
   .add-q-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   .s3-side {
     background: var(--bg-2); border-left: 1px solid var(--border);
-    padding: 24px 20px 60px; position: sticky; top: 0;
-    height: calc(100vh - 90px); overflow-y: auto; overflow-x: hidden;
+    padding: 24px 20px 60px;
+    height: 100%; overflow-y: auto; overflow-x: hidden;
     min-width: 0;
   }
   .s3-side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -973,7 +973,7 @@ export const FLOW_CSS = `
     width: 4px; height: 4px; background: currentColor; border-radius: 50%;
   }
 
-  /* --- Inside the frame: the visitor's site header (detected brand) --- */
+  /* --- Inside the frame: visitor's site header + the scraped brand background color. --- */
   .s4-site {
     background: var(--site-bg, #ffffff);
     color: var(--site-text, #1a1a1a);
@@ -981,19 +981,6 @@ export const FLOW_CSS = `
     min-height: 620px;
     position: relative;
     overflow: hidden;
-  }
-  .s4-site-screenshot {
-    position: absolute; top: 0; left: 0; width: 100%; height: auto;
-    min-height: 100%;
-    object-fit: cover; object-position: top center;
-    pointer-events: none; z-index: 0;
-    opacity: 0.18;
-    filter: blur(1px);
-  }
-  .s4-site-overlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(180deg, var(--site-overlay-start, var(--site-bg, #ffffff)) 0%, var(--site-overlay-mid, rgba(255,255,255,0.75)) 25%, var(--site-overlay-end, rgba(255,255,255,0.6)) 100%);
-    z-index: 1;
   }
   .s4-site-nav {
     position: relative; z-index: 2;
