@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
-import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz } from '../services/claudeService';
+import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
 import { runCleanup } from '../services/databaseCleanup';
@@ -215,8 +215,22 @@ previewRouter.post('/preview-analyze', async (req, res) => {
     const brand = await scrapeBrand(normalizedUrl);
     console.log(`[PreviewAnalyze] Scrape done. Summary: ${brand.business?.summary?.length || 0} chars`);
 
-    const { questions: onboardingQuestions } = await generateOnboardingQuestions(normalizedUrl, brand);
+    // Run AI analysis and onboarding questions in parallel for speed
+    const [{ questions: onboardingQuestions }, businessProfile] = await Promise.all([
+      generateOnboardingQuestions(normalizedUrl, brand),
+      analyzeBusinessProfile(normalizedUrl, brand),
+    ]);
     console.log(`[PreviewAnalyze] Onboarding questions generated: ${onboardingQuestions.length}`);
+    console.log(`[PreviewAnalyze] Business profile: ${JSON.stringify(businessProfile)}`);
+
+    // Merge AI-analyzed business profile into brand object
+    brand.business = {
+      ...brand.business,
+      type: businessProfile.type,
+      audience: businessProfile.audience,
+      tone: businessProfile.tone,
+      key_offer: businessProfile.key_offer,
+    };
 
     const sessionToken = crypto.randomBytes(16).toString('hex');
     previewSessionCache.set(sessionToken, {

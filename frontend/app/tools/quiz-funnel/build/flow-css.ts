@@ -339,11 +339,13 @@ export const FLOW_CSS = `
   .ai-tags { display: flex; flex-wrap: wrap; gap: 10px; }
   .ai-tag { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; transition: border-color 0.15s; }
   .ai-tag:hover { border-color: var(--border-2); }
-  .ai-tag-content { display: flex; flex-direction: column; gap: 2px; }
+  .ai-tag-content { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
   .ai-tag-label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .ai-tag-value { font-size: 14px; font-weight: 600; color: var(--text); }
-  .ai-tag-edit { font-size: 12px; color: rgba(210,255,29,0.5); cursor: pointer; font-weight: 600; transition: color 0.15s; padding: 4px; }
+  .ai-tag-edit { font-size: 12px; color: rgba(210,255,29,0.5); cursor: pointer; font-weight: 600; transition: color 0.15s; padding: 4px; margin-left: auto; flex-shrink: 0; }
   .ai-tag-edit:hover { color: var(--accent); }
+  .ai-tag-input { background: rgba(255,255,255,0.08); border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; font-size: 14px; font-weight: 600; color: var(--text); outline: none; width: 100%; font-family: inherit; }
+  .ai-tag-input:focus { box-shadow: 0 0 0 2px rgba(210,255,29,0.15); }
 
   /* Goal section */
   .goal-intro { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 6px; letter-spacing: 0.01em; }

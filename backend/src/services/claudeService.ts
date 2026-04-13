@@ -588,7 +588,74 @@ async function processOtherAnswer(
   }
 }
 
-export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz };
+/**
+ * Analyze scraped website content and extract a concise business profile:
+ * business type, target audience, brand tone, and key offer.
+ * Used to populate the "AI detected from your site" panel in Step 2.
+ */
+async function analyzeBusinessProfile(
+  websiteUrl: string,
+  brandData?: any
+): Promise<{ type: string; audience: string; tone: string; key_offer: string }> {
+  const businessSummary = brandData?.business?.summary || '';
+  const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
+
+  if (!businessSummary || businessSummary.length < 30) {
+    // Not enough content to analyze - return sensible defaults from domain name
+    return {
+      type: 'Business',
+      audience: 'General audience',
+      tone: 'Professional',
+      key_offer: 'Products and services',
+    };
+  }
+
+  const systemPrompt = `You analyze a website's scraped content and extract a concise business profile. Return ONLY valid JSON with exactly these 4 fields:
+- "type": The business category in 2-5 words (e.g. "Wellness coaching studio", "E-commerce fashion brand", "SaaS analytics platform", "Photography studio", "Marketing agency")
+- "audience": The target audience in 2-6 words (e.g. "Health-conscious women 25-45", "Small business owners", "Creative professionals", "Tech startups", "Brides and couples")
+- "tone": The brand's communication tone in 1-3 words (e.g. "Warm and friendly", "Bold and confident", "Minimal and elegant", "Playful and casual", "Professional and expert")
+- "key_offer": The main product, service, or value proposition in 3-8 words (e.g. "Custom wedding photography packages", "AI-powered analytics dashboard", "Handmade organic skincare", "1-on-1 business coaching", "Web design for creators")
+
+RULES:
+- Be specific to THIS business. Never say generic things like "Various services" or "Products".
+- Infer from the actual content: headings, paragraphs, meta descriptions, navigation, CTAs.
+- Keep each value short and punchy. These appear as UI tags.
+- Return ONLY the JSON object. No markdown, no backticks, no explanation.`;
+
+  const userPrompt = `WEBSITE: ${siteName}
+URL: ${websiteUrl}
+
+SCRAPED CONTENT:
+${businessSummary.slice(0, 2500)}`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+    const parsed = JSON.parse(extractJSON(raw));
+    return {
+      type: String(parsed.type || 'Business').slice(0, 60),
+      audience: String(parsed.audience || 'General audience').slice(0, 60),
+      tone: String(parsed.tone || 'Professional').slice(0, 40),
+      key_offer: String(parsed.key_offer || 'Products and services').slice(0, 80),
+    };
+  } catch (err: any) {
+    console.error('[analyzeBusinessProfile] AI analysis failed:', err.message);
+    return {
+      type: 'Business',
+      audience: 'General audience',
+      tone: 'Professional',
+      key_offer: 'Products and services',
+    };
+  }
+}
+
+export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile };
 export const generateQuizWithClaude = callClaude;
 export const generateQuiz = callClaude;
 export const generateQuizContent = callClaude;

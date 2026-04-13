@@ -189,6 +189,38 @@ export function TryFlowInner({
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, number>>({});
   const [buildingQuiz, setBuildingQuiz] = useState(false);
 
+  // Stage 2 - inline editing of AI-detected tags
+  const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the input when an edit starts
+  useEffect(() => {
+    if (editingTag && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingTag]);
+
+  const startEditTag = (tagKey: string, currentValue: string) => {
+    setEditingTag(tagKey);
+    setEditValues((prev) => ({ ...prev, [tagKey]: currentValue }));
+  };
+
+  const commitEditTag = (tagKey: string) => {
+    const newValue = (editValues[tagKey] || '').trim();
+    if (newValue && brand) {
+      setBrand({
+        ...brand,
+        business: {
+          ...brand.business,
+          [tagKey]: newValue,
+        },
+      });
+    }
+    setEditingTag(null);
+  };
+
   // Stage 3 editor
   const [quiz, setQuiz] = useState<Quiz | null>(initialQuiz ?? null);
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
@@ -301,6 +333,7 @@ export function TryFlowInner({
         business_type: brand?.business?.type || 'unknown',
         audience: brand?.business?.audience || 'unknown',
         tone: brand?.business?.tone || 'unknown',
+        key_offer: brand?.business?.key_offer || 'unknown',
       };
       const res = await fetch(`${API}/api/preview-build-quiz`, {
         method: 'POST',
@@ -851,34 +884,44 @@ export function TryFlowInner({
                     <span className="ai-header-text">AI detected from your site</span>
                   </div>
                   <div className="ai-tags">
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Business type</span>
-                        <span className="ai-tag-value">{brand.business.type || 'Unknown'}</span>
+                    {([
+                      { key: 'type', label: 'Business type' },
+                      { key: 'audience', label: 'Audience' },
+                      { key: 'tone', label: 'Tone' },
+                      { key: 'key_offer', label: 'Key offer' },
+                    ] as const).map((tag) => (
+                      <div className="ai-tag" key={tag.key}>
+                        <div className="ai-tag-content">
+                          <span className="ai-tag-label">{tag.label}</span>
+                          {editingTag === tag.key ? (
+                            <input
+                              ref={editingTag === tag.key ? editInputRef : undefined}
+                              className="ai-tag-input"
+                              value={editValues[tag.key] || ''}
+                              onChange={(e) => setEditValues((prev) => ({ ...prev, [tag.key]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitEditTag(tag.key);
+                                if (e.key === 'Escape') setEditingTag(null);
+                              }}
+                              onBlur={() => commitEditTag(tag.key)}
+                              maxLength={80}
+                            />
+                          ) : (
+                            <span className="ai-tag-value">{brand.business[tag.key] || 'Unknown'}</span>
+                          )}
+                        </div>
+                        {editingTag !== tag.key && (
+                          <span
+                            className="ai-tag-edit"
+                            onClick={() => startEditTag(tag.key, brand.business[tag.key] || '')}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            edit
+                          </span>
+                        )}
                       </div>
-                      <span className="ai-tag-edit">edit</span>
-                    </div>
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Audience</span>
-                        <span className="ai-tag-value">{brand.business.audience || 'Unknown'}</span>
-                      </div>
-                      <span className="ai-tag-edit">edit</span>
-                    </div>
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Tone</span>
-                        <span className="ai-tag-value">{brand.business.tone || 'Unknown'}</span>
-                      </div>
-                      <span className="ai-tag-edit">edit</span>
-                    </div>
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Key offer</span>
-                        <span className="ai-tag-value">{brand.business.key_offer || 'Unknown'}</span>
-                      </div>
-                      <span className="ai-tag-edit">edit</span>
-                    </div>
+                    ))}
                   </div>
                 </div>
               )}
