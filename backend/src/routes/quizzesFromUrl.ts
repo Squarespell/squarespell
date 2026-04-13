@@ -113,10 +113,12 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
   const userId = req.dbUserId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-  const { url } = (req.body ?? {}) as { url?: string };
+  const { url, topic } = (req.body ?? {}) as { url?: string; topic?: string };
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'url required' });
   }
+  const cleanTopic =
+    typeof topic === 'string' ? topic.trim().slice(0, 500) : '';
 
   let normalizedUrl: string;
   try {
@@ -165,6 +167,15 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
       { question: 'What is the key product or service?', answer: businessProfile.key_offer || 'unknown' },
     ].filter((p) => p.answer && p.answer !== 'unknown');
 
+    // User-supplied topic steers the generator toward a specific angle.
+    // Prepended so it carries the most weight in the LLM context.
+    if (cleanTopic) {
+      onboardingPairs.unshift({
+        question: 'What should this quiz specifically be about?',
+        answer: cleanTopic,
+      });
+    }
+
     console.log(`[FromUrl] building quiz for ${normalizedUrl}`);
     const quiz = await generateTailoredQuiz(normalizedUrl, brand, onboardingPairs);
 
@@ -183,6 +194,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
           ...(quiz.settings ?? {}),
           website_url: normalizedUrl,
           source: 'from-url-modal',
+          user_topic: cleanTopic || null,
         },
         status: 'draft',
       })

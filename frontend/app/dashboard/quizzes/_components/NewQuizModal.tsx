@@ -188,6 +188,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [url, setUrl] = useState('');
+  const [topic, setTopic] = useState('');
   const [stage, setStage] = useState<Stage>('idle');
   const [error, setError] = useState<string | null>(null);
   const [creatingBlank, setCreatingBlank] = useState(false);
@@ -199,6 +200,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
     } else {
       // reset state on close
       setUrl('');
+      setTopic('');
       setStage('idle');
       setError(null);
       setCreatingBlank(false);
@@ -234,7 +236,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ url: normalized }),
+        body: JSON.stringify({ url: normalized, topic: topic.trim() || undefined }),
       });
 
       clearTimeout(ticker);
@@ -321,7 +323,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           New quiz
         </h2>
         <p style={{ color: C.MUTED, fontSize: 14, margin: '6px 0 0' }}>
-          Paste your site URL and we'll generate a personalized quiz, or start from a blank canvas.
+          Paste your site URL and we'll generate a personalized quiz. Add a topic below to steer it toward a specific angle.
         </p>
       </div>
 
@@ -360,6 +362,56 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
             fontFamily: 'inherit',
           }}
         />
+
+        <label
+          htmlFor="new-quiz-topic"
+          style={{
+            display: 'block',
+            color: C.TEXT,
+            fontSize: 13,
+            fontWeight: 500,
+            marginTop: 16,
+            marginBottom: 8,
+          }}
+        >
+          What's this quiz about?{' '}
+          <span style={{ color: C.MUTED, fontWeight: 400 }}>(optional)</span>
+        </label>
+        <textarea
+          id="new-quiz-topic"
+          placeholder="e.g. Help customers pick the right skincare routine for their skin type"
+          value={topic}
+          disabled={isGenerating || creatingBlank}
+          maxLength={500}
+          rows={2}
+          onChange={(e) => setTopic(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '10px 14px',
+            borderRadius: 10,
+            border: `1px solid ${C.BORDER}`,
+            background: C.SURFACE,
+            color: C.TEXT,
+            fontSize: 14,
+            outline: 'none',
+            fontFamily: 'inherit',
+            resize: 'vertical',
+            minHeight: 56,
+            lineHeight: 1.45,
+          }}
+        />
+        <div
+          style={{
+            color: C.MUTED,
+            fontSize: 12,
+            marginTop: 6,
+            display: 'flex',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span>Leave blank and we'll infer from your site.</span>
+          <span>{topic.length}/500</span>
+        </div>
 
         {isGenerating && (
           <div style={{ marginTop: 18, padding: '12px 0' }}>
