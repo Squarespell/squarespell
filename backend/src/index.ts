@@ -1,28 +1,17 @@
 import 'dotenv/config';
-import * as Sentry from '@sentry/node';
 import express from 'express';
 import cors from 'cors';
 import quizRoutes from './routes/quiz';
-import apiKeysRoutes from './routes/apiKeys';
-import zapierRoutes from './routes/zapier';
-import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter, templatesRouter, cleanupRouter, quizPaymentsRouter } from './routes/allRoutes';
+import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
+import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter } from './routes/allRoutes';
 import clerkWebhookRoute from './routes/clerkWebhook';
-import { supabase } from './db/supabaseClient';
-
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'development',
-    tracesSampleRate: 0.1,
-  });
-}
+import squarespaceRouter from './routes/squarespace';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/clerk/webhook', express.raw({ type: 'application/json' }));
-app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/json' }));
 
 /* ------------------------------------------------------------------ */
 /* CORS                                                                */
@@ -67,8 +56,6 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/quiz',
   '/api/save-preview',
   '/api/scrape-brand',
-  '/api/public/quiz',
-  '/api/webhooks/stripe-quiz-payment',
 ];
 
 const restrictedCors = cors({
@@ -97,9 +84,8 @@ app.use(express.json());
 // Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
 
+app.use('/api/quizzes', quizzesFromUrlRoutes);
 app.use('/api/quizzes', quizRoutes);
-app.use('/api/api-keys', apiKeysRoutes);
-app.use('/api/zapier', zapierRoutes);
 app.use('/api', generateRouter);
 app.use('/api', leadsRouter);
 app.use('/api/analytics', analyticsRouter);
@@ -108,101 +94,11 @@ app.use('/api/stripe', stripeRouter);
 app.use('/api/clerk', clerkWebhookRoute);
 app.use('/api/quiz', publicQuizRouter);
 app.use('/api/user', userRouter);
+app.use('/auth/squarespace', squarespaceRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/cron', cronRouter);
 app.use('/api/cron', trialReminderRouter);
-app.use('/api/admin', cleanupRouter);
-app.use('/api/templates', templatesRouter);
-app.use('/api', quizPaymentsRouter);
-app.get('/health', async (_req, res) => {
-  const checks: Record<string, 'ok' | 'error'> = {};
-
-  // Check Supabase
-  try {
-    const { error } = await supabase.from('users').select('id').limit(1);
-    checks.supabase = error ? 'error' : 'ok';
-  } catch {
-    checks.supabase = 'error';
-  }
-
-  // Check Clerk
-  try {
-    // Simple check that Clerk API key is valid
-    if (process.env.CLERK_SECRET_KEY) {
-      checks.clerk = 'ok';
-    } else {
-      checks.clerk = 'error';
-    }
-  } catch {
-    checks.clerk = 'error';
-  }
-
-  // Check Stripe
-  try {
-    if (process.env.STRIPE_SECRET_KEY) {
-      checks.stripe = 'ok';
-    } else {
-      checks.stripe = 'error';
-    }
-  } catch {
-    checks.stripe = 'error';
-  }
-
-  const allOk = Object.values(checks).every(v => v === 'ok');
-  const status = allOk ? 200 : 503;
-
-  res.status(status).json({
-    status: allOk ? 'healthy' : 'degraded',
-    checks,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Keep /api/health as an alias
-app.get('/api/health', async (_req, res) => {
-  const checks: Record<string, 'ok' | 'error'> = {};
-
-  // Check Supabase
-  try {
-    const { error } = await supabase.from('users').select('id').limit(1);
-    checks.supabase = error ? 'error' : 'ok';
-  } catch {
-    checks.supabase = 'error';
-  }
-
-  // Check Clerk
-  try {
-    // Simple check that Clerk API key is valid
-    if (process.env.CLERK_SECRET_KEY) {
-      checks.clerk = 'ok';
-    } else {
-      checks.clerk = 'error';
-    }
-  } catch {
-    checks.clerk = 'error';
-  }
-
-  // Check Stripe
-  try {
-    if (process.env.STRIPE_SECRET_KEY) {
-      checks.stripe = 'ok';
-    } else {
-      checks.stripe = 'error';
-    }
-  } catch {
-    checks.stripe = 'error';
-  }
-
-  const allOk = Object.values(checks).every(v => v === 'ok');
-  const status = allOk ? 200 : 503;
-
-  res.status(status).json({
-    status: allOk ? 'healthy' : 'degraded',
-    checks,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-Sentry.setupExpressErrorHandler(app);
+app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
