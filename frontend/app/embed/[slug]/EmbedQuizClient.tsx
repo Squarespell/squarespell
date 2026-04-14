@@ -48,7 +48,9 @@ interface Quiz {
     cta_url?: string;
     show_branding?: boolean;
     requireEmail?: boolean;
-  }
+  };
+  leadGate?: { headline?: string; subtext?: string; buttonText?: string };
+}
 
 export default function EmbedQuizClient({
   quiz,
