@@ -211,6 +211,17 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
       }
       const data = await res.json();
       setPublishedSlug(data?.slug || (quiz as any)?.slug || "");
+      // Merge publish response into local quiz state so UI flips draft -> live
+      // immediately without a page reload.
+      setQuiz((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          status: (data?.status as any) || 'live',
+          slug: data?.slug || (prev as any).slug,
+          published_at: data?.published_at || (prev as any).published_at,
+        } as any;
+      });
       setPublishModalOpen(true);
     } catch (e: any) {
       setPublishError(e?.message || "Publish failed");
