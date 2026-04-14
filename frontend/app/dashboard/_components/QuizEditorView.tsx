@@ -80,21 +80,6 @@ function EditorLoading({ label }: { label: string }) {
   return (
     <DashboardShell title="Quiz editor">
       <div style={{ color: C.TEXT_MUTED, fontSize: 14, padding: '48px 0' }}>{label}</div>
-          <button
-        onClick={handlePublish}
-        disabled={publishing}
-        style={{position:"fixed",top:16,right:16,zIndex:50,padding:"10px 18px",borderRadius:8,background:"#111",color:"#fff",fontWeight:600,border:"none",cursor:"pointer",opacity:publishing?0.6:1}}
-        aria-label="Publish quiz"
-      >{publishing ? "Publishing..." : "Publish"}</button>
-      {publishError && (
-        <div style={{position:"fixed",top:60,right:16,zIndex:50,background:"#fee",color:"#900",padding:"8px 12px",borderRadius:6,fontSize:13}}>{publishError}</div>
-      )}
-      <PublishModal
-        open={publishModalOpen}
-        quizTitle={(quiz as any)?.title || "Quiz"}
-        slug={publishedSlug}
-        onClose={() => setPublishModalOpen(false)}
-      />
     </DashboardShell>
   );
 }
@@ -302,6 +287,21 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
           initialStage={3}
         />
       </div>
+          <button
+        onClick={handlePublish}
+        disabled={publishing}
+        style={{position:"fixed",top:16,right:16,zIndex:50,padding:"10px 18px",borderRadius:8,background:"#111",color:"#fff",fontWeight:600,border:"none",cursor:"pointer",opacity:publishing?0.6:1}}
+        aria-label="Publish quiz"
+      >{publishing ? "Publishing..." : "Publish"}</button>
+      {publishError && (
+        <div style={{position:"fixed",top:60,right:16,zIndex:50,background:"#fee",color:"#900",padding:"8px 12px",borderRadius:6,fontSize:13}}>{publishError}</div>
+      )}
+      <PublishModal
+        open={publishModalOpen}
+        quizTitle={(quiz as any)?.title || "Quiz"}
+        slug={publishedSlug}
+        onClose={() => setPublishModalOpen(false)}
+      />
     </DashboardShell>
   );
 }
