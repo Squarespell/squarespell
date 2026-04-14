@@ -6,7 +6,7 @@ import { generateQuizReport } from '../services/pdfReport';
 const router = Router();
 
 // GET /api/public/leads/:leadId/report - download PDF report (requires signed token)
-router.get('/public/leads/:leadId/report', async (req, res) => {
+router.get('/leads/:leadId/report', async (req, res) => {
   try {
     const { token } = req.query;
 

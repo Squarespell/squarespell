@@ -29,6 +29,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   const { to, quizTitle, outcomeTitle, outcomeDescription, ctaUrl, ctaText, branding, reportEnabled, leadId, ownerEmail } = params;
   const primaryColor = branding.primaryColor || '#D2FF1D';
   const siteName = branding.siteName || 'Squarespell Quiz';
+  const logoUrl = branding.logoUrl || '';
 
   // Generate report token if report is enabled
   let reportUrl = '';
@@ -68,9 +69,9 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
       <tr><td align="center" style="padding:24px 12px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
           <tr>
-            <td style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);padding:28px 32px;color:#ffffff;">
-              <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.9;">${siteName}</div>
-              <div style="font-size:22px;font-weight:700;margin-top:6px;">Your results are in</div>
+            <td style="background:${primaryColor};padding:28px 32px;color:#0a0a0a;">
+              ${logoUrl ? `<img src="${logoUrl}" alt="${siteName}" style="max-height:36px;margin-bottom:10px;display:block;" />` : `<div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;">${siteName}</div>`}
+              <div style="font-size:22px;font-weight:700;margin-top:6px;color:#0a0a0a;">Your results are in</div>
             </td>
           </tr>
           <tr>
@@ -78,14 +79,12 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
               <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">From ${quizTitle}</div>
               <h1 style="margin:0 0 14px;font-size:26px;line-height:1.25;color:#111;">${outcomeTitle}</h1>
               <div style="color:#444;font-size:15px;line-height:1.65;margin:0 0 28px;">${outcomeDescription}</div>
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 10px;">
-                <tr>
-                  ${reportUrl ? `<td align="center" style="border-radius:10px;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);padding:2px;">
-                    <a href="${reportUrl}" style="display:inline-block;padding:14px 28px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">⬇  Download your PDF report</a>
-                  </td>` : ''}
-                </tr>
-              </table>
-              ${ctaUrl ? `<p style="text-align:center;margin:14px 0 0;"><a href="${ctaUrl}" style="color:#6366f1;text-decoration:none;font-weight:600;font-size:14px;">${ctaText || 'Learn more'} →</a></p>` : ''}
+              ${reportUrl ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 6px;"><tr>
+                <td align="center" style="border-radius:10px;background:${primaryColor};">
+                  <a href="${reportUrl}" style="display:inline-block;padding:14px 28px;font-size:16px;font-weight:700;color:#0a0a0a;text-decoration:none;border-radius:10px;">⬇  Download your PDF report</a>
+                </td>
+              </tr></table>` : ''}
+              ${ctaUrl ? `<p style="text-align:center;margin:18px 0 0;"><a href="${ctaUrl}" style="color:${primaryColor};text-decoration:none;font-weight:700;font-size:14px;filter:brightness(0.6);">${ctaText || 'Learn more'} →</a></p>` : ''}
               ${reportUrl ? `<p style="text-align:center;margin:20px 0 0;color:#999;font-size:12px;">Your download link is valid for 30 days.</p>` : ''}
             </td>
           </tr>
@@ -96,7 +95,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
           </tr>
           <tr>
             <td style="padding:14px 32px 22px;background:#fafafa;color:#999;font-size:12px;line-height:1.5;text-align:center;">
-              Sent by ${siteName} via <a href="https://squarespell.com" style="color:#6366f1;text-decoration:none;">Squarespell</a>.<br/>
+              Sent by ${siteName} via <a href="https://squarespell.com" style="color:#888;text-decoration:none;">Squarespell</a>.<br/>
               <a href="${unsubUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
             </td>
           </tr>
