@@ -38,10 +38,20 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   }
 
   try {
+    const unsubUrl = `${process.env.FRONTEND_URL || 'https://app.squarespell.com'}/unsubscribe?email=${encodeURIComponent(to)}`;
+    const plainText = [quizTitle,'',outcomeTitle,'',outcomeDescription.replace(/<[^>]+>/g,''),'',ctaUrl?`${ctaText||'Learn More'}: ${ctaUrl}`:'',reportUrl?`Download your report: ${reportUrl}`:'','','Powered by Squarespell','',`Unsubscribe: ${unsubUrl}`].filter(Boolean).join('\n');
+
     await resend.emails.send({
       from: `${siteName} <results@squarespell.com>`,
       to,
+      replyTo: 'hello@squarespell.com',
       subject: `Your Result: ${outcomeTitle}`,
+      text: plainText,
+      headers: {
+        'List-Unsubscribe': `<${unsubUrl}>, <mailto:unsubscribe@squarespell.com?subject=unsubscribe>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        'X-Entity-Ref-ID': leadId || '',
+      },
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
