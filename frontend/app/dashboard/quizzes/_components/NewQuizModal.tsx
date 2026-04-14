@@ -9,13 +9,14 @@ type Goal = {
   id: string;
   label: string;
   hint: string;
+  icon: "mail" | "target" | "book" | "gauge";
 };
 
 const GOALS: Goal[] = [
-  { id: "leads", label: "Capture leads", hint: "Email-gated result page. Best for list growth." },
-  { id: "recommend", label: "Recommend a product", hint: "Route visitors to the best fit SKU or plan." },
-  { id: "educate", label: "Educate and nurture", hint: "Assess knowledge, then send a drip follow up." },
-  { id: "score", label: "Score and qualify", hint: "Grade readiness. Useful for sales hand-off." },
+  { id: "leads", label: "Capture leads", hint: "Email-gated result page. Best for list growth.", icon: "mail" },
+  { id: "recommend", label: "Recommend a product", hint: "Route visitors to the best fit SKU or plan.", icon: "target" },
+  { id: "educate", label: "Educate and nurture", hint: "Assess knowledge, then send a drip follow up.", icon: "book" },
+  { id: "score", label: "Score and qualify", hint: "Grade readiness. Useful for sales hand-off.", icon: "gauge" },
 ];
 
 type BrandScrape = {
@@ -36,6 +37,15 @@ function normalizeUrl(raw: string): string {
   if (!trimmed) return "";
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
+}
+
+
+function GoalIcon({ name }: { name: Goal["icon"] }) {
+  const common = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  if (name === "mail") return (<svg {...common}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>);
+  if (name === "target") return (<svg {...common}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg>);
+  if (name === "book") return (<svg {...common}><path d="M4 5a2 2 0 012-2h12v18H6a2 2 0 01-2-2V5z"/><path d="M8 7h8M8 11h6"/></svg>);
+  return (<svg {...common}><path d="M3 12a9 9 0 0118 0"/><path d="M12 12l5-3"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg>);
 }
 
 export default function NewQuizModal({ open, onClose, onCreated }: Props) {
@@ -247,6 +257,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                         className={`sq-goal ${goalId === g.id ? "is-selected" : ""}`}
                         onClick={() => setGoalId(g.id)}
                       >
+                        <span className="sq-goal-icon" aria-hidden="true"><GoalIcon name={g.icon} /></span>
                         <div className="sq-goal-top">
                           <span className="sq-goal-label">{g.label}</span>
                           <span className="sq-goal-check" aria-hidden="true">
@@ -551,6 +562,20 @@ const styles = `
 .sq-error-block {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 10px; padding: 40px 20px; text-align: center;
+}
+.sq-goal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(212, 255, 77, 0.10);
+  color: #d4ff4d;
+  margin-bottom: 12px;
+}
+.sq-goal.is-selected .sq-goal-icon {
+  background: rgba(212, 255, 77, 0.18);
 }
 .sq-error-icon {
   width: 48px; height: 48px; border-radius: 50%;
