@@ -192,27 +192,31 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
 
-  async function handlePublish() {
+  async function handlePublish(): Promise<boolean> {
     try {
       setPublishing(true);
       setPublishError(null);
-      const token = await getToken();
-      if (!token) throw new Error("Not signed in");
       const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
       const qid = (quiz as any)?.id || quizId || "";
-      if (!qid) throw new Error("Quiz id not ready");
-      const res = await fetch(`${API}/api/quizzes/${qid}/publish`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (!qid) throw new Error("Quiz id not ready yet. Give the editor a second to load.");
+      // One-shot retry: if the first token is stale and the server returns 401,
+      // force a fresh token via skipCache and try once more before giving up.
+      const doFetch = async (fresh: boolean) => {
+        const token = await getToken(fresh ? { skipCache: true } as any : undefined);
+        if (!token) throw new Error("Not signed in");
+        return fetch(`${API}/api/quizzes/${qid}/publish`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      };
+      let res = await doFetch(false);
+      if (res.status === 401) res = await doFetch(true);
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new Error(`Publish failed (${res.status}): ${body.slice(0, 200)}`);
       }
       const data = await res.json();
       setPublishedSlug(data?.slug || (quiz as any)?.slug || "");
-      // Merge publish response into local quiz state so UI flips draft -> live
-      // immediately without a page reload.
       setQuiz((prev) => {
         if (!prev) return prev;
         return {
@@ -223,10 +227,12 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
         } as any;
       });
       setPublishModalOpen(true);
+      return true;
     } catch (e: any) {
       setPublishError(e?.message || "Publish failed");
       // eslint-disable-next-line no-console
       console.error("[publish]", e);
+      return false;
     } finally {
       setPublishing(false);
     }
@@ -296,16 +302,11 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
           initialBrand={brandFromQuiz(quiz)}
           initialUrl={quiz.branding?.site_url || quiz.source_url || ''}
           initialStage={3}
+          onPublish={handlePublish}
         />
       </div>
-          <button
-        onClick={handlePublish}
-        disabled={publishing}
-        style={{position:"fixed",top:16,right:16,zIndex:50,padding:"10px 18px",borderRadius:8,background:"#111",color:"#fff",fontWeight:600,border:"none",cursor:"pointer",opacity:publishing?0.6:1}}
-        aria-label="Publish quiz"
-      >{publishing ? "Publishing..." : "Publish"}</button>
       {publishError && (
-        <div style={{position:"fixed",top:60,right:16,zIndex:50,background:"#fee",color:"#900",padding:"8px 12px",borderRadius:6,fontSize:13}}>{publishError}</div>
+        <div style={{position:"fixed",top:16,right:16,zIndex:60,background:"#fee",color:"#900",padding:"10px 14px",borderRadius:8,fontSize:13,boxShadow:"0 6px 18px rgba(0,0,0,0.18)"}}>{publishError}</div>
       )}
       <PublishModal
         open={publishModalOpen}
