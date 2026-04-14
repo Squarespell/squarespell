@@ -22,10 +22,27 @@ export function useDashboardAuth(): { token: string | null; status: AuthStatus }
 
   useEffect(() => {
     if (!isLoaded) return;
+    // Grace window: when Clerk rotates the session token (e.g. another tab
+    // just refreshed), isSignedIn can briefly flip to false in this tab
+    // before the new token lands. Without a grace delay we bounce the user
+    // to /sign-in mid-session. Wait before redirecting and re-check.
     if (!isSignedIn) {
-      setStatus('unauthed');
-      router.replace('/sign-in');
-      return;
+      const graceMs = started.current ? 3000 : 500;
+      const timer = setTimeout(() => {
+        (async () => {
+          try {
+            const maybe = await getToken();
+            if (maybe) {
+              setToken(maybe);
+              setStatus('ready');
+              return;
+            }
+          } catch {}
+          setStatus('unauthed');
+          router.replace('/sign-in');
+        })();
+      }, graceMs);
+      return () => clearTimeout(timer);
     }
     if (started.current) return;
     started.current = true;
