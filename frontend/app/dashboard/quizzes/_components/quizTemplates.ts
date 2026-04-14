@@ -106,3 +106,30 @@ export function findTemplate(id: string | null | undefined): QuizTemplate | null
   if (!id) return null;
   return QUIZ_TEMPLATES.find((t) => t.id === id) ?? null;
 }
+
+export type CreateQuizFromUrlInput = {
+  url: string;
+  context?: string;
+  goal: "capture" | "recommend" | "score" | "grow";
+  brand: {
+    businessType: string;
+    audience: string;
+    tone: string;
+    keyOffer: string;
+  };
+};
+
+export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<{ id: string }> {
+  const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+  const res = await fetch(`${API}/api/quizzes/from-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    throw new Error(`Quiz creation failed (${res.status})`);
+  }
+  const data = (await res.json()) as { id: string };
+  return data;
+}
