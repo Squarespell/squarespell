@@ -95,12 +95,23 @@ export default function EmbedQuizClient({
   // Notify embed parent of height changes
   useEffect(() => {
     if (typeof window === 'undefined' || window.parent === window) return;
+    let lastSent = 0;
     const notify = () => {
-      const h = document.documentElement.scrollHeight;
+      // Measure actual content height, not the iframe-fitted documentElement.
+      // Use the first child of body (the quiz root) to avoid feedback loops.
+      const root = document.body.firstElementChild as HTMLElement | null;
+      const h = root ? Math.ceil(root.getBoundingClientRect().height) : document.body.scrollHeight;
+      if (Math.abs(h - lastSent) < 2) return;
+      lastSent = h;
       window.parent.postMessage({ source: 'squarespell', type: 'resize', height: h }, '*');
     };
+    const root = document.body.firstElementChild;
     const ro = new ResizeObserver(notify);
-    ro.observe(document.body);
+    if (root) ro.observe(root); else ro.observe(document.body);
+    // Also observe body in case content isn't wrapped
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.margin = '0';
     notify();
     return () => ro.disconnect();
   }, [stage, qIdx]);
