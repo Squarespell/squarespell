@@ -111,7 +111,7 @@ export type CreateQuizFromUrlInput = {
   url: string;
   context?: string;
   goal: "capture" | "recommend" | "score" | "grow";
-  brand: {
+  brand?: {
     businessType: string;
     audience: string;
     tone: string;
