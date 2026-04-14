@@ -147,6 +147,10 @@ export interface TryFlowInnerProps {
   initialUrl?: string;
   /** Which stage to render first. Defaults to 1 for preview, 3 for authed. */
   initialStage?: 1 | 2 | 3 | 4 | 5 | 6;
+  /** Called when user clicks Publish in authed mode. Return true to advance to
+   *  Stage 6 (success screen), false to stay put (the handler is responsible
+   *  for surfacing its own error). Ignored in preview mode. */
+  onPublish?: () => Promise<boolean>;
 }
 
 export function TryFlowInner({
@@ -156,6 +160,7 @@ export function TryFlowInner({
   initialBrand = null,
   initialUrl = '',
   initialStage,
+  onPublish,
 }: TryFlowInnerProps = {}) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -169,6 +174,23 @@ export function TryFlowInner({
     initialStage ??
     (mode === 'authed' ? 3 : (urlParam ? 2 : 1));
   const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5 | 6>(defaultStage);
+  const [publishingRemote, setPublishingRemote] = useState(false);
+  // Authed-mode publish: await the parent onPublish callback (which hits the
+  // real API) before flipping to Stage 6. Preview mode keeps the old behavior.
+  const doPublish = async () => {
+    if (mode !== 'authed' || !onPublish) {
+      setStage(mode === 'authed' ? 6 : 5);
+      return;
+    }
+    if (publishingRemote) return;
+    setPublishingRemote(true);
+    try {
+      const ok = await onPublish();
+      if (ok) setStage(6);
+    } finally {
+      setPublishingRemote(false);
+    }
+  };
 
   // Stage 1
   const [url, setUrl] = useState(initialUrl || urlParam);
@@ -1280,10 +1302,11 @@ export function TryFlowInner({
             <button className="btn btn-dark" onClick={() => { resetS4(); setStage(4); }} type="button">Preview my quiz</button>
             <button
               className="btn btn-primary"
-              onClick={() => setStage(mode === 'authed' ? 6 : 5)}
+              onClick={doPublish}
+              disabled={publishingRemote}
               type="button"
             >
-              Publish
+              {publishingRemote ? 'Publishing...' : 'Publish'}
             </button>
           </div>
         </div>
@@ -1639,10 +1662,11 @@ export function TryFlowInner({
               <button className="btn btn-ghost s4-exit" onClick={() => setStage(3)} type="button">Exit preview</button>
               <button
                 className="btn btn-primary s4-publish"
-                onClick={() => setStage(mode === 'authed' ? 6 : 5)}
+                onClick={doPublish}
+                disabled={publishingRemote}
                 type="button"
               >
-                Publish
+                {publishingRemote ? 'Publishing...' : 'Publish'}
               </button>
             </div>
           </div>
