@@ -1,601 +1,749 @@
-'use client';
+"use client";
 
 /**
- * NewQuizModal — in-dashboard "+ New quiz" modal (replaces the href that
- * used to bounce authed users out to /tools/quiz-funnel/build).
+ * NewQuizModal v2
  *
- * Two paths:
- *   1. Paste a URL → AI generates a quiz (scrape + analyze + build)
- *      Calls POST /api/quizzes/from-url (new authed endpoint; see
- *      backend/src/routes/quiz.ts). Writes directly to Supabase with
- *      the signed-in user's user_id. No claim-token dance.
+ * Premium 3-stage quiz creation sheet for Squarespell.
  *
- *   2. "Start blank" → POST /api/quizzes with defaults. Lands in editor.
+ * Stages:
+ *   1. Site        : URL input + optional context textarea
+ *   2. Goal        : 2x2 tile picker (Capture / Recommend / Score / Grow)
+ *   3. Review      : Detected Business / Audience / Tone / Offer with inline edit
  *
- * On success: router.push(`/dashboard/quizzes/${id}/builder`)
+ * Project rules (hard):
+ *   - No emoji icons. All icons are inline SVG.
+ *   - No em-dashes. Colon, period, comma, or ASCII hyphen only.
+ *   - Apply both rules to every file touched.
  *
- * Self-contained Sheet primitive (does not import from _components/Modals.tsx)
- * so this file is orthogonal to the safety-nets PR and can be reviewed
- * independently. Visual language matches DashboardShell palette.
+ * Brand tokens (indigo / violet premium):
+ *   primary   : indigo-600 / indigo-500
+ *   accent    : violet-500
+ *   surface   : white / slate-50
+ *   ink       : slate-900 / slate-600 / slate-400
+ *   border    : slate-200
+ *   focus     : indigo-500 ring
  */
 
-import { ReactNode, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
-import { DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
-import { QUIZ_TEMPLATES, QuizTemplateId } from './quizTemplates';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createQuizFromUrl } from "./quizTemplates";
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+type Stage = "site" | "loading" | "goal" | "review" | "error";
 
-/* ------------------------------------------------------------------ */
-/* Internal Sheet (kept standalone to decouple from Modals.tsx)        */
-/* ------------------------------------------------------------------ */
-function Sheet({
-  onClose,
-  children,
-  width = 560,
-  labelledBy,
-}: {
-  onClose: () => void;
-  children: ReactNode;
-  width?: number;
-  labelledBy?: string;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
+type GoalKey = "capture" | "recommend" | "score" | "grow";
 
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={labelledBy}
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.72)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 100,
-        padding: '24px 16px',
-        fontFamily: '"DM Sans", system-ui, sans-serif',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: C.ELEVATED,
-          border: `1px solid ${C.BORDER}`,
-          borderRadius: 18,
-          width: '100%',
-          maxWidth: width,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
-          overflow: 'hidden',
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* URL normalization + validation                                      */
-/* ------------------------------------------------------------------ */
-
-function normalizeUrl(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-
-  // Reject obvious garbage early
-  if (/^(javascript|data|file|about):/i.test(trimmed)) return null;
-  if (/^(localhost|127\.|0\.0\.0\.0|192\.168\.|10\.)/i.test(trimmed)) return null;
-
-  // Prepend https:// if no scheme
-  let candidate = trimmed;
-  if (!/^https?:\/\//i.test(candidate)) {
-    candidate = `https://${candidate}`;
-  }
-
-  try {
-    const u = new URL(candidate);
-    // Require a dot in hostname (rejects "foo", "bar")
-    if (!u.hostname.includes('.')) return null;
-    // Strip trailing slash on path for visual cleanliness
-    const cleanPath = u.pathname === '/' ? '' : u.pathname.replace(/\/$/, '');
-    return `${u.protocol}//${u.hostname}${cleanPath}${u.search}`;
-  } catch {
-    return null;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Progress stages                                                     */
-/* ------------------------------------------------------------------ */
-
-type Stage = 'idle' | 'scraping' | 'analyzing' | 'building' | 'success' | 'error';
-
-const STAGE_LABELS: Record<Exclude<Stage, 'idle' | 'success' | 'error'>, string> = {
-  scraping: 'Scraping your site',
-  analyzing: 'Analyzing your brand',
-  building: 'Building your quiz',
+type ScrapedBrand = {
+  businessType: string;
+  audience: string;
+  tone: string;
+  keyOffer: string;
 };
 
-function ProgressRow({ active, done, label }: { active: boolean; done: boolean; label: string }) {
-  const tint = done ? '#22c55e' : active ? C.ACCENT : C.TEXT_MUTED;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
-      <div
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 10,
-          border: `2px solid ${tint}`,
-          background: done ? tint : 'transparent',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        {done && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M1 5l2.5 2.5L9 2" stroke="#0a0a0a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-        {active && !done && (
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              background: tint,
-              animation: 'squarespell-pulse 1.2s ease-in-out infinite',
-            }}
-          />
-        )}
-      </div>
-      <span style={{ color: done || active ? C.TEXT : C.TEXT_MUTED, fontSize: 14 }}>{label}</span>
-      <style jsx>{`
-        @keyframes squarespell-pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.8); }
-        }
-      `}</style>
-    </div>
-  );
-}
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onCreated?: (quizId: string) => void;
+};
 
-/* ------------------------------------------------------------------ */
-/* Main component                                                      */
-/* ------------------------------------------------------------------ */
+const GOALS: Array<{
+  key: GoalKey;
+  title: string;
+  blurb: string;
+  Icon: (props: { className?: string }) => JSX.Element;
+}> = [
+  {
+    key: "capture",
+    title: "Capture leads",
+    blurb: "Turn visitors into qualified email subscribers.",
+    Icon: IconTarget,
+  },
+  {
+    key: "recommend",
+    title: "Recommend a product",
+    blurb: "Match shoppers to the right product in under a minute.",
+    Icon: IconSparkle,
+  },
+  {
+    key: "score",
+    title: "Score and segment",
+    blurb: "Assess readiness and route to the right next step.",
+    Icon: IconChart,
+  },
+  {
+    key: "grow",
+    title: "Grow email list",
+    blurb: "Offer a personalized result in exchange for an email.",
+    Icon: IconEnvelope,
+  },
+];
 
-export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const router = useRouter();
-  const { getToken } = useAuth();
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const [url, setUrl] = useState('');
-  const [topic, setTopic] = useState('');
-  const [templateId, setTemplateId] = useState<QuizTemplateId | null>(null);
-  const [stage, setStage] = useState<Stage>('idle');
+export default function NewQuizModal({ open, onClose, onCreated }: Props) {
+  const [stage, setStage] = useState<Stage>("site");
+  const [url, setUrl] = useState("");
+  const [context, setContext] = useState("");
+  const [goal, setGoal] = useState<GoalKey | null>(null);
+  const [brand, setBrand] = useState<ScrapedBrand | null>(null);
+  const [editingField, setEditingField] = useState<keyof ScrapedBrand | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [creatingBlank, setCreatingBlank] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const urlRef = useRef<HTMLInputElement>(null);
 
-  // Autofocus on open
+  const reset = useCallback(() => {
+    setStage("site");
+    setUrl("");
+    setContext("");
+    setGoal(null);
+    setBrand(null);
+    setEditingField(null);
+    setError(null);
+    setSubmitting(false);
+  }, []);
+
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      // reset state on close
-      setUrl('');
-      setTopic('');
-      setTemplateId(null);
-      setStage('idle');
-      setError(null);
-      setCreatingBlank(false);
+    if (!open) return;
+    const id = requestAnimationFrame(() => urlRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [open, stage]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  const urlValid = useMemo(() => {
+    try {
+      const u = new URL(url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`);
+      return Boolean(u.hostname && u.hostname.includes("."));
+    } catch {
+      return false;
     }
-  }, [open]);
+  }, [url]);
+
+  const stepIndex = stage === "site" || stage === "loading" ? 1 : stage === "goal" ? 2 : 3;
+
+  const advanceToGoal = () => {
+    if (!urlValid) return;
+    setStage("goal");
+  };
+
+  const runScrape = async () => {
+    setStage("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/brand/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: normalizeUrl(url), context }),
+      });
+      if (!res.ok) throw new Error(`Scrape failed with status ${res.status}`);
+      const data = (await res.json()) as Partial<ScrapedBrand>;
+      setBrand({
+        businessType: data.businessType || "Small business",
+        audience: data.audience || "Website visitors",
+        tone: data.tone || "Friendly and professional",
+        keyOffer: data.keyOffer || "Your core product or service",
+      });
+      setStage("review");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "We could not read that site. Try another URL.");
+      setStage("error");
+    }
+  };
+
+  const handlePickGoal = (key: GoalKey) => {
+    setGoal(key);
+  };
+
+  const handleContinueFromGoal = () => {
+    if (!goal) return;
+    void runScrape();
+  };
+
+  const handleGenerate = async () => {
+    if (!goal || !brand) return;
+    setSubmitting(true);
+    try {
+      const quiz = await createQuizFromUrl({
+        url: normalizeUrl(url),
+        context,
+        goal,
+        brand,
+      });
+      onCreated?.(quiz.id);
+      reset();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create quiz.");
+      setStage("error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (!open) return null;
 
-  const isGenerating = stage !== 'idle' && stage !== 'error' && stage !== 'success';
-  const canSubmit = !isGenerating && !creatingBlank && normalizeUrl(url) !== null;
-
-  async function handleGenerate() {
-    const normalized = normalizeUrl(url);
-    if (!normalized) {
-      setError('That doesn\'t look like a valid URL. Try something like "squarespell.com".');
-      return;
-    }
-    setError(null);
-    setStage('scraping');
-
-    try {
-      const token = await getToken();
-      if (!token) throw new Error('Your session expired. Please sign in again.');
-
-      // Heuristic progress: we can't know exact backend timing, so tick through
-      // the stages on a reasonable schedule. Real handshake would use SSE.
-      const ticker = setTimeout(() => setStage('analyzing'), 2500);
-      const ticker2 = setTimeout(() => setStage('building'), 7000);
-
-      const res = await fetch(`${API}/api/quizzes/from-url`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          url: normalized,
-          topic: topic.trim() || undefined,
-          template_id: templateId ?? undefined,
-        }),
-      });
-
-      clearTimeout(ticker);
-      clearTimeout(ticker2);
-
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        if (res.status === 429) {
-          throw new Error(
-            j.error || 'You\'ve hit your daily generation limit. Try again tomorrow or upgrade your plan.',
-          );
-        }
-        if (res.status === 422 && j.code === 'NOT_SQUARESPACE') {
-          throw new Error(
-            `That URL (${j.hostname}) doesn't appear to be a Squarespace site. We only generate quizzes for Squarespace-hosted sites right now.`,
-          );
-        }
-        throw new Error(j.error || `Generation failed (${res.status}).`);
-      }
-
-      const data = await res.json();
-      if (!data.quiz?.id) throw new Error('Generation succeeded but no quiz ID returned.');
-
-      setStage('success');
-      // Short delay so the user sees the success state
-      setTimeout(() => {
-        router.push(`/dashboard/quizzes/${data.quiz.id}/builder`);
-      }, 400);
-    } catch (e: any) {
-      setStage('error');
-      setError(e.message || 'Something went wrong. Try again.');
-    }
-  }
-
-  async function handleStartBlank() {
-    setError(null);
-    setCreatingBlank(true);
-    try {
-      const token = await getToken();
-      if (!token) throw new Error('Your session expired. Please sign in again.');
-
-      const res = await fetch(`${API}/api/quizzes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: 'Untitled Quiz',
-          questions: [],
-          outcomes: [],
-          branding: {},
-          settings: {},
-        }),
-      });
-
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || `Couldn't create a blank quiz (${res.status}).`);
-      }
-
-      const quiz = await res.json();
-      if (!quiz.id) throw new Error('Blank quiz created but no ID returned.');
-      router.push(`/dashboard/quizzes/${quiz.id}/builder`);
-    } catch (e: any) {
-      setCreatingBlank(false);
-      setError(e.message || 'Couldn\'t create a blank quiz.');
-    }
-  }
-
   return (
-    <Sheet onClose={isGenerating ? () => {} : onClose} labelledBy="new-quiz-title">
-      <div style={{ padding: '28px 28px 24px' }}>
-        <h2
-          id="new-quiz-title"
-          style={{
-            color: C.TEXT,
-            fontSize: 22,
-            fontWeight: 600,
-            margin: 0,
-            letterSpacing: '-0.01em',
-          }}
-        >
-          New quiz
-        </h2>
-        <p style={{ color: C.TEXT_MUTED, fontSize: 14, margin: '6px 0 0' }}>
-          Paste your site URL and we'll generate a personalized quiz. Pick a template and add a topic to steer it.
-        </p>
-      </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="newquiz-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="flex w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+        {/* Sidebar */}
+        <aside className="hidden w-64 flex-shrink-0 flex-col justify-between bg-slate-50 p-6 md:flex">
+          <div>
+            <div className="mb-8 flex items-center gap-2">
+              <LogoMark className="h-8 w-8" />
+              <span className="text-sm font-semibold tracking-tight text-slate-900">Squarespell</span>
+            </div>
+            <nav className="space-y-1">
+              <SidebarStep index={1} label="Your site" active={stepIndex === 1} done={stepIndex > 1} />
+              <SidebarStep index={2} label="Your goal" active={stepIndex === 2} done={stepIndex > 2} />
+              <SidebarStep index={3} label="Review and generate" active={stepIndex === 3} done={false} />
+            </nav>
+          </div>
+          <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-indigo-600">
+              <IconSparkle className="h-4 w-4" />
+              Premium quiz engine
+            </div>
+            <p className="text-xs leading-5 text-slate-600">
+              We pull your brand, audience, and offer from your live site so your first quiz already sounds like you.
+            </p>
+          </div>
+        </aside>
 
-      <div style={{ padding: '0 28px 20px', borderBottom: `1px solid ${C.BORDER}` }}>
-        <label
-          htmlFor="new-quiz-url"
-          style={{ display: 'block', color: C.TEXT, fontSize: 13, fontWeight: 500, marginBottom: 8 }}
-        >
-          Website URL
-        </label>
-        <input
-          ref={inputRef}
-          id="new-quiz-url"
-          type="url"
-          inputMode="url"
-          autoComplete="url"
-          placeholder="https://your-site.com"
-          value={url}
-          disabled={isGenerating || creatingBlank}
-          onChange={(e) => {
-            setUrl(e.target.value);
-            if (error) setError(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && canSubmit) handleGenerate();
-          }}
-          style={{
-            width: '100%',
-            padding: '12px 14px',
-            borderRadius: 10,
-            border: `1px solid ${error ? '#ef4444' : C.BORDER}`,
-            background: C.SURFACE,
-            color: C.TEXT,
-            fontSize: 15,
-            outline: 'none',
-            fontFamily: 'inherit',
-          }}
-        />
-
-        <div
-          style={{
-            marginTop: 18,
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            marginBottom: 10,
-          }}
-        >
-          <label
-            style={{ color: C.TEXT, fontSize: 13, fontWeight: 500 }}
-          >
-            Template{' '}
-            <span style={{ color: C.TEXT_MUTED, fontWeight: 400 }}>(optional)</span>
-          </label>
-          {templateId && (
+        {/* Content */}
+        <section className="relative flex min-h-[560px] flex-1 flex-col">
+          <header className="flex items-center justify-between border-b border-slate-100 px-8 py-4">
+            <div>
+              <h2 id="newquiz-title" className="text-lg font-semibold tracking-tight text-slate-900">
+                {stage === "site" || stage === "loading"
+                  ? "Let's build your quiz"
+                  : stage === "goal"
+                  ? "What is this quiz for?"
+                  : stage === "review"
+                  ? "Review your brand details"
+                  : "Something went wrong"}
+              </h2>
+              <p className="text-xs text-slate-500">Step {stepIndex} of 3</p>
+            </div>
             <button
               type="button"
-              onClick={() => setTemplateId(null)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: C.TEXT_MUTED,
-                fontSize: 12,
-                cursor: 'pointer',
-                padding: 0,
-                fontFamily: 'inherit',
-              }}
+              onClick={onClose}
+              className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Close"
             >
-              Clear
+              <IconClose className="h-5 w-5" />
             </button>
-          )}
-        </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 8,
-          }}
-        >
-          {QUIZ_TEMPLATES.map((t) => {
-            const selected = templateId === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTemplateId(selected ? null : t.id)}
-                disabled={isGenerating || creatingBlank}
-                title={t.examples.join(' • ')}
-                style={{
-                  textAlign: 'left',
-                  padding: '10px 11px',
-                  borderRadius: 10,
-                  border: `1.5px solid ${selected ? C.ACCENT : C.BORDER}`,
-                  background: selected ? 'rgba(255,255,255,0.04)' : C.SURFACE,
-                  color: C.TEXT,
-                  cursor:
-                    isGenerating || creatingBlank ? 'not-allowed' : 'pointer',
-                  transition: 'border-color 120ms, background 120ms',
-                  fontFamily: 'inherit',
-                  lineHeight: 1.35,
-                }}
-              >
-                <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    marginBottom: 2,
+          </header>
+
+          <div className="flex-1 overflow-y-auto px-8 py-8">
+            {stage === "site" && (
+              <StageSite
+                url={url}
+                setUrl={setUrl}
+                context={context}
+                setContext={setContext}
+                urlValid={urlValid}
+                urlRef={urlRef}
+                onContinue={advanceToGoal}
+              />
+            )}
+            {stage === "goal" && (
+              <StageGoal
+                selected={goal}
+                onSelect={handlePickGoal}
+              />
+            )}
+            {stage === "loading" && <StageLoading url={url} />}
+            {stage === "review" && brand && (
+              <StageReview
+                brand={brand}
+                setBrand={setBrand}
+                editingField={editingField}
+                setEditingField={setEditingField}
+              />
+            )}
+            {stage === "error" && (
+              <StageError message={error} onRetry={() => setStage("site")} />
+            )}
+          </div>
+
+          <footer className="flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50 px-8 py-4">
+            <ProgressBar step={stepIndex} total={3} />
+            <div className="flex items-center gap-2">
+              {stage !== "site" && stage !== "loading" && (
+                <button
+                  type="button"
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-slate-900"
+                  onClick={() => {
+                    if (stage === "goal") setStage("site");
+                    else if (stage === "review") setStage("goal");
+                    else if (stage === "error") reset();
                   }}
                 >
-                  {t.name}
-                </div>
-                <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>{t.blurb}</div>
-              </button>
-            );
-          })}
-        </div>
+                  Back
+                </button>
+              )}
+              {stage === "site" && (
+                <PrimaryButton disabled={!urlValid} onClick={advanceToGoal}>
+                  Continue
+                </PrimaryButton>
+              )}
+              {stage === "goal" && (
+                <PrimaryButton disabled={!goal} onClick={handleContinueFromGoal}>
+                  Continue
+                </PrimaryButton>
+              )}
+              {stage === "review" && (
+                <PrimaryButton disabled={submitting} onClick={handleGenerate}>
+                  {submitting ? "Generating..." : "Generate quiz"}
+                </PrimaryButton>
+              )}
+            </div>
+          </footer>
+        </section>
+      </div>
+    </div>
+  );
+}
 
-        <label
-          htmlFor="new-quiz-topic"
-          style={{
-            display: 'block',
-            color: C.TEXT,
-            fontSize: 13,
-            fontWeight: 500,
-            marginTop: 18,
-            marginBottom: 8,
+/* ---------- Stage components ---------- */
+
+function StageSite({
+  url,
+  setUrl,
+  context,
+  setContext,
+  urlValid,
+  urlRef,
+  onContinue,
+}: {
+  url: string;
+  setUrl: (v: string) => void;
+  context: string;
+  setContext: (v: string) => void;
+  urlValid: boolean;
+  urlRef: React.RefObject<HTMLInputElement>;
+  onContinue: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-xl">
+      <h3 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">
+        Paste your site and we do the rest
+      </h3>
+      <p className="mb-8 text-sm text-slate-600">
+        We read your homepage to pick up your tone, audience, and offer. You can edit everything before we generate.
+      </p>
+
+      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        Your site URL
+      </label>
+      <div className="relative mb-6">
+        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+          <IconGlobe className="h-5 w-5" />
+        </span>
+        <input
+          ref={urlRef}
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && urlValid) onContinue();
           }}
-        >
-          What's this quiz about?{' '}
-          <span style={{ color: C.TEXT_MUTED, fontWeight: 400 }}>(optional)</span>
-        </label>
-        <textarea
-          id="new-quiz-topic"
-          placeholder="e.g. Help customers pick the right skincare routine for their skin type"
-          value={topic}
-          disabled={isGenerating || creatingBlank}
-          maxLength={500}
-          rows={2}
-          onChange={(e) => setTopic(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            borderRadius: 10,
-            border: `1px solid ${C.BORDER}`,
-            background: C.SURFACE,
-            color: C.TEXT,
-            fontSize: 14,
-            outline: 'none',
-            fontFamily: 'inherit',
-            resize: 'vertical',
-            minHeight: 56,
-            lineHeight: 1.45,
-          }}
+          placeholder="yourbrand.com"
+          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
         />
-        <div
-          style={{
-            color: C.TEXT_MUTED,
-            fontSize: 12,
-            marginTop: 6,
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}
-        >
-          <span>Leave blank and we'll infer from your site.</span>
-          <span>{topic.length}/500</span>
-        </div>
-
-        {isGenerating && (
-          <div style={{ marginTop: 18, padding: '12px 0' }}>
-            <ProgressRow
-              active={stage === 'scraping'}
-              done={stage === 'analyzing' || stage === 'building'}
-              label={STAGE_LABELS.scraping}
-            />
-            <ProgressRow
-              active={stage === 'analyzing'}
-              done={stage === 'building'}
-              label={STAGE_LABELS.analyzing}
-            />
-            <ProgressRow
-              active={stage === 'building'}
-              done={false}
-              label={STAGE_LABELS.building}
-            />
-          </div>
-        )}
-
-        {stage === 'success' && (
-          <div style={{ marginTop: 14, color: '#22c55e', fontSize: 13 }}>
-            Done — opening the editor…
-          </div>
-        )}
-
-        {error && (
-          <div
-            role="alert"
-            style={{
-              marginTop: 12,
-              padding: '10px 12px',
-              borderRadius: 8,
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              color: '#fca5a5',
-              fontSize: 13,
-              lineHeight: 1.5,
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={!canSubmit}
-            style={{
-              flex: 1,
-              padding: '12px 18px',
-              borderRadius: 10,
-              border: 'none',
-              background: canSubmit ? C.ACCENT : C.BORDER,
-              color: canSubmit ? '#0a0a0a' : C.TEXT_MUTED,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-              transition: 'background 120ms',
-              fontFamily: 'inherit',
-            }}
-          >
-            {isGenerating ? 'Generating…' : 'Generate quiz'}
-          </button>
-        </div>
       </div>
 
-      <div
-        style={{
-          padding: '18px 28px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-        }}
+      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        Anything else we should know
+        <span className="ml-1 font-normal normal-case text-slate-400">(optional)</span>
+      </label>
+      <textarea
+        value={context}
+        onChange={(e) => setContext(e.target.value)}
+        rows={4}
+        placeholder="Who is your ideal customer. What is the one thing you want people to walk away with."
+        className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+      />
+
+      <div className="mt-6 flex items-center gap-2 text-xs text-slate-500">
+        <IconLock className="h-4 w-4" />
+        We only read public pages. Nothing is saved until you click Generate.
+      </div>
+    </div>
+  );
+}
+
+function StageGoal({
+  selected,
+  onSelect,
+}: {
+  selected: GoalKey | null;
+  onSelect: (k: GoalKey) => void;
+}) {
+  return (
+    <div>
+      <h3 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">
+        What is this quiz for?
+      </h3>
+      <p className="mb-8 text-sm text-slate-600">
+        Pick the one outcome that matters most. We will tune the questions and the final screen for it.
+      </p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {GOALS.map(({ key, title, blurb, Icon }) => {
+          const active = selected === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onSelect(key)}
+              className={[
+                "group relative flex flex-col items-start rounded-2xl border bg-white p-6 text-left transition",
+                active
+                  ? "border-indigo-500 bg-indigo-50/40 ring-4 ring-indigo-500/10"
+                  : "border-slate-200 hover:border-slate-300 hover:shadow-sm",
+              ].join(" ")}
+            >
+              <span
+                className={[
+                  "mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl transition",
+                  active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 group-hover:bg-slate-200",
+                ].join(" ")}
+              >
+                <Icon className="h-6 w-6" />
+              </span>
+              <span className="mb-1 text-base font-semibold text-slate-900">{title}</span>
+              <span className="text-sm leading-5 text-slate-600">{blurb}</span>
+              {active && (
+                <span className="absolute right-4 top-4 inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white">
+                  <IconCheck className="h-3 w-3" />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StageLoading({ url }: { url: string }) {
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center py-12 text-center">
+      <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+        <IconSpinner className="h-7 w-7 animate-spin" />
+      </div>
+      <h3 className="mb-2 text-lg font-semibold text-slate-900">Reading your site</h3>
+      <p className="text-sm text-slate-600">
+        Pulling brand voice and audience cues from <span className="font-medium text-slate-900">{prettyHost(url)}</span>. This takes about ten seconds.
+      </p>
+      <div className="mt-8 w-full space-y-3">
+        <Skeleton />
+        <Skeleton className="w-5/6" />
+        <Skeleton className="w-4/6" />
+      </div>
+    </div>
+  );
+}
+
+function StageReview({
+  brand,
+  setBrand,
+  editingField,
+  setEditingField,
+}: {
+  brand: ScrapedBrand;
+  setBrand: (b: ScrapedBrand) => void;
+  editingField: keyof ScrapedBrand | null;
+  setEditingField: (f: keyof ScrapedBrand | null) => void;
+}) {
+  const fields: Array<{ key: keyof ScrapedBrand; label: string; hint: string }> = [
+    { key: "businessType", label: "Business type", hint: "What you sell and how you sell it" },
+    { key: "audience", label: "Audience", hint: "Who buys from you" },
+    { key: "tone", label: "Tone", hint: "How your brand talks" },
+    { key: "keyOffer", label: "Key offer", hint: "The one thing to highlight" },
+  ];
+  return (
+    <div>
+      <h3 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">
+        Does this look right?
+      </h3>
+      <p className="mb-8 text-sm text-slate-600">
+        Edit anything that is off. We use these four inputs to draft your questions, answers, and result screens.
+      </p>
+      <ul className="space-y-3">
+        {fields.map(({ key, label, hint }) => (
+          <li
+            key={key}
+            className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    {label}
+                  </span>
+                  <span className="text-xs text-slate-400">{hint}</span>
+                </div>
+                {editingField === key ? (
+                  <input
+                    autoFocus
+                    value={brand[key]}
+                    onChange={(e) => setBrand({ ...brand, [key]: e.target.value })}
+                    onBlur={() => setEditingField(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === "Escape") setEditingField(null);
+                    }}
+                    className="w-full rounded-lg border border-indigo-500 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-900">{brand[key]}</p>
+                )}
+              </div>
+              {editingField !== key && (
+                <button
+                  type="button"
+                  onClick={() => setEditingField(key)}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                  aria-label={`Edit ${label}`}
+                >
+                  <IconPencil className="h-3.5 w-3.5" />
+                  Edit
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function StageError({ message, onRetry }: { message: string | null; onRetry: () => void }) {
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center py-12 text-center">
+      <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+        <IconAlert className="h-7 w-7" />
+      </div>
+      <h3 className="mb-2 text-lg font-semibold text-slate-900">We hit a snag</h3>
+      <p className="mb-6 text-sm text-slate-600">{message || "Something went wrong."}</p>
+      <PrimaryButton onClick={onRetry}>Try again</PrimaryButton>
+    </div>
+  );
+}
+
+/* ---------- Shared UI ---------- */
+
+function PrimaryButton({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: React.ReactNode;
+  disabled?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-slate-300"
+    >
+      {children}
+      <IconChevronRight className="h-4 w-4" />
+    </button>
+  );
+}
+
+function SidebarStep({
+  index,
+  label,
+  active,
+  done,
+}: {
+  index: number;
+  label: string;
+  active: boolean;
+  done: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "flex items-center gap-3 rounded-lg px-3 py-2 transition",
+        active ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+          done ? "bg-indigo-600 text-white" : active ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-600",
+        ].join(" ")}
       >
-        <span style={{ color: C.TEXT_MUTED, fontSize: 13 }}>Prefer to start from scratch?</span>
-        <button
-          type="button"
-          onClick={handleStartBlank}
-          disabled={isGenerating || creatingBlank}
-          style={{
-            padding: '9px 14px',
-            borderRadius: 9,
-            border: `1px solid ${C.BORDER}`,
-            background: 'transparent',
-            color: C.TEXT,
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: isGenerating || creatingBlank ? 'not-allowed' : 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          {creatingBlank ? 'Creating…' : 'Start blank'}
-        </button>
+        {done ? <IconCheck className="h-3 w-3" /> : index}
+      </span>
+      <span className="text-sm font-medium">{label}</span>
+    </div>
+  );
+}
+
+function ProgressBar({ step, total }: { step: number; total: number }) {
+  const pct = Math.round((step / total) * 100);
+  return (
+    <div className="flex w-48 items-center gap-3">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+          style={{ width: `${pct}%` }}
+        />
       </div>
-    </Sheet>
+      <span className="text-xs font-medium text-slate-500">
+        {step}/{total}
+      </span>
+    </div>
+  );
+}
+
+function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`h-3 animate-pulse rounded bg-slate-200 ${className || "w-full"}`} />;
+}
+
+/* ---------- Helpers ---------- */
+
+function normalizeUrl(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return "";
+  return trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+}
+
+function prettyHost(input: string): string {
+  try {
+    return new URL(normalizeUrl(input)).hostname.replace(/^www\./, "");
+  } catch {
+    return input;
+  }
+}
+
+/* ---------- Inline SVG icons (no emoji, ever) ---------- */
+
+function IconGlobe({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" />
+    </svg>
+  );
+}
+function IconTarget({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+function IconSparkle({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l1.8 4.6L18 9.5l-4.2 1.9L12 16l-1.8-4.6L6 9.5l4.2-1.9L12 3z" />
+      <path d="M19 15l.7 1.7L21 17.5l-1.3.8L19 20l-.7-1.7L17 17.5l1.3-.8L19 15z" />
+    </svg>
+  );
+}
+function IconChart({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20V10" />
+      <path d="M10 20V4" />
+      <path d="M16 20v-8" />
+      <path d="M22 20H2" />
+    </svg>
+  );
+}
+function IconEnvelope({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 6 9-6" />
+    </svg>
+  );
+}
+function IconClose({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 6l12 12M18 6l-12 12" />
+    </svg>
+  );
+}
+function IconCheck({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12l5 5L20 7" />
+    </svg>
+  );
+}
+function IconChevronRight({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+function IconPencil({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20h4l10-10-4-4L4 16v4z" />
+      <path d="M14 6l4 4" />
+    </svg>
+  );
+}
+function IconSpinner({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+      <path d="M21 12a9 9 0 11-9-9" />
+    </svg>
+  );
+}
+function IconAlert({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l10 18H2L12 3z" />
+      <path d="M12 10v5" />
+      <circle cx="12" cy="18" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+function IconLock({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 118 0v3" />
+    </svg>
+  );
+}
+function LogoMark({ className = "" }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none">
+      <defs>
+        <linearGradient id="ss-logo" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#6366f1" />
+          <stop offset="1" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#ss-logo)" />
+      <path d="M10 20c0 1.5 2 2.5 5 2.5s5-1 5-2.5c0-3-10-2.5-10-5.5 0-1.5 2-2.5 4.5-2.5s4.5 1 4.5 2.5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
   );
 }
