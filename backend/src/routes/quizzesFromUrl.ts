@@ -29,6 +29,7 @@ import {
   analyzeBusinessProfile,
   generateTailoredQuiz,
 } from '../services/claudeService';
+import { QUIZ_TEMPLATES, isValidTemplateId } from '../config/quizTemplates';
 
 const router = Router();
 router.use(requireAuth, attachUser);
@@ -113,12 +114,17 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
   const userId = req.dbUserId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-  const { url, topic } = (req.body ?? {}) as { url?: string; topic?: string };
+  const { url, topic, template_id } = (req.body ?? {}) as {
+    url?: string;
+    topic?: string;
+    template_id?: string;
+  };
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'url required' });
   }
   const cleanTopic =
     typeof topic === 'string' ? topic.trim().slice(0, 500) : '';
+  const cleanTemplateId = isValidTemplateId(template_id) ? template_id : null;
 
   let normalizedUrl: string;
   try {
@@ -167,8 +173,19 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
       { question: 'What is the key product or service?', answer: businessProfile.key_offer || 'unknown' },
     ].filter((p) => p.answer && p.answer !== 'unknown');
 
+    // Template (if picked) informs the LLM of the quiz archetype.
+    // Inserted before topic so that topic ends up at position 0 (highest
+    // priority) after both unshifts run.
+    if (cleanTemplateId) {
+      const tpl = QUIZ_TEMPLATES[cleanTemplateId];
+      onboardingPairs.unshift({
+        question: `Quiz format: ${tpl.name}`,
+        answer: tpl.system_prompt,
+      });
+    }
+
     // User-supplied topic steers the generator toward a specific angle.
-    // Prepended so it carries the most weight in the LLM context.
+    // Prepended last so it carries the most weight in the LLM context.
     if (cleanTopic) {
       onboardingPairs.unshift({
         question: 'What should this quiz specifically be about?',
@@ -195,6 +212,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
           website_url: normalizedUrl,
           source: 'from-url-modal',
           user_topic: cleanTopic || null,
+          template_id: cleanTemplateId,
         },
         status: 'draft',
       })
