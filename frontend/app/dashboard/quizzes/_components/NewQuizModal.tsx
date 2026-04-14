@@ -1,41 +1,28 @@
 "use client";
 
-/**
- * NewQuizModal v2
- *
- * Premium 3-stage quiz creation sheet for Squarespell.
- *
- * Stages:
- *   1. Site        : URL input + optional context textarea
- *   2. Goal        : 2x2 tile picker (Capture / Recommend / Score / Grow)
- *   3. Review      : Detected Business / Audience / Tone / Offer with inline edit
- *
- * Project rules (hard):
- *   - No emoji icons. All icons are inline SVG.
- *   - No em-dashes. Colon, period, comma, or ASCII hyphen only.
- *   - Apply both rules to every file touched.
- *
- * Brand tokens (indigo / violet premium):
- *   primary   : indigo-600 / indigo-500
- *   accent    : violet-500
- *   surface   : white / slate-50
- *   ink       : slate-900 / slate-600 / slate-400
- *   border    : slate-200
- *   focus     : indigo-500 ring
- */
-
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createQuizFromUrl } from "./quizTemplates";
 
 type Stage = "site" | "loading" | "goal" | "review" | "error";
 
-type GoalKey = "capture" | "recommend" | "score" | "grow";
+type Goal = {
+  id: string;
+  label: string;
+  hint: string;
+};
 
-type ScrapedBrand = {
-  businessType: string;
-  audience: string;
-  tone: string;
-  keyOffer: string;
+const GOALS: Goal[] = [
+  { id: "leads", label: "Capture leads", hint: "Email-gated result page. Best for list growth." },
+  { id: "recommend", label: "Recommend a product", hint: "Route visitors to the best fit SKU or plan." },
+  { id: "educate", label: "Educate and nurture", hint: "Assess knowledge, then send a drip follow up." },
+  { id: "score", label: "Score and qualify", hint: "Grade readiness. Useful for sales hand-off." },
+];
+
+type BrandScrape = {
+  businessType?: string;
+  audience?: string;
+  tone?: string;
+  offer?: string;
 };
 
 type Props = {
@@ -44,65 +31,34 @@ type Props = {
   onCreated?: (quizId: string) => void;
 };
 
-const GOALS: Array<{
-  key: GoalKey;
-  title: string;
-  blurb: string;
-  Icon: (props: { className?: string }) => JSX.Element;
-}> = [
-  {
-    key: "capture",
-    title: "Capture leads",
-    blurb: "Turn visitors into qualified email subscribers.",
-    Icon: IconTarget,
-  },
-  {
-    key: "recommend",
-    title: "Recommend a product",
-    blurb: "Match shoppers to the right product in under a minute.",
-    Icon: IconSparkle,
-  },
-  {
-    key: "score",
-    title: "Score and segment",
-    blurb: "Assess readiness and route to the right next step.",
-    Icon: IconChart,
-  },
-  {
-    key: "grow",
-    title: "Grow email list",
-    blurb: "Offer a personalized result in exchange for an email.",
-    Icon: IconEnvelope,
-  },
-];
+function normalizeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
 
 export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [stage, setStage] = useState<Stage>("site");
   const [url, setUrl] = useState("");
   const [context, setContext] = useState("");
-  const [goal, setGoal] = useState<GoalKey | null>(null);
-  const [brand, setBrand] = useState<ScrapedBrand | null>(null);
-  const [editingField, setEditingField] = useState<keyof ScrapedBrand | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [goalId, setGoalId] = useState<string>("leads");
+  const [brand, setBrand] = useState<BrandScrape>({});
+  const [errorMsg, setErrorMsg] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const urlRef = useRef<HTMLInputElement>(null);
 
-  const reset = useCallback(() => {
+  useEffect(() => {
+    if (!open) return;
     setStage("site");
     setUrl("");
     setContext("");
-    setGoal(null);
-    setBrand(null);
-    setEditingField(null);
-    setError(null);
+    setGoalId("leads");
+    setBrand({});
+    setErrorMsg("");
     setSubmitting(false);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const id = requestAnimationFrame(() => urlRef.current?.focus());
-    return () => cancelAnimationFrame(id);
-  }, [open, stage]);
+    setTimeout(() => urlRef.current?.focus(), 20);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -113,639 +69,527 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const urlValid = useMemo(() => {
-    try {
-      const u = new URL(url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`);
-      return Boolean(u.hostname && u.hostname.includes("."));
-    } catch {
-      return false;
-    }
-  }, [url]);
+  if (!open) return null;
 
   const stepIndex = stage === "site" || stage === "loading" ? 1 : stage === "goal" ? 2 : 3;
 
-  const advanceToGoal = () => {
-    if (!urlValid) return;
-    setStage("goal");
-  };
-
-  const runScrape = async () => {
+  async function handleContinueSite() {
+    const normalized = normalizeUrl(url);
+    if (!normalized) {
+      setErrorMsg("Paste a site URL to continue.");
+      return;
+    }
+    setErrorMsg("");
     setStage("loading");
-    setError(null);
     try {
-      const res = await fetch("/api/brand/scrape", {
+      const resp = await fetch("/api/brand/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: normalizeUrl(url), context }),
+        body: JSON.stringify({ url: normalized, context }),
       });
-      if (!res.ok) throw new Error(`Scrape failed with status ${res.status}`);
-      const data = (await res.json()) as Partial<ScrapedBrand>;
-      setBrand({
-        businessType: data.businessType || "Small business",
-        audience: data.audience || "Website visitors",
-        tone: data.tone || "Friendly and professional",
-        keyOffer: data.keyOffer || "Your core product or service",
-      });
-      setStage("review");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "We could not read that site. Try another URL.");
-      setStage("error");
+      if (resp.ok) {
+        const data = await resp.json();
+        setBrand({
+          businessType: data.businessType,
+          audience: data.audience,
+          tone: data.tone,
+          offer: data.offer,
+        });
+      } else {
+        setBrand({});
+      }
+    } catch {
+      setBrand({});
     }
-  };
+    setStage("goal");
+  }
 
-  const handlePickGoal = (key: GoalKey) => {
-    setGoal(key);
-  };
-
-  const handleContinueFromGoal = () => {
-    if (!goal) return;
-    void runScrape();
-  };
-
-  const handleGenerate = async () => {
-    if (!goal || !brand) return;
+  async function handleGenerate() {
     setSubmitting(true);
+    setErrorMsg("");
     try {
+      const normalized = normalizeUrl(url);
       const quiz = await createQuizFromUrl({
-        url: normalizeUrl(url),
+        url: normalized,
         context,
-        goal,
-        brand,
+        goal: goalId,
       });
-      onCreated?.(quiz.id);
-      reset();
+      const quizId = (quiz && (quiz.id || quiz.quizId)) as string | undefined;
+      if (quizId && onCreated) onCreated(quizId);
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create quiz.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong. Try again.";
+      setErrorMsg(message);
       setStage("error");
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
-  if (!open) return null;
+  const currentGoal = GOALS.find((g) => g.id === goalId) || GOALS[0];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="newquiz-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="flex w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-        {/* Sidebar */}
-        <aside className="hidden w-64 flex-shrink-0 flex-col justify-between bg-slate-50 p-6 md:flex">
-          <div>
-            <div className="mb-8 flex items-center gap-2">
-              <LogoMark className="h-8 w-8" />
-              <span className="text-sm font-semibold tracking-tight text-slate-900">Squarespell</span>
-            </div>
-            <nav className="space-y-1">
-              <SidebarStep index={1} label="Your site" active={stepIndex === 1} done={stepIndex > 1} />
-              <SidebarStep index={2} label="Your goal" active={stepIndex === 2} done={stepIndex > 2} />
-              <SidebarStep index={3} label="Review and generate" active={stepIndex === 3} done={false} />
-            </nav>
-          </div>
-          <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-indigo-600">
-              <IconSparkle className="h-4 w-4" />
-              Premium quiz engine
-            </div>
-            <p className="text-xs leading-5 text-slate-600">
-              We pull your brand, audience, and offer from your live site so your first quiz already sounds like you.
-            </p>
-          </div>
-        </aside>
-
-        {/* Content */}
-        <section className="relative flex min-h-[560px] flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-slate-100 px-8 py-4">
-            <div>
-              <h2 id="newquiz-title" className="text-lg font-semibold tracking-tight text-slate-900">
-                {stage === "site" || stage === "loading"
-                  ? "Let's build your quiz"
-                  : stage === "goal"
-                  ? "What is this quiz for?"
-                  : stage === "review"
-                  ? "Review your brand details"
-                  : "Something went wrong"}
-              </h2>
-              <p className="text-xs text-slate-500">Step {stepIndex} of 3</p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label="Close"
-            >
-              <IconClose className="h-5 w-5" />
-            </button>
-          </header>
-
-          <div className="flex-1 overflow-y-auto px-8 py-8">
-            {stage === "site" && (
-              <StageSite
-                url={url}
-                setUrl={setUrl}
-                context={context}
-                setContext={setContext}
-                urlValid={urlValid}
-                urlRef={urlRef}
-                onContinue={advanceToGoal}
-              />
-            )}
-            {stage === "goal" && (
-              <StageGoal
-                selected={goal}
-                onSelect={handlePickGoal}
-              />
-            )}
-            {stage === "loading" && <StageLoading url={url} />}
-            {stage === "review" && brand && (
-              <StageReview
-                brand={brand}
-                setBrand={setBrand}
-                editingField={editingField}
-                setEditingField={setEditingField}
-              />
-            )}
-            {stage === "error" && (
-              <StageError message={error} onRetry={() => setStage("site")} />
-            )}
-          </div>
-
-          <footer className="flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50 px-8 py-4">
-            <ProgressBar step={stepIndex} total={3} />
-            <div className="flex items-center gap-2">
-              {stage !== "site" && stage !== "loading" && (
-                <button
-                  type="button"
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-slate-900"
-                  onClick={() => {
-                    if (stage === "goal") setStage("site");
-                    else if (stage === "review") setStage("goal");
-                    else if (stage === "error") reset();
-                  }}
-                >
-                  Back
-                </button>
-              )}
-              {stage === "site" && (
-                <PrimaryButton disabled={!urlValid} onClick={advanceToGoal}>
-                  Continue
-                </PrimaryButton>
-              )}
-              {stage === "goal" && (
-                <PrimaryButton disabled={!goal} onClick={handleContinueFromGoal}>
-                  Continue
-                </PrimaryButton>
-              )}
-              {stage === "review" && (
-                <PrimaryButton disabled={submitting} onClick={handleGenerate}>
-                  {submitting ? "Generating..." : "Generate quiz"}
-                </PrimaryButton>
-              )}
-            </div>
-          </footer>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Stage components ---------- */
-
-function StageSite({
-  url,
-  setUrl,
-  context,
-  setContext,
-  urlValid,
-  urlRef,
-  onContinue,
-}: {
-  url: string;
-  setUrl: (v: string) => void;
-  context: string;
-  setContext: (v: string) => void;
-  urlValid: boolean;
-  urlRef: React.RefObject<HTMLInputElement>;
-  onContinue: () => void;
-}) {
-  return (
-    <div className="mx-auto max-w-xl">
-      <h3 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">
-        Paste your site and we do the rest
-      </h3>
-      <p className="mb-8 text-sm text-slate-600">
-        We read your homepage to pick up your tone, audience, and offer. You can edit everything before we generate.
-      </p>
-
-      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-        Your site URL
-      </label>
-      <div className="relative mb-6">
-        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-          <IconGlobe className="h-5 w-5" />
-        </span>
-        <input
-          ref={urlRef}
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && urlValid) onContinue();
-          }}
-          placeholder="yourbrand.com"
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
-        />
-      </div>
-
-      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-        Anything else we should know
-        <span className="ml-1 font-normal normal-case text-slate-400">(optional)</span>
-      </label>
-      <textarea
-        value={context}
-        onChange={(e) => setContext(e.target.value)}
-        rows={4}
-        placeholder="Who is your ideal customer. What is the one thing you want people to walk away with."
-        className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
-      />
-
-      <div className="mt-6 flex items-center gap-2 text-xs text-slate-500">
-        <IconLock className="h-4 w-4" />
-        We only read public pages. Nothing is saved until you click Generate.
-      </div>
-    </div>
-  );
-}
-
-function StageGoal({
-  selected,
-  onSelect,
-}: {
-  selected: GoalKey | null;
-  onSelect: (k: GoalKey) => void;
-}) {
-  return (
-    <div>
-      <h3 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">
-        What is this quiz for?
-      </h3>
-      <p className="mb-8 text-sm text-slate-600">
-        Pick the one outcome that matters most. We will tune the questions and the final screen for it.
-      </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {GOALS.map(({ key, title, blurb, Icon }) => {
-          const active = selected === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onSelect(key)}
-              className={[
-                "group relative flex flex-col items-start rounded-2xl border bg-white p-6 text-left transition",
-                active
-                  ? "border-indigo-500 bg-indigo-50/40 ring-4 ring-indigo-500/10"
-                  : "border-slate-200 hover:border-slate-300 hover:shadow-sm",
-              ].join(" ")}
-            >
-              <span
-                className={[
-                  "mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl transition",
-                  active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 group-hover:bg-slate-200",
-                ].join(" ")}
-              >
-                <Icon className="h-6 w-6" />
+    <>
+      <style>{styles}</style>
+      <div className="sq-overlay" onClick={onClose}>
+        <div
+          className="sq-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Create new quiz"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <aside className="sq-side">
+            <div className="sq-brand">
+              <span className="sq-logo" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               </span>
-              <span className="mb-1 text-base font-semibold text-slate-900">{title}</span>
-              <span className="text-sm leading-5 text-slate-600">{blurb}</span>
-              {active && (
-                <span className="absolute right-4 top-4 inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white">
-                  <IconCheck className="h-3 w-3" />
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function StageLoading({ url }: { url: string }) {
-  return (
-    <div className="mx-auto flex max-w-md flex-col items-center py-12 text-center">
-      <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-        <IconSpinner className="h-7 w-7 animate-spin" />
-      </div>
-      <h3 className="mb-2 text-lg font-semibold text-slate-900">Reading your site</h3>
-      <p className="text-sm text-slate-600">
-        Pulling brand voice and audience cues from <span className="font-medium text-slate-900">{prettyHost(url)}</span>. This takes about ten seconds.
-      </p>
-      <div className="mt-8 w-full space-y-3">
-        <Skeleton />
-        <Skeleton className="w-5/6" />
-        <Skeleton className="w-4/6" />
-      </div>
-    </div>
-  );
-}
-
-function StageReview({
-  brand,
-  setBrand,
-  editingField,
-  setEditingField,
-}: {
-  brand: ScrapedBrand;
-  setBrand: (b: ScrapedBrand) => void;
-  editingField: keyof ScrapedBrand | null;
-  setEditingField: (f: keyof ScrapedBrand | null) => void;
-}) {
-  const fields: Array<{ key: keyof ScrapedBrand; label: string; hint: string }> = [
-    { key: "businessType", label: "Business type", hint: "What you sell and how you sell it" },
-    { key: "audience", label: "Audience", hint: "Who buys from you" },
-    { key: "tone", label: "Tone", hint: "How your brand talks" },
-    { key: "keyOffer", label: "Key offer", hint: "The one thing to highlight" },
-  ];
-  return (
-    <div>
-      <h3 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">
-        Does this look right?
-      </h3>
-      <p className="mb-8 text-sm text-slate-600">
-        Edit anything that is off. We use these four inputs to draft your questions, answers, and result screens.
-      </p>
-      <ul className="space-y-3">
-        {fields.map(({ key, label, hint }) => (
-          <li
-            key={key}
-            className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    {label}
+              <span>Squarespell</span>
+            </div>
+            <nav className="sq-steps" aria-label="Progress">
+              {[
+                { n: 1, label: "Your site" },
+                { n: 2, label: "Your goal" },
+                { n: 3, label: "Review and generate" },
+              ].map((s) => (
+                <div key={s.n} className={`sq-step ${stepIndex === s.n ? "is-active" : stepIndex > s.n ? "is-done" : ""}`}>
+                  <span className="sq-step-dot">
+                    {stepIndex > s.n ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                    ) : (
+                      <span>{s.n}</span>
+                    )}
                   </span>
-                  <span className="text-xs text-slate-400">{hint}</span>
+                  <span className="sq-step-label">{s.label}</span>
                 </div>
-                {editingField === key ? (
-                  <input
-                    autoFocus
-                    value={brand[key]}
-                    onChange={(e) => setBrand({ ...brand, [key]: e.target.value })}
-                    onBlur={() => setEditingField(null)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === "Escape") setEditingField(null);
-                    }}
-                    className="w-full rounded-lg border border-indigo-500 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+              ))}
+            </nav>
+            <div className="sq-tip">
+              <div className="sq-tip-title">Premium quiz engine</div>
+              <p>We pull your brand, audience, and offer from your live site so your first quiz already sounds like you.</p>
+            </div>
+          </aside>
+
+          <section className="sq-main">
+            <header className="sq-head">
+              <div>
+                <div className="sq-eyebrow">Step {stepIndex} of 3</div>
+                <h2 className="sq-title">
+                  {stage === "site" && "Let's build your quiz"}
+                  {stage === "loading" && "Reading your site"}
+                  {stage === "goal" && "What should this quiz do"}
+                  {stage === "review" && "Review and generate"}
+                  {stage === "error" && "We hit a snag"}
+                </h2>
+              </div>
+              <button type="button" className="sq-close" onClick={onClose} aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              </button>
+            </header>
+
+            <div className="sq-body">
+              {stage === "site" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Paste your site and we do the rest. We read your homepage to pick up your tone, audience, and offer. You can edit everything before we generate.</p>
+
+                  <label className="sq-label" htmlFor="sq-url">Your site URL</label>
+                  <div className="sq-input-wrap">
+                    <span className="sq-input-icon" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+                    </span>
+                    <input
+                      id="sq-url"
+                      ref={urlRef}
+                      type="url"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="yourbrand.com"
+                      className="sq-input"
+                      autoComplete="url"
+                    />
+                  </div>
+
+                  <label className="sq-label" htmlFor="sq-context">Anything else we should know <span className="sq-muted">(optional)</span></label>
+                  <textarea
+                    id="sq-context"
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                    rows={3}
+                    placeholder="Who is your ideal customer. What is the one thing you want people to walk away with."
+                    className="sq-textarea"
                   />
-                ) : (
-                  <p className="text-sm text-slate-900">{brand[key]}</p>
+
+                  <div className="sq-hint">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    <span>We only read public pages. Nothing is saved until you click Generate.</span>
+                  </div>
+
+                  {errorMsg && <div className="sq-error">{errorMsg}</div>}
+                </div>
+              )}
+
+              {stage === "loading" && (
+                <div className="sq-loading">
+                  <div className="sq-spinner" aria-hidden="true" />
+                  <div className="sq-loading-title">Reading your homepage</div>
+                  <div className="sq-loading-sub">Pulling your brand, audience, and offer.</div>
+                </div>
+              )}
+
+              {stage === "goal" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Pick the goal that matches how you want to use this quiz.</p>
+                  <div className="sq-goals">
+                    {GOALS.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        className={`sq-goal ${goalId === g.id ? "is-selected" : ""}`}
+                        onClick={() => setGoalId(g.id)}
+                      >
+                        <div className="sq-goal-top">
+                          <span className="sq-goal-label">{g.label}</span>
+                          <span className="sq-goal-check" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                          </span>
+                        </div>
+                        <div className="sq-goal-hint">{g.hint}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {stage === "review" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Here is what we picked up. Edit anything that looks off.</p>
+                  <div className="sq-review">
+                    <div className="sq-review-row"><span>Site</span><strong>{normalizeUrl(url) || "-"}</strong></div>
+                    <div className="sq-review-row"><span>Goal</span><strong>{currentGoal.label}</strong></div>
+                    {brand.businessType && <div className="sq-review-row"><span>Business type</span><strong>{brand.businessType}</strong></div>}
+                    {brand.audience && <div className="sq-review-row"><span>Audience</span><strong>{brand.audience}</strong></div>}
+                    {brand.tone && <div className="sq-review-row"><span>Tone</span><strong>{brand.tone}</strong></div>}
+                    {brand.offer && <div className="sq-review-row"><span>Key offer</span><strong>{brand.offer}</strong></div>}
+                  </div>
+                  {errorMsg && <div className="sq-error">{errorMsg}</div>}
+                </div>
+              )}
+
+              {stage === "error" && (
+                <div className="sq-error-block">
+                  <div className="sq-error-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
+                  </div>
+                  <div className="sq-error-title">Could not generate your quiz</div>
+                  <div className="sq-error-sub">{errorMsg || "Our service had a hiccup. Try again in a moment."}</div>
+                </div>
+              )}
+            </div>
+
+            <footer className="sq-foot">
+              <div className="sq-progress" aria-hidden="true">
+                <span style={{ width: `${(stepIndex / 3) * 100}%` }} />
+              </div>
+              <div className="sq-foot-actions">
+                {stage === "goal" && (
+                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("site")}>Back</button>
+                )}
+                {stage === "review" && (
+                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("goal")}>Back</button>
+                )}
+                {stage === "error" && (
+                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("review")}>Back</button>
+                )}
+
+                {stage === "site" && (
+                  <button type="button" className="sq-btn sq-btn-primary" onClick={handleContinueSite}>
+                    Continue
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                  </button>
+                )}
+                {stage === "loading" && (
+                  <button type="button" className="sq-btn sq-btn-primary" disabled>
+                    Reading site...
+                  </button>
+                )}
+                {stage === "goal" && (
+                  <button type="button" className="sq-btn sq-btn-primary" onClick={() => setStage("review")}>
+                    Review
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                  </button>
+                )}
+                {stage === "review" && (
+                  <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={submitting}>
+                    {submitting ? "Generating..." : "Generate quiz"}
+                  </button>
+                )}
+                {stage === "error" && (
+                  <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={submitting}>
+                    Try again
+                  </button>
                 )}
               </div>
-              {editingField !== key && (
-                <button
-                  type="button"
-                  onClick={() => setEditingField(key)}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                  aria-label={`Edit ${label}`}
-                >
-                  <IconPencil className="h-3.5 w-3.5" />
-                  Edit
-                </button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function StageError({ message, onRetry }: { message: string | null; onRetry: () => void }) {
-  return (
-    <div className="mx-auto flex max-w-md flex-col items-center py-12 text-center">
-      <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-        <IconAlert className="h-7 w-7" />
+            </footer>
+          </section>
+        </div>
       </div>
-      <h3 className="mb-2 text-lg font-semibold text-slate-900">We hit a snag</h3>
-      <p className="mb-6 text-sm text-slate-600">{message || "Something went wrong."}</p>
-      <PrimaryButton onClick={onRetry}>Try again</PrimaryButton>
-    </div>
-  );
-}
-
-/* ---------- Shared UI ---------- */
-
-function PrimaryButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode;
-  disabled?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-slate-300"
-    >
-      {children}
-      <IconChevronRight className="h-4 w-4" />
-    </button>
-  );
-}
-
-function SidebarStep({
-  index,
-  label,
-  active,
-  done,
-}: {
-  index: number;
-  label: string;
-  active: boolean;
-  done: boolean;
-}) {
-  return (
-    <div
-      className={[
-        "flex items-center gap-3 rounded-lg px-3 py-2 transition",
-        active ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500",
-      ].join(" ")}
-    >
-      <span
-        className={[
-          "inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-          done ? "bg-indigo-600 text-white" : active ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-600",
-        ].join(" ")}
-      >
-        {done ? <IconCheck className="h-3 w-3" /> : index}
-      </span>
-      <span className="text-sm font-medium">{label}</span>
-    </div>
-  );
-}
-
-function ProgressBar({ step, total }: { step: number; total: number }) {
-  const pct = Math.round((step / total) * 100);
-  return (
-    <div className="flex w-48 items-center gap-3">
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
-        <div
-          className="h-full rounded-full bg-indigo-600 transition-all duration-300"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-xs font-medium text-slate-500">
-        {step}/{total}
-      </span>
-    </div>
-  );
-}
-
-function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`h-3 animate-pulse rounded bg-slate-200 ${className || "w-full"}`} />;
-}
-
-/* ---------- Helpers ---------- */
-
-function normalizeUrl(input: string): string {
-  const trimmed = input.trim();
-  if (!trimmed) return "";
-  return trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
-}
-
-function prettyHost(input: string): string {
-  try {
-    return new URL(normalizeUrl(input)).hostname.replace(/^www\./, "");
-  } catch {
-    return input;
-  }
-}
-
-/* ---------- Inline SVG icons (no emoji, ever) ---------- */
-
-function IconGlobe({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18" />
-      <path d="M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" />
-    </svg>
-  );
-}
-function IconTarget({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="5" />
-      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-    </svg>
-  );
-}
-function IconSparkle({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3l1.8 4.6L18 9.5l-4.2 1.9L12 16l-1.8-4.6L6 9.5l4.2-1.9L12 3z" />
-      <path d="M19 15l.7 1.7L21 17.5l-1.3.8L19 20l-.7-1.7L17 17.5l1.3-.8L19 15z" />
-    </svg>
-  );
-}
-function IconChart({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 20V10" />
-      <path d="M10 20V4" />
-      <path d="M16 20v-8" />
-      <path d="M22 20H2" />
-    </svg>
-  );
-}
-function IconEnvelope({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3 7l9 6 9-6" />
-    </svg>
-  );
-}
-function IconClose({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 6l12 12M18 6l-12 12" />
-    </svg>
-  );
-}
-function IconCheck({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 12l5 5L20 7" />
-    </svg>
-  );
-}
-function IconChevronRight({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 6l6 6-6 6" />
-    </svg>
-  );
-}
-function IconPencil({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 20h4l10-10-4-4L4 16v4z" />
-      <path d="M14 6l4 4" />
-    </svg>
-  );
-}
-function IconSpinner({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-      <path d="M21 12a9 9 0 11-9-9" />
-    </svg>
-  );
-}
-function IconAlert({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3l10 18H2L12 3z" />
-      <path d="M12 10v5" />
-      <circle cx="12" cy="18" r="1" fill="currentColor" />
-    </svg>
-  );
-}
-function IconLock({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="5" y="11" width="14" height="9" rx="2" />
-      <path d="M8 11V8a4 4 0 118 0v3" />
-    </svg>
-  );
-}
-function LogoMark({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 32 32" fill="none">
-      <defs>
-        <linearGradient id="ss-logo" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="#6366f1" />
-          <stop offset="1" stopColor="#8b5cf6" />
-        </linearGradient>
-      </defs>
-      <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#ss-logo)" />
-      <path d="M10 20c0 1.5 2 2.5 5 2.5s5-1 5-2.5c0-3-10-2.5-10-5.5 0-1.5 2-2.5 4.5-2.5s4.5 1 4.5 2.5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-    </svg>
+    </>
   );
 }
 
 export { NewQuizModal };
+
+const styles = `
+.sq-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(5, 7, 10, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: sq-fade 160ms ease-out;
+}
+@keyframes sq-fade { from { opacity: 0 } to { opacity: 1 } }
+.sq-modal {
+  width: 100%;
+  max-width: 960px;
+  max-height: 92vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: #0e1116;
+  border: 1px solid #1f242c;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  overflow: hidden;
+  color: #e7eaf0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  animation: sq-pop 180ms ease-out;
+}
+@keyframes sq-pop { from { transform: translateY(8px) scale(0.98); opacity: 0 } to { transform: none; opacity: 1 } }
+
+.sq-side {
+  background: linear-gradient(180deg, #0b0d12 0%, #0e1116 100%);
+  border-right: 1px solid #1a1f27;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.sq-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.sq-logo {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: #d4ff4d; color: #0e1116;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.sq-steps { display: flex; flex-direction: column; gap: 4px; }
+.sq-step {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 500;
+  color: #8891a0;
+  transition: background 120ms, color 120ms;
+}
+.sq-step-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #181d26;
+  color: #8891a0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  border: 1px solid #232a35;
+}
+.sq-step.is-active { background: rgba(212, 255, 77, 0.08); color: #e7eaf0; }
+.sq-step.is-active .sq-step-dot { background: #d4ff4d; color: #0e1116; border-color: #d4ff4d; }
+.sq-step.is-done { color: #c0c6d0; }
+.sq-step.is-done .sq-step-dot { background: #1d2a14; color: #d4ff4d; border-color: #2e4a18; }
+.sq-step-label { flex: 1; }
+
+.sq-tip {
+  margin-top: auto;
+  padding: 14px;
+  background: rgba(212, 255, 77, 0.04);
+  border: 1px solid rgba(212, 255, 77, 0.14);
+  border-radius: 12px;
+  font-size: 12px;
+  color: #b6bdc8;
+  line-height: 1.5;
+}
+.sq-tip p { margin: 0; }
+.sq-tip-title { color: #d4ff4d; font-weight: 700; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 6px; }
+
+.sq-main { display: flex; flex-direction: column; min-width: 0; background: #0e1116; }
+.sq-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 28px 12px 28px;
+}
+.sq-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7384; margin-bottom: 4px; }
+.sq-title { margin: 0; font-size: 22px; line-height: 1.2; font-weight: 700; letter-spacing: -0.015em; color: #f4f6f8; }
+.sq-close {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: #171b23; color: #9aa3b2;
+  border: 1px solid #232a35;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 120ms;
+}
+.sq-close:hover { background: #1f2530; color: #e7eaf0; }
+
+.sq-body { padding: 8px 28px 20px 28px; overflow-y: auto; min-height: 320px; }
+.sq-form { display: flex; flex-direction: column; gap: 14px; }
+.sq-lead { margin: 0 0 6px 0; font-size: 14px; line-height: 1.55; color: #aeb5c2; }
+.sq-label { font-size: 13px; font-weight: 600; color: #dfe3ea; }
+.sq-muted { color: #6b7384; font-weight: 500; }
+
+.sq-input-wrap { position: relative; }
+.sq-input-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: #6b7384; pointer-events: none;
+  display: inline-flex;
+}
+.sq-input, .sq-textarea {
+  width: 100%; box-sizing: border-box;
+  background: #121620;
+  border: 1px solid #232a35;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #f4f6f8;
+  font-size: 14px; font-family: inherit;
+  outline: none;
+  transition: border-color 120ms, box-shadow 120ms, background 120ms;
+}
+.sq-input { padding-left: 40px; }
+.sq-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.sq-input:focus, .sq-textarea:focus {
+  border-color: #d4ff4d;
+  box-shadow: 0 0 0 3px rgba(212, 255, 77, 0.18);
+  background: #141925;
+}
+.sq-input::placeholder, .sq-textarea::placeholder { color: #5b6472; }
+
+.sq-hint {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #8891a0;
+  padding: 8px 12px;
+  background: #121620;
+  border: 1px solid #1d2330;
+  border-radius: 10px;
+  width: fit-content;
+}
+.sq-error {
+  padding: 10px 14px;
+  background: rgba(255, 92, 92, 0.08);
+  border: 1px solid rgba(255, 92, 92, 0.3);
+  color: #ffb4b4;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.sq-loading {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 48px 20px; text-align: center;
+}
+.sq-spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid #232a35; border-top-color: #d4ff4d;
+  animation: sq-spin 0.9s linear infinite;
+}
+@keyframes sq-spin { to { transform: rotate(360deg) } }
+.sq-loading-title { font-size: 15px; font-weight: 600; color: #f4f6f8; }
+.sq-loading-sub { font-size: 13px; color: #8891a0; }
+
+.sq-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sq-goal {
+  text-align: left;
+  padding: 14px;
+  background: #121620;
+  border: 1px solid #232a35;
+  border-radius: 14px;
+  color: #e7eaf0;
+  cursor: pointer;
+  transition: all 120ms;
+  font-family: inherit;
+}
+.sq-goal:hover { border-color: #3a4556; background: #141a26; }
+.sq-goal.is-selected {
+  border-color: #d4ff4d;
+  background: rgba(212, 255, 77, 0.06);
+  box-shadow: 0 0 0 3px rgba(212, 255, 77, 0.14);
+}
+.sq-goal-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.sq-goal-label { font-weight: 600; font-size: 14px; color: #f4f6f8; }
+.sq-goal-check {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #181d26;
+  color: transparent;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #2a3240;
+  transition: all 120ms;
+}
+.sq-goal.is-selected .sq-goal-check { background: #d4ff4d; color: #0e1116; border-color: #d4ff4d; }
+.sq-goal-hint { font-size: 12.5px; color: #8891a0; line-height: 1.5; }
+
+.sq-review {
+  display: flex; flex-direction: column;
+  background: #121620;
+  border: 1px solid #232a35;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.sq-review-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  border-bottom: 1px solid #1a2029;
+}
+.sq-review-row:last-child { border-bottom: none; }
+.sq-review-row span { color: #8891a0; }
+.sq-review-row strong { color: #f4f6f8; font-weight: 600; }
+
+.sq-error-block {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 40px 20px; text-align: center;
+}
+.sq-error-icon {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(255, 92, 92, 0.1);
+  color: #ff8080;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.sq-error-title { font-size: 16px; font-weight: 700; color: #f4f6f8; }
+.sq-error-sub { font-size: 13.5px; color: #9aa3b2; max-width: 420px; line-height: 1.5; }
+
+.sq-foot { border-top: 1px solid #1a1f27; padding: 16px 28px 20px 28px; display: flex; flex-direction: column; gap: 12px; }
+.sq-progress { height: 4px; background: #1a1f27; border-radius: 999px; overflow: hidden; }
+.sq-progress span { display: block; height: 100%; background: linear-gradient(90deg, #d4ff4d 0%, #b8e63a 100%); border-radius: 999px; transition: width 220ms ease-out; }
+.sq-foot-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.sq-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px;
+  font-size: 13.5px; font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 120ms;
+  font-family: inherit;
+}
+.sq-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.sq-btn-primary {
+  background: #d4ff4d; color: #0e1116;
+}
+.sq-btn-primary:hover:not(:disabled) { background: #c1eb3a; }
+.sq-btn-ghost {
+  background: transparent; color: #c0c6d0;
+  border-color: #2a3240;
+}
+.sq-btn-ghost:hover:not(:disabled) { background: #181d26; color: #f4f6f8; }
+
+@media (max-width: 720px) {
+  .sq-modal { grid-template-columns: 1fr; max-height: 96vh; }
+  .sq-side { display: none; }
+  .sq-goals { grid-template-columns: 1fr; }
+}
+`;
