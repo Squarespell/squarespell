@@ -500,10 +500,9 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     enqueueSequenceEmails(
       leadId,
       quiz.id,
-      email,
-      name ?? '',
       outcome_id,
       leadData?.score ?? null,
+      [],
       (quiz as any).mode || null,
     ).catch((e: any) => console.log('[EmailSeq] enqueue failed:', e?.message));
   }
