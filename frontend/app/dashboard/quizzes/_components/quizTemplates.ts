@@ -131,14 +131,28 @@ export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<
       } catch {}
     }
   }
+  const payload = {
+    url: input.url,
+    context: input.context,
+    topic: input.context,
+    goal: input.goal,
+    brand: input.brand,
+  };
   const res = await fetch(`${API}/api/quizzes/from-url`, {
     method: "POST",
     headers,
-    body: JSON.stringify(input),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    throw new Error(`Quiz creation failed (${res.status})`);
+    let msg = `Quiz creation failed (${res.status})`;
+    try {
+      const errBody = await res.json();
+      if (errBody?.error) msg = String(errBody.error);
+    } catch {}
+    throw new Error(msg);
   }
-  const data = (await res.json()) as { id: string };
-  return data;
+  const raw = (await res.json()) as { quiz?: { id?: string }; id?: string };
+  const id = raw?.quiz?.id ?? raw?.id;
+  if (!id) throw new Error("Server returned no quiz id");
+  return { id };
 }
