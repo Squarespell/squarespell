@@ -44,7 +44,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
     await resend.emails.send({
       from: `${siteName} <results@squarespell.com>`,
       to,
-      replyTo: 'hello@squarespell.com',
+      reply_to: 'hello@squarespell.com',
       subject: `Your Result: ${outcomeTitle}`,
       text: plainText,
       headers: {
