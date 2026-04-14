@@ -185,7 +185,7 @@ export interface QuizEditorViewProps {
   quizId?: string;
 }
 
-export function QuizEditorView({
+export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   const { getToken } = useAuth();
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState<string>("");
@@ -199,8 +199,7 @@ export function QuizEditorView({
       const token = await getToken();
       if (!token) throw new Error("Not signed in");
       const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
-      // `quiz` or `quiz` is the loaded quiz object in scope; guard for either name
-      const qid = (quiz as any)?.id || "";
+      const qid = (quiz as any)?.id || quizId || "";
       if (!qid) throw new Error("Quiz id not ready");
       const res = await fetch(`${API}/api/quizzes/${qid}/publish`, {
         method: "POST",
@@ -210,6 +209,17 @@ export function QuizEditorView({
         const body = await res.text().catch(() => "");
         throw new Error(`Publish failed (${res.status}): ${body.slice(0, 200)}`);
       }
+      const data = await res.json();
+      setPublishedSlug(data?.slug || (quiz as any)?.slug || "");
+      setPublishModalOpen(true);
+    } catch (e: any) {
+      setPublishError(e?.message || "Publish failed");
+      // eslint-disable-next-line no-console
+      console.error("[publish]", e);
+    } finally {
+      setPublishing(false);
+    }
+  }
       const data = await res.json();
       setPublishedSlug(data?.slug || (quiz as any)?.slug || "");
       setPublishModalOpen(true);
