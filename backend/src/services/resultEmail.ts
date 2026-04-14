@@ -17,6 +17,7 @@ interface ResultEmailParams {
   };
   reportEnabled?: boolean;
   leadId?: string;
+  ownerEmail?: string;
 }
 
 export async function sendResultEmail(params: ResultEmailParams): Promise<boolean> {
@@ -25,7 +26,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
     return false;
   }
 
-  const { to, quizTitle, outcomeTitle, outcomeDescription, ctaUrl, ctaText, branding, reportEnabled, leadId } = params;
+  const { to, quizTitle, outcomeTitle, outcomeDescription, ctaUrl, ctaText, branding, reportEnabled, leadId, ownerEmail } = params;
   const primaryColor = branding.primaryColor || '#D2FF1D';
   const siteName = branding.siteName || 'Squarespell Quiz';
 
@@ -44,7 +45,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
     await resend.emails.send({
       from: `${siteName} <results@squarespell.com>`,
       to,
-      replyTo: 'hello@squarespell.com',
+      ...(ownerEmail ? { reply_to: ownerEmail } : {}),
       subject: `Your Result: ${outcomeTitle}`,
       text: plainText,
       headers: {

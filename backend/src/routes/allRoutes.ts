@@ -454,11 +454,12 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   const leadId = leadData?.id;
   await supabase.rpc('increment_lead_count', { qid: quiz.id });
 
+  const { data: ownerUser } = await supabase.from('users').select('email').eq('id', quiz.user_id).single();
+
   // Send email notification to quiz owner
   if (resend) {
     try {
-      const { data: ownerUser } = await supabase.from('users').select('email').eq('id', quiz.user_id).single();
-      const notifyEmail = ownerUser?.email || 'hasnain.munir700@gmail.com';
+      const notifyEmail = ownerUser?.email;
       if (notifyEmail) {
         const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
         await resend.emails.send({
@@ -491,6 +492,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           branding: (quiz.branding as any) || {},
           reportEnabled,
           leadId,
+          ownerEmail: ownerUser?.email,
         }).catch((e: any) => console.log('[ResultEmail] send failed:', e?.message));
       }
     } catch (e) { console.log('[ResultEmail] setup failed:', e); }
