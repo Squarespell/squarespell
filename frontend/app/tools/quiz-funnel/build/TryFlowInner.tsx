@@ -694,12 +694,17 @@ export function TryFlowInner({
     return siteRoot;
   })();
 
-  // Slug derived from quiz title - used in Stage 6 public URL and embed snippet
-  const quizSlug = (quiz?.title || 'your-quiz')
+  // Prefer the saved DB slug so the embed snippet matches what's actually
+  // live. Only fall back to a title-derived slug for the pre-save preview
+  // state. Without this, the copied snippet points at a slug that doesn't
+  // resolve on the backend whenever the DB slug differs from the title
+  // (collision suffixes, user-edited slugs, AI-generated titles, etc.).
+  const derivedFromTitle = (quiz?.title || 'your-quiz')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60) || 'your-quiz';
+  const quizSlug = (quiz as any)?.slug || derivedFromTitle;
   const publicQuizUrlValue = publicQuizUrl(quizSlug);
   const embedSnippetValue = embedSnippet(quizSlug).replace(' data-quiz=', '\n  data-quiz=');
 
