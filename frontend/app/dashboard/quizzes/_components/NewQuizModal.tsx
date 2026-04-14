@@ -131,7 +131,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       const quizId = ((quiz as any) && ((quiz as any).id || (quiz as any).quizId)) as string | undefined;
       if (quizId) {
         if (onCreated) onCreated(quizId);
-        router.push(`/dashboard/quizzes/${quizId}`);
+        router.push(`/dashboard/${quizId}`);
       }
       onClose();
     } catch (err: unknown) {
@@ -330,21 +330,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 {stage === "review" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("goal")}>Back</button>
                 )}
-                {stage === "generating" && (
-                <div className="sq-form">
-                  <p className="sq-lead">Building questions, outcomes, and styling. This usually takes 10 to 20 seconds.</p>
-                  <div className="sq-skeleton-list">
-                    <div className="sq-skel sq-skel-row" />
-                    <div className="sq-skel sq-skel-row sq-skel-w80" />
-                    <div className="sq-skel sq-skel-row sq-skel-w60" />
-                    <div className="sq-skel sq-skel-block" />
-                    <div className="sq-skel sq-skel-row sq-skel-w70" />
-                    <div className="sq-skel sq-skel-row sq-skel-w50" />
-                  </div>
-                </div>
-              )}
-
-              {stage === "error" && (
+                {stage === "error" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("review")}>Back</button>
                 )}
 
@@ -370,21 +356,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                     {submitting ? "Generating..." : "Generate quiz"}
                   </button>
                 )}
-                {stage === "generating" && (
-                <div className="sq-form">
-                  <p className="sq-lead">Building questions, outcomes, and styling. This usually takes 10 to 20 seconds.</p>
-                  <div className="sq-skeleton-list">
-                    <div className="sq-skel sq-skel-row" />
-                    <div className="sq-skel sq-skel-row sq-skel-w80" />
-                    <div className="sq-skel sq-skel-row sq-skel-w60" />
-                    <div className="sq-skel sq-skel-block" />
-                    <div className="sq-skel sq-skel-row sq-skel-w70" />
-                    <div className="sq-skel sq-skel-row sq-skel-w50" />
-                  </div>
-                </div>
-              )}
-
-              {stage === "error" && (
+                {stage === "error" && (
                   <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={submitting}>
                     Try again
                   </button>
@@ -416,6 +388,8 @@ const styles = `
 }
 @keyframes sq-fade { from { opacity: 0 } to { opacity: 1 } }
 .sq-modal {
+  max-height: 92vh;
+  overflow: hidden;
   width: 100%;
   max-width: 960px;
   max-height: 92vh;
@@ -448,6 +422,8 @@ const styles = `
 }
 .sq-steps { display: flex; flex-direction: column; gap: 4px; }
 .sq-step {
+  overflow-y: auto;
+  max-height: 92vh;
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px;
   border-radius: 10px;
