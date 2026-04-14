@@ -66,7 +66,7 @@ interface Quiz {
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
 
-type Stage = 'loading' | 'error' | 'question' | 'leadgate' | 'result';
+type Stage = 'loading' | 'error' | 'question' | 'leadgate' | 'submitted' | 'result';
 
 function getOutcome(quiz: Quiz, answers: Record<number, number>): QuizOutcome | null {
   const outcomes = quiz.outcomes || quiz.results || [];
@@ -161,7 +161,7 @@ export default function QuizPage() {
         } else {
           const o = getOutcome(quiz, { ...answers, [qIdx]: oi });
           setOutcome(o);
-          setStage('result');
+          setStage('submitted');
           fetch(`${API}/api/quiz/${slug}/event`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -588,7 +588,29 @@ export default function QuizPage() {
             </div>
           )}
 
-          {stage === 'result' && outcome && (
+          {stage === 'submitted' && (
+        <div className="sq-card sq-submitted" style={{textAlign:'center',padding:'40px 28px'}}>
+          <div style={{fontSize:48,lineHeight:1,marginBottom:16}}>✉️</div>
+          <h2 style={{margin:'0 0 8px',fontSize:24}}>Check your inbox</h2>
+          <p style={{margin:'0 0 6px',color:'#444'}}>
+            We just emailed your personalized report to <strong>{email}</strong>.
+          </p>
+          <p style={{margin:'0 0 24px',color:'#777',fontSize:14}}>
+            Don’t see it in a minute? Check <strong>Promotions</strong> or <strong>Spam</strong> —
+            mark it as <em>Not Spam</em> so future emails land in your Inbox.
+          </p>
+          <button
+            type="button"
+            className="sq-btn sq-btn-secondary"
+            onClick={() => setStage('result')}
+            style={{padding:'10px 18px'}}
+          >
+            View results now →
+          </button>
+        </div>
+      )}
+
+      {stage === 'result' && outcome && (
             <div className="sq-card sq-result">
               <div className="sq-result-badge">Your result</div>
               <div className="sq-result-title">{outcome.title}</div>

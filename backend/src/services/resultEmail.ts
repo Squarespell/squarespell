@@ -53,26 +53,57 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         'X-Entity-Ref-ID': leadId || '',
       },
-      html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5">
-  <div style="max-width:560px;margin:0 auto;padding:32px 16px">
-    <div style="background:#fff;border-radius:16px;padding:40px 32px;text-align:center">
-      <h1 style="font-size:24px;margin:0 0 8px;color:#1a1a1a">${quizTitle}</h1>
-      <p style="font-size:14px;color:#666;margin:0 0 32px">Here are your results</p>
-      <div style="background:${primaryColor};border-radius:12px;padding:32px 24px;margin:0 0 24px">
-        <h2 style="font-size:28px;margin:0 0 12px;color:#0a0f05">${outcomeTitle}</h2>
-        <p style="font-size:16px;color:#0a0f05;margin:0;line-height:1.5">${outcomeDescription}</p>
-      </div>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        ${ctaUrl ? `<a href="${ctaUrl}" style="display:inline-block;padding:14px 32px;background:#0a0f05;color:#fff;border-radius:24px;text-decoration:none;font-weight:600;font-size:16px">${ctaText || 'Learn More'}</a>` : ''}
-        ${reportUrl ? `<a href="${reportUrl}" style="display:inline-block;padding:14px 32px;background:#666666;color:#fff;border-radius:24px;text-decoration:none;font-weight:600;font-size:16px">Download Report</a>` : ''}
-      </div>
+      html: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${outcomeTitle}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;">
+    <div style="display:none;max-height:0;overflow:hidden;color:transparent;line-height:0;">
+      Your ${quizTitle} results are ready — ${outcomeTitle}
     </div>
-    <p style="text-align:center;font-size:12px;color:#999;margin:24px 0 0">Powered by Squarespell</p>
-  </div>
-</body>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;">
+      <tr><td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);padding:28px 32px;color:#ffffff;">
+              <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.9;">${siteName}</div>
+              <div style="font-size:22px;font-weight:700;margin-top:6px;">Your results are in</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 32px 8px;">
+              <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">From ${quizTitle}</div>
+              <h1 style="margin:0 0 14px;font-size:26px;line-height:1.25;color:#111;">${outcomeTitle}</h1>
+              <div style="color:#444;font-size:15px;line-height:1.65;margin:0 0 28px;">${outcomeDescription}</div>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 10px;">
+                <tr>
+                  ${reportUrl ? `<td align="center" style="border-radius:10px;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);padding:2px;">
+                    <a href="${reportUrl}" style="display:inline-block;padding:14px 28px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">⬇  Download your PDF report</a>
+                  </td>` : ''}
+                </tr>
+              </table>
+              ${ctaUrl ? `<p style="text-align:center;margin:14px 0 0;"><a href="${ctaUrl}" style="color:#6366f1;text-decoration:none;font-weight:600;font-size:14px;">${ctaText || 'Learn more'} →</a></p>` : ''}
+              ${reportUrl ? `<p style="text-align:center;margin:20px 0 0;color:#999;font-size:12px;">Your download link is valid for 30 days.</p>` : ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:22px 32px;background:#fafafa;border-top:1px solid #eee;color:#777;font-size:12px;line-height:1.6;">
+              <strong>Didn't land in your Inbox?</strong> Drag this email from Promotions or Spam to your Primary tab, and mark it as <em>Not Spam</em> so future reports don't get lost.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 32px 22px;background:#fafafa;color:#999;font-size:12px;line-height:1.5;text-align:center;">
+              Sent by ${siteName} via <a href="https://squarespell.com" style="color:#6366f1;text-decoration:none;">Squarespell</a>.<br/>
+              <a href="${unsubUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
 </html>`,
     });
     console.log(`[ResultEmail] Sent to ${to} for "${quizTitle}"`);
