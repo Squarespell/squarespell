@@ -135,7 +135,7 @@ const STAGE_LABELS: Record<Exclude<Stage, 'idle' | 'success' | 'error'>, string>
 };
 
 function ProgressRow({ active, done, label }: { active: boolean; done: boolean; label: string }) {
-  const tint = done ? '#22c55e' : active ? C.ACCENT : C.MUTED;
+  const tint = done ? '#22c55e' : active ? C.ACCENT : C.TEXT_MUTED;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
       <div
@@ -168,7 +168,7 @@ function ProgressRow({ active, done, label }: { active: boolean; done: boolean; 
           />
         )}
       </div>
-      <span style={{ color: done || active ? C.TEXT : C.MUTED, fontSize: 14 }}>{label}</span>
+      <span style={{ color: done || active ? C.TEXT : C.TEXT_MUTED, fontSize: 14 }}>{label}</span>
       <style jsx>{`
         @keyframes squarespell-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
@@ -329,7 +329,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
         >
           New quiz
         </h2>
-        <p style={{ color: C.MUTED, fontSize: 14, margin: '6px 0 0' }}>
+        <p style={{ color: C.TEXT_MUTED, fontSize: 14, margin: '6px 0 0' }}>
           Paste your site URL and we'll generate a personalized quiz. Pick a template and add a topic to steer it.
         </p>
       </div>
@@ -383,7 +383,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
             style={{ color: C.TEXT, fontSize: 13, fontWeight: 500 }}
           >
             Template{' '}
-            <span style={{ color: C.MUTED, fontWeight: 400 }}>(optional)</span>
+            <span style={{ color: C.TEXT_MUTED, fontWeight: 400 }}>(optional)</span>
           </label>
           {templateId && (
             <button
@@ -392,7 +392,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: C.MUTED,
+                color: C.TEXT_MUTED,
                 fontSize: 12,
                 cursor: 'pointer',
                 padding: 0,
@@ -443,7 +443,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
                 >
                   {t.name}
                 </div>
-                <div style={{ fontSize: 11, color: C.MUTED }}>{t.blurb}</div>
+                <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>{t.blurb}</div>
               </button>
             );
           })}
@@ -461,7 +461,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           }}
         >
           What's this quiz about?{' '}
-          <span style={{ color: C.MUTED, fontWeight: 400 }}>(optional)</span>
+          <span style={{ color: C.TEXT_MUTED, fontWeight: 400 }}>(optional)</span>
         </label>
         <textarea
           id="new-quiz-topic"
@@ -488,7 +488,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
         />
         <div
           style={{
-            color: C.MUTED,
+            color: C.TEXT_MUTED,
             fontSize: 12,
             marginTop: 6,
             display: 'flex',
@@ -503,17 +503,17 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           <div style={{ marginTop: 18, padding: '12px 0' }}>
             <ProgressRow
               active={stage === 'scraping'}
-              done={stage === 'analyzing' || stage === 'building' || stage === 'success'}
+              done={stage === 'analyzing' || stage === 'building'}
               label={STAGE_LABELS.scraping}
             />
             <ProgressRow
               active={stage === 'analyzing'}
-              done={stage === 'building' || stage === 'success'}
+              done={stage === 'building'}
               label={STAGE_LABELS.analyzing}
             />
             <ProgressRow
               active={stage === 'building'}
-              done={stage === 'success'}
+              done={false}
               label={STAGE_LABELS.building}
             />
           </div>
@@ -554,7 +554,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
               borderRadius: 10,
               border: 'none',
               background: canSubmit ? C.ACCENT : C.BORDER,
-              color: canSubmit ? '#0a0a0a' : C.MUTED,
+              color: canSubmit ? '#0a0a0a' : C.TEXT_MUTED,
               fontSize: 14,
               fontWeight: 600,
               cursor: canSubmit ? 'pointer' : 'not-allowed',
@@ -576,7 +576,7 @@ export function NewQuizModal({ open, onClose }: { open: boolean; onClose: () => 
           gap: 12,
         }}
       >
-        <span style={{ color: C.MUTED, fontSize: 13 }}>Prefer to start from scratch?</span>
+        <span style={{ color: C.TEXT_MUTED, fontSize: 13 }}>Prefer to start from scratch?</span>
         <button
           type="button"
           onClick={handleStartBlank}
