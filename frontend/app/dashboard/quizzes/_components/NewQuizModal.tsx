@@ -112,7 +112,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       const quiz = await createQuizFromUrl({
         url: normalized,
         context,
-        goal: goalId,
+        goal: goalId as "capture" | "recommend" | "score" | "grow",
       });
       const quizId = (quiz && (quiz.id || quiz.quizId)) as string | undefined;
       if (quizId && onCreated) onCreated(quizId);
