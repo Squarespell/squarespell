@@ -114,7 +114,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
         context,
         goal: goalId as "capture" | "recommend" | "score" | "grow",
       });
-      const quizId = (quiz && (quiz.id || quiz.quizId)) as string | undefined;
+      const quizId = ((quiz as any) && ((quiz as any).id || (quiz as any).quizId)) as string | undefined;
       if (quizId && onCreated) onCreated(quizId);
       onClose();
     } catch (err: unknown) {
