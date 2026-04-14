@@ -21,6 +21,7 @@ import {
   PageLoading,
 } from '../_components/PageShell';
 import { ConfirmDialog, PublishModal } from '../_components/Modals';
+import { NewQuizModal } from './_components/NewQuizModal';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
 
@@ -61,6 +62,7 @@ export default function QuizzesPage() {
   const [publishQuiz, setPublishQuiz] = useState<Quiz | null>(null);
   const [deleteQuiz, setDeleteQuiz] = useState<Quiz | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [newQuizOpen, setNewQuizOpen] = useState(false);
 
   const confirmDelete = async () => {
     if (!token || !deleteQuiz) return;
@@ -113,8 +115,9 @@ export default function QuizzesPage() {
   return (
     <DashboardShell
       title="Quizzes"
-      topbarRight={<PrimaryButton href="/try">+ New quiz</PrimaryButton>}
+      topbarRight={<PrimaryButton onClick={() => setNewQuizOpen(true)}>+ New quiz</PrimaryButton>}
     >
+      <NewQuizModal open={newQuizOpen} onClose={() => setNewQuizOpen(false)} />
       <PublishModal
         open={Boolean(publishQuiz)}
         quizTitle={publishQuiz?.title || ''}
@@ -146,7 +149,7 @@ export default function QuizzesPage() {
           }
           title="Create your first quiz"
           body="Get started with an AI-built quiz funnel that captures qualified leads in minutes."
-          action={<PrimaryButton href="/try">Build your first quiz</PrimaryButton>}
+          action={<PrimaryButton onClick={() => setNewQuizOpen(true)}>Build your first quiz</PrimaryButton>}
         />
       ) : (
         <div
