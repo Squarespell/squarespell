@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { DashboardShell, DASHBOARD_COLORS as C } from './_components/DashboardShell';
 import { useDashboardAuth } from './_components/useDashboardAuth';
 import { Card, PageLoading, PrimaryButton } from './_components/PageShell';
+import { NewQuizModal } from './quizzes/_components/NewQuizModal';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -421,6 +422,7 @@ function OverviewInner() {
     lead_rate: 0,
   });
   const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [newQuizOpen, setNewQuizOpen] = useState(false);
   const initRef = useRef(false);
 
   // Claim flow + plan fetch - runs once when token becomes available
@@ -613,8 +615,9 @@ function OverviewInner() {
   return (
     <DashboardShell
       title="Overview"
-      topbarRight={<PrimaryButton href="/tools/quiz-funnel/build">+ New quiz</PrimaryButton>}
+      topbarRight={<PrimaryButton onClick={() => setNewQuizOpen(true)}>+ New quiz</PrimaryButton>}
     >
+      <NewQuizModal open={newQuizOpen} onClose={() => setNewQuizOpen(false)} />
       {status === 'trial' && <TrialBanner daysLeft={daysLeft} onUpgrade={() => router.push('/pricing')} />}
 
       {/* Page hero */}
