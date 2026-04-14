@@ -34,8 +34,8 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   let reportUrl = '';
   if (reportEnabled && leadId) {
     const token = generateReportToken(leadId);
-    const baseUrl = process.env.FRONTEND_URL || 'https://app.squarespell.com';
-    reportUrl = `${baseUrl}/api/public/leads/${leadId}/report?token=${token}`;
+    const backendBase = process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com';
+      reportUrl = `${backendBase}/api/quizzes/public/leads/${leadId}/report?token=${token}`;
   }
 
   try {
