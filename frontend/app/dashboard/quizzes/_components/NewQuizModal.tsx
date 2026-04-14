@@ -747,5 +747,3 @@ function LogoMark({ className = "" }) {
     </svg>
   );
 }
-
-export { NewQuizModal };
