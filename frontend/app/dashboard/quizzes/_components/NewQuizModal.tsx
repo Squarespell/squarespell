@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createQuizFromUrl } from "./quizTemplates";
 
-type Stage = "site" | "loading" | "goal" | "review" | "error";
+type Stage = "site" | "loading" | "goal" | "review" | "generating" | "error";
 
 type Goal = {
   id: string;
@@ -49,6 +50,7 @@ function GoalIcon({ name }: { name: Goal["icon"] }) {
 }
 
 export default function NewQuizModal({ open, onClose, onCreated }: Props) {
+  const router = useRouter();
   const [stage, setStage] = useState<Stage>("site");
   const [url, setUrl] = useState("");
   const [context, setContext] = useState("");
@@ -82,6 +84,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   if (!open) return null;
 
   const stepIndex = stage === "site" || stage === "loading" ? 1 : stage === "goal" ? 2 : 3;
+  const isBusy = submitting || stage === "generating";
 
   async function handleContinueSite() {
     const normalized = normalizeUrl(url);
@@ -117,6 +120,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   async function handleGenerate() {
     setSubmitting(true);
     setErrorMsg("");
+    setStage("generating");
     try {
       const normalized = normalizeUrl(url);
       const quiz = await createQuizFromUrl({
@@ -125,7 +129,10 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
         goal: goalId as "capture" | "recommend" | "score" | "grow",
       });
       const quizId = ((quiz as any) && ((quiz as any).id || (quiz as any).quizId)) as string | undefined;
-      if (quizId && onCreated) onCreated(quizId);
+      if (quizId) {
+        if (onCreated) onCreated(quizId);
+        router.push(`/dashboard/quizzes/${quizId}`);
+      }
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong. Try again.";
@@ -189,6 +196,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                   {stage === "loading" && "Reading your site"}
                   {stage === "goal" && "What should this quiz do"}
                   {stage === "review" && "Review and generate"}
+                  {stage === "generating" && "Generating your quiz"}
                   {stage === "error" && "We hit a snag"}
                 </h2>
               </div>
@@ -286,6 +294,20 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 </div>
               )}
 
+              {stage === "generating" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Building questions, outcomes, and styling. This usually takes 10 to 20 seconds.</p>
+                  <div className="sq-skeleton-list">
+                    <div className="sq-skel sq-skel-row" />
+                    <div className="sq-skel sq-skel-row sq-skel-w80" />
+                    <div className="sq-skel sq-skel-row sq-skel-w60" />
+                    <div className="sq-skel sq-skel-block" />
+                    <div className="sq-skel sq-skel-row sq-skel-w70" />
+                    <div className="sq-skel sq-skel-row sq-skel-w50" />
+                  </div>
+                </div>
+              )}
+
               {stage === "error" && (
                 <div className="sq-error-block">
                   <div className="sq-error-icon" aria-hidden="true">
@@ -308,7 +330,21 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 {stage === "review" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("goal")}>Back</button>
                 )}
-                {stage === "error" && (
+                {stage === "generating" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Building questions, outcomes, and styling. This usually takes 10 to 20 seconds.</p>
+                  <div className="sq-skeleton-list">
+                    <div className="sq-skel sq-skel-row" />
+                    <div className="sq-skel sq-skel-row sq-skel-w80" />
+                    <div className="sq-skel sq-skel-row sq-skel-w60" />
+                    <div className="sq-skel sq-skel-block" />
+                    <div className="sq-skel sq-skel-row sq-skel-w70" />
+                    <div className="sq-skel sq-skel-row sq-skel-w50" />
+                  </div>
+                </div>
+              )}
+
+              {stage === "error" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("review")}>Back</button>
                 )}
 
@@ -330,11 +366,25 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                   </button>
                 )}
                 {stage === "review" && (
-                  <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={submitting}>
+                  <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={isBusy}>
                     {submitting ? "Generating..." : "Generate quiz"}
                   </button>
                 )}
-                {stage === "error" && (
+                {stage === "generating" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Building questions, outcomes, and styling. This usually takes 10 to 20 seconds.</p>
+                  <div className="sq-skeleton-list">
+                    <div className="sq-skel sq-skel-row" />
+                    <div className="sq-skel sq-skel-row sq-skel-w80" />
+                    <div className="sq-skel sq-skel-row sq-skel-w60" />
+                    <div className="sq-skel sq-skel-block" />
+                    <div className="sq-skel sq-skel-row sq-skel-w70" />
+                    <div className="sq-skel sq-skel-row sq-skel-w50" />
+                  </div>
+                </div>
+              )}
+
+              {stage === "error" && (
                   <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={submitting}>
                     Try again
                   </button>
@@ -576,6 +626,28 @@ const styles = `
 }
 .sq-goal.is-selected .sq-goal-icon {
   background: rgba(212, 255, 77, 0.18);
+}
+.sq-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+.sq-skel {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 100%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+  animation: sq-shimmer 1.4s ease-in-out infinite;
+}
+.sq-skel-row { height: 14px; width: 100%; }
+.sq-skel-block { height: 80px; width: 100%; border-radius: 12px; }
+.sq-skel-w80 { width: 80%; }
+.sq-skel-w70 { width: 70%; }
+.sq-skel-w60 { width: 60%; }
+.sq-skel-w50 { width: 50%; }
+@keyframes sq-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 .sq-error-icon {
   width: 48px; height: 48px; border-radius: 50%;
