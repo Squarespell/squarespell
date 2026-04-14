@@ -70,8 +70,8 @@
          in the editor and collapse removed-script blocks so the layout doesn't
          reserve phantom space around our quiz. */
       'html.squarespace-damask .sqs-blockStatus,.sqs-block .removed-script{display:none !important}',
-      '.squarespell-wrapper{width:100%;max-width:640px;margin:0 auto;display:block}',
-      '.squarespell-wrapper iframe{width:100%;border:none;border-radius:16px;display:block;transition:height 0.3s ease}',
+      '.squarespell-wrapper{width:100%;max-width:100%;margin:0;padding:0;display:block;line-height:0;font-size:0}',
+      '.squarespell-wrapper iframe{width:100%;border:0;display:block;margin:0;padding:0;vertical-align:top;transition:height 0.3s ease}',
       '.squarespell-fallback{display:none;text-align:center;padding:20px;font-size:14px}',
       '.squarespell-fallback a{display:inline-block;padding:12px 24px;background:#D2FF1D;color:#0a0f05;border-radius:20px;font-weight:700;text-decoration:none}',
       /* Popup mode styles */
@@ -110,7 +110,12 @@
       iframe.src = url;
       iframe.title = 'Squarespell Quiz';
       iframe.loading = 'lazy';
-      iframe.style.height = (fixedHeight && fixedHeight !== 'auto') ? fixedHeight + 'px' : '600px';
+      iframe.style.height = (fixedHeight && fixedHeight !== 'auto') ? fixedHeight + 'px' : '0px';
+      iframe.style.display = 'block';
+      iframe.style.margin = '0';
+      iframe.style.padding = '0';
+      iframe.style.verticalAlign = 'top';
+      iframe.style.overflow = 'hidden';
 
       var fallback = document.createElement('div');
       fallback.className = 'squarespell-fallback';

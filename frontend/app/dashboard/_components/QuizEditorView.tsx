@@ -199,10 +199,8 @@ export function QuizEditorView({
       const token = await getToken();
       if (!token) throw new Error("Not signed in");
       const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
-      // `quiz` or `quizData` is the loaded quiz object in scope; guard for either name
-      const qid = (typeof quiz !== "undefined" && quiz && (quiz as any).id)
-        ? (quiz as any).id
-        : (typeof quizData !== "undefined" && (quizData as any)?.id) || "";
+      // `quiz` or `quiz` is the loaded quiz object in scope; guard for either name
+      const qid = (quiz as any)?.id || "";
       if (!qid) throw new Error("Quiz id not ready");
       const res = await fetch(`${API}/api/quizzes/${qid}/publish`, {
         method: "POST",
@@ -213,7 +211,7 @@ export function QuizEditorView({
         throw new Error(`Publish failed (${res.status}): ${body.slice(0, 200)}`);
       }
       const data = await res.json();
-      setPublishedSlug(data?.slug || (typeof quiz !== "undefined" ? (quiz as any)?.slug : "") || "");
+      setPublishedSlug(data?.slug || (quiz as any)?.slug || "");
       setPublishModalOpen(true);
     } catch (e: any) {
       setPublishError(e?.message || "Publish failed");
@@ -308,7 +306,7 @@ export function QuizEditorView({
 
     {publishError && <div style={{position:"fixed",top:60,right:16,zIndex:50,background:"#fee",color:"#900",padding:"8px 12px",borderRadius:6,fontSize:13}}>{publishError}</div>}
 
-    <PublishModal open={publishModalOpen} quizTitle={((typeof quiz!=="undefined"&&(quiz as any)?.title)||"Quiz")} slug={publishedSlug} onClose={()=>setPublishModalOpen(false)} />
+    <PublishModal open={publishModalOpen} quizTitle={(quiz as any)?.title || "Quiz"} slug={publishedSlug} onClose={()=>setPublishModalOpen(false)} />
 
     </>
   );
