@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import publicReportRouter from './routes/publicReport';
 import express from 'express';
 import cors from 'cors';
 import quizRoutes from './routes/quiz';
@@ -83,6 +84,7 @@ app.use(express.json());
 // Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
 
+app.use('/api/public', publicReportRouter);
 app.use('/api/quizzes', quizzesFromUrlRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api', generateRouter);
