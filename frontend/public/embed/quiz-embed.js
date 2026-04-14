@@ -257,7 +257,11 @@
       var fixedHeight = parentEl ? parentEl.getAttribute('data-height') : null;
 
       if (d.type === 'resize' && typeof d.height === 'number' && (!fixedHeight || fixedHeight === 'auto')) {
-        targetIframe.style.height = (d.height + 32) + 'px';
+        var desired = Math.min(Math.max(0, Math.round(d.height)), 4000);
+        var current = parseFloat(targetIframe.style.height) || 0;
+        if (Math.abs(desired - current) >= 2) {
+          targetIframe.style.height = desired + 'px';
+        }
       }
 
       if (d.type === 'complete') {
