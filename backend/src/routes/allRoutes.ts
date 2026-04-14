@@ -5,6 +5,8 @@ import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
+import { sendResultEmail } from '../services/resultEmail';
+import { enqueueSequenceEmails, processEmailQueue } from '../services/emailSequence';
 import { runCleanup } from '../services/databaseCleanup';
 import * as quizPaymentsService from '../services/quizPayments';
 import { supabase } from '../db/supabaseClient';
@@ -467,6 +469,43 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
         });
       }
     } catch (e) { console.log('Email notification failed:', e); }
+  }
+
+  // Send result email to the LEAD (not the owner). Includes download-report link.
+  if (leadId && email) {
+    try {
+      const matchedOutcome = outcome_id && quiz.outcomes
+        ? (quiz.outcomes as any[]).find((o: any) => o.id === outcome_id)
+        : null;
+      if (matchedOutcome) {
+        const reportEnabled = (quiz.settings as any)?.report_enabled === true;
+        const ctaUrl = matchedOutcome.cta_url || (quiz.branding as any)?.ctaUrl;
+        const ctaText = matchedOutcome.cta_text || 'Learn More';
+        sendResultEmail({
+          to: email,
+          quizTitle: quiz.title,
+          outcomeTitle: matchedOutcome.title || 'Your Result',
+          outcomeDescription: matchedOutcome.description || '',
+          ctaUrl,
+          ctaText,
+          branding: (quiz.branding as any) || {},
+          reportEnabled,
+          leadId,
+        }).catch((e) => console.log('[ResultEmail] send failed:', e?.message));
+      }
+    } catch (e) { console.log('[ResultEmail] setup failed:', e); }
+  }
+
+  if (leadId && email && outcome_id) {
+    enqueueSequenceEmails(
+      leadId,
+      quiz.id,
+      email,
+      name ?? '',
+      outcome_id,
+      leadData?.score ?? null,
+      (quiz as any).mode || null,
+    ).catch((e) => console.log('[EmailSeq] enqueue failed:', e?.message));
   }
 
   // Fire Zapier/webhook integrations
@@ -987,6 +1026,16 @@ stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRe
 
 // ── Cron: Weekly Digest ───────────────────────────────────────────────────────
 export const cronRouter = Router();
+cronRouter.post('/process-email-queue', async (_req, res) => {
+  try {
+    const result = await processEmailQueue();
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[Cron] process-email-queue failed:', err);
+    res.status(500).json({ error: err?.message || 'queue drain failed' });
+  }
+});
+
 cronRouter.post('/weekly-digest', async (req, res) => {
   // Verify cron job secret
   const cronSecret = req.headers['x-cron-secret'];
