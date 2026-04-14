@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/nextjs";
 'use client';
 
 /**
@@ -18,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { TryFlowInner } from '@/app/tools/quiz-funnel/build/TryFlowInner';
 import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
+import { PublishModal } from "./Modals";
 
 interface DbQuiz {
   id: string;
@@ -183,7 +185,45 @@ export interface QuizEditorViewProps {
   quizId?: string;
 }
 
-export function QuizEditorView({ quizId }: QuizEditorViewProps) {
+export function QuizEditorView({
+  const { getToken } = useAuth();
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [publishedSlug, setPublishedSlug] = useState<string>("");
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
+  async function handlePublish() {
+    try {
+      setPublishing(true);
+      setPublishError(null);
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+      const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+      // `quiz` or `quizData` is the loaded quiz object in scope; guard for either name
+      const qid = (typeof quiz !== "undefined" && quiz && (quiz as any).id)
+        ? (quiz as any).id
+        : (typeof quizData !== "undefined" && (quizData as any)?.id) || "";
+      if (!qid) throw new Error("Quiz id not ready");
+      const res = await fetch(`${API}/api/quizzes/${qid}/publish`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`Publish failed (${res.status}): ${body.slice(0, 200)}`);
+      }
+      const data = await res.json();
+      setPublishedSlug(data?.slug || (typeof quiz !== "undefined" ? (quiz as any)?.slug : "") || "");
+      setPublishModalOpen(true);
+    } catch (e: any) {
+      setPublishError(e?.message || "Publish failed");
+      // eslint-disable-next-line no-console
+      console.error("[publish]", e);
+    } finally {
+      setPublishing(false);
+    }
+  }
+ quizId }: QuizEditorViewProps) {
   const [quiz, setQuiz] = useState<DbQuiz | null>(null);
   const [resolvedId, setResolvedId] = useState<string>('');
   const [state, setState] = useState<'loading' | 'error' | 'empty' | 'ready'>('loading');
@@ -238,6 +278,8 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   if (!quiz) return <EditorLoading label="Loading editor…" />;
 
   return (
+    <>
+
     <DashboardShell hideTopbar contentPadding="0">
       <style dangerouslySetInnerHTML={{ __html: SHELL_OVERRIDES }} />
       <div className="dash-editor-shell" style={{ minHeight: 'calc(100vh - 0px)' }}>
@@ -251,5 +293,23 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
         />
       </div>
     </DashboardShell>
+
+    <button
+
+      onClick={handlePublish}
+
+      disabled={publishing}
+
+      style={{position:"fixed",top:16,right:16,zIndex:50,padding:"10px 18px",borderRadius:8,background:"#111",color:"#fff",fontWeight:600,border:"none",cursor:"pointer",opacity:publishing?0.6:1}}
+
+      aria-label="Publish quiz"
+
+    >{publishing?"Publishing...":"Publish"}</button>
+
+    {publishError && <div style={{position:"fixed",top:60,right:16,zIndex:50,background:"#fee",color:"#900",padding:"8px 12px",borderRadius:6,fontSize:13}}>{publishError}</div>}
+
+    <PublishModal open={publishModalOpen} quizTitle={((typeof quiz!=="undefined"&&(quiz as any)?.title)||"Quiz")} slug={publishedSlug} onClose={()=>setPublishModalOpen(false)} />
+
+    </>
   );
 }
