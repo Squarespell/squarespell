@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/nextjs";
 'use client';
 
 /**
@@ -14,6 +13,7 @@ import { useAuth } from "@clerk/nextjs";
  */
 
 import { useEffect, useState } from 'react';
+import { useAuth } from "@clerk/nextjs";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -80,6 +80,21 @@ function EditorLoading({ label }: { label: string }) {
   return (
     <DashboardShell title="Quiz editor">
       <div style={{ color: C.TEXT_MUTED, fontSize: 14, padding: '48px 0' }}>{label}</div>
+          <button
+        onClick={handlePublish}
+        disabled={publishing}
+        style={{position:"fixed",top:16,right:16,zIndex:50,padding:"10px 18px",borderRadius:8,background:"#111",color:"#fff",fontWeight:600,border:"none",cursor:"pointer",opacity:publishing?0.6:1}}
+        aria-label="Publish quiz"
+      >{publishing ? "Publishing..." : "Publish"}</button>
+      {publishError && (
+        <div style={{position:"fixed",top:60,right:16,zIndex:50,background:"#fee",color:"#900",padding:"8px 12px",borderRadius:6,fontSize:13}}>{publishError}</div>
+      )}
+      <PublishModal
+        open={publishModalOpen}
+        quizTitle={(quiz as any)?.title || "Quiz"}
+        slug={publishedSlug}
+        onClose={() => setPublishModalOpen(false)}
+      />
     </DashboardShell>
   );
 }
@@ -220,18 +235,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
       setPublishing(false);
     }
   }
-      const data = await res.json();
-      setPublishedSlug(data?.slug || (quiz as any)?.slug || "");
-      setPublishModalOpen(true);
-    } catch (e: any) {
-      setPublishError(e?.message || "Publish failed");
-      // eslint-disable-next-line no-console
-      console.error("[publish]", e);
-    } finally {
-      setPublishing(false);
-    }
-  }
- quizId }: QuizEditorViewProps) {
+
   const [quiz, setQuiz] = useState<DbQuiz | null>(null);
   const [resolvedId, setResolvedId] = useState<string>('');
   const [state, setState] = useState<'loading' | 'error' | 'empty' | 'ready'>('loading');
@@ -286,8 +290,6 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   if (!quiz) return <EditorLoading label="Loading editor…" />;
 
   return (
-    <>
-
     <DashboardShell hideTopbar contentPadding="0">
       <style dangerouslySetInnerHTML={{ __html: SHELL_OVERRIDES }} />
       <div className="dash-editor-shell" style={{ minHeight: 'calc(100vh - 0px)' }}>
@@ -301,23 +303,5 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
         />
       </div>
     </DashboardShell>
-
-    <button
-
-      onClick={handlePublish}
-
-      disabled={publishing}
-
-      style={{position:"fixed",top:16,right:16,zIndex:50,padding:"10px 18px",borderRadius:8,background:"#111",color:"#fff",fontWeight:600,border:"none",cursor:"pointer",opacity:publishing?0.6:1}}
-
-      aria-label="Publish quiz"
-
-    >{publishing?"Publishing...":"Publish"}</button>
-
-    {publishError && <div style={{position:"fixed",top:60,right:16,zIndex:50,background:"#fee",color:"#900",padding:"8px 12px",borderRadius:6,fontSize:13}}>{publishError}</div>}
-
-    <PublishModal open={publishModalOpen} quizTitle={(quiz as any)?.title || "Quiz"} slug={publishedSlug} onClose={()=>setPublishModalOpen(false)} />
-
-    </>
   );
 }
