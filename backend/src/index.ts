@@ -5,7 +5,6 @@ import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
 import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter } from './routes/allRoutes';
 import clerkWebhookRoute from './routes/clerkWebhook';
-import squarespaceRouter from './routes/squarespace';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -94,7 +93,6 @@ app.use('/api/stripe', stripeRouter);
 app.use('/api/clerk', clerkWebhookRoute);
 app.use('/api/quiz', publicQuizRouter);
 app.use('/api/user', userRouter);
-app.use('/auth/squarespace', squarespaceRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/cron', cronRouter);
 app.use('/api/cron', trialReminderRouter);
