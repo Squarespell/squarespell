@@ -406,7 +406,115 @@ export default function EmbedQuizClient({
           transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
         }
         .sq-btn:hover { transform: translateY(-1px); }
-        .sq-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .sq-btn:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+          transform: none;
+          filter: saturate(0.6);
+        }
+        .sq-btn-lead {
+          margin-top: 14px;
+          padding: 15px 22px;
+          font-size: 14px;
+          box-shadow: 0 6px 18px ${brandPrimary}40;
+        }
+        .sq-btn-lead:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 10px 24px ${brandPrimary}55;
+        }
+        .sq-lead { text-align: left; padding: 28px 26px 24px; }
+        .sq-lead-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 6px 12px;
+          background: ${brandPrimary}14;
+          color: ${brandPrimary};
+          border-radius: 100px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin-bottom: 14px;
+        }
+        .sq-lead-title {
+          font-size: 26px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          line-height: 1.18;
+          margin-bottom: 8px;
+        }
+        .sq-lead-sub {
+          font-size: 14px;
+          line-height: 1.55;
+          opacity: 0.66;
+          margin-bottom: 20px;
+        }
+        .sq-lead-preview {
+          position: relative;
+          background: ${brandBg};
+          border: 1px dashed ${brandBorder};
+          border-radius: 14px;
+          padding: 18px 20px;
+          margin-bottom: 22px;
+          overflow: hidden;
+          min-height: 96px;
+        }
+        .sq-lead-preview-title {
+          font-size: 17px;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          margin-bottom: 6px;
+          filter: blur(6px);
+          user-select: none;
+          pointer-events: none;
+        }
+        .sq-lead-preview-desc {
+          font-size: 13px;
+          line-height: 1.55;
+          opacity: 0.7;
+          filter: blur(5px);
+          user-select: none;
+          pointer-events: none;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .sq-lead-preview-cover {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(180deg, ${brandSurface}00 0%, ${brandSurface}cc 45%, ${brandSurface} 100%);
+          color: ${brandPrimary};
+        }
+        .sq-lead-form { display: flex; flex-direction: column; }
+        .sq-lead-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .sq-opt-tag {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          opacity: 0.45;
+          text-transform: none;
+          margin-left: 4px;
+        }
+        .sq-trust {
+          text-align: center;
+          font-size: 11px;
+          opacity: 0.5;
+          margin-top: 10px;
+          letter-spacing: 0.01em;
+        }
+        @container (max-width: 540px) {
+          .sq-lead { padding: 24px 20px 22px; }
+          .sq-lead-title { font-size: 22px; }
+          .sq-lead-grid { grid-template-columns: 1fr; gap: 8px; }
+        }
 
         .sq-result {
           text-align: center;
@@ -506,29 +614,58 @@ export default function EmbedQuizClient({
 
           {stage === 'leadgate' && (
             <div className="sq-card sq-lead">
-              <div className="sq-lead-title">{quiz.leadGate?.headline || 'Your result is ready'}</div>
-              <div className="sq-lead-sub">{quiz.leadGate?.subtext || 'Enter your email to see it'}</div>
-
-              <div className="sq-field">
-                <label>First name <span style={{ opacity: 0.5, fontWeight: 500 }}>(optional)</span></label>
-                <input className="sq-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-              </div>
-              <div className="sq-field">
-                <label>Email</label>
-                <input
-                  className="sq-input"
-                  type="email"
-                  value={email}
-                  placeholder="you@yoursite.com"
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') submitLead(); }}
-                />
-              </div>
-
-              <button className="sq-btn" onClick={submitLead} disabled={submitting || !email.trim()} type="button" style={{ marginTop: 10 }}>
-                {submitting ? 'Loading…' : (quiz.leadGate?.buttonText || 'Show my result')}
-              </button>
-              {leadError && <div className="sq-err">{leadError}</div>}
+              {(() => {
+                const peekOutcome = getOutcome(answers);
+                return (
+                  <>
+                    <div className="sq-lead-badge">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, verticalAlign: '-2px' }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Your result is ready
+                    </div>
+                    <div className="sq-lead-title">
+                      {quiz.leadGate?.headline || (peekOutcome?.title ? `You are a ${peekOutcome.title}` : 'Unlock your personalized result')}
+                    </div>
+                    <div className="sq-lead-sub">
+                      {quiz.leadGate?.subtext || 'Enter your email below to see your full result, recommendations, and next steps.'}
+                    </div>
+                    {peekOutcome && (
+                      <div className="sq-lead-preview" aria-hidden="true">
+                        <div className="sq-lead-preview-title">{peekOutcome.title}</div>
+                        <div className="sq-lead-preview-desc">{peekOutcome.description}</div>
+                        <div className="sq-lead-preview-cover">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                      </div>
+                    )}
+                    <div className="sq-lead-form">
+                      <div className="sq-lead-grid">
+                        <div className="sq-field">
+                          <label>First name <span className="sq-opt-tag">Optional</span></label>
+                          <input className="sq-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" />
+                        </div>
+                        <div className="sq-field">
+                          <label>Email</label>
+                          <input
+                            className="sq-input"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@yoursite.com"
+                            type="email"
+                            autoComplete="email"
+                            onKeyDown={(e) => { if (e.key === 'Enter' && email.trim()) submitLead(); }}
+                          />
+                        </div>
+                      </div>
+                      {leadError && <div className="sq-err">{leadError}</div>}
+                      <button className="sq-btn sq-btn-lead" onClick={submitLead} disabled={submitting || !email.trim()} type="button">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        {submitting ? 'Unlocking...' : (quiz.leadGate?.buttonText || 'Unlock my result')}
+                      </button>
+                      <div className="sq-trust">No spam. Unsubscribe anytime.</div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
