@@ -121,10 +121,19 @@ export type CreateQuizFromUrlInput = {
 
 export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<{ id: string }> {
   const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (typeof window !== "undefined") {
+    const clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
+    if (clerk?.session) {
+      try {
+        const token = await clerk.session.getToken();
+        if (token) headers["Authorization"] = "Bearer " + token;
+      } catch {}
+    }
+  }
   const res = await fetch(`${API}/api/quizzes/from-url`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    headers,
     body: JSON.stringify(input),
   });
   if (!res.ok) {
