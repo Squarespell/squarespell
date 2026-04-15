@@ -62,7 +62,7 @@ export default function EmailsPage() {
         <EmptyState
           title="No campaigns yet"
           body="Create your first campaign to send branded emails to leads."
-          actions={
+          action={
             <Link href="/dashboard/emails/new">
               <PrimaryButton>Create your first campaign</PrimaryButton>
             </Link>
