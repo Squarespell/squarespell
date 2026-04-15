@@ -51,8 +51,8 @@ export default function NewCampaignPage() {
   }
 
   const input: React.CSSProperties = {
-    width: '100%', background: C.surface, border: `1px solid ${C.border}`,
-    color: C.text, padding: 12, borderRadius: 8, fontSize: 14,
+    width: '100%', background: C.SURFACE, border: `1px solid ${C.BORDER}`,
+    color: C.TEXT, padding: 12, borderRadius: 8, fontSize: 14,
   };
 
   return (
@@ -73,7 +73,7 @@ export default function NewCampaignPage() {
             <PrimaryButton onClick={sendNow} disabled={saving || !recipients}>Send now</PrimaryButton>
           </div>
           {result && (
-            <div style={{ color: C.textMuted, fontSize: 14, padding: 12, border: `1px solid ${C.border}`, borderRadius: 8 }}>
+            <div style={{ color: C.TEXT_MUTED, fontSize: 14, padding: 12, border: `1px solid ${C.BORDER}`, borderRadius: 8 }}>
               Sent: {result.sent} · Skipped: {result.skipped}
               {result.skipped > 0 && <span style={{ color: '#fbbf24' }}> (quota reached)</span>}
             </div>

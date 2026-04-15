@@ -49,11 +49,11 @@ export default function EmailsPage() {
       {quota && (
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
-            <span style={{ color: C.textMuted }}>Monthly email usage ({quota.plan})</span>
-            <span style={{ color: C.text }}>{quota.used.toLocaleString()} / {quota.cap.toLocaleString()}</span>
+            <span style={{ color: C.TEXT_MUTED }}>Monthly email usage ({quota.plan})</span>
+            <span style={{ color: C.TEXT }}>{quota.used.toLocaleString()} / {quota.cap.toLocaleString()}</span>
           </div>
-          <div style={{ height: 8, background: C.border, borderRadius: 999, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: C.accent }} />
+          <div style={{ height: 8, background: C.BORDER, borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: C.ACCENT }} />
           </div>
         </Card>
       )}
@@ -72,7 +72,7 @@ export default function EmailsPage() {
         <Card>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ textAlign: 'left', color: C.textMuted, fontSize: 12, textTransform: 'uppercase' }}>
+              <tr style={{ textAlign: 'left', color: C.TEXT_MUTED, fontSize: 12, textTransform: 'uppercase' }}>
                 <th style={{ padding: 12 }}>Name</th>
                 <th style={{ padding: 12 }}>Subject</th>
                 <th style={{ padding: 12 }}>Status</th>
@@ -81,11 +81,11 @@ export default function EmailsPage() {
             </thead>
             <tbody>
               {items.map(c => (
-                <tr key={c.id} style={{ borderTop: `1px solid ${C.border}` }}>
-                  <td style={{ padding: 12, color: C.text }}>{c.name}</td>
-                  <td style={{ padding: 12, color: C.textMuted }}>{c.subject}</td>
+                <tr key={c.id} style={{ borderTop: `1px solid ${C.BORDER}` }}>
+                  <td style={{ padding: 12, color: C.TEXT }}>{c.name}</td>
+                  <td style={{ padding: 12, color: C.TEXT_MUTED }}>{c.subject}</td>
                   <td style={{ padding: 12 }}><Pill>{c.status}</Pill></td>
-                  <td style={{ padding: 12, color: C.textMuted, fontSize: 13 }}>{new Date(c.created_at).toLocaleDateString()}</td>
+                  <td style={{ padding: 12, color: C.TEXT_MUTED, fontSize: 13 }}>{new Date(c.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
