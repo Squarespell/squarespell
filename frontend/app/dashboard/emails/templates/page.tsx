@@ -135,7 +135,7 @@ function PreviewModal({ template, onClose }: { template: EmailTemplate; onClose:
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: C.BG_CARD,
+          background: C.ELEVATED,
           border: '1px solid ' + C.BORDER,
           borderRadius: 14,
           width: '100%',
@@ -158,7 +158,7 @@ function PreviewModal({ template, onClose }: { template: EmailTemplate; onClose:
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Pill variant="accent">{CATEGORY_LABEL[template.category]}</Pill>
-            <div style={{ color: C.TEXT_PRIMARY, fontSize: 15, fontWeight: 600 }}>{template.title}</div>
+            <div style={{ color: C.TEXT, fontSize: 15, fontWeight: 600 }}>{template.title}</div>
           </div>
           <button
             onClick={onClose}
@@ -178,10 +178,10 @@ function PreviewModal({ template, onClose }: { template: EmailTemplate; onClose:
         </div>
         <div style={{ padding: '14px 20px 0', color: C.TEXT_MUTED, fontSize: 13, lineHeight: '18px' }}>
           <div style={{ marginBottom: 4 }}>
-            <span style={{ color: C.TEXT_PRIMARY, fontWeight: 500 }}>Subject:</span> {template.defaultSubject}
+            <span style={{ color: C.TEXT, fontWeight: 500 }}>Subject:</span> {template.defaultSubject}
           </div>
           <div>
-            <span style={{ color: C.TEXT_PRIMARY, fontWeight: 500 }}>Preheader:</span> {template.defaultPreheader}
+            <span style={{ color: C.TEXT, fontWeight: 500 }}>Preheader:</span> {template.defaultPreheader}
           </div>
         </div>
         <div style={{ padding: '14px 20px 20px', flex: 1, minHeight: 0 }}>
@@ -230,7 +230,7 @@ function TemplateCard({ template, onPreview }: { template: EmailTemplate; onPrev
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <Pill variant="accent">{CATEGORY_LABEL[template.category]}</Pill>
       </div>
-      <div style={{ color: C.TEXT_PRIMARY, fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{template.title}</div>
+      <div style={{ color: C.TEXT, fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{template.title}</div>
       <div style={{ color: C.TEXT_MUTED, fontSize: 13, lineHeight: '19px', marginBottom: 10 }}>{template.oneLiner}</div>
       <div
         style={{
@@ -253,7 +253,7 @@ function TemplateCard({ template, onPreview }: { template: EmailTemplate; onPrev
             gap: 6,
             padding: '8px 12px',
             background: 'transparent',
-            color: C.TEXT_PRIMARY,
+            color: C.TEXT,
             border: '1px solid ' + C.BORDER,
             borderRadius: 8,
             cursor: 'pointer',
@@ -311,7 +311,7 @@ export default function EmailTemplatesPage() {
                 borderRadius: 999,
                 border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
                 background: active ? 'rgba(210,255,29,0.1)' : 'transparent',
-                color: active ? C.ACCENT : C.TEXT_PRIMARY,
+                color: active ? C.ACCENT : C.TEXT,
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
