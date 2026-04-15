@@ -400,8 +400,21 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
 // ── Public Quiz ───────────────────────────────────────────────────────────────
 export const publicQuizRouter = Router();
 publicQuizRouter.get('/:slug', async (req, res) => {
-  const { data, error } = await supabase.from('quizzes').select('id,title,questions,outcomes,branding,settings').eq('slug', req.params.slug).eq('status', 'live').single();
-  if (error || !data) return res.status(404).json({ error: 'Quiz not found' });
+  const key = req.params.slug;
+  // Try slug first
+  let { data } = await supabase
+    .from('quizzes')
+    .select('id,title,questions,outcomes,branding,settings')
+    .eq('slug', key).eq('status', 'live').maybeSingle();
+  // Fallback: treat the param as a quiz id (covers id-based shared links)
+  if (!data) {
+    const r = await supabase
+      .from('quizzes')
+      .select('id,title,questions,outcomes,branding,settings')
+      .eq('id', key).eq('status', 'live').maybeSingle();
+    data = r.data;
+  }
+  if (!data) return res.status(404).json({ error: 'Quiz not found' });
   res.json(data);
 });
 publicQuizRouter.post('/:slug/event', async (req, res) => {

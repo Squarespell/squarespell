@@ -1,13 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { makeUniqueSlug } from '../../../utils/slug';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function makeSlug() {
-  return Math.random().toString(36).slice(2, 10);
-}
 
 interface CreateQuizRequest {
   title: string;
@@ -50,7 +48,7 @@ export async function perform(z: any, bundle: any): Promise<CreateQuizResponse> 
       .insert({
         user_id: userId,
         title: title.trim(),
-        slug: makeSlug(),
+        slug: await makeUniqueSlug(title.trim()),
         mode: quizMode,
         description: description || '',
         questions: [],

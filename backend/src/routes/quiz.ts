@@ -7,6 +7,7 @@ import * as abTesting from '../services/abTesting';
 import { generateQuizReport } from '../services/pdfReport';
 import { generateReportToken, verifyReportToken } from '../services/reportToken';
 import * as teamService from '../services/teamService';
+import { makeUniqueSlug, isLegacyRandomSlug } from '../utils/slug';
 
 interface EmailInSequence {
   delay_days: number;
@@ -21,7 +22,6 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function makeSlug() { return Math.random().toString(36).slice(2, 10); }
 const router = Router();
 router.use(requireAuth, attachUser);
 
@@ -34,7 +34,7 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
 router.post('/', guardQuizCreation, async (req: AuthenticatedRequest, res) => {
   const { title, questions, outcomes, branding, settings, mode } = req.body;
   const quizMode = mode && ['lead_quiz', 'price_calculator', 'service_recommender', 'client_qualifier', 'segmentation_quiz'].includes(mode) ? mode : 'lead_quiz';
-  const { data, error } = await supabase.from('quizzes').insert({ user_id: req.dbUserId, title: title ?? 'Untitled Quiz', slug: makeSlug(), mode: quizMode, questions: questions ?? [], outcomes: outcomes ?? [], branding: branding ?? {}, settings: settings ?? {}, status: 'draft' }).select().single();
+  const { data, error } = await supabase.from('quizzes').insert({ user_id: req.dbUserId, title: title ?? 'Untitled Quiz', slug: await makeUniqueSlug(title ?? 'Untitled Quiz'), mode: quizMode, questions: questions ?? [], outcomes: outcomes ?? [], branding: branding ?? {}, settings: settings ?? {}, status: 'draft' }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   await supabase.rpc('increment_quiz_count', { uid: req.dbUserId });
   res.status(201).json(data);
@@ -104,7 +104,16 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
 });
 
 router.post('/:id/publish', async (req: AuthenticatedRequest, res) => {
-  const { data, error } = await supabase.from('quizzes').update({ status: 'live' }).eq('id', req.params.id).eq('user_id', req.dbUserId).select().single();
+  // If the slug is still the legacy 8-char random, regenerate from title
+  // so the published URL is human-readable.
+  const { data: existing } = await supabase
+    .from('quizzes').select('slug,title')
+    .eq('id', req.params.id).eq('user_id', req.dbUserId).single();
+  const updates: any = { status: 'live' };
+  if (existing && isLegacyRandomSlug(existing.slug)) {
+    updates.slug = await makeUniqueSlug(existing.title || 'quiz', req.params.id);
+  }
+  const { data, error } = await supabase.from('quizzes').update(updates).eq('id', req.params.id).eq('user_id', req.dbUserId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
