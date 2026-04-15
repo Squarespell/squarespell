@@ -31,7 +31,7 @@ export function ReviewStep({
   const sendTest = async () => {
     if (!testEmail) return;
     setTestSending(true); setTestStatus(null);
-    try { await onTestSend(testEmail); setTestStatus('Sent ✓'); }
+    try { await onTestSend(testEmail); setTestStatus('Sent'); }
     catch (e: any) { setTestStatus('Failed: ' + e.message); }
     finally { setTestSending(false); }
   };
@@ -45,8 +45,8 @@ export function ReviewStep({
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 22 }}>
         <Stat label="Recipients" value={String(recipientCount)} />
-        <Stat label="Subject" value={design.subject || '—'} truncate />
-        <Stat label="From" value={`${design.fromName || '—'} <${design.fromEmail || '—'}>`} truncate />
+        <Stat label="Subject" value={design.subject || 'None'} truncate />
+        <Stat label="From" value={`${design.fromName || 'None'} <${design.fromEmail || 'None'}>`} truncate />
         <Stat label="Source" value={audience.sourceKind === 'quiz' ? 'Quiz leads' : 'Manual list'} />
       </div>
 
@@ -85,7 +85,7 @@ export function ReviewStep({
 
       {result && (
         <div style={{ marginTop: 18, padding: 14, background: C.ELEVATED, border: `1px solid ${C.BORDER}`, borderRadius: 10, color: C.TEXT, fontSize: 13 }}>
-          ✓ Queued {result.sent} sends, resolved {result.resolved}, skipped {result.skipped}.
+          Queued {result.sent} sends, resolved {result.resolved}, skipped {result.skipped}.
         </div>
       )}
 
