@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router } from 'express';import { requireAuth, attachUser } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import { resendProvider } from '../services/email/resendProvider';
 import { emailQuota } from '../middleware/emailQuota';
 import { limitFor } from '../services/email/limits';
 
-const r = Router();
+const r = Router();r.use(requireAuth, attachUser);
 
 // Shared: resolve lead emails for a tenant from a quiz source + filters
 async function resolveRecipients(
