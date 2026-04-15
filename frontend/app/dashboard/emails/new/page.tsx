@@ -1,9 +1,9 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DashboardShell, PageHeader } from '../../_components/PageShell';
-import { useDashboardAuth } from '../../_lib/auth';
-import { DASHBOARD_COLORS as C } from '../../_theme/colors';
+import { DashboardShell } from '../../_components/DashboardShell';import { PageHeader } from '../../_components/PageShell';
+import { useDashboardAuth } from '../../_components/useDashboardAuth';
+import { DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 import {
   createCampaign, sendCampaign, previewRecipients, testSendCampaign,
   CampaignMode,

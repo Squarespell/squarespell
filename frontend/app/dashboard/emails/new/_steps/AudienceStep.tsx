@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { DASHBOARD_COLORS as C } from '../../../_theme/colors';
-import { GhostButton, AccentButton } from '../../../_components/PageShell';
+import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
+import { GhostButton, PrimaryButton } from '../../../_components/PageShell';
 import {
   listSourceQuizzes, listOutcomesForQuiz, previewRecipients,
   SourceQuiz, SourceFilters,
@@ -147,7 +147,7 @@ export function AudienceStep({
             {state.sourceKind === 'quiz' ? 'Live preview from your quiz leads' : 'Parsed from your list'}
           </div>
         </div>
-        <AccentButton onClick={onNext} disabled={!ready}>Continue →</AccentButton>
+        <PrimaryButton onClick={onNext} disabled={!ready}>Continue →</PrimaryButton>
       </div>
     </div>
   );

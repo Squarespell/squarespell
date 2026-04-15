@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import { DASHBOARD_COLORS as C } from '../../../_theme/colors';
-import { GhostButton, AccentButton } from '../../../_components/PageShell';
+import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
+import { GhostButton, PrimaryButton } from '../../../_components/PageShell';
 import type { AudienceState } from './AudienceStep';
 import type { DesignState } from './DesignStep';
 import type { CampaignMode } from '../../../../../lib/emails';
@@ -77,9 +77,9 @@ export function ReviewStep({
         <GhostButton onClick={onBack}>← Back</GhostButton>
         <div style={{ display: 'flex', gap: 10 }}>
           <GhostButton onClick={onSaveDraft}>Save draft</GhostButton>
-          <AccentButton onClick={() => setConfirmOpen(true)} disabled={sending || recipientCount === 0}>
+          <PrimaryButton onClick={() => setConfirmOpen(true)} disabled={sending || recipientCount === 0}>
             {mode === 'live' ? 'Activate live send' : `Send to ${recipientCount}`}
-          </AccentButton>
+          </PrimaryButton>
         </div>
       </div>
 
@@ -102,9 +102,9 @@ export function ReviewStep({
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <GhostButton onClick={() => setConfirmOpen(false)}>Cancel</GhostButton>
-              <AccentButton onClick={() => { setConfirmOpen(false); onSend(); }} disabled={sending}>
+              <PrimaryButton onClick={() => { setConfirmOpen(false); onSend(); }} disabled={sending}>
                 {sending ? 'Sending…' : mode === 'live' ? 'Activate' : 'Send now'}
-              </AccentButton>
+              </PrimaryButton>
             </div>
           </div>
         </div>

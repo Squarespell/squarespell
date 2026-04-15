@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import { DASHBOARD_COLORS as C } from '../../../_theme/colors';
-import { GhostButton, AccentButton } from '../../../_components/PageShell';
+import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
+import { GhostButton, PrimaryButton } from '../../../_components/PageShell';
 import { EMAIL_TEMPLATES, EmailTemplate } from './templates';
 
 export type DesignState = {
@@ -117,9 +117,9 @@ export function DesignStep({
 
       <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
         <GhostButton onClick={onBack}>← Back</GhostButton>
-        <AccentButton onClick={onNext} disabled={!state.subject || !state.html || !state.fromEmail}>
+        <PrimaryButton onClick={onNext} disabled={!state.subject || !state.html || !state.fromEmail}>
           Continue to review →
-        </AccentButton>
+        </PrimaryButton>
       </div>
     </div>
   );

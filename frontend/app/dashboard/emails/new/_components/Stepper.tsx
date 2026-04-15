@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { DASHBOARD_COLORS as C } from '../../../_theme/colors';
+import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 
 export type StepKey = 'audience' | 'design' | 'review';
 
