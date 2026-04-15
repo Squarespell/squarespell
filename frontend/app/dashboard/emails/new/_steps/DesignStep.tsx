@@ -95,7 +95,9 @@ export function DesignStep({
                 background: view === v ? C.ACCENT : 'transparent',
                 color: view === v ? '#0a0a0a' : C.TEXT_MUTED,
                 border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              }}>{v === 'desktop' ? '🖥 Desktop' : '📱 Mobile'}</button>
+              }}>{v === 'desktop'
+                  ? <><svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{marginRight:5,verticalAlign:'middle'}}><rect x='2' y='3' width='20' height='14' rx='2'/><line x1='8' y1='21' x2='16' y2='21'/><line x1='12' y1='17' x2='12' y2='21'/></svg>Desktop</>
+                  : <><svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{marginRight:5,verticalAlign:'middle'}}><rect x='5' y='2' width='14' height='20' rx='2'/><line x1='12' y1='18' x2='12.01' y2='18'/></svg>Mobile</> }</button>
             ))}
           </div>
         </div>
