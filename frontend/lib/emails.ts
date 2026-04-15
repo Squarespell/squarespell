@@ -77,3 +77,7 @@ export async function previewRecipients(quizId: string, filters: SourceFilters =
   const qs = new URLSearchParams({ quiz_id: quizId, filters: JSON.stringify(filters) });
   return req<{ count: number; emails: string[] }>(`/api/emails/recipients/preview?${qs}`);
 }
+
+export async function testSendCampaign(id: string, to: string) {
+  return req(`/api/emails/campaigns/${id}/test-send`, { method: 'POST', body: JSON.stringify({ to }) });
+}

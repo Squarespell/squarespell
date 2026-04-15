@@ -169,6 +169,26 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
   });
 });
 
+
+r.post('/campaigns/:id/test-send', async (req, res) => {
+  const tenantId = req.dbUserId;
+  const to = (req.body?.to || '').trim();
+  if (!to) return res.status(400).json({ error: 'missing_to' });
+  const { data: c } = await supabase.from('email_campaigns').select('*')
+    .eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!c) return res.status(404).json({ error: 'not_found' });
+  try {
+    const { messageId } = await resendProvider.send({
+      to, from: c.from_email, fromName: c.from_name,
+      subject: '[TEST] ' + c.subject, html: c.html,
+      tags: [{ name: 'campaign', value: c.id }, { name: 'test', value: '1' }],
+    });
+    res.json({ ok: true, messageId });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 r.post('/webhooks/resend', async (req, res) => {
   const e = req.body;
   const sendId = e?.data?.headers?.['X-Send-Id'];
