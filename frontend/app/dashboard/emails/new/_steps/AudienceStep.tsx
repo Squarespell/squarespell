@@ -56,7 +56,7 @@ export function AudienceStep({
 
   const parsedManual = useMemo(() => {
     const hits = (state.manualRecipients.match(EMAIL_RE) || []).map(s => s.toLowerCase());
-    return [...new Set(hits)];
+    return Array.from(new Set(hits));
   }, [state.manualRecipients]);
 
   const ready = state.sourceKind === 'quiz' ? !!count && count > 0 : parsedManual.length > 0;
@@ -72,7 +72,7 @@ export function AudienceStep({
     try {
       const text = await file.text();
       const emails = (text.match(EMAIL_RE) || []).map(s => s.toLowerCase());
-      const unique = [...new Set(emails)];
+      const unique = Array.from(new Set(emails));
       if (unique.length === 0) { setUploadError('No valid email addresses found'); return; }
       setState({ manualRecipients: unique.join('\n') });
       setUploadName(`${file.name} — ${unique.length} emails`);
