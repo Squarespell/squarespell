@@ -319,4 +319,4 @@ const MiniLabel = ({ children }: any) => (
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', background: C.SURFACE,
   border: `1px solid ${C.BORDER}`, borderRadius: 10, color: C.TEXT, fontSize: 13, boxSizing: 'border-box',
-}=
+};
