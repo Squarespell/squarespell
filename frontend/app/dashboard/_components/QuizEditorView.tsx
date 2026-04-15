@@ -187,6 +187,15 @@ export interface QuizEditorViewProps {
 
 export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   const { getToken } = useAuth();
+
+  // Wire Clerk token into the shared api client BEFORE any request fires.
+  // Fixes editor Unauthorized: window.Clerk fallback races with hydration.
+  useEffect(() => {
+    api.setAuthToken(async () => {
+      try { return (await getToken({ skipCache: true })) || ''; } catch { return ''; }
+    });
+  }, [getToken]);
+
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState<string>("");
   const [publishing, setPublishing] = useState(false);
