@@ -47,7 +47,7 @@ r.get('/recipients/preview', async (req, res) => {
     const { quiz_id } = req.query as { quiz_id?: string };
     if (!quiz_id) return res.json({ count: 0, emails: [] });
     const filters = req.query.filters ? JSON.parse(String(req.query.filters)) : {};
-    const emails = await resolveRecipients(tenantId, quiz_id, filters);
+    const emails = await resolveRecipients(tenantId!, quiz_id, filters);
     res.json({ count: emails.length, emails: emails.slice(0, 5) });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -116,7 +116,7 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
   let recipients: string[] = Array.isArray(body.recipients) ? body.recipients : [];
   if (recipients.length === 0 && c.source_quiz_id) {
     try {
-      recipients = await resolveRecipients(tenantId, c.source_quiz_id, c.source_filters || {});
+      recipients = await resolveRecipients(tenantId!, c.source_quiz_id, c.source_filters || {});
     } catch (e: any) {
       return res.status(500).json({ error: 'resolve_failed: ' + e.message });
     }
