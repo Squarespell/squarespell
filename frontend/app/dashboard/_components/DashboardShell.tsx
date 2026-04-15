@@ -200,6 +200,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
       { href: '/dashboard/quizzes', label: 'Quizzes', icon: icons.quizzes, match: isQuizzesRoute },
       { href: '/dashboard/leads', label: 'Leads', icon: icons.leads },
+      { href: '/dashboard/emails', label: 'Emails', icon: icons.leads },
       {
         href: '/dashboard/analytics',
         label: 'Analytics',
