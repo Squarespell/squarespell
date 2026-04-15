@@ -19,7 +19,7 @@ export default function NewCampaignPage() {
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  if (authStatus !== 'authenticated') return <DashboardShell><PageLoading /></DashboardShell>;
+  if (authStatus !== 'ready') return <DashboardShell><PageLoading /></DashboardShell>;
 
   async function create() {
     const r = await fetch(`${API}/api/emails/campaigns`, {

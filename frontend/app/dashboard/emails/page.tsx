@@ -28,7 +28,7 @@ export default function EmailsPage() {
     ]).then(([c, q]) => { setItems(c || []); setQuota(q); }).finally(() => setLoading(false));
   }, [token]);
 
-  if (authStatus !== 'authenticated' || loading) {
+  if (authStatus !== 'ready' || loading) {
     return <DashboardShell><PageLoading /></DashboardShell>;
   }
 
