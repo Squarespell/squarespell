@@ -155,6 +155,7 @@ const OTHER_SECTION_PREFIXES = [
   '/dashboard/quizzes',
   '/dashboard/editor',
   '/dashboard/leads',
+  '/dashboard/emails',
   '/dashboard/analytics',
   '/dashboard/integrations',
   '/dashboard/embed',
