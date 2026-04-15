@@ -129,7 +129,7 @@ export function AudienceStep({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                   <div>
                     <MiniLabel>Result</MiniLabel>
-                    <select value={state.filters.outcome_id || ''}
+  2                 <select value={state.filters.outcome_id || ''}
                       onChange={e => setState({ filters: { ...state.filters, outcome_id: e.target.value || undefined } })}
                       style={inputStyle}>
                       <option value="">Any result</option>
@@ -145,14 +145,14 @@ export function AudienceStep({
                   <div>
                     <MiniLabel>Max score</MiniLabel>
                     <input type="number" value={state.filters.max_score ?? ''}
-  4                   onChange={e => setState({ filters: { ...state.filters, max_score: e.target.value ? Number(e.target.value) : undefined } })}
+                      onChange={e => setState({ filters: { ...state.filters, max_score: e.target.value ? Number(e.target.value) : undefined } })}
                       style={inputStyle} />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
                   <div>
                     <MiniLabel>From date</MiniLabel>
-                    <input typ%="date" value={state.filters.since || ''}
+                    <input type="date" value={state.filters.since || ''}
                       onChange={e => setState({ filters: { ...state.filters, since: e.target.value || undefined } })}
                       style={inputStyle} />
                   </div>
