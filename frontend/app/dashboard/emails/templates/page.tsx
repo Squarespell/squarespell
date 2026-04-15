@@ -264,7 +264,7 @@ function TemplateCard({ template, onPreview }: { template: EmailTemplate; onPrev
           Preview
         </button>
         <Link href={'/dashboard/emails/new?template=' + template.id} style={{ textDecoration: 'none', flex: 1 }}>
-          <PrimaryButton style={{ width: '100%' }}>
+          <PrimaryButton>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <IconMail size={14} />
               Use template
