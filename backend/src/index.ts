@@ -5,6 +5,7 @@ import cors from 'cors';
 import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
 import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter } from './routes/allRoutes';
+import emailsRouter from './routes/emails';
 import clerkWebhookRoute from './routes/clerkWebhook';
 
 const app = express();
@@ -98,6 +99,7 @@ app.use('/api/user', userRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/cron', cronRouter);
 app.use('/api/cron', trialReminderRouter);
+app.use('/api/emails', emailsRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
