@@ -1,59 +1,85 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createCampaign, sendCampaign } from '@/lib/emails';
+import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
+import { useDashboardAuth } from '../../_components/useDashboardAuth';
+import { PageHeader, Card, PrimaryButton, GhostButton, PageLoading } from '../../_components/PageShell';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 export default function NewCampaignPage() {
-  const r = useRouter();
-  const [name,setName]=useState('');
-  const [subject,setSubject]=useState('');
-  const [fromName,setFromName]=useState('');
-  const [fromEmail,setFromEmail]=useState('');
-  const [html,setHtml]=useState('<p>Hi {{firstName}},</p><p>Thanks for taking the quiz.</p>');
-  const [recipients,setRecipients]=useState('');
-  const [saving,setSaving]=useState(false);
-  const [result,setResult]=useState<any>(null);
+  const router = useRouter();
+  const { token, status: authStatus } = useDashboardAuth();
+  const [name, setName] = useState('');
+  const [subject, setSubject] = useState('');
+  const [fromName, setFromName] = useState('');
+  const [fromEmail, setFromEmail] = useState('');
+  const [html, setHtml] = useState('<p>Hi {{firstName}},</p><p>Thanks for taking the quiz.</p>');
+  const [recipients, setRecipients] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  if (authStatus !== 'authenticated') return <DashboardShell><PageLoading /></DashboardShell>;
+
+  async function create() {
+    const r = await fetch(`${API}/api/emails/campaigns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ name, subject, from_name: fromName, from_email: fromEmail, html }),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  }
 
   async function saveDraft() {
     setSaving(true);
-    try {
-      await createCampaign({ name, subject, from_name: fromName, from_email: fromEmail, html } as any);
-      r.push(`/dashboard/emails`);
-    } finally { setSaving(false); }
+    try { await create(); router.push('/dashboard/emails'); } finally { setSaving(false); }
   }
+
   async function sendNow() {
     setSaving(true);
     try {
-      const c = await createCampaign({ name, subject, from_name: fromName, from_email: fromEmail, html } as any);
-      const list = recipients.split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
-      const res = await sendCampaign(c.id, list);
-      setResult(res);
+      const c = await create();
+      const list = recipients.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+      const res = await fetch(`${API}/api/emails/campaigns/${c.id}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ recipients: list }),
+      });
+      setResult(await res.json());
     } finally { setSaving(false); }
   }
 
+  const input: React.CSSProperties = {
+    width: '100%', background: C.surface, border: `1px solid ${C.border}`,
+    color: C.text, padding: 12, borderRadius: 8, fontSize: 14,
+  };
+
   return (
-    <div className="p-8 max-w-3xl">
-      <h1 className="text-2xl font-bold mb-4">New campaign</h1>
-      <div className="space-y-4">
-        <input className="w-full bg-gray-900 rounded p-3" placeholder="Internal name" value={name} onChange={e=>setName(e.target.value)} />
-        <input className="w-full bg-gray-900 rounded p-3" placeholder="Subject line" value={subject} onChange={e=>setSubject(e.target.value)} />
-        <div className="grid grid-cols-2 gap-3">
-          <input className="bg-gray-900 rounded p-3" placeholder="From name" value={fromName} onChange={e=>setFromName(e.target.value)} />
-          <input className="bg-gray-900 rounded p-3" placeholder="From email (verified domain)" value={fromEmail} onChange={e=>setFromEmail(e.target.value)} />
-        </div>
-        <textarea className="w-full bg-gray-900 rounded p-3 h-48 font-mono text-sm" value={html} onChange={e=>setHtml(e.target.value)} />
-        <textarea className="w-full bg-gray-900 rounded p-3 h-24" placeholder="Recipient emails (comma or newline separated)" value={recipients} onChange={e=>setRecipients(e.target.value)} />
-        <div className="flex gap-3">
-          <button disabled={saving} onClick={saveDraft} className="px-4 py-2 rounded-full border border-gray-700">Save draft</button>
-          <button disabled={saving||!recipients} onClick={sendNow} className="px-4 py-2 rounded-full bg-lime-300 text-black font-semibold">Send now</button>
-        </div>
-        {result && (
-          <div className="rounded border border-gray-700 p-4 text-sm">
-            Sent: {result.sent} · Skipped: {result.skipped}
-            {result.skipped > 0 && <span className="text-yellow-400"> (quota reached)</span>}
+    <DashboardShell>
+      <PageHeader title="New campaign" subtitle="Draft, save, or send a branded email now." />
+      <Card>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <input style={input} placeholder="Internal name" value={name} onChange={e => setName(e.target.value)} />
+          <input style={input} placeholder="Subject line" value={subject} onChange={e => setSubject(e.target.value)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <input style={input} placeholder="From name" value={fromName} onChange={e => setFromName(e.target.value)} />
+            <input style={input} placeholder="From email (verified Resend domain)" value={fromEmail} onChange={e => setFromEmail(e.target.value)} />
           </div>
-        )}
-      </div>
-    </div>
+          <textarea style={{ ...input, minHeight: 180, fontFamily: 'monospace' }} value={html} onChange={e => setHtml(e.target.value)} />
+          <textarea style={{ ...input, minHeight: 80 }} placeholder="Recipient emails (comma or newline separated)" value={recipients} onChange={e => setRecipients(e.target.value)} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <GhostButton onClick={saveDraft} disabled={saving}>Save draft</GhostButton>
+            <PrimaryButton onClick={sendNow} disabled={saving || !recipients}>Send now</PrimaryButton>
+          </div>
+          {result && (
+            <div style={{ color: C.textMuted, fontSize: 14, padding: 12, border: `1px solid ${C.border}`, borderRadius: 8 }}>
+              Sent: {result.sent} · Skipped: {result.skipped}
+              {result.skipped > 0 && <span style={{ color: '#fbbf24' }}> (quota reached)</span>}
+            </div>
+          )}
+        </div>
+      </Card>
+    </DashboardShell>
   );
 }
