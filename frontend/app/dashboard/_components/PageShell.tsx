@@ -244,11 +244,13 @@ export function GhostButton({
   onClick,
   href,
   target,
+  disabled,
 }: {
   children: ReactNode;
   onClick?: () => void;
   href?: string;
   target?: string;
+  disabled?: boolean;
 }) {
   const style: React.CSSProperties = {
     display: 'inline-flex',
@@ -285,7 +287,7 @@ export function GhostButton({
     );
   }
   return (
-    <button type="button" onClick={onClick} style={style} onMouseEnter={hover} onMouseLeave={leave}>
+    <button type="button" onClick={onClick} disabled={disabled} style={{ ...style, opacity: disabled ? 0.5 : 1, cursor: disabled ? 'default' : 'pointer' }} onMouseEnter={disabled ? undefined : hover} onMouseLeave={disabled ? undefined : leave}>
       {children}
     </button>
   );
