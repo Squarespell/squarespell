@@ -1,8 +1,7 @@
 'use client';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
-import { GhostButton, PrimaryButton } from '../../../_components/PageShell';
+import { PrimaryButton } from '../../../_components/PageShell';
 import {
   listSourceQuizzes, listOutcomesForQuiz, previewRecipients,
   SourceQuiz, SourceFilters,
@@ -25,6 +24,7 @@ export function AudienceStep({
   onNext: () => void;
 }) {
   const [quizzes, setQuizzes] = useState<SourceQuiz[] | null>(null);
+  const [quizError, setQuizError] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>([]);
   const [count, setCount] = useState<number | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -35,7 +35,9 @@ export function AudienceStep({
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    listSourceQuizzes().then(setQuizzes).catch(() => setQuizzes([]));
+    listSourceQuizzes()
+      .then(qs => { setQuizzes(qs); setQuizError(null); })
+      .catch(err => { setQuizzes([]); setQuizError(err?.message || 'Could not load quizzes'); });
   }, []);
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export function AudienceStep({
       const unique = Array.from(new Set(emails));
       if (unique.length === 0) { setUploadError('No valid email addresses found'); return; }
       setState({ manualRecipients: unique.join('\n') });
-      setUploadName(`${file.name} — ${unique.length} emails`);
+      setUploadName(`${file.name} · ${unique.length} emails`);
     } catch (e: any) { setUploadError('Could not read file: ' + e.message); }
   };
 
@@ -83,28 +85,28 @@ export function AudienceStep({
     <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 28 }}>
       <h2 style={{ margin: '0 0 6px', fontSize: 22, color: C.TEXT }}>Who gets this email?</h2>
       <p style={{ margin: '0 0 24px', color: C.TEXT_SUBTLE, fontSize: 14 }}>
-        Send to quiz leads (filtered how you want) — or upload a CSV of email addresses.
+        Send to quiz leads with optional filters, or upload a list of email addresses.
       </p>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
         <SourceChip active={state.sourceKind === 'quiz'} onClick={() => setState({ sourceKind: 'quiz' })}
-          icon="🎯" title="Leads from a quiz" sub="Everyone who finished, optionally filtered" />
+          icon={<IconUsers />} title="Leads from a quiz" sub="Everyone who finished, with optional filters" />
         <SourceChip active={state.sourceKind === 'manual'} onClick={() => setState({ sourceKind: 'manual' })}
-          icon="📎" title="Upload a list" sub="Drop a CSV, Excel, or text file of emails" />
+          icon={<IconUpload />} title="Upload a list" sub="Drop a CSV, Excel, or text file" />
       </div>
 
       {state.sourceKind === 'quiz' ? (
         quizzes === null ? (
-          <div style={{ padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>Loading your quizzes…</div>
+          <div style={{ padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>Loading your quizzes&hellip;</div>
         ) : quizzes.length === 0 ? (
-          <EmptyQuizzesCard />
+          <EmptyQuizzesCard error={quizError} />
         ) : (
           <>
             {quizzes.length > 5 && (
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder={`Search ${quizzes.length} quizzes…`}
+                placeholder={`Search ${quizzes.length} quizzes`}
                 style={{ ...inputStyle, marginBottom: 12 }}
               />
             )}
@@ -116,7 +118,7 @@ export function AudienceStep({
               ))}
               {filteredQuizzes.length === 0 && (
                 <div style={{ color: C.TEXT_MUTED, fontSize: 13, padding: 20, textAlign: 'center', gridColumn: '1 / -1' }}>
-                  No quizzes match "{search}"
+                  No quizzes match &ldquo;{search}&rdquo;
                 </div>
               )}
             </div>
@@ -143,14 +145,14 @@ export function AudienceStep({
                   <div>
                     <MiniLabel>Max score</MiniLabel>
                     <input type="number" value={state.filters.max_score ?? ''}
-                      onChange={e => setState({ filters: { ...state.filters, max_score: e.target.value ? Number(e.target.value) : undefined } })}
+  4                   onChange={e => setState({ filters: { ...state.filters, max_score: e.target.value ? Number(e.target.value) : undefined } })}
                       style={inputStyle} />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
                   <div>
                     <MiniLabel>From date</MiniLabel>
-                    <input type="date" value={state.filters.since || ''}
+                    <input typ%="date" value={state.filters.since || ''}
                       onChange={e => setState({ filters: { ...state.filters, since: e.target.value || undefined } })}
                       style={inputStyle} />
                   </div>
@@ -182,7 +184,7 @@ export function AudienceStep({
               marginBottom: 16, transition: 'all 0.15s',
             }}
           >
-            <div style={{ fontSize: 28, marginBottom: 8 }}>📎</div>
+            <div style={{ marginBottom: 10, color: C.ACCENT, display: 'flex', justifyContent: 'center' }}><IconFile size={28} /></div>
             <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
               {uploadName || 'Drop a CSV, Excel, or TXT file here'}
             </div>
@@ -230,7 +232,7 @@ export function AudienceStep({
       }}>
         <div>
           <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 18 }}>
-            {previewLoading ? 'Counting…' : `${displayCount.toLocaleString()} recipient${displayCount === 1 ? '' : 's'}`}
+            {previewLoading ? 'Counting\u2026' : `${displayCount.toLocaleString()} recipient${displayCount === 1 ? '' : 's'}`}
           </div>
           <div style={{ color: C.TEXT_SUBTLE, fontSize: 12, marginTop: 2 }}>
             {state.sourceKind === 'quiz'
@@ -238,7 +240,7 @@ export function AudienceStep({
               : (parsedManual.length > 0 ? 'Parsed and deduped from your list' : 'Upload a file or paste addresses')}
           </div>
         </div>
-        <PrimaryButton onClick={onNext} disabled={!ready}>Continue →</PrimaryButton>
+        <PrimaryButton onClick={onNext} disabled={!ready}>Continue</PrimaryButton>
       </div>
     </div>
   );
@@ -268,32 +270,29 @@ function QuizCard({ quiz, active, onClick }: { quiz: SourceQuiz; active: boolean
             /{quiz.slug}
           </div>
         </div>
-        {active && <div style={{ color: C.ACCENT, fontSize: 16, fontWeight: 700 }}>✓</div>}
+        {active && <div style={{ color: C.ACCENT }}><IconCheck size={16} /></div>}
       </div>
     </button>
   );
 }
 
-function EmptyQuizzesCard() {
+function EmptyQuizzesCard({ error }: { error?: string | null }) {
   return (
     <div style={{
-      padding: '36px 24px', textAlign: 'center',
+      padding: '28px 24px', textAlign: 'center',
       background: C.ELEVATED, border: `1px dashed ${C.BORDER}`, borderRadius: 12,
     }}>
-      <div style={{ fontSize: 32, marginBottom: 10 }}>🎯</div>
-      <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 16, marginBottom: 6 }}>No quizzes yet</div>
-      <div style={{ color: C.TEXT_SUBTLE, fontSize: 13, marginBottom: 18 }}>
-        You need a published quiz collecting leads before you can email them.
+      <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 15, marginBottom: 6 }}>No quizzes found</div>
+      <div style={{ color: C.TEXT_SUBTLE, fontSize: 13 }}>
+        {error
+          ? 'We could not reach the server. Try refreshing, or switch to upload a list.'
+          : 'Either you have not published a quiz yet, or none of your quizzes have collected leads. Switch to Upload a list above to send to a CSV instead.'}
       </div>
-      <Link href="/dashboard/quizzes/new" style={{
-        display: 'inline-block', background: C.ACCENT, color: '#0a0a0a',
-        padding: '10px 20px', borderRadius: 10, fontWeight: 600, fontSize: 13, textDecoration: 'none',
-      }}>Create a quiz →</Link>
     </div>
   );
 }
 
-function SourceChip({ active, onClick, title, sub, icon }: { active: boolean; onClick: () => void; title: string; sub: string; icon: string }) {
+function SourceChip({ active, onClick, title, sub, icon }: { active: boolean; onClick: () => void; title: string; sub: string; icon: React.ReactNode }) {
   return (
     <button onClick={onClick} style={{
       flex: 1, textAlign: 'left', display: 'flex', gap: 12, alignItems: 'start',
@@ -301,12 +300,55 @@ function SourceChip({ active, onClick, title, sub, icon }: { active: boolean; on
       border: `1px solid ${active ? C.ACCENT : C.BORDER}`,
       borderRadius: 12, padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s',
     }}>
-      <div style={{ fontSize: 20 }}>{icon}</div>
+      <div style={{
+        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+        background: active ? C.ACCENT : 'rgba(210,255,29,0.10)',
+        color: active ? '#0a0a0a' : C.ACCENT,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>{icon}</div>
       <div>
         <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 14 }}>{title}</div>
         <div style={{ color: C.TEXT_SUBTLE, fontSize: 12, marginTop: 4 }}>{sub}</div>
       </div>
     </button>
+  );
+}
+
+function IconUsers({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+function IconUpload({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  );
+}
+function IconFile({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+}
+function IconCheck({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
   );
 }
 
