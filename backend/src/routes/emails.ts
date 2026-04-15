@@ -32,7 +32,7 @@ async function resolveRecipients(
 }
 
 r.get('/quota', async (req, res) => {
-  const tenantId = (req as any).auth?.userId;
+  const tenantId = req.dbUserId;
   const plan = (req as any).auth?.plan || 'starter';
   const ps = new Date(); ps.setDate(1);
   const { data } = await supabase.from('email_quota_usage')
@@ -43,7 +43,7 @@ r.get('/quota', async (req, res) => {
 // Live recipient count preview for the compose UI
 r.get('/recipients/preview', async (req, res) => {
   try {
-    const tenantId = (req as any).auth?.userId;
+    const tenantId = req.dbUserId;
     const { quiz_id } = req.query as { quiz_id?: string };
     if (!quiz_id) return res.json({ count: 0, emails: [] });
     const filters = req.query.filters ? JSON.parse(String(req.query.filters)) : {};
@@ -56,7 +56,7 @@ r.get('/recipients/preview', async (req, res) => {
 
 // Quizzes dropdown for the source picker
 r.get('/source-quizzes', async (req, res) => {
-  const tenantId = (req as any).auth?.userId;
+  const tenantId = req.dbUserId;
   const { data, error } = await supabase.from('quizzes')
     .select('id, title, slug')
     .eq('user_id', tenantId)
@@ -67,7 +67,7 @@ r.get('/source-quizzes', async (req, res) => {
 
 // Outcomes for filter dropdown
 r.get('/source-quizzes/:id/outcomes', async (req, res) => {
-  const tenantId = (req as any).auth?.userId;
+  const tenantId = req.dbUserId;
   const { data, error } = await supabase.from('leads')
     .select('outcome_id')
     .eq('user_id', tenantId).eq('quiz_id', req.params.id)
@@ -79,7 +79,7 @@ r.get('/source-quizzes/:id/outcomes', async (req, res) => {
 });
 
 r.get('/campaigns', async (req, res) => {
-  const tenantId = (req as any).auth?.userId;
+  const tenantId = req.dbUserId;
   const { data, error } = await supabase.from('email_campaigns')
     .select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
@@ -87,7 +87,7 @@ r.get('/campaigns', async (req, res) => {
 });
 
 r.post('/campaigns', async (req, res) => {
-  const tenantId = (req as any).auth?.userId;
+  const tenantId = req.dbUserId;
   const {
     name, subject, from_name, from_email, html,
     mode, source_quiz_id, source_filters,
@@ -106,7 +106,7 @@ r.post('/campaigns', async (req, res) => {
 });
 
 r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
-  const tenantId = (req as any).auth?.userId;
+  const tenantId = req.dbUserId;
   const body = req.body || {};
   const { data: c } = await supabase.from('email_campaigns').select('*')
     .eq('id', req.params.id).eq('tenant_id', tenantId).single();
