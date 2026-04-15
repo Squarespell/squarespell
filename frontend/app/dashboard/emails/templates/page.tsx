@@ -1,324 +1,71 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
+// Templates gallery. Previews block-based templates rendered via
+// renderBlocks() against DEFAULT_BRAND_KIT + SAMPLE_CONTEXT so designers
+// see a realistic preview before picking a source quiz.
+
+import { useMemo, useState } from 'react';
+import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 import { PageHeader, Card, Pill, PrimaryButton } from '../../_components/PageShell';
-import { EMAIL_TEMPLATES, EmailTemplate, TemplateCategory } from '../../../../lib/email_templates';
+import { EMAIL_TEMPLATES, CATEGORY_LABELS } from '../../../../lib/email/templates';
+import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
+import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
+import { renderBlocks } from '../../../../lib/email/renderBlocks';
+import type { EmailTemplate, TemplateCategory } from '../../../../lib/email/blocks';
 
-type CategoryFilter = 'all' | TemplateCategory;
-
-const CATEGORY_LABEL: Record<TemplateCategory, string> = {
-  'post-quiz': 'Post-quiz',
-  'outcome': 'Outcome',
-  'nurture': 'Nurture',
-  'abandoner': 'Abandoner',
-  'booking': 'Booking',
-  'discount': 'Discount',
-};
-
-const FILTERS: { id: CategoryFilter; label: string }[] = [
-  { id: 'all', label: 'All templates' },
-  { id: 'post-quiz', label: 'Post-quiz' },
-  { id: 'outcome', label: 'Outcome' },
-  { id: 'nurture', label: 'Nurture' },
-  { id: 'abandoner', label: 'Abandoner' },
-  { id: 'booking', label: 'Booking' },
-  { id: 'discount', label: 'Discount' },
+const FILTERS: (TemplateCategory | 'all')[] = [
+  'all',
+  'post-quiz',
+  'outcome',
+  'nurture',
+  'abandoner',
+  'booking',
+  'discount',
 ];
 
-function IconMail({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3 7l9 7 9-7" />
-    </svg>
-  );
-}
-
-function IconEye({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function IconClose({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 6l12 12M18 6l-12 12" />
-    </svg>
-  );
-}
-
-function TemplateThumb({ template }: { template: EmailTemplate }) {
-  const glyph = (() => {
-    switch (template.category) {
-      case 'post-quiz':
-        return (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3l2.09 4.24 4.68.68-3.39 3.3.8 4.66L12 13.77 7.82 15.88l.8-4.66L5.23 7.92l4.68-.68L12 3z" />
-          </svg>
-        );
-      case 'outcome':
-        return (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M8 12l3 3 5-6" />
-          </svg>
-        );
-      case 'nurture':
-        return (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 12h4l2-4 4 8 2-4h4" />
-          </svg>
-        );
-      case 'abandoner':
-        return (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 12h13" />
-            <path d="M12 5l7 7-7 7" />
-          </svg>
-        );
-      case 'booking':
-        return (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="5" width="18" height="16" rx="2" />
-            <path d="M3 9h18M8 3v4M16 3v4" />
-          </svg>
-        );
-      case 'discount':
-        return (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 12l-8 8-9-9V3h8l9 9z" />
-            <circle cx="7.5" cy="7.5" r="1.2" />
-          </svg>
-        );
-    }
-  })();
-
-  return (
-    <div
-      style={{
-        height: 120,
-        borderRadius: 10,
-        background: 'linear-gradient(180deg, #1a1a1d 0%, #131315 100%)',
-        border: '1px solid ' + C.BORDER,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 14,
-      }}
-    >
-      {glyph}
-    </div>
-  );
-}
-
-function PreviewModal({ template, onClose }: { template: EmailTemplate; onClose: () => void }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: C.ELEVATED,
-          border: '1px solid ' + C.BORDER,
-          borderRadius: 14,
-          width: '100%',
-          maxWidth: 720,
-          maxHeight: '90vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <div
-          style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid ' + C.BORDER,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Pill variant="accent">{CATEGORY_LABEL[template.category]}</Pill>
-            <div style={{ color: C.TEXT, fontSize: 15, fontWeight: 600 }}>{template.title}</div>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close preview"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: C.TEXT_MUTED,
-              cursor: 'pointer',
-              padding: 6,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <IconClose size={18} />
-          </button>
-        </div>
-        <div style={{ padding: '14px 20px 0', color: C.TEXT_MUTED, fontSize: 13, lineHeight: '18px' }}>
-          <div style={{ marginBottom: 4 }}>
-            <span style={{ color: C.TEXT, fontWeight: 500 }}>Subject:</span> {template.defaultSubject}
-          </div>
-          <div>
-            <span style={{ color: C.TEXT, fontWeight: 500 }}>Preheader:</span> {template.defaultPreheader}
-          </div>
-        </div>
-        <div style={{ padding: '14px 20px 20px', flex: 1, minHeight: 0 }}>
-          <iframe
-            title={template.title + ' preview'}
-            srcDoc={template.html}
-            sandbox=""
-            style={{
-              width: '100%',
-              height: '55vh',
-              border: '1px solid ' + C.BORDER,
-              borderRadius: 10,
-              background: '#0b0b0c',
-            }}
-          />
-        </div>
-        <div
-          style={{
-            padding: '14px 20px',
-            borderTop: '1px solid ' + C.BORDER,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <div style={{ color: C.TEXT_MUTED, fontSize: 12, lineHeight: '18px', maxWidth: 420 }}>
-            {template.whyQuizNative}
-          </div>
-          <Link
-            href={'/dashboard/emails/new?template=' + template.id}
-            style={{ textDecoration: 'none' }}
-          >
-            <PrimaryButton>Use this template</PrimaryButton>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TemplateCard({ template, onPreview }: { template: EmailTemplate; onPreview: (t: EmailTemplate) => void }) {
-  return (
-    <Card>
-      <TemplateThumb template={template} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Pill variant="accent">{CATEGORY_LABEL[template.category]}</Pill>
-      </div>
-      <div style={{ color: C.TEXT, fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{template.title}</div>
-      <div style={{ color: C.TEXT_MUTED, fontSize: 13, lineHeight: '19px', marginBottom: 10 }}>{template.oneLiner}</div>
-      <div
-        style={{
-          color: C.TEXT_MUTED,
-          fontSize: 12,
-          lineHeight: '17px',
-          marginBottom: 14,
-          paddingLeft: 10,
-          borderLeft: '2px solid ' + C.ACCENT,
-        }}
-      >
-        {template.whyQuizNative}
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          onClick={() => onPreview(template)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 12px',
-            background: 'transparent',
-            color: C.TEXT,
-            border: '1px solid ' + C.BORDER,
-            borderRadius: 8,
-            cursor: 'pointer',
-            fontSize: 13,
-          }}
-        >
-          <IconEye size={14} />
-          Preview
-        </button>
-        <Link href={'/dashboard/emails/new?template=' + template.id} style={{ textDecoration: 'none', flex: 1 }}>
-          <PrimaryButton>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <IconMail size={14} />
-              Use template
-            </span>
-          </PrimaryButton>
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
 export default function EmailTemplatesPage() {
-  const [filter, setFilter] = useState<CategoryFilter>('all');
-  const [preview, setPreview] = useState<EmailTemplate | null>(null);
+  const [filter, setFilter] = useState<TemplateCategory | 'all'>('all');
+  const [selected, setSelected] = useState<EmailTemplate | null>(null);
 
   const visible = useMemo(() => {
     if (filter === 'all') return EMAIL_TEMPLATES;
-    return EMAIL_TEMPLATES.filter((t) => t.category === filter);
+    return EMAIL_TEMPLATES.filter(function (t) { return t.category === filter; });
   }, [filter]);
 
+  const previewHtml = useMemo(() => {
+    if (!selected) return '';
+    return renderBlocks(selected.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {
+      preheader: selected.defaultPreheader,
+    });
+  }, [selected]);
+
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 1200, margin: '0 auto' }}>
+    <DashboardShell>
       <PageHeader
         title="Email templates"
-        subtitle="Six starting points, each one only works because the recipient just took your quiz."
+        subtitle="Quiz-native templates. Each one only exists because you have a quiz feeding it."
       />
 
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 20,
-        }}
-      >
-        {FILTERS.map((f) => {
-          const active = f.id === filter;
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+        {FILTERS.map(function (f) {
+          const active = f === filter;
+          const label = f === 'all' ? 'All' : (CATEGORY_LABELS[f] || f);
           return (
             <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
+              key={f}
+              onClick={function () { setFilter(f); }}
               style={{
-                padding: '7px 13px',
+                padding: '7px 14px',
                 borderRadius: 999,
-                border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
-                background: active ? 'rgba(210,255,29,0.1)' : 'transparent',
-                color: active ? C.ACCENT : C.TEXT,
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
-                transition: 'all 120ms ease',
+                background: active ? C.ACCENT : 'transparent',
+                color: active ? '#0b0b0c' : C.TEXT_MUTED,
+                border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
               }}
             >
-              {f.label}
+              {label}
             </button>
           );
         })}
@@ -327,16 +74,152 @@ export default function EmailTemplatesPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
           gap: 16,
         }}
       >
-        {visible.map((t) => (
-          <TemplateCard key={t.id} template={t} onPreview={setPreview} />
-        ))}
+        {visible.map(function (t) {
+          const thumb = renderBlocks(t.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {
+            preheader: t.defaultPreheader,
+          });
+          return (
+            <Card key={t.id} style={{ padding: 0, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: 220,
+                  overflow: 'hidden',
+                  borderBottom: '1px solid ' + C.BORDER,
+                  background: '#0b0b0c',
+                  position: 'relative',
+                }}
+              >
+                <iframe
+                  title={t.title + ' preview'}
+                  srcDoc={thumb}
+                  style={{
+                    width: '200%',
+                    height: '440px',
+                    border: 0,
+                    transform: 'scale(0.5)',
+                    transformOrigin: 'top left',
+                    pointerEvents: 'none',
+                  }}
+                />
+              </div>
+              <div style={{ padding: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT }}>{t.title}</div>
+                  <Pill variant="accent">{CATEGORY_LABELS[t.category] || t.category}</Pill>
+                </div>
+                <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5, marginBottom: 14 }}>
+                  {t.oneLiner}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={function () { setSelected(t); }}
+                    style={{
+                      flex: 1,
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      color: C.TEXT,
+                      border: '1px solid ' + C.BORDER,
+                    }}
+                  >
+                    Preview
+                  </button>
+                  <div style={{ flex: 1 }}>
+                    <PrimaryButton href={'/dashboard/emails/new?template=' + t.id}>
+                      Use template
+                    </PrimaryButton>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
-      {preview ? <PreviewModal template={preview} onClose={() => setPreview(null)} /> : null}
-    </div>
+      {selected ? (
+        <div
+          onClick={function () { setSelected(null); }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={function (e) { e.stopPropagation(); }}
+            style={{
+              width: '100%',
+              maxWidth: 1000,
+              height: '90vh',
+              background: C.SURFACE,
+              borderRadius: 14,
+              border: '1px solid ' + C.BORDER,
+              display: 'grid',
+              gridTemplateColumns: '320px 1fr',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ padding: 20, borderRight: '1px solid ' + C.BORDER, overflow: 'auto' }}>
+              <div style={{ fontSize: 18, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>{selected.title}</div>
+              <Pill variant="accent">{CATEGORY_LABELS[selected.category]}</Pill>
+              <div style={{ marginTop: 16, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.6 }}>
+                {selected.oneLiner}
+              </div>
+              <div style={{ marginTop: 20, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Why quiz-native</div>
+              <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.6 }}>{selected.whyQuizNative}</div>
+              <div style={{ marginTop: 20, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Subject</div>
+              <div style={{ fontSize: 13, color: C.TEXT }}>{selected.defaultSubject}</div>
+              <div style={{ marginTop: 14, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Preheader</div>
+              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>{selected.defaultPreheader}</div>
+              <div style={{ marginTop: 20, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Merge tags</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {selected.mergeTags.map(function (tag) {
+                  return (
+                    <span
+                      key={tag}
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        padding: '3px 7px',
+                        borderRadius: 5,
+                        background: C.ELEVATED,
+                        color: C.TEXT_MUTED,
+                        border: '1px solid ' + C.BORDER,
+                      }}
+                    >
+                      {'{{' + tag + '}}'}
+                    </span>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 24 }}>
+                <PrimaryButton href={'/dashboard/emails/new?template=' + selected.id}>
+                  Use this template
+                </PrimaryButton>
+              </div>
+            </div>
+            <div style={{ background: '#0b0b0c', overflow: 'auto' }}>
+              <iframe
+                title="template preview"
+                srcDoc={previewHtml}
+                style={{ width: '100%', height: '100%', border: 0, background: '#0b0b0c' }}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </DashboardShell>
   );
 }
