@@ -114,11 +114,27 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
   const userId = req.dbUserId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-  const { url, topic, template_id } = (req.body ?? {}) as {
+  const { url, topic, template_id, brand: brandOverride } = (req.body ?? {}) as {
     url?: string;
     topic?: string;
     template_id?: string;
+    brand?: {
+      businessType?: string;
+      audience?: string;
+      tone?: string;
+      keyOffer?: string;
+      primaryColor?: string;
+      accentColor?: string;
+    };
   };
+
+  // Whitelist of hex colors, lower-cased and normalized. Anything else is dropped.
+  function normHex(v: unknown): string | null {
+    if (typeof v !== 'string') return null;
+    const t = v.trim().toLowerCase();
+    if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(t)) return t;
+    return null;
+  }
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'url required' });
   }
@@ -154,14 +170,33 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
       analyzeBusinessProfile(normalizedUrl, brand),
     ]);
 
-    // Merge AI-analyzed profile into the brand object so the generator has context
+    // Merge AI-analyzed profile into the brand object so the generator has context.
+    // Then let the user's overrides from the Review step win (if they provided any).
+    const ovType = brandOverride?.businessType?.trim();
+    const ovAud  = brandOverride?.audience?.trim();
+    const ovTone = brandOverride?.tone?.trim();
+    const ovOff  = brandOverride?.keyOffer?.trim();
+    const ovPrim = normHex(brandOverride?.primaryColor);
+    const ovAcc  = normHex(brandOverride?.accentColor);
+
     brand.business = {
       ...brand.business,
-      type: businessProfile.type,
-      audience: businessProfile.audience,
-      tone: businessProfile.tone,
-      key_offer: businessProfile.key_offer,
+      type: ovType || businessProfile.type,
+      audience: ovAud || businessProfile.audience,
+      tone: ovTone || businessProfile.tone,
+      key_offer: ovOff || businessProfile.key_offer,
     };
+
+    // Apply color overrides to the scraped palette so downstream
+    // generateTailoredQuiz and the persisted branding reflect the user's choices.
+    if (ovPrim || ovAcc) {
+      const scrapedColors = (brand as any).colors || {};
+      (brand as any).colors = {
+        ...scrapedColors,
+        primary: ovPrim || scrapedColors.primary,
+        accent:  ovAcc  || scrapedColors.accent,
+      };
+    }
 
     // Build onboarding pairs with sensible defaults (authed user didn't answer
     // the goal-selector; we default to lead capture).

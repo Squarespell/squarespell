@@ -116,6 +116,8 @@ export type CreateQuizFromUrlInput = {
     audience: string;
     tone: string;
     keyOffer: string;
+    primaryColor?: string;
+    accentColor?: string;
   };
 };
 

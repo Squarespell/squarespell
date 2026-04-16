@@ -25,7 +25,20 @@ type BrandScrape = {
   audience?: string;
   tone?: string;
   offer?: string;
+  primaryColor?: string;
+  accentColor?: string;
 };
+
+// Defaults used when scrape finds nothing or the user clears a swatch.
+// These mirror the Squarespell lime-on-ink house style so the preview
+// card always has a valid, readable combination to render.
+const DEFAULT_PRIMARY = '#d4ff4d';
+const DEFAULT_ACCENT = '#b8e63a';
+
+function isHex(v: string | undefined): boolean {
+  if (!v) return false;
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v.trim());
+}
 
 type Props = {
   open: boolean;
@@ -186,11 +199,14 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       if (resp.ok) {
         const data = await resp.json();
         const biz = (data && data.business) || {};
+        const colors = (data && data.colors) || {};
         const next: BrandScrape = {
           businessType: biz.type,
           audience: biz.audience,
           tone: biz.tone,
           offer: biz.key_offer,
+          primaryColor: isHex(colors.primary) ? colors.primary : undefined,
+          accentColor: isHex(colors.accent) ? colors.accent : undefined,
         };
         setBrand(next);
         const flags = new Set<keyof BrandScrape>();
@@ -217,17 +233,23 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setStage("generating");
     try {
       const normalized = normalizeUrl(url);
+      const pCol = (brand.primaryColor || "").trim();
+      const aCol = (brand.accentColor || "").trim();
       const trimmedBrand = {
         businessType: (brand.businessType || "").trim(),
         audience: (brand.audience || "").trim(),
         tone: (brand.tone || "").trim(),
         keyOffer: (brand.offer || "").trim(),
+        primaryColor: isHex(pCol) ? pCol : "",
+        accentColor: isHex(aCol) ? aCol : "",
       };
       const hasAnyBrand =
         trimmedBrand.businessType.length > 0 ||
         trimmedBrand.audience.length > 0 ||
         trimmedBrand.tone.length > 0 ||
-        trimmedBrand.keyOffer.length > 0;
+        trimmedBrand.keyOffer.length > 0 ||
+        trimmedBrand.primaryColor.length > 0 ||
+        trimmedBrand.accentColor.length > 0;
       const quiz = await createQuizFromUrl({
         url: normalized,
         context,
@@ -433,6 +455,65 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                         onChange={(e) => { setBrand((b) => ({ ...b, offer: e.target.value })); setDetected((d) => { if (!d.has("offer")) return d; const n = new Set(d); n.delete("offer"); return n; }); }}
                       />
                     </label>
+                  </div>
+                  <div className="sq-style-pack">
+                    <div className="sq-style-head">
+                      <span className="sq-brand-label">Brand colors{(detected.has("primaryColor") || detected.has("accentColor")) ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <span className="sq-style-sub">Used for buttons, progress bar, and accents.</span>
+                    </div>
+                    <div className="sq-style-body">
+                      <div className="sq-swatches">
+                        <label className="sq-swatch">
+                          <span className="sq-swatch-role">Primary</span>
+                          <span className="sq-swatch-wrap">
+                            <input
+                              type="color"
+                              className="sq-swatch-input"
+                              value={isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY}
+                              onChange={(e) => { setBrand((b) => ({ ...b, primaryColor: e.target.value })); setDetected((d) => { if (!d.has("primaryColor")) return d; const n = new Set(d); n.delete("primaryColor"); return n; }); }}
+                            />
+                            <span className="sq-swatch-hex">{(isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY).toUpperCase()}</span>
+                          </span>
+                        </label>
+                        <label className="sq-swatch">
+                          <span className="sq-swatch-role">Accent</span>
+                          <span className="sq-swatch-wrap">
+                            <input
+                              type="color"
+                              className="sq-swatch-input"
+                              value={isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT}
+                              onChange={(e) => { setBrand((b) => ({ ...b, accentColor: e.target.value })); setDetected((d) => { if (!d.has("accentColor")) return d; const n = new Set(d); n.delete("accentColor"); return n; }); }}
+                            />
+                            <span className="sq-swatch-hex">{(isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT).toUpperCase()}</span>
+                          </span>
+                        </label>
+                      </div>
+                      <div className="sq-preview" aria-label="Preview">
+                        <div className="sq-preview-chrome">
+                          <span className="sq-preview-dot" />
+                          <span className="sq-preview-dot" />
+                          <span className="sq-preview-dot" />
+                          <span className="sq-preview-url">Your quiz</span>
+                        </div>
+                        <div className="sq-preview-body">
+                          <div className="sq-preview-progress">
+                            <span style={{ width: "60%", background: `linear-gradient(90deg, ${isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY} 0%, ${isHex(brand.accentColor) ? brand.accentColor : DEFAULT_ACCENT} 100%)` }} />
+                          </div>
+                          <div className="sq-preview-q">Which option sounds most like you?</div>
+                          <div
+                            className="sq-preview-opt is-selected"
+                            style={{ borderColor: isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY, boxShadow: `0 0 0 3px ${isHex(brand.primaryColor) ? (brand.primaryColor as string) + "33" : "rgba(212,255,77,0.18)"}` }}
+                          >
+                            <span>The first one</span>
+                            <span className="sq-preview-check" style={{ background: isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY, color: "#0e1116" }} aria-hidden="true">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                            </span>
+                          </div>
+                          <div className="sq-preview-opt"><span>The second one</span></div>
+                          <button type="button" className="sq-preview-cta" disabled style={{ background: isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY, color: "#0e1116" }}>Next</button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   {errorMsg && <div className="sq-error">{errorMsg}</div>}
                 </div>
@@ -839,5 +920,87 @@ const styles = `
   .sq-modal { grid-template-columns: 1fr; max-height: 96vh; }
   .sq-side { display: none; }
   .sq-goals { grid-template-columns: 1fr; }
+}
+.sq-style-pack {
+  margin-top: 18px;
+  padding: 16px;
+  background: #111722;
+  border: 1px solid #202735;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sq-style-head { display: flex; flex-direction: column; gap: 4px; }
+.sq-style-sub { font-size: 12px; color: #7d8594; }
+.sq-style-body { display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: stretch; }
+.sq-swatches { display: flex; flex-direction: column; gap: 10px; }
+.sq-swatch {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px;
+  background: #0e1420;
+  border: 1px solid #1f2735;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.sq-swatch-role { font-size: 10.5px; color: #7d8594; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+.sq-swatch-wrap { display: flex; align-items: center; gap: 10px; }
+.sq-swatch-input {
+  appearance: none; -webkit-appearance: none;
+  width: 34px; height: 34px; border-radius: 8px;
+  padding: 0; border: 1px solid #2a3240; background: transparent;
+  cursor: pointer; overflow: hidden;
+}
+.sq-swatch-input::-webkit-color-swatch-wrapper { padding: 0; border-radius: 7px; }
+.sq-swatch-input::-webkit-color-swatch { border: none; border-radius: 7px; }
+.sq-swatch-input::-moz-color-swatch { border: none; border-radius: 7px; }
+.sq-swatch-hex { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #c6ccd6; letter-spacing: 0.02em; }
+.sq-preview {
+  background: #0a0f17;
+  border: 1px solid #1a2130;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  min-height: 240px;
+}
+.sq-preview-chrome {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px;
+  background: #0e141f;
+  border-bottom: 1px solid #1a2130;
+}
+.sq-preview-dot { width: 8px; height: 8px; border-radius: 50%; background: #2a3240; }
+.sq-preview-url { margin-left: 8px; font-size: 11px; color: #6b7384; }
+.sq-preview-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.sq-preview-progress { height: 4px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+.sq-preview-progress span { display: block; height: 100%; border-radius: 999px; transition: background 120ms; }
+.sq-preview-q { font-size: 13.5px; font-weight: 600; color: #f4f6f8; }
+.sq-preview-opt {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px;
+  background: #121a27;
+  border: 1.5px solid #1f2735;
+  border-radius: 10px;
+  color: #c6ccd6; font-size: 12.5px;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.sq-preview-opt.is-selected { color: #f4f6f8; }
+.sq-preview-check {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.sq-preview-cta {
+  margin-top: 4px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12.5px; font-weight: 700;
+  font-family: inherit;
+  cursor: default;
+  align-self: flex-start;
+  transition: background 120ms;
+}
+@media (max-width: 720px) {
+  .sq-style-body { grid-template-columns: 1fr; }
 }
 `;
