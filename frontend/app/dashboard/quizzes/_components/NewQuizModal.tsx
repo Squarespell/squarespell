@@ -129,6 +129,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [stage, setStage] = useState<Stage>("site");
   const [url, setUrl] = useState("");
   const [context, setContext] = useState("");
+  const [topic, setTopic] = useState("");
+  const [quizIdeas, setQuizIdeas] = useState<string[]>([]);
   const [goalId, setGoalId] = useState<string>("leads");
   const [brand, setBrand] = useState<BrandScrape>({});
   const [detected, setDetected] = useState<Set<keyof BrandScrape>>(new Set());
@@ -141,6 +143,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setStage("site");
     setUrl("");
     setContext("");
+    setTopic("");
+    setQuizIdeas([]);
     setGoalId("leads");
     setBrand({});
     setDetected(new Set());
@@ -215,13 +219,17 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
           if (typeof v === "string" && v.trim().length > 0) flags.add(k);
         });
         setDetected(flags);
+        const ideas = Array.isArray(data?.quiz_ideas) ? data.quiz_ideas.filter((s: unknown): s is string => typeof s === "string" && s.trim().length > 0) : [];
+        setQuizIdeas(ideas.slice(0, 4));
       } else {
         setBrand({});
         setDetected(new Set());
+        setQuizIdeas([]);
       }
     } catch {
       setBrand({});
       setDetected(new Set());
+      setQuizIdeas([]);
     }
     clearTimeout(timer);
     setStage("goal");
@@ -253,6 +261,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       const quiz = await createQuizFromUrl({
         url: normalized,
         context,
+        topic: topic.trim() || undefined,
         goal: goalId as "capture" | "recommend" | "score" | "grow",
         brand: hasAnyBrand ? trimmedBrand : undefined,
       });
@@ -385,6 +394,33 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
               {stage === "goal" && (
                 <div className="sq-form">
                   <p className="sq-lead">Pick the goal that matches how you want to use this quiz.</p>
+                  {quizIdeas.length > 0 && (
+                    <div className="sq-ideas">
+                      <div className="sq-ideas-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="4"/></svg>
+                        <span>Quiz ideas tailored to your site</span>
+                      </div>
+                      <div className="sq-ideas-chips">
+                        {quizIdeas.map((idea) => (
+                          <button
+                            key={idea}
+                            type="button"
+                            className={`sq-idea ${topic === idea ? "is-selected" : ""}`}
+                            onClick={() => setTopic(topic === idea ? "" : idea)}
+                          >
+                            {idea}
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="text"
+                        className="sq-input sq-ideas-input"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="Pick an idea above or write your own"
+                      />
+                    </div>
+                  )}
                   <div className="sq-goals">
                     {GOALS.map((g) => (
                       <button
@@ -921,6 +957,14 @@ const styles = `
   .sq-side { display: none; }
   .sq-goals { grid-template-columns: 1fr; }
 }
+
+.sq-ideas { margin: 0 0 16px; padding: 12px; border: 1px solid rgba(239, 68, 68, 0.22); background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(168,85,247,0.06)); border-radius: 10px; }
+.sq-ideas-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: rgba(239, 68, 68, 1); margin-bottom: 8px; text-transform: uppercase; }
+.sq-ideas-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.sq-idea { font: inherit; cursor: pointer; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(0,0,0,0.14); background: #fff; color: #111; font-size: 13px; line-height: 1.2; transition: all .15s ease; text-align: left; }
+.sq-idea:hover { border-color: rgba(239, 68, 68, 0.5); background: #fff5f6; }
+.sq-idea.is-selected { border-color: rgba(239, 68, 68, 0.9); background: rgba(239, 68, 68, 0.1); color: #8b1220; font-weight: 600; }
+.sq-ideas-input { font-size: 14px; }
 .sq-style-pack {
   margin-top: 18px;
   padding: 16px;

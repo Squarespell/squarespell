@@ -812,7 +812,52 @@ ${businessSummary.slice(0, 2500)}`;
   }
 }
 
-export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile };
+async function suggestQuizIdeas(
+  websiteUrl: string,
+  brandData?: any,
+  profile?: { type?: string; audience?: string; tone?: string; key_offer?: string }
+): Promise<string[]> {
+  const businessSummary = brandData?.business?.summary || '';
+  const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
+  if (!businessSummary || businessSummary.length < 30) {
+    return [];
+  }
+  const systemPrompt = `You suggest 4 short, concrete quiz TOPICS for a specific business. Each topic is a one-line angle that a lead-generation quiz could be built around.
+
+RULES:
+- Return ONLY valid JSON: {"ideas": ["...", "...", "...", "..."]}
+- Exactly 4 ideas. Each 6-12 words. No punctuation at the end.
+- Each idea must be SPECIFIC to this business - reference what they actually sell, offer, or teach.
+- Mix angles: one diagnostic (e.g. "What is your X style"), one matchmaker (e.g. "Which X is right for you"), one readiness (e.g. "Are you ready for X"), one persona (e.g. "What type of X are you").
+- Do NOT include the business name in the idea.
+- No markdown, no backticks, no explanation outside JSON.`;
+  const profileLine = profile ? `BUSINESS: ${profile.type || ''} | AUDIENCE: ${profile.audience || ''} | OFFER: ${profile.key_offer || ''}` : '';
+  const userPrompt = `WEBSITE: ${siteName}
+URL: ${websiteUrl}
+${profileLine}
+SCRAPED CONTENT:
+${businessSummary.slice(0, 2000)}`;
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+    const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+    const parsed = JSON.parse(extractJSON(raw));
+    const ideas = Array.isArray(parsed?.ideas) ? parsed.ideas : [];
+    return ideas
+      .map((s: any) => String(s || '').trim())
+      .filter((s: string) => s.length >= 4 && s.length <= 120)
+      .slice(0, 4);
+  } catch (err: any) {
+    console.error('[suggestQuizIdeas] AI suggestion failed:', err.message);
+    return [];
+  }
+}
+
+export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas };
 export const generateQuizWithClaude = callClaude;
 export const generateQuiz = callClaude;
 export const generateQuizContent = callClaude;

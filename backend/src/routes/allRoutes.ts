@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
-import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile } from '../services/claudeService';
+import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
 import { sendResultEmail } from '../services/resultEmail';
@@ -974,15 +974,35 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
   let normalizedBrandUrl: string;
-  try { normalizedBrandUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'invalid url' }); }
   try {
-    res.json(await scrapeBrand(normalizedBrandUrl));
+    normalizedBrandUrl = normalizeUrl(url);
+  } catch {
+    return res.status(400).json({ error: 'invalid url' });
+  }
+  try {
+    const brand = await scrapeBrand(normalizedBrandUrl);
+    const [profile, ideas] = await Promise.all([
+      analyzeBusinessProfile(normalizedBrandUrl, brand).catch((e: any) => {
+        console.error('[ScrapeBrand] analyzeBusinessProfile failed:', e?.message);
+        return null;
+      }),
+      suggestQuizIdeas(normalizedBrandUrl, brand).catch((e: any) => {
+        console.error('[ScrapeBrand] suggestQuizIdeas failed:', e?.message);
+        return [] as string[];
+      }),
+    ]);
+    const merged: any = { ...brand };
+    if (profile) {
+      merged.business = { ...((brand as any).business || {}), ...profile };
+    }
+    merged.quiz_ideas = Array.isArray(ideas) ? ideas : [];
+    res.json(merged);
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
       return res.status(422).json({ error: err.message, code: 'NOT_SQUARESPACE', hostname: err.hostname });
     }
     console.error('[ScrapeBrand] Failed:', err);
-    res.status(500).json({ error: err.message ?? 'Scrape failed' });
+    res.status(500).json({ error: err?.message ?? 'Scrape failed' });
   }
 });
 

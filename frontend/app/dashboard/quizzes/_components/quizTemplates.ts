@@ -110,6 +110,7 @@ export function findTemplate(id: string | null | undefined): QuizTemplate | null
 export type CreateQuizFromUrlInput = {
   url: string;
   context?: string;
+  topic?: string;
   goal: "capture" | "recommend" | "score" | "grow";
   brand?: {
     businessType: string;
@@ -152,7 +153,7 @@ export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<
   const payload = {
     url: input.url,
     context: input.context,
-    topic: input.context,
+    topic: (input.topic && input.topic.trim()) ? input.topic.trim() : input.context,
     goal: input.goal,
     brand: input.brand,
   };
