@@ -144,10 +144,22 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setStage("generating");
     try {
       const normalized = normalizeUrl(url);
+      const trimmedBrand = {
+        businessType: (brand.businessType || "").trim(),
+        audience: (brand.audience || "").trim(),
+        tone: (brand.tone || "").trim(),
+        keyOffer: (brand.offer || "").trim(),
+      };
+      const hasAnyBrand =
+        trimmedBrand.businessType.length > 0 ||
+        trimmedBrand.audience.length > 0 ||
+        trimmedBrand.tone.length > 0 ||
+        trimmedBrand.keyOffer.length > 0;
       const quiz = await createQuizFromUrl({
         url: normalized,
         context,
         goal: goalId as "capture" | "recommend" | "score" | "grow",
+        brand: hasAnyBrand ? trimmedBrand : undefined,
       });
       const quizId = ((quiz as any) && ((quiz as any).id || (quiz as any).quizId)) as string | undefined;
       if (quizId) {
@@ -306,10 +318,48 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                   <div className="sq-review">
                     <div className="sq-review-row"><span>Site</span><strong>{normalizeUrl(url) || "-"}</strong></div>
                     <div className="sq-review-row"><span>Goal</span><strong>{currentGoal.label}</strong></div>
-                    {brand.businessType && <div className="sq-review-row"><span>Business type</span><strong>{brand.businessType}</strong></div>}
-                    {brand.audience && <div className="sq-review-row"><span>Audience</span><strong>{brand.audience}</strong></div>}
-                    {brand.tone && <div className="sq-review-row"><span>Tone</span><strong>{brand.tone}</strong></div>}
-                    {brand.offer && <div className="sq-review-row"><span>Key offer</span><strong>{brand.offer}</strong></div>}
+                  </div>
+                  <div className="sq-brand-grid">
+                    <label className="sq-brand-field">
+                      <span className="sq-brand-label">Business type{brand.businessType ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <input
+                        type="text"
+                        className="sq-brand-input"
+                        placeholder="e.g. ecommerce, online course, agency"
+                        value={brand.businessType || ""}
+                        onChange={(e) => setBrand((b) => ({ ...b, businessType: e.target.value }))}
+                      />
+                    </label>
+                    <label className="sq-brand-field">
+                      <span className="sq-brand-label">Audience{brand.audience ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <input
+                        type="text"
+                        className="sq-brand-input"
+                        placeholder="e.g. small business owners on Squarespace"
+                        value={brand.audience || ""}
+                        onChange={(e) => setBrand((b) => ({ ...b, audience: e.target.value }))}
+                      />
+                    </label>
+                    <label className="sq-brand-field">
+                      <span className="sq-brand-label">Tone{brand.tone ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <input
+                        type="text"
+                        className="sq-brand-input"
+                        placeholder="e.g. friendly, confident, minimal"
+                        value={brand.tone || ""}
+                        onChange={(e) => setBrand((b) => ({ ...b, tone: e.target.value }))}
+                      />
+                    </label>
+                    <label className="sq-brand-field">
+                      <span className="sq-brand-label">Key offer{brand.offer ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <input
+                        type="text"
+                        className="sq-brand-input"
+                        placeholder="e.g. Squarespace plugins for service businesses"
+                        value={brand.offer || ""}
+                        onChange={(e) => setBrand((b) => ({ ...b, offer: e.target.value }))}
+                      />
+                    </label>
                   </div>
                   {errorMsg && <div className="sq-error">{errorMsg}</div>}
                 </div>
@@ -605,6 +655,37 @@ const styles = `
 .sq-review-row:last-child { border-bottom: none; }
 .sq-review-row span { color: #8891a0; }
 .sq-review-row strong { color: #f4f6f8; font-weight: 600; }
+.sq-brand-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-top: 14px;
+}
+.sq-brand-field { display: flex; flex-direction: column; gap: 6px; }
+.sq-brand-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #8891a0;
+  letter-spacing: 0.02em; text-transform: uppercase;
+}
+.sq-brand-hint {
+  font-style: normal; font-size: 10.5px;
+  padding: 1px 7px; border-radius: 999px;
+  background: rgba(212, 255, 77, 0.12); color: #d4ff4d;
+  letter-spacing: 0.04em;
+}
+.sq-brand-input {
+  background: #121620; border: 1px solid #232a35;
+  border-radius: 10px; padding: 10px 12px;
+  color: #f4f6f8; font-size: 13.5px;
+  transition: border-color 120ms, box-shadow 120ms;
+  font-family: inherit;
+}
+.sq-brand-input::placeholder { color: #5a6372; }
+.sq-brand-input:focus {
+  outline: none; border-color: #d4ff4d;
+  box-shadow: 0 0 0 3px rgba(212, 255, 77, 0.15);
+}
+@media (max-width: 600px) {
+  .sq-brand-grid { grid-template-columns: 1fr; }
+}
 
 .sq-error-block {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
