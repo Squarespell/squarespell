@@ -56,6 +56,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [context, setContext] = useState("");
   const [goalId, setGoalId] = useState<string>("leads");
   const [brand, setBrand] = useState<BrandScrape>({});
+  const [detected, setDetected] = useState<Set<keyof BrandScrape>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const urlRef = useRef<HTMLInputElement>(null);
@@ -67,6 +68,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setContext("");
     setGoalId("leads");
     setBrand({});
+    setDetected(new Set());
     setErrorMsg("");
     setSubmitting(false);
     setTimeout(() => urlRef.current?.focus(), 20);
@@ -122,17 +124,26 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       if (resp.ok) {
         const data = await resp.json();
         const biz = (data && data.business) || {};
-        setBrand({
+        const next: BrandScrape = {
           businessType: biz.type,
           audience: biz.audience,
           tone: biz.tone,
           offer: biz.key_offer,
+        };
+        setBrand(next);
+        const flags = new Set<keyof BrandScrape>();
+        (Object.keys(next) as Array<keyof BrandScrape>).forEach(function (k) {
+          const v = next[k];
+          if (typeof v === "string" && v.trim().length > 0) flags.add(k);
         });
+        setDetected(flags);
       } else {
         setBrand({});
+        setDetected(new Set());
       }
     } catch {
       setBrand({});
+      setDetected(new Set());
     }
     clearTimeout(timer);
     setStage("goal");
@@ -321,43 +332,43 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                   </div>
                   <div className="sq-brand-grid">
                     <label className="sq-brand-field">
-                      <span className="sq-brand-label">Business type{brand.businessType ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <span className="sq-brand-label">Business type{detected.has("businessType") ? <em className="sq-brand-hint">detected</em> : null}</span>
                       <input
                         type="text"
                         className="sq-brand-input"
                         placeholder="e.g. ecommerce, online course, agency"
                         value={brand.businessType || ""}
-                        onChange={(e) => setBrand((b) => ({ ...b, businessType: e.target.value }))}
+                        onChange={(e) => { setBrand((b) => ({ ...b, businessType: e.target.value })); setDetected((d) => { if (!d.has("businessType")) return d; const n = new Set(d); n.delete("businessType"); return n; }); }}
                       />
                     </label>
                     <label className="sq-brand-field">
-                      <span className="sq-brand-label">Audience{brand.audience ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <span className="sq-brand-label">Audience{detected.has("audience") ? <em className="sq-brand-hint">detected</em> : null}</span>
                       <input
                         type="text"
                         className="sq-brand-input"
                         placeholder="e.g. small business owners on Squarespace"
                         value={brand.audience || ""}
-                        onChange={(e) => setBrand((b) => ({ ...b, audience: e.target.value }))}
+                        onChange={(e) => { setBrand((b) => ({ ...b, audience: e.target.value })); setDetected((d) => { if (!d.has("audience")) return d; const n = new Set(d); n.delete("audience"); return n; }); }}
                       />
                     </label>
                     <label className="sq-brand-field">
-                      <span className="sq-brand-label">Tone{brand.tone ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <span className="sq-brand-label">Tone{detected.has("tone") ? <em className="sq-brand-hint">detected</em> : null}</span>
                       <input
                         type="text"
                         className="sq-brand-input"
                         placeholder="e.g. friendly, confident, minimal"
                         value={brand.tone || ""}
-                        onChange={(e) => setBrand((b) => ({ ...b, tone: e.target.value }))}
+                        onChange={(e) => { setBrand((b) => ({ ...b, tone: e.target.value })); setDetected((d) => { if (!d.has("tone")) return d; const n = new Set(d); n.delete("tone"); return n; }); }}
                       />
                     </label>
                     <label className="sq-brand-field">
-                      <span className="sq-brand-label">Key offer{brand.offer ? <em className="sq-brand-hint">detected</em> : null}</span>
+                      <span className="sq-brand-label">Key offer{detected.has("offer") ? <em className="sq-brand-hint">detected</em> : null}</span>
                       <input
                         type="text"
                         className="sq-brand-input"
                         placeholder="e.g. Squarespace plugins for service businesses"
                         value={brand.offer || ""}
-                        onChange={(e) => setBrand((b) => ({ ...b, offer: e.target.value }))}
+                        onChange={(e) => { setBrand((b) => ({ ...b, offer: e.target.value })); setDetected((d) => { if (!d.has("offer")) return d; const n = new Set(d); n.delete("offer"); return n; }); }}
                       />
                     </label>
                   </div>
