@@ -121,16 +121,32 @@ export type CreateQuizFromUrlInput = {
 
 export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<{ id: string }> {
   const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (typeof window !== "undefined") {
-    const clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
-    if (clerk?.session) {
-      try {
-        const token = await clerk.session.getToken();
-        if (token) headers["Authorization"] = "Bearer " + token;
-      } catch {}
+
+  async function getAuthHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (typeof window !== "undefined") {
+      const clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
+      if (clerk?.session) {
+        try {
+          const token = await clerk.session.getToken();
+          if (token) headers["Authorization"] = "Bearer " + token;
+        } catch {}
+      }
     }
+    return headers;
   }
+
+  // Warm the backend. Render free tier spins down after 15 min idle; the first
+  // POST after idle can hang 30-60s while the dyno boots. We fire a /health ping
+  // first to wake it, so the real POST lands on a warm server.
+  try {
+    const warmCtl = new AbortController();
+    const warmTimer = setTimeout(function () { warmCtl.abort(); }, 5000);
+    await fetch(API + "/health", { method: "GET", signal: warmCtl.signal }).catch(function () { return null; });
+    clearTimeout(warmTimer);
+  } catch {}
+
+  const headers = await getAuthHeaders();
   const payload = {
     url: input.url,
     context: input.context,
@@ -138,13 +154,35 @@ export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<
     goal: input.goal,
     brand: input.brand,
   };
-  const res = await fetch(`${API}/api/quizzes/from-url`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
+
+  // 150s timeout: Render cold start (up to 60s) + scrape (10s) + 2 LLM calls (up to 60s).
+  const ctl = new AbortController();
+  const timer = setTimeout(function () { ctl.abort(); }, 150000);
+
+  let res: Response;
+  try {
+    res = await fetch(API + "/api/quizzes/from-url", {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(payload),
+      signal: ctl.signal,
+    });
+  } catch (err: unknown) {
+    clearTimeout(timer);
+    const name = err instanceof Error ? err.name : "";
+    const msg = err instanceof Error ? err.message : String(err);
+    if (name === "AbortError") {
+      throw new Error("The generator took too long to respond. Our service may be warming up — please wait 30 seconds and try again.");
+    }
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+      throw new Error("Could not reach the generator (" + API + "). If this is the first request in a while, it may be starting up — wait 30 seconds and retry. If it keeps failing, check that ad-blockers are not blocking onrender.com.");
+    }
+    throw new Error("Network error: " + msg);
+  }
+  clearTimeout(timer);
+
   if (!res.ok) {
-    let msg = `Quiz creation failed (${res.status})`;
+    let msg = "Quiz creation failed (" + res.status + ")";
     try {
       const errBody = await res.json();
       if (errBody?.error) msg = String(errBody.error);

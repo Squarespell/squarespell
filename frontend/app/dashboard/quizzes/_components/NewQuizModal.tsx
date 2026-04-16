@@ -94,19 +94,39 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     }
     setErrorMsg("");
     setStage("loading");
+
+    // Call the real backend scrape-brand endpoint. Keep this fast and silent:
+    // if it fails or times out we still advance to the goal step - the
+    // POST /api/quizzes/from-url call later re-scrapes server-side anyway.
+    const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (typeof window !== "undefined") {
+      const clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
+      if (clerk?.session) {
+        try {
+          const token = await clerk.session.getToken();
+          if (token) headers["Authorization"] = "Bearer " + token;
+        } catch {}
+      }
+    }
+
+    const ctl = new AbortController();
+    const timer = setTimeout(function () { ctl.abort(); }, 20000);
     try {
-      const resp = await fetch("/api/brand/scrape", {
+      const resp = await fetch(API + "/api/scrape-brand", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: normalized, context }),
+        headers: headers,
+        body: JSON.stringify({ url: normalized }),
+        signal: ctl.signal,
       });
       if (resp.ok) {
         const data = await resp.json();
+        const biz = (data && data.business) || {};
         setBrand({
-          businessType: data.businessType,
-          audience: data.audience,
-          tone: data.tone,
-          offer: data.offer,
+          businessType: biz.type,
+          audience: biz.audience,
+          tone: biz.tone,
+          offer: biz.key_offer,
         });
       } else {
         setBrand({});
@@ -114,6 +134,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     } catch {
       setBrand({});
     }
+    clearTimeout(timer);
     setStage("goal");
   }
 
