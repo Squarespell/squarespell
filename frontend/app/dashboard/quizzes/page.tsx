@@ -62,6 +62,7 @@ export default function QuizzesPage() {
   const [publishQuiz, setPublishQuiz] = useState<Quiz | null>(null);
   const [deleteQuiz, setDeleteQuiz] = useState<Quiz | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [newQuizOpen, setNewQuizOpen] = useState(false);
 
   const confirmDelete = async () => {
@@ -80,6 +81,28 @@ export default function QuizzesPage() {
     } finally {
       setDeleting(false);
       setDeleteQuiz(null);
+    }
+  };
+
+  const handleDuplicate = async (quiz: Quiz) => {
+    if (!token || duplicatingId) return;
+    setDuplicatingId(quiz.id);
+    try {
+      const res = await fetch(`${API}/api/quizzes/${quiz.id}/duplicate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Duplicate failed');
+      }
+      const created: Quiz = await res.json();
+      // Inject the new draft at the top of the list
+      setQuizzes((prev) => [created, ...prev]);
+    } catch (e) {
+      console.error('Duplicate failed:', e);
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -217,10 +240,17 @@ export default function QuizzesPage() {
                   <GhostButton onClick={() => setPublishQuiz(quiz)}>
                     {quiz.status === 'live' ? 'Share' : 'Publish'}
                   </GhostButton>
+                  <GhostButton
+                    onClick={() => handleDuplicate(quiz)}
+                    disabled={duplicatingId === quiz.id}
+                  >
+                    {duplicatingId === quiz.id ? 'Duplicating…' : 'Duplicate'}
+                  </GhostButton>
                   <button
                     type="button"
                     onClick={() => setDeleteQuiz(quiz)}
                     style={{
+                      gridColumn: '1 / -1',
                       padding: '11px 20px',
                       background: 'transparent',
                       color: '#ef4444',

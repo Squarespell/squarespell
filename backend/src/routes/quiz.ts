@@ -124,6 +124,46 @@ router.delete('/:id', async (req: AuthenticatedRequest, res) => {
   res.json({ success: true });
 });
 
+// POST /api/quizzes/:id/duplicate — clone an existing quiz as a new draft
+router.post('/:id/duplicate', guardQuizCreation, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data: source, error: srcErr } = await supabase
+      .from('quizzes')
+      .select('title, questions, outcomes, branding, settings, mode')
+      .eq('id', req.params.id)
+      .eq('user_id', req.dbUserId)
+      .single();
+    if (srcErr || !source) return res.status(404).json({ error: 'Quiz not found' });
+
+    const srcTitle = (source.title as string) || 'Untitled Quiz';
+    // Avoid piling up "(Copy) (Copy) (Copy)" — cap to a single suffix
+    const newTitle = /\(Copy\)$/i.test(srcTitle.trim()) ? srcTitle : `${srcTitle} (Copy)`;
+
+    const { data, error } = await supabase
+      .from('quizzes')
+      .insert({
+        user_id: req.dbUserId,
+        title: newTitle,
+        slug: await makeUniqueSlug(newTitle),
+        mode: source.mode ?? 'lead_quiz',
+        questions: source.questions ?? [],
+        outcomes: source.outcomes ?? [],
+        branding: source.branding ?? {},
+        settings: source.settings ?? {},
+        status: 'draft',
+      })
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+
+    await supabase.rpc('increment_quiz_count', { uid: req.dbUserId });
+    res.status(201).json(data);
+  } catch (err: any) {
+    console.error('Quiz duplicate error:', err);
+    res.status(500).json({ error: err?.message ?? 'Duplicate failed' });
+  }
+});
+
 router.get('/:id/leads', async (req: AuthenticatedRequest, res) => {
   const { data, error } = await supabase.from('leads').select('id,name,email,outcome_id,created_at').eq('quiz_id', req.params.id).eq('user_id', req.dbUserId).order('created_at', { ascending: false }).limit(500);
   if (error) return res.status(500).json({ error: error.message });
