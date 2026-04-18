@@ -1,6 +1,6 @@
 import { supabase } from '../db/supabaseClient';
 import { Resend } from 'resend';
-import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed } from './unsubscribe';
+import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterHtml } from './unsubscribe';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -288,9 +288,8 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
 </html>`;
         }
 
-        // Add unsubscribe footer
-        const unsubUrl = buildUnsubscribeUrl(leadData.email, leadData.quiz_id);
-        const unsubFooter = `<div style="text-align:center;padding:20px 0;font-size:12px;color:#999;"><a href="${unsubUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a> from future emails.</div>`;
+        // Add CAN-SPAM compliant footer with business address + unsubscribe
+        const unsubFooter = canSpamFooterHtml(leadData.email, { quizId: leadData.quiz_id, siteName });
         // Inject before closing body tag, or append
         if (htmlBody.includes('</body>')) {
           htmlBody = htmlBody.replace('</body>', unsubFooter + '</body>');

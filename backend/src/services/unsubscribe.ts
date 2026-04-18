@@ -38,6 +38,12 @@ export async function isUnsubscribed(email: string): Promise<boolean> {
 }
 
 /**
+ * Default business address for CAN-SPAM compliance.
+ * Customers can override via brand kit; this is the platform fallback.
+ */
+const DEFAULT_BUSINESS_ADDRESS = process.env.BUSINESS_ADDRESS || 'Squarespell, 651 N Broad St, Suite 201, Middletown, DE 19709';
+
+/**
  * Build the HTML footer snippet with unsubscribe link for any email.
  */
 export function unsubscribeFooterHtml(email: string, quizId?: string): string {
@@ -47,4 +53,31 @@ export function unsubscribeFooterHtml(email: string, quizId?: string): string {
     <a href="${url}" style="color:#999;text-decoration:underline;">Unsubscribe</a> from future emails.
   </td>
 </tr>`;
+}
+
+/**
+ * Build a CAN-SPAM compliant footer with business address + unsubscribe.
+ * Used by all transactional and marketing email paths.
+ */
+export function canSpamFooterHtml(
+  email: string,
+  opts?: { quizId?: string; siteName?: string; businessAddress?: string },
+): string {
+  const url = buildUnsubscribeUrl(email, opts?.quizId);
+  const siteName = opts?.siteName || 'Squarespell';
+  const address = opts?.businessAddress || DEFAULT_BUSINESS_ADDRESS;
+  return `<div style="text-align:center;padding:20px 32px;font-size:12px;color:#999;line-height:1.6;">
+  <span>Sent by ${siteName} via <a href="https://squarespell.com" style="color:#888;text-decoration:none;">Squarespell</a></span><br/>
+  <span style="color:#bbb;">${address}</span><br/>
+  <a href="${url}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
+</div>`;
+}
+
+/**
+ * CAN-SPAM footer for plain-text emails.
+ */
+export function canSpamFooterText(email: string, opts?: { quizId?: string; businessAddress?: string }): string {
+  const url = buildUnsubscribeUrl(email, opts?.quizId);
+  const address = opts?.businessAddress || DEFAULT_BUSINESS_ADDRESS;
+  return `\n${address}\nUnsubscribe: ${url}`;
 }

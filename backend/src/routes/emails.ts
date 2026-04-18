@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { isUnsubscribed, buildUnsubscribeHeaders } from '../services/unsubscribe';
+import { isUnsubscribed, buildUnsubscribeHeaders, canSpamFooterHtml } from '../services/unsubscribe';
 import { requireAuth, attachUser } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import { resendProvider } from '../services/email/resendProvider';
@@ -191,9 +191,17 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     }).select().single();
     if (sendErr) { results.push({ to, ok: false, error: sendErr.message }); continue; }
     try {
+      // Inject CAN-SPAM footer with business address + unsubscribe link
+      const footer = canSpamFooterHtml(to, { siteName: c.from_name });
+      let html = c.html || '';
+      if (html.includes('</body>')) {
+        html = html.replace('</body>', footer + '</body>');
+      } else {
+        html += footer;
+      }
       const { messageId } = await resendProvider.send({
         to, from: c.from_email, fromName: c.from_name,
-        subject: c.subject, html: c.html,
+        subject: c.subject, html,
         headers: { 'X-Send-Id': send!.id, ...buildUnsubscribeHeaders(to) },
         tags: [{ name: 'campaign', value: c.id }],
       });

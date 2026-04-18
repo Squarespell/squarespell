@@ -74,7 +74,7 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
   bodyWeight: 400,
   toneWords: ['direct', 'warm', 'practical'],
   businessName: 'Your business',
-  businessAddress: 'Add your business address in Brand kit',
+  businessAddress: 'Squarespell, 651 N Broad St, Suite 201, Middletown, DE 19709',
   supportEmail: 'hello@example.com',
   social: {},
   ctaButtonRadius: 8,
