@@ -32,6 +32,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Deliverability dashboard (bounce rate, spam complaint rate)
 - [x] Bounce classification pipeline (hard/soft)
 - [x] Suppression list (global)
+- [x] Resend batch send integration (up to 100 emails per API call)
 - [ ] DKIM/SPF on Resend shared domain
 - [x] Brand kit shared across quiz + email + popup
 - [x] Brand-import-from-URL scraper (logo, palette, fonts, tone)
