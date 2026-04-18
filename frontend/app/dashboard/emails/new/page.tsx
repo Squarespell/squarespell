@@ -46,6 +46,7 @@ function NewCampaignPageInner() {
         html,
         fromName: '',
         fromEmail: '',
+        blocks: blockTpl.blocks,
       };
     }
     return {

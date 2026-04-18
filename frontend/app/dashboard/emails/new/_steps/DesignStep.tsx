@@ -1,8 +1,14 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 import { GhostButton, PrimaryButton } from '../../../_components/PageShell';
 import { EMAIL_TEMPLATES, EmailTemplate } from './templates';
+import { Block } from '../../../../../lib/email/blocks';
+import { renderBlocks } from '../../../../../lib/email/renderBlocks';
+import { DEFAULT_BRAND_KIT } from '../../../../../lib/email/brandKit';
+import { SAMPLE_CONTEXT } from '../../../../../lib/email/mergeContext';
+import { BlockEditorCanvas } from '../_components/BlockEditorCanvas';
+import { BlockInspector } from '../_components/BlockInspector';
 
 export type DesignState = {
   templateId: string;
@@ -10,6 +16,8 @@ export type DesignState = {
   html: string;
   fromName: string;
   fromEmail: string;
+  /** When present, editor uses block mode. Changes sync back to `html`. */
+  blocks?: Block[];
 };
 
 export function DesignStep({
@@ -23,13 +31,38 @@ export function DesignStep({
   const [view, setView] = useState<'desktop' | 'mobile'>('desktop');
   const [darkMode, setDarkMode] = useState(false);
   const [showHtml, setShowHtml] = useState(false);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
+  const isBlockMode = Array.isArray(state.blocks) && state.blocks.length > 0;
+
+  // Legacy template picker (only in HTML mode)
   const pickTemplate = (t: EmailTemplate) => setState({
     templateId: t.id,
     html: t.html,
     subject: state.subject || t.subjectSuggestion,
+    blocks: undefined, // clear blocks when picking legacy template
   });
 
+  // Block change handler: update blocks and regenerate HTML
+  const handleBlocksChange = useCallback((blocks: Block[]) => {
+    const html = renderBlocks(blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {});
+    setState({ blocks, html });
+  }, [setState]);
+
+  // Update a single block
+  const handleBlockUpdate = useCallback((updated: Block) => {
+    if (!state.blocks) return;
+    const blocks = state.blocks.map(b => b.id === updated.id ? updated : b);
+    const html = renderBlocks(blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {});
+    setState({ blocks, html });
+  }, [state.blocks, setState]);
+
+  const selectedBlock = useMemo(() => {
+    if (!state.blocks || !selectedBlockId) return null;
+    return state.blocks.find(b => b.id === selectedBlockId) || null;
+  }, [state.blocks, selectedBlockId]);
+
+  // Preview HTML with sample merge tags filled in
   const previewHtml = state.html
     .replace(/\{\{firstName\}\}/g, 'Alex')
     .replace(/\{\{outcomeTitle\}\}/g, 'The Curator')
@@ -38,55 +71,89 @@ export function DesignStep({
     .replace(/\{\{brand\}\}/g, 'Your brand')
     .replace(/\{\{unsubscribeUrl\}\}/g, '#');
 
+  // Three-column layout: blocks | preview | inspector (when selected)
+  const hasInspector = isBlockMode && selectedBlock;
+  const gridCols = hasInspector ? '320px 1fr 300px' : isBlockMode ? '320px 1fr' : '1fr 1fr';
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-      {/* LEFT: template + fields */}
-      <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 24 }}>
-        <h2 style={{ margin: '0 0 18px', fontSize: 20, color: C.TEXT }}>Pick a template</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 24 }}>
-          {EMAIL_TEMPLATES.map(t => (
-            <button key={t.id} onClick={() => pickTemplate(t)} style={{
-              textAlign: 'left', padding: '12px 14px',
-              background: state.templateId === t.id ? 'rgba(210,255,29,0.10)' : C.ELEVATED,
-              border: `1px solid ${state.templateId === t.id ? C.ACCENT : C.BORDER}`,
-              borderRadius: 10, cursor: 'pointer',
-            }}>
-              <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 13 }}>{t.name}</div>
-              <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 2 }}>{t.description}</div>
-            </button>
-          ))}
-        </div>
+    <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 16, transition: 'grid-template-columns 0.2s ease' }}>
+      {/* LEFT: block canvas or legacy editor */}
+      <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 20, overflow: 'auto', maxHeight: 'calc(100vh - 220px)' }}>
+        {isBlockMode ? (
+          <>
+            <h2 style={{ margin: '0 0 12px', fontSize: 16, color: C.TEXT, fontWeight: 700 }}>Blocks</h2>
+            <Field label="Subject line">
+              <input value={state.subject} onChange={e => setState({ subject: e.target.value })}
+                placeholder="Your result is in" style={inputStyle} />
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <Field label="From name">
+                <input value={state.fromName} onChange={e => setState({ fromName: e.target.value })}
+                  placeholder="Your brand" style={inputStyle} />
+              </Field>
+              <Field label="From email">
+                <input value={state.fromEmail} onChange={e => setState({ fromEmail: e.target.value })}
+                  placeholder="hello@yourdomain.com" style={inputStyle} />
+              </Field>
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <BlockEditorCanvas
+                blocks={state.blocks!}
+                onChange={handleBlocksChange}
+                selectedBlockId={selectedBlockId}
+                onSelectBlock={setSelectedBlockId}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 style={{ margin: '0 0 18px', fontSize: 20, color: C.TEXT }}>Pick a template</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 24 }}>
+              {EMAIL_TEMPLATES.map(t => (
+                <button key={t.id} onClick={() => pickTemplate(t)} style={{
+                  textAlign: 'left', padding: '12px 14px',
+                  background: state.templateId === t.id ? 'rgba(210,255,29,0.10)' : C.ELEVATED,
+                  border: `1px solid ${state.templateId === t.id ? C.ACCENT : C.BORDER}`,
+                  borderRadius: 10, cursor: 'pointer',
+                }}>
+                  <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 13 }}>{t.name}</div>
+                  <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 2 }}>{t.description}</div>
+                </button>
+              ))}
+            </div>
 
-        <Field label="Subject line">
-          <input value={state.subject} onChange={e => setState({ subject: e.target.value })}
-            placeholder="Your result is in" style={inputStyle} />
-        </Field>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <Field label="From name">
-            <input value={state.fromName} onChange={e => setState({ fromName: e.target.value })}
-              placeholder="Your brand" style={inputStyle} />
-          </Field>
-          <Field label="From email">
-            <input value={state.fromEmail} onChange={e => setState({ fromEmail: e.target.value })}
-              placeholder="hello@yourdomain.com" style={inputStyle} />
-          </Field>
-        </div>
+            <Field label="Subject line">
+              <input value={state.subject} onChange={e => setState({ subject: e.target.value })}
+                placeholder="Your result is in" style={inputStyle} />
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <Field label="From name">
+                <input value={state.fromName} onChange={e => setState({ fromName: e.target.value })}
+                  placeholder="Your brand" style={inputStyle} />
+              </Field>
+              <Field label="From email">
+                <input value={state.fromEmail} onChange={e => setState({ fromEmail: e.target.value })}
+                  placeholder="hello@yourdomain.com" style={inputStyle} />
+              </Field>
+            </div>
 
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Label>{showHtml ? 'HTML' : 'Content'}</Label>
-          <button onClick={() => setShowHtml(v => !v)} style={{
-            background: 'transparent', border: `1px solid ${C.BORDER}`,
-            color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
-          }}>{showHtml ? 'Edit visually' : 'Edit HTML'}</button>
-        </div>
-        <textarea value={state.html} onChange={e => setState({ html: e.target.value })}
-          style={{ ...inputStyle, minHeight: 220, fontFamily: showHtml ? 'ui-monospace,monospace' : 'inherit', fontSize: showHtml ? 12 : 13 }} />
-        <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 6 }}>
-          Variables: {'{{firstName}}'}, {'{{outcomeTitle}}'}, {'{{quizTitle}}'}, {'{{ctaUrl}}'}, {'{{brand}}'}
-        </div>
+            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Label>{showHtml ? 'HTML' : 'Content'}</Label>
+              <button onClick={() => setShowHtml(v => !v)} style={{
+                background: 'transparent', border: `1px solid ${C.BORDER}`,
+                color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+              }}>{showHtml ? 'Edit visually' : 'Edit HTML'}</button>
+            </div>
+            <textarea value={state.html} onChange={e => setState({ html: e.target.value })}
+              style={{ ...inputStyle, minHeight: 220, fontFamily: showHtml ? 'ui-monospace,monospace' : 'inherit', fontSize: showHtml ? 12 : 13 }} />
+            <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 6 }}>
+              Variables: {'{{firstName}}'}, {'{{outcomeTitle}}'}, {'{{quizTitle}}'}, {'{{ctaUrl}}'}, {'{{brand}}'}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* RIGHT: live preview */}
+      {/* CENTER/RIGHT: live preview */}
       <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', minHeight: 600 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <h2 style={{ margin: 0, fontSize: 20, color: C.TEXT }}>Preview</h2>
@@ -98,7 +165,7 @@ export function DesignStep({
               border: '1px solid ' + (darkMode ? '#333' : C.BORDER),
               padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
             }}>
-              <svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+              <svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden="true">
                 <path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/>
               </svg>
               Dark
@@ -110,8 +177,8 @@ export function DesignStep({
                   color: view === v ? '#0a0a0a' : C.TEXT_MUTED,
                   border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 }}>{v === 'desktop'
-                    ? <><svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{marginRight:5,verticalAlign:'middle'}}><rect x='2' y='3' width='20' height='14' rx='2'/><line x1='8' y1='21' x2='16' y2='21'/><line x1='12' y1='17' x2='12' y2='21'/></svg>Desktop</>
-                    : <><svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{marginRight:5,verticalAlign:'middle'}}><rect x='5' y='2' width='14' height='20' rx='2'/><line x1='12' y1='18' x2='12.01' y2='18'/></svg>Mobile</> }</button>
+                    ? <><svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{marginRight:5,verticalAlign:'middle'}} aria-hidden="true"><rect x='2' y='3' width='20' height='14' rx='2'/><line x1='8' y1='21' x2='16' y2='21'/><line x1='12' y1='17' x2='12' y2='21'/></svg>Desktop</>
+                    : <><svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{marginRight:5,verticalAlign:'middle'}} aria-hidden="true"><rect x='5' y='2' width='14' height='20' rx='2'/><line x1='12' y1='18' x2='12.01' y2='18'/></svg>Mobile</> }</button>
               ))}
             </div>
           </div>
@@ -145,10 +212,23 @@ export function DesignStep({
         </div>
       </div>
 
+      {/* RIGHT: inspector panel (block mode only) */}
+      {hasInspector && (
+        <BlockInspector
+          block={selectedBlock}
+          onUpdate={handleBlockUpdate}
+          onClose={() => setSelectedBlockId(null)}
+        />
+      )}
+
       <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-        <GhostButton onClick={onBack}>← Back</GhostButton>
+        <GhostButton onClick={onBack}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginRight: 4, verticalAlign: 'middle' }}><polyline points="15 18 9 12 15 6" /></svg>
+          Back
+        </GhostButton>
         <PrimaryButton onClick={onNext} disabled={!state.subject || !state.html || !state.fromEmail}>
-          Continue to review →
+          Continue to review
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: 4, verticalAlign: 'middle' }}><polyline points="9 18 15 12 9 6" /></svg>
         </PrimaryButton>
       </div>
     </div>
