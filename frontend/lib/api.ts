@@ -67,4 +67,5 @@ export const api = {
   getSuppressions:      ()                          => req('/api/emails/suppressions'),
   addSuppression:       (d: any)                    => req('/api/emails/suppressions',            { method: 'POST', body: JSON.stringify(d) }),
   removeSuppression:    (id: string)                => req('/api/emails/suppressions/' + id,      { method: 'DELETE' }),
+  getFunnel:            (quizId: string, opts?: { exclude_bots?: boolean }) => req('/api/analytics/' + quizId + '/funnel' + (opts?.exclude_bots ? '?exclude_bots=true' : '')),
 };

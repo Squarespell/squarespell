@@ -10,6 +10,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
   const [stats, setStats] = useState<any>(null);
   const [leads, setLeads] = useState<any[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [funnel, setFunnel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [excludeBots, setExcludeBots] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -24,7 +25,8 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
       api.getQuiz(params.quizId),
       api.getAnalytics(params.quizId, { exclude_bots: filterBots }),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/${params.quizId}/leads`, { credentials: 'include' }).then(r => r.ok ? r.json() : []),
-    ]).then(([q, s, l]) => { setQuiz(q); setStats(s); setLeads(l); }).finally(() => setLoading(false));
+      api.getFunnel(params.quizId, { exclude_bots: filterBots }),
+    ]).then(([q, s, l, f]) => { setQuiz(q); setStats(s); setLeads(l); setFunnel(f); }).finally(() => setLoading(false));
   }, [params.quizId]);
 
   useEffect(() => {
@@ -84,12 +86,57 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
         ))}
       </div>
       <div className={styles.funnelCard}>
-        <h2 className={styles.sectionTitle}>Funnel breakdown</h2>
+        <h2 className={styles.sectionTitle}>Full funnel: quiz to email CTR</h2>
         <div className={styles.funnelRows}>
-          {[{label:'Views',value:stats?.views??0,pct:100},{label:'Completions',value:stats?.completions??0,pct:stats?.views?Math.round(((stats?.completions??0)/stats.views)*100):0},{label:'Leads',value:stats?.leads??0,pct:stats?.views?Math.round(((stats?.leads??0)/stats.views)*100):0}].map(row=>(
-            <div key={row.label} className={styles.funnelRow}><div className={styles.funnelLabel}>{row.label}</div><div className={styles.funnelBar}><div className={styles.funnelFill} style={{width:`${row.pct}%`}}/></div><div className={styles.funnelCount}>{row.value}</div><div className={styles.funnelPct}>{row.pct}%</div></div>
-          ))}
+          {(function () {
+            var views = funnel?.viewed ?? stats?.views ?? 0;
+            var completed = funnel?.completed ?? stats?.completions ?? 0;
+            var leads = funnel?.lead_captured ?? stats?.leads ?? 0;
+            var emailSent = funnel?.email_sent ?? 0;
+            var emailClicked = funnel?.email_clicked ?? 0;
+            var pct = function (v: number) { return views > 0 ? Math.round((v / views) * 100) : 0; };
+            return [
+              { label: 'Views', value: views, pct: 100 },
+              { label: 'Completions', value: completed, pct: pct(completed) },
+              { label: 'Leads captured', value: leads, pct: pct(leads) },
+              { label: 'Emails delivered', value: emailSent, pct: pct(emailSent) },
+              { label: 'Email clicks', value: emailClicked, pct: pct(emailClicked) },
+            ];
+          })().map(function (row) {
+            return (
+              <div key={row.label} className={styles.funnelRow}>
+                <div className={styles.funnelLabel}>{row.label}</div>
+                <div className={styles.funnelBar}><div className={styles.funnelFill} style={{ width: row.pct + '%' }} /></div>
+                <div className={styles.funnelCount}>{row.value}</div>
+                <div className={styles.funnelPct}>{row.pct}%</div>
+              </div>
+            );
+          })}
         </div>
+        {funnel?.outcome_breakdown && Object.keys(funnel.outcome_breakdown).length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>Outcome breakdown</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {Object.entries(funnel.outcome_breakdown).map(function (entry) {
+                var outcomeId = entry[0] as string;
+                var count = entry[1] as number;
+                var outcomeTitle = quiz?.outcomes?.find(function (o: any) { return o.id === outcomeId; })?.title || outcomeId;
+                return (
+                  <div key={outcomeId} style={{
+                    padding: '8px 14px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 8,
+                    fontSize: 13,
+                  }}>
+                    <div style={{ fontWeight: 600, color: 'rgba(244,246,248,0.9)' }}>{outcomeTitle}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{count} lead{count !== 1 ? 's' : ''}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
       <div className={styles.leadsCard}>
         <div className={styles.leadsHeader}><h2 className={styles.sectionTitle}>Leads</h2>{leads.length>0&&<button className={styles.exportBtnSmall} onClick={exportCsv} disabled={exporting}>{exporting?'...':'Export CSV'}</button>}</div>

@@ -825,7 +825,52 @@ analyticsRouter.get('/:quizId/funnel', async (req: AuthenticatedRequest, res) =>
   const { count: started } = await botFilter(supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'start'));
   const { count: completed } = await botFilter(supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'complete'));
   const { count: lead_captured } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId);
-  res.json({ viewed: viewed ?? 0, started: started ?? 0, completed: completed ?? 0, lead_captured: lead_captured ?? 0 });
+
+  // Extended funnel: email sends and clicks for leads from this quiz
+  // Join through campaigns that have source_quiz_id matching this quiz
+  const { data: quizCampaigns } = await supabase
+    .from('campaigns')
+    .select('id')
+    .eq('source_quiz_id', req.params.quizId)
+    .eq('tenant_id', req.dbUserId);
+  const campaignIds = (quizCampaigns ?? []).map((c: any) => c.id);
+  let emailSent = 0;
+  let emailClicked = 0;
+  if (campaignIds.length > 0) {
+    const { count: sentCount } = await supabase
+      .from('email_sends')
+      .select('id', { count: 'exact', head: true })
+      .in('campaign_id', campaignIds)
+      .eq('status', 'delivered');
+    emailSent = sentCount ?? 0;
+    const { count: clickCount } = await supabase
+      .from('email_sends')
+      .select('id', { count: 'exact', head: true })
+      .in('campaign_id', campaignIds)
+      .not('clicked_at', 'is', null);
+    emailClicked = clickCount ?? 0;
+  }
+
+  // Outcome breakdown: count leads per outcome
+  const { data: outcomeLeads } = await supabase
+    .from('leads')
+    .select('outcome_id')
+    .eq('quiz_id', req.params.quizId)
+    .not('outcome_id', 'is', null);
+  const outcomeCounts: Record<string, number> = {};
+  (outcomeLeads ?? []).forEach((l: any) => {
+    outcomeCounts[l.outcome_id] = (outcomeCounts[l.outcome_id] || 0) + 1;
+  });
+
+  res.json({
+    viewed: viewed ?? 0,
+    started: started ?? 0,
+    completed: completed ?? 0,
+    lead_captured: lead_captured ?? 0,
+    email_sent: emailSent,
+    email_clicked: emailClicked,
+    outcome_breakdown: outcomeCounts,
+  });
 });
 
 analyticsRouter.get('/:quizId/dropoff', async (req: AuthenticatedRequest, res) => {

@@ -57,7 +57,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 
 ## P4
 
-- [ ] Per-quiz funnel chart (views -> completes -> outcomes -> email CTR)
+- [x] Per-quiz funnel chart (views -> completes -> outcomes -> email CTR)
 - [ ] Per-campaign report tied to originating quiz
 - [ ] Conversion funnel report (quiz view -> complete -> email CTR)
 - [ ] Date-range + comparison picker
