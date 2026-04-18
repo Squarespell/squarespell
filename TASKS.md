@@ -75,7 +75,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [ ] Sync quiz subscribers into Squarespace Newsletter Block
 - [ ] Use Squarespace Scheduling link as booking-outcome CTA
 - [ ] Detect Squarespace template family (7.0 vs 7.1)
-- [ ] Light / dark BrandKit variants
+- [x] Light / dark BrandKit variants
 
 ## P6 (Observability)
 
