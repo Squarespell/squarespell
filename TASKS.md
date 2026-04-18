@@ -60,7 +60,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Per-quiz funnel chart (views -> completes -> outcomes -> email CTR)
 - [x] Per-campaign report tied to originating quiz
 - [x] Conversion funnel report (quiz view -> complete -> email CTR)
-- [ ] Date-range + comparison picker
+- [x] Date-range + comparison picker
 - [ ] Analytics v2 (funnel drop-off, question heatmap)
 - [ ] A/B testing framework for quizzes
 - [ ] Attribution pipeline (quiz -> outcome -> email -> order)

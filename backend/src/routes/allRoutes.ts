@@ -765,16 +765,28 @@ analyticsRouter.get('/:quizId', async (req: AuthenticatedRequest, res) => {
   const { data: quiz } = await supabase.from('quizzes').select('id,view_count,lead_count').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
   if (!quiz) return res.status(404).json({ error: 'Not found' });
   const excludeBots = req.query.exclude_bots === 'true';
-  if (excludeBots) {
-    // Count views and completions excluding bot events
+  const since = req.query.since as string | undefined;
+  const botFilter = (q: any) => excludeBots ? q.or('metadata->is_bot.is.null,metadata->>is_bot.neq.true') : q;
+
+  // When a date range is specified, always count from analytics_events
+  if (since || excludeBots) {
     let viewQ = supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'view');
-    viewQ = viewQ.or('metadata->is_bot.is.null,metadata->>is_bot.neq.true');
-    const { count: viewCount } = await viewQ;
     let compQ = supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'complete');
-    compQ = compQ.or('metadata->is_bot.is.null,metadata->>is_bot.neq.true');
+    let leadQ = supabase.from('leads').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId);
+    if (since) {
+      viewQ = viewQ.gte('created_at', since);
+      compQ = compQ.gte('created_at', since);
+      leadQ = leadQ.gte('created_at', since);
+    }
+    if (excludeBots) {
+      viewQ = viewQ.or('metadata->is_bot.is.null,metadata->>is_bot.neq.true');
+      compQ = compQ.or('metadata->is_bot.is.null,metadata->>is_bot.neq.true');
+    }
+    const { count: viewCount } = await viewQ;
     const { count: completions } = await compQ;
-    const views = viewCount ?? 0; const leads = quiz.lead_count ?? 0; const comp = completions ?? 0;
-    res.json({ views, completions: comp, leads, completion_rate: views > 0 ? Math.round((comp/views)*100) : 0, lead_rate: comp > 0 ? Math.round((leads/comp)*100) : 0, bot_filtered: true });
+    const { count: leadCount } = await leadQ;
+    const views = viewCount ?? 0; const leads = leadCount ?? 0; const comp = completions ?? 0;
+    res.json({ views, completions: comp, leads, completion_rate: views > 0 ? Math.round((comp/views)*100) : 0, lead_rate: comp > 0 ? Math.round((leads/comp)*100) : 0, date_filtered: !!since, bot_filtered: excludeBots });
   } else {
     const { count: completions } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', req.params.quizId).eq('event_type', 'complete');
     const views = quiz.view_count ?? 0; const leads = quiz.lead_count ?? 0; const comp = completions ?? 0;

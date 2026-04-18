@@ -18,20 +18,37 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
     }
     return false;
   });
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('all');
 
-  const loadData = useCallback((filterBots: boolean) => {
+  function sinceDate(range: string): string | undefined {
+    if (range === 'all') return undefined;
+    var days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+    var d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString();
+  }
+
+  function rangeName(range: string): string {
+    if (range === '7d') return 'Last 7 days';
+    if (range === '30d') return 'Last 30 days';
+    if (range === '90d') return 'Last 90 days';
+    return 'All time';
+  }
+
+  const loadData = useCallback((filterBots: boolean, range: string) => {
     setLoading(true);
+    var since = range === 'all' ? undefined : sinceDate(range);
     Promise.all([
       api.getQuiz(params.quizId),
-      api.getAnalytics(params.quizId, { exclude_bots: filterBots }),
+      api.getAnalytics(params.quizId, { exclude_bots: filterBots, since: since }),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/${params.quizId}/leads`, { credentials: 'include' }).then(r => r.ok ? r.json() : []),
       api.getFunnel(params.quizId, { exclude_bots: filterBots }),
     ]).then(([q, s, l, f]) => { setQuiz(q); setStats(s); setLeads(l); setFunnel(f); }).finally(() => setLoading(false));
   }, [params.quizId]);
 
   useEffect(() => {
-    loadData(excludeBots);
-  }, [params.quizId, excludeBots, loadData]);
+    loadData(excludeBots, dateRange);
+  }, [params.quizId, excludeBots, dateRange, loadData]);
 
   function toggleBotFilter() {
     const next = !excludeBots;
@@ -51,7 +68,26 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
       <div className={styles.header}>
         <button className={styles.back} onClick={() => router.push(`/dashboard/${params.quizId}`)}>&#8592; Back to editor</button>
         <div><h1 className={styles.title}>{quiz?.title}</h1><div className={`${styles.status} ${quiz?.status==='live'?styles.live:styles.draft}`}>{quiz?.status}</div></div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: 2 }}>
+            {(['7d', '30d', '90d', 'all'] as const).map(function (r) {
+              var active = r === dateRange;
+              return (
+                <button
+                  key={r}
+                  onClick={function () { setDateRange(r); }}
+                  style={{
+                    padding: '5px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600,
+                    cursor: 'pointer', border: 'none', transition: 'all 0.15s ease',
+                    background: active ? 'rgba(210,255,29,0.15)' : 'transparent',
+                    color: active ? '#D2FF1D' : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  {r === 'all' ? 'All' : r}
+                </button>
+              );
+            })}
+          </div>
           <button
             onClick={toggleBotFilter}
             style={{
@@ -77,7 +113,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
         </div>
       </div>
       <div className={styles.statGrid}>
-        {[{label:'Total views',value:stats?.views??0,unit:'',sub:excludeBots ? 'Humans only' : 'All time'},{label:'Completions',value:stats?.completions??0,unit:'',sub:'Finished the quiz'},{label:'Completion rate',value:stats?.completion_rate??0,unit:'%',sub:'Industry avg 34%',highlight:(stats?.completion_rate??0)>=34},{label:'Leads captured',value:stats?.leads??0,unit:'',sub:'Emails collected'},{label:'Lead rate',value:stats?.lead_rate??0,unit:'%',sub:'Industry avg 42%',highlight:(stats?.lead_rate??0)>=42}].map(s=>(
+        {[{label:'Total views',value:stats?.views??0,unit:'',sub:rangeName(dateRange) + (excludeBots ? ' (humans only)' : '')},{label:'Completions',value:stats?.completions??0,unit:'',sub:'Finished the quiz'},{label:'Completion rate',value:stats?.completion_rate??0,unit:'%',sub:'Industry avg 34%',highlight:(stats?.completion_rate??0)>=34},{label:'Leads captured',value:stats?.leads??0,unit:'',sub:'Emails collected'},{label:'Lead rate',value:stats?.lead_rate??0,unit:'%',sub:'Industry avg 42%',highlight:(stats?.lead_rate??0)>=42}].map(s=>(
           <div key={s.label} className={`${styles.statCard} ${s.highlight?styles.statHighlight:''}`}>
             <div className={styles.statValue}>{s.value}<span className={styles.statUnit}>{s.unit}</span></div>
             <div className={styles.statLabel}>{s.label}</div>
