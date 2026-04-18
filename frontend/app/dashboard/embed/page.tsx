@@ -1,4 +1,5 @@
 'use client';
+import { useToast } from '@/lib/toast';
 
 /**
  * /dashboard/embed - Embed snippets + install instructions for every quiz.
@@ -48,6 +49,7 @@ const MODE_LABELS: Record<EmbedMode, { label: string; desc: string }> = {
 };
 
 function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
+  const { success: toastSuccess } = useToast();
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState<EmbedMode>('inline');
   const snippet = buildSnippet(quiz.slug, mode);
@@ -56,6 +58,7 @@ function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
     if (typeof navigator === 'undefined' || !navigator.clipboard) return;
     navigator.clipboard.writeText(snippet).then(() => {
       setCopied(true);
+      toastSuccess('Embed code copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     });
   };

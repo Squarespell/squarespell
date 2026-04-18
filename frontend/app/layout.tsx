@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { setAuthToken } from '../lib/api';
 import { startKeepAlive } from '../lib/keepAlive';
+import { ToastProvider } from '../lib/toast';
 import './globals.css';
 
 function AuthTokenSync() {
@@ -98,10 +99,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en">
         <head><link rel="preconnect" href="https://fonts.googleapis.com" /><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></head>
         <body>
+          <ToastProvider>
           <AuthTokenSync />
           <KeepAlive />
           {children}
           <Footer />
+          </ToastProvider>
         </body>
       </html>
     </ClerkProvider>

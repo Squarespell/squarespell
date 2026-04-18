@@ -1,4 +1,5 @@
 'use client';
+import { useToast } from '@/lib/toast';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -33,6 +34,7 @@ const inputStyle: React.CSSProperties = {
 export default function CampaignDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const { token, status: authStatus } = useDashboardAuth();
   const campaignId = params?.id as string;
 
@@ -139,7 +141,7 @@ export default function CampaignDetailPage() {
       await deleteCampaign(campaign.id);
       router.push('/dashboard/emails');
     } catch (e: any) {
-      alert('Delete failed: ' + (e?.message || 'unknown'));
+      showError('Delete failed: ' + (e?.message || 'unknown'));
       setDeleting(false);
     }
   }
