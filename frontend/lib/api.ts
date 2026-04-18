@@ -48,7 +48,7 @@ export const api = {
   publishQuiz:          (id: string)                => req('/api/quizzes/' + id + '/publish',  { method: 'POST' }),
   deleteQuiz:           (id: string)                => req('/api/quizzes/' + id,               { method: 'DELETE' }),
   getLeads:             (quizId: string)            => req('/api/leads/' + quizId),
-  getAnalytics:         (quizId: string)            => req('/api/analytics/' + quizId),
+  getAnalytics:         (quizId: string, opts?: { exclude_bots?: boolean }) => req('/api/analytics/' + quizId + (opts?.exclude_bots ? '?exclude_bots=true' : '')),
   scrapeBrand:          (url: string)               => req('/api/scrape-brand',                { method: 'POST', body: JSON.stringify({ url }) }),
   createCheckout:       (planId: string)            => req('/api/stripe/checkout',             { method: 'POST', body: JSON.stringify({ planId }) }),
   getSubscription:      ()                          => req('/api/stripe/subscription'),

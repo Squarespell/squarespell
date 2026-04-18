@@ -48,7 +48,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [ ] Dark-mode email-client preview
 - [ ] Global search (cmd+k) across quizzes, campaigns, contacts
 - [ ] Outcomes routing visualization in builder
-- [ ] Trash + restore for campaigns and quizzes
+- [x] Trash + restore for campaigns and quizzes
 - [ ] Bot filtering toggle
 - [ ] Segments = quiz answers audience builder
 - [ ] Add Templates sidebar nav entry under Emails
