@@ -1082,6 +1082,74 @@ analyticsRouter.get('/:quizId/time-to-complete', async (req: AuthenticatedReques
   });
 });
 
+// Question-level answer heatmap and drop-off from leads data
+analyticsRouter.get('/:quizId/question-heatmap', async (req: AuthenticatedRequest, res) => {
+  const { data: quiz } = await supabase
+    .from('quizzes')
+    .select('id, questions')
+    .eq('id', req.params.quizId)
+    .eq('user_id', req.dbUserId)
+    .single();
+  if (!quiz) return res.status(404).json({ error: 'Not found' });
+
+  const questions: any[] = quiz.questions || [];
+  if (questions.length === 0) return res.json({ questions: [], total_leads: 0 });
+
+  // Fetch all leads with answers for this quiz
+  const { data: leadsData } = await supabase
+    .from('leads')
+    .select('answers')
+    .eq('quiz_id', req.params.quizId)
+    .not('answers', 'is', null);
+
+  const leads = leadsData || [];
+  const totalLeads = leads.length;
+
+  // Build per-question stats
+  const questionStats = questions.map((q: any, qi: number) => {
+    const optionCounts: Record<number, number> = {};
+    const optionCount = (q.options || []).length;
+    for (let oi = 0; oi < optionCount; oi++) {
+      optionCounts[oi] = 0;
+    }
+
+    let answered = 0;
+    leads.forEach((lead: any) => {
+      const ans = lead.answers;
+      if (ans && ans[String(qi)] !== undefined) {
+        answered++;
+        const selectedOption = Number(ans[String(qi)]);
+        if (optionCounts[selectedOption] !== undefined) {
+          optionCounts[selectedOption]++;
+        }
+      }
+    });
+
+    const options = (q.options || []).map((opt: any, oi: number) => {
+      const count = optionCounts[oi] || 0;
+      return {
+        index: oi,
+        text: opt.text || '',
+        count,
+        pct: answered > 0 ? Math.round((count / answered) * 100) : 0,
+        score: opt.score || 0,
+      };
+    });
+
+    return {
+      index: qi,
+      text: q.text || '',
+      type: q.type || 'multiple_choice',
+      answered,
+      dropoff: qi === 0 ? 0 : Math.max(0, totalLeads - answered),
+      dropoff_rate: totalLeads > 0 ? Math.round(((totalLeads - answered) / totalLeads) * 100) : 0,
+      options,
+    };
+  });
+
+  res.json({ questions: questionStats, total_leads: totalLeads });
+});
+
 // ── Scrape Brand ──────────────────────────────────────────────────────────────
 export const scrapeBrandRouter = Router();
 scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res) => {

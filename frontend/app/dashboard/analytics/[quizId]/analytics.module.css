@@ -40,4 +40,20 @@
 .table tr:last-child td { border-bottom: none; }
 .table tr:hover td { background: #141f0a; }
 .outcomePill { font-size: 11px; padding: 3px 10px; background: #141f0a; border: 1px solid #2a3e14; border-radius: 10px; color: #4a6020; white-space: nowrap; }
-@media (max-width: 480px) { .statGrid { grid-template-columns: 1fr 1fr; } .header { flex-direction: column; align-items: flex-start; } .exportBtn { width: 100%; } }
+.heatmapCard { background: #0d1509; border: 1px solid #2a3e14; border-radius: 14px; padding: 28px; margin-bottom: 24px; }
+.heatmapQuestion { margin-bottom: 24px; }
+.heatmapQuestion:last-child { margin-bottom: 0; }
+.heatmapQHeader { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.heatmapQNum { font-size: 11px; font-weight: 700; color: #D2FF1D; background: rgba(210,255,29,0.1); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.heatmapQText { font-size: 14px; color: #e8f5c8; font-weight: 600; }
+.heatmapMeta { font-size: 11px; color: #4a6020; margin-left: auto; white-space: nowrap; }
+.heatmapOptions { display: flex; flex-direction: column; gap: 6px; }
+.heatmapOption { display: grid; grid-template-columns: minmax(80px, 180px) 1fr 44px 38px; align-items: center; gap: 10px; }
+.heatmapOptLabel { font-size: 12px; color: rgba(244,246,248,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.heatmapBar { height: 6px; background: #141f0a; border-radius: 3px; overflow: hidden; }
+.heatmapBarFill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.heatmapOptCount { font-size: 11px; color: rgba(244,246,248,0.5); text-align: right; }
+.heatmapOptPct { font-size: 11px; color: #4a6020; text-align: right; font-weight: 600; }
+.heatmapDropoff { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11px; color: #4a6020; }
+.heatmapDropoffBad { color: #ff6b6b; }
+@media (max-width: 480px) { .statGrid { grid-template-columns: 1fr 1fr; } .header { flex-direction: column; align-items: flex-start; } .exportBtn { width: 100%; } .heatmapOption { grid-template-columns: minmax(60px, 120px) 1fr 36px 32px; } }

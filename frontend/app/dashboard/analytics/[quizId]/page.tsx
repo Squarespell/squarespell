@@ -19,6 +19,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
     return false;
   });
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('all');
+  const [heatmap, setHeatmap] = useState<any>(null);
 
   function sinceDate(range: string): string | undefined {
     if (range === 'all') return undefined;
@@ -43,7 +44,8 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
       api.getAnalytics(params.quizId, { exclude_bots: filterBots, since: since }),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/${params.quizId}/leads`, { credentials: 'include' }).then(r => r.ok ? r.json() : []),
       api.getFunnel(params.quizId, { exclude_bots: filterBots }),
-    ]).then(([q, s, l, f]) => { setQuiz(q); setStats(s); setLeads(l); setFunnel(f); }).finally(() => setLoading(false));
+      api.getQuestionHeatmap(params.quizId).catch(function () { return null; }),
+    ]).then(([q, s, l, f, h]) => { setQuiz(q); setStats(s); setLeads(l); setFunnel(f); setHeatmap(h); }).finally(() => setLoading(false));
   }, [params.quizId]);
 
   useEffect(() => {
@@ -174,6 +176,45 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
           </div>
         )}
       </div>
+      {heatmap && heatmap.questions && heatmap.questions.length > 0 && (
+        <div className={styles.heatmapCard}>
+          <h2 className={styles.sectionTitle}>Question heatmap</h2>
+          {heatmap.questions.map(function (q: any, qi: number) {
+            var maxCount = Math.max(1, ...(q.options || []).map(function (o: any) { return o.count; }));
+            var barColors = ['#D2FF1D', '#86c232', '#4a9e3f', '#3b7dd8', '#9b59b6', '#e67e22', '#e74c3c', '#1abc9c'];
+            return (
+              <div key={qi} className={styles.heatmapQuestion}>
+                <div className={styles.heatmapQHeader}>
+                  <span className={styles.heatmapQNum}>Q{qi + 1}</span>
+                  <span className={styles.heatmapQText}>{q.text}</span>
+                  <span className={styles.heatmapMeta}>{q.answered} answered</span>
+                </div>
+                <div className={styles.heatmapOptions}>
+                  {(q.options || []).map(function (opt: any, oi: number) {
+                    var color = barColors[oi % barColors.length];
+                    return (
+                      <div key={oi} className={styles.heatmapOption}>
+                        <span className={styles.heatmapOptLabel} title={opt.text}>{opt.text}</span>
+                        <div className={styles.heatmapBar}>
+                          <div className={styles.heatmapBarFill} style={{ width: (opt.count / maxCount * 100) + '%', background: color }} />
+                        </div>
+                        <span className={styles.heatmapOptCount}>{opt.count}</span>
+                        <span className={styles.heatmapOptPct}>{opt.pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {q.dropoff > 0 && (
+                  <div className={q.dropoff_rate > 20 ? styles.heatmapDropoff + ' ' + styles.heatmapDropoffBad : styles.heatmapDropoff}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 13 12 18 17 13" /><polyline points="7 6 12 11 17 6" /></svg>
+                    {q.dropoff} dropped off ({q.dropoff_rate}%)
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className={styles.leadsCard}>
         <div className={styles.leadsHeader}><h2 className={styles.sectionTitle}>Leads</h2>{leads.length>0&&<button className={styles.exportBtnSmall} onClick={exportCsv} disabled={exporting}>{exporting?'...':'Export CSV'}</button>}</div>
         {leads.length===0?<EmptyState title="No leads yet" body="Share your quiz to start collecting emails." />:(
