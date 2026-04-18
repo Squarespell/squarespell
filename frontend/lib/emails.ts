@@ -58,6 +58,14 @@ export async function createCampaign(p: Partial<Campaign>): Promise<Campaign> {
   return req('/api/emails/campaigns', { method: 'POST', body: JSON.stringify(p) });
 }
 
+export async function updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign> {
+  return req(`/api/emails/campaigns/${id}`, { method: 'PATCH', body: JSON.stringify(updates) });
+}
+
+export async function deleteCampaign(id: string): Promise<{deleted:boolean}> {
+  return req(`/api/emails/campaigns/${id}`, { method: 'DELETE' });
+}
+
 export async function sendCampaign(id: string, recipients?: string[]) {
   return req<{sent:number;skipped:number;resolved?:number;results:any[]}>(
     `/api/emails/campaigns/${id}/send`,

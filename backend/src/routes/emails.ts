@@ -113,6 +113,41 @@ r.post('/campaigns', async (req, res) => {
   res.json(data);
 });
 
+r.patch('/campaigns/:id', async (req, res) => {
+  const tenantId = req.dbUserId;
+  const { data: existing } = await supabase.from('email_campaigns')
+    .select('status').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!existing) return res.status(404).json({ error: 'Campaign not found' });
+  if (existing.status === 'sent' || existing.status === 'sending') {
+    return res.status(400).json({ error: 'Cannot edit a sent campaign' });
+  }
+  const allowed = ['name', 'subject', 'from_name', 'from_email', 'html',
+    'mode', 'source_quiz_id', 'source_filters', 'trigger_type', 'trigger_delay_minutes'];
+  const updates: Record<string, any> = {};
+  for (const k of allowed) {
+    if (req.body[k] !== undefined) updates[k] = req.body[k];
+  }
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No valid fields' });
+  const { data, error } = await supabase.from('email_campaigns')
+    .update(updates).eq('id', req.params.id).eq('tenant_id', tenantId).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+r.delete('/campaigns/:id', async (req, res) => {
+  const tenantId = req.dbUserId;
+  const { data: existing } = await supabase.from('email_campaigns')
+    .select('status').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!existing) return res.status(404).json({ error: 'Campaign not found' });
+  if (existing.status === 'sending') {
+    return res.status(400).json({ error: 'Cannot delete while sending' });
+  }
+  const { error } = await supabase.from('email_campaigns')
+    .delete().eq('id', req.params.id).eq('tenant_id', tenantId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ deleted: true });
+});
+
 r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
   const tenantId = req.dbUserId;
   const body = req.body || {};
