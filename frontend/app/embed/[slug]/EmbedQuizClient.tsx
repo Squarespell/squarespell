@@ -569,6 +569,13 @@ export default function EmbedQuizClient({
           .sq-q { font-size: 18px; }
           .sq-title { font-size: 20px; }
         }
+
+        /* Container queries can't target the container itself, so .sq-root
+           padding must use @media. In an iframe the viewport IS the embed
+           width, so this fires correctly on narrow embeds. */
+        @media (max-width: 540px) {
+          .sq-root { padding: 20px 14px 32px; }
+        }
       ` }} />
 
       <div className="sq-root">
