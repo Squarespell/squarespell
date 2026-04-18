@@ -115,9 +115,7 @@ export async function assignVariant(
       throw insertError;
     }
 
-    console.log(
-      `[ABTesting] Assigned visitor ${visitorId} to variant ${selectedVariant.variant_id}`
-    );
+    log.info('[ABTesting] Assigned visitor to variant', { visitorId, variantId: selectedVariant.variant_id });
 
     return {
       variant_id: selectedVariant.variant_id,

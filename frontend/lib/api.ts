@@ -77,4 +77,10 @@ export const api = {
   removeSuppression:    (id: string)                => req('/api/emails/suppressions/' + id,      { method: 'DELETE' }),
   getFunnel:            (quizId: string, opts?: { exclude_bots?: boolean }) => req('/api/analytics/' + quizId + '/funnel' + (opts?.exclude_bots ? '?exclude_bots=true' : '')),
   getQuestionHeatmap:   (quizId: string) => req('/api/analytics/' + quizId + '/question-heatmap'),
+  // A/B Testing
+  listABTests:          (quizId: string)            => req('/api/quizzes/' + quizId + '/ab-tests'),
+  createABTest:         (quizId: string, d: any)    => req('/api/quizzes/' + quizId + '/ab-tests',          { method: 'POST', body: JSON.stringify(d) }),
+  getABTest:            (testId: string)            => req('/api/quizzes/tests/' + testId),
+  updateABTestStatus:   (testId: string, status: string) => req('/api/quizzes/tests/' + testId,             { method: 'PATCH', body: JSON.stringify({ status }) }),
+  declareABTestWinner:  (testId: string, variantId: string) => req('/api/quizzes/tests/' + testId + '/winner', { method: 'POST', body: JSON.stringify({ variant_id: variantId }) }),
 };

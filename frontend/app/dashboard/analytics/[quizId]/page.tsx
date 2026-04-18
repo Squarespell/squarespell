@@ -111,6 +111,26 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
             </svg>
             {excludeBots ? 'Bots excluded' : 'Include bots'}
           </button>
+          <button
+            onClick={function () { router.push('/dashboard/analytics/' + params.quizId + '/ab-tests'); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', transition: 'all 0.15s ease',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.5)',
+              fontFamily: '"DM Sans",system-ui,sans-serif',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 3h5v5" />
+              <path d="M8 3H3v5" />
+              <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" />
+              <path d="m15 9 6-6" />
+            </svg>
+            A/B tests
+          </button>
           <button className={styles.exportBtn} onClick={exportCsv} disabled={exporting||leads.length===0}>{exporting?'Exporting...':`Export ${leads.length} leads CSV`}</button>
         </div>
       </div>
