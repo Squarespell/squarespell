@@ -31,13 +31,26 @@ type Quiz = {
   status: 'live' | 'draft';
 };
 
-function buildSnippet(slug: string): string {
-  return embedSnippet(slug);
+type EmbedMode = 'inline' | 'popup' | 'tab';
+
+function buildSnippet(slug: string, mode: EmbedMode = 'inline'): string {
+  if (mode === 'inline') return embedSnippet(slug);
+  if (mode === 'popup') return `<div data-squarespell-quiz="${slug}" data-mode="popup" data-button-text="Take the quiz"></div>
+<script src="${embedScriptUrl()}" async></script>`;
+  return `<div data-squarespell-quiz="${slug}" data-mode="tab" data-button-text="Take our quiz"></div>
+<script src="${embedScriptUrl()}" async></script>`;
 }
+
+const MODE_LABELS: Record<EmbedMode, { label: string; desc: string }> = {
+  inline: { label: 'Inline', desc: 'Embeds directly in the page flow' },
+  popup: { label: 'Popup', desc: 'Opens in a centered overlay on click' },
+  tab: { label: 'Tab', desc: 'Sticky tab on the side of the screen' },
+};
 
 function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
   const [copied, setCopied] = useState(false);
-  const snippet = buildSnippet(quiz.slug);
+  const [mode, setMode] = useState<EmbedMode>('inline');
+  const snippet = buildSnippet(quiz.slug, mode);
 
   const handleCopy = () => {
     if (typeof navigator === 'undefined' || !navigator.clipboard) return;
@@ -68,6 +81,26 @@ function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
         <Pill variant={quiz.status === 'live' ? 'live' : 'draft'}>{quiz.status}</Pill>
       </div>
 
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        {(['inline', 'popup', 'tab'] as EmbedMode[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => { setMode(m); setCopied(false); }}
+            style={{
+              padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+              border: `1px solid ${mode === m ? C.ACCENT : C.BORDER}`,
+              background: mode === m ? 'rgba(210,255,29,0.1)' : 'transparent',
+              color: mode === m ? C.ACCENT : C.TEXT_MUTED,
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            {MODE_LABELS[m].label}
+          </button>
+        ))}
+        <span style={{ fontSize: 11.5, color: C.TEXT_MUTED, alignSelf: 'center', marginLeft: 4 }}>
+          {MODE_LABELS[mode].desc}
+        </span>
+      </div>
       <div
         style={{
           background: C.SURFACE,
@@ -79,6 +112,7 @@ function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
           fontSize: 12.5,
           color: C.TEXT_MUTED,
           overflowX: 'auto',
+          whiteSpace: 'pre-wrap',
           wordBreak: 'break-all',
         }}
       >
