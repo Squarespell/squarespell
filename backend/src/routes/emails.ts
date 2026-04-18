@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { isUnsubscribed, buildUnsubscribeHeaders, canSpamFooterHtml } from '../services/unsubscribe';
+import { applyMergeTags, buildMergeContextFromData, MergeContext } from '../services/mergeTags';
 import { requireAuth, attachUser } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import { resendProvider } from '../services/email/resendProvider';
@@ -184,6 +185,28 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
 
   const { used, cap, periodStart } = (req as any).emailQuota;
   const allowed = recipients.slice(0, Math.max(0, cap - used));
+
+  // Pre-fetch quiz data + lead rows so we can resolve merge tags per recipient
+  let quizData: any = null;
+  if (c.source_quiz_id) {
+    const { data: qd } = await supabase.from('quizzes')
+      .select('title, slug, questions, outcomes, branding')
+      .eq('id', c.source_quiz_id).single();
+    quizData = qd;
+  }
+  // Batch-fetch leads for all allowed recipients in one query
+  const leadsByEmail: Record<string, any> = {};
+  if (allowed.length > 0 && c.source_quiz_id) {
+    const { data: leadRows } = await supabase.from('leads')
+      .select('email, name, answers, outcome_id, score')
+      .eq('quiz_id', c.source_quiz_id)
+      .in('email', allowed);
+    for (const row of leadRows || []) {
+      const e = (row.email || '').trim().toLowerCase();
+      if (e) leadsByEmail[e] = row;
+    }
+  }
+
   const results: any[] = [];
   for (const to of allowed) {
     const { data: send, error: sendErr } = await supabase.from('email_sends').insert({
@@ -191,17 +214,22 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     }).select().single();
     if (sendErr) { results.push({ to, ok: false, error: sendErr.message }); continue; }
     try {
+      // Build per-recipient merge context and resolve tags
+      const leadRow = leadsByEmail[to] || { email: to };
+      const mergeCtx = buildMergeContextFromData(leadRow, quizData || {});
+      const resolvedSubject = applyMergeTags(c.subject || '', mergeCtx);
+      let resolvedHtml = applyMergeTags(c.html || '', mergeCtx);
+
       // Inject CAN-SPAM footer with business address + unsubscribe link
       const footer = canSpamFooterHtml(to, { siteName: c.from_name });
-      let html = c.html || '';
-      if (html.includes('</body>')) {
-        html = html.replace('</body>', footer + '</body>');
+      if (resolvedHtml.includes('</body>')) {
+        resolvedHtml = resolvedHtml.replace('</body>', footer + '</body>');
       } else {
-        html += footer;
+        resolvedHtml += footer;
       }
       const { messageId } = await resendProvider.send({
         to, from: c.from_email, fromName: c.from_name,
-        subject: c.subject, html,
+        subject: resolvedSubject, html: resolvedHtml,
         headers: { 'X-Send-Id': send!.id, ...buildUnsubscribeHeaders(to) },
         tags: [{ name: 'campaign', value: c.id }],
       });

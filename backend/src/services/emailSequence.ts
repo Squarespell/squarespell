@@ -1,6 +1,7 @@
 import { supabase } from '../db/supabaseClient';
 import { Resend } from 'resend';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterHtml } from './unsubscribe';
+import { applyMergeTags, buildMergeContextFromData } from './mergeTags';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -199,7 +200,10 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
           id,
           email,
           name,
-          quiz_id
+          quiz_id,
+          answers,
+          outcome_id,
+          score
         )
         `
       )
@@ -254,15 +258,34 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
         // Get quiz info for branding
         const { data: quiz } = await supabase
           .from('quizzes')
-          .select('title, branding')
+          .select('title, slug, questions, outcomes, branding')
           .eq('id', leadData.quiz_id)
           .single();
 
         const primaryColor = (quiz?.branding as any)?.colors?.primary || '#D2FF1D';
         const siteName = (quiz?.branding as any)?.site_name || 'Squarespell Quiz';
 
+        // Resolve merge tags ({{outcome_name}}, {{answer:q1}}, etc.)
+        const mergeCtx = buildMergeContextFromData(
+          {
+            email: leadData.email,
+            name: leadData.name,
+            answers: leadData.answers,
+            outcome_id: leadData.outcome_id,
+            score: leadData.score,
+          },
+          {
+            title: quiz?.title,
+            slug: (quiz as any)?.slug,
+            questions: quiz?.questions as any[],
+            outcomes: quiz?.outcomes as any[],
+            branding: quiz?.branding as Record<string, any>,
+          },
+        );
+        const resolvedSubject = applyMergeTags(emailConfig.subject, mergeCtx);
+
         // Build HTML email body
-        let htmlBody = emailConfig.body;
+        let htmlBody = applyMergeTags(emailConfig.body, mergeCtx);
 
         // If body doesn't look like HTML, wrap it in basic styling
         if (!htmlBody.includes('<html') && !htmlBody.includes('<!DOCTYPE')) {
@@ -302,7 +325,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
         await resend.emails.send({
           from: `${siteName} <results@squarespell.com>`,
           to: leadData.email,
-          subject: emailConfig.subject,
+          subject: resolvedSubject,
           html: htmlBody,
           headers: unsubHeaders,
         });

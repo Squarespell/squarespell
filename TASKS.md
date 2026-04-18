@@ -9,10 +9,10 @@ Durable task list. Edit freely. Order within a priority band is rough.
 
 ## P0 (do next)
 
-- [ ] Unsubscribe link + public endpoint + branded preference page
-- [ ] CAN-SPAM footer with business address
-- [ ] Onboarding checklist widget with % complete
-- [ ] Merge tags: {{outcome_name}}, {{answer:slug}}, {{quiz_name}}
+- [x] Unsubscribe link + public endpoint + branded preference page
+- [x] CAN-SPAM footer with business address
+- [x] Onboarding checklist widget with % complete
+- [x] Merge tags: {{outcome_name}}, {{answer:slug}}, {{quiz_name}}
 - [ ] Persistent top banner slot (trial, billing, announcements)
 
 ## P1
