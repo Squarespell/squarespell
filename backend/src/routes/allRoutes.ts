@@ -1010,13 +1010,13 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
 export const userRouter = Router();
 userRouter.use(requireAuth, attachUser);
 userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
-  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email').eq('id', req.dbUserId).single();
+  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications').eq('id', req.dbUserId).single();
   if (!user) return res.status(404).json({ error: 'Not found' });
   const plan = user.plan || 'trial';
   const trialEndsAt = (plan === 'free' || plan === 'trial') && user.created_at
     ? new Date(new Date(user.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
     : null;
-  res.json({ plan, quiz_count: user.quiz_count, limits: getPlanLimits(plan), trial_ends_at: trialEndsAt, email: user.email || '' });
+  res.json({ plan, quiz_count: user.quiz_count, limits: getPlanLimits(plan), trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false });
 });
 userRouter.post('/notifications', async (req: AuthenticatedRequest, res) => {
   const { enabled } = req.body;
