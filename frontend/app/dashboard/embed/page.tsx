@@ -147,34 +147,83 @@ function QuizEmbedCard({ quiz }: { quiz: Quiz }) {
 }
 
 function InstallGuide() {
-  const steps = [
+  const [method, setMethod] = useState<'block' | 'injection'>('block');
+
+  const blockSteps = [
     {
       title: 'Copy your quiz snippet',
-      body: 'Click "Copy snippet" on any quiz above. The snippet contains a single <script> tag tied to that specific quiz.',
+      body: 'Click "Copy snippet" on any quiz card above. The snippet is a single <script> tag tied to that specific quiz.',
     },
     {
-      title: 'Open your Squarespace site',
-      body: 'In Squarespace, navigate to the page where you want the quiz to appear. You can place it on your homepage, a landing page, or a dedicated "/quiz" URL.',
+      title: 'Edit the target page in Squarespace',
+      body: 'Open your Squarespace site editor and navigate to the page where the quiz should appear - homepage, a landing page, or a dedicated "/quiz" page.',
     },
     {
-      title: 'Add a Code block',
-      body: 'Click "Edit" on the page, press the "+" to add a block, and choose "Code". Paste the snippet into the code block exactly as copied - don\'t wrap it in any other HTML.',
+      title: 'Insert a Code block',
+      body: 'Click the insert point (+) where you want the quiz, choose "Code" from the block picker. Toggle "Display Source" OFF. Paste the snippet exactly as copied.',
     },
     {
-      title: 'Save and publish',
-      body: 'Save the page and publish your changes. The quiz will auto-mount where you placed the snippet. You can move the code block around just like any other block.',
+      title: 'Save and preview',
+      body: 'Save the page and preview it. The quiz auto-mounts inside the Code block. You can drag the block around just like any other Squarespace block.',
     },
   ];
+
+  const injectionSteps = [
+    {
+      title: 'Copy your quiz snippet',
+      body: 'Click "Copy snippet" above. For site-wide injection, use the "tab" or "popup" mode so the quiz floats on every page.',
+    },
+    {
+      title: 'Open Code Injection settings',
+      body: 'In Squarespace, go to Settings, then Advanced, then Code Injection. Available on Business plan and above.',
+    },
+    {
+      title: 'Paste in the Header section',
+      body: 'Paste the snippet into the "Header" field. This loads on every page immediately. Header is recommended for popup and tab modes.',
+    },
+    {
+      title: 'Save',
+      body: 'Click Save. The quiz will now appear on every page of your site. For page-specific placement, use the Code Block method instead.',
+    },
+  ];
+
+  const steps = method === 'block' ? blockSteps : injectionSteps;
 
   return (
     <Card>
       <h2 style={{ margin: '0 0 6px 0', fontSize: 18, fontWeight: 700, color: C.TEXT }}>
         Install on Squarespace
       </h2>
-      <p style={{ margin: '0 0 22px 0', fontSize: 13.5, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
-        Your quiz ships as a single &lt;script&gt; tag. Drop it into any Squarespace Code block
-        and it will mount automatically. No custom CSS, no build step, no theme changes.
+      <p style={{ margin: '0 0 14px 0', fontSize: 13.5, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
+        Your quiz ships as a single &lt;script&gt; tag. Choose how to install it:
       </p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {([
+          { id: 'block' as const, label: 'Code Block', hint: 'Place on a specific page' },
+          { id: 'injection' as const, label: 'Code Injection', hint: 'Show on every page' },
+        ]).map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => setMethod(m.id)}
+            style={{
+              flex: 1,
+              padding: '10px 14px',
+              border: `1.5px solid ${method === m.id ? C.ACCENT : C.BORDER}`,
+              borderRadius: 10,
+              background: method === m.id ? 'rgba(210,255,29,0.08)' : 'transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all .15s ease',
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 700, color: method === m.id ? C.ACCENT : C.TEXT, marginBottom: 2 }}>
+              {m.label}
+            </div>
+            <div style={{ fontSize: 11.5, color: C.TEXT_MUTED }}>{m.hint}</div>
+          </button>
+        ))}
+      </div>
       <ol style={{ margin: 0, padding: 0, listStyle: 'none' }}>
         {steps.map((step, i) => (
           <li
