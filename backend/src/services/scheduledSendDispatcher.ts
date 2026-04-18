@@ -17,9 +17,15 @@ async function resolveRecipients(
   sourceQuizId: string,
   filters: any = {},
 ): Promise<string[]> {
+  // Check if quiz has GDPR consent enabled - if so, only include consented leads
+  const { data: quizRow } = await supabase.from('quizzes')
+    .select('settings').eq('id', sourceQuizId).single();
+  const gdprEnabled = (quizRow?.settings as any)?.gdpr_consent_enabled === true;
+
   let q = supabase.from('leads').select('email')
     .eq('user_id', tenantId).eq('quiz_id', sourceQuizId)
     .is('archived_at', null).not('email', 'is', null);
+  if (gdprEnabled) q = q.eq('consent', true);
   if (filters?.outcome_id) q = q.eq('outcome_id', filters.outcome_id);
   if (typeof filters?.min_score === 'number') q = q.gte('score', filters.min_score);
   if (typeof filters?.max_score === 'number') q = q.lte('score', filters.max_score);

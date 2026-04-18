@@ -510,6 +510,17 @@ export default function QuizBuilderPage() {
         </div>
       </div>
 
+      {/* Settings Panel */}
+      <SettingsPanel
+        settings={quiz.settings || {}}
+        onUpdate={(key: string, value: any) => {
+          setQuiz(prev => prev ? {
+            ...prev,
+            settings: { ...(prev.settings || {}), [key]: value },
+          } : prev);
+        }}
+      />
+
       {/* Toast */}
       {toast && (
         <div
@@ -1461,6 +1472,88 @@ function OutcomesPanel({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ========================================================================= */
+/* SettingsPanel Component                                                   */
+/* ========================================================================= */
+function SettingsPanel({
+  settings,
+  onUpdate,
+}: {
+  settings: any;
+  onUpdate: (key: string, value: any) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const gdprEnabled = settings.gdpr_consent_enabled === true;
+  const gdprText = settings.gdpr_consent_text || '';
+
+  return (
+    <div style={{
+      margin: '0 16px 16px',
+      background: COLORS.SURFACE,
+      border: `1px solid ${COLORS.BORDER}`,
+      borderRadius: 8,
+      overflow: 'hidden',
+    }}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 16px', background: 'transparent', border: 'none',
+          color: COLORS.TEXT, cursor: 'pointer', fontSize: 15, fontWeight: 600,
+        }}
+      >
+        <span>Settings</span>
+        <span style={{ color: COLORS.TEXT_MUTED, fontSize: 12 }}>{expanded ? 'Collapse' : 'Expand'}</span>
+      </button>
+
+      {expanded && (
+        <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* GDPR Consent */}
+          <div style={{
+            background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}`,
+            borderRadius: 6, padding: 14,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: gdprEnabled ? 12 : 0 }}>
+              <input
+                type="checkbox"
+                checked={gdprEnabled}
+                onChange={e => onUpdate('gdpr_consent_enabled', e.target.checked)}
+                style={{ accentColor: COLORS.ACCENT, cursor: 'pointer' }}
+              />
+              <div>
+                <div style={{ color: COLORS.TEXT, fontSize: 13, fontWeight: 600 }}>
+                  Require GDPR consent
+                </div>
+                <div style={{ color: COLORS.TEXT_MUTED, fontSize: 11, marginTop: 2 }}>
+                  Show a consent checkbox on the lead capture step. Emails will only be sent to leads who opt in.
+                </div>
+              </div>
+            </div>
+            {gdprEnabled && (
+              <div>
+                <label style={{ fontSize: 11, color: COLORS.TEXT_MUTED, display: 'block', marginBottom: 4 }}>
+                  Consent text
+                </label>
+                <input
+                  type="text"
+                  value={gdprText}
+                  onChange={e => onUpdate('gdpr_consent_text', e.target.value)}
+                  placeholder="I agree to receive communications from this business"
+                  style={{
+                    width: '100%', padding: '8px 10px',
+                    background: COLORS.SURFACE, border: `1px solid ${COLORS.BORDER}`,
+                    borderRadius: 4, color: COLORS.TEXT, fontSize: 12, outline: 'none',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

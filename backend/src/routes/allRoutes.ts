@@ -437,7 +437,7 @@ publicQuizRouter.post('/:slug/process-other', async (req, res) => {
 // ── Leads ─────────────────────────────────────────────────────────────────────
 export const leadsRouter = Router();
 leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
-  const { name, email, answers, outcome_id, time_to_complete_ms } = req.body;
+  const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
@@ -464,7 +464,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     metadata.os = ua.os.name;
   }
 
-  const { data: leadData, error } = await supabase.from('leads').insert({ quiz_id: quiz.id, user_id: quiz.user_id, name: name ?? null, email, answers: answers ?? {}, outcome_id: outcome_id ?? null, metadata }).select('id, metadata, score').single();
+  const { data: leadData, error } = await supabase.from('leads').insert({ quiz_id: quiz.id, user_id: quiz.user_id, name: name ?? null, email, answers: answers ?? {}, outcome_id: outcome_id ?? null, metadata, consent: consent === true, consent_text: consent ? (consent_text || null) : null }).select('id, metadata, score').single();
   if (error) return res.status(500).json({ error: error.message });
   const leadId = leadData?.id;
   await supabase.rpc('increment_lead_count', { qid: quiz.id });
@@ -487,8 +487,13 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     } catch (e) { console.log('Email notification failed:', e); }
   }
 
+  // GDPR gate: skip all outbound emails if consent is required but not given
+  const gdprEnabled = (quiz.settings as any)?.gdpr_consent_enabled === true;
+  const hasConsent = consent === true;
+  const canEmail = !gdprEnabled || hasConsent;
+
   // Send result email to the LEAD (not the owner). Includes download-report link.
-  if (leadId && email) {
+  if (leadId && email && canEmail) {
     try {
       const matchedOutcome = outcome_id && quiz.outcomes
         ? (quiz.outcomes as any[]).find((o: any) => o.id === outcome_id)
@@ -512,9 +517,11 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
         }).catch((e: any) => console.log('[ResultEmail] send failed:', e?.message));
       }
     } catch (e) { console.log('[ResultEmail] setup failed:', e); }
+  } else if (!canEmail) {
+    console.log(`[GDPR] Skipping result email for ${email} - no consent`);
   }
 
-  if (leadId && email && outcome_id) {
+  if (leadId && email && outcome_id && canEmail) {
     enqueueSequenceEmails(
       leadId,
       quiz.id,
@@ -523,6 +530,8 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       [],
       (quiz as any).mode || null,
     ).catch((e: any) => console.log('[EmailSeq] enqueue failed:', e?.message));
+  } else if (!canEmail && outcome_id) {
+    console.log(`[GDPR] Skipping sequence emails for ${email} - no consent`);
   }
 
   // Fire Zapier/webhook integrations
