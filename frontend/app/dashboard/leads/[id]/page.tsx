@@ -291,8 +291,8 @@ export default function LeadDetailPage() {
                       fontSize: 13.5,
                       color: C.TEXT,
                       padding: '12px 14px',
-                      background: 'rgba(210,255,29,0.06)',
-                      borderLeft: '3px solid rgba(210,255,29,0.3)',
+                      background: C.ACCENT_LIGHT,
+                      borderLeft: `3px solid ${C.ACCENT}`,
                       borderRadius: 4,
                     }}
                   >

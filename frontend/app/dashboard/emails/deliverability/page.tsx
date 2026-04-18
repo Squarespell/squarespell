@@ -170,26 +170,26 @@ export default function DeliverabilityPage() {
               <h3 style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, margin: '0 0 16px' }}>
                 Rates
               </h3>
-              <RateBar label="Delivery rate" value={data.rates.delivery_rate} color="#34d399" />
+              <RateBar label="Delivery rate" value={data.rates.delivery_rate} color="#2D6A4F" />
               <RateBar label="Open rate" value={data.rates.open_rate} color={C.ACCENT} />
               <RateBar label="Click rate" value={data.rates.click_rate} color="#60a5fa" />
               <RateBar
                 label="Bounce rate"
                 value={data.rates.bounce_rate}
-                color="#ff5c5c"
+                color="#C53030"
                 warn={data.rates.bounce_rate > 5}
               />
               {(data.rates.hard_bounce_rate !== undefined || data.rates.soft_bounce_rate !== undefined) && (
                 <div style={{ display: 'flex', gap: 16, paddingLeft: 20 }}>
-                  <RateBar label="Hard bounces" value={data.rates.hard_bounce_rate ?? 0} color="#ff5c5c" warn={false} />
-                  <RateBar label="Soft bounces" value={data.rates.soft_bounce_rate ?? 0} color="#ffb020" warn={false} />
+                  <RateBar label="Hard bounces" value={data.rates.hard_bounce_rate ?? 0} color="#C53030" warn={false} />
+                  <RateBar label="Soft bounces" value={data.rates.soft_bounce_rate ?? 0} color="#B45309" warn={false} />
                 </div>
               )}
               <RateBar
                 label="Complaint rate"
                 value={data.rates.complaint_rate}
                 max={1}
-                color="#ff5c5c"
+                color="#C53030"
                 warn={data.rates.complaint_rate > 0.1}
               />
             </Card>
@@ -223,12 +223,12 @@ export default function DeliverabilityPage() {
                           <td style={{ padding: '10px', color: C.TEXT }}>{c.sent}</td>
                           <td style={{ padding: '10px', color: C.TEXT }}>{c.delivered}</td>
                           <td style={{ padding: '10px', color: C.TEXT }}>{c.opened}</td>
-                          <td style={{ padding: '10px', color: c.bounced > 0 ? '#ff5c5c' : C.TEXT }}>{c.bounced}</td>
-                          <td style={{ padding: '10px', color: c.complained > 0 ? '#ff5c5c' : C.TEXT }}>{c.complained}</td>
-                          <td style={{ padding: '10px', color: c.bounce_rate > 5 ? '#ff5c5c' : C.TEXT, fontWeight: c.bounce_rate > 5 ? 700 : 400 }}>
+                          <td style={{ padding: '10px', color: c.bounced > 0 ? '#C53030' : C.TEXT }}>{c.bounced}</td>
+                          <td style={{ padding: '10px', color: c.complained > 0 ? '#C53030' : C.TEXT }}>{c.complained}</td>
+                          <td style={{ padding: '10px', color: c.bounce_rate > 5 ? '#C53030' : C.TEXT, fontWeight: c.bounce_rate > 5 ? 700 : 400 }}>
                             {c.bounce_rate}%
                           </td>
-                          <td style={{ padding: '10px', color: c.complaint_rate > 0.1 ? '#ff5c5c' : C.TEXT, fontWeight: c.complaint_rate > 0.1 ? 700 : 400 }}>
+                          <td style={{ padding: '10px', color: c.complaint_rate > 0.1 ? '#C53030' : C.TEXT, fontWeight: c.complaint_rate > 0.1 ? 700 : 400 }}>
                             {c.complaint_rate}%
                           </td>
                         </tr>

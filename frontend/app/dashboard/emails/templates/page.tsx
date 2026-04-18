@@ -75,12 +75,12 @@ export default function EmailTemplatesPage() {
               onClick={function () { setFilter(f); }}
               style={{
                 padding: '7px 14px',
-                borderRadius: 999,
+                borderRadius: 8,
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
                 background: active ? C.ACCENT : 'transparent',
-                color: active ? '#0b0b0c' : C.TEXT_MUTED,
+                color: active ? '#FFFFFF' : C.TEXT_MUTED,
                 border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
               }}
             >
@@ -100,12 +100,12 @@ export default function EmailTemplatesPage() {
               onClick={function () { setSiteFilter(f); }}
               style={{
                 padding: '7px 14px',
-                borderRadius: 999,
+                borderRadius: 8,
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
                 background: active ? C.ACCENT : 'transparent',
-                color: active ? '#0b0b0c' : C.TEXT_MUTED,
+                color: active ? '#FFFFFF' : C.TEXT_MUTED,
                 border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
               }}
             >
@@ -133,7 +133,7 @@ export default function EmailTemplatesPage() {
                   height: 220,
                   overflow: 'hidden',
                   borderBottom: '1px solid ' + C.BORDER,
-                  background: '#0b0b0c',
+                  background: '#F7F7F5',
                   position: 'relative',
                 }}
               >
@@ -196,7 +196,7 @@ export default function EmailTemplatesPage() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.7)',
+            background: 'rgba(0,0,0,0.25)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -260,11 +260,11 @@ export default function EmailTemplatesPage() {
                 </PrimaryButton>
               </div>
             </div>
-            <div style={{ background: '#0b0b0c', overflow: 'auto' }}>
+            <div style={{ background: '#F7F7F5', overflow: 'auto' }}>
               <iframe
                 title="template preview"
                 srcDoc={previewHtml}
-                style={{ width: '100%', height: '100%', border: 0, background: '#0b0b0c' }}
+                style={{ width: '100%', height: '100%', border: 0, background: '#F7F7F5' }}
               />
             </div>
           </div>

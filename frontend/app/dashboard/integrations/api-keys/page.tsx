@@ -89,9 +89,9 @@ export default function ApiKeysPage() {
       {newKey && (
         <Card>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ color: '#4ade80', fontSize: 14, fontWeight: 700 }}>Your new API key</div>
+            <div style={{ color: C.SUCCESS, fontSize: 14, fontWeight: 700 }}>Your new API key</div>
             <div style={{ fontSize: 12.5, color: C.TEXT_MUTED }}>Copy this key now. You will not be able to see it again.</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '12px 16px', border: `1px solid ${C.BORDER}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: C.HAIRLINE, borderRadius: 10, padding: '12px 16px', border: `1px solid ${C.BORDER}` }}>
               <code style={{ flex: 1, fontSize: 13, color: C.TEXT, fontFamily: 'ui-monospace,monospace', wordBreak: 'break-all' }}>{newKey}</code>
               <GhostButton onClick={() => copyKey(newKey)}>{copied ? 'Copied!' : 'Copy'}</GhostButton>
             </div>

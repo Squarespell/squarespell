@@ -64,7 +64,7 @@ function createDefaultBlock(type: BlockType): Block {
   const id = uid();
   switch (type) {
     case 'hero':
-      return { id, type: 'hero', variant: 'gradient', headline: 'Your headline here', subheadline: 'Supporting text goes here', gradientFrom: '#D2FF1D', gradientTo: '#0a0d12', align: 'center' } as HeroBlock;
+      return { id, type: 'hero', variant: 'gradient', headline: 'Your headline here', subheadline: 'Supporting text goes here', gradientFrom: C.ACCENT, gradientTo: C.ACCENT, align: 'center' } as HeroBlock;
     case 'heading':
       return { id, type: 'heading', level: 2, text: 'Section heading', align: 'left' } as HeadingBlock;
     case 'text':
@@ -194,7 +194,7 @@ function AddBlockInserter({
           height: 28,
           borderRadius: '50%',
           border: `1px dashed ${expanded ? C.ACCENT : C.BORDER}`,
-          background: expanded ? 'rgba(210,255,29,0.08)' : 'transparent',
+          background: expanded ? C.ACCENT_LIGHT : 'transparent',
           color: expanded ? C.ACCENT : C.TEXT_MUTED,
           cursor: 'pointer',
           display: 'flex',
@@ -228,7 +228,7 @@ function AddBlockInserter({
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 4,
           minWidth: 280,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
         }}>
           {PALETTE.map(p => (
             <button
@@ -251,7 +251,7 @@ function AddBlockInserter({
                 transition: 'all 0.12s ease',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(210,255,29,0.08)';
+                e.currentTarget.style.background = C.ACCENT_LIGHT;
                 e.currentTarget.style.color = C.ACCENT;
               }}
               onMouseLeave={e => {
@@ -309,7 +309,7 @@ function BlockCard({
         alignItems: 'center',
         gap: 10,
         padding: '10px 12px',
-        background: selected ? 'rgba(210,255,29,0.06)' : C.ELEVATED,
+        background: selected ? C.ACCENT_LIGHT : C.ELEVATED,
         border: `1px solid ${selected ? C.ACCENT : C.BORDER}`,
         borderRadius: 10,
         cursor: 'pointer',
@@ -401,7 +401,7 @@ function InlineAction({ label, onClick, danger, children }: {
         transition: 'all 0.1s',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = danger ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.06)';
+        e.currentTarget.style.background = danger ? 'rgba(197,48,48,0.08)' : 'rgba(0,0,0,0.04)';
       }}
       onMouseLeave={e => {
         e.currentTarget.style.background = 'transparent';

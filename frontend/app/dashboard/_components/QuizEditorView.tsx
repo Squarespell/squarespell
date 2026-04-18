@@ -104,9 +104,9 @@ function EditorError({ message }: { message: string }) {
           style={{
             padding: '10px 18px',
             background: C.ACCENT,
-            color: C.BG,
+            color: '#FFFFFF',
             border: 0,
-            borderRadius: 100,
+            borderRadius: 8,
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -136,8 +136,8 @@ function EditorEmpty() {
           style={{
             width: 56,
             height: 56,
-            background: 'rgba(210,255,29,0.12)',
-            border: '1px solid rgba(210,255,29,0.3)',
+            background: C.ACCENT_LIGHT,
+            border: `1px solid ${C.ACCENT}`,
             borderRadius: 14,
             margin: '0 auto 18px',
             display: 'flex',
@@ -165,8 +165,8 @@ function EditorEmpty() {
             gap: 8,
             padding: '12px 22px',
             background: C.ACCENT,
-            color: C.BG,
-            borderRadius: 100,
+            color: '#FFFFFF',
+            borderRadius: 8,
             fontWeight: 700,
             fontSize: 14,
             textDecoration: 'none',

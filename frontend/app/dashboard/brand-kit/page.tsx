@@ -77,10 +77,10 @@ function generateAltPalette(colors: Record<string, string>): Record<string, stri
   }
   // Light bg -> generate dark variant
   return {
-    primary: colors.primary || '#d2ff1d',
+    primary: colors.primary || '#0D7377',
     background: '#0b0b0c',
     text: '#ececec',
-    accent: colors.accent || colors.primary || '#d2ff1d',
+    accent: colors.accent || colors.primary || '#0D7377',
   };
 }
 
@@ -335,7 +335,7 @@ export default function BrandKitPage() {
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {saved && (
-            <span style={{ fontSize: 12, color: '#86c232', fontWeight: 600 }}>
+            <span style={{ fontSize: 12, color: C.SUCCESS, fontWeight: 600 }}>
               Saved
             </span>
           )}
@@ -438,7 +438,7 @@ export default function BrandKitPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 5,
                     background: active ? C.ACCENT : 'transparent',
-                    color: active ? '#0a0a0a' : C.TEXT_MUTED,
+                    color: active ? '#FFFFFF' : C.TEXT_MUTED,
                     border: 'none', padding: '5px 12px', borderRadius: 6,
                     fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   }}
@@ -506,7 +506,7 @@ export default function BrandKitPage() {
                 alt=""
                 style={{
                   width: 48, height: 48, borderRadius: 10,
-                  objectFit: 'contain', background: 'rgba(255,255,255,0.06)',
+                  objectFit: 'contain', background: C.BG,
                   padding: 6, border: `1px solid ${C.BORDER}`,
                 }}
               />
@@ -547,9 +547,9 @@ export default function BrandKitPage() {
           </div>
           <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{
-              padding: '10px 22px', borderRadius: 20, fontWeight: 700, fontSize: 13,
+              padding: '10px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13,
               background: kit?.colors?.primary || C.ACCENT,
-              color: kit?.colors?.background || '#0a0f05',
+              color: '#FFFFFF',
             }}>
               Sample CTA button
             </div>

@@ -13,7 +13,7 @@ import { QuizEditorView } from '../_components/QuizEditorView';
 
 export default function DashboardEditorPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#07090c' }} />}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F7F7F5' }} />}>
       <QuizEditorView />
     </Suspense>
   );

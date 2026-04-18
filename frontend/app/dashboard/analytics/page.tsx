@@ -139,7 +139,7 @@ export default function AnalyticsPage() {
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '11px 20px', background: 'transparent',
               color: C.TEXT, border: '1px solid ' + C.BORDER,
-              borderRadius: 100, fontSize: 13, fontWeight: 600,
+              borderRadius: 8, fontSize: 13, fontWeight: 600,
               textDecoration: 'none', fontFamily: '"DM Sans",system-ui,sans-serif',
             }}
           >
@@ -189,7 +189,7 @@ export default function AnalyticsPage() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <tr style={{ background: C.BG }}>
                     {['Quiz', 'Status', 'Views', 'Completions', 'Leads', 'Completion rate', ''].map((h) => (
                       <th
                         key={h}

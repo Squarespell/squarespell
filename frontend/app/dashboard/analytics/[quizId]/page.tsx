@@ -71,7 +71,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
         <button className={styles.back} onClick={() => router.push(`/dashboard/${params.quizId}`)}>&#8592; Back to editor</button>
         <div><h1 className={styles.title}>{quiz?.title}</h1><div className={`${styles.status} ${quiz?.status==='live'?styles.live:styles.draft}`}>{quiz?.status}</div></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: 2 }}>
+          <div style={{ display: 'flex', gap: 2, background: 'rgba(0,0,0,0.04)', borderRadius: 6, padding: 2 }}>
             {(['7d', '30d', '90d', 'all'] as const).map(function (r) {
               var active = r === dateRange;
               return (
@@ -81,8 +81,8 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
                   style={{
                     padding: '5px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600,
                     cursor: 'pointer', border: 'none', transition: 'all 0.15s ease',
-                    background: active ? 'rgba(210,255,29,0.15)' : 'transparent',
-                    color: active ? '#D2FF1D' : 'rgba(255,255,255,0.4)',
+                    background: active ? 'rgba(13,115,119,0.15)' : 'transparent',
+                    color: active ? '#0D7377' : 'rgba(0,0,0,0.4)',
                   }}
                 >
                   {r === 'all' ? 'All' : r}
@@ -96,9 +96,9 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
               cursor: 'pointer', transition: 'all 0.15s ease',
-              background: excludeBots ? 'rgba(210,255,29,0.1)' : 'rgba(255,255,255,0.06)',
-              border: excludeBots ? '1px solid rgba(210,255,29,0.3)' : '1px solid rgba(255,255,255,0.12)',
-              color: excludeBots ? '#D2FF1D' : 'rgba(255,255,255,0.5)',
+              background: excludeBots ? 'rgba(13,115,119,0.1)' : 'rgba(0,0,0,0.06)',
+              border: excludeBots ? '1px solid rgba(13,115,119,0.3)' : '1px solid rgba(0,0,0,0.12)',
+              color: excludeBots ? '#0D7377' : 'rgba(0,0,0,0.5)',
             }}
             title={excludeBots ? 'Bot traffic is excluded from analytics' : 'Bot traffic is included in analytics'}
           >
@@ -117,9 +117,9 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
               cursor: 'pointer', transition: 'all 0.15s ease',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.5)',
+              background: 'rgba(0,0,0,0.04)',
+              border: '1px solid rgba(0,0,0,0.1)',
+              color: 'rgba(0,0,0,0.5)',
               fontFamily: '"DM Sans",system-ui,sans-serif',
             }}
           >
@@ -173,7 +173,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
         </div>
         {funnel?.outcome_breakdown && Object.keys(funnel.outcome_breakdown).length > 0 && (
           <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>Outcome breakdown</div>
+            <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(0,0,0,0.4)', marginBottom: 10 }}>Outcome breakdown</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {Object.entries(funnel.outcome_breakdown).map(function (entry) {
                 var outcomeId = entry[0] as string;
@@ -182,13 +182,13 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
                 return (
                   <div key={outcomeId} style={{
                     padding: '8px 14px',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(0,0,0,0.03)',
+                    border: '1px solid rgba(0,0,0,0.08)',
                     borderRadius: 8,
                     fontSize: 13,
                   }}>
-                    <div style={{ fontWeight: 600, color: 'rgba(244,246,248,0.9)' }}>{outcomeTitle}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{count} lead{count !== 1 ? 's' : ''}</div>
+                    <div style={{ fontWeight: 600, color: '#1A1A1A' }}>{outcomeTitle}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', marginTop: 2 }}>{count} lead{count !== 1 ? 's' : ''}</div>
                   </div>
                 );
               })}
@@ -201,7 +201,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
           <h2 className={styles.sectionTitle}>Question heatmap</h2>
           {heatmap.questions.map(function (q: any, qi: number) {
             var maxCount = Math.max(1, ...(q.options || []).map(function (o: any) { return o.count; }));
-            var barColors = ['#D2FF1D', '#86c232', '#4a9e3f', '#3b7dd8', '#9b59b6', '#e67e22', '#e74c3c', '#1abc9c'];
+            var barColors = ['#0D7377', '#2D6A4F', '#4a9e3f', '#3b7dd8', '#9b59b6', '#e67e22', '#e74c3c', '#1abc9c'];
             return (
               <div key={qi} className={styles.heatmapQuestion}>
                 <div className={styles.heatmapQHeader}>

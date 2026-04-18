@@ -2,16 +2,15 @@
 
 /**
  * DashboardShell - the persistent chrome (sidebar + topbar) that wraps every
- * top-level dashboard page: /dashboard, /dashboard/leads, /dashboard/analytics,
- * /dashboard/integrations, /dashboard/brand-kit, /dashboard/embed, and
- * /dashboard/billing.
+ * top-level dashboard page.
+ *
+ * Light theme with warm off-white palette and deep teal accent.
  *
  * Rules
  * -----
  * - Sidebar is persistent across route changes (no re-mount flicker)
- * - Active state uses a 3px lime left border + subtle lime-tinted background
+ * - Active state uses teal-tinted background
  * - Collapses to a drawer on mobile (<768px)
- * - Matches the /try dark + lime aesthetic 1:1
  * - Full-screen pages (like /dashboard/[quizId] editor) deliberately opt out
  *   by NOT rendering inside this shell
  */
@@ -33,126 +32,130 @@ type NavItem = {
   match?: (pathname: string) => boolean;
 };
 
-// Inline primitive icons - keeps us free of an icon library dep
-// All nav icons are decorative (adjacent text label) so they carry aria-hidden.
+// Inline SVG icons - 1.5px stroke, 20x20 viewBox for refined look
 const icons = {
   overview: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="3" width="7" height="9" />
-      <rect x="14" y="3" width="7" height="5" />
-      <rect x="14" y="12" width="7" height="9" />
-      <rect x="3" y="16" width="7" height="5" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+      <path d="M9 21V12h6v9"/>
     </svg>
   ),
   quizzes: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 11l3 3L22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M9 9h6M9 13h6M9 17h4"/>
     </svg>
   ),
   editor: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20h9"/>
+      <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
     </svg>
   ),
   leads: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/>
+    </svg>
+  ),
+  emails: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <path d="M22 4L12 13 2 4"/>
     </svg>
   ),
   analytics: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 3v18h18"/>
+      <path d="M7 16l4-5 4 3 5-7"/>
     </svg>
   ),
   integrations: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
     </svg>
   ),
   embed: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="16 18 22 12 16 6" />
-      <polyline points="8 6 2 12 8 18" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="16 18 22 12 16 6"/>
+      <polyline points="8 6 2 12 8 18"/>
     </svg>
   ),
   brand: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="13.5" cy="6.5" r=".5" />
-      <circle cx="17.5" cy="10.5" r=".5" />
-      <circle cx="8.5" cy="7.5" r=".5" />
-      <circle cx="6.5" cy="12.5" r=".5" />
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
     </svg>
   ),
   billing: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-      <line x1="1" y1="10" x2="23" y2="10" />
-    </svg>
-  ),
-  help: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  ),
-  settings: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  ),
-  menu: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  ),
-  close: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  ),
-  plus: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
     </svg>
   ),
   templates: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <line x1="3" y1="9" x2="21" y2="9" />
-      <line x1="9" y1="21" x2="9" y2="9" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="9" rx="1.5"/>
+      <rect x="14" y="3" width="7" height="5" rx="1.5"/>
+      <rect x="14" y="12" width="7" height="9" rx="1.5"/>
+      <rect x="3" y="16" width="7" height="5" rx="1.5"/>
     </svg>
   ),
   trash: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+    </svg>
+  ),
+  help: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  ),
+  settings: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  ),
+  menu: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  ),
+  close: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  ),
+  plus: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  ),
+  search: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"/>
+      <path d="M21 21l-4.35-4.35"/>
     </svg>
   ),
   signout: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
   ),
   logo: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#07090c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
     </svg>
   ),
 };
@@ -177,8 +180,6 @@ function isOverviewRoute(pathname: string): boolean {
 }
 
 // Quiz editor = /dashboard/editor OR any quiz detail route (e.g. /dashboard/<id>).
-// Both surfaces open the same editor chrome, so we highlight the same sidebar
-// item whether the user clicked the sidebar link or clicked a quiz card.
 function isEditorRoute(pathname: string): boolean {
   if (pathname === '/dashboard/editor' || pathname.startsWith('/dashboard/editor/')) return true;
   if (pathname === '/dashboard') return false;
@@ -186,11 +187,9 @@ function isEditorRoute(pathname: string): boolean {
   if (OTHER_SECTION_PREFIXES.some((prefix) => prefix !== '/dashboard/editor' && (pathname === prefix || pathname.startsWith(prefix + '/')))) {
     return false;
   }
-  // Any other /dashboard/<something> is a quiz detail route
   return pathname.startsWith('/dashboard/');
 }
 
-// Quizzes list = /dashboard/quizzes only (the management grid).
 function isQuizzesRoute(pathname: string): boolean {
   return pathname === '/dashboard/quizzes' || pathname.startsWith('/dashboard/quizzes/');
 }
@@ -208,7 +207,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
       { href: '/dashboard/quizzes', label: 'Quizzes', icon: icons.quizzes, match: isQuizzesRoute },
       { href: '/dashboard/leads', label: 'Leads', icon: icons.leads },
-      { href: '/dashboard/emails', label: 'Emails', icon: icons.leads, match: (p) => (p === '/dashboard/emails' || p.startsWith('/dashboard/emails/')) && !p.startsWith('/dashboard/emails/templates') },
+      { href: '/dashboard/emails', label: 'Emails', icon: icons.emails, match: (p) => (p === '/dashboard/emails' || p.startsWith('/dashboard/emails/')) && !p.startsWith('/dashboard/emails/templates') },
       { href: '/dashboard/emails/templates', label: 'Templates', icon: icons.templates },
       {
         href: '/dashboard/analytics',
@@ -246,15 +245,9 @@ function isActive(item: NavItem, pathname: string): boolean {
 
 interface DashboardShellProps {
   children: ReactNode;
-  /** Optional page title shown in the topbar */
   title?: string;
-  /** Optional right-side topbar content (e.g. page-level actions) */
   topbarRight?: ReactNode;
-  /** Override the default 36px main-column padding. Useful for full-bleed
-   *  pages (e.g. the quiz editor) that render their own internal chrome.
-   *  Accepts any valid CSS padding value - e.g. "0" or "0 0 36px". */
   contentPadding?: string;
-  /** Hide the sticky topbar entirely (quiz editor has its own topbar). */
   hideTopbar?: boolean;
 }
 
@@ -281,7 +274,6 @@ export function DashboardShell({
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Fetch auth token for the TopBanner
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -293,7 +285,6 @@ export function DashboardShell({
     return () => { cancelled = true; };
   }, [getToken]);
 
-  // Close drawer on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
@@ -308,8 +299,8 @@ export function DashboardShell({
       aria-label="Sidebar navigation"
       style={{
         width: sidebarWidth,
-        background: COLORS.SURFACE,
-        borderRight: `1px solid ${COLORS.HAIRLINE}`,
+        background: COLORS.SIDEBAR,
+        borderRight: `1px solid ${COLORS.BORDER}`,
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
@@ -319,14 +310,11 @@ export function DashboardShell({
         zIndex: 50,
         transition: 'left 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
         fontFamily: '"DM Sans",system-ui,sans-serif',
-        boxShadow: isMobile && mobileOpen ? '0 24px 64px rgba(0,0,0,0.5)' : 'inset -1px 0 0 rgba(255,255,255,0.02)',
+        boxShadow: isMobile && mobileOpen ? '4px 0 24px rgba(0,0,0,0.08)' : 'none',
       }}
     >
-      {/* Brand wordmark - the "New quiz" button used to live here but was
-          removed: it duplicated the one on the /dashboard overview page and
-          made the sidebar feel top-heavy. The dedicated "Quiz editor" nav
-          item below handles opening the current editor. */}
-      <div style={{ padding: '24px 20px 18px', borderBottom: `1px solid ${COLORS.HAIRLINE}` }}>
+      {/* Brand header */}
+      <div style={{ padding: '22px 20px 18px', borderBottom: `1px solid ${COLORS.BORDER}` }}>
         <Link
           href="/dashboard"
           style={{
@@ -346,29 +334,73 @@ export function DashboardShell({
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 0 22px rgba(210,255,29,0.22)',
             }}
           >
             {icons.logo}
           </div>
-          <span style={{ fontSize: 18, fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.035em' }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.03em' }}>
             Squarespell
           </span>
         </Link>
       </div>
 
+      {/* Search trigger */}
+      <div style={{ padding: '14px 14px 0' }}>
+        <button
+          type="button"
+          onClick={() => {
+            // Trigger Cmd+K palette
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+          }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 12px',
+            background: COLORS.SURFACE,
+            border: `1px solid ${COLORS.BORDER}`,
+            borderRadius: 8,
+            color: COLORS.TEXT_SUBTLE,
+            fontSize: 13,
+            fontWeight: 400,
+            cursor: 'pointer',
+            fontFamily: '"DM Sans",system-ui,sans-serif',
+            transition: 'border-color 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = COLORS.ACCENT; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = COLORS.BORDER; }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icons.search}</span>
+          <span style={{ flex: 1, textAlign: 'left' }}>Search...</span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 500,
+              color: COLORS.TEXT_SUBTLE,
+              background: COLORS.SIDEBAR,
+              padding: '2px 6px',
+              borderRadius: 4,
+              border: `1px solid ${COLORS.BORDER}`,
+            }}
+          >
+            Cmd+K
+          </span>
+        </button>
+      </div>
+
       {/* Primary nav */}
-      <nav aria-label="Main" style={{ flex: 1, padding: '16px 12px 14px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+      <nav aria-label="Main" style={{ flex: 1, padding: '14px 10px 14px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
         {NAV_SECTIONS.map((section, sectionIdx) => (
-          <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 14 }}>
+          <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 16 }}>
             <div
               style={{
-                fontSize: 10.5,
-                fontWeight: 700,
+                fontSize: 11,
+                fontWeight: 600,
                 color: COLORS.TEXT_SUBTLE,
                 textTransform: 'uppercase',
-                letterSpacing: '0.09em',
-                padding: '4px 14px 8px',
+                letterSpacing: '0.06em',
+                padding: '4px 14px 6px',
               }}
             >
               {section.label}
@@ -382,29 +414,28 @@ export function DashboardShell({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 12,
-                    padding: '9px 14px',
+                    gap: 10,
+                    padding: '8px 12px',
                     margin: '1px 0',
-                    borderRadius: 10,
+                    borderRadius: 8,
                     textDecoration: 'none',
-                    color: active ? COLORS.TEXT : COLORS.TEXT_MUTED,
-                    background: active ? 'rgba(210,255,29,0.09)' : 'transparent',
-                    boxShadow: active ? 'inset 0 0 0 1px rgba(210,255,29,0.18)' : 'none',
+                    color: active ? COLORS.ACCENT : COLORS.TEXT_SECONDARY,
+                    background: active ? COLORS.ACCENT_LIGHT : 'transparent',
                     fontSize: 13.5,
                     fontWeight: active ? 600 : 500,
                     letterSpacing: '-0.005em',
-                    transition: 'background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
+                    transition: 'background 0.15s ease, color 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
+                      e.currentTarget.style.background = COLORS.SIDEBAR_HOVER;
                       e.currentTarget.style.color = COLORS.TEXT;
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!active) {
                       e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = COLORS.TEXT_MUTED;
+                      e.currentTarget.style.color = COLORS.TEXT_SECONDARY;
                     }
                   }}
                 >
@@ -431,12 +462,12 @@ export function DashboardShell({
 
         <div
           style={{
-            fontSize: 10.5,
-            fontWeight: 700,
+            fontSize: 11,
+            fontWeight: 600,
             color: COLORS.TEXT_SUBTLE,
             textTransform: 'uppercase',
-            letterSpacing: '0.09em',
-            padding: '20px 14px 8px',
+            letterSpacing: '0.06em',
+            padding: '20px 14px 6px',
           }}
         >
           Resources
@@ -455,23 +486,23 @@ export function DashboardShell({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 12,
-                padding: '10px 14px',
-                borderRadius: 10,
+                gap: 10,
+                padding: '8px 12px',
+                borderRadius: 8,
                 textDecoration: 'none',
-                color: COLORS.TEXT_MUTED,
+                color: COLORS.TEXT_SECONDARY,
                 fontSize: 13,
                 fontWeight: 500,
                 letterSpacing: '-0.005em',
                 transition: 'background 0.15s ease, color 0.15s ease',
               }}
               onMouseEnter={(e: any) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.035)';
+                e.currentTarget.style.background = COLORS.SIDEBAR_HOVER;
                 e.currentTarget.style.color = COLORS.TEXT;
               }}
               onMouseLeave={(e: any) => {
                 e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = COLORS.TEXT_MUTED;
+                e.currentTarget.style.color = COLORS.TEXT_SECONDARY;
               }}
             >
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, flexShrink: 0 }}>
@@ -484,16 +515,16 @@ export function DashboardShell({
       </nav>
 
       {/* Account footer */}
-      <div style={{ padding: '14px 14px 18px', borderTop: `1px solid ${COLORS.HAIRLINE}` }}>
+      <div style={{ padding: '12px 12px 16px', borderTop: `1px solid ${COLORS.BORDER}` }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 10,
-            padding: '11px 12px',
-            background: 'rgba(255,255,255,0.025)',
-            border: `1px solid ${COLORS.HAIRLINE}`,
-            borderRadius: 12,
+            padding: '10px 12px',
+            background: COLORS.SURFACE,
+            border: `1px solid ${COLORS.BORDER}`,
+            borderRadius: 10,
           }}
         >
           <div
@@ -501,23 +532,22 @@ export function DashboardShell({
               width: 32,
               height: 32,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(210,255,29,0.9), rgba(210,255,29,0.5))',
-              color: COLORS.BG,
+              background: COLORS.ACCENT,
+              color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 13,
-              fontWeight: 800,
+              fontWeight: 700,
               flexShrink: 0,
             }}
           >
             {userInitial}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, color: COLORS.TEXT_MUTED, marginBottom: 2 }}>Signed in as</div>
             <div
               style={{
-                fontSize: 12.5,
+                fontSize: 13,
                 color: COLORS.TEXT,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -534,12 +564,12 @@ export function DashboardShell({
             onClick={() => signOut(() => router.push('/sign-in'))}
             title="Sign out"
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
+              width: 30,
+              height: 30,
+              borderRadius: 7,
               background: 'transparent',
               border: `1px solid ${COLORS.BORDER}`,
-              color: COLORS.TEXT_MUTED,
+              color: COLORS.TEXT_SECONDARY,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -548,14 +578,14 @@ export function DashboardShell({
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(210,255,29,0.08)';
-              e.currentTarget.style.borderColor = 'rgba(210,255,29,0.3)';
-              e.currentTarget.style.color = COLORS.ACCENT;
+              e.currentTarget.style.background = COLORS.DANGER_LIGHT;
+              e.currentTarget.style.borderColor = COLORS.DANGER;
+              e.currentTarget.style.color = COLORS.DANGER;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
               e.currentTarget.style.borderColor = COLORS.BORDER;
-              e.currentTarget.style.color = COLORS.TEXT_MUTED;
+              e.currentTarget.style.color = COLORS.TEXT_SECONDARY;
             }}
           >
             {icons.signout}
@@ -585,7 +615,7 @@ export function DashboardShell({
           zIndex: 100,
           padding: '12px 24px',
           background: COLORS.ACCENT,
-          color: COLORS.BG,
+          color: '#FFFFFF',
           fontWeight: 700,
           fontSize: 14,
           borderRadius: '0 0 8px 0',
@@ -619,7 +649,7 @@ export function DashboardShell({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.55)',
+            background: 'rgba(0,0,0,0.18)',
             zIndex: 40,
             backdropFilter: 'blur(2px)',
           }}
@@ -642,16 +672,16 @@ export function DashboardShell({
             position: 'sticky',
             top: 0,
             zIndex: 20,
-            background: 'rgba(7,9,12,0.78)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
-            borderBottom: `1px solid ${COLORS.HAIRLINE}`,
-            padding: '16px 36px',
+            background: 'rgba(247,247,245,0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderBottom: `1px solid ${COLORS.BORDER}`,
+            padding: '14px 36px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 16,
-            minHeight: 68,
+            minHeight: 64,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
@@ -664,9 +694,9 @@ export function DashboardShell({
                   background: 'transparent',
                   border: `1px solid ${COLORS.BORDER}`,
                   color: COLORS.TEXT,
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -681,10 +711,10 @@ export function DashboardShell({
               <h1
                 style={{
                   margin: 0,
-                  fontSize: 19,
+                  fontSize: 18,
                   fontWeight: 700,
                   color: COLORS.TEXT,
-                  letterSpacing: '-0.025em',
+                  letterSpacing: '-0.02em',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -698,7 +728,7 @@ export function DashboardShell({
         </header>
         )}
 
-        {/* Persistent banner slot (trial countdown, billing alerts, announcements) */}
+        {/* Persistent banner slot */}
         <TopBanner token={bannerToken} />
 
         {/* Page content */}
@@ -708,5 +738,5 @@ export function DashboardShell({
   );
 }
 
-// Re-export for backward compatibility - prefer importing from dashboardColors.ts directly
+// Re-export for backward compatibility
 export { DASHBOARD_COLORS } from './dashboardColors';

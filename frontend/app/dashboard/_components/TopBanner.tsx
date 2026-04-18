@@ -46,22 +46,22 @@ interface BannerConfig {
 
 const VARIANT_STYLES: Record<BannerVariant, { bg: string; border: string; accent: string; text: string }> = {
   trial: {
-    bg: 'rgba(234, 179, 8, 0.08)',
-    border: 'rgba(234, 179, 8, 0.25)',
-    accent: '#eab308',
-    text: '#fde68a',
+    bg: C.WARNING_LIGHT,
+    border: 'rgba(180, 83, 9, 0.2)',
+    accent: C.WARNING,
+    text: '#92400E',
   },
   billing: {
-    bg: 'rgba(239, 68, 68, 0.08)',
-    border: 'rgba(239, 68, 68, 0.25)',
-    accent: '#ef4444',
-    text: '#fca5a5',
+    bg: C.DANGER_LIGHT,
+    border: 'rgba(197, 48, 48, 0.2)',
+    accent: C.DANGER,
+    text: '#9B2C2C',
   },
   info: {
-    bg: 'rgba(210, 255, 29, 0.06)',
-    border: 'rgba(210, 255, 29, 0.18)',
+    bg: C.ACCENT_LIGHT,
+    border: 'rgba(13, 115, 119, 0.15)',
     accent: C.ACCENT,
-    text: '#e2e8f0',
+    text: C.TEXT,
   },
 };
 
@@ -219,7 +219,7 @@ export function TopBanner({ token, announcement }: TopBannerProps) {
             padding: '5px 14px',
             borderRadius: 7,
             background: s.accent,
-            color: '#0b0b0c',
+            color: '#FFFFFF',
             fontSize: 12.5,
             fontWeight: 700,
             textDecoration: 'none',

@@ -129,7 +129,7 @@ function QuizRow({
               </svg>
             )}
           </div>
-          <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+          <div style={{ height: 4, borderRadius: 2, background: C.HAIRLINE, overflow: 'hidden' }}>
             <div style={{
               height: '100%', borderRadius: 2,
               width: barWidth + '%',
@@ -190,7 +190,7 @@ function QuizRow({
         <div style={{
           borderTop: '1px solid ' + C.HAIRLINE,
           padding: '10px 20px 14px 40px',
-          background: 'rgba(0,0,0,0.15)',
+          background: 'rgba(0,0,0,0.02)',
         }}>
           <div style={{
             fontSize: 10, fontWeight: 700, color: C.TEXT_SUBTLE,
@@ -209,11 +209,11 @@ function QuizRow({
                 <span style={{ fontSize: 12.5, color: C.TEXT, minWidth: 120, flexShrink: 0 }}>
                   {o.outcome_name}
                 </span>
-                <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.04)' }}>
+                <div style={{ flex: 1, height: 4, borderRadius: 2, background: C.HAIRLINE }}>
                   <div style={{
                     height: '100%', borderRadius: 2,
                     width: outcomeBar + '%',
-                    background: '#86c232',
+                    background: C.SUCCESS,
                   }} />
                 </div>
                 <span style={{ fontSize: 12, color: C.TEXT_MUTED, fontVariantNumeric: 'tabular-nums', minWidth: 50, textAlign: 'right' }}>

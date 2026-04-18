@@ -114,7 +114,7 @@ export function ReviewStep({
             {testSending ? 'Sending…' : 'Send test'}
           </GhostButton>
         </div>
-        {testStatus && <div style={{ color: testStatus.startsWith('Sent') ? C.ACCENT : '#ff6b6b', fontSize: 12, marginTop: 8 }}>{testStatus}</div>}
+        {testStatus && <div style={{ color: testStatus.startsWith('Sent') ? C.SUCCESS : C.DANGER, fontSize: 12, marginTop: 8 }}>{testStatus}</div>}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -143,7 +143,7 @@ export function ReviewStep({
       )}
 
       {confirmOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 28, maxWidth: 480, width: '90%' }}>
             <h3 style={{ margin: '0 0 8px', color: C.TEXT, fontSize: 20 }}>
               {timing === 'scheduled'
@@ -196,7 +196,7 @@ function ModeChip({ active, onClick, title, sub }: any) {
   return (
     <button onClick={onClick} style={{
       flex: 1, textAlign: 'left',
-      background: active ? 'rgba(210,255,29,0.12)' : C.ELEVATED,
+      background: active ? C.ACCENT_LIGHT : C.ELEVATED,
       border: `1px solid ${active ? C.ACCENT : C.BORDER}`,
       borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
     }}>

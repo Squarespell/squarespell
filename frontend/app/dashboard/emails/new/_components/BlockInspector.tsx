@@ -84,7 +84,7 @@ function AlignField({ value, onChange }: { value?: Alignment; onChange: (v: Alig
             style={{
               flex: 1,
               padding: '6px 0',
-              background: value === a ? 'rgba(210,255,29,0.12)' : 'transparent',
+              background: value === a ? C.ACCENT_LIGHT : 'transparent',
               border: `1px solid ${value === a ? C.ACCENT : C.BORDER}`,
               borderRadius: 6,
               color: value === a ? C.ACCENT : C.TEXT_MUTED,
@@ -122,8 +122,8 @@ function HeroInspector({ block, onUpdate }: { block: HeroBlock; onUpdate: (b: Bl
       <Field label="Subheadline"><input value={block.subheadline || ''} onChange={e => set({ subheadline: e.target.value })} style={inputStyle} /></Field>
       {block.variant === 'gradient' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <Field label="From color"><input type="color" value={block.gradientFrom || '#D2FF1D'} onChange={e => set({ gradientFrom: e.target.value })} style={{ ...inputStyle, height: 36, padding: 4 }} /></Field>
-          <Field label="To color"><input type="color" value={block.gradientTo || '#0a0d12'} onChange={e => set({ gradientTo: e.target.value })} style={{ ...inputStyle, height: 36, padding: 4 }} /></Field>
+          <Field label="From color"><input type="color" value={block.gradientFrom || C.ACCENT} onChange={e => set({ gradientFrom: e.target.value })} style={{ ...inputStyle, height: 36, padding: 4 }} /></Field>
+          <Field label="To color"><input type="color" value={block.gradientTo || C.ACCENT} onChange={e => set({ gradientTo: e.target.value })} style={{ ...inputStyle, height: 36, padding: 4 }} /></Field>
         </div>
       )}
       {block.variant === 'image' && (
@@ -329,7 +329,7 @@ function CardGridInspector({ block, onUpdate }: { block: CardGridBlock; onUpdate
       </Field>
       {block.cards.map((card, i) => (
         <div key={card.id} style={{
-          padding: 10, background: 'rgba(255,255,255,0.02)',
+          padding: 10, background: 'rgba(0,0,0,0.02)',
           border: `1px solid ${C.HAIRLINE}`, borderRadius: 8, marginBottom: 8,
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -378,7 +378,7 @@ export function BlockInspector({ block, onUpdate, onClose }: BlockInspectorProps
             background: 'transparent', border: 'none', color: C.TEXT_MUTED, cursor: 'pointer',
             borderRadius: 6,
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor"

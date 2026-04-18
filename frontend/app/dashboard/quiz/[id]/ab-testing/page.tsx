@@ -282,22 +282,22 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'running':
-        return '#4ade80';
+        return '#2D6A4F';
       case 'draft':
-        return 'rgba(240,242,245,.5)';
+        return 'rgba(26,26,26,.5)';
       case 'paused':
         return '#f59e0b';
       case 'completed':
-        return '#D2FF1D';
+        return '#0D7377';
       default:
-        return 'rgba(240,242,245,.5)';
+        return 'rgba(26,26,26,.5)';
     }
   };
 
   if (loading) {
     return (
-      <div style={{ background: '#07090c', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 32, height: 32, border: '2px solid rgba(210,255,29,.2)', borderTopColor: '#D2FF1D', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+      <div style={{ background: '#F7F7F5', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 32, height: 32, border: '2px solid rgba(13,115,119,.2)', borderTopColor: '#0D7377', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
@@ -305,7 +305,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
 
   if (!quiz) {
     return (
-      <div style={{ background: '#07090c', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f0f2f5', fontFamily: 'DM Sans, sans-serif' }}>
+      <div style={{ background: '#F7F7F5', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1A1A1A', fontFamily: 'DM Sans, sans-serif' }}>
         <p>Quiz not found.</p>
       </div>
     );
@@ -316,8 +316,8 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-        body{font-family:'DM Sans',system-ui,sans-serif;background:#07090c;color:#f0f2f5}
-        :root{--acc:#D2FF1D;--g1:rgba(255,255,255,.055);--g2:rgba(255,255,255,.034);--b1:rgba(255,255,255,.09);--b2:rgba(255,255,255,.058);--t1:#f0f2f5;--t3:rgba(240,242,245,.42);--t4:rgba(240,242,245,.22)}
+        body{font-family:'DM Sans',system-ui,sans-serif;background:#F7F7F5;color:#1A1A1A}
+        :root{--acc:#0D7377;--g1:rgba(0,0,0,.055);--g2:rgba(0,0,0,.034);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.058);--t1:#1A1A1A;--t3:rgba(26,26,26,.42);--t4:rgba(26,26,26,.22)}
       `}</style>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '48px 24px' }}>
@@ -335,7 +335,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
               onClick={() => setShowForm(true)}
               style={{
                 background: 'var(--acc)',
-                color: '#07090c',
+                color: '#FFFFFF',
                 border: 'none',
                 borderRadius: 8,
                 padding: '12px 24px',
@@ -373,10 +373,10 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    background: '#07090c',
+                    background: '#EEEDE9',
                     border: '.5px solid var(--b1)',
                     borderRadius: 8,
-                    color: '#f0f2f5',
+                    color: '#1A1A1A',
                     fontSize: 14,
                     fontFamily: 'DM Sans, sans-serif',
                   }}
@@ -395,7 +395,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                       style={{
                         padding: '8px 16px',
                         background: variantCount === count ? 'var(--acc)' : 'var(--g2)',
-                        color: variantCount === count ? '#07090c' : '#f0f2f5',
+                        color: variantCount === count ? '#FFFFFF' : '#1A1A1A',
                         border: 'none',
                         borderRadius: 6,
                         fontSize: 13,
@@ -423,10 +423,10 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                         style={{
                           width: '100%',
                           padding: '10px 14px',
-                          background: '#07090c',
+                          background: '#EEEDE9',
                           border: '.5px solid var(--b1)',
                           borderRadius: 8,
-                          color: '#f0f2f5',
+                          color: '#1A1A1A',
                           fontSize: 14,
                           fontFamily: 'DM Sans, sans-serif',
                         }}
@@ -450,10 +450,10 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                         style={{
                           width: '100%',
                           padding: '10px 14px',
-                          background: '#07090c',
+                          background: '#EEEDE9',
                           border: '.5px solid var(--b1)',
                           borderRadius: 8,
-                          color: '#f0f2f5',
+                          color: '#1A1A1A',
                           fontSize: 14,
                           fontFamily: 'DM Sans, sans-serif',
                         }}
@@ -470,7 +470,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                   disabled={creating}
                   style={{
                     background: 'var(--acc)',
-                    color: '#07090c',
+                    color: '#FFFFFF',
                     border: 'none',
                     borderRadius: 8,
                     padding: '10px 24px',
@@ -491,7 +491,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                   }}
                   style={{
                     background: 'var(--g2)',
-                    color: '#f0f2f5',
+                    color: '#1A1A1A',
                     border: '.5px solid var(--b1)',
                     borderRadius: 8,
                     padding: '10px 24px',
@@ -571,13 +571,13 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                                 key={variant.variant_id}
                                 style={{
                                   borderBottom: i < test.variants.length - 1 ? '.5px solid var(--b2)' : 'none',
-                                  background: isWinner ? 'rgba(210,255,29,.05)' : 'transparent',
+                                  background: isWinner ? 'rgba(13,115,119,.06)' : 'transparent',
                                 }}
                               >
                                 <td style={{ padding: '12px 0', color: isWinner ? 'var(--acc)' : '#f0f2f5' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     {getQuizTitle(variant.quiz_id)}
-                                    {isWinner && <span style={{ fontSize: 11, background: 'var(--acc)', color: '#07090c', borderRadius: 4, padding: '2px 8px', fontWeight: 600 }}>Winner</span>}
+                                    {isWinner && <span style={{ fontSize: 11, background: 'var(--acc)', color: '#FFFFFF', borderRadius: 4, padding: '2px 8px', fontWeight: 600 }}>Winner</span>}
                                   </div>
                                 </td>
                                 <td style={{ textAlign: 'right', padding: '12px 16px', color: 'var(--t1)' }}>{stat?.impressions ?? 0}</td>
@@ -601,7 +601,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                     style={{
                       width: '100%',
                       background: 'var(--acc)',
-                      color: '#07090c',
+                      color: '#FFFFFF',
                       border: 'none',
                       borderRadius: 8,
                       padding: '10px',
@@ -622,7 +622,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                       style={{
                         flex: 1,
                         background: 'var(--g2)',
-                        color: '#f0f2f5',
+                        color: '#1A1A1A',
                         border: '.5px solid var(--b1)',
                         borderRadius: 8,
                         padding: '10px',
@@ -645,7 +645,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                         style={{
                           flex: 1,
                           background: 'var(--acc)',
-                          color: '#07090c',
+                          color: '#FFFFFF',
                           border: 'none',
                           borderRadius: 8,
                           padding: '10px',
@@ -667,7 +667,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                     style={{
                       width: '100%',
                       background: 'var(--acc)',
-                      color: '#07090c',
+                      color: '#FFFFFF',
                       border: 'none',
                       borderRadius: 8,
                       padding: '10px',
@@ -684,12 +684,12 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                 {test.status === 'completed' && (
                   <div
                     style={{
-                      background: 'rgba(74,222,128,.05)',
-                      border: '.5px solid rgba(74,222,128,.3)',
+                      background: 'rgba(45,106,79,.05)',
+                      border: '.5px solid rgba(45,106,79,.3)',
                       borderRadius: 8,
                       padding: 12,
                       textAlign: 'center',
-                      color: '#4ade80',
+                      color: '#2D6A4F',
                       fontSize: 13,
                       fontWeight: 600,
                     }}

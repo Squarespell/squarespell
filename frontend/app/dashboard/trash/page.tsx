@@ -87,8 +87,8 @@ export default function TrashPage() {
   const tabStyle = (active: boolean): React.CSSProperties => ({
     padding: '6px 14px',
     borderRadius: 6,
-    background: active ? 'rgba(210,255,29,0.1)' : C.ELEVATED,
-    border: `1px solid ${active ? 'rgba(210,255,29,0.25)' : C.BORDER}`,
+    background: active ? 'rgba(13,115,119,0.1)' : C.ELEVATED,
+    border: `1px solid ${active ? 'rgba(13,115,119,0.25)' : C.BORDER}`,
     color: active ? C.ACCENT : C.TEXT_MUTED,
     fontSize: 12,
     fontWeight: 600,

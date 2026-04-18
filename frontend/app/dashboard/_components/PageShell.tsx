@@ -1,13 +1,12 @@
 'use client';
 
 /**
- * PageShell - small reusable primitives for dashboard pages so every page has a
- * consistent header, empty state, card, pill, and stat block without pulling
- * in a UI library. Keeps every dashboard page visually identical to /try.
+ * PageShell - reusable primitives for dashboard pages.
+ * Light theme with warm off-white palette and deep teal accent.
  */
 
 import { ReactNode } from 'react';
-import { DASHBOARD_COLORS as C } from './DashboardShell';
+import { DASHBOARD_COLORS as C } from './dashboardColors';
 
 export function PageHeader({
   title,
@@ -26,18 +25,19 @@ export function PageHeader({
         justifyContent: 'space-between',
         gap: 24,
         flexWrap: 'wrap',
-        marginBottom: 36,
+        marginBottom: 32,
       }}
     >
       <div style={{ minWidth: 0 }}>
         <h1
           style={{
             margin: 0,
-            fontSize: 38,
+            fontSize: 28,
             fontWeight: 700,
             color: C.TEXT,
-            letterSpacing: '-0.04em',
-            lineHeight: 1.05,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.15,
+            fontFamily: '"DM Sans",system-ui,sans-serif',
           }}
         >
           {title}
@@ -45,11 +45,12 @@ export function PageHeader({
         {subtitle && (
           <p
             style={{
-              margin: '12px 0 0 0',
-              fontSize: 15,
-              color: C.TEXT_MUTED,
+              margin: '8px 0 0 0',
+              fontSize: 14,
+              color: C.TEXT_SECONDARY,
               lineHeight: 1.5,
-              maxWidth: 620,
+              maxWidth: 560,
+              fontFamily: '"Inter","DM Sans",system-ui,sans-serif',
             }}
           >
             {subtitle}
@@ -63,7 +64,7 @@ export function PageHeader({
 
 export function Card({
   children,
-  padding = 26,
+  padding = 24,
   style,
 }: {
   children: ReactNode;
@@ -73,11 +74,11 @@ export function Card({
   return (
     <div
       style={{
-        background: C.ELEVATED,
-        border: `1px solid ${C.HAIRLINE}`,
-        borderRadius: 16,
+        background: C.SURFACE,
+        border: `1px solid ${C.BORDER}`,
+        borderRadius: 12,
         padding,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.025)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         ...style,
       }}
     >
@@ -88,32 +89,35 @@ export function Card({
 
 export function StatCard({ label, value, accent, sub }: { label: string; value: ReactNode; accent?: boolean; sub?: string }) {
   return (
-    <Card padding={22}>
+    <Card padding={20}>
       <div
         style={{
-          fontSize: 12.5,
+          fontSize: 12,
           fontWeight: 600,
-          color: C.TEXT_MUTED,
-          letterSpacing: '-0.005em',
-          marginBottom: 14,
+          color: C.TEXT_SECONDARY,
+          letterSpacing: '0.01em',
+          marginBottom: 10,
+          textTransform: 'uppercase',
+          fontFamily: '"Inter","DM Sans",system-ui,sans-serif',
         }}
       >
         {label}
       </div>
       <div
         style={{
-          fontSize: 36,
+          fontSize: 32,
           fontWeight: 700,
           color: accent ? C.ACCENT : C.TEXT,
-          letterSpacing: '-0.035em',
+          letterSpacing: '-0.03em',
           lineHeight: 1,
           fontVariantNumeric: 'tabular-nums',
+          fontFamily: '"DM Sans",system-ui,sans-serif',
         }}
       >
         {value}
       </div>
       {sub && (
-        <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginTop: 8 }}>{sub}</div>
+        <div style={{ fontSize: 12, color: C.TEXT_SUBTLE, marginTop: 8, fontFamily: '"Inter","DM Sans",system-ui,sans-serif' }}>{sub}</div>
       )}
     </Card>
   );
@@ -135,33 +139,33 @@ export function EmptyState({
       {icon && (
         <div
           style={{
-            width: 60,
-            height: 60,
-            borderRadius: 18,
-            background: 'rgba(210,255,29,0.08)',
-            border: '1px solid rgba(210,255,29,0.18)',
+            width: 56,
+            height: 56,
+            borderRadius: 14,
+            background: C.ACCENT_LIGHT,
+            border: `1px solid ${C.BORDER}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 22px',
+            margin: '0 auto 20px',
             color: C.ACCENT,
-            boxShadow: 'inset 0 0 30px rgba(210,255,29,0.06)',
           }}
         >
           {icon}
         </div>
       )}
-      <h2 style={{ margin: '0 0 12px 0', fontSize: 26, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.03em' }}>
+      <h2 style={{ margin: '0 0 10px 0', fontSize: 22, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.02em', fontFamily: '"DM Sans",system-ui,sans-serif' }}>
         {title}
       </h2>
       {body && (
         <p
           style={{
             margin: '0 auto 24px',
-            fontSize: 14.5,
-            color: C.TEXT_MUTED,
-            maxWidth: 440,
+            fontSize: 14,
+            color: C.TEXT_SECONDARY,
+            maxWidth: 400,
             lineHeight: 1.55,
+            fontFamily: '"Inter","DM Sans",system-ui,sans-serif',
           }}
         >
           {body}
@@ -190,53 +194,36 @@ export function PrimaryButton({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    padding: '12px 24px',
-    background: disabled ? 'rgba(210,255,29,0.3)' : C.ACCENT,
-    color: C.BG,
+    padding: '10px 22px',
+    background: disabled ? 'rgba(13,115,119,0.4)' : C.ACCENT,
+    color: '#FFFFFF',
     border: 'none',
-    borderRadius: 100,
+    borderRadius: 8,
     fontSize: 13.5,
-    fontWeight: 700,
+    fontWeight: 600,
     cursor: disabled ? 'default' : 'pointer',
     textDecoration: 'none',
     fontFamily: '"DM Sans",system-ui,sans-serif',
-    transition: 'transform 0.15s ease, box-shadow 0.2s ease',
+    transition: 'background 0.15s ease, transform 0.15s ease',
+  };
+  const hoverIn = (e: any) => {
+    if (disabled) return;
+    e.currentTarget.style.background = C.ACCENT_HOVER;
+    e.currentTarget.style.transform = 'translateY(-1px)';
+  };
+  const hoverOut = (e: any) => {
+    e.currentTarget.style.background = disabled ? 'rgba(13,115,119,0.4)' : C.ACCENT;
+    e.currentTarget.style.transform = 'translateY(0)';
   };
   if (href) {
     return (
-      <a
-        href={href}
-        style={style}
-        onMouseEnter={(e) => {
-          if (disabled) return;
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = '0 0 24px rgba(210,255,29,0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-      >
+      <a href={href} style={style} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
         {children}
       </a>
     );
   }
   return (
-    <button
-      type={type}
-      disabled={disabled}
-      onClick={onClick}
-      style={style}
-      onMouseEnter={(e) => {
-        if (disabled) return;
-        e.currentTarget.style.transform = 'translateY(-1px)';
-        e.currentTarget.style.boxShadow = '0 0 24px rgba(210,255,29,0.3)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
+    <button type={type} disabled={disabled} onClick={onClick} style={style} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
       {children}
     </button>
   );
@@ -260,11 +247,11 @@ export function GhostButton({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    padding: '11px 20px',
+    padding: '10px 18px',
     background: 'transparent',
     color: C.TEXT,
     border: `1px solid ${C.BORDER}`,
-    borderRadius: 100,
+    borderRadius: 8,
     fontSize: 13,
     fontWeight: 600,
     cursor: 'pointer',
@@ -273,8 +260,8 @@ export function GhostButton({
     transition: 'all 0.15s ease',
   };
   const hover = (e: any) => {
-    e.currentTarget.style.background = 'rgba(210,255,29,0.08)';
-    e.currentTarget.style.borderColor = 'rgba(210,255,29,0.4)';
+    e.currentTarget.style.background = C.ACCENT_LIGHT;
+    e.currentTarget.style.borderColor = C.ACCENT;
     e.currentTarget.style.color = C.ACCENT;
   };
   const leave = (e: any) => {
@@ -301,28 +288,31 @@ export function Pill({
   variant = 'neutral',
 }: {
   children: ReactNode;
-  variant?: 'live' | 'draft' | 'neutral' | 'accent';
+  variant?: 'live' | 'draft' | 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
 }) {
-  const colors = {
-    live: { bg: 'rgba(76,175,80,0.14)', fg: '#4cd964' },
-    draft: { bg: 'rgba(156,163,175,0.15)', fg: '#9ca3af' },
-    neutral: { bg: 'rgba(255,255,255,0.06)', fg: C.TEXT_MUTED },
-    accent: { bg: 'rgba(210,255,29,0.1)', fg: C.ACCENT },
-  }[variant];
+  const colors: Record<string, { bg: string; fg: string }> = {
+    live: { bg: C.SUCCESS_LIGHT, fg: C.SUCCESS },
+    draft: { bg: '#F5F5F4', fg: C.TEXT_SECONDARY },
+    neutral: { bg: '#F5F5F4', fg: C.TEXT_SECONDARY },
+    accent: { bg: C.ACCENT_LIGHT, fg: C.ACCENT },
+    success: { bg: C.SUCCESS_LIGHT, fg: C.SUCCESS },
+    warning: { bg: C.WARNING_LIGHT, fg: C.WARNING },
+    danger: { bg: C.DANGER_LIGHT, fg: C.DANGER },
+  };
+  const c = colors[variant] || colors.neutral;
   return (
     <span
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        padding: '4px 11px',
+        padding: '3px 10px',
         borderRadius: 100,
         fontSize: 11,
         fontWeight: 600,
         textTransform: 'uppercase',
-        letterSpacing: '0.07em',
-        background: colors.bg,
-        color: colors.fg,
-        boxShadow: `inset 0 0 0 1px ${colors.fg}1a`,
+        letterSpacing: '0.04em',
+        background: c.bg,
+        color: c.fg,
       }}
     >
       {children}
@@ -338,7 +328,7 @@ export function Spinner({ size = 28, label = 'Loading' }: { size?: number; label
       style={{
         width: size,
         height: size,
-        border: `${Math.max(2, size / 14)}px solid rgba(210,255,29,0.15)`,
+        border: `${Math.max(2, size / 14)}px solid ${C.BORDER}`,
         borderTopColor: C.ACCENT,
         borderRadius: '50%',
         animation: 'sq-spin 0.75s linear infinite',

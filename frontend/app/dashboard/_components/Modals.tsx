@@ -49,7 +49,7 @@ function Sheet({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.72)',
+        background: 'rgba(0,0,0,0.25)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
@@ -65,10 +65,10 @@ function Sheet({
         style={{
           background: C.ELEVATED,
           border: `1px solid ${C.BORDER}`,
-          borderRadius: 18,
+          borderRadius: 14,
           width: '100%',
           maxWidth: width,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
           overflow: 'hidden',
         }}
       >
@@ -106,7 +106,7 @@ export function ConfirmDialog({
   if (!open) return null;
 
   const accent = destructive ? '#ef4444' : C.ACCENT;
-  const accentText = destructive ? '#ffffff' : '#07090c';
+  const accentText = '#ffffff';
 
   return (
     <Sheet onClose={loading ? () => {} : onClose} labelledBy="confirm-title" width={440}>
@@ -116,7 +116,7 @@ export function ConfirmDialog({
             width: 44,
             height: 44,
             borderRadius: 12,
-            background: destructive ? 'rgba(239,68,68,0.12)' : 'rgba(210,255,29,0.10)',
+            background: destructive ? C.DANGER_LIGHT : C.ACCENT_LIGHT,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -162,7 +162,7 @@ export function ConfirmDialog({
           disabled={loading}
           style={{
             padding: '10px 18px',
-            borderRadius: 100,
+            borderRadius: 8,
             background: 'transparent',
             color: C.TEXT,
             border: `1px solid ${C.BORDER}`,
@@ -181,7 +181,7 @@ export function ConfirmDialog({
           disabled={loading}
           style={{
             padding: '10px 20px',
-            borderRadius: 100,
+            borderRadius: 8,
             background: accent,
             color: accentText,
             border: 0,
@@ -274,8 +274,8 @@ function CopyRow({ label, value }: { label: string; value: string }) {
           style={{
             padding: '8px 14px',
             borderRadius: 8,
-            background: copied ? 'rgba(74,222,128,0.15)' : C.ACCENT,
-            color: copied ? '#4ade80' : '#07090c',
+            background: copied ? C.SUCCESS_LIGHT : C.ACCENT,
+            color: copied ? C.SUCCESS : '#FFFFFF',
             border: copied ? '1px solid rgba(74,222,128,0.3)' : 0,
             fontSize: 12.5,
             fontWeight: 700,
@@ -436,9 +436,9 @@ export function PublishModal({
           onClick={onClose}
           style={{
             padding: '10px 20px',
-            borderRadius: 100,
+            borderRadius: 8,
             background: C.ACCENT,
-            color: '#07090c',
+            color: '#FFFFFF',
             border: 0,
             fontSize: 13,
             fontWeight: 700,

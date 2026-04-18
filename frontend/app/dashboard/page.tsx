@@ -168,8 +168,8 @@ function HeroChart({
     <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" width="100%" height={220} style={{ display: 'block' }}>
       <defs>
         <linearGradient id="sq-grad-views" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#D2FF1D" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#D2FF1D" stopOpacity="0" />
+          <stop offset="0%" stopColor="#0D7377" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#0D7377" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="sq-grad-leads" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#6b7280" stopOpacity="0.3" />
@@ -183,7 +183,7 @@ function HeroChart({
           x2={width}
           y1={height * p}
           y2={height * p}
-          stroke="rgba(255,255,255,0.035)"
+          stroke="rgba(107,107,107,0.1)"
           strokeWidth={1}
         />
       ))}
@@ -196,7 +196,7 @@ function HeroChart({
       {viewSeries.some((v) => v > 0) && (
         <>
           <path d={viewsArea} fill="url(#sq-grad-views)" />
-          <path d={viewsLine} fill="none" stroke="#D2FF1D" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={viewsLine} fill="none" stroke="#0D7377" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
     </svg>
@@ -237,8 +237,8 @@ function OverviewStatCard({
             width: 30,
             height: 30,
             borderRadius: 9,
-            background: 'rgba(210,255,29,0.08)',
-            border: '1px solid rgba(210,255,29,0.18)',
+            background: C.ACCENT_LIGHT,
+            border: `1px solid rgba(13,115,119,0.25)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -298,8 +298,8 @@ function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () 
   return (
     <div
       style={{
-        background: urgent ? 'rgba(210,255,29,0.06)' : C.ELEVATED,
-        border: `1px solid ${urgent ? 'rgba(210,255,29,0.18)' : C.HAIRLINE}`,
+        background: urgent ? C.ACCENT_LIGHT : C.ELEVATED,
+        border: `1px solid ${urgent ? 'rgba(13,115,119,0.25)' : C.HAIRLINE}`,
         borderRadius: 14,
         padding: '14px 20px',
         marginBottom: 22,
@@ -310,7 +310,7 @@ function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () 
         flexWrap: 'wrap',
       }}
     >
-      <div style={{ fontSize: 14, color: 'rgba(240,242,245,0.75)' }}>
+      <div style={{ fontSize: 14, color: C.TEXT_MUTED }}>
         {urgent ? (
           <>
             Trial ends in{' '}
@@ -328,10 +328,10 @@ function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () 
       <button
         onClick={onUpgrade}
         style={{
-          background: urgent ? C.ACCENT : 'rgba(255,255,255,0.08)',
-          color: urgent ? C.BG : C.TEXT,
+          background: urgent ? C.ACCENT : C.SIDEBAR,
+          color: urgent ? '#FFFFFF' : C.TEXT,
           border: 'none',
-          borderRadius: 100,
+          borderRadius: 8,
           padding: '9px 20px',
           fontSize: 13,
           fontWeight: 700,
@@ -379,7 +379,7 @@ function OnboardingChecklist({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 28, height: 28, borderRadius: 8,
-            background: 'rgba(210,255,29,0.1)', border: '1px solid rgba(210,255,29,0.2)',
+            background: C.ACCENT_LIGHT, border: `1px solid rgba(13,115,119,0.25)`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -438,7 +438,7 @@ function OnboardingChecklist({
               color: 'inherit',
               transition: 'background 0.12s ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.SIDEBAR; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
             {step.done ? (
@@ -850,9 +850,9 @@ function OverviewInner() {
             alignItems: 'center',
             gap: 8,
             padding: '9px 14px',
-            background: C.ELEVATED,
-            border: `1px solid ${C.HAIRLINE}`,
-            borderRadius: 100,
+            background: C.SURFACE,
+            border: `1px solid ${C.BORDER}`,
+            borderRadius: 8,
             fontSize: 12.5,
             color: C.TEXT,
             fontWeight: 500,
@@ -963,12 +963,12 @@ function OverviewInner() {
                   padding: '6px 14px',
                   fontSize: 11.5,
                   fontWeight: 600,
-                  borderRadius: 100,
+                  borderRadius: 6,
                   border: 'none',
                   cursor: 'pointer',
-                  background: range === r ? 'rgba(210,255,29,0.1)' : 'transparent',
+                  background: range === r ? C.ACCENT_LIGHT : 'transparent',
                   color: range === r ? C.ACCENT : C.TEXT_MUTED,
-                  boxShadow: range === r ? 'inset 0 0 0 1px rgba(210,255,29,0.22)' : 'none',
+                  boxShadow: 'none',
                   fontFamily: '"DM Sans",system-ui,sans-serif',
                   transition: 'all 0.15s ease',
                 }}
@@ -1070,7 +1070,7 @@ function OverviewInner() {
                       transition: 'background 0.12s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                      e.currentTarget.style.background = C.SIDEBAR;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'transparent';
@@ -1081,8 +1081,8 @@ function OverviewInner() {
                         width: 40,
                         height: 40,
                         borderRadius: 10,
-                        background: 'linear-gradient(135deg, #1a1f29, #0f1319)',
-                        border: `1px solid ${C.HAIRLINE}`,
+                        background: C.ACCENT_LIGHT,
+                        border: `1px solid rgba(13,115,119,0.25)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1198,8 +1198,8 @@ function OverviewInner() {
                     width: 34,
                     height: 34,
                     borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${C.HAIRLINE}`,
+                    background: C.SIDEBAR,
+                    border: `1px solid ${C.BORDER}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

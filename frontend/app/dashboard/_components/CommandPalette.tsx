@@ -244,7 +244,7 @@ export function CommandPalette() {
         position: 'fixed',
         inset: 0,
         zIndex: 200,
-        background: 'rgba(0,0,0,0.6)',
+        background: 'rgba(0,0,0,0.25)',
         backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'flex-start',
@@ -261,7 +261,7 @@ export function CommandPalette() {
           border: '1px solid ' + C.BORDER,
           borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.15)',
         }}
       >
         {/* Search input */}
@@ -321,7 +321,7 @@ export function CommandPalette() {
                   gap: 10,
                   width: '100%',
                   padding: '10px 12px',
-                  background: isActive ? 'rgba(210,255,29,0.08)' : 'transparent',
+                  background: isActive ? C.ACCENT_LIGHT : 'transparent',
                   border: 'none',
                   borderRadius: 10,
                   cursor: 'pointer',

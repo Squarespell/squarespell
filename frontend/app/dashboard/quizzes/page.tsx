@@ -253,9 +253,9 @@ export default function QuizzesPage() {
                       gridColumn: '1 / -1',
                       padding: '11px 20px',
                       background: 'transparent',
-                      color: '#ef4444',
+                      color: C.DANGER,
                       border: `1px solid ${C.BORDER}`,
-                      borderRadius: 100,
+                      borderRadius: 8,
                       fontSize: 13,
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -263,8 +263,8 @@ export default function QuizzesPage() {
                       transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
-                      e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)';
+                      e.currentTarget.style.background = C.DANGER_LIGHT;
+                      e.currentTarget.style.borderColor = C.DANGER;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'transparent';

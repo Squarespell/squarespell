@@ -70,18 +70,18 @@ interface QuizData {
 /* Colors (matching DashboardShell)                                         */
 /* ========================================================================= */
 const COLORS = {
-  BG: '#07090c',
-  SURFACE: '#0a0d12',
-  ELEVATED: '#0f1319',
-  BORDER: '#1a1f29',
-  HAIRLINE: 'rgba(255,255,255,0.05)',
-  TEXT: '#f4f6f8',
-  TEXT_MUTED: '#8a919c',
-  TEXT_SUBTLE: '#5e6470',
-  ACCENT: '#D2FF1D',
-  ERROR: '#ef4444',
-  SUCCESS: '#10b981',
-  WARNING: '#f59e0b',
+  BG: '#F7F7F5',
+  SURFACE: '#FFFFFF',
+  ELEVATED: '#FFFFFF',
+  BORDER: '#E4E3E0',
+  HAIRLINE: '#EEEDE9',
+  TEXT: '#1A1A1A',
+  TEXT_MUTED: '#6B6B6B',
+  TEXT_SUBTLE: '#9B9B9B',
+  ACCENT: '#0D7377',
+  ERROR: '#C53030',
+  SUCCESS: '#2D6A4F',
+  WARNING: '#B45309',
 };
 
 /* ========================================================================= */
@@ -845,7 +845,7 @@ function QuestionList({
                   : draggedIdx === idx
                     ? COLORS.ELEVATED
                     : dragOverIdx === idx
-                      ? 'rgba(210,255,29,0.05)'
+                      ? 'rgba(13,115,119,0.06)'
                       : 'transparent',
               cursor: 'pointer',
               transition: 'background-color 0.15s',
@@ -1320,7 +1320,7 @@ function QuestionEditor({
 /* ========================================================================= */
 
 const ROUTE_COLORS = [
-  '#D2FF1D', '#22d3ee', '#f472b6', '#a78bfa', '#fb923c',
+  '#0D7377', '#22d3ee', '#f472b6', '#a78bfa', '#fb923c',
   '#34d399', '#f87171', '#facc15', '#818cf8', '#38bdf8',
 ];
 
@@ -1486,7 +1486,7 @@ function RoutingVisualization({
                         }}
                         title={opt.text + ' (' + score + ' pts)' + (branchTarget >= 0 ? ' -> Q' + (branchTarget + 1) : '')}
                       >
-                        <span style={{ color: 'rgba(255,255,255,0.7)' }}>{opt.text}</span>
+                        <span style={{ color: COLORS.TEXT_MUTED }}>{opt.text}</span>
                         <span style={{
                           fontWeight: 700, fontSize: 11, color: pillColor,
                           padding: '1px 5px', background: pillColor + '18', borderRadius: 4,

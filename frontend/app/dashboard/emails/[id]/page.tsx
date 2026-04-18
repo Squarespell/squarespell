@@ -172,7 +172,7 @@ export default function CampaignDetailPage() {
           <div style={{ color: '#ff5c5c', fontSize: 14, marginBottom: 16 }}>{error || 'Campaign not found'}</div>
           <button
             onClick={() => router.push('/dashboard/emails')}
-            style={{ padding: '8px 16px', background: C.ACCENT, color: C.BG, border: 0, borderRadius: 100, fontWeight: 600, cursor: 'pointer' }}
+            style={{ padding: '8px 16px', background: C.ACCENT, color: '#FFFFFF', border: 0, borderRadius: 100, fontWeight: 600, cursor: 'pointer' }}
           >
             Back to campaigns
           </button>
@@ -192,7 +192,7 @@ export default function CampaignDetailPage() {
         actions={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {saveMsg && (
-              <span style={{ fontSize: 12, color: saveMsg === 'Saved' ? '#4ade80' : '#ff5c5c', fontWeight: 500 }}>
+              <span style={{ fontSize: 12, color: saveMsg === 'Saved' ? '#2D6A4F' : '#C53030', fontWeight: 500 }}>
                 {saveMsg}
               </span>
             )}
@@ -261,11 +261,11 @@ export default function CampaignDetailPage() {
           <div style={{ color: C.TEXT, fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Performance report</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
             {[
-              { label: 'Delivered', value: stats.delivered, pct: stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0, color: '#4ade80' },
+              { label: 'Delivered', value: stats.delivered, pct: stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0, color: '#2D6A4F' },
               { label: 'Opened', value: stats.opened, pct: stats.delivered > 0 ? Math.round((stats.opened / stats.delivered) * 100) : 0, color: '#60a5fa' },
               { label: 'Clicked', value: stats.clicked, pct: stats.delivered > 0 ? Math.round((stats.clicked / stats.delivered) * 100) : 0, color: C.ACCENT },
-              { label: 'Bounced', value: stats.bounced, pct: stats.total > 0 ? Math.round((stats.bounced / stats.total) * 100) : 0, color: stats.bounced > 0 ? '#f59e0b' : C.TEXT_SUBTLE },
-              { label: 'Complained', value: stats.complained, pct: stats.total > 0 ? Math.round((stats.complained / stats.total) * 100) : 0, color: stats.complained > 0 ? '#ff5c5c' : C.TEXT_SUBTLE },
+              { label: 'Bounced', value: stats.bounced, pct: stats.total > 0 ? Math.round((stats.bounced / stats.total) * 100) : 0, color: stats.bounced > 0 ? '#B45309' : C.TEXT_SUBTLE },
+              { label: 'Complained', value: stats.complained, pct: stats.total > 0 ? Math.round((stats.complained / stats.total) * 100) : 0, color: stats.complained > 0 ? '#C53030' : C.TEXT_SUBTLE },
             ].map(function (m) {
               return (
                 <div key={m.label} style={{ padding: '14px 16px', background: C.ELEVATED, border: '1px solid ' + C.BORDER, borderRadius: 10 }}>
@@ -281,14 +281,14 @@ export default function CampaignDetailPage() {
           {/* Visual bars */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: 'Delivery rate', pct: stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0, color: '#4ade80' },
+              { label: 'Delivery rate', pct: stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0, color: '#2D6A4F' },
               { label: 'Open rate', pct: stats.delivered > 0 ? Math.round((stats.opened / stats.delivered) * 100) : 0, color: '#60a5fa' },
               { label: 'Click rate', pct: stats.delivered > 0 ? Math.round((stats.clicked / stats.delivered) * 100) : 0, color: C.ACCENT },
             ].map(function (bar) {
               return (
                 <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 90, fontSize: 12, color: C.TEXT_MUTED, fontWeight: 500, flexShrink: 0 }}>{bar.label}</div>
-                  <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: 8, background: 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
                     <div style={{ width: bar.pct + '%', height: '100%', background: bar.color, borderRadius: 4, transition: 'width 0.3s ease' }} />
                   </div>
                   <div style={{ width: 40, fontSize: 12, color: C.TEXT, fontWeight: 600, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{bar.pct}%</div>
@@ -297,7 +297,7 @@ export default function CampaignDetailPage() {
             })}
           </div>
           {stats.hard_bounced > 0 && (
-            <div style={{ marginTop: 14, fontSize: 12, color: '#f59e0b' }}>
+            <div style={{ marginTop: 14, fontSize: 12, color: '#B45309' }}>
               {stats.hard_bounced} hard bounce{stats.hard_bounced !== 1 ? 's' : ''}, {stats.soft_bounced} soft bounce{stats.soft_bounced !== 1 ? 's' : ''}
             </div>
           )}
@@ -414,7 +414,7 @@ export default function CampaignDetailPage() {
               </button>
             </div>
             {testMsg && (
-              <div style={{ marginTop: 6, fontSize: 12, color: testStatus === 'sent' ? '#4ade80' : '#ff5c5c' }}>
+              <div style={{ marginTop: 6, fontSize: 12, color: testStatus === 'sent' ? '#2D6A4F' : '#C53030' }}>
                 {testMsg}
               </div>
             )}
@@ -427,8 +427,8 @@ export default function CampaignDetailPage() {
                 onClick={handleSend}
                 disabled={sending}
                 style={{
-                  padding: '12px 24px', background: C.ACCENT, color: C.BG, border: 0,
-                  borderRadius: 100, fontWeight: 700, fontSize: 14, cursor: sending ? 'not-allowed' : 'pointer',
+                  padding: '12px 24px', background: C.ACCENT, color: '#FFFFFF', border: 0,
+                  borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: sending ? 'not-allowed' : 'pointer',
                   opacity: sending ? 0.6 : 1,
                 }}
               >
@@ -468,15 +468,15 @@ export default function CampaignDetailPage() {
 
           {isSent && (
             <div style={{ borderTop: `1px solid ${C.BORDER}`, paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ color: '#4ade80', fontSize: 13, fontWeight: 500 }}>
+              <div style={{ color: '#2D6A4F', fontSize: 13, fontWeight: 500 }}>
                 This campaign has been sent to {(campaign.sent_count || 0).toLocaleString()} recipients.
               </div>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
                 style={{
-                  padding: '10px 18px', background: 'transparent', color: '#ff5c5c',
-                  border: '1px solid rgba(255,92,92,0.3)', borderRadius: 100, fontWeight: 600,
+                  padding: '10px 18px', background: 'transparent', color: '#C53030',
+                  border: '1px solid rgba(197,48,48,0.3)', borderRadius: 8, fontWeight: 600,
                   fontSize: 13, cursor: deleting ? 'not-allowed' : 'pointer',
                   opacity: deleting ? 0.5 : 1,
                 }}
@@ -487,7 +487,7 @@ export default function CampaignDetailPage() {
           )}
 
           {sendResult && (
-            <div style={{ fontSize: 13, color: sendResult.startsWith('Error') ? '#ff5c5c' : '#4ade80' }}>
+            <div style={{ fontSize: 13, color: sendResult.startsWith('Error') ? '#C53030' : '#2D6A4F' }}>
               {sendResult}
             </div>
           )}

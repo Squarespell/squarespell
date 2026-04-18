@@ -112,7 +112,7 @@ export function DesignStep({
               {EMAIL_TEMPLATES.map(t => (
                 <button key={t.id} onClick={() => pickTemplate(t)} style={{
                   textAlign: 'left', padding: '12px 14px',
-                  background: state.templateId === t.id ? 'rgba(210,255,29,0.10)' : C.ELEVATED,
+                  background: state.templateId === t.id ? C.ACCENT_LIGHT : C.ELEVATED,
                   border: `1px solid ${state.templateId === t.id ? C.ACCENT : C.BORDER}`,
                   borderRadius: 10, cursor: 'pointer',
                 }}>
@@ -174,7 +174,7 @@ export function DesignStep({
               {(['desktop', 'mobile'] as const).map(v => (
                 <button key={v} onClick={() => setView(v)} style={{
                   background: view === v ? C.ACCENT : 'transparent',
-                  color: view === v ? '#0a0a0a' : C.TEXT_MUTED,
+                  color: view === v ? '#FFFFFF' : C.TEXT_MUTED,
                   border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 }}>{v === 'desktop'
                     ? <><svg width={13} height={13} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' style={{marginRight:5,verticalAlign:'middle'}} aria-hidden="true"><rect x='2' y='3' width='20' height='14' rx='2'/><line x1='8' y1='21' x2='16' y2='21'/><line x1='12' y1='17' x2='12' y2='21'/></svg>Desktop</>

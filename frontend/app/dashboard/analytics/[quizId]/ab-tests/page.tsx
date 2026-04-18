@@ -169,7 +169,7 @@ function CreateTestForm({
   var selectStyle: React.CSSProperties = {
     ...inputStyle,
     appearance: 'none' as const,
-    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\' fill=\'none\'%3E%3Cpath d=\'M3 4.5L6 7.5L9 4.5\' stroke=\'%238a919c\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E")',
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\' fill=\'none\'%3E%3Cpath d=\'M3 4.5L6 7.5L9 4.5\' stroke=\'%236B6B6B\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E")',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'right 12px center',
     paddingRight: 32,
@@ -200,8 +200,8 @@ function CreateTestForm({
               <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: 8,
-                  background: 'rgba(210,255,29,0.08)',
-                  border: '1px solid rgba(210,255,29,0.18)',
+                  background: C.ACCENT_LIGHT,
+                  border: '1px solid ' + C.ACCENT,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 12, fontWeight: 700, color: C.ACCENT, flexShrink: 0,
                 }}>
@@ -338,7 +338,7 @@ function TestCard({
     });
   }
 
-  var barColors = ['#D2FF1D', '#3b7dd8', '#e67e22', '#9b59b6', '#1abc9c'];
+  var barColors = [C.ACCENT, '#3b7dd8', '#e67e22', '#9b59b6', '#1abc9c'];
 
   return (
     <Card style={{ marginBottom: 16 }}>
@@ -410,8 +410,8 @@ function TestCard({
                 key={variant.variant_id}
                 style={{
                   padding: 16,
-                  background: isWinner ? 'rgba(210,255,29,0.04)' : C.SURFACE,
-                  border: '1px solid ' + (isWinner ? 'rgba(210,255,29,0.25)' : C.BORDER),
+                  background: isWinner ? C.ACCENT_LIGHT : C.SURFACE,
+                  border: '1px solid ' + (isWinner ? C.ACCENT : C.BORDER),
                   borderRadius: 12,
                 }}
               >
@@ -464,7 +464,7 @@ function TestCard({
                 {/* Conversion rate bar */}
                 <div style={{
                   height: 6, borderRadius: 3,
-                  background: 'rgba(255,255,255,0.04)',
+                  background: C.HAIRLINE,
                   overflow: 'hidden',
                 }}>
                   <div style={{

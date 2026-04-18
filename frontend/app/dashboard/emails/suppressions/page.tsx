@@ -127,7 +127,7 @@ export default function SuppressionsPage() {
           {unsubCount > 0 && (
             <div style={{
               padding: '6px 14px', borderRadius: 6,
-              background: `rgba(210,255,29,0.08)`, border: `1px solid rgba(210,255,29,0.2)`,
+              background: `rgba(13,115,119,0.08)`, border: `1px solid rgba(13,115,119,0.2)`,
               fontSize: 12, color: C.ACCENT,
             }}>
               Unsubscribed: <strong>{unsubCount}</strong>

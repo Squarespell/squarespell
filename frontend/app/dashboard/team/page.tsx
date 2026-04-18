@@ -38,10 +38,10 @@ type TeamQuiz = {
 };
 
 const ROLE_COLORS: Record<TeamRole, { bg: string; text: string }> = {
-  owner: { bg: '#D2FF1D', text: '#000' },
-  admin: { bg: '#4f9f5f', text: '#fff' },
-  editor: { bg: '#5f7f8f', text: '#fff' },
-  viewer: { bg: '#3a4a5f', text: '#fff' },
+  owner: { bg: '#0D7377', text: '#FFFFFF' },
+  admin: { bg: '#2D6A4F', text: '#FFFFFF' },
+  editor: { bg: '#B45309', text: '#FFFFFF' },
+  viewer: { bg: '#6B6B6B', text: '#FFFFFF' },
 };
 
 export default function TeamPage() {
@@ -341,13 +341,13 @@ export default function TeamPage() {
               </div>
 
               {error && (
-                <div style={{ padding: '0.75rem', background: '#4f2a2a', color: '#ff6b6b', borderRadius: '0.375rem', marginBottom: '1rem' }}>
+                <div style={{ padding: '0.75rem', background: C.DANGER_LIGHT, color: C.DANGER, borderRadius: '0.375rem', marginBottom: '1rem' }}>
                   {error}
                 </div>
               )}
 
               {success && (
-                <div style={{ padding: '0.75rem', background: '#2a4f2a', color: '#6bff6b', borderRadius: '0.375rem', marginBottom: '1rem' }}>
+                <div style={{ padding: '0.75rem', background: C.SUCCESS_LIGHT, color: C.SUCCESS, borderRadius: '0.375rem', marginBottom: '1rem' }}>
                   {success}
                 </div>
               )}
@@ -494,8 +494,8 @@ export default function TeamPage() {
                               onClick={() => handleRemoveMember(member.user_id)}
                               style={{
                                 padding: '0.375rem 0.75rem',
-                                background: '#4f2a2a',
-                                color: '#ff6b6b',
+                                background: C.DANGER_LIGHT,
+                                color: C.DANGER,
                                 border: 'none',
                                 borderRadius: '0.25rem',
                                 cursor: 'pointer',
@@ -579,8 +579,8 @@ export default function TeamPage() {
                             }}
                             style={{
                               padding: '0.375rem 0.75rem',
-                              background: '#4f2a2a',
-                              color: '#ff6b6b',
+                              background: C.DANGER_LIGHT,
+                              color: C.DANGER,
                               border: 'none',
                               borderRadius: '0.25rem',
                               cursor: 'pointer',

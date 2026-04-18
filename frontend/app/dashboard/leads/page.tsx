@@ -201,7 +201,7 @@ export default function LeadsPage() {
                 fontFamily: '"DM Sans",system-ui,sans-serif',
                 outline: 'none',
               }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(210,255,29,0.4)')}
+              onFocus={(e) => (e.currentTarget.style.borderColor = C.ACCENT)}
               onBlur={(e) => (e.currentTarget.style.borderColor = C.BORDER)}
             />
             <select
@@ -252,7 +252,7 @@ export default function LeadsPage() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <tr style={{ background: C.SIDEBAR }}>
                     {['Name', 'Email', 'Quiz', 'Score', 'Captured'].map((h) => (
                       <th
                         key={h}
@@ -301,7 +301,7 @@ export default function LeadsPage() {
                           transition: 'background-color 0.15s ease',
                         }}
                         onClick={() => router.push(`/dashboard/leads/${l.id}`)}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = C.SIDEBAR)}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <td style={{ padding: '14px 18px', color: C.TEXT, fontWeight: 600 }}>{l.name || '-'}</td>

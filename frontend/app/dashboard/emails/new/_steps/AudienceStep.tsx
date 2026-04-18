@@ -259,7 +259,7 @@ export function AudienceStep({
             onClick={() => fileRef.current?.click()}
             style={{
               border: `2px dashed ${dragOver ? C.ACCENT : C.BORDER}`,
-              background: dragOver ? 'rgba(210,255,29,0.06)' : C.ELEVATED,
+              background: dragOver ? C.ACCENT_LIGHT : C.ELEVATED,
               borderRadius: 12, padding: '36px 20px', textAlign: 'center', cursor: 'pointer',
               marginBottom: 16, transition: 'all 0.15s',
             }}
@@ -306,7 +306,7 @@ export function AudienceStep({
 
       <div style={{
         marginTop: 20, padding: '14px 18px',
-        background: ready ? 'rgba(210,255,29,0.08)' : C.ELEVATED,
+        background: ready ? C.ACCENT_LIGHT : C.ELEVATED,
         border: `1px solid ${ready ? C.ACCENT : C.BORDER}`,
         borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
@@ -330,15 +330,15 @@ function QuizCard({ quiz, active, onClick }: { quiz: SourceQuiz; active: boolean
   return (
     <button onClick={onClick} style={{
       textAlign: 'left', cursor: 'pointer', position: 'relative',
-      background: active ? 'rgba(210,255,29,0.10)' : C.ELEVATED,
+      background: active ? C.ACCENT_LIGHT : C.ELEVATED,
       border: `1px solid ${active ? C.ACCENT : C.BORDER}`,
       borderRadius: 12, padding: '14px 16px', transition: 'all 0.15s',
     }}>
       <div style={{ display: 'flex', alignItems: 'start', gap: 10 }}>
         <div style={{
           width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-          background: active ? C.ACCENT : 'rgba(210,255,29,0.12)',
-          color: active ? '#0a0a0a' : C.ACCENT,
+          background: active ? C.ACCENT : C.ACCENT_LIGHT,
+          color: active ? '#FFFFFF' : C.ACCENT,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 14, fontWeight: 700,
         }}>{(quiz.title || quiz.slug || '?').charAt(0).toUpperCase()}</div>
@@ -376,14 +376,14 @@ function SourceChip({ active, onClick, title, sub, icon }: { active: boolean; on
   return (
     <button onClick={onClick} style={{
       flex: 1, textAlign: 'left', display: 'flex', gap: 12, alignItems: 'start',
-      background: active ? 'rgba(210,255,29,0.10)' : C.ELEVATED,
+      background: active ? C.ACCENT_LIGHT : C.ELEVATED,
       border: `1px solid ${active ? C.ACCENT : C.BORDER}`,
       borderRadius: 12, padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s',
     }}>
       <div style={{
         width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-        background: active ? C.ACCENT : 'rgba(210,255,29,0.10)',
-        color: active ? '#0a0a0a' : C.ACCENT,
+        background: active ? C.ACCENT : C.ACCENT_LIGHT,
+        color: active ? '#FFFFFF' : C.ACCENT,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>{icon}</div>
       <div>

@@ -26,7 +26,7 @@ export function Stepper({ current, onJump }: { current: StepKey; onJump?: (k: St
             style={{
               flex: 1,
               textAlign: 'left',
-              background: active ? 'rgba(210,255,29,0.08)' : C.SURFACE,
+              background: active ? C.ACCENT_LIGHT : C.SURFACE,
               border: `1px solid ${active ? C.ACCENT : C.BORDER}`,
               borderRadius: 14,
               padding: '14px 16px',
@@ -38,7 +38,7 @@ export function Stepper({ current, onJump }: { current: StepKey; onJump?: (k: St
               <div style={{
                 width: 22, height: 22, borderRadius: 11,
                 background: done ? C.ACCENT : active ? C.ACCENT : C.BORDER,
-                color: done || active ? '#0a0a0a' : C.TEXT_MUTED,
+                color: done || active ? '#FFFFFF' : C.TEXT_MUTED,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700,
               }}>{done ? '✓' : i + 1}</div>

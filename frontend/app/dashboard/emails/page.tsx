@@ -94,7 +94,7 @@ export default function EmailsPage() {
               <div style={{ color: C.TEXT_MUTED, fontSize: 12, marginTop: 2 }}>{pct}% used</div>
             </div>
           </div>
-          <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
+          <div style={{ height: 8, background: 'rgba(0,0,0,0.06)', borderRadius: 999, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${pct}%`, background: barColor, transition: 'width 400ms ease' }} />
           </div>
           {pct >= 90 && (
@@ -174,7 +174,7 @@ export default function EmailsPage() {
               </thead>
               <tbody>
                 {items.map(c => (
-                  <tr key={c.id} onClick={() => router.push(`/dashboard/emails/${c.id}`)} style={{ borderTop: `1px solid ${C.BORDER}`, cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <tr key={c.id} onClick={() => router.push(`/dashboard/emails/${c.id}`)} style={{ borderTop: `1px solid ${C.BORDER}`, cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     <td style={{ padding: '14px 12px', color: C.TEXT, fontWeight: 500 }}>
                       <Link href={`/dashboard/emails/${c.id}`} style={{ color: C.TEXT, textDecoration: 'none' }}>
                         {c.name || 'Untitled campaign'}

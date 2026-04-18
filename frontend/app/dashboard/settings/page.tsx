@@ -56,7 +56,7 @@ export default function SettingsPage() {
 
   const dotStyle = (on: boolean): React.CSSProperties => ({
     position: 'absolute', top: 3, width: 18, height: 18,
-    borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
+    borderRadius: '50%', background: '#FFFFFF', transition: 'left 0.2s',
     left: on ? 23 : 3,
   });
 
@@ -78,7 +78,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {saved && <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 600 }}>Saved</span>}
+                {saved && <span style={{ fontSize: 12, color: C.SUCCESS, fontWeight: 600 }}>Saved</span>}
                 <button
                   onClick={() => toggleNotifs(!emailNotifs)}
                   disabled={saving}

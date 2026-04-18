@@ -383,7 +383,7 @@ export default function IntegrationsPage() {
                     padding: 16,
                     border: `1px solid ${C.BORDER}`,
                     borderRadius: 12,
-                    background: c.available ? C.SURFACE : 'rgba(255,255,255,0.02)',
+                    background: c.available ? C.SURFACE : C.BG,
                     opacity: c.available ? 1 : 0.7,
                     cursor: c.available ? 'pointer' : 'default',
                     transition: 'border-color 0.15s',

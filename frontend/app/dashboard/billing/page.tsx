@@ -293,7 +293,7 @@ export default function BillingPage() {
                     width: 18,
                     height: 18,
                     borderRadius: 9,
-                    background: yearly ? '#000' : C.TEXT_MUTED,
+                    background: '#FFFFFF',
                     position: 'absolute',
                     top: 3,
                     left: yearly ? 23 : 3,
@@ -305,7 +305,7 @@ export default function BillingPage() {
                 Yearly
               </span>
               {yearly && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#000', background: C.ACCENT, padding: '2px 8px', borderRadius: 10 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#FFFFFF', background: C.ACCENT, padding: '2px 8px', borderRadius: 6 }}>
                   Save 20%
                 </span>
               )}
