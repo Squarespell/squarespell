@@ -4,54 +4,111 @@ Durable task list. Edit freely. Order within a priority band is rough.
 
 ## In flight
 
-- [ ] Incorporate your design ideas into NewQuizModal before pushing
-- [ ] Ship NewQuizModal redesign PR (branch ready: `fix/newquiz-modal-redesign-20260414`, script at `_cherry-pick-to-main/ship-newquiz-redesign.sh`)
 - [ ] End-to-end smoke test after deploy (login, paste URL, pick goal, generate, land in builder)
+- [ ] Verify POST /api/quizzes/from-url works from app.squarespell.com
 
 ## P0 (do next)
 
-- [ ] Clean up dirty working tree (~25 uncommitted mods + pop stash)
-- [ ] Diagnose 404 root cause on POST /api/quizzes/from-url (verify in smoke test)
-- [ ] Two-stage flow: URL paste, real scrape, show detected Business Type / Audience / Tone / Key Offer with edit buttons, goal picker, generate. Mirrors /tools/quiz-funnel/build polish.
+- [ ] Unsubscribe link + public endpoint + branded preference page
+- [ ] CAN-SPAM footer with business address
+- [ ] Onboarding checklist widget with % complete
+- [ ] Merge tags: {{outcome_name}}, {{answer:slug}}, {{quiz_name}}
+- [ ] Persistent top banner slot (trial, billing, announcements)
 
 ## P1
 
-- [ ] Style packs v1 (preset brand themes for generated quizzes)
-- [ ] Auto-suggest quiz ideas in the modal based on scraped site
-- [ ] Duplicate / remix quiz from dashboard grid
-- [ ] Investigate and ship fix/consolidate-subdomains branch
-- [ ] PLG guest-session to draft-claim verification end-to-end
-- [ ] Mobile embed audit (test iframe on mobile Safari and Chrome)
+- [ ] Resend webhook handler (delivered/opened/clicked/bounced/complained)
+- [ ] email_events table + indexes
+- [ ] Scrape Squarespace fonts + palette for BrandKit autofill
+- [ ] PLG guest-session to draft-claim E2E
+- [ ] GDPR consent gating on quiz + email
+- [ ] Send test email to self
+- [ ] Schedule picker UI
+- [ ] Render cron dispatcher for scheduled sends
 
 ## P2
 
-- [ ] Embed iframe loading skeleton
-- [ ] Remove-branding toggle (paid plan gate)
-- [ ] Premium templates v2 (more archetypes, paid-tier gated)
-- [ ] Advanced integrations (Zapier, HubSpot, Klaviyo actions)
-- [ ] Empty state polish across dashboard
+- [ ] WCAG 2.1 AA audit on dashboard and public quiz flow
+- [ ] Deliverability dashboard (bounce rate, spam complaint rate)
+- [ ] Bounce classification pipeline (hard/soft)
+- [ ] Suppression list (global)
+- [ ] DKIM/SPF on Resend shared domain
+- [ ] Brand kit shared across quiz + email + popup
+- [ ] Brand-import-from-URL scraper (logo, palette, fonts, tone)
+- [ ] AI body generator (personalize around respondent answers)
+- [ ] AI subject generator (quiz outcome + answers context)
+- [ ] Post-quiz automation (one-node MVP, keyed to outcome)
 
 ## P3
 
-- [ ] OG / Twitter meta tags for public quiz pages
-- [ ] GDPR consent gating on lead capture
-- [ ] WCAG 2.1 AA audit on dashboard and public quiz flow
-- [ ] Bulk delete in quizzes grid
+- [ ] Visual editor canvas (drag-drop blocks)
+- [ ] Inspector panel (right sidebar, edit block props)
+- [ ] Live preview iframe that updates on edit
+- [ ] Mobile / desktop preview toggle
+- [ ] Dark-mode email-client preview
+- [ ] Global search (cmd+k) across quizzes, campaigns, contacts
 - [ ] Outcomes routing visualization in builder
-- [ ] Em-dash sweep repo-wide plus CTA copy validator
+- [ ] Trash + restore for campaigns and quizzes
+- [ ] Bot filtering toggle
+- [ ] Segments = quiz answers audience builder
+- [ ] Add Templates sidebar nav entry under Emails
+- [ ] Wire template gallery into New Campaign wizard
+- [ ] Template gallery for 7 Squarespace site types
 
 ## P4
 
+- [ ] Per-quiz funnel chart (views -> completes -> outcomes -> email CTR)
+- [ ] Per-campaign report tied to originating quiz
+- [ ] Conversion funnel report (quiz view -> complete -> email CTR)
+- [ ] Date-range + comparison picker
 - [ ] Analytics v2 (funnel drop-off, question heatmap)
 - [ ] A/B testing framework for quizzes
+- [ ] Attribution pipeline (quiz -> outcome -> email -> order)
+- [ ] Attribution dashboard ($ per quiz / outcome / campaign)
 - [ ] ROI attribution reporting
+
+## P5 (Squarespace Commerce)
+
+- [ ] Pull product catalog from Squarespace Commerce
+- [ ] Squarespace Commerce order webhook intake
+- [ ] Generate discount codes for Squarespace Commerce
+- [ ] Sync quiz subscribers into Squarespace Newsletter Block
+- [ ] Use Squarespace Scheduling link as booking-outcome CTA
+- [ ] Detect Squarespace template family (7.0 vs 7.1)
+- [ ] Light / dark BrandKit variants
+
+## P6 (Observability)
+
+- [ ] Sentry error alerting
+- [ ] Structured logging across API + workers
 
 ## Done log (recent)
 
+- [x] Standardize empty states across dashboard pages
+- [x] Global toast notification system (useToast hook + ToastProvider)
+- [x] UTM auto-tagging on all outbound CTA links
+- [x] Em-dash sweep repo-wide
+- [x] OG / Twitter meta tags for public quiz pages
+- [x] Deep embed-install guide (Code Block vs Code Injection)
+- [x] Auto-detect Squarespace site on URL paste
+- [x] Embed mode picker (inline/popup/tab)
+- [x] One-click copy embed snippet with site ID pre-filled
+- [x] Style packs v1 (preset brand themes for generated quizzes)
+- [x] Auto-suggest quiz ideas in the modal based on scraped site
+- [x] Duplicate / remix quiz from dashboard grid
+- [x] Two-stage flow: URL paste, real scrape, editable brand fields, goal picker, generate
+- [x] Embed iframe loading skeleton
+- [x] Remove-branding toggle (paid plan gate)
+- [x] Zapier integration + API keys management page
+- [x] Settings page with email notification toggle
+- [x] Claim flow fix (preserve preview on failed claim, retry banner)
+- [x] Clean up dirty working tree
+- [x] Skeleton loaders on every async surface
+- [x] Premium duotone goal-card icons
 - [x] Vercel build hotfix (PR #21)
 - [x] Wire + New quiz buttons to modal (merged)
-- [x] Redesign NewQuizModal with SVG icons + goal picker (built, holding for your design input)
-- [x] Fix API fallback URL squarespell-backend to squarespell-api + improve 404 surface
+- [x] Redesign NewQuizModal with SVG icons + goal picker
+- [x] Fix API fallback URL squarespell-backend to squarespell-api
 - [x] Codify no-emoji / no-em-dash rules in CLAUDE.md
 
 ## Project rules (non-negotiable, also in CLAUDE.md)
