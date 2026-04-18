@@ -104,6 +104,33 @@ r.get('/campaigns/:id', async (req, res) => {
   res.json(data);
 });
 
+// Delivery stats for a campaign (sent, delivered, opened, clicked, bounced, complained)
+r.get('/campaigns/:id/stats', async (req, res) => {
+  const tenantId = req.dbUserId;
+  // Verify ownership
+  const { data: c } = await supabase.from('email_campaigns')
+    .select('id').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!c) return res.status(404).json({ error: 'Campaign not found' });
+
+  const { data: sends } = await supabase.from('email_sends')
+    .select('status, opened_at, clicked_at')
+    .eq('campaign_id', req.params.id);
+
+  const rows = sends || [];
+  const stats = {
+    total: rows.length,
+    sent: rows.filter((s: any) => s.status === 'sent' || s.status === 'delivered').length,
+    delivered: rows.filter((s: any) => s.status === 'delivered').length,
+    opened: rows.filter((s: any) => s.opened_at).length,
+    clicked: rows.filter((s: any) => s.clicked_at).length,
+    bounced: rows.filter((s: any) => s.status === 'bounced').length,
+    complained: rows.filter((s: any) => s.status === 'complained').length,
+    failed: rows.filter((s: any) => s.status === 'failed').length,
+  };
+
+  res.json(stats);
+});
+
 r.post('/campaigns', async (req, res) => {
   const tenantId = req.dbUserId;
   const {
@@ -275,16 +302,6 @@ r.post('/campaigns/:id/test-send', async (req, res) => {
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
-});
-
-r.post('/webhooks/resend', async (req, res) => {
-  const e = req.body;
-  const sendId = e?.data?.headers?.['X-Send-Id'];
-  const type = (e?.type || '').replace('email.', '');
-  if (sendId && type) {
-    await supabase.from('email_events').insert({ send_id: sendId, type, meta: e });
-  }
-  res.json({ ok: true });
 });
 
 export default r;

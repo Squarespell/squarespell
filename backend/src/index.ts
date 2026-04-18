@@ -6,6 +6,7 @@ import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
 import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter } from './routes/allRoutes';
 import emailsRouter from './routes/emails';
+import resendWebhookRouter from './routes/resendWebhook';
 import unsubscribeRouter from './routes/unsubscribe';
 import clerkWebhookRoute from './routes/clerkWebhook';
 
@@ -60,6 +61,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/scrape-brand',
   '/api/public/unsubscribe',
   '/api/public/resubscribe',
+  '/api/webhooks',
 ];
 
 const restrictedCors = cors({
@@ -105,6 +107,7 @@ app.use('/api/integrations', integrationsRouter);
 app.use('/api/cron', cronRouter);
 app.use('/api/cron', trialReminderRouter);
 app.use('/api/emails', emailsRouter);
+app.use('/api/webhooks', resendWebhookRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
