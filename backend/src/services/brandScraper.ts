@@ -102,6 +102,26 @@ export async function scrapeBrand(url: string) {
       console.log('[Scraper] Squarespace site detected');
     }
 
+    // Detect Squarespace template family: 7.1 uses siteVersion or templateVersion in context
+    let templateVersion: '7.0' | '7.1' | 'unknown' = 'unknown';
+    if (isSquarespace) {
+      if (
+        html.includes('"templateVersion":"7.1"') ||
+        html.includes('"siteVersion":"7.1"') ||
+        html.includes('sqs-slide-container') ||
+        html.includes('data-controller="SiteLoader"')
+      ) {
+        templateVersion = '7.1';
+      } else if (
+        html.includes('"templateVersion":"7"') ||
+        html.includes('sqs-layout') ||
+        html.includes('data-controller="SiteLayout"')
+      ) {
+        templateVersion = '7.0';
+      }
+      console.log('[Scraper] Template version:', templateVersion);
+    }
+
     if (!isSquarespace) {
       const hostname = new URL(url).hostname.replace(/^www\./, '');
       console.warn(`[Scraper] HARD FAIL: ${hostname} is not a Squarespace site`);
@@ -571,6 +591,8 @@ export async function scrapeBrand(url: string) {
 
     return {
       detected: true,
+      platform: 'squarespace',
+      template_version: templateVersion,
       colors: {
         background: bgColor,
         primary: primaryColor,

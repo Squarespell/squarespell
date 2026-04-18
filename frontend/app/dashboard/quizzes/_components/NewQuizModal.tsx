@@ -134,6 +134,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [goalId, setGoalId] = useState<string>("leads");
   const [brand, setBrand] = useState<BrandScrape>({});
   const [detected, setDetected] = useState<Set<keyof BrandScrape>>(new Set());
+  const [isSquarespace, setIsSquarespace] = useState(false);
+  const [templateVersion, setTemplateVersion] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const urlRef = useRef<HTMLInputElement>(null);
@@ -148,6 +150,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setGoalId("leads");
     setBrand({});
     setDetected(new Set());
+    setIsSquarespace(false);
+    setTemplateVersion('');
     setErrorMsg("");
     setSubmitting(false);
     setTimeout(() => urlRef.current?.focus(), 20);
@@ -213,6 +217,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
           accentColor: isHex(colors.accent) ? colors.accent : undefined,
         };
         setBrand(next);
+        setIsSquarespace(true);
+        if (data.template_version) setTemplateVersion(data.template_version);
         const flags = new Set<keyof BrandScrape>();
         (Object.keys(next) as Array<keyof BrandScrape>).forEach(function (k) {
           const v = next[k];
@@ -221,6 +227,18 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
         setDetected(flags);
         const ideas = Array.isArray(data?.quiz_ideas) ? data.quiz_ideas.filter((s: unknown): s is string => typeof s === "string" && s.trim().length > 0) : [];
         setQuizIdeas(ideas.slice(0, 4));
+      } else if (resp.status === 422) {
+        const errData = await resp.json().catch(() => ({}));
+        if (errData.code === 'NOT_SQUARESPACE') {
+          setErrorMsg('This doesn't look like a Squarespace site. Squarespell is built exclusively for Squarespace - paste a Squarespace site URL to continue.');
+          setIsSquarespace(false);
+          clearTimeout(timer);
+          setStage('site');
+          return;
+        }
+        setBrand({});
+        setDetected(new Set());
+        setQuizIdeas([]);
       } else {
         setBrand({});
         setDetected(new Set());
@@ -394,6 +412,12 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
               {stage === "goal" && (
                 <div className="sq-form">
                   <p className="sq-lead">Pick the goal that matches how you want to use this quiz.</p>
+                  {isSquarespace && (
+                    <div className="sq-sqsp-badge">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                      <span>Squarespace{templateVersion ? " " + templateVersion : ""} detected</span>
+                    </div>
+                  )}
                   {quizIdeas.length > 0 && (
                     <div className="sq-ideas">
                       <div className="sq-ideas-label">
@@ -958,6 +982,7 @@ const styles = `
   .sq-goals { grid-template-columns: 1fr; }
 }
 
+.sq-sqsp-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: #4ade80; font-size: 12px; font-weight: 600; margin-bottom: 14px; letter-spacing: 0.02em; }
 .sq-ideas { margin: 0 0 16px; padding: 12px; border: 1px solid rgba(239, 68, 68, 0.22); background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(168,85,247,0.06)); border-radius: 10px; }
 .sq-ideas-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: rgba(239, 68, 68, 1); margin-bottom: 8px; text-transform: uppercase; }
 .sq-ideas-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
