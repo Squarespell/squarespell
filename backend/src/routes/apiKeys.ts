@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router } from 'express';
 import crypto from 'crypto';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
@@ -42,7 +43,7 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
 
     res.json(keys ?? []);
   } catch (err: any) {
-    console.error('List API keys error:', err);
+    log.error('List API keys error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to list API keys' });
   }
 });
@@ -87,7 +88,7 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
       message: 'Store this API key in a safe place. You will not be able to see it again.',
     });
   } catch (err: any) {
-    console.error('Create API key error:', err);
+    log.error('Create API key error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to create API key' });
   }
 });
@@ -131,7 +132,7 @@ router.delete('/:keyId', async (req: AuthenticatedRequest, res) => {
 
     res.json({ success: true });
   } catch (err: any) {
-    console.error('Revoke API key error:', err);
+    log.error('Revoke API key error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to revoke API key' });
   }
 });

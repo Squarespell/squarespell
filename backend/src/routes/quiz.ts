@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router } from 'express';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation } from '../middleware/planGuard';
@@ -107,7 +108,7 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
   } catch (err: any) {
-    console.error('Quiz patch error:', err);
+    log.error('Quiz patch error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Update failed' });
   }
 });
@@ -182,7 +183,7 @@ router.post('/:id/duplicate', guardQuizCreation, async (req: AuthenticatedReques
     await supabase.rpc('increment_quiz_count', { uid: req.dbUserId });
     res.status(201).json(data);
   } catch (err: any) {
-    console.error('Quiz duplicate error:', err);
+    log.error('Quiz duplicate error:', { err: err });
     res.status(500).json({ error: err?.message ?? 'Duplicate failed' });
   }
 });
@@ -230,7 +231,7 @@ router.get('/:id/sequences', async (req: AuthenticatedRequest, res) => {
 
     res.json(sequences ?? []);
   } catch (err: any) {
-    console.error('Sequences list error:', err);
+    log.error('Sequences list error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to fetch sequences' });
   }
 });
@@ -300,7 +301,7 @@ router.post('/:id/sequences', async (req: AuthenticatedRequest, res) => {
 
     res.status(201).json(sequence);
   } catch (err: any) {
-    console.error('Sequence create error:', err);
+    log.error('Sequence create error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to create sequence' });
   }
 });
@@ -372,7 +373,7 @@ router.put('/:id/sequences/:sequenceId', async (req: AuthenticatedRequest, res) 
 
     res.json(sequence);
   } catch (err: any) {
-    console.error('Sequence update error:', err);
+    log.error('Sequence update error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to update sequence' });
   }
 });
@@ -403,7 +404,7 @@ router.delete('/:id/sequences/:sequenceId', async (req: AuthenticatedRequest, re
 
     res.json({ success: true });
   } catch (err: any) {
-    console.error('Sequence delete error:', err);
+    log.error('Sequence delete error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to delete sequence' });
   }
 });
@@ -533,7 +534,7 @@ router.put('/:id/outcome-automations', async (req: AuthenticatedRequest, res) =>
 
     res.json({ ok: true, results });
   } catch (err: any) {
-    console.error('Outcome automation sync error:', err);
+    log.error('Outcome automation sync error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to sync automations' });
   }
 });
@@ -571,7 +572,7 @@ router.post('/:id/generate-email', async (req: AuthenticatedRequest, res) => {
 
     res.json(result);
   } catch (err: any) {
-    console.error('Generate email content error:', err);
+    log.error('Generate email content error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to generate email content' });
   }
 });
@@ -621,7 +622,7 @@ router.post('/:id/ab-tests', async (req: AuthenticatedRequest, res) => {
     const test = await abTesting.createTest(req.dbUserId, quizId, name, variants);
     res.status(201).json(test);
   } catch (err: any) {
-    console.error('Create test error:', err);
+    log.error('Create test error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to create test' });
   }
 });
@@ -649,7 +650,7 @@ router.get('/:id/ab-tests', async (req: AuthenticatedRequest, res) => {
     const tests = await abTesting.listTestsForQuiz(quizId);
     res.json(tests);
   } catch (err: any) {
-    console.error('List tests error:', err);
+    log.error('List tests error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to list tests' });
   }
 });
@@ -673,7 +674,7 @@ router.get('/tests/:testId', async (req: AuthenticatedRequest, res) => {
 
     res.json({ ...test, stats });
   } catch (err: any) {
-    console.error('Get test error:', err);
+    log.error('Get test error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to get test' });
   }
 });
@@ -700,7 +701,7 @@ router.patch('/tests/:testId', async (req: AuthenticatedRequest, res) => {
     const updated = await abTesting.updateTestStatus(req.params.testId, status);
     res.json(updated);
   } catch (err: any) {
-    console.error('Update test error:', err);
+    log.error('Update test error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to update test' });
   }
 });
@@ -727,7 +728,7 @@ router.post('/tests/:testId/winner', async (req: AuthenticatedRequest, res) => {
     const updated = await abTesting.declareWinner(req.params.testId, variant_id);
     res.json(updated);
   } catch (err: any) {
-    console.error('Declare winner error:', err);
+    log.error('Declare winner error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to declare winner' });
   }
 });
@@ -749,7 +750,7 @@ router.get('/public/ab-test/:testId/assign', async (req, res) => {
     const assignment = await abTesting.assignVariant(testId, visitor_id);
     res.json(assignment);
   } catch (err: any) {
-    console.error('Assign variant error:', err);
+    log.error('Assign variant error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to assign variant' });
   }
 });
@@ -768,7 +769,7 @@ router.post('/teams', async (req: AuthenticatedRequest, res) => {
     const team = await teamService.createTeam(req.userId!, name.trim());
     res.status(201).json(team);
   } catch (err: any) {
-    console.error('Create team error:', err);
+    log.error('Create team error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to create team' });
   }
 });
@@ -779,7 +780,7 @@ router.get('/teams', async (req: AuthenticatedRequest, res) => {
     const teams = await teamService.getUserTeams(req.userId!);
     res.json(teams);
   } catch (err: any) {
-    console.error('List teams error:', err);
+    log.error('List teams error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to fetch teams' });
   }
 });
@@ -798,7 +799,7 @@ router.get('/teams/:teamId', async (req: AuthenticatedRequest, res) => {
     const team = await teamService.getTeamDetails(teamId);
     res.json(team);
   } catch (err: any) {
-    console.error('Get team error:', err);
+    log.error('Get team error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to fetch team' });
   }
 });
@@ -826,7 +827,7 @@ router.post('/teams/:teamId/members', async (req: AuthenticatedRequest, res) => 
     const member = await teamService.inviteMember(teamId, email.trim(), role, req.userId!);
     res.status(201).json(member);
   } catch (err: any) {
-    console.error('Invite member error:', err);
+    log.error('Invite member error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to invite member' });
   }
 });
@@ -850,7 +851,7 @@ router.patch('/teams/:teamId/members/:userId', async (req: AuthenticatedRequest,
     const member = await teamService.updateMemberRole(teamId, userId, role);
     res.json(member);
   } catch (err: any) {
-    console.error('Update member role error:', err);
+    log.error('Update member role error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to update member role' });
   }
 });
@@ -869,7 +870,7 @@ router.delete('/teams/:teamId/members/:userId', async (req: AuthenticatedRequest
     await teamService.removeMember(teamId, userId);
     res.json({ success: true });
   } catch (err: any) {
-    console.error('Remove member error:', err);
+    log.error('Remove member error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to remove member' });
   }
 });
@@ -905,7 +906,7 @@ router.post('/teams/:teamId/quizzes', async (req: AuthenticatedRequest, res) => 
     const teamQuiz = await teamService.addQuizToTeam(teamId, quizId);
     res.status(201).json(teamQuiz);
   } catch (err: any) {
-    console.error('Share quiz error:', err);
+    log.error('Share quiz error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to share quiz' });
   }
 });
@@ -924,7 +925,7 @@ router.delete('/teams/:teamId/quizzes/:quizId', async (req: AuthenticatedRequest
     await teamService.removeQuizFromTeam(teamId, quizId);
     res.json({ success: true });
   } catch (err: any) {
-    console.error('Remove quiz error:', err);
+    log.error('Remove quiz error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to remove quiz' });
   }
 });
@@ -989,7 +990,7 @@ router.get('/:id/analytics/roi', async (req: AuthenticatedRequest, res) => {
       average_deal_value: dealValue,
     });
   } catch (err: any) {
-    console.error('ROI analytics error:', err);
+    log.error('ROI analytics error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to get ROI analytics' });
   }
 });
@@ -1032,7 +1033,7 @@ router.post('/:id/report-settings', async (req: AuthenticatedRequest, res) => {
 
     res.json(updated);
   } catch (err: any) {
-    console.error('Report settings error:', err);
+    log.error('Report settings error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to save report settings' });
   }
 });

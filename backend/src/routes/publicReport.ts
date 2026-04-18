@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
 import { verifyReportToken } from '../services/reportToken';
@@ -78,7 +79,7 @@ router.get('/leads/:leadId/report', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="report-${lead.name?.replace(/\s+/g, '-') || 'lead'}.pdf"`);
     res.send(pdfBuffer);
   } catch (err: any) {
-    console.error('Report generation error:', err);
+    log.error('Report generation error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to generate report' });
   }
 });

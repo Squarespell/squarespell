@@ -9,6 +9,8 @@ import emailsRouter from './routes/emails';
 import resendWebhookRouter from './routes/resendWebhook';
 import unsubscribeRouter from './routes/unsubscribe';
 import clerkWebhookRoute from './routes/clerkWebhook';
+import { log } from './lib/logger';
+import { requestLogger } from './middleware/requestLogger';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -87,6 +89,7 @@ app.use((req, res, next) => {
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(requestLogger);
 
 // Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
@@ -111,4 +114,4 @@ app.use('/api/webhooks', resendWebhookRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+app.listen(PORT, () => log.info('Backend running', { port: Number(PORT) }));

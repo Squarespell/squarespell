@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
 
@@ -82,9 +83,9 @@ r.post('/resend', async (req, res) => {
           await supabase.from('email_unsubscribes')
             .upsert({ email: recipientEmail, source: 'hard_bounce' }, { onConflict: 'email' })
             .select();
-          console.log(`[Webhook] Hard bounce - suppressed ${recipientEmail}`);
+          log.info(`[Webhook] Hard bounce - suppressed ${recipientEmail}`);
         } else {
-          console.log(`[Webhook] Soft bounce for ${recipientEmail} - not suppressing`);
+          log.info(`[Webhook] Soft bounce for ${recipientEmail} - not suppressing`);
         }
       }
     }
@@ -95,13 +96,13 @@ r.post('/resend', async (req, res) => {
         await supabase.from('email_unsubscribes')
           .upsert({ email: recipientEmail, source: 'spam_complaint' }, { onConflict: 'email' })
           .select();
-        console.log(`[Webhook] Spam complaint - suppressed ${recipientEmail}`);
+        log.info(`[Webhook] Spam complaint - suppressed ${recipientEmail}`);
       }
     }
 
     res.json({ ok: true });
   } catch (err: any) {
-    console.error('[Webhook] Resend error:', err.message);
+    log.error('[Webhook] Resend error:', { err: err.message });
     // Always return 200 to Resend so it does not retry forever
     res.json({ ok: true });
   }

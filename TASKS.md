@@ -47,7 +47,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Mobile / desktop preview toggle
 - [x] Dark-mode email-client preview
 - [x] Global search (cmd+k) across quizzes, campaigns, contacts
-- [ ] Outcomes routing visualization in builder
+- [x] Outcomes routing visualization in builder
 - [x] Trash + restore for campaigns and quizzes
 - [x] Bot filtering toggle
 - [x] Segments = quiz answers audience builder

@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
 import crypto from 'crypto';
 
@@ -110,7 +111,7 @@ export async function assignVariant(
       });
 
     if (insertError) {
-      console.error('[ABTesting] Failed to insert assignment:', insertError.message);
+      log.error('[ABTesting] Failed to insert assignment:', { err: insertError.message });
       throw insertError;
     }
 
@@ -123,7 +124,7 @@ export async function assignVariant(
       test_id: testId,
     };
   } catch (err: any) {
-    console.error('[ABTesting] Assignment error:', err.message);
+    log.error('[ABTesting] Assignment error:', { err: err.message });
     throw err;
   }
 }
@@ -158,7 +159,7 @@ export async function getTestStats(testId: string): Promise<TestStats[]> {
         .eq('variant_id', variant.variant_id);
 
       if (impressionError) {
-        console.error(`[ABTesting] Error counting impressions for variant ${variant.variant_id}:`, impressionError.message);
+        log.error('[ABTesting] Error counting impressions for variant ${variant.variant_id}:', { err: impressionError.message });
         continue;
       }
 
@@ -169,7 +170,7 @@ export async function getTestStats(testId: string): Promise<TestStats[]> {
         .eq('quiz_id', variant.quiz_id);
 
       if (conversionError) {
-        console.error(`[ABTesting] Error counting conversions for variant ${variant.variant_id}:`, conversionError.message);
+        log.error('[ABTesting] Error counting conversions for variant ${variant.variant_id}:', { err: conversionError.message });
         continue;
       }
 
@@ -188,7 +189,7 @@ export async function getTestStats(testId: string): Promise<TestStats[]> {
 
     return stats;
   } catch (err: any) {
-    console.error('[ABTesting] Get stats error:', err.message);
+    log.error('[ABTesting] Get stats error:', { err: err.message });
     throw err;
   }
 }
@@ -219,11 +220,11 @@ export async function declareWinner(
       throw error || new Error('Failed to declare winner');
     }
 
-    console.log(`[ABTesting] Declared winner for test ${testId}: ${variantId}`);
+    log.info(`[ABTesting] Declared winner for test ${testId}: ${variantId}`);
 
     return data;
   } catch (err: any) {
-    console.error('[ABTesting] Declare winner error:', err.message);
+    log.error('[ABTesting] Declare winner error:', { err: err.message });
     throw err;
   }
 }
@@ -254,11 +255,11 @@ export async function createTest(
       throw error || new Error('Failed to create test');
     }
 
-    console.log(`[ABTesting] Created test ${data.id} with ${variants.length} variants`);
+    log.info(`[ABTesting] Created test ${data.id} with ${variants.length} variants`);
 
     return data;
   } catch (err: any) {
-    console.error('[ABTesting] Create test error:', err.message);
+    log.error('[ABTesting] Create test error:', { err: err.message });
     throw err;
   }
 }
@@ -288,11 +289,11 @@ export async function updateTestStatus(
       throw error || new Error('Failed to update test status');
     }
 
-    console.log(`[ABTesting] Updated test ${testId} status to ${status}`);
+    log.info(`[ABTesting] Updated test ${testId} status to ${status}`);
 
     return data;
   } catch (err: any) {
-    console.error('[ABTesting] Update status error:', err.message);
+    log.error('[ABTesting] Update status error:', { err: err.message });
     throw err;
   }
 }
@@ -314,7 +315,7 @@ export async function getTest(testId: string): Promise<ABTest | null> {
 
     return data;
   } catch (err: any) {
-    console.error('[ABTesting] Get test error:', err.message);
+    log.error('[ABTesting] Get test error:', { err: err.message });
     return null;
   }
 }
@@ -336,7 +337,7 @@ export async function listTestsForQuiz(quizId: string): Promise<ABTest[]> {
 
     return data;
   } catch (err: any) {
-    console.error('[ABTesting] List tests error:', err.message);
+    log.error('[ABTesting] List tests error:', { err: err.message });
     return [];
   }
 }

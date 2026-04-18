@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
 
 const BACKOFF_DELAYS = [60000, 300000, 1800000]; // 1min, 5min, 30min
@@ -92,7 +93,7 @@ export async function processRetries(): Promise<number> {
     .lt('attempts', MAX_ATTEMPTS);
 
   if (fetchError) {
-    console.error('Error fetching pending deliveries:', fetchError);
+    log.error('Error fetching pending deliveries:', { err: fetchError });
     return 0;
   }
 
@@ -157,7 +158,7 @@ export async function processRetries(): Promise<number> {
 
       processed++;
     } catch (err) {
-      console.error('Error processing delivery:', err);
+      log.error('Error processing delivery:', { err: err });
     }
   }
 

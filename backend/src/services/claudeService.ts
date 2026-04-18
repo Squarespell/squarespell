@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import Anthropic from '@anthropic-ai/sdk';
 import { buildFallbackQuiz } from './fallbackQuiz';
 
@@ -355,14 +356,14 @@ function extractJSON(text: string): string {
  * Normalize quiz JSON from Claude into a consistent shape the frontend expects.
  */
 function normalizeQuiz(raw: any, ctx?: { websiteUrl?: string; navPages?: { text: string; url: string }[] }): any {
-  console.log('[normalizeQuiz] Input keys:', Object.keys(raw || {}));
+  log.info('[normalizeQuiz] Input keys:', { detail: Object.keys(raw || {}) });
 
   // Handle case where AI wraps in { quiz: { ... } }
   const data = raw?.quiz || raw;
 
   // Normalize questions - handle various AI output formats
   const rawQuestions = data.questions || data.quiz_questions || [];
-  console.log(`[normalizeQuiz] Raw questions count: ${rawQuestions.length}`);
+  log.info(`[normalizeQuiz] Raw questions count: ${rawQuestions.length}`);
 
   data.title = data.title || data.quiz_title || 'Your Quiz';
   data.description = data.description || data.quiz_description || '';
@@ -395,7 +396,7 @@ function normalizeQuiz(raw: any, ctx?: { websiteUrl?: string; navPages?: { text:
 
   // Normalize outcomes - handle various AI output formats
   const rawOutcomes = data.outcomes || data.results || data.quiz_outcomes || data.quiz_results || [];
-  console.log(`[normalizeQuiz] Raw outcomes count: ${rawOutcomes.length}`);
+  log.info(`[normalizeQuiz] Raw outcomes count: ${rawOutcomes.length}`);
 
   // Build a set of real URLs we can validate against. If Claude returns
   // anything NOT in this list, fall back to the best-matching nav page or
@@ -458,7 +459,7 @@ function normalizeQuiz(raw: any, ctx?: { websiteUrl?: string; navPages?: { text:
 
   data.results = data.outcomes;
 
-  console.log(`[normalizeQuiz] Final: ${data.questions.length} questions, ${data.outcomes.length} outcomes`);
+  log.info(`[normalizeQuiz] Final: ${data.questions.length} questions, ${data.outcomes.length} outcomes`);
   return data;
 }
 
@@ -473,8 +474,8 @@ async function callClaude(
   const siteName = brandData?.site_name || (() => { try { return new URL(websiteUrl).hostname; } catch { return websiteUrl; } })();
   const brandColorPrimary = brandData?.colors?.primary || '#000000';
 
-  console.log(`[Claude] Generating ${mode} quiz for: ${siteName} (${websiteUrl})`);
-  console.log(`[Claude] Business summary available: ${businessSummary.length} chars`);
+  log.info(`[Claude] Generating ${mode} quiz for: ${siteName} (${websiteUrl})`);
+  log.info(`[Claude] Business summary available: ${businessSummary.length} chars`);
 
   const systemPrompt = getSystemPromptForMode(mode, quizType, websiteUrl);
   const userPrompt = getUserPromptForMode(mode, siteName, websiteUrl, businessSummary, brandColorPrimary);
@@ -491,8 +492,8 @@ async function callClaude(
     .map((b: any) => b.text)
     .join('');
 
-  console.log(`[Claude] Response length: ${raw.length} chars`);
-  console.log(`[Claude] First 200 chars: ${raw.slice(0, 200)}`);
+  log.info(`[Claude] Response length: ${raw.length} chars`);
+  log.info(`[Claude] First 200 chars: ${raw.slice(0, 200)}`);
 
   try {
     const parsed = JSON.parse(extractJSON(raw));
@@ -500,11 +501,11 @@ async function callClaude(
       websiteUrl,
       navPages: Array.isArray(brandData?.business?.nav_pages) ? brandData.business.nav_pages : [],
     });
-    console.log(`[Claude] Quiz title: "${normalized.title}"`);
-    console.log(`[Claude] Questions: ${normalized.questions?.length}, Outcomes: ${normalized.outcomes?.length}`);
+    log.info(`[Claude] Quiz title: "${normalized.title}"`);
+    log.info(`[Claude] Questions: ${normalized.questions?.length}, Outcomes: ${normalized.outcomes?.length}`);
     return normalized;
   } catch {
-    console.error('[Claude] Parse failed, raw:', raw.substring(0, 500));
+    log.error('[Claude] Parse failed, raw:', { err: raw.substring(0, 500) });
     throw new Error('Failed to generate quiz. Please try again.');
   }
 }
@@ -579,7 +580,7 @@ Make every question specific to ${siteName}. The first question should confirm t
     }
     return { questions: normalized };
   } catch {
-    console.error('[Claude] Onboarding parse failed, raw:', raw.slice(0, 400));
+    log.error('[Claude] Onboarding parse failed, raw:', { err: raw.slice(0, 400) });
     return {
       questions: [
         { id: 'o1', text: 'What is the main goal of this quiz?', options: ['Capture qualified leads','Recommend the right product','Grow my email list','Segment by intent'] },
@@ -715,7 +716,7 @@ REQUIREMENTS:
     const parsed = JSON.parse(extractJSON(raw));
     return normalizeQuiz(parsed, { websiteUrl, navPages });
   } catch (err: any) {
-    console.error(`[Claude] Tailored quiz generation failed for ${siteName}, using fallback quiz. Error:`, err?.message || err);
+    log.error('[Claude] Tailored quiz generation failed for ${siteName}, using fallback quiz. Error:', { err: err?.message || err });
     return buildFallbackQuiz(brandColorPrimary);
   }
 }
@@ -802,7 +803,7 @@ ${businessSummary.slice(0, 2500)}`;
       key_offer: String(parsed.key_offer || 'Products and services').slice(0, 80),
     };
   } catch (err: any) {
-    console.error('[analyzeBusinessProfile] AI analysis failed:', err.message);
+    log.error('[analyzeBusinessProfile] AI analysis failed:', { err: err.message });
     return {
       type: 'Business',
       audience: 'General audience',
@@ -852,7 +853,7 @@ ${businessSummary.slice(0, 2000)}`;
       .filter((s: string) => s.length >= 4 && s.length <= 120)
       .slice(0, 4);
   } catch (err: any) {
-    console.error('[suggestQuizIdeas] AI suggestion failed:', err.message);
+    log.error('[suggestQuizIdeas] AI suggestion failed:', { err: err.message });
     return [];
   }
 }
@@ -910,7 +911,7 @@ Return this JSON:
       body: String(parsed.body || '').slice(0, 5000),
     };
   } catch (err: any) {
-    console.error('[generateEmailContent] AI generation failed:', err.message);
+    log.error('[generateEmailContent] AI generation failed:', { err: err.message });
     return {
       subject: `Your ${outcomeName} result from ${quizTitle}`,
       body: `<p>Hi {{first_name}},</p><p>Thanks for completing ${quizTitle}. Your result was {{outcome_name}}.</p><p>We put together some next steps based on your answers.</p>`,

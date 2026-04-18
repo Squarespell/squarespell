@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
 
@@ -104,11 +105,11 @@ r.post('/unsubscribe', async (req, res) => {
     );
 
   if (error) {
-    console.error('[Unsubscribe] DB error:', error.message);
+    log.error('[Unsubscribe] DB error:', { err: error.message });
     return res.status(500).send(buildPage('Error', 'Something went wrong. Please try again.', false));
   }
 
-  console.log(`[Unsubscribe] ${normalized} unsubscribed via ${isOneClick ? 'one-click' : 'web form'}`);
+  log.info('[Unsubscribe] User unsubscribed', { email: normalized, method: isOneClick ? 'one-click' : 'web form' });
 
   // For one-click (mail client), return 200 with no body
   if (isOneClick) {
@@ -153,11 +154,11 @@ r.post('/resubscribe', async (req, res) => {
     .eq('email', email);
 
   if (error) {
-    console.error('[Resubscribe] DB error:', error.message);
+    log.error('[Resubscribe] DB error:', { err: error.message });
     return res.status(500).json({ error: 'Failed to resubscribe' });
   }
 
-  console.log(`[Resubscribe] ${email} resubscribed`);
+  log.info(`[Resubscribe] ${email} resubscribed`);
   res.json({ ok: true });
 });
 

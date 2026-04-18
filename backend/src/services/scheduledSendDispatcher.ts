@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 // Cron dispatcher: finds campaigns with status='scheduled' and
 // scheduled_at <= now(), then sends each one using the same pipeline as
 // the manual /campaigns/:id/send route.
@@ -188,7 +189,7 @@ export async function processScheduledCampaigns(): Promise<{
     .order('scheduled_at', { ascending: true });
 
   if (error) {
-    console.error('[ScheduledSend] Query error:', error.message);
+    log.error('[ScheduledSend] Query error:', { err: error.message });
     throw error;
   }
 
@@ -197,7 +198,7 @@ export async function processScheduledCampaigns(): Promise<{
     return { processed: 0, results: [] };
   }
 
-  console.log(`[ScheduledSend] Found ${campaigns.length} due campaign(s)`);
+  log.info(`[ScheduledSend] Found ${campaigns.length} due campaign(s)`);
 
   const results: Array<{ campaignId: string; sent: number; error?: string }> = [];
 
@@ -211,14 +212,14 @@ export async function processScheduledCampaigns(): Promise<{
     try {
       const result = await sendCampaign(campaign);
       results.push({ campaignId: campaign.id, sent: result.sent });
-      console.log(`[ScheduledSend] Campaign ${campaign.id}: sent ${result.sent}, skipped ${result.skipped}`);
+      log.info(`[ScheduledSend] Campaign ${campaign.id}: sent ${result.sent}, skipped ${result.skipped}`);
     } catch (e: any) {
       // Mark as failed so it doesn't retry forever
       await supabase.from('email_campaigns')
         .update({ status: 'failed' })
         .eq('id', campaign.id);
       results.push({ campaignId: campaign.id, sent: 0, error: e.message });
-      console.error(`[ScheduledSend] Campaign ${campaign.id} failed:`, e.message);
+      log.error('[ScheduledSend] Campaign ${campaign.id} failed:', { err: e.message });
     }
   }
 

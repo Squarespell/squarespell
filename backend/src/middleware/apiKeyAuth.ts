@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
@@ -59,12 +60,12 @@ export async function apiKeyAuth(req: ApiKeyRequest, res: Response, next: NextFu
         .eq('key_hash', keyHash);
     } catch (err: any) {
       // Non-critical, log but don't fail the request
-      console.warn('Failed to update last_used_at:', err);
+      log.warn('Failed to update last_used_at:', { detail: err });
     }
 
     next();
   } catch (err: any) {
-    console.error('API key authentication error:', err);
+    log.error('API key authentication error:', { err: err });
     res.status(500).json({ error: 'Authentication failed' });
   }
 }

@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
@@ -69,7 +70,7 @@ Keep it practical and direct. No preamble or explanation text.`;
 
     return '';
   } catch (error) {
-    console.error('[LeadInsights] Generation failed:', error);
+    log.error('[LeadInsights] Generation failed:', { err: error });
     // Return empty string on error - don't break lead creation
     return '';
   }

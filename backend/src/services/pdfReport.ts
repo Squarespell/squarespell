@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import PDFDocument from 'pdfkit';
 
 interface Lead {
@@ -115,7 +116,7 @@ export async function generateQuizReport(
           doc.image(quiz.branding.logoUrl, 40, 40, { width: 80 });
           doc.moveDown(2.5);
         } catch (e) {
-          console.log('[PDF] Could not load logo, continuing');
+          log.info('[PDF] Could not load logo, continuing');
           doc.moveDown(1);
         }
       }

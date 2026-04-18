@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
 
 export interface CleanupSummary {
@@ -26,7 +27,7 @@ export async function runCleanup(): Promise<CleanupSummary> {
       .rpc('cleanup_old_data', {});
 
     if (error) {
-      console.error('Database cleanup error:', error);
+      log.error('Database cleanup error:', { err: error });
       return {
         analyticsDeleted: 0,
         archivedLeadsDeleted: 0,
@@ -61,11 +62,11 @@ export async function runCleanup(): Promise<CleanupSummary> {
     };
 
     // Log summary
-    console.log('Database cleanup completed:', summary);
+    log.info('Database cleanup completed:', { detail: summary });
 
     return summary;
   } catch (err: any) {
-    console.error('Unexpected error during database cleanup:', err);
+    log.error('Unexpected error during database cleanup:', { err: err });
     return {
       analyticsDeleted: 0,
       archivedLeadsDeleted: 0,
@@ -91,13 +92,13 @@ export async function archiveLead(leadId: string): Promise<boolean> {
       .eq('id', leadId);
 
     if (error) {
-      console.error('Error archiving lead:', error);
+      log.error('Error archiving lead:', { err: error });
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('Unexpected error archiving lead:', err);
+    log.error('Unexpected error archiving lead:', { err: err });
     return false;
   }
 }
@@ -115,13 +116,13 @@ export async function archiveQuiz(quizId: string): Promise<boolean> {
       .eq('id', quizId);
 
     if (error) {
-      console.error('Error archiving quiz:', error);
+      log.error('Error archiving quiz:', { err: error });
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('Unexpected error archiving quiz:', err);
+    log.error('Unexpected error archiving quiz:', { err: err });
     return false;
   }
 }
@@ -143,13 +144,13 @@ export async function setQuizRetention(
       .eq('id', quizId);
 
     if (error) {
-      console.error('Error setting quiz retention:', error);
+      log.error('Error setting quiz retention:', { err: error });
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('Unexpected error setting quiz retention:', err);
+    log.error('Unexpected error setting quiz retention:', { err: err });
     return false;
   }
 }

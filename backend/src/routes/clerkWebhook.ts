@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router, Request, Response } from 'express';
 import { Webhook } from 'svix';
 import { supabase } from '../db/supabaseClient';
@@ -19,7 +20,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
       'svix-signature': req.headers['svix-signature'] as string,
     });
   } catch (e: any) {
-    console.warn('[ClerkWebhook] verify failed:', e?.message);
+    log.warn('[ClerkWebhook] verify failed:', { detail: e?.message });
     return res.status(400).json({ error: 'Invalid signature' });
   }
   try {
@@ -32,7 +33,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
     }
     res.json({ received: true });
   } catch (e: any) {
-    console.error('[ClerkWebhook] handler error:', e?.message);
+    log.error('[ClerkWebhook] handler error:', { err: e?.message });
     res.status(500).json({ error: 'Handler failed' });
   }
 });

@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import fetch from 'node-fetch';
 
 /**
@@ -38,7 +39,7 @@ export async function scrapeBrand(url: string) {
       redirect: 'follow',
     });
     const html = await res.text();
-    console.log(`[Scraper] Fetched ${url} - ${html.length} chars, status ${res.status}`);
+    log.info(`[Scraper] Fetched ${url} - ${html.length} chars, status ${res.status}`);
 
     // ── Site identity ──────────────────────────────────────────────────────
     const siteName =
@@ -65,7 +66,7 @@ export async function scrapeBrand(url: string) {
         if (!jsonLdData) jsonLdData = parsed;
       } catch {}
     }
-    console.log(`[Scraper] JSON-LD blocks found: ${jsonLdBlocks.length}`);
+    log.info(`[Scraper] JSON-LD blocks found: ${jsonLdBlocks.length}`);
 
     // Extract business info from JSON-LD
     let jsonLdDescription = '';
@@ -99,7 +100,7 @@ export async function scrapeBrand(url: string) {
       /generator"[^>]+content="Squarespace/i.test(html)
     ) {
       isSquarespace = true;
-      console.log('[Scraper] Squarespace site detected');
+      log.info('[Scraper] Squarespace site detected');
     }
 
     // Detect Squarespace template family: 7.1 uses siteVersion or templateVersion in context
@@ -119,12 +120,12 @@ export async function scrapeBrand(url: string) {
       ) {
         templateVersion = '7.0';
       }
-      console.log('[Scraper] Template version:', templateVersion);
+      log.info('[Scraper] Template version:', { detail: templateVersion });
     }
 
     if (!isSquarespace) {
       const hostname = new URL(url).hostname.replace(/^www\./, '');
-      console.warn(`[Scraper] HARD FAIL: ${hostname} is not a Squarespace site`);
+      log.warn(`[Scraper] HARD FAIL: ${hostname} is not a Squarespace site`);
       throw new NotSquarespaceError(hostname);
     }
 
@@ -133,7 +134,7 @@ export async function scrapeBrand(url: string) {
       try {
         const sqspData = JSON.parse(sqspMatch[1]);
         squarespaceContext = JSON.stringify(sqspData).slice(0, 500);
-        console.log('[Scraper] Squarespace context found');
+        log.info('[Scraper] Squarespace context found');
       } catch {}
     }
 
@@ -277,9 +278,9 @@ export async function scrapeBrand(url: string) {
 
     const businessSummary = summaryParts.slice(0, 3500);
 
-    console.log(`[Scraper] Extracted: ${headings.length} headings, ${paragraphs.length} paragraphs, ${linkTexts.length} links, ${listItems.length} list items`);
-    console.log(`[Scraper] Business summary length: ${businessSummary.length} chars`);
-    console.log(`[Scraper] First 300 chars of summary: ${businessSummary.slice(0, 300)}`);
+    log.info(`[Scraper] Extracted: ${headings.length} headings, ${paragraphs.length} paragraphs, ${linkTexts.length} links, ${listItems.length} list items`);
+    log.info(`[Scraper] Business summary length: ${businessSummary.length} chars`);
+    log.info(`[Scraper] First 300 chars of summary: ${businessSummary.slice(0, 300)}`);
 
     // ── Brand visuals extraction ───────────────────────────────────────────
     const inlineStyles = (html.match(/<style[^>]*>([\s\S]*?)<\/style>/gi) || [])
@@ -324,7 +325,7 @@ export async function scrapeBrand(url: string) {
         fetchedSheets++;
       } catch {}
     }
-    console.log(`[Scraper] External stylesheets fetched: ${fetchedSheets}/${rankedHrefs.length} (top: ${rankedHrefs[0] || 'none'})`);
+    log.info('[Scraper] External stylesheets fetched', { fetched: fetchedSheets, total: rankedHrefs.length });
 
     const allCss = inlineStyles + '\n' + externalCss;
 
@@ -469,11 +470,11 @@ export async function scrapeBrand(url: string) {
       return candidates[0].value;
     };
 
-    console.log(`[Scraper] CSS custom props found: ${Object.keys(varOccurrences).length}`);
+    log.info(`[Scraper] CSS custom props found: ${Object.keys(varOccurrences).length}`);
     const sqspCandidates = Object.keys(varOccurrences).filter(n =>
       /^(site|heading|paragraph|navigationLink|primaryButton|secondaryButton|tertiaryButton|accent|colorAccent|logoColor|tweak)/i.test(n)
     );
-    console.log(`[Scraper] Squarespace-style vars matched: ${sqspCandidates.slice(0, 20).join(', ')}`);
+    log.info('[Scraper] Squarespace-style vars matched', { count: sqspCandidates.length });
 
     const extractVar = (v: string) => {
       const bareName = v.replace(/^--/, '');
@@ -585,9 +586,7 @@ export async function scrapeBrand(url: string) {
       extractVar('--color-accent') ||
       (topColors.length > 1 ? topColors[1] : primaryColor);
 
-    console.log(`[Scraper] Colors detected - primary: ${primaryColor}, bg: ${bgColor}, text: ${textColor}, accent: ${accentColor}`);
-    console.log(`[Scraper] Theme-color meta: ${themeColor || 'none'}, Top CSS colors: ${topColors.slice(0, 5).join(', ')}`);
-    console.log(`[Scraper] Font family: ${fontFamily}`);
+    log.info('[Scraper] Brand detected', { primaryColor, bgColor, textColor, accentColor, fontFamily });
 
     return {
       detected: true,
@@ -616,7 +615,7 @@ export async function scrapeBrand(url: string) {
   } catch (err: any) {
     // NotSquarespaceError bubbles up so routes can return a clean 422
     if (err instanceof NotSquarespaceError) throw err;
-    console.error(`[Scraper] FAILED for ${url}:`, err.message);
+    log.error('[Scraper] FAILED for ${url}:', { err: err.message });
     // Network/parse failures fall through to a detected:false result so the
     // frontend can show a neutral dark theme and continue (no hard block here)
     return {

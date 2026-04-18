@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 /**
  * POST /api/quizzes/from-url
  *
@@ -161,7 +162,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
   }
 
   try {
-    console.log(`[FromUrl] user=${userId} scraping ${normalizedUrl}`);
+    log.info(`[FromUrl] user=${userId} scraping ${normalizedUrl}`);
     const brand = await scrapeBrand(normalizedUrl);
 
     // Run AI analysis + onboarding questions in parallel (mirrors /preview-analyze)
@@ -228,7 +229,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    console.log(`[FromUrl] building quiz for ${normalizedUrl}`);
+    log.info(`[FromUrl] building quiz for ${normalizedUrl}`);
     const quiz = await generateTailoredQuiz(normalizedUrl, brand, onboardingPairs);
 
     // Direct insert into quizzes table with user_id
@@ -255,7 +256,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
       .single();
 
     if (insertErr) {
-      console.error('[FromUrl] DB insert failed:', insertErr);
+      log.error('[FromUrl] DB insert failed:', { err: insertErr });
       return res.status(500).json({ error: insertErr.message });
     }
 
@@ -265,14 +266,14 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
       (e) => console.warn('[FromUrl] increment_quiz_count failed:', e),
     );
 
-    console.log(`[FromUrl] SUCCESS quiz_id=${inserted.id} slug=${inserted.slug}`);
+    log.info(`[FromUrl] SUCCESS quiz_id=${inserted.id} slug=${inserted.slug}`);
     return res.status(201).json({
       quiz: inserted,
       brand,
     });
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
-      console.warn(`[FromUrl] Rejected non-Squarespace site: ${err.hostname}`);
+      log.warn(`[FromUrl] Rejected non-Squarespace site: ${err.hostname}`);
       // Refund the rate-limit slot - the user didn't actually use AI generation
       const entry = fromUrlRateMap.get(userId);
       if (entry && entry.count > 0) entry.count -= 1;
@@ -282,7 +283,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
         hostname: err.hostname,
       });
     }
-    console.error('[FromUrl] Failed:', err);
+    log.error('[FromUrl] Failed:', { err: err });
     return res.status(500).json({ error: err.message ?? 'Generation failed' });
   }
 });

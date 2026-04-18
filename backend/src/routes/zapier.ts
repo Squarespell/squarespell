@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router, Request, Response } from 'express';
 import { apiKeyAuth, ApiKeyRequest } from '../middleware/apiKeyAuth';
 import { testAuth } from '../services/zapierApp/authentication';
@@ -29,7 +30,7 @@ router.post('/auth/test', async (req: Request, res: Response) => {
       user_id: result.user_id,
     });
   } catch (err: any) {
-    console.error('Zapier auth test error:', err);
+    log.error('Zapier auth test error:', { err: err });
     res.status(500).json({ error: 'Authentication test failed' });
   }
 });
@@ -44,7 +45,7 @@ router.get('/app', async (_req: Request, res: Response) => {
     const zapierApp = (await import('../services/zapierApp')).default;
     res.json(zapierApp);
   } catch (err: any) {
-    console.error('Failed to load Zapier app:', err);
+    log.error('Failed to load Zapier app:', { err: err });
     res.status(500).json({ error: 'Failed to load app definition' });
   }
 });
@@ -74,7 +75,7 @@ router.post('/triggers/new_lead', apiKeyAuth, async (req: ApiKeyRequest, res: Re
     const results = await perform({}, bundle);
     res.json(results);
   } catch (err: any) {
-    console.error('new_lead trigger error:', err);
+    log.error('new_lead trigger error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Trigger failed' });
   }
 });
@@ -104,7 +105,7 @@ router.post('/triggers/quiz_completed', apiKeyAuth, async (req: ApiKeyRequest, r
     const results = await perform({}, bundle);
     res.json(results);
   } catch (err: any) {
-    console.error('quiz_completed trigger error:', err);
+    log.error('quiz_completed trigger error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Trigger failed' });
   }
 });
@@ -132,7 +133,7 @@ router.post('/actions/create_quiz', apiKeyAuth, async (req: ApiKeyRequest, res: 
     const result = await perform({}, bundle);
     res.status(201).json(result);
   } catch (err: any) {
-    console.error('create_quiz action error:', err);
+    log.error('create_quiz action error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Action failed' });
   }
 });

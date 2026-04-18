@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Resend } from 'resend';
 import { supabase } from '../db/supabaseClient';
 
@@ -14,7 +15,7 @@ interface WeeklyDigestParams {
  */
 export async function sendWeeklyDigest(params: WeeklyDigestParams): Promise<boolean> {
   if (!resend) {
-    console.log('[WeeklyDigest] Resend not configured, skipping');
+    log.info('[WeeklyDigest] Resend not configured, skipping');
     return false;
   }
 
@@ -29,7 +30,7 @@ export async function sendWeeklyDigest(params: WeeklyDigestParams): Promise<bool
       .eq('status', 'live');
 
     if (!quizzes || quizzes.length === 0) {
-      console.log('[WeeklyDigest] No active quizzes found for user', userId);
+      log.info('[WeeklyDigest] No active quizzes found for user', { detail: userId });
       return false;
     }
 
@@ -138,13 +139,13 @@ export async function sendWeeklyDigest(params: WeeklyDigestParams): Promise<bool
           metadata: { totalViews, totalLeads, quizCount: quizzes.length }
         });
     } catch (err) {
-      console.error('[WeeklyDigest] Failed to log email:', err);
+      log.error('[WeeklyDigest] Failed to log email:', { err: err });
     }
 
-    console.log('[WeeklyDigest] Sent to', userEmail);
+    log.info('[WeeklyDigest] Sent to', { detail: userEmail });
     return true;
   } catch (error) {
-    console.error('[WeeklyDigest] Failed:', error);
+    log.error('[WeeklyDigest] Failed:', { err: error });
     return false;
   }
 }

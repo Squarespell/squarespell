@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
 import { Resend } from 'resend';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterHtml } from './unsubscribe';
@@ -117,7 +118,7 @@ export async function enqueueSequenceEmails(
       .eq('enabled', true);
 
     if (sequenceError || !sequences || sequences.length === 0) {
-      console.log(`[EmailSequence] No sequences found for quiz ${quizId}`);
+      log.info(`[EmailSequence] No sequences found for quiz ${quizId}`);
       return;
     }
 
@@ -126,13 +127,13 @@ export async function enqueueSequenceEmails(
     // Check each sequence to see if it matches this lead's conditions
     for (const sequence of sequences) {
       if (!matchesConditions(sequence, outcomeId, score, segments, quizMode)) {
-        console.log(`[EmailSequence] Lead ${leadId} does not match sequence "${sequence.name}"`);
+        log.info(`[EmailSequence] Lead ${leadId} does not match sequence "${sequence.name}"`);
         continue;
       }
 
       const emails = sequence.emails as EmailInSequence[];
       if (!Array.isArray(emails) || emails.length === 0) {
-        console.log(`[EmailSequence] Sequence "${sequence.name}" is empty, skipping`);
+        log.info(`[EmailSequence] Sequence "${sequence.name}" is empty, skipping`);
         continue;
       }
 
@@ -154,19 +155,19 @@ export async function enqueueSequenceEmails(
         .insert(queueEntries);
 
       if (insertError) {
-        console.error(`[EmailSequence] Failed to enqueue sequence "${sequence.name}": ${insertError.message}`);
+        log.error(`[EmailSequence] Failed to enqueue sequence "${sequence.name}": ${insertError.message}`);
         continue;
       }
 
       totalEnqueued += queueEntries.length;
-      console.log(`[EmailSequence] Enqueued ${queueEntries.length} emails from sequence "${sequence.name}" for lead ${leadId}`);
+      log.info(`[EmailSequence] Enqueued ${queueEntries.length} emails from sequence "${sequence.name}" for lead ${leadId}`);
     }
 
     if (totalEnqueued === 0) {
-      console.log(`[EmailSequence] No matching sequences for lead ${leadId}`);
+      log.info(`[EmailSequence] No matching sequences for lead ${leadId}`);
     }
   } catch (err: any) {
-    console.error('[EmailSequence] Error enqueueing sequences:', err.message);
+    log.error('[EmailSequence] Error enqueueing sequences:', { err: err.message });
   }
 }
 
@@ -176,7 +177,7 @@ export async function enqueueSequenceEmails(
  */
 export async function processEmailQueue(): Promise<{ processed: number; failed: number }> {
   if (!resend) {
-    console.warn('[EmailSequence] Resend not configured, skipping');
+    log.warn('[EmailSequence] Resend not configured, skipping');
     return { processed: 0, failed: 0 };
   }
 
@@ -212,7 +213,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
       .limit(100);
 
     if (queryError) {
-      console.error('[EmailSequence] Query error:', queryError.message);
+      log.error('[EmailSequence] Query error:', { err: queryError.message });
       return { processed: 0, failed: 0 };
     }
 
@@ -231,7 +232,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
         const emailConfig = emails?.[item.email_index];
 
         if (!emailConfig || !leadData?.email) {
-          console.warn(`[EmailSequence] Invalid email config or lead for queue item ${item.id}`);
+          log.warn(`[EmailSequence] Invalid email config or lead for queue item ${item.id}`);
           // Mark as failed if we can't find config
           await supabase
             .from('email_sequence_queue')
@@ -247,7 +248,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
 
         // Check if recipient has unsubscribed
         if (await isUnsubscribed(leadData.email)) {
-          console.log(`[EmailSequence] Skipping ${leadData.email} - unsubscribed`);
+          log.info(`[EmailSequence] Skipping ${leadData.email} - unsubscribed`);
           await supabase
             .from('email_sequence_queue')
             .update({ status: 'skipped', error_message: 'Recipient unsubscribed', updated_at: new Date().toISOString() })
@@ -339,10 +340,10 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
           })
           .eq('id', item.id);
 
-        console.log(`[EmailSequence] Sent email ${item.email_index + 1} to ${leadData.email}`);
+        log.info(`[EmailSequence] Sent email ${item.email_index + 1} to ${leadData.email}`);
         processed++;
       } catch (err: any) {
-        console.error(`[EmailSequence] Failed to send email for queue item ${item.id}:`, err.message);
+        log.error('[EmailSequence] Failed to send email for queue item ${item.id}:', { err: err.message });
 
         // Mark as failed with error message
         await supabase
@@ -358,10 +359,10 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
       }
     }
 
-    console.log(`[EmailSequence] Processed: ${processed}, Failed: ${failed}`);
+    log.info(`[EmailSequence] Processed: ${processed}, Failed: ${failed}`);
     return { processed, failed };
   } catch (err: any) {
-    console.error('[EmailSequence] Processing error:', err.message);
+    log.error('[EmailSequence] Processing error:', { err: err.message });
     return { processed: 0, failed: 0 };
   }
 }

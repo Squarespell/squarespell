@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './auth';
 import { createClient } from '@supabase/supabase-js';
@@ -47,7 +48,7 @@ export async function guardQuizCreation(
       .single();
 
     if (error || !user) {
-      console.error('guardQuizCreation: user not found for dbUserId:', req.dbUserId);
+      log.error('guardQuizCreation: user not found for dbUserId:', { err: req.dbUserId });
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -84,7 +85,7 @@ export async function guardQuizCreation(
     (req as any).quizCount = quizCount;
     next();
   } catch (err: any) {
-    console.error('guardQuizCreation error:', err.message);
+    log.error('guardQuizCreation error:', { err: err.message });
     res.status(500).json({ error: err.message ?? 'Plan check failed' });
   }
 }

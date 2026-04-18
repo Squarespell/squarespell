@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
 
@@ -102,7 +103,7 @@ export async function createCheckoutSession(
       .single();
 
     if (insertError) {
-      console.error('Failed to store payment record:', insertError);
+      log.error('Failed to store payment record:', { err: insertError });
       throw new Error('Failed to store payment record');
     }
 
@@ -111,7 +112,7 @@ export async function createCheckoutSession(
       sessionId: session.id
     };
   } catch (err: any) {
-    console.error('Error creating checkout session:', err);
+    log.error('Error creating checkout session:', { err: err });
     throw err;
   }
 }
@@ -137,9 +138,9 @@ export async function handlePaymentWebhook(event: Stripe.Event): Promise<void> {
           .eq('stripe_session_id', session.id);
 
         if (updateError) {
-          console.error('Failed to update payment status:', updateError);
+          log.error('Failed to update payment status:', { err: updateError });
         } else {
-          console.log(`Payment completed for session ${session.id}`);
+          log.info(`Payment completed for session ${session.id}`);
         }
         break;
       }
@@ -157,9 +158,9 @@ export async function handlePaymentWebhook(event: Stripe.Event): Promise<void> {
           .eq('stripe_payment_intent_id', intent.id);
 
         if (updateError) {
-          console.error('Failed to update failed payment status:', updateError);
+          log.error('Failed to update failed payment status:', { err: updateError });
         } else {
-          console.log(`Payment failed for intent ${intent.id}`);
+          log.info(`Payment failed for intent ${intent.id}`);
         }
         break;
       }
@@ -169,7 +170,7 @@ export async function handlePaymentWebhook(event: Stripe.Event): Promise<void> {
         break;
     }
   } catch (err: any) {
-    console.error('Error handling payment webhook:', err);
+    log.error('Error handling payment webhook:', { err: err });
     throw err;
   }
 }
@@ -186,13 +187,13 @@ export async function getPaymentsForQuiz(quizId: string): Promise<any[]> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Failed to fetch payments for quiz:', error);
+      log.error('Failed to fetch payments for quiz:', { err: error });
       return [];
     }
 
     return payments || [];
   } catch (err: any) {
-    console.error('Error fetching quiz payments:', err);
+    log.error('Error fetching quiz payments:', { err: err });
     return [];
   }
 }
@@ -212,13 +213,13 @@ export async function getPaymentByLead(leadId: string): Promise<any | null> {
 
     if (error && error.code !== 'PGRST116') {
       // PGRST116 is "no rows" error, which is expected if no payment exists
-      console.error('Failed to fetch payment for lead:', error);
+      log.error('Failed to fetch payment for lead:', { err: error });
       return null;
     }
 
     return payment || null;
   } catch (err: any) {
-    console.error('Error fetching lead payment:', err);
+    log.error('Error fetching lead payment:', { err: err });
     return null;
   }
 }
@@ -236,13 +237,13 @@ export async function refundPayment(paymentId: string): Promise<boolean> {
       .single();
 
     if (fetchError || !payment) {
-      console.error('Payment not found:', fetchError);
+      log.error('Payment not found:', { err: fetchError });
       return false;
     }
 
     // Can only refund completed payments
     if (payment.status !== 'completed' || !payment.stripe_payment_intent_id) {
-      console.error('Cannot refund payment with status:', payment.status);
+      log.error('Cannot refund payment with status:', { err: payment.status });
       return false;
     }
 
@@ -261,14 +262,14 @@ export async function refundPayment(paymentId: string): Promise<boolean> {
       .eq('id', paymentId);
 
     if (updateError) {
-      console.error('Failed to update refunded payment status:', updateError);
+      log.error('Failed to update refunded payment status:', { err: updateError });
       return false;
     }
 
-    console.log(`Payment refunded: ${paymentId}`);
+    log.info(`Payment refunded: ${paymentId}`);
     return true;
   } catch (err: any) {
-    console.error('Error refunding payment:', err);
+    log.error('Error refunding payment:', { err: err });
     return false;
   }
 }

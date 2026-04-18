@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Router } from 'express';
 import { isUnsubscribed, buildUnsubscribeHeaders, canSpamFooterHtml } from '../services/unsubscribe';
 import { applyMergeTags, buildMergeContextFromData, MergeContext } from '../services/mergeTags';
@@ -432,7 +433,7 @@ r.get('/deliverability', async (req, res) => {
 
     res.json({ totals, rates, campaigns: campaignBreakdown });
   } catch (err: any) {
-    console.error('Deliverability fetch error:', err);
+    log.error('Deliverability fetch error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to fetch deliverability data' });
   }
 });

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import crypto from 'crypto';
+import { log } from '../lib/logger';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
@@ -122,7 +123,7 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
     if (error) throw error;
     res.json({ saved: true, quiz_id: data.id, slug: data.slug });
   } catch (err: any) {
-    console.error('save-preview error:', err);
+    log.error('save-preview error:', { err: err });
     res.status(500).json({ error: 'Failed to save quiz' });
   }
 });
@@ -135,7 +136,7 @@ async function storePreviewDraft(claimToken: string, quiz: any, brand: any, url:
     claim_token: claimToken, quiz, brand: brand || {}, url,
   });
   if (error) {
-    console.error('[PreviewDraft] Insert failed:', error.message);
+    log.error('[PreviewDraft] Insert failed:', { err: error.message });
     throw error;
   }
   // Async cleanup: delete unclaimed drafts older than 24 hours
@@ -144,7 +145,7 @@ async function storePreviewDraft(claimToken: string, quiz: any, brand: any, url:
     .is('claimed_at', null)
     .lt('created_at', new Date(Date.now() - 86400000).toISOString())
     .then(({ error: cleanErr }) => {
-      if (cleanErr) console.warn('[PreviewDraft] Cleanup error:', cleanErr.message);
+      if (cleanErr) log.warn('[PreviewDraft] Cleanup error:', { detail: cleanErr.message });
     });
 }
 
@@ -209,30 +210,30 @@ previewRouter.post('/preview-generate', async (req, res) => {
 
   try {
     // Step 1: Scrape brand
-    console.log(`[Preview] Starting scrape for: ${normalizedUrl}`);
+    log.info(`[Preview] Starting scrape for: ${normalizedUrl}`);
     const brand = await scrapeBrand(normalizedUrl);
-    console.log(`[Preview] Scrape complete. Business summary: ${brand.business?.summary?.length || 0} chars`);
+    log.info(`[Preview] Scrape complete. Business summary: ${brand.business?.summary?.length || 0} chars`);
 
     // Step 2: Generate quiz with AI
     const quiz = await generateQuiz(normalizedUrl, 'general', 'Generate more leads', brand);
-    console.log(`[Preview] Quiz generated: "${quiz.title}"`);
+    log.info(`[Preview] Quiz generated: "${quiz.title}"`);
 
     // Step 3: Generate a claim token and persist draft to Supabase
     const claimToken = crypto.randomBytes(16).toString('hex');
     await storePreviewDraft(claimToken, quiz, brand, normalizedUrl);
 
-    console.log(`[Preview] Quiz stored with claim token: ${claimToken.slice(0, 8)}...`);
+    log.info(`[Preview] Quiz stored with claim token: ${claimToken.slice(0, 8)}...`);
     res.json({ brand, quiz, claim_token: claimToken });
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
-      console.warn(`[Preview] Rejected non-Squarespace site: ${err.hostname}`);
+      log.warn('[Preview] Rejected non-Squarespace site', { hostname: err.hostname });
       return res.status(422).json({
         error: err.message,
         code: 'NOT_SQUARESPACE',
         hostname: err.hostname,
       });
     }
-    console.error('[Preview] Generation failed:', err);
+    log.error('[Preview] Generation failed:', { err: err });
     res.status(500).json({ error: err.message ?? 'Preview generation failed' });
   }
 });
@@ -257,17 +258,17 @@ previewRouter.post('/preview-analyze', async (req, res) => {
   try { normalizedUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
 
   try {
-    console.log(`[PreviewAnalyze] Scraping: ${normalizedUrl}`);
+    log.info(`[PreviewAnalyze] Scraping: ${normalizedUrl}`);
     const brand = await scrapeBrand(normalizedUrl);
-    console.log(`[PreviewAnalyze] Scrape done. Summary: ${brand.business?.summary?.length || 0} chars`);
+    log.info(`[PreviewAnalyze] Scrape done. Summary: ${brand.business?.summary?.length || 0} chars`);
 
     // Run AI analysis and onboarding questions in parallel for speed
     const [{ questions: onboardingQuestions }, businessProfile] = await Promise.all([
       generateOnboardingQuestions(normalizedUrl, brand),
       analyzeBusinessProfile(normalizedUrl, brand),
     ]);
-    console.log(`[PreviewAnalyze] Onboarding questions generated: ${onboardingQuestions.length}`);
-    console.log(`[PreviewAnalyze] Business profile: ${JSON.stringify(businessProfile)}`);
+    log.info(`[PreviewAnalyze] Onboarding questions generated: ${onboardingQuestions.length}`);
+    log.info(`[PreviewAnalyze] Business profile: ${JSON.stringify(businessProfile)}`);
 
     // Merge AI-analyzed business profile into brand object
     brand.business = {
@@ -293,14 +294,14 @@ previewRouter.post('/preview-analyze', async (req, res) => {
     res.json({ brand, onboarding_questions: onboardingQuestions, session_token: sessionToken, url: normalizedUrl });
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
-      console.warn(`[PreviewAnalyze] Rejected non-Squarespace site: ${err.hostname}`);
+      log.warn('[PreviewAnalyze] Rejected non-Squarespace site', { hostname: err.hostname });
       return res.status(422).json({
         error: err.message,
         code: 'NOT_SQUARESPACE',
         hostname: err.hostname,
       });
     }
-    console.error('[PreviewAnalyze] Failed:', err);
+    log.error('[PreviewAnalyze] Failed:', { err: err });
     res.status(500).json({ error: err.message ?? 'Analyze failed' });
   }
 });
@@ -333,16 +334,16 @@ previewRouter.post('/preview-build-quiz', async (req, res) => {
   ].filter(p => p.answer && p.answer !== 'unknown');
 
   try {
-    console.log(`[PreviewBuildQuiz] Building quiz for ${session.url} | goal=${goal} | type=${businessType} | audience=${audience} | tone=${tone} | offer=${keyOffer}`);
+    log.info(`[PreviewBuildQuiz] Building quiz for ${session.url} | goal=${goal} | type=${businessType} | audience=${audience} | tone=${tone} | offer=${keyOffer}`);
     const quiz = await generateTailoredQuiz(session.url, session.brand, onboardingPairs);
-    console.log(`[PreviewBuildQuiz] Quiz generated: "${quiz.title}"`);
+    log.info(`[PreviewBuildQuiz] Quiz generated: "${quiz.title}"`);
 
     const claimToken = crypto.randomBytes(16).toString('hex');
     await storePreviewDraft(claimToken, quiz, session.brand, session.url);
 
     res.json({ quiz, brand: session.brand, claim_token: claimToken, url: session.url });
   } catch (err: any) {
-    console.error('[PreviewBuildQuiz] Failed:', err);
+    log.error('[PreviewBuildQuiz] Failed:', { err: err });
     res.status(500).json({ error: err.message ?? 'Quiz build failed' });
   }
 });
@@ -377,10 +378,10 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
     if (draft) {
       quiz = draft.quiz; brand = draft.brand; url = draft.url;
     } else if (bodyQuiz && bodyUrl) {
-      console.log(`[Claim] Draft not found; using body payload fallback`);
+      log.info('[Claim] Draft not found; using body payload fallback');
       quiz = bodyQuiz; brand = bodyBrand || {}; url = bodyUrl;
     } else {
-      console.log(`[Claim] Token not found and no fallback payload: ${(claim_token || '').slice(0, 8)}...`);
+      log.info('[Claim] Token not found and no fallback payload', { token: (claim_token || '').slice(0, 8) });
       return res.status(404).json({ error: 'Quiz not found or expired. Please generate a new one.' });
     }
 
@@ -407,17 +408,17 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
     }).select('id, slug').single();
 
     if (saveErr) {
-      console.error('[Claim] Supabase insert error:', saveErr);
+      log.error('[Claim] Supabase insert error:', { err: saveErr });
       throw saveErr;
     }
 
     // Mark draft as claimed
     if (claim_token) await markDraftClaimed(claim_token, userId);
 
-    console.log(`[Claim] Quiz ${saved.id} saved for user ${userId}, slug: ${saved.slug}`);
+    log.info(`[Claim] Quiz ${saved.id} saved for user ${userId}, slug: ${saved.slug}`);
     res.json({ claimed: true, quiz_id: saved.id, slug: saved.slug });
   } catch (err: any) {
-    console.error('[Claim] Error:', err);
+    log.error('[Claim] Error:', { err: err });
     res.status(500).json({ error: 'Failed to claim quiz', details: err?.message || String(err) });
   }
 });
@@ -510,7 +511,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
         });
       }
-    } catch (e) { console.log('Email notification failed:', e); }
+    } catch (e) { log.info('Email notification failed:', { detail: e }); }
   }
 
   // GDPR gate: skip all outbound emails if consent is required but not given
@@ -540,11 +541,11 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           leadId,
           ownerEmail: ownerUser?.email,
           quizId: quiz.id,
-        }).catch((e: any) => console.log('[ResultEmail] send failed:', e?.message));
+        }).catch((e: any) => log.info('[ResultEmail] send failed', { err: e?.message }));
       }
-    } catch (e) { console.log('[ResultEmail] setup failed:', e); }
+    } catch (e) { log.info('[ResultEmail] setup failed', { err: e }); }
   } else if (!canEmail) {
-    console.log(`[GDPR] Skipping result email for ${email} - no consent`);
+    log.info('[GDPR] Skipping result email - no consent', { email });
   }
 
   if (leadId && email && outcome_id && canEmail) {
@@ -555,9 +556,9 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       leadData?.score ?? null,
       [],
       (quiz as any).mode || null,
-    ).catch((e: any) => console.log('[EmailSeq] enqueue failed:', e?.message));
+    ).catch((e: any) => log.info('[EmailSeq] enqueue failed', { err: e?.message }));
   } else if (!canEmail && outcome_id) {
-    console.log(`[GDPR] Skipping sequence emails for ${email} - no consent`);
+    log.info('[GDPR] Skipping sequence emails - no consent', { email });
   }
 
   // Fire Zapier/webhook integrations
@@ -576,7 +577,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
         }
       }
     }
-  } catch (e) { console.log('Webhook dispatch failed:', e); }
+  } catch (e) { log.info('Webhook dispatch failed:', { detail: e }); }
 
   
   // Generate AI lead insights (non-blocking)
@@ -625,21 +626,21 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
                   })
                   .eq('id', leadId);
                 if (error) {
-                  console.log('[LeadInsights] Failed to store:', error.message);
+                  log.info('[LeadInsights] Failed to store:', { detail: error.message });
                 } else {
-                  console.log('[LeadInsights] Stored for lead:', leadId);
+                  log.info('[LeadInsights] Stored for lead:', { detail: leadId });
                 }
               } catch (err: any) {
-                console.log('[LeadInsights] Store error:', err);
+                log.info('[LeadInsights] Store error:', { detail: err });
               }
             })();
           }
         }).catch((err: any) => {
-          console.log('[LeadInsights] Gen error:', err);
+          log.info('[LeadInsights] Gen error:', { detail: err });
         });
       }
     } catch (e) {
-      console.log('[LeadInsights] Setup error:', e);
+      log.info('[LeadInsights] Setup error:', { detail: e });
     }
   }
 
@@ -1096,11 +1097,11 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
     const brand = await scrapeBrand(normalizedBrandUrl);
     const [profile, ideas] = await Promise.all([
       analyzeBusinessProfile(normalizedBrandUrl, brand).catch((e: any) => {
-        console.error('[ScrapeBrand] analyzeBusinessProfile failed:', e?.message);
+        log.error('[ScrapeBrand] analyzeBusinessProfile failed:', { err: e?.message });
         return null;
       }),
       suggestQuizIdeas(normalizedBrandUrl, brand).catch((e: any) => {
-        console.error('[ScrapeBrand] suggestQuizIdeas failed:', e?.message);
+        log.error('[ScrapeBrand] suggestQuizIdeas failed:', { err: e?.message });
         return [] as string[];
       }),
     ]);
@@ -1114,7 +1115,7 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
     if (err instanceof NotSquarespaceError) {
       return res.status(422).json({ error: err.message, code: 'NOT_SQUARESPACE', hostname: err.hostname });
     }
-    console.error('[ScrapeBrand] Failed:', err);
+    log.error('[ScrapeBrand] Failed:', { err: err });
     res.status(500).json({ error: err?.message ?? 'Scrape failed' });
   }
 });
@@ -1178,7 +1179,7 @@ cronRouter.post('/process-email-queue', async (_req, res) => {
     const result = await processEmailQueue();
     res.json({ ok: true, ...result });
   } catch (err: any) {
-    console.error('[Cron] process-email-queue failed:', err);
+    log.error('[Cron] process-email-queue failed:', { err: err });
     res.status(500).json({ error: err?.message || 'queue drain failed' });
   }
 });
@@ -1190,10 +1191,10 @@ cronRouter.post('/process-scheduled-sends', async (req, res) => {
   }
   try {
     const result = await processScheduledCampaigns();
-    console.log(`[Cron] scheduled-sends: processed ${result.processed} campaign(s)`);
+    log.info(`[Cron] scheduled-sends: processed ${result.processed} campaign(s)`);
     res.json({ ok: true, ...result });
   } catch (err: any) {
-    console.error('[Cron] process-scheduled-sends failed:', err);
+    log.error('[Cron] process-scheduled-sends failed:', { err: err });
     res.status(500).json({ error: err?.message || 'scheduled send dispatch failed' });
   }
 });
@@ -1317,13 +1318,13 @@ cronRouter.post('/weekly-digest', async (req, res) => {
 
         emailsSent++;
       } catch (e) {
-        console.error(`Failed to send digest to user ${user.id}:`, e);
+        log.error('Failed to send digest', { userId: user.id, err: e });
       }
     }
 
     res.json({ success: true, sent: emailsSent, skipped });
   } catch (err: any) {
-    console.error('Weekly digest error:', err);
+    log.error('Weekly digest error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to send digests' });
   }
 });
@@ -1457,13 +1458,13 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
           emailsSent++;
         }
       } catch (e) {
-        console.error(`Failed to send trial reminder to user ${user.id}:`, e);
+        log.error('Failed to send trial reminder', { userId: user.id, err: e });
       }
     }
 
     res.json({ success: true, sent: emailsSent });
   } catch (err: any) {
-    console.error('Trial reminder error:', err);
+    log.error('Trial reminder error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to send trial reminders' });
   }
 });
@@ -1485,7 +1486,7 @@ cleanupRouter.post('/cleanup', async (req: AuthenticatedRequest, res) => {
       const summary = await runCleanup();
       res.json(summary);
     } catch (err: any) {
-      console.error('Cleanup error:', err);
+      log.error('Cleanup error:', { err: err });
       res.status(500).json({
         success: false,
         error: err.message ?? 'Cleanup failed',
@@ -1524,7 +1525,7 @@ cleanupRouter.post('/cleanup', async (req: AuthenticatedRequest, res) => {
     const summary = await runCleanup();
     res.json(summary);
   } catch (err: any) {
-    console.error('Cleanup error:', err);
+    log.error('Cleanup error:', { err: err });
     res.status(500).json({
       success: false,
       error: err.message ?? 'Cleanup failed',
@@ -1569,7 +1570,7 @@ quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
 
     res.json({ checkout_url: result.url, session_id: result.sessionId });
   } catch (err: any) {
-    console.error('Checkout session error:', err);
+    log.error('Checkout session error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to create checkout session' });
   }
 });
@@ -1585,7 +1586,7 @@ quizPaymentsRouter.post('/webhooks/stripe-quiz-payment', async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
+    log.error('Webhook signature verification failed:', { err: err });
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
@@ -1593,7 +1594,7 @@ quizPaymentsRouter.post('/webhooks/stripe-quiz-payment', async (req, res) => {
     await quizPaymentsService.handlePaymentWebhook(event);
     res.json({ received: true });
   } catch (err: any) {
-    console.error('Error handling payment webhook:', err);
+    log.error('Error handling payment webhook:', { err: err });
     res.status(500).json({ error: err.message ?? 'Webhook processing failed' });
   }
 });
@@ -1619,7 +1620,7 @@ quizPaymentsRouter.get('/quizzes/:id/payments', requireAuth, attachUser, async (
     const payments = await quizPaymentsService.getPaymentsForQuiz(req.params.id);
     res.json(payments);
   } catch (err: any) {
-    console.error('Get payments error:', err);
+    log.error('Get payments error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to fetch payments' });
   }
 });

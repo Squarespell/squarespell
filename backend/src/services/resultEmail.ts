@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Resend } from 'resend';
 import { generateReportToken } from './reportToken';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterText } from './unsubscribe';
@@ -38,12 +39,12 @@ interface ResultEmailParams {
 export async function sendResultEmail(params: ResultEmailParams): Promise<boolean> {
   // Check if recipient has unsubscribed
   if (await isUnsubscribed(params.to)) {
-    console.log(`[ResultEmail] Skipping ${params.to} - unsubscribed`);
+    log.info(`[ResultEmail] Skipping ${params.to} - unsubscribed`);
     return false;
   }
 
   if (!resend) {
-    console.log('[ResultEmail] Resend not configured, skipping');
+    log.info('[ResultEmail] Resend not configured, skipping');
     return false;
   }
 
@@ -127,10 +128,10 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   </body>
 </html>`,
     });
-    console.log(`[ResultEmail] Sent to ${to} for "${quizTitle}"`);
+    log.info(`[ResultEmail] Sent to ${to} for "${quizTitle}"`);
     return true;
   } catch (err: any) {
-    console.error('[ResultEmail] Failed:', err.message);
+    log.error('[ResultEmail] Failed:', { err: err.message });
     return false;
   }
 }

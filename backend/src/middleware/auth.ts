@@ -1,3 +1,4 @@
+import { log } from '../lib/logger';
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '@clerk/backend';
 import { clerkClient } from '@clerk/clerk-sdk-node';
@@ -42,7 +43,7 @@ export async function requireAuth(
     req.userId = payload.sub;
     next();
   } catch (err: any) {
-    console.error('Token verification failed:', err.message || err);
+    log.error('Token verification failed:', { err: err.message || err });
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
@@ -73,7 +74,7 @@ export async function attachUser(
       const clerkUser = await clerkClient.users.getUser(req.userId);
       email = clerkUser.emailAddresses?.[0]?.emailAddress || '';
     } catch (e) {
-      console.log('Clerk lookup failed, continuing without email:', e);
+      log.info('Clerk lookup failed, continuing without email:', { detail: e });
     }
 
     const { data: newUser, error } = await supabase
@@ -88,14 +89,14 @@ export async function attachUser(
       .single();
 
     if (error) {
-      console.error('User insert error:', error.message);
+      log.error('User insert error:', { err: error.message });
       return res.status(500).json({ error: 'Failed to create user: ' + error.message });
     }
 
     req.dbUserId = newUser?.id;
     next();
   } catch (err: any) {
-    console.error('attachUser error:', err.message);
+    log.error('attachUser error:', { err: err.message });
     return res.status(500).json({ error: 'Auth error: ' + err.message });
   }
 }
