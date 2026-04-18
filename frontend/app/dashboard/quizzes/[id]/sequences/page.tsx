@@ -1,4 +1,5 @@
 'use client';
+import { EmptyState, PrimaryButton } from '@/app/dashboard/_components/PageShell';
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -532,7 +533,7 @@ export default function SequencesPage() {
 
           {sequences.length === 0 ? (
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 text-center">
-              <p className="text-slate-400">No sequences yet. Create one to get started.</p>
+              <EmptyState title="No sequences yet" body="Create an email sequence to automatically follow up with quiz respondents." />
             </div>
           ) : (
             sequences.map((seq) => (

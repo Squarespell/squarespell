@@ -1018,7 +1018,7 @@ function OverviewInner() {
                 borderRadius: 12,
               }}
             >
-              No leads yet. They&apos;ll show up here as soon as visitors complete a quiz.
+              No leads yet. They will show up here as soon as visitors complete a quiz.
             </div>
           ) : (
             leads.map((lead, idx) => (
