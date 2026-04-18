@@ -29,7 +29,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 ## P2
 
 - [ ] WCAG 2.1 AA audit on dashboard and public quiz flow
-- [ ] Deliverability dashboard (bounce rate, spam complaint rate)
+- [x] Deliverability dashboard (bounce rate, spam complaint rate)
 - [ ] Bounce classification pipeline (hard/soft)
 - [ ] Suppression list (global)
 - [ ] DKIM/SPF on Resend shared domain

@@ -311,4 +311,73 @@ r.post('/campaigns/:id/test-send', async (req, res) => {
   }
 });
 
+// ── Deliverability Dashboard ─────────────────────────────────────────────
+// GET /api/emails/deliverability - aggregate email health metrics
+r.get('/deliverability', async (req, res) => {
+  const tenantId = req.dbUserId;
+  try {
+    // Get all campaigns for this tenant
+    const { data: campaigns } = await supabase.from('email_campaigns')
+      .select('id, name, status, created_at')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false });
+
+    const campaignIds = (campaigns || []).map((c: any) => c.id);
+    if (campaignIds.length === 0) {
+      return res.json({
+        totals: { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, complained: 0, failed: 0 },
+        rates: { delivery_rate: 0, open_rate: 0, click_rate: 0, bounce_rate: 0, complaint_rate: 0 },
+        campaigns: [],
+      });
+    }
+
+    // Get all sends for these campaigns
+    const { data: sends } = await supabase.from('email_sends')
+      .select('campaign_id, status, opened_at, clicked_at')
+      .in('campaign_id', campaignIds);
+
+    const rows = sends || [];
+    const totals = {
+      sent: rows.length,
+      delivered: rows.filter((s: any) => s.status === 'delivered').length,
+      opened: rows.filter((s: any) => s.opened_at).length,
+      clicked: rows.filter((s: any) => s.clicked_at).length,
+      bounced: rows.filter((s: any) => s.status === 'bounced').length,
+      complained: rows.filter((s: any) => s.status === 'complained').length,
+      failed: rows.filter((s: any) => s.status === 'failed').length,
+    };
+
+    const safe = (n: number, d: number) => d > 0 ? Math.round((n / d) * 10000) / 100 : 0;
+    const rates = {
+      delivery_rate: safe(totals.delivered, totals.sent),
+      open_rate: safe(totals.opened, totals.delivered || totals.sent),
+      click_rate: safe(totals.clicked, totals.delivered || totals.sent),
+      bounce_rate: safe(totals.bounced, totals.sent),
+      complaint_rate: safe(totals.complained, totals.sent),
+    };
+
+    // Per-campaign breakdown (last 10)
+    const campaignBreakdown = (campaigns || []).slice(0, 10).map((c: any) => {
+      const cRows = rows.filter((s: any) => s.campaign_id === c.id);
+      const cSent = cRows.length;
+      const cDelivered = cRows.filter((s: any) => s.status === 'delivered').length;
+      const cBounced = cRows.filter((s: any) => s.status === 'bounced').length;
+      const cComplained = cRows.filter((s: any) => s.status === 'complained').length;
+      const cOpened = cRows.filter((s: any) => s.opened_at).length;
+      return {
+        id: c.id, name: c.name, status: c.status, created_at: c.created_at,
+        sent: cSent, delivered: cDelivered, bounced: cBounced, complained: cComplained, opened: cOpened,
+        bounce_rate: safe(cBounced, cSent),
+        complaint_rate: safe(cComplained, cSent),
+        open_rate: safe(cOpened, cDelivered || cSent),
+      };
+    });
+
+    res.json({ totals, rates, campaigns: campaignBreakdown });
+  } catch (err: any) {
+    console.error('Deliverability fetch error:', err);
+    res.status(500).json({ error: err.message ?? 'Failed to fetch deliverability data' });
+  }
+});
+
 export default r;
