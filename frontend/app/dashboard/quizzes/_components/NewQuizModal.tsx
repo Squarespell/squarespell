@@ -155,10 +155,21 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setErrorMsg("");
     setSubmitting(false);
     setTimeout(() => urlRef.current?.focus(), 20);
-    // Lock body scroll while modal is open
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  // Lock body and html scroll while modal is open
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -307,13 +318,14 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   return (
     <>
       <style>{styles}</style>
-      <div className="sq-overlay" onClick={onClose}>
+      <div className="sq-overlay" onClick={onClose} onWheel={(e) => e.stopPropagation()}>
         <div
           className="sq-modal"
           role="dialog"
           aria-modal="true"
           aria-label="Create new quiz"
           onClick={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
         >
           <aside className="sq-side">
             <div className="sq-brand">
@@ -675,11 +687,11 @@ const styles = `
   padding: 24px;
   animation: sq-fade 160ms ease-out;
   overflow: hidden;
+  overscroll-behavior: contain;
 }
 @keyframes sq-fade { from { opacity: 0 } to { opacity: 1 } }
 .sq-modal {
   max-height: 92vh;
-  overflow: hidden;
   width: 100%;
   max-width: 960px;
   display: grid;
@@ -689,6 +701,7 @@ const styles = `
   border-radius: 20px;
   box-shadow: 0 30px 60px rgba(0,0,0,0.12);
   overflow: hidden;
+  overscroll-behavior: contain;
   color: #1A1A1A;
   font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   animation: sq-pop 180ms ease-out;
@@ -763,7 +776,7 @@ const styles = `
 }
 .sq-close:hover { background: #EEEDE9; color: #1A1A1A; }
 
-.sq-body { padding: 8px 28px 20px 28px; overflow-y: auto; min-height: 0; flex: 1; }
+.sq-body { padding: 8px 28px 20px 28px; overflow-y: auto; min-height: 0; flex: 1; overscroll-behavior: contain; }
 .sq-form { display: flex; flex-direction: column; gap: 14px; }
 .sq-lead { margin: 0 0 6px 0; font-size: 14px; line-height: 1.55; color: #6B6B6B; }
 .sq-label { font-size: 13px; font-weight: 600; color: #1A1A1A; }
