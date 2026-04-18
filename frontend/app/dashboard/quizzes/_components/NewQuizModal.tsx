@@ -696,6 +696,7 @@ const styles = `
   max-width: 960px;
   display: grid;
   grid-template-columns: 280px 1fr;
+  grid-template-rows: minmax(0, 1fr);
   background: #FFFFFF;
   border: 1px solid #E4E3E0;
   border-radius: 20px;
@@ -715,6 +716,7 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 22px;
+  overflow-y: auto;
 }
 .sq-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; color: #1A1A1A; }
 .sq-logo {
@@ -724,8 +726,6 @@ const styles = `
 }
 .sq-steps { display: flex; flex-direction: column; gap: 4px; }
 .sq-step {
-  overflow-y: auto;
-  max-height: 92vh;
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px;
   border-radius: 10px;
@@ -760,7 +760,7 @@ const styles = `
 .sq-tip p { margin: 0; }
 .sq-tip-title { color: #0D7377; font-weight: 700; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 6px; }
 
-.sq-main { display: flex; flex-direction: column; min-width: 0; background: #FFFFFF; overflow: hidden; }
+.sq-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #FFFFFF; overflow: hidden; }
 .sq-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 22px 28px 12px 28px;
