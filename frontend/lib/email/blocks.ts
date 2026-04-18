@@ -158,9 +158,19 @@ export type TemplateCategory =
   | 'booking'
   | 'discount';
 
+export type SiteType =
+  | 'portfolio'
+  | 'restaurant'
+  | 'shop'
+  | 'blog'
+  | 'wedding'
+  | 'fitness'
+  | 'services';
+
 export interface EmailTemplate {
   id: string;
   category: TemplateCategory;
+  siteType?: SiteType;
   title: string;
   oneLiner: string;
   whyQuizNative: string;

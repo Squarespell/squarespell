@@ -7,11 +7,11 @@
 import { useMemo, useState } from 'react';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 import { PageHeader, Card, Pill, PrimaryButton } from '../../_components/PageShell';
-import { EMAIL_TEMPLATES, CATEGORY_LABELS } from '../../../../lib/email/templates';
+import { EMAIL_TEMPLATES, CATEGORY_LABELS, SITE_TYPE_LABELS } from '../../../../lib/email/templates';
 import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
 import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
 import { renderBlocks } from '../../../../lib/email/renderBlocks';
-import type { EmailTemplate, TemplateCategory } from '../../../../lib/email/blocks';
+import type { EmailTemplate, TemplateCategory, SiteType } from '../../../../lib/email/blocks';
 
 const FILTERS: (TemplateCategory | 'all')[] = [
   'all',
@@ -23,14 +23,32 @@ const FILTERS: (TemplateCategory | 'all')[] = [
   'discount',
 ];
 
+const SITE_FILTERS: (SiteType | 'all')[] = [
+  'all',
+  'portfolio',
+  'restaurant',
+  'shop',
+  'blog',
+  'wedding',
+  'fitness',
+  'services',
+];
+
 export default function EmailTemplatesPage() {
   const [filter, setFilter] = useState<TemplateCategory | 'all'>('all');
+  const [siteFilter, setSiteFilter] = useState<SiteType | 'all'>('all');
   const [selected, setSelected] = useState<EmailTemplate | null>(null);
 
   const visible = useMemo(() => {
-    if (filter === 'all') return EMAIL_TEMPLATES;
-    return EMAIL_TEMPLATES.filter(function (t) { return t.category === filter; });
-  }, [filter]);
+    var list = EMAIL_TEMPLATES;
+    if (filter !== 'all') {
+      list = list.filter(function (t) { return t.category === filter; });
+    }
+    if (siteFilter !== 'all') {
+      list = list.filter(function (t) { return t.siteType === siteFilter; });
+    }
+    return list;
+  }, [filter, siteFilter]);
 
   const previewHtml = useMemo(() => {
     if (!selected) return '';
@@ -46,7 +64,8 @@ export default function EmailTemplatesPage() {
         subtitle="Quiz-native templates. Each one only exists because you have a quiz feeding it."
       />
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Email type</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         {FILTERS.map(function (f) {
           const active = f === filter;
           const label = f === 'all' ? 'All' : (CATEGORY_LABELS[f] || f);
@@ -54,6 +73,31 @@ export default function EmailTemplatesPage() {
             <button
               key={f}
               onClick={function () { setFilter(f); }}
+              style={{
+                padding: '7px 14px',
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                background: active ? C.ACCENT : 'transparent',
+                color: active ? '#0b0b0c' : C.TEXT_MUTED,
+                border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Site type</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+        {SITE_FILTERS.map(function (f) {
+          const active = f === siteFilter;
+          const label = f === 'all' ? 'All' : (SITE_TYPE_LABELS[f] || f);
+          return (
+            <button
+              key={f}
+              onClick={function () { setSiteFilter(f); }}
               style={{
                 padding: '7px 14px',
                 borderRadius: 999,
@@ -109,7 +153,10 @@ export default function EmailTemplatesPage() {
               <div style={{ padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT }}>{t.title}</div>
-                  <Pill variant="accent">{CATEGORY_LABELS[t.category] || t.category}</Pill>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {t.siteType ? <Pill variant="accent">{SITE_TYPE_LABELS[t.siteType] || t.siteType}</Pill> : null}
+                    <Pill variant="accent">{CATEGORY_LABELS[t.category] || t.category}</Pill>
+                  </div>
                 </div>
                 <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5, marginBottom: 14 }}>
                   {t.oneLiner}
@@ -173,7 +220,10 @@ export default function EmailTemplatesPage() {
           >
             <div style={{ padding: 20, borderRight: '1px solid ' + C.BORDER, overflow: 'auto' }}>
               <div style={{ fontSize: 18, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>{selected.title}</div>
-              <Pill variant="accent">{CATEGORY_LABELS[selected.category]}</Pill>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {selected.siteType ? <Pill variant="accent">{SITE_TYPE_LABELS[selected.siteType] || selected.siteType}</Pill> : null}
+                <Pill variant="accent">{CATEGORY_LABELS[selected.category]}</Pill>
+              </div>
               <div style={{ marginTop: 16, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.6 }}>
                 {selected.oneLiner}
               </div>
