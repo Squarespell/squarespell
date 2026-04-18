@@ -230,7 +230,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       } else if (resp.status === 422) {
         const errData = await resp.json().catch(() => ({}));
         if (errData.code === 'NOT_SQUARESPACE') {
-          setErrorMsg('This doesn't look like a Squarespace site. Squarespell is built exclusively for Squarespace - paste a Squarespace site URL to continue.');
+          setErrorMsg('This does not look like a Squarespace site. Squarespell is built exclusively for Squarespace - paste a Squarespace site URL to continue.');
           setIsSquarespace(false);
           clearTimeout(timer);
           setStage('site');
