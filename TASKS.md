@@ -43,14 +43,14 @@ Durable task list. Edit freely. Order within a priority band is rough.
 
 - [ ] Visual editor canvas (drag-drop blocks)
 - [ ] Inspector panel (right sidebar, edit block props)
-- [ ] Live preview iframe that updates on edit
-- [ ] Mobile / desktop preview toggle
-- [ ] Dark-mode email-client preview
+- [x] Live preview iframe that updates on edit
+- [x] Mobile / desktop preview toggle
+- [x] Dark-mode email-client preview
 - [ ] Global search (cmd+k) across quizzes, campaigns, contacts
 - [ ] Outcomes routing visualization in builder
 - [x] Trash + restore for campaigns and quizzes
 - [x] Bot filtering toggle
-- [ ] Segments = quiz answers audience builder
+- [x] Segments = quiz answers audience builder
 - [x] Add Templates sidebar nav entry under Emails
 - [x] Wire template gallery into New Campaign wizard
 - [x] Template gallery for 7 Squarespace site types
