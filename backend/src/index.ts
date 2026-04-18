@@ -6,6 +6,7 @@ import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
 import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter } from './routes/allRoutes';
 import emailsRouter from './routes/emails';
+import unsubscribeRouter from './routes/unsubscribe';
 import clerkWebhookRoute from './routes/clerkWebhook';
 
 const app = express();
@@ -57,6 +58,8 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/quiz',
   '/api/save-preview',
   '/api/scrape-brand',
+  '/api/public/unsubscribe',
+  '/api/public/resubscribe',
 ];
 
 const restrictedCors = cors({
@@ -80,12 +83,14 @@ app.use((req, res, next) => {
   return restrictedCors(req, res, next);
 });
 
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
 
 app.use('/api/public', publicReportRouter);
+app.use('/api/public', unsubscribeRouter);
 app.use('/api/quizzes', quizzesFromUrlRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api', generateRouter);

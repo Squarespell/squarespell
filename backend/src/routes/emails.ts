@@ -1,4 +1,6 @@
-import { Router } from 'express';import { requireAuth, attachUser } from '../middleware/auth';
+import { Router } from 'express';
+import { isUnsubscribed, buildUnsubscribeHeaders } from '../services/unsubscribe';
+import { requireAuth, attachUser } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import { resendProvider } from '../services/email/resendProvider';
 import { emailQuota } from '../middleware/emailQuota';
@@ -23,12 +25,19 @@ async function resolveRecipients(
   const { data, error } = await q;
   if (error) throw error;
   const seen = new Set<string>();
-  const out: string[] = [];
+  const candidates: string[] = [];
   for (const row of data || []) {
     const e = (row.email || '').trim().toLowerCase();
-    if (e && !seen.has(e)) { seen.add(e); out.push(e); }
+    if (e && !seen.has(e)) { seen.add(e); candidates.push(e); }
   }
-  return out;
+  // Filter out unsubscribed emails
+  if (candidates.length === 0) return candidates;
+  const { data: unsubs } = await supabase
+    .from('email_unsubscribes')
+    .select('email')
+    .in('email', candidates);
+  const unsubSet = new Set((unsubs || []).map((u: any) => u.email));
+  return candidates.filter(e => !unsubSet.has(e));
 }
 
 r.get('/quota', async (req, res) => {
@@ -185,7 +194,7 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
       const { messageId } = await resendProvider.send({
         to, from: c.from_email, fromName: c.from_name,
         subject: c.subject, html: c.html,
-        headers: { 'X-Send-Id': send!.id },
+        headers: { 'X-Send-Id': send!.id, ...buildUnsubscribeHeaders(to) },
         tags: [{ name: 'campaign', value: c.id }],
       });
       await supabase.from('email_sends').update({

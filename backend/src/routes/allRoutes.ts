@@ -6,6 +6,7 @@ import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generate
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
 import { sendResultEmail } from '../services/resultEmail';
+import { isUnsubscribed, buildUnsubscribeHeaders, buildUnsubscribeUrl } from '../services/unsubscribe';
 import { enqueueSequenceEmails, processEmailQueue } from '../services/emailSequence';
 import { runCleanup } from '../services/databaseCleanup';
 import * as quizPaymentsService from '../services/quizPayments';
@@ -506,6 +507,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           reportEnabled,
           leadId,
           ownerEmail: ownerUser?.email,
+          quizId: quiz.id,
         }).catch((e: any) => console.log('[ResultEmail] send failed:', e?.message));
       }
     } catch (e) { console.log('[ResultEmail] setup failed:', e); }

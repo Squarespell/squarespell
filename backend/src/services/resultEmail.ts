@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { generateReportToken } from './reportToken';
+import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed } from './unsubscribe';
 
 function appendUtm(url: string, slug: string): string {
   if (!url) return url;
@@ -30,15 +31,23 @@ interface ResultEmailParams {
   reportEnabled?: boolean;
   leadId?: string;
   ownerEmail?: string;
+  slug?: string;
+  quizId?: string;
 }
 
 export async function sendResultEmail(params: ResultEmailParams): Promise<boolean> {
+  // Check if recipient has unsubscribed
+  if (await isUnsubscribed(params.to)) {
+    console.log(`[ResultEmail] Skipping ${params.to} - unsubscribed`);
+    return false;
+  }
+
   if (!resend) {
     console.log('[ResultEmail] Resend not configured, skipping');
     return false;
   }
 
-  const { to, quizTitle, outcomeTitle, outcomeDescription, ctaUrl, ctaText, branding, reportEnabled, leadId, ownerEmail } = params;
+  const { to, quizTitle, outcomeTitle, outcomeDescription, ctaUrl, ctaText, branding, reportEnabled, leadId, ownerEmail, slug, quizId } = params;
   const primaryColor = branding.primaryColor || '#D2FF1D';
   const siteName = branding.siteName || 'Squarespell Quiz';
   const logoUrl = branding.logoUrl || '';
@@ -52,7 +61,8 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   }
 
   try {
-    const unsubUrl = `${process.env.FRONTEND_URL || 'https://app.squarespell.com'}/unsubscribe?email=${encodeURIComponent(to)}`;
+    const unsubUrl = buildUnsubscribeUrl(to, quizId);
+    const unsubHeaders = buildUnsubscribeHeaders(to, quizId);
     const plainText = [quizTitle,'',outcomeTitle,'',outcomeDescription.replace(/<[^>]+>/g,''),'',ctaUrl?`${ctaText||'Learn More'}: ${ctaUrl}`:'',reportUrl?`Download your report: ${reportUrl}`:'','','Powered by Squarespell','',`Unsubscribe: ${unsubUrl}`].filter(Boolean).join('\n');
 
     await resend.emails.send({
@@ -62,8 +72,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
       subject: `Your Result: ${outcomeTitle}`,
       text: plainText,
       headers: {
-        'List-Unsubscribe': `<${unsubUrl}>, <mailto:unsubscribe@squarespell.com?subject=unsubscribe>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        ...unsubHeaders,
         'X-Entity-Ref-ID': leadId || '',
       },
       html: `<!doctype html>

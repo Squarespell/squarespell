@@ -1,5 +1,6 @@
 import { supabase } from '../db/supabaseClient';
 import { Resend } from 'resend';
+import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed } from './unsubscribe';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -240,6 +241,16 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
           continue;
         }
 
+        // Check if recipient has unsubscribed
+        if (await isUnsubscribed(leadData.email)) {
+          console.log(`[EmailSequence] Skipping ${leadData.email} - unsubscribed`);
+          await supabase
+            .from('email_sequence_queue')
+            .update({ status: 'skipped', error_message: 'Recipient unsubscribed', updated_at: new Date().toISOString() })
+            .eq('id', item.id);
+          continue;
+        }
+
         // Get quiz info for branding
         const { data: quiz } = await supabase
           .from('quizzes')
@@ -277,12 +288,24 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
 </html>`;
         }
 
+        // Add unsubscribe footer
+        const unsubUrl = buildUnsubscribeUrl(leadData.email, leadData.quiz_id);
+        const unsubFooter = `<div style="text-align:center;padding:20px 0;font-size:12px;color:#999;"><a href="${unsubUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a> from future emails.</div>`;
+        // Inject before closing body tag, or append
+        if (htmlBody.includes('</body>')) {
+          htmlBody = htmlBody.replace('</body>', unsubFooter + '</body>');
+        } else {
+          htmlBody += unsubFooter;
+        }
+
         // Send email via Resend
+        const unsubHeaders = buildUnsubscribeHeaders(leadData.email, leadData.quiz_id);
         await resend.emails.send({
           from: `${siteName} <results@squarespell.com>`,
           to: leadData.email,
           subject: emailConfig.subject,
           html: htmlBody,
+          headers: unsubHeaders,
         });
 
         // Mark as sent
