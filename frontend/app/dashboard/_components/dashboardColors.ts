@@ -12,6 +12,6 @@ export const DASHBOARD_COLORS = {
   HAIRLINE: 'rgba(255,255,255,0.05)',
   TEXT: '#f4f6f8',
   TEXT_MUTED: '#8a919c',
-  TEXT_SUBTLE: '#5e6470',
+  TEXT_SUBTLE: '#78808c',
   ACCENT: '#D2FF1D',
 };

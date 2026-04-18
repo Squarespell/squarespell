@@ -241,8 +241,8 @@ export default function QuizPage() {
   /* ---------- render ---------- */
   if (stage === 'loading') {
     return (
-      <div style={{ minHeight: '100svh', background: brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: brandFont, color: brandText, fontSize: 14, opacity: 0.6 }}>
-        Loading…
+      <div role="status" aria-label="Loading quiz" style={{ minHeight: '100svh', background: brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: brandFont, color: brandText, fontSize: 14, opacity: 0.6 }}>
+        Loading...
       </div>
     );
   }
@@ -445,7 +445,8 @@ export default function QuizPage() {
           color: ${brandText};
           outline: none;
         }
-        .sq-input:focus { border-color: ${brandPrimary}; }
+        .sq-input:focus { border-color: ${brandPrimary}; outline: 2px solid ${brandPrimary}; outline-offset: 1px; }
+        *:focus-visible { outline: 2px solid ${brandPrimary}; outline-offset: 2px; }
         .sq-btn {
           display: inline-flex;
           align-items: center;
@@ -536,7 +537,7 @@ export default function QuizPage() {
                   <span>Question {qIdx + 1} of {totalQs}</span>
                   <span>{progress}%</span>
                 </div>
-                <div className="sq-bar"><div className="sq-bar-fill" style={{ width: `${progress}%` }} /></div>
+                <div className="sq-bar" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Quiz progress: ${progress}%`}><div className="sq-bar-fill" style={{ width: `${progress}%` }} /></div>
 
                 <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
                 <div className="sq-q">{currentQ.text || currentQ.question}</div>
@@ -556,7 +557,7 @@ export default function QuizPage() {
                 </div>
 
                 {qIdx > 0 && (
-                  <span className="sq-back" onClick={goBack}>← Previous question</span>
+                  <button type="button" className="sq-back" onClick={goBack} style={{ background: 'none', border: 'none', fontFamily: brandFont, color: brandText, cursor: 'pointer' }}>Previous question</button>
                 )}
               </div>
             </>

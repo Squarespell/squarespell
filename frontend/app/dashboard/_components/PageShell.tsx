@@ -330,9 +330,11 @@ export function Pill({
   );
 }
 
-export function Spinner({ size = 28 }: { size?: number }) {
+export function Spinner({ size = 28, label = 'Loading' }: { size?: number; label?: string }) {
   return (
     <div
+      role="status"
+      aria-label={label}
       style={{
         width: size,
         height: size,
@@ -350,7 +352,7 @@ export function Spinner({ size = 28 }: { size?: number }) {
 export function PageLoading() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-      <Spinner size={32} />
+      <Spinner size={32} label="Loading page" />
     </div>
   );
 }
