@@ -539,30 +539,60 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                     </div>
                     <div className="sq-style-body">
                       <div className="sq-swatches">
-                        <label className="sq-swatch">
+                        <div className="sq-swatch">
                           <span className="sq-swatch-role">Primary</span>
                           <span className="sq-swatch-wrap">
+                            <label className="sq-swatch-picker">
+                              <input
+                                type="color"
+                                className="sq-swatch-input"
+                                value={isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY}
+                                onChange={(e) => { setBrand((b) => ({ ...b, primaryColor: e.target.value })); setDetected((d) => { if (!d.has("primaryColor")) return d; const n = new Set(d); n.delete("primaryColor"); return n; }); }}
+                              />
+                            </label>
                             <input
-                              type="color"
-                              className="sq-swatch-input"
-                              value={isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY}
-                              onChange={(e) => { setBrand((b) => ({ ...b, primaryColor: e.target.value })); setDetected((d) => { if (!d.has("primaryColor")) return d; const n = new Set(d); n.delete("primaryColor"); return n; }); }}
+                              type="text"
+                              className="sq-swatch-text"
+                              value={(isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY).toUpperCase()}
+                              onChange={(e) => {
+                                var v = e.target.value;
+                                if (!v.startsWith('#')) v = '#' + v;
+                                setBrand((b) => ({ ...b, primaryColor: v }));
+                                setDetected((d) => { if (!d.has("primaryColor")) return d; const n = new Set(d); n.delete("primaryColor"); return n; });
+                              }}
+                              placeholder="#000000"
+                              maxLength={7}
+                              spellCheck={false}
                             />
-                            <span className="sq-swatch-hex">{(isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY).toUpperCase()}</span>
                           </span>
-                        </label>
-                        <label className="sq-swatch">
+                        </div>
+                        <div className="sq-swatch">
                           <span className="sq-swatch-role">Accent</span>
                           <span className="sq-swatch-wrap">
+                            <label className="sq-swatch-picker">
+                              <input
+                                type="color"
+                                className="sq-swatch-input"
+                                value={isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT}
+                                onChange={(e) => { setBrand((b) => ({ ...b, accentColor: e.target.value })); setDetected((d) => { if (!d.has("accentColor")) return d; const n = new Set(d); n.delete("accentColor"); return n; }); }}
+                              />
+                            </label>
                             <input
-                              type="color"
-                              className="sq-swatch-input"
-                              value={isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT}
-                              onChange={(e) => { setBrand((b) => ({ ...b, accentColor: e.target.value })); setDetected((d) => { if (!d.has("accentColor")) return d; const n = new Set(d); n.delete("accentColor"); return n; }); }}
+                              type="text"
+                              className="sq-swatch-text"
+                              value={(isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT).toUpperCase()}
+                              onChange={(e) => {
+                                var v = e.target.value;
+                                if (!v.startsWith('#')) v = '#' + v;
+                                setBrand((b) => ({ ...b, accentColor: v }));
+                                setDetected((d) => { if (!d.has("accentColor")) return d; const n = new Set(d); n.delete("accentColor"); return n; });
+                              }}
+                              placeholder="#000000"
+                              maxLength={7}
+                              spellCheck={false}
                             />
-                            <span className="sq-swatch-hex">{(isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT).toUpperCase()}</span>
                           </span>
-                        </label>
+                        </div>
                       </div>
                       <div className="sq-preview" aria-label="Preview">
                         <div className="sq-preview-chrome">
@@ -1030,7 +1060,8 @@ const styles = `
   cursor: pointer;
 }
 .sq-swatch-role { font-size: 10.5px; color: #6B6B6B; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
-.sq-swatch-wrap { display: flex; align-items: center; gap: 10px; }
+.sq-swatch-wrap { display: flex; align-items: center; gap: 8px; }
+.sq-swatch-picker { display: inline-flex; cursor: pointer; flex-shrink: 0; }
 .sq-swatch-input {
   appearance: none; -webkit-appearance: none;
   width: 34px; height: 34px; border-radius: 8px;
@@ -1040,7 +1071,15 @@ const styles = `
 .sq-swatch-input::-webkit-color-swatch-wrapper { padding: 0; border-radius: 7px; }
 .sq-swatch-input::-webkit-color-swatch { border: none; border-radius: 7px; }
 .sq-swatch-input::-moz-color-swatch { border: none; border-radius: 7px; }
-.sq-swatch-hex { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #6B6B6B; letter-spacing: 0.02em; }
+.sq-swatch-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px; color: #1A1A1A; letter-spacing: 0.02em;
+  background: #FFFFFF; border: 1px solid #E4E3E0; border-radius: 6px;
+  padding: 5px 8px; width: 90px; outline: none;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.sq-swatch-text:focus { border-color: #0D7377; box-shadow: 0 0 0 2px rgba(13,115,119,0.12); }
+.sq-swatch-text::placeholder { color: #9B9B9B; }
 .sq-preview {
   background: #F7F7F5;
   border: 1px solid #E4E3E0;
