@@ -345,6 +345,132 @@ function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () 
   );
 }
 
+// ============================ ONBOARDING CHECKLIST ============================
+interface ChecklistStep {
+  label: string;
+  done: boolean;
+  href: string;
+}
+
+function OnboardingChecklist({
+  steps,
+  onDismiss,
+}: {
+  steps: ChecklistStep[];
+  onDismiss: () => void;
+}) {
+  const completed = steps.filter((s) => s.done).length;
+  const total = steps.length;
+  const pct = Math.round((completed / total) * 100);
+
+  if (completed === total) return null; // All done, hide the widget
+
+  return (
+    <div
+      style={{
+        background: C.ELEVATED,
+        border: `1px solid ${C.HAIRLINE}`,
+        borderRadius: 16,
+        padding: '22px 24px 18px',
+        marginBottom: 22,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 8,
+            background: 'rgba(210,255,29,0.1)', border: '1px solid rgba(210,255,29,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 11 12 14 22 4" />
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.015em' }}>
+              Get started with Squarespell
+            </div>
+            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>
+              {completed} of {total} complete - {pct}%
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={onDismiss}
+          title="Dismiss checklist"
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+            color: C.TEXT_SUBTLE, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ height: 4, background: C.BORDER, borderRadius: 10, marginBottom: 16, overflow: 'hidden' }}>
+        <div style={{
+          width: `${pct}%`,
+          height: '100%',
+          background: C.ACCENT,
+          borderRadius: 10,
+          transition: 'width 0.4s ease',
+        }} />
+      </div>
+
+      {/* Steps */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {steps.map((step, i) => (
+          <Link
+            key={i}
+            href={step.href}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '9px 8px',
+              borderRadius: 10,
+              textDecoration: 'none',
+              color: 'inherit',
+              transition: 'background 0.12s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            {step.done ? (
+              <div style={{
+                width: 20, height: 20, borderRadius: '50%',
+                background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.BG} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            ) : (
+              <div style={{
+                width: 20, height: 20, borderRadius: '50%',
+                border: `2px solid ${C.BORDER}`, flexShrink: 0,
+              }} />
+            )}
+            <span style={{
+              fontSize: 13.5,
+              fontWeight: step.done ? 500 : 600,
+              color: step.done ? C.TEXT_MUTED : C.TEXT,
+              textDecoration: step.done ? 'line-through' : 'none',
+            }}>
+              {step.label}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ============================ EXPIRED ============================
 function ExpiredState() {
   return (
@@ -424,6 +550,10 @@ function OverviewInner() {
   const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [newQuizOpen, setNewQuizOpen] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [checklistDismissed, setChecklistDismissed] = useState(false);
+  const [hasEmbedded, setHasEmbedded] = useState(false);
+  const [hasBrandKit, setHasBrandKit] = useState(false);
+  const [hasCampaign, setHasCampaign] = useState(false);
   const initRef = useRef(false);
 
   // Claim flow + plan fetch - runs once when token becomes available
@@ -596,6 +726,21 @@ function OverviewInner() {
           const leadData: Lead[] = await leadRes.json();
           if (!cancelled) setLeads(leadData.slice(0, 7));
         }
+
+        // Check onboarding state for checklist
+        try {
+          const campRes = await fetch(`${API}/api/emails/campaigns`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null);
+          if (campRes && campRes.ok) {
+            const camps = await campRes.json().catch(() => []);
+            if (!cancelled) setHasCampaign(camps.some((c: any) => c.status === 'sent'));
+          }
+        } catch {}
+
+        try {
+          if (localStorage.getItem('sq_checklist_dismissed') === '1') {
+            if (!cancelled) setChecklistDismissed(true);
+          }
+        } catch {}
       } catch (e) {
         console.error('Error fetching overview data:', e);
       } finally {
@@ -631,6 +776,22 @@ function OverviewInner() {
     >
       <NewQuizModal open={newQuizOpen} onClose={() => setNewQuizOpen(false)} />
       {status === 'trial' && <TrialBanner daysLeft={daysLeft} onUpgrade={() => router.push('/pricing')} />}
+
+      {!checklistDismissed && !loadingData && (
+        <OnboardingChecklist
+          steps={[
+            { label: 'Create your first quiz', done: quizzes.length > 0, href: '/dashboard/quizzes' },
+            { label: 'Publish a quiz (set to live)', done: quizzes.some((q) => q.status === 'live'), href: '/dashboard/quizzes' },
+            { label: 'Get your first lead', done: leads.length > 0, href: '/dashboard/leads' },
+            { label: 'Embed a quiz on your site', done: quizzes.some((q) => q.view_count > 0), href: quizzes[0] ? `/dashboard/quiz/${quizzes[0].id}/embed` : '/dashboard/quizzes' },
+            { label: 'Send your first email campaign', done: hasCampaign, href: '/dashboard/emails' },
+          ]}
+          onDismiss={() => {
+            setChecklistDismissed(true);
+            try { localStorage.setItem('sq_checklist_dismissed', '1'); } catch {}
+          }}
+        />
+      )}
 
       {claimError && (
         <div style={{
