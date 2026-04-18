@@ -857,7 +857,68 @@ ${businessSummary.slice(0, 2000)}`;
   }
 }
 
-export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas };
+/**
+ * Generate AI email subject line and body for a post-quiz follow-up email.
+ * Takes quiz context (outcome, quiz title, business info) and returns
+ * a compelling subject + personalized body with merge tags.
+ */
+async function generateEmailContent(
+  quizTitle: string,
+  outcomeName: string,
+  outcomeDescription: string,
+  businessName: string,
+  fields: ('subject' | 'body')[] = ['subject', 'body']
+): Promise<{ subject: string; body: string }> {
+  const wantSubject = fields.includes('subject');
+  const wantBody = fields.includes('body');
+
+  const systemPrompt = `You write high-converting follow-up emails for quiz results. The email is sent immediately after someone completes a quiz and gets a specific outcome.
+
+RULES:
+- Subject line: 5-10 words, curiosity-driven, references the outcome. No clickbait. No ALL CAPS.
+- Body: 3-5 short paragraphs of HTML. Warm, helpful tone. Reference the quiz result by name.
+- Use these merge tags naturally: {{first_name}} (recipient name), {{outcome_name}} (their result), {{quiz_name}} (quiz title).
+- Body should acknowledge their result, give a brief insight, and lead toward the CTA.
+- Do NOT include a CTA button in the body - the platform adds that separately.
+- Do NOT include subject/from/unsubscribe in the body - just the email content paragraphs.
+- Do NOT use em dashes. Use commas, periods, or " - " instead.
+- Return ONLY valid JSON. No markdown, no backticks.`;
+
+  const userPrompt = `BUSINESS: ${businessName}
+QUIZ: "${quizTitle}"
+OUTCOME: "${outcomeName}"
+OUTCOME DESCRIPTION: ${outcomeDescription || 'N/A'}
+
+Return this JSON:
+{
+  ${wantSubject ? '"subject": "Your compelling subject line here",' : ''}
+  ${wantBody ? '"body": "<p>Paragraph 1...</p><p>Paragraph 2...</p><p>Paragraph 3...</p>"' : ''}
+}`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+    const parsed = JSON.parse(extractJSON(raw));
+    return {
+      subject: String(parsed.subject || '').slice(0, 200),
+      body: String(parsed.body || '').slice(0, 5000),
+    };
+  } catch (err: any) {
+    console.error('[generateEmailContent] AI generation failed:', err.message);
+    return {
+      subject: `Your ${outcomeName} result from ${quizTitle}`,
+      body: `<p>Hi {{first_name}},</p><p>Thanks for completing ${quizTitle}. Your result was {{outcome_name}}.</p><p>We put together some next steps based on your answers.</p>`,
+    };
+  }
+}
+
+export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas, generateEmailContent };
 export const generateQuizWithClaude = callClaude;
 export const generateQuiz = callClaude;
 export const generateQuizContent = callClaude;

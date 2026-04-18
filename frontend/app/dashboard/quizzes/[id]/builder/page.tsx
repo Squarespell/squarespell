@@ -552,6 +552,7 @@ export default function QuizBuilderPage() {
               onDelete={deleteOutcome}
               automations={automations}
               onAutomationUpdate={updateAutomation}
+              quizId={quizId}
             />
           )}
         </div>
@@ -1278,6 +1279,7 @@ function OutcomesPanel({
   onDelete,
   automations,
   onAutomationUpdate,
+  quizId,
 }: {
   outcomes: Outcome[];
   onAdd: () => void;
@@ -1285,7 +1287,26 @@ function OutcomesPanel({
   onDelete: (idx: number) => void;
   automations: Record<string, { enabled: boolean; subject: string; body: string; cta_url: string; cta_text: string }>;
   onAutomationUpdate: (outcomeId: string, field: string, value: any) => void;
+  quizId: string;
 }) {
+  const [generating, setGenerating] = useState<Record<string, boolean>>({});
+
+  const handleGenerate = async (outcomeId: string) => {
+    if (!quizId || generating[outcomeId]) return;
+    setGenerating(prev => ({ ...prev, [outcomeId]: true }));
+    try {
+      const result = await api.generateEmailContent(quizId, {
+        outcome_id: outcomeId,
+        fields: ['subject', 'body'],
+      });
+      if (result.subject) onAutomationUpdate(outcomeId, 'subject', result.subject);
+      if (result.body) onAutomationUpdate(outcomeId, 'body', result.body);
+    } catch (err) {
+      console.error('AI generation failed:', err);
+    } finally {
+      setGenerating(prev => ({ ...prev, [outcomeId]: false }));
+    }
+  };
   return (
     <div style={{ padding: 24 }}>
       <div style={{ maxWidth: 800 }}>
@@ -1510,6 +1531,29 @@ function OutcomesPanel({
                   </label>
                   {automations[outcome.id]?.enabled && (
                     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => handleGenerate(outcome.id)}
+                          disabled={generating[outcome.id]}
+                          style={{
+                            background: 'transparent',
+                            border: `1px solid ${COLORS.ACCENT}`,
+                            color: COLORS.ACCENT,
+                            padding: '4px 10px',
+                            borderRadius: 4,
+                            cursor: generating[outcome.id] ? 'wait' : 'pointer',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            opacity: generating[outcome.id] ? 0.6 : 1,
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                          {generating[outcome.id] ? 'Generating...' : 'Generate with AI'}
+                        </button>
+                      </div>
                       <input
                         type="text"
                         value={automations[outcome.id]?.subject || ''}

@@ -35,9 +35,9 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [ ] DKIM/SPF on Resend shared domain
 - [ ] Brand kit shared across quiz + email + popup
 - [x] Brand-import-from-URL scraper (logo, palette, fonts, tone)
-- [ ] AI body generator (personalize around respondent answers)
-- [ ] AI subject generator (quiz outcome + answers context)
-- [ ] Post-quiz automation (one-node MVP, keyed to outcome)
+- [x] AI body generator (personalize around respondent answers)
+- [x] AI subject generator (quiz outcome + answers context)
+- [x] Post-quiz automation (one-node MVP, keyed to outcome)
 
 ## P3
 

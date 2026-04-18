@@ -515,6 +515,44 @@ router.put('/:id/outcome-automations', async (req: AuthenticatedRequest, res) =>
   }
 });
 
+// ── AI Email Content Generation ──────────────────────────────────────────
+// POST /api/quizzes/:id/generate-email - generate subject + body for an outcome follow-up
+router.post('/:id/generate-email', async (req: AuthenticatedRequest, res) => {
+  try {
+    const quizId = req.params.id;
+    const { outcome_id, fields } = req.body; // fields: ['subject'] | ['body'] | ['subject','body']
+
+    // Load quiz to get title and outcome details
+    const { data: quiz, error: qErr } = await supabase
+      .from('quizzes')
+      .select('title, outcomes, brand')
+      .eq('id', quizId)
+      .eq('user_id', req.userId)
+      .single();
+    if (qErr || !quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    const outcomes: any[] = Array.isArray(quiz.outcomes) ? quiz.outcomes : [];
+    const outcome = outcomes.find((o: any) => o.id === outcome_id);
+    if (!outcome) return res.status(400).json({ error: 'Outcome not found in quiz' });
+
+    const businessName = quiz.brand?.site_name || quiz.title || 'Our business';
+
+    const { generateEmailContent } = await import('../services/claudeService');
+    const result = await generateEmailContent(
+      quiz.title,
+      outcome.title || outcome.name || 'Your result',
+      outcome.description || '',
+      businessName,
+      Array.isArray(fields) ? fields : ['subject', 'body']
+    );
+
+    res.json(result);
+  } catch (err: any) {
+    console.error('Generate email content error:', err);
+    res.status(500).json({ error: err.message ?? 'Failed to generate email content' });
+  }
+});
+
 // ── A/B Testing ───────────────────────────────────────────────────────────
 // POST /api/quizzes/:id/ab-tests - create a new A/B test
 router.post('/:id/ab-tests', async (req: AuthenticatedRequest, res) => {

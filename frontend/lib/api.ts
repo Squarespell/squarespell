@@ -58,4 +58,5 @@ export const api = {
   trackEvent:           (quizId: string, d: any)    => req('/api/quiz/' + quizId + '/track',   { method: 'POST', body: JSON.stringify(d) }),
   getOutcomeAutomations:(quizId: string)            => req('/api/quizzes/' + quizId + '/outcome-automations'),
   syncOutcomeAutomations:(quizId: string, d: any)   => req('/api/quizzes/' + quizId + '/outcome-automations', { method: 'PUT', body: JSON.stringify(d) }),
+  generateEmailContent: (quizId: string, d: any)    => req('/api/quizzes/' + quizId + '/generate-email',      { method: 'POST', body: JSON.stringify(d) }),
 };
