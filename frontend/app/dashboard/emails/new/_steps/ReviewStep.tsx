@@ -1,14 +1,16 @@
 'use client';
 import React, { useState } from 'react';
-import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
+import { DASHBOARD_COLORS as C } from '../../../_components/dashboardColors';
 import { GhostButton, PrimaryButton } from '../../../_components/PageShell';
 import type { AudienceState } from './AudienceStep';
 import type { DesignState } from './DesignStep';
 import type { CampaignMode } from '../../../../../lib/emails';
 
+export type SendTiming = 'now' | 'scheduled';
+
 export function ReviewStep({
   audience, design, mode, setMode, recipientCount,
-  onBack, onSend, onTestSend, onSaveDraft,
+  onBack, onSend, onSchedule, onTestSend, onSaveDraft,
   sending, result,
 }: {
   audience: AudienceState;
@@ -18,6 +20,7 @@ export function ReviewStep({
   recipientCount: number;
   onBack: () => void;
   onSend: () => void;
+  onSchedule: (scheduledAt: string) => void;
   onTestSend: (to: string) => Promise<void>;
   onSaveDraft: () => void;
   sending: boolean;
@@ -27,6 +30,9 @@ export function ReviewStep({
   const [testSending, setTestSending] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [timing, setTiming] = useState<SendTiming>('now');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('09:00');
 
   const sendTest = async () => {
     if (!testEmail) return;
@@ -58,6 +64,44 @@ export function ReviewStep({
           title="Live automation" sub="Keep sending to every new matching lead" />
       </div>
 
+      {/* Schedule picker */}
+      <Label>When to send</Label>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+        <ModeChip active={timing === 'now'} onClick={() => setTiming('now')}
+          title="Send now" sub="Queue immediately after confirmation" />
+        <ModeChip active={timing === 'scheduled'} onClick={() => setTiming('scheduled')}
+          title="Schedule for later" sub="Pick a date and time" />
+      </div>
+      {timing === 'scheduled' && (
+        <div style={{
+          background: C.ELEVATED, border: `1px solid ${C.BORDER}`,
+          borderRadius: 12, padding: 16, marginBottom: 22,
+        }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 160px' }}>
+              <Label>Date</Label>
+              <input type="date" value={scheduledDate}
+                onChange={e => setScheduledDate(e.target.value)}
+                min={new Date().toISOString().slice(0, 10)}
+                style={{ ...inputStyle, colorScheme: 'dark' }} />
+            </div>
+            <div style={{ flex: '1 1 120px' }}>
+              <Label>Time</Label>
+              <input type="time" value={scheduledTime}
+                onChange={e => setScheduledTime(e.target.value)}
+                style={{ ...inputStyle, colorScheme: 'dark' }} />
+            </div>
+            <div style={{ flex: '1 1 200px', fontSize: 12, color: C.TEXT_MUTED, paddingBottom: 12 }}>
+              {scheduledDate && scheduledTime ? (
+                <>
+                  {formatScheduledPreview(scheduledDate, scheduledTime)}
+                </>
+              ) : 'Pick a date and time above'}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{
         background: C.ELEVATED, border: `1px solid ${C.BORDER}`,
         borderRadius: 12, padding: 16, marginBottom: 22,
@@ -74,18 +118,27 @@ export function ReviewStep({
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <GhostButton onClick={onBack}>← Back</GhostButton>
+        <GhostButton onClick={onBack}>Back</GhostButton>
         <div style={{ display: 'flex', gap: 10 }}>
           <GhostButton onClick={onSaveDraft}>Save draft</GhostButton>
-          <PrimaryButton onClick={() => setConfirmOpen(true)} disabled={sending || recipientCount === 0}>
-            {mode === 'live' ? 'Activate live send' : `Send to ${recipientCount}`}
+          <PrimaryButton
+            onClick={() => setConfirmOpen(true)}
+            disabled={sending || recipientCount === 0 || (timing === 'scheduled' && !scheduledDate)}
+          >
+            {timing === 'scheduled'
+              ? 'Schedule send'
+              : mode === 'live' ? 'Activate live send' : `Send to ${recipientCount}`}
           </PrimaryButton>
         </div>
       </div>
 
       {result && (
         <div style={{ marginTop: 18, padding: 14, background: C.ELEVATED, border: `1px solid ${C.BORDER}`, borderRadius: 10, color: C.TEXT, fontSize: 13 }}>
-          Queued {result.sent} sends, resolved {result.resolved}, skipped {result.skipped}.
+          {result.scheduled
+            ? `Campaign scheduled for ${new Date(result.scheduledAt).toLocaleString()}.`
+            : result.error
+              ? `Error: ${result.error}`
+              : `Queued ${result.sent} sends, resolved ${result.resolved}, skipped ${result.skipped}.`}
         </div>
       )}
 
@@ -93,17 +146,29 @@ export function ReviewStep({
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 28, maxWidth: 480, width: '90%' }}>
             <h3 style={{ margin: '0 0 8px', color: C.TEXT, fontSize: 20 }}>
-              {mode === 'live' ? 'Activate this live campaign?' : `Send to ${recipientCount} people?`}
+              {timing === 'scheduled'
+                ? 'Schedule this campaign?'
+                : mode === 'live' ? 'Activate this live campaign?' : `Send to ${recipientCount} people?`}
             </h3>
             <p style={{ margin: '0 0 20px', color: C.TEXT_SUBTLE, fontSize: 14, lineHeight: 1.5 }}>
-              {mode === 'live'
-                ? `This will start sending "${design.subject}" to every new lead that matches your filters, starting now.`
-                : `"${design.subject}" will be queued to ${recipientCount} recipient${recipientCount === 1 ? '' : 's'}. This can't be unsent.`}
+              {timing === 'scheduled'
+                ? `"${design.subject}" will be scheduled for ${formatScheduledPreview(scheduledDate, scheduledTime)} to ${recipientCount} recipient${recipientCount === 1 ? '' : 's'}.`
+                : mode === 'live'
+                  ? `This will start sending "${design.subject}" to every new lead that matches your filters, starting now.`
+                  : `"${design.subject}" will be queued to ${recipientCount} recipient${recipientCount === 1 ? '' : 's'}. This cannot be unsent.`}
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <GhostButton onClick={() => setConfirmOpen(false)}>Cancel</GhostButton>
-              <PrimaryButton onClick={() => { setConfirmOpen(false); onSend(); }} disabled={sending}>
-                {sending ? 'Sending…' : mode === 'live' ? 'Activate' : 'Send now'}
+              <PrimaryButton onClick={() => {
+                setConfirmOpen(false);
+                if (timing === 'scheduled') {
+                  const iso = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+                  onSchedule(iso);
+                } else {
+                  onSend();
+                }
+              }} disabled={sending}>
+                {sending ? 'Processing...' : timing === 'scheduled' ? 'Schedule' : mode === 'live' ? 'Activate' : 'Send now'}
               </PrimaryButton>
             </div>
           </div>
@@ -148,3 +213,14 @@ const inputStyle: React.CSSProperties = {
   flex: 1, padding: '10px 12px', background: C.SURFACE,
   border: `1px solid ${C.BORDER}`, borderRadius: 10, color: C.TEXT, fontSize: 14,
 };
+
+function formatScheduledPreview(date: string, time: string): string {
+  if (!date || !time) return '';
+  try {
+    const d = new Date(`${date}T${time}`);
+    return d.toLocaleString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true,
+    });
+  } catch { return `${date} ${time}`; }
+}

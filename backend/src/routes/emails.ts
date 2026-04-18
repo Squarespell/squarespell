@@ -159,7 +159,8 @@ r.patch('/campaigns/:id', async (req, res) => {
     return res.status(400).json({ error: 'Cannot edit a sent campaign' });
   }
   const allowed = ['name', 'subject', 'from_name', 'from_email', 'html',
-    'mode', 'source_quiz_id', 'source_filters', 'trigger_type', 'trigger_delay_minutes'];
+    'mode', 'source_quiz_id', 'source_filters', 'trigger_type', 'trigger_delay_minutes',
+    'scheduled_at', 'status'];
   const updates: Record<string, any> = {};
   for (const k of allowed) {
     if (req.body[k] !== undefined) updates[k] = req.body[k];

@@ -39,6 +39,7 @@ export type Campaign = {
   mode?: CampaignMode;
   source_quiz_id?: string | null;
   source_filters?: SourceFilters;
+  scheduled_at?: string | null;
   last_run_at?: string | null;
   sent_count?: number;
   created_at: string;

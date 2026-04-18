@@ -19,10 +19,10 @@ Durable task list. Edit freely. Order within a priority band is rough.
 
 - [x] Resend webhook handler (delivered/opened/clicked/bounced/complained)
 - [x] email_events table + indexes
-- [ ] Scrape Squarespace fonts + palette for BrandKit autofill
+- [x] Scrape Squarespace fonts + palette for BrandKit autofill
 - [ ] PLG guest-session to draft-claim E2E
 - [ ] GDPR consent gating on quiz + email
-- [ ] Send test email to self
+- [x] Send test email to self
 - [ ] Schedule picker UI
 - [ ] Render cron dispatcher for scheduled sends
 
@@ -34,7 +34,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [ ] Suppression list (global)
 - [ ] DKIM/SPF on Resend shared domain
 - [ ] Brand kit shared across quiz + email + popup
-- [ ] Brand-import-from-URL scraper (logo, palette, fonts, tone)
+- [x] Brand-import-from-URL scraper (logo, palette, fonts, tone)
 - [ ] AI body generator (personalize around respondent answers)
 - [ ] AI subject generator (quiz outcome + answers context)
 - [ ] Post-quiz automation (one-node MVP, keyed to outcome)

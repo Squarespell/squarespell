@@ -210,6 +210,14 @@ export default function CampaignDetailPage() {
             <div style={{ color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Created</div>
             <div style={{ color: C.TEXT, fontSize: 14 }}>{new Date(campaign.created_at).toLocaleDateString()}</div>
           </div>
+          {(campaign as any).scheduled_at && (
+            <div>
+              <div style={{ color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Scheduled for</div>
+              <div style={{ color: C.ACCENT, fontSize: 14, fontWeight: 500 }}>
+                {new Date((campaign as any).scheduled_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '../../_components/DashboardShell';import { PageHeader } from '../../_components/PageShell';
 import { useDashboardAuth } from '../../_components/useDashboardAuth';
-import { DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
+import { DASHBOARD_COLORS as C } from '../../_components/dashboardColors';
 import {
-  createCampaign, sendCampaign, previewRecipients, testSendCampaign,
+  createCampaign, updateCampaign, sendCampaign, previewRecipients, testSendCampaign,
   CampaignMode,
 } from '../../../../lib/emails';
 import { Stepper, StepKey } from './_components/Stepper';
@@ -127,6 +127,30 @@ export default function NewCampaignPage() {
           recipientCount={recipientCount}
           onBack={() => setStep('design')}
           onSend={() => saveOrSend(true)}
+          onSchedule={async (scheduledAt: string) => {
+            setSending(true); setResult(null);
+            try {
+              let id = draftId;
+              if (!id) {
+                const draft = await createCampaign({
+                  name: name || design.subject || 'Untitled',
+                  subject: design.subject,
+                  from_name: design.fromName, from_email: design.fromEmail, html: design.html,
+                  mode, source_quiz_id: audience.sourceKind === 'quiz' ? audience.sourceQuizId : undefined,
+                  source_filters: audience.sourceKind === 'quiz' ? audience.filters : undefined,
+                } as any);
+                id = draft.id;
+                setDraftId(id);
+              }
+              await updateCampaign(id, { scheduled_at: scheduledAt, status: 'scheduled' } as any);
+              setResult({ scheduled: true, scheduledAt });
+              setTimeout(() => router.push(`/dashboard/emails/${id}`), 1500);
+            } catch (e: any) {
+              setResult({ error: e.message });
+            } finally {
+              setSending(false);
+            }
+          }}
           onSaveDraft={() => saveOrSend(false)}
           onTestSend={testSend}
           sending={sending} result={result}
