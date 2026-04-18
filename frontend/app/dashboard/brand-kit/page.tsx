@@ -24,8 +24,12 @@ import { api } from '@/lib/api';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
+type ColorMode = 'light' | 'dark';
+
 type BrandKit = {
   colors?: Record<string, string>;
+  dark_colors?: Record<string, string>;   // alternate palette
+  color_mode?: ColorMode;                 // which palette is active
   font_family?: string;
   site_name?: string;
   favicon_url?: string;
@@ -33,6 +37,52 @@ type BrandKit = {
 };
 
 const COLOR_KEYS = ['primary', 'background', 'text', 'accent'] as const;
+
+// -----------------------------------------------------------------------
+// Palette inversion helpers
+// -----------------------------------------------------------------------
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const m = hex.replace('#', '').match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!m) return null;
+  return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+}
+
+function luminance(hex: string): number {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return 0;
+  const [r, g, b] = rgb.map(c => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function isDark(hex: string): boolean {
+  return luminance(hex) < 0.2;
+}
+
+/** Auto-generate a complementary palette for the opposite color mode */
+function generateAltPalette(colors: Record<string, string>): Record<string, string> {
+  const bg = colors.background || '#ffffff';
+  const bgIsDark = isDark(bg);
+  if (bgIsDark) {
+    // Dark bg -> generate light variant
+    return {
+      primary: colors.primary || '#333333',
+      background: '#f7f7f8',
+      text: '#1a1a1a',
+      accent: colors.accent || colors.primary || '#333333',
+    };
+  }
+  // Light bg -> generate dark variant
+  return {
+    primary: colors.primary || '#d2ff1d',
+    background: '#0b0b0c',
+    text: '#ececec',
+    accent: colors.accent || colors.primary || '#d2ff1d',
+  };
+}
 
 const inputStyle: React.CSSProperties = {
   padding: '10px 14px',
@@ -241,8 +291,13 @@ export default function BrandKitPage() {
   }
 
   function applyScrapedBrand(data: any) {
+    const scrapedColors = data.colors || {};
+    const bgIsDark = isDark(scrapedColors.background || '#ffffff');
+    const altColors = generateAltPalette(scrapedColors);
     const incoming: BrandKit = {
-      colors: data.colors || {},
+      colors: scrapedColors,
+      dark_colors: altColors,
+      color_mode: bgIsDark ? 'dark' : 'light',
       font_family: data.font_family || '',
       site_name: data.site_name || '',
       favicon_url: data.favicon_url || '',
@@ -359,9 +414,62 @@ export default function BrandKitPage() {
 
       {/* Colors */}
       <Card style={{ marginBottom: 20 }}>
-        <h2 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-          Palette
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.TEXT }}>
+            Palette
+          </h2>
+          <div style={{ display: 'flex', gap: 4, background: C.ELEVATED, borderRadius: 8, padding: 3 }}>
+            {(['light', 'dark'] as const).map((m) => {
+              const active = (kit?.color_mode || 'dark') === m;
+              return (
+                <button
+                  key={m}
+                  onClick={() => {
+                    if (active) return;
+                    // Swap active and alternate palettes
+                    const currentColors = kit?.colors || {};
+                    const altColors = kit?.dark_colors || generateAltPalette(currentColors);
+                    updateKit({
+                      color_mode: m,
+                      colors: altColors,
+                      dark_colors: currentColors,
+                    });
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    background: active ? C.ACCENT : 'transparent',
+                    color: active ? '#0a0a0a' : C.TEXT_MUTED,
+                    border: 'none', padding: '5px 12px', borderRadius: 6,
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  {m === 'light' ? (
+                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="5" />
+                      <line x1="12" y1="1" x2="12" y2="3" />
+                      <line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" />
+                      <line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                  ) : (
+                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                  )}
+                  {m === 'light' ? 'Light' : 'Dark'}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <p style={{ margin: '0 0 14px 0', fontSize: 12.5, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
+          Active palette: <strong style={{ color: C.TEXT }}>{(kit?.color_mode || 'dark') === 'dark' ? 'Dark' : 'Light'}</strong>.
+          Toggle to edit the alternate variant. Both are saved so you can switch per campaign.
+        </p>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',

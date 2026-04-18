@@ -1358,6 +1358,8 @@ userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
   // Sanitize: only keep known fields
   const sanitized: Record<string, any> = {};
   if (kit.colors && typeof kit.colors === 'object') sanitized.colors = kit.colors;
+  if (kit.dark_colors && typeof kit.dark_colors === 'object') sanitized.dark_colors = kit.dark_colors;
+  if (kit.color_mode === 'light' || kit.color_mode === 'dark') sanitized.color_mode = kit.color_mode;
   if (typeof kit.font_family === 'string') sanitized.font_family = kit.font_family;
   if (typeof kit.site_name === 'string') sanitized.site_name = kit.site_name;
   if (typeof kit.favicon_url === 'string') sanitized.favicon_url = kit.favicon_url;

@@ -2,6 +2,8 @@
 // page renders for a customer. Brand-import-from-URL populates it on signup;
 // the user can edit any field in the Brand kit panel.
 
+export type ColorMode = 'light' | 'dark';
+
 export interface BrandKit {
   id: string;
   user_id: string;
@@ -10,6 +12,7 @@ export interface BrandKit {
   // Visual
   logoUrl?: string;
   logoDarkUrl?: string;       // optional dark-mode variant
+  colorMode?: ColorMode;      // which palette variant is active
   primaryColor: string;       // hex, e.g. "#d2ff1d"
   onPrimaryColor: string;     // text color that sits on primaryColor
   secondaryColor?: string;
