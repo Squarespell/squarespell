@@ -155,6 +155,10 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setErrorMsg("");
     setSubmitting(false);
     setTimeout(() => urlRef.current?.focus(), 20);
+    // Lock body scroll while modal is open
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
   }, [open]);
 
   useEffect(() => {
@@ -670,6 +674,7 @@ const styles = `
   justify-content: center;
   padding: 24px;
   animation: sq-fade 160ms ease-out;
+  overflow: hidden;
 }
 @keyframes sq-fade { from { opacity: 0 } to { opacity: 1 } }
 .sq-modal {
@@ -742,7 +747,7 @@ const styles = `
 .sq-tip p { margin: 0; }
 .sq-tip-title { color: #0D7377; font-weight: 700; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 6px; }
 
-.sq-main { display: flex; flex-direction: column; min-width: 0; background: #FFFFFF; }
+.sq-main { display: flex; flex-direction: column; min-width: 0; background: #FFFFFF; overflow: hidden; }
 .sq-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 22px 28px 12px 28px;
@@ -758,7 +763,7 @@ const styles = `
 }
 .sq-close:hover { background: #EEEDE9; color: #1A1A1A; }
 
-.sq-body { padding: 8px 28px 20px 28px; overflow-y: auto; min-height: 320px; }
+.sq-body { padding: 8px 28px 20px 28px; overflow-y: auto; min-height: 0; flex: 1; }
 .sq-form { display: flex; flex-direction: column; gap: 14px; }
 .sq-lead { margin: 0 0 6px 0; font-size: 14px; line-height: 1.55; color: #6B6B6B; }
 .sq-label { font-size: 13px; font-weight: 600; color: #1A1A1A; }
