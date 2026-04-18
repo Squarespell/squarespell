@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { Suspense, useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '../../_components/DashboardShell';import { PageHeader } from '../../_components/PageShell';
 import { useDashboardAuth } from '../../_components/useDashboardAuth';
@@ -18,7 +18,7 @@ import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
 import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
 import { renderBlocks } from '../../../../lib/email/renderBlocks';
 
-export default function NewCampaignPage() {
+function NewCampaignPageInner() {
   const { status } = useDashboardAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -184,5 +184,13 @@ export default function NewCampaignPage() {
         />
       )}
     </DashboardShell>
+  );
+}
+
+export default function NewCampaignPage() {
+  return (
+    <Suspense fallback={<DashboardShell><div style={{ padding: 40, color: C.TEXT_SUBTLE }}>Loading...</div></DashboardShell>}>
+      <NewCampaignPageInner />
+    </Suspense>
   );
 }
