@@ -423,6 +423,7 @@ function OverviewInner() {
   });
   const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [newQuizOpen, setNewQuizOpen] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const initRef = useRef(false);
 
   // Claim flow + plan fetch - runs once when token becomes available
@@ -463,28 +464,39 @@ function OverviewInner() {
             }),
           });
           const claimData = await claimRes.json().catch(() => ({}));
+          let claimFailureReason: string | null = null;
           if (claimRes.ok && claimData.claimed) {
             quizClaimed = true;
             claimedQuizId = claimData.quiz_id || '';
-          } else if (previewPayload) {
-            const saveRes = await fetch(`${API}/api/save-preview`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ quiz: previewPayload.quiz, brand: previewPayload.brand, url: previewPayload.url }),
-            });
-            const saveData = await saveRes.json().catch(() => ({}));
-            if (saveRes.ok && saveData.saved) {
-              quizClaimed = true;
-              claimedQuizId = saveData.quiz_id || '';
+          } else {
+            claimFailureReason = claimData?.error || `claim-quiz ${claimRes.status}`;
+            if (previewPayload) {
+              const saveRes = await fetch(`${API}/api/save-preview`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ quiz: previewPayload.quiz, brand: previewPayload.brand, url: previewPayload.url }),
+              });
+              const saveData = await saveRes.json().catch(() => ({}));
+              if (saveRes.ok && saveData.saved) {
+                quizClaimed = true;
+                claimedQuizId = saveData.quiz_id || '';
+                claimFailureReason = null;
+              } else {
+                claimFailureReason = saveData?.error || `save-preview ${saveRes.status}`;
+              }
             }
           }
-
-          clearCookie('sq_claim');
-          try { sessionStorage.removeItem('sq_claim_token'); } catch {}
-          try {
-            localStorage.removeItem('squarespell_preview');
-            sessionStorage.removeItem('squarespell_preview');
-          } catch {}
+          if (quizClaimed) {
+            clearCookie('sq_claim');
+            try { sessionStorage.removeItem('sq_claim_token'); } catch {}
+            try {
+              localStorage.removeItem('squarespell_preview');
+              sessionStorage.removeItem('squarespell_preview');
+            } catch {}
+          } else if (claimFailureReason) {
+            console.error('[Squarespell] Claim failed - preview preserved for retry:', claimFailureReason);
+            if (!cancelled) setClaimError(claimFailureReason);
+          }
         }
       } catch (e) {
         console.error('[Squarespell] Claim/save failed:', e);
@@ -619,6 +631,29 @@ function OverviewInner() {
     >
       <NewQuizModal open={newQuizOpen} onClose={() => setNewQuizOpen(false)} />
       {status === 'trial' && <TrialBanner daysLeft={daysLeft} onUpgrade={() => router.push('/pricing')} />}
+
+      {claimError && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)',
+          borderRadius: 12, padding: '12px 18px', marginBottom: 16,
+        }}>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='#fbbf24' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
+          <span style={{ fontSize: 14, color: '#fbbf24', fontWeight: 500, flex: 1 }}>
+            We could not import your preview quiz. Refresh the page to try again.
+          </span>
+          <button
+            onClick={() => { setClaimError(null); window.location.reload(); }}
+            style={{
+              background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.3)',
+              borderRadius: 8, padding: '6px 16px', color: '#fbbf24', fontSize: 13,
+              fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Page hero */}
       <div
