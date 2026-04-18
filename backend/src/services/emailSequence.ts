@@ -3,6 +3,18 @@ import { Resend } from 'resend';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
+function appendUtm(url: string, campaign: string): string {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has('utm_source')) u.searchParams.set('utm_source', 'squarespell');
+    if (!u.searchParams.has('utm_medium')) u.searchParams.set('utm_medium', 'email');
+    if (!u.searchParams.has('utm_campaign')) u.searchParams.set('utm_campaign', campaign || 'sequence');
+    return u.toString();
+  } catch { return url; }
+}
+
+
 interface EmailInSequence {
   delay_days: number;
   subject: string;
@@ -253,7 +265,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
       <div style="color:#333;font-size:16px;line-height:1.6;margin:0 0 24px">${emailConfig.body}</div>
       ${
         emailConfig.cta_url
-          ? `<a href="${emailConfig.cta_url}" style="display:inline-block;padding:14px 32px;background:#0a0f05;color:#fff;border-radius:24px;text-decoration:none;font-weight:600;font-size:16px">${
+          ? `<a href="${appendUtm(emailConfig.cta_url || '', 'sequence')}" style="display:inline-block;padding:14px 32px;background:#0a0f05;color:#fff;border-radius:24px;text-decoration:none;font-weight:600;font-size:16px">${
               emailConfig.cta_text || 'Learn More'
             }</a>`
           : ''

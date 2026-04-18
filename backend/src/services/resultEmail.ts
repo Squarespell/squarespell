@@ -1,6 +1,18 @@
 import { Resend } from 'resend';
 import { generateReportToken } from './reportToken';
 
+function appendUtm(url: string, slug: string): string {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has('utm_source')) u.searchParams.set('utm_source', 'squarespell');
+    if (!u.searchParams.has('utm_medium')) u.searchParams.set('utm_medium', 'email');
+    if (!u.searchParams.has('utm_campaign')) u.searchParams.set('utm_campaign', slug || 'result');
+    return u.toString();
+  } catch { return url; }
+}
+
+
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 interface ResultEmailParams {
@@ -84,7 +96,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
                   <a href="${reportUrl}" style="display:inline-block;padding:14px 28px;font-size:16px;font-weight:700;color:#0a0a0a;text-decoration:none;border-radius:10px;">⬇  Download your PDF report</a>
                 </td>
               </tr></table>` : ''}
-              ${ctaUrl ? `<p style="text-align:center;margin:18px 0 0;"><a href="${ctaUrl}" style="color:${primaryColor};text-decoration:none;font-weight:700;font-size:14px;filter:brightness(0.6);">${ctaText || 'Learn more'} →</a></p>` : ''}
+              ${ctaUrl ? `<p style="text-align:center;margin:18px 0 0;"><a href="${appendUtm(ctaUrl || '', slug || '')}" style="color:${primaryColor};text-decoration:none;font-weight:700;font-size:14px;filter:brightness(0.6);">${ctaText || 'Learn more'} →</a></p>` : ''}
               ${reportUrl ? `<p style="text-align:center;margin:20px 0 0;color:#999;font-size:12px;">Your download link is valid for 30 days.</p>` : ''}
             </td>
           </tr>

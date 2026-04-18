@@ -18,6 +18,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
+import { addUtmParams, quizUtm } from '@/lib/urls';
+
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 interface QuizOption {
@@ -617,13 +619,13 @@ export default function QuizPage() {
               <div className="sq-result-desc">{outcome.description}</div>
 
               {outcome.ctaUrl ? (
-                <a href={outcome.ctaUrl} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={addUtmParams(outcome.ctaUrl, quizUtm(slug, outcome.title))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button className="sq-btn" type="button">
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
                 </a>
               ) : quiz.settings?.cta_url ? (
-                <a href={quiz.settings.cta_url} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button className="sq-btn" type="button">
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>

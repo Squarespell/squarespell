@@ -64,3 +64,71 @@ export const tryFlowUrl = (siteUrl?: string): string => {
   if (!siteUrl) return `${APP_URL}${QUIZ_BUILDER_PATH}`;
   return `${APP_URL}${QUIZ_BUILDER_PATH}?url=${encodeURIComponent(siteUrl)}`;
 };
+
+
+/* ------------------------------------------------------------------ */
+/* UTM auto-tagging                                                    */
+/* ------------------------------------------------------------------ */
+
+interface UtmParams {
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  content?: string;
+  term?: string;
+}
+
+/**
+ * Append UTM parameters to any URL. Skips mailto:, tel:, and fragment-only
+ * links. Preserves existing query params. If the URL already has a given
+ * utm_ param, it is NOT overwritten (user intent wins).
+ */
+export function addUtmParams(
+  url: string,
+  params: UtmParams
+): string {
+  if (!url || url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('#')) {
+    return url;
+  }
+  try {
+    const u = new URL(url, 'https://placeholder.invalid');
+    const mapping: Array<[string, string | undefined]> = [
+      ['utm_source', params.source],
+      ['utm_medium', params.medium],
+      ['utm_campaign', params.campaign],
+      ['utm_content', params.content],
+      ['utm_term', params.term],
+    ];
+    for (const [key, val] of mapping) {
+      if (val && !u.searchParams.has(key)) {
+        u.searchParams.set(key, val);
+      }
+    }
+    // If the original URL was relative (no protocol), return just path+search
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('//')) {
+      return u.pathname + u.search + u.hash;
+    }
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+/** Build UTM params for a quiz CTA click. */
+export function quizUtm(slug: string, outcomeName?: string): UtmParams {
+  return {
+    source: 'squarespell',
+    medium: 'quiz',
+    campaign: slug,
+    content: outcomeName ? outcomeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50) : 'cta',
+  };
+}
+
+/** Build UTM params for an email CTA click. */
+export function emailUtm(campaignName?: string): UtmParams {
+  return {
+    source: 'squarespell',
+    medium: 'email',
+    campaign: campaignName ? campaignName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50) : 'campaign',
+  };
+}

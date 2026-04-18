@@ -1,4 +1,5 @@
 'use client';
+import { addUtmParams, quizUtm } from '@/lib/urls';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 
@@ -683,13 +684,13 @@ export default function EmbedQuizClient({
               <div className="sq-result-desc">{outcome.description}</div>
 
               {outcome.ctaUrl ? (
-                <a href={outcome.ctaUrl} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={addUtmParams(outcome.ctaUrl, quizUtm(slug, outcome.title))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button className="sq-btn" type="button">
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
                 </a>
               ) : quiz.settings?.cta_url ? (
-                <a href={quiz.settings.cta_url} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button className="sq-btn" type="button">
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
