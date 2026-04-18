@@ -122,6 +122,16 @@ export default function EmailsPage() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           Deliverability
         </Link>
+        <Link href="/dashboard/emails/suppressions" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '6px 14px', borderRadius: 6,
+          background: C.ELEVATED, border: `1px solid ${C.BORDER}`,
+          color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
+          textDecoration: 'none',
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          Suppressions
+        </Link>
       </div>
 
       {err && (

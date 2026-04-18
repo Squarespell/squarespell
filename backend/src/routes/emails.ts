@@ -380,4 +380,61 @@ r.get('/deliverability', async (req, res) => {
   }
 });
 
+// ── Suppression List ─────────────────────────────────────────────────────
+// GET /api/emails/suppressions - list all suppressed emails for this tenant
+r.get('/suppressions', async (req, res) => {
+  try {
+    // email_unsubscribes is global (not per-tenant) since emails are unique
+    // Show all suppressions - the table is small enough for full fetch
+    const { data, error } = await supabase
+      .from('email_unsubscribes')
+      .select('id, email, source, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message ?? 'Failed to fetch suppressions' });
+  }
+});
+
+// POST /api/emails/suppressions - manually add an email to suppression list
+r.post('/suppressions', async (req, res) => {
+  try {
+    const { email, reason } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const normalized = email.trim().toLowerCase();
+    const { data, error } = await supabase
+      .from('email_unsubscribes')
+      .upsert(
+        { email: normalized, source: reason || 'manual' },
+        { onConflict: 'email' }
+      )
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message ?? 'Failed to add suppression' });
+  }
+});
+
+// DELETE /api/emails/suppressions/:id - remove an entry from suppression list
+r.delete('/suppressions/:id', async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('email_unsubscribes')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message ?? 'Failed to remove suppression' });
+  }
+});
+
 export default r;
