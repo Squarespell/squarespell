@@ -586,17 +586,61 @@ export async function scrapeBrand(url: string) {
       extractVar('--color-accent') ||
       (topColors.length > 1 ? topColors[1] : primaryColor);
 
-    log.info('[Scraper] Brand detected', { primaryColor, bgColor, textColor, accentColor, fontFamily });
+    // Convert any CSS color (hsl, hsla, rgb, rgba) to hex so the frontend can use it
+    const toHex = (color: string): string => {
+      const s = color.trim().toLowerCase().replace(/\s+/g, '');
+      // Already hex
+      if (/^#[0-9a-f]{3,8}$/i.test(s)) {
+        if (s.length === 4) return '#' + s[1]+s[1] + s[2]+s[2] + s[3]+s[3];
+        if (s.length === 9) return s.slice(0, 7); // drop alpha
+        return s.slice(0, 7);
+      }
+      // hsl/hsla
+      const hslM = s.match(/hsla?\(([0-9.]+),([0-9.]+)%,([0-9.]+)%/);
+      if (hslM) {
+        const h = parseFloat(hslM[1]) / 360;
+        const sat = parseFloat(hslM[2]) / 100;
+        const l = parseFloat(hslM[3]) / 100;
+        const hue2rgb = (p: number, q: number, t: number) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        let r: number, g: number, b: number;
+        if (sat === 0) { r = g = b = l; } else {
+          const q = l < 0.5 ? l * (1 + sat) : l + sat - l * sat;
+          const p = 2 * l - q;
+          r = hue2rgb(p, q, h + 1/3);
+          g = hue2rgb(p, q, h);
+          b = hue2rgb(p, q, h - 1/3);
+        }
+        const toH = (v: number) => Math.round(v * 255).toString(16).padStart(2, '0');
+        return '#' + toH(r) + toH(g) + toH(b);
+      }
+      // rgb/rgba
+      const rgbM = s.match(/rgba?\((\d+),(\d+),(\d+)/);
+      if (rgbM) {
+        const toH = (v: string) => parseInt(v, 10).toString(16).padStart(2, '0');
+        return '#' + toH(rgbM[1]) + toH(rgbM[2]) + toH(rgbM[3]);
+      }
+      return color;
+    };
+
+    log.info('[Scraper] Brand detected (raw)', { primaryColor, bgColor, textColor, accentColor, fontFamily });
+    log.info('[Scraper] Brand detected (hex)', { primary: toHex(primaryColor), bg: toHex(bgColor), text: toHex(textColor), accent: toHex(accentColor) });
 
     return {
       detected: true,
       platform: 'squarespace',
       template_version: templateVersion,
       colors: {
-        background: bgColor,
-        primary: primaryColor,
-        text: textColor,
-        accent: accentColor,
+        background: toHex(bgColor),
+        primary: toHex(primaryColor),
+        text: toHex(textColor),
+        accent: toHex(accentColor),
       },
       font_family: fontFamily,
       font_fallback: 'sans-serif',
@@ -608,7 +652,7 @@ export async function scrapeBrand(url: string) {
         headings: headings.slice(0, 10),
         key_content: paragraphs.slice(0, 6),
         json_ld: jsonLdBlocks.length > 0 ? jsonLdBlocks[0]?.slice(0, 500) : null,
-        nav_links: [...new Set(linkTexts)].slice(0, 6),
+        nav_links: Array.from(new Set(linkTexts)).slice(0, 6),
         nav_pages: navPages.slice(0, 12),
       } as Record<string, any>,
     };
@@ -620,7 +664,7 @@ export async function scrapeBrand(url: string) {
     // frontend can show a neutral dark theme and continue (no hard block here)
     return {
       detected: false,
-      colors: { background: '#0a0f05', primary: '#D2FF1D', text: '#e8f5c8', accent: '#D2FF1D' },
+      colors: { background: '#F7F7F5', primary: '#0D7377', text: '#1A1A1A', accent: '#0D7377' },
       font_family: 'Poppins',
       font_fallback: 'sans-serif',
       site_name: '',
