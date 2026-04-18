@@ -20,7 +20,7 @@ import {
   Pill,
   PageLoading,
 } from '../_components/PageShell';
-import { embedSnippet, publicQuizUrl } from '@/lib/urls';
+import { embedSnippet, embedScriptUrl, publicQuizUrl } from '@/lib/urls';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
