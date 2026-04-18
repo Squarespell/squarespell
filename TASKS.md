@@ -46,7 +46,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Live preview iframe that updates on edit
 - [x] Mobile / desktop preview toggle
 - [x] Dark-mode email-client preview
-- [ ] Global search (cmd+k) across quizzes, campaigns, contacts
+- [x] Global search (cmd+k) across quizzes, campaigns, contacts
 - [ ] Outcomes routing visualization in builder
 - [x] Trash + restore for campaigns and quizzes
 - [x] Bot filtering toggle

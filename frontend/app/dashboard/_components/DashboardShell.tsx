@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { TopBanner } from './TopBanner';
+import { CommandPalette } from './CommandPalette';
 import { DASHBOARD_COLORS } from './dashboardColors';
 
 const COLORS = DASHBOARD_COLORS;
@@ -573,6 +574,7 @@ export function DashboardShell({
       }}
     >
       {sidebar}
+      <CommandPalette />
 
       {/* Scrim for mobile drawer */}
       {isMobile && mobileOpen && (
