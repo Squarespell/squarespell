@@ -41,6 +41,8 @@ interface Question {
   step?: number;
 }
 
+type CtaType = 'link' | 'scheduling' | 'calendly' | 'acuity';
+
 interface Outcome {
   id: string;
   title: string;
@@ -50,6 +52,7 @@ interface Outcome {
   price?: number;
   cta_url?: string;
   cta_text?: string;
+  cta_type?: CtaType;
   type?: string;
 }
 
@@ -1823,13 +1826,60 @@ function OutcomesPanel({
 
                 <div>
                   <label style={{ fontSize: 11, color: COLORS.TEXT_MUTED, display: 'block', marginBottom: 4 }}>
-                    CTA URL (optional)
+                    CTA type
+                  </label>
+                  <select
+                    value={outcome.cta_type || 'link'}
+                    onChange={(e) => {
+                      const t = e.target.value as CtaType;
+                      const patch: Record<string, any> = { cta_type: t };
+                      if (t === 'scheduling') {
+                        if (!outcome.cta_text) patch.cta_text = 'Book a session';
+                      } else if (t === 'calendly') {
+                        if (!outcome.cta_text) patch.cta_text = 'Schedule a call';
+                      } else if (t === 'acuity') {
+                        if (!outcome.cta_text) patch.cta_text = 'Book an appointment';
+                      }
+                      for (const [k, v] of Object.entries(patch)) onUpdate(idx, k, v);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      background: COLORS.ELEVATED,
+                      border: `1px solid ${COLORS.BORDER}`,
+                      borderRadius: 4,
+                      color: COLORS.TEXT,
+                      fontSize: 12,
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="link">Custom link</option>
+                    <option value="scheduling">Squarespace Scheduling</option>
+                    <option value="acuity">Acuity Scheduling</option>
+                    <option value="calendly">Calendly</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 11, color: COLORS.TEXT_MUTED, display: 'block', marginBottom: 4 }}>
+                    {(outcome.cta_type === 'scheduling' || outcome.cta_type === 'acuity')
+                      ? 'Acuity / Squarespace Scheduling URL'
+                      : outcome.cta_type === 'calendly'
+                        ? 'Calendly link'
+                        : 'CTA URL (optional)'}
                   </label>
                   <input
                     type="text"
                     value={outcome.cta_url || ''}
                     onChange={(e) => onUpdate(idx, 'cta_url', e.target.value || undefined)}
-                    placeholder="https://..."
+                    placeholder={
+                      (outcome.cta_type === 'scheduling' || outcome.cta_type === 'acuity')
+                        ? 'https://app.acuityscheduling.com/schedule.php?owner=...'
+                        : outcome.cta_type === 'calendly'
+                          ? 'https://calendly.com/your-name/meeting'
+                          : 'https://...'
+                    }
                     style={{
                       width: '100%',
                       padding: '8px 10px',
@@ -1841,6 +1891,16 @@ function OutcomesPanel({
                       outline: 'none',
                     }}
                   />
+                  {(outcome.cta_type === 'scheduling' || outcome.cta_type === 'acuity') && (
+                    <div style={{ fontSize: 10.5, color: COLORS.TEXT_SUBTLE, marginTop: 4, lineHeight: 1.4 }}>
+                      Lead name and email are auto-filled on the booking page.
+                    </div>
+                  )}
+                  {outcome.cta_type === 'calendly' && (
+                    <div style={{ fontSize: 10.5, color: COLORS.TEXT_SUBTLE, marginTop: 4, lineHeight: 1.4 }}>
+                      Lead name and email are pre-filled via Calendly URL params.
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1851,7 +1911,13 @@ function OutcomesPanel({
                     type="text"
                     value={outcome.cta_text || ''}
                     onChange={(e) => onUpdate(idx, 'cta_text', e.target.value || undefined)}
-                    placeholder="Click here"
+                    placeholder={
+                      (outcome.cta_type === 'scheduling' || outcome.cta_type === 'acuity')
+                        ? 'Book a session'
+                        : outcome.cta_type === 'calendly'
+                          ? 'Schedule a call'
+                          : 'Click here'
+                    }
                     style={{
                       width: '100%',
                       padding: '8px 10px',

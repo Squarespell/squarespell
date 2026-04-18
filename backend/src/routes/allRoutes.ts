@@ -9,6 +9,8 @@ import { generateLeadInsight } from '../services/leadInsights';
 import { sendResultEmail } from '../services/resultEmail';
 import { isUnsubscribed, buildUnsubscribeHeaders, buildUnsubscribeUrl } from '../services/unsubscribe';
 import { enqueueSequenceEmails, processEmailQueue } from '../services/emailSequence';
+import { prefillAcuityLink } from '../services/integrations/acuity';
+import { prefillCalendlyLink } from '../services/integrations/calendly';
 import { runCleanup } from '../services/databaseCleanup';
 import { processScheduledCampaigns } from '../services/scheduledSendDispatcher';
 import * as quizPaymentsService from '../services/quizPayments';
@@ -527,8 +529,15 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
         : null;
       if (matchedOutcome) {
         const reportEnabled = (quiz.settings as any)?.report_enabled === true;
-        const ctaUrl = matchedOutcome.cta_url || (quiz.branding as any)?.ctaUrl;
+        let ctaUrl = matchedOutcome.cta_url || (quiz.branding as any)?.ctaUrl;
         const ctaText = matchedOutcome.cta_text || 'Learn More';
+        // Prefill scheduling links with lead info
+        const ctaType = matchedOutcome.cta_type;
+        if (ctaUrl && (ctaType === 'scheduling' || ctaType === 'acuity')) {
+          ctaUrl = prefillAcuityLink(ctaUrl, name || '', email);
+        } else if (ctaUrl && ctaType === 'calendly') {
+          ctaUrl = prefillCalendlyLink(ctaUrl, name || '', email);
+        }
         sendResultEmail({
           to: email,
           quizTitle: quiz.title,

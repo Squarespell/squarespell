@@ -40,8 +40,28 @@ interface QuizOutcome {
   description: string;
   ctaText?: string;
   ctaUrl?: string;
+  cta_url?: string;     // snake_case from builder
+  cta_text?: string;
+  cta_type?: string;
   minScore?: number;
   maxScore?: number;
+}
+
+/** Prefill scheduling URLs with lead name and email */
+function prefillSchedulingUrl(url: string, ctaType: string | undefined, name: string, email: string): string {
+  if (!url || !ctaType) return url;
+  try {
+    const u = new URL(url);
+    if (ctaType === 'scheduling' || ctaType === 'acuity') {
+      if (name) u.searchParams.set('firstName', name.split(' ')[0]);
+      if (name.includes(' ')) u.searchParams.set('lastName', name.split(' ').slice(1).join(' '));
+      if (email) u.searchParams.set('email', email);
+    } else if (ctaType === 'calendly') {
+      if (name) u.searchParams.set('name', name);
+      if (email) u.searchParams.set('email', email);
+    }
+    return u.toString();
+  } catch { return url; }
 }
 interface QuizBranding {
   colors?: Record<string, string>;
@@ -619,10 +639,13 @@ export default function QuizPage() {
               <div className="sq-result-title">{outcome.title}</div>
               <div className="sq-result-desc">{outcome.description}</div>
 
-              {outcome.ctaUrl ? (
-                <a href={addUtmParams(outcome.ctaUrl, quizUtm(slug, outcome.title))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              {(outcome.ctaUrl || outcome.cta_url) ? (
+                <a href={addUtmParams(
+                  prefillSchedulingUrl(outcome.ctaUrl || outcome.cta_url || '', outcome.cta_type, firstName, email),
+                  quizUtm(slug, outcome.title)
+                )} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button className="sq-btn" type="button">
-                    {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
+                    {outcome.ctaText || outcome.cta_text || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
                 </a>
               ) : quiz.settings?.cta_url ? (
