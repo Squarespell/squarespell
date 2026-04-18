@@ -46,6 +46,10 @@ export type Campaign = {
 
 export type SourceQuiz = { id: string; title: string; slug: string };
 
+export async function getCampaign(id: string): Promise<Campaign> {
+  return req(`/api/emails/campaigns/${id}`);
+}
+
 export async function listCampaigns(): Promise<Campaign[]> {
   return req('/api/emails/campaigns');
 }

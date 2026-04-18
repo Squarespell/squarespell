@@ -86,6 +86,14 @@ r.get('/campaigns', async (req, res) => {
   res.json(data || []);
 });
 
+r.get('/campaigns/:id', async (req, res) => {
+  const tenantId = req.dbUserId;
+  const { data, error } = await supabase.from('email_campaigns')
+    .select('*').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (error || !data) return res.status(404).json({ error: 'Campaign not found' });
+  res.json(data);
+});
+
 r.post('/campaigns', async (req, res) => {
   const tenantId = req.dbUserId;
   const {
