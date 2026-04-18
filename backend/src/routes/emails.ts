@@ -127,17 +127,20 @@ r.get('/campaigns/:id/stats', async (req, res) => {
   if (!c) return res.status(404).json({ error: 'Campaign not found' });
 
   const { data: sends } = await supabase.from('email_sends')
-    .select('status, opened_at, clicked_at')
+    .select('status, opened_at, clicked_at, metadata')
     .eq('campaign_id', req.params.id);
 
   const rows = sends || [];
+  const bouncedRows = rows.filter((s: any) => s.status === 'bounced');
   const stats = {
     total: rows.length,
     sent: rows.filter((s: any) => s.status === 'sent' || s.status === 'delivered').length,
     delivered: rows.filter((s: any) => s.status === 'delivered').length,
     opened: rows.filter((s: any) => s.opened_at).length,
     clicked: rows.filter((s: any) => s.clicked_at).length,
-    bounced: rows.filter((s: any) => s.status === 'bounced').length,
+    bounced: bouncedRows.length,
+    hard_bounced: bouncedRows.filter((s: any) => s.metadata?.bounce_type === 'hard_bounce').length,
+    soft_bounced: bouncedRows.filter((s: any) => s.metadata?.bounce_type === 'soft_bounce').length,
     complained: rows.filter((s: any) => s.status === 'complained').length,
     failed: rows.filter((s: any) => s.status === 'failed').length,
   };
@@ -355,16 +358,19 @@ r.get('/deliverability', async (req, res) => {
 
     // Get all sends for these campaigns
     const { data: sends } = await supabase.from('email_sends')
-      .select('campaign_id, status, opened_at, clicked_at')
+      .select('campaign_id, status, opened_at, clicked_at, metadata')
       .in('campaign_id', campaignIds);
 
     const rows = sends || [];
+    const bouncedRows = rows.filter((s: any) => s.status === 'bounced');
     const totals = {
       sent: rows.length,
       delivered: rows.filter((s: any) => s.status === 'delivered').length,
       opened: rows.filter((s: any) => s.opened_at).length,
       clicked: rows.filter((s: any) => s.clicked_at).length,
-      bounced: rows.filter((s: any) => s.status === 'bounced').length,
+      bounced: bouncedRows.length,
+      hard_bounced: bouncedRows.filter((s: any) => s.metadata?.bounce_type === 'hard_bounce').length,
+      soft_bounced: bouncedRows.filter((s: any) => s.metadata?.bounce_type === 'soft_bounce').length,
       complained: rows.filter((s: any) => s.status === 'complained').length,
       failed: rows.filter((s: any) => s.status === 'failed').length,
     };
@@ -375,6 +381,8 @@ r.get('/deliverability', async (req, res) => {
       open_rate: safe(totals.opened, totals.delivered || totals.sent),
       click_rate: safe(totals.clicked, totals.delivered || totals.sent),
       bounce_rate: safe(totals.bounced, totals.sent),
+      hard_bounce_rate: safe(totals.hard_bounced, totals.sent),
+      soft_bounce_rate: safe(totals.soft_bounced, totals.sent),
       complaint_rate: safe(totals.complained, totals.sent),
     };
 

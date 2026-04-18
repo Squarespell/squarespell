@@ -13,6 +13,8 @@ interface DeliverabilityData {
     opened: number;
     clicked: number;
     bounced: number;
+    hard_bounced?: number;
+    soft_bounced?: number;
     complained: number;
     failed: number;
   };
@@ -21,6 +23,8 @@ interface DeliverabilityData {
     open_rate: number;
     click_rate: number;
     bounce_rate: number;
+    hard_bounce_rate?: number;
+    soft_bounce_rate?: number;
     complaint_rate: number;
   };
   campaigns: Array<{
@@ -157,7 +161,7 @@ export default function DeliverabilityPage() {
               <StatCard label="Delivered" value={data.totals.delivered.toLocaleString()} accent />
               <StatCard label="Opened" value={data.totals.opened.toLocaleString()} />
               <StatCard label="Clicked" value={data.totals.clicked.toLocaleString()} />
-              <StatCard label="Bounced" value={data.totals.bounced.toLocaleString()} />
+              <StatCard label="Bounced" value={data.totals.bounced.toLocaleString()} sub={data.totals.hard_bounced || data.totals.soft_bounced ? `${data.totals.hard_bounced ?? 0} hard / ${data.totals.soft_bounced ?? 0} soft` : undefined} />
               <StatCard label="Complaints" value={data.totals.complained.toLocaleString()} />
             </div>
 
@@ -175,6 +179,12 @@ export default function DeliverabilityPage() {
                 color="#ff5c5c"
                 warn={data.rates.bounce_rate > 5}
               />
+              {(data.rates.hard_bounce_rate !== undefined || data.rates.soft_bounce_rate !== undefined) && (
+                <div style={{ display: 'flex', gap: 16, paddingLeft: 20 }}>
+                  <RateBar label="Hard bounces" value={data.rates.hard_bounce_rate ?? 0} color="#ff5c5c" warn={false} />
+                  <RateBar label="Soft bounces" value={data.rates.soft_bounce_rate ?? 0} color="#ffb020" warn={false} />
+                </div>
+              )}
               <RateBar
                 label="Complaint rate"
                 value={data.rates.complaint_rate}

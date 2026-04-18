@@ -86,7 +86,7 @@ export function Card({
   );
 }
 
-export function StatCard({ label, value, accent }: { label: string; value: ReactNode; accent?: boolean }) {
+export function StatCard({ label, value, accent, sub }: { label: string; value: ReactNode; accent?: boolean; sub?: string }) {
   return (
     <Card padding={22}>
       <div
@@ -112,6 +112,9 @@ export function StatCard({ label, value, accent }: { label: string; value: React
       >
         {value}
       </div>
+      {sub && (
+        <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginTop: 8 }}>{sub}</div>
+      )}
     </Card>
   );
 }

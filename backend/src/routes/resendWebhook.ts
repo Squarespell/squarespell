@@ -55,15 +55,47 @@ r.post('/resend', async (req, res) => {
       }
     }
 
-    // 4. Auto-suppress on hard bounce or spam complaint
-    if (type === 'bounced' || type === 'complained') {
+    // 4. Classify bounces and auto-suppress hard bounces + complaints
+    if (type === 'bounced') {
+      const recipientEmail = e?.data?.to?.[0] || e?.data?.email_id;
+      // Resend bounce payloads include bounce_type or error codes
+      const bounceMessage = (e?.data?.bounce?.message || e?.data?.error?.message || '').toLowerCase();
+      const bounceType = e?.data?.bounce?.type || '';
+
+      // Classify: hard bounce = permanent failure, soft bounce = temporary
+      const hardPatterns = /invalid|not exist|unknown user|no such|mailbox not found|rejected|undeliverable|disabled|permanent|hard/i;
+      const isHard = bounceType === 'hard'
+        || bounceType === 'permanent'
+        || hardPatterns.test(bounceMessage)
+        || (!bounceType && !bounceMessage); // Default to hard if no details
+
+      const bounceClass = isHard ? 'hard_bounce' : 'soft_bounce';
+
+      // Update email_sends with bounce classification
+      await supabase.from('email_sends')
+        .update({ status: 'bounced', metadata: { bounce_type: bounceClass, bounce_message: bounceMessage || null } })
+        .eq('id', sendId);
+
+      if (recipientEmail) {
+        if (isHard) {
+          // Only suppress on hard bounces
+          await supabase.from('email_unsubscribes')
+            .upsert({ email: recipientEmail, source: 'hard_bounce' }, { onConflict: 'email' })
+            .select();
+          console.log(`[Webhook] Hard bounce - suppressed ${recipientEmail}`);
+        } else {
+          console.log(`[Webhook] Soft bounce for ${recipientEmail} - not suppressing`);
+        }
+      }
+    }
+
+    if (type === 'complained') {
       const recipientEmail = e?.data?.to?.[0] || e?.data?.email_id;
       if (recipientEmail) {
-        const source = type === 'bounced' ? 'hard_bounce' : 'spam_complaint';
         await supabase.from('email_unsubscribes')
-          .upsert({ email: recipientEmail, source }, { onConflict: 'email' })
+          .upsert({ email: recipientEmail, source: 'spam_complaint' }, { onConflict: 'email' })
           .select();
-        console.log(`[Webhook] Auto-suppressed ${recipientEmail} (${source})`);
+        console.log(`[Webhook] Spam complaint - suppressed ${recipientEmail}`);
       }
     }
 

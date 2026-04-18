@@ -49,7 +49,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [ ] Global search (cmd+k) across quizzes, campaigns, contacts
 - [ ] Outcomes routing visualization in builder
 - [x] Trash + restore for campaigns and quizzes
-- [ ] Bot filtering toggle
+- [x] Bot filtering toggle
 - [ ] Segments = quiz answers audience builder
 - [ ] Add Templates sidebar nav entry under Emails
 - [ ] Wire template gallery into New Campaign wizard
