@@ -73,7 +73,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [ ] Squarespace Commerce order webhook intake
 - [ ] Generate discount codes for Squarespace Commerce
 - [ ] Sync quiz subscribers into Squarespace Newsletter Block
-- [ ] Use Squarespace Scheduling link as booking-outcome CTA
+- [x] Use Squarespace Scheduling link as booking-outcome CTA
 - [ ] Detect Squarespace template family (7.0 vs 7.1)
 - [x] Light / dark BrandKit variants
 
