@@ -1,16 +1,14 @@
 'use client';
 
 /**
- * /dashboard/brand-kit - Brand snapshot pulled from the user's quizzes.
+ * /dashboard/brand-kit - User-level brand kit, shared across quiz, email, and popup.
  *
- * Squarespell doesn't store a separate "brand kit" per user yet - the brand
- * palette, font, logo, and site name live inside each quiz's `branding`
- * JSONB. This page picks the most recent quiz, loads its full record, and
- * shows the scraped brand so users can verify what we detected. Changing
- * quizzes in the dropdown lets them spot differences across sites.
+ * Persists to users.brand_kit JSONB via GET/PUT /api/user/brand-kit.
+ * Can be populated by scraping a URL or editing fields directly.
+ * Falls back into quizzes and emails when per-quiz branding is missing.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { DashboardShell } from '../_components/DashboardShell';
 import { DASHBOARD_COLORS as C } from '../_components/dashboardColors';
@@ -20,87 +18,97 @@ import {
   Card,
   EmptyState,
   PrimaryButton,
-  GhostButton,
   PageLoading,
 } from '../_components/PageShell';
+import { api } from '@/lib/api';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
-type Quiz = {
-  id: string;
-  title: string;
-  slug: string;
+type BrandKit = {
+  colors?: Record<string, string>;
+  font_family?: string;
+  site_name?: string;
+  favicon_url?: string;
+  logo_url?: string;
 };
 
-type QuizFull = Quiz & {
-  branding?: {
-    colors?: Record<string, string>;
-    font_family?: string;
-    site_name?: string;
-    favicon_url?: string;
-  } | null;
-  settings?: Record<string, any>;
+const COLOR_KEYS = ['primary', 'background', 'text', 'accent'] as const;
+
+const inputStyle: React.CSSProperties = {
+  padding: '10px 14px',
+  background: C.SURFACE,
+  border: `1px solid ${C.BORDER}`,
+  borderRadius: 10,
+  fontSize: 13.5,
+  color: C.TEXT,
+  fontFamily: '"DM Sans",system-ui,sans-serif',
+  outline: 'none',
+  width: '100%',
 };
 
-function ColorSwatch({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
-  const onCopy = () => {
-    if (typeof navigator === 'undefined' || !navigator.clipboard) return;
-    navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  };
+const labelStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  color: C.TEXT_MUTED,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.05em',
+  marginBottom: 6,
+  display: 'block',
+};
+
+// -----------------------------------------------------------------------
+// Editable color swatch
+// -----------------------------------------------------------------------
+
+function EditableColor({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
-    <button
-      onClick={onCopy}
-      style={{
-        background: 'transparent',
-        border: `1px solid ${C.BORDER}`,
-        borderRadius: 12,
-        padding: 14,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        cursor: 'pointer',
-        textAlign: 'left',
-        fontFamily: '"DM Sans",system-ui,sans-serif',
-        color: C.TEXT,
-        width: '100%',
-      }}
-    >
-      <div
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <label
         style={{
           width: 44,
           height: 44,
           borderRadius: 10,
-          background: value,
+          background: value || '#333',
           border: `1px solid ${C.BORDER}`,
           flexShrink: 0,
-          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)',
+          cursor: 'pointer',
+          position: 'relative',
+          overflow: 'hidden',
         }}
-      />
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div
+      >
+        <input
+          type="color"
+          value={value || '#333333'}
+          onChange={(e) => onChange(e.target.value)}
           style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: C.TEXT_MUTED,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            marginBottom: 3,
+            position: 'absolute',
+            inset: 0,
+            opacity: 0,
+            cursor: 'pointer',
+            width: '100%',
+            height: '100%',
           }}
-        >
-          {label}
-        </div>
-        <div style={{ fontSize: 13, fontFamily: 'ui-monospace,monospace', color: C.TEXT }}>
-          {value}
-        </div>
+        />
+      </label>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={labelStyle}>{label}</div>
+        <input
+          type="text"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="#000000"
+          style={{ ...inputStyle, fontFamily: 'ui-monospace,monospace', fontSize: 13 }}
+        />
       </div>
-      <div style={{ fontSize: 11, color: copied ? C.ACCENT : C.TEXT_MUTED, fontWeight: 600 }}>
-        {copied ? 'Copied' : 'Copy'}
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -158,17 +166,7 @@ function ScrapeUrlInput({
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleScrape(); }}
           placeholder="https://your-squarespace-site.com"
-          style={{
-            flex: 1,
-            padding: '11px 14px',
-            background: C.SURFACE,
-            border: `1px solid ${C.BORDER}`,
-            borderRadius: 10,
-            fontSize: 13.5,
-            color: C.TEXT,
-            fontFamily: '"DM Sans",system-ui,sans-serif',
-            outline: 'none',
-          }}
+          style={{ ...inputStyle, flex: 1 }}
         />
         <PrimaryButton
           onClick={handleScrape}
@@ -187,195 +185,73 @@ function ScrapeUrlInput({
 }
 
 // -----------------------------------------------------------------------
-// Brand display (shared between quiz-derived and scraped brands)
-// -----------------------------------------------------------------------
-
-function BrandDisplay({ brand, label }: {
-  brand: { colors?: Record<string, string>; font_family?: string; site_name?: string; favicon_url?: string };
-  label?: string;
-}) {
-  const colors = Object.entries(brand.colors || {}).filter(([, v]) => typeof v === 'string' && v);
-
-  return (
-    <div style={{ display: 'grid', gap: 20 }}>
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          {brand.favicon_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={brand.favicon_url}
-              alt=""
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 10,
-                background: C.SURFACE,
-                border: `1px solid ${C.BORDER}`,
-                objectFit: 'contain',
-                padding: 6,
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 10,
-                background: C.SURFACE,
-                border: `1px solid ${C.BORDER}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: C.TEXT_MUTED,
-                fontSize: 18,
-                fontWeight: 700,
-              }}
-            >
-              {(brand.site_name || '?').charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
-              {brand.site_name || 'Unknown brand'}
-            </div>
-            {label && (
-              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>{label}</div>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <h2 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-          Palette
-        </h2>
-        {colors.length === 0 ? (
-          <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
-            No colors were detected.
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: 12,
-            }}
-          >
-            {colors.map(([l, value]) => (
-              <ColorSwatch key={l} label={l} value={value as string} />
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card>
-        <h2 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-          Typography
-        </h2>
-        <div
-          style={{
-            padding: 20,
-            border: `1px solid ${C.BORDER}`,
-            borderRadius: 12,
-            background: C.SURFACE,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: C.TEXT_MUTED,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: 10,
-            }}
-          >
-            Font family
-          </div>
-          <div
-            style={{
-              fontSize: 26,
-              color: C.TEXT,
-              fontFamily: brand.font_family || 'inherit',
-              marginBottom: 6,
-              lineHeight: 1.2,
-            }}
-          >
-            The quick brown fox jumps over the lazy dog.
-          </div>
-          <div style={{ fontSize: 12.5, color: C.TEXT_MUTED, fontFamily: 'ui-monospace,monospace' }}>
-            {brand.font_family || 'sans-serif (fallback)'}
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// -----------------------------------------------------------------------
 // Page
 // -----------------------------------------------------------------------
 
 export default function BrandKitPage() {
   const { token, status: authStatus } = useDashboardAuth();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [selectedId, setSelectedId] = useState<string>('');
-  const [quiz, setQuiz] = useState<QuizFull | null>(null);
-  const [loadingList, setLoadingList] = useState(true);
-  const [loadingQuiz, setLoadingQuiz] = useState(false);
-
-  // Standalone scrape state (independent of quiz selection)
-  const [scrapedBrand, setScrapedBrand] = useState<any>(null);
+  const [kit, setKit] = useState<BrandKit | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [scraping, setScraping] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
-  useEffect(() => {
+  const loadKit = useCallback(async () => {
     if (!token) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`${API}/api/quizzes`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to load quizzes');
-        const data: Quiz[] = await res.json();
-        if (cancelled) return;
-        setQuizzes(data);
-        if (data.length > 0) setSelectedId(data[0].id);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (!cancelled) setLoadingList(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    setLoading(true);
+    try {
+      const data = await api.getBrandKit();
+      setKit(data || {});
+    } catch {
+      setKit({});
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
-  useEffect(() => {
-    if (!token || !selectedId) return;
-    let cancelled = false;
-    setLoadingQuiz(true);
-    (async () => {
-      try {
-        const res = await fetch(`${API}/api/quizzes/${selectedId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to load quiz');
-        const data = await res.json();
-        if (!cancelled) setQuiz(data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (!cancelled) setLoadingQuiz(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token, selectedId]);
+  useEffect(() => { loadKit(); }, [loadKit]);
 
-  if (authStatus === 'loading') {
+  async function save() {
+    if (!kit) return;
+    setSaving(true);
+    try {
+      await api.saveBrandKit(kit);
+      setSaved(true);
+      setDirty(false);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updateKit(patch: Partial<BrandKit>) {
+    setKit((prev) => ({ ...prev, ...patch }));
+    setDirty(true);
+  }
+
+  function updateColor(key: string, value: string) {
+    setKit((prev) => ({
+      ...prev,
+      colors: { ...(prev?.colors || {}), [key]: value },
+    }));
+    setDirty(true);
+  }
+
+  function applyScrapedBrand(data: any) {
+    const incoming: BrandKit = {
+      colors: data.colors || {},
+      font_family: data.font_family || '',
+      site_name: data.site_name || '',
+      favicon_url: data.favicon_url || '',
+    };
+    setKit(incoming);
+    setDirty(true);
+  }
+
+  if (authStatus === 'loading' || loading) {
     return (
       <DashboardShell title="Brand kit">
         <PageLoading />
@@ -383,52 +259,204 @@ export default function BrandKitPage() {
     );
   }
 
-  // Determine which brand to display: scraped (priority) or quiz-derived
-  const quizBrand = quiz?.branding || null;
+  const hasKit = kit && (kit.site_name || kit.font_family || (kit.colors && Object.values(kit.colors).some(Boolean)));
 
   return (
     <DashboardShell title="Brand kit">
       <PageHeader
         title="Brand kit"
-        subtitle="The brand signals Squarespell detected from your website"
+        subtitle="Your brand defaults for quizzes, emails, and popups"
       />
 
-      {/* ---- Import from URL (always visible) ---- */}
+      {/* Save bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 20, flexWrap: 'wrap', gap: 10,
+      }}>
+        <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
+          {hasKit
+            ? 'Changes apply to new quizzes and emails that don\'t have per-quiz branding.'
+            : 'Import from your site or fill in manually below.'}
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {saved && (
+            <span style={{ fontSize: 12, color: '#86c232', fontWeight: 600 }}>
+              Saved
+            </span>
+          )}
+          <PrimaryButton onClick={save} disabled={saving || !dirty}>
+            {saving ? 'Saving...' : 'Save brand kit'}
+          </PrimaryButton>
+        </div>
+      </div>
+
+      {/* Import from URL */}
       <Card style={{ marginBottom: 20 }}>
         <div style={{ marginBottom: 10 }}>
           <h2 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
             Import from URL
           </h2>
           <p style={{ margin: 0, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
-            Paste any Squarespace site URL to detect its palette, fonts, and brand name.
+            Paste any Squarespace site URL to auto-detect palette, fonts, and brand name.
           </p>
         </div>
         <ScrapeUrlInput
           token={token}
           loading={scraping}
           onLoadingChange={setScraping}
-          onResult={(data) => {
-            setScrapedBrand({
-              colors: data.colors,
-              font_family: data.font_family,
-              site_name: data.site_name,
-              favicon_url: data.favicon_url,
-            });
-          }}
+          onResult={applyScrapedBrand}
         />
       </Card>
 
-      {/* ---- Scraped brand result ---- */}
-      {scrapedBrand && (
-        <div style={{ marginBottom: 24 }}>
-          <BrandDisplay brand={scrapedBrand} label="Imported from URL" />
+      {/* Identity */}
+      <Card style={{ marginBottom: 20 }}>
+        <h2 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
+          Identity
+        </h2>
+        <div style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr' }}>
+          <div>
+            <label style={labelStyle}>Site / brand name</label>
+            <input
+              type="text"
+              value={kit?.site_name || ''}
+              onChange={(e) => updateKit({ site_name: e.target.value })}
+              placeholder="My Squarespace Site"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Font family</label>
+            <input
+              type="text"
+              value={kit?.font_family || ''}
+              onChange={(e) => updateKit({ font_family: e.target.value })}
+              placeholder="Montserrat, system-ui, sans-serif"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Favicon URL</label>
+            <input
+              type="url"
+              value={kit?.favicon_url || ''}
+              onChange={(e) => updateKit({ favicon_url: e.target.value })}
+              placeholder="https://..."
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Logo URL</label>
+            <input
+              type="url"
+              value={kit?.logo_url || ''}
+              onChange={(e) => updateKit({ logo_url: e.target.value })}
+              placeholder="https://..."
+              style={inputStyle}
+            />
+          </div>
         </div>
+      </Card>
+
+      {/* Colors */}
+      <Card style={{ marginBottom: 20 }}>
+        <h2 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
+          Palette
+        </h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+          gap: 16,
+        }}>
+          {COLOR_KEYS.map((key) => (
+            <EditableColor
+              key={key}
+              label={key}
+              value={(kit?.colors || {})[key] || ''}
+              onChange={(v) => updateColor(key, v)}
+            />
+          ))}
+        </div>
+      </Card>
+
+      {/* Preview */}
+      {hasKit && (
+        <Card>
+          <h2 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
+            Preview
+          </h2>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+            padding: 20,
+            background: kit?.colors?.background || C.SURFACE,
+            border: `1px solid ${C.BORDER}`,
+            borderRadius: 12,
+          }}>
+            {kit?.favicon_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={kit.favicon_url}
+                alt=""
+                style={{
+                  width: 48, height: 48, borderRadius: 10,
+                  objectFit: 'contain', background: 'rgba(255,255,255,0.06)',
+                  padding: 6, border: `1px solid ${C.BORDER}`,
+                }}
+              />
+            ) : (
+              <div style={{
+                width: 48, height: 48, borderRadius: 10,
+                background: kit?.colors?.primary || C.ACCENT,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: 20, fontWeight: 800,
+              }}>
+                {(kit?.site_name || '?').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div style={{
+                fontSize: 20, fontWeight: 700,
+                color: kit?.colors?.text || C.TEXT,
+                fontFamily: kit?.font_family || 'inherit',
+                marginBottom: 4,
+              }}>
+                {kit?.site_name || 'Your Brand'}
+              </div>
+              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
+                {kit?.font_family || 'Default font'}
+              </div>
+            </div>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+              {COLOR_KEYS.map((key) => {
+                var c = (kit?.colors || {})[key];
+                return c ? (
+                  <div key={key} title={key} style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: c, border: `1px solid ${C.BORDER}`,
+                  }} />
+                ) : null;
+              })}
+            </div>
+          </div>
+          <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{
+              padding: '10px 22px', borderRadius: 20, fontWeight: 700, fontSize: 13,
+              background: kit?.colors?.primary || C.ACCENT,
+              color: kit?.colors?.background || '#0a0f05',
+            }}>
+              Sample CTA button
+            </div>
+            <div style={{
+              fontSize: 26, lineHeight: 1.2,
+              fontFamily: kit?.font_family || 'inherit',
+              color: kit?.colors?.text || C.TEXT,
+            }}>
+              The quick brown fox
+            </div>
+          </div>
+        </Card>
       )}
 
-      {/* ---- Quiz-derived brand (existing behavior) ---- */}
-      {loadingList ? (
-        <PageLoading />
-      ) : quizzes.length === 0 && !scrapedBrand ? (
+      {!hasKit && !scraping && (
         <EmptyState
           icon={
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -440,100 +468,9 @@ export default function BrandKitPage() {
             </svg>
           }
           title="No brand kit yet"
-          body="Paste a URL above to import your brand, or create a quiz to auto-detect your palette, fonts, and logo."
-          action={<PrimaryButton href="/tools/quiz-funnel/build">+ Create a quiz</PrimaryButton>}
+          body="Paste a URL above to import your brand, or fill in the fields manually."
         />
-      ) : quizzes.length > 0 ? (
-        <div style={{ display: 'grid', gap: 20 }}>
-          <Card>
-            <div
-              style={{
-                display: 'flex',
-                gap: 12,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                marginBottom: 4,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: C.TEXT_MUTED,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    marginBottom: 6,
-                  }}
-                >
-                  Brand from quiz
-                </div>
-                <select
-                  value={selectedId}
-                  onChange={(e) => setSelectedId(e.target.value)}
-                  style={{
-                    padding: '10px 14px',
-                    background: C.SURFACE,
-                    border: `1px solid ${C.BORDER}`,
-                    borderRadius: 10,
-                    fontSize: 13.5,
-                    color: C.TEXT,
-                    fontFamily: '"DM Sans",system-ui,sans-serif',
-                    cursor: 'pointer',
-                    outline: 'none',
-                  }}
-                >
-                  {quizzes.map((q) => (
-                    <option key={q.id} value={q.id}>
-                      {q.title || 'Untitled'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {quiz?.settings?.website_url && (
-                <GhostButton
-                  href={quiz.settings.website_url as string}
-                  target="_blank"
-                >
-                  Visit site
-                </GhostButton>
-              )}
-            </div>
-          </Card>
-
-          {loadingQuiz || !quiz ? (
-            <PageLoading />
-          ) : quizBrand ? (
-            <>
-              <BrandDisplay
-                brand={quizBrand}
-                label={`Detected from ${quiz.title || 'this quiz'}`}
-              />
-              <Card style={{ marginTop: 0 }}>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                  <div style={{ minWidth: 0, flex: '1 1 280px' }}>
-                    <h3 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
-                      Want to tweak it?
-                    </h3>
-                    <p style={{ margin: 0, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
-                      You can override any color or font directly on the quiz. Changes
-                      apply instantly to the live embed.
-                    </p>
-                  </div>
-                  <PrimaryButton href={`/dashboard/${quiz.id}`}>Edit this quiz</PrimaryButton>
-                </div>
-              </Card>
-            </>
-          ) : (
-            <Card>
-              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
-                No brand data found on this quiz. Use the URL import above to scan your site.
-              </div>
-            </Card>
-          )}
-        </div>
-      ) : null}
+      )}
     </DashboardShell>
   );
 }

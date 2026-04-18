@@ -468,7 +468,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'email required' });
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-  const { data: owner } = await supabase.from('users').select('plan').eq('id', quiz.user_id).single();
+  const { data: owner } = await supabase.from('users').select('plan,brand_kit').eq('id', quiz.user_id).single();
   const { leads: leadLimit } = getPlanLimits(owner?.plan ?? 'free');
   const { count } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id);
   if ((count ?? 0) >= leadLimit) return res.status(403).json({ error: 'Lead limit reached' });
@@ -496,7 +496,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   const leadId = leadData?.id;
   await supabase.rpc('increment_lead_count', { qid: quiz.id });
 
-  const { data: ownerUser } = await supabase.from('users').select('email').eq('id', quiz.user_id).single();
+  const { data: ownerUser } = await supabase.from('users').select('email,brand_kit').eq('id', quiz.user_id).single();
 
   // Send email notification to quiz owner
   if (resend) {
@@ -536,7 +536,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           outcomeDescription: matchedOutcome.description || '',
           ctaUrl,
           ctaText,
-          branding: (quiz.branding as any) || {},
+          branding: { ...(ownerUser?.brand_kit || {}), ...((quiz.branding as any) || {}) },
           reportEnabled,
           leadId,
           ownerEmail: ownerUser?.email,
@@ -1204,6 +1204,41 @@ userRouter.post('/notifications', async (req: AuthenticatedRequest, res) => {
   const { enabled } = req.body;
   await supabase.from('users').update({ email_notifications: !!enabled }).eq('id', req.dbUserId);
   res.json({ ok: true, enabled: !!enabled });
+});
+
+// ── Brand Kit (user-level) ──────────────────────────────────────────────────
+userRouter.get('/brand-kit', async (req: AuthenticatedRequest, res) => {
+  const { data: user } = await supabase
+    .from('users')
+    .select('brand_kit')
+    .eq('id', req.dbUserId)
+    .single();
+  res.json(user?.brand_kit || null);
+});
+
+userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
+  const kit = req.body;
+  if (!kit || typeof kit !== 'object') {
+    return res.status(400).json({ error: 'Invalid brand kit payload' });
+  }
+  // Sanitize: only keep known fields
+  const sanitized: Record<string, any> = {};
+  if (kit.colors && typeof kit.colors === 'object') sanitized.colors = kit.colors;
+  if (typeof kit.font_family === 'string') sanitized.font_family = kit.font_family;
+  if (typeof kit.site_name === 'string') sanitized.site_name = kit.site_name;
+  if (typeof kit.favicon_url === 'string') sanitized.favicon_url = kit.favicon_url;
+  if (typeof kit.logo_url === 'string') sanitized.logo_url = kit.logo_url;
+
+  const { error } = await supabase
+    .from('users')
+    .update({ brand_kit: sanitized })
+    .eq('id', req.dbUserId);
+  if (error) {
+    log.error('Failed to save brand kit', { error: error.message });
+    return res.status(500).json({ error: 'Failed to save' });
+  }
+  log.info('Brand kit saved', { userId: req.dbUserId });
+  res.json(sanitized);
 });
 
 // ── Stripe ────────────────────────────────────────────────────────────────────

@@ -256,15 +256,27 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
           continue;
         }
 
-        // Get quiz info for branding
+        // Get quiz info for branding (fall back to user-level brand kit)
         const { data: quiz } = await supabase
           .from('quizzes')
-          .select('title, slug, questions, outcomes, branding')
+          .select('title, slug, questions, outcomes, branding, user_id')
           .eq('id', leadData.quiz_id)
           .single();
 
-        const primaryColor = (quiz?.branding as any)?.colors?.primary || '#D2FF1D';
-        const siteName = (quiz?.branding as any)?.site_name || 'Squarespell Quiz';
+        let effectiveBranding = quiz?.branding as Record<string, any> | null;
+        if (!effectiveBranding?.colors?.primary && quiz?.user_id) {
+          const { data: owner } = await supabase
+            .from('users')
+            .select('brand_kit')
+            .eq('id', quiz.user_id)
+            .single();
+          if (owner?.brand_kit) {
+            effectiveBranding = { ...owner.brand_kit, ...(effectiveBranding || {}) };
+          }
+        }
+
+        const primaryColor = (effectiveBranding as any)?.colors?.primary || '#D2FF1D';
+        const siteName = (effectiveBranding as any)?.site_name || 'Squarespell Quiz';
 
         // Resolve merge tags ({{outcome_name}}, {{answer:q1}}, etc.)
         const mergeCtx = buildMergeContextFromData(
@@ -280,7 +292,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
             slug: (quiz as any)?.slug,
             questions: quiz?.questions as any[],
             outcomes: quiz?.outcomes as any[],
-            branding: quiz?.branding as Record<string, any>,
+            branding: effectiveBranding as Record<string, any>,
           },
         );
         const resolvedSubject = applyMergeTags(emailConfig.subject, mergeCtx);

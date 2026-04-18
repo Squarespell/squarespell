@@ -39,6 +39,8 @@ async function req(path: string, options?: RequestInit) {
 export const api = {
   setAuthToken,
   getUserPlan:          ()                          => req('/api/user/plan'),
+  getBrandKit:          ()                          => req('/api/user/brand-kit'),
+  saveBrandKit:         (d: any)                    => req('/api/user/brand-kit',              { method: 'PUT',  body: JSON.stringify(d) }),
   generateQuiz:         (data: any)                 => req('/api/generate',                    { method: 'POST', body: JSON.stringify(data) }),
   generate:             (data: any)                 => req('/api/generate',                    { method: 'POST', body: JSON.stringify(data) }),
   createQuiz:           (data: any)                 => req('/api/quizzes',                     { method: 'POST', body: JSON.stringify(data) }),

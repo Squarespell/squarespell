@@ -33,7 +33,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Bounce classification pipeline (hard/soft)
 - [x] Suppression list (global)
 - [ ] DKIM/SPF on Resend shared domain
-- [ ] Brand kit shared across quiz + email + popup
+- [x] Brand kit shared across quiz + email + popup
 - [x] Brand-import-from-URL scraper (logo, palette, fonts, tone)
 - [x] AI body generator (personalize around respondent answers)
 - [x] AI subject generator (quiz outcome + answers context)
