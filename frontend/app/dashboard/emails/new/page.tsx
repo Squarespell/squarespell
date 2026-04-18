@@ -1,6 +1,6 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '../../_components/DashboardShell';import { PageHeader } from '../../_components/PageShell';
 import { useDashboardAuth } from '../../_components/useDashboardAuth';
 import { DASHBOARD_COLORS as C } from '../../_components/dashboardColors';
@@ -13,18 +13,45 @@ import { AudienceStep, AudienceState } from './_steps/AudienceStep';
 import { DesignStep, DesignState } from './_steps/DesignStep';
 import { ReviewStep } from './_steps/ReviewStep';
 import { EMAIL_TEMPLATES } from './_steps/templates';
+import { EMAIL_TEMPLATES as BLOCK_TEMPLATES } from '../../../../lib/email/templates';
+import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
+import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
+import { renderBlocks } from '../../../../lib/email/renderBlocks';
 
 export default function NewCampaignPage() {
   const { status } = useDashboardAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateParam = searchParams.get('template');
   const [step, setStep] = useState<StepKey>('audience');
   const [audience, setAudience] = useState<AudienceState>({
     sourceKind: 'quiz', sourceQuizId: '', filters: {}, manualRecipients: '',
   });
+
+  // If ?template=<id> is in the URL, look up from the block-based gallery
+  const blockTpl = useMemo(() => {
+    if (!templateParam) return null;
+    return BLOCK_TEMPLATES.find(function (t) { return t.id === templateParam; }) || null;
+  }, [templateParam]);
+
   const defaultTpl = EMAIL_TEMPLATES[0];
-  const [design, setDesign] = useState<DesignState>({
-    templateId: defaultTpl.id, subject: defaultTpl.subjectSuggestion,
-    html: defaultTpl.html, fromName: '', fromEmail: '',
+  const [design, setDesign] = useState<DesignState>(() => {
+    if (blockTpl) {
+      const html = renderBlocks(blockTpl.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {
+        preheader: blockTpl.defaultPreheader,
+      });
+      return {
+        templateId: blockTpl.id,
+        subject: blockTpl.defaultSubject,
+        html,
+        fromName: '',
+        fromEmail: '',
+      };
+    }
+    return {
+      templateId: defaultTpl.id, subject: defaultTpl.subjectSuggestion,
+      html: defaultTpl.html, fromName: '', fromEmail: '',
+    };
   });
   const [mode, setMode] = useState<CampaignMode>('blast');
   const [recipientCount, setRecipientCount] = useState(0);
