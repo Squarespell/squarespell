@@ -63,9 +63,9 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Date-range + comparison picker
 - [x] Analytics v2 (funnel drop-off, question heatmap)
 - [x] A/B testing framework for quizzes
-- [ ] Attribution pipeline (quiz -> outcome -> email -> order)
-- [ ] Attribution dashboard ($ per quiz / outcome / campaign)
-- [ ] ROI attribution reporting
+- [x] Attribution pipeline (quiz -> outcome -> email -> order)
+- [x] Attribution dashboard ($ per quiz / outcome / campaign)
+- [x] ROI attribution reporting
 
 ## P5 (Squarespace Commerce)
 
