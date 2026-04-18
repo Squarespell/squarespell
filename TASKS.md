@@ -13,7 +13,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] CAN-SPAM footer with business address
 - [x] Onboarding checklist widget with % complete
 - [x] Merge tags: {{outcome_name}}, {{answer:slug}}, {{quiz_name}}
-- [ ] Persistent top banner slot (trial, billing, announcements)
+- [x] Persistent top banner slot (trial, billing, announcements)
 
 ## P1
 

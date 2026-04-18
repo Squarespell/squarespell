@@ -19,7 +19,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useClerk, useUser } from '@clerk/nextjs';
+import { useAuth, useClerk, useUser } from '@clerk/nextjs';
+import { TopBanner } from './TopBanner';
 
 const COLORS = {
   BG: '#07090c',
@@ -260,8 +261,10 @@ export function DashboardShell({
   const router = useRouter();
   const { signOut } = useClerk();
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [bannerToken, setBannerToken] = useState<string | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -269,6 +272,18 @@ export function DashboardShell({
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  // Fetch auth token for the TopBanner
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const t = await getToken();
+        if (!cancelled) setBannerToken(t);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [getToken]);
 
   // Close drawer on route change
   useEffect(() => {
@@ -638,6 +653,9 @@ export function DashboardShell({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{topbarRight}</div>
         </header>
         )}
+
+        {/* Persistent banner slot (trial countdown, billing alerts, announcements) */}
+        <TopBanner token={bannerToken} />
 
         {/* Page content */}
         <main style={{ flex: 1, padding: contentPadding, minWidth: 0 }}>{children}</main>
