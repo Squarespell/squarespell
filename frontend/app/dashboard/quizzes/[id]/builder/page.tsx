@@ -168,6 +168,7 @@ export default function QuizBuilderPage() {
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [showOutcomes, setShowOutcomes] = useState(false);
+  const [rightTab, setRightTab] = useState<'outcomes' | 'routing'>('outcomes');
 
   // Toast
   const [toast, setToast] = useState('');
@@ -545,15 +546,57 @@ export default function QuizBuilderPage() {
               }}
             />
           ) : (
-            <OutcomesPanel
-              outcomes={quiz.outcomes || []}
-              onAdd={addOutcome}
-              onUpdate={updateOutcome}
-              onDelete={deleteOutcome}
-              automations={automations}
-              onAutomationUpdate={updateAutomation}
-              quizId={quizId}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              {/* Tab bar */}
+              <div style={{
+                display: 'flex', gap: 0,
+                borderBottom: '1px solid ' + COLORS.BORDER,
+                background: COLORS.ELEVATED,
+                padding: '0 24px',
+              }}>
+                {(['outcomes', 'routing'] as const).map(function (tab) {
+                  var active = tab === rightTab;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={function () { setRightTab(tab); }}
+                      style={{
+                        padding: '12px 16px',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: 'none',
+                        background: 'none',
+                        color: active ? COLORS.ACCENT : COLORS.TEXT_MUTED,
+                        borderBottom: active ? '2px solid ' + COLORS.ACCENT : '2px solid transparent',
+                        transition: 'all 0.15s ease',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {tab}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ flex: 1, overflow: 'auto' }}>
+                {rightTab === 'outcomes' ? (
+                  <OutcomesPanel
+                    outcomes={quiz.outcomes || []}
+                    onAdd={addOutcome}
+                    onUpdate={updateOutcome}
+                    onDelete={deleteOutcome}
+                    automations={automations}
+                    onAutomationUpdate={updateAutomation}
+                    quizId={quizId}
+                  />
+                ) : (
+                  <RoutingVisualization
+                    questions={quiz.questions}
+                    outcomes={quiz.outcomes || []}
+                  />
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -1264,6 +1307,318 @@ function QuestionEditor({
             Add Option
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ========================================================================= */
+/* RoutingVisualization Component                                           */
+/* ========================================================================= */
+
+const ROUTE_COLORS = [
+  '#D2FF1D', '#22d3ee', '#f472b6', '#a78bfa', '#fb923c',
+  '#34d399', '#f87171', '#facc15', '#818cf8', '#38bdf8',
+];
+
+function RoutingVisualization({
+  questions,
+  outcomes,
+}: {
+  questions: Question[];
+  outcomes: Outcome[];
+}) {
+  // Compute the max possible score (sum of max option score per question)
+  var maxPossible = 0;
+  var minPossible = 0;
+  questions.forEach(function (q) {
+    if (q.options.length === 0) return;
+    var scores = q.options.map(function (o) { return o.score || 0; });
+    maxPossible += Math.max.apply(null, scores);
+    minPossible += Math.min.apply(null, scores);
+  });
+
+  // Check if branching (next_question_id) is used
+  var hasBranching = questions.some(function (q) {
+    return q.options.some(function (o) { return !!o.next_question_id; });
+  });
+
+  // For each outcome, determine which score range it covers
+  var sortedOutcomes = outcomes.slice().sort(function (a, b) {
+    return (a.score_min || 0) - (b.score_min || 0);
+  });
+
+  // Build per-question contribution summary
+  var questionSummaries = questions.map(function (q, qi) {
+    var scores = q.options.map(function (o) { return o.score || 0; });
+    var lo = scores.length > 0 ? Math.min.apply(null, scores) : 0;
+    var hi = scores.length > 0 ? Math.max.apply(null, scores) : 0;
+    return { question: q, index: qi, lo: lo, hi: hi };
+  });
+
+  if (questions.length === 0 && outcomes.length === 0) {
+    return (
+      <div style={{ padding: 24, color: COLORS.TEXT_MUTED, textAlign: 'center', marginTop: 60 }}>
+        <p style={{ fontSize: 14 }}>Add questions and outcomes to see routing.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ maxWidth: 900 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.TEXT, margin: '0 0 4px 0' }}>Score routing</h2>
+        <p style={{ fontSize: 13, color: COLORS.TEXT_MUTED, margin: '0 0 20px 0' }}>
+          Each answer adds points. The final score determines the outcome.
+        </p>
+
+        {/* Score range bar */}
+        {outcomes.length > 0 && (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: COLORS.TEXT_SUBTLE, marginBottom: 8 }}>
+              Outcome score ranges ({minPossible} - {maxPossible} possible)
+            </div>
+            <div style={{
+              display: 'flex', borderRadius: 6, overflow: 'hidden',
+              border: '1px solid ' + COLORS.BORDER, height: 32,
+            }}>
+              {sortedOutcomes.map(function (oc, i) {
+                var lo = oc.score_min != null ? oc.score_min : minPossible;
+                var hi = oc.score_max != null ? oc.score_max : maxPossible;
+                var range = maxPossible - minPossible || 1;
+                var widthPct = ((hi - lo) / range) * 100;
+                var color = ROUTE_COLORS[i % ROUTE_COLORS.length];
+                return (
+                  <div
+                    key={oc.id}
+                    title={oc.title + ': ' + lo + ' - ' + hi}
+                    style={{
+                      width: widthPct + '%',
+                      minWidth: 24,
+                      background: color + '18',
+                      borderRight: i < sortedOutcomes.length - 1 ? '1px solid ' + COLORS.BORDER : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 4px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, color: color,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {oc.title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+              <span style={{ fontSize: 10, color: COLORS.TEXT_SUBTLE }}>{minPossible}</span>
+              <span style={{ fontSize: 10, color: COLORS.TEXT_SUBTLE }}>{maxPossible}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Question flow */}
+        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: COLORS.TEXT_SUBTLE, marginBottom: 10 }}>
+          Question flow ({questions.length} question{questions.length !== 1 ? 's' : ''})
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {questionSummaries.map(function (qs, qi) {
+            return (
+              <div key={qs.question.id} style={{
+                background: COLORS.ELEVATED,
+                border: '1px solid ' + COLORS.BORDER,
+                borderRadius: 10,
+                padding: 16,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: COLORS.ACCENT + '20', color: COLORS.ACCENT,
+                    fontSize: 11, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{qi + 1}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.TEXT, flex: 1 }}>
+                    {qs.question.text || 'Untitled question'}
+                  </div>
+                  <div style={{ fontSize: 11, color: COLORS.TEXT_SUBTLE }}>
+                    {qs.lo === qs.hi ? qs.lo + ' pts' : qs.lo + ' - ' + qs.hi + ' pts'}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {qs.question.options.map(function (opt) {
+                    var score = opt.score || 0;
+                    // Color-code by which outcome this score leans toward
+                    var matchIdx = -1;
+                    if (sortedOutcomes.length > 0) {
+                      for (var k = 0; k < sortedOutcomes.length; k++) {
+                        var oLo = sortedOutcomes[k].score_min != null ? sortedOutcomes[k].score_min! : minPossible;
+                        var oHi = sortedOutcomes[k].score_max != null ? sortedOutcomes[k].score_max! : maxPossible;
+                        var midpoint = (oLo + oHi) / 2;
+                        if (matchIdx === -1 || Math.abs(score - midpoint) < Math.abs(score - ((sortedOutcomes[matchIdx].score_min || 0) + (sortedOutcomes[matchIdx].score_max || 0)) / 2)) {
+                          matchIdx = k;
+                        }
+                      }
+                    }
+                    var pillColor = matchIdx >= 0 ? ROUTE_COLORS[matchIdx % ROUTE_COLORS.length] : COLORS.TEXT_MUTED;
+                    var branchTarget = opt.next_question_id
+                      ? questions.findIndex(function (qq) { return qq.id === opt.next_question_id; })
+                      : -1;
+                    return (
+                      <div
+                        key={opt.id}
+                        style={{
+                          padding: '5px 10px',
+                          background: pillColor + '12',
+                          border: '1px solid ' + pillColor + '30',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          color: COLORS.TEXT,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                        title={opt.text + ' (' + score + ' pts)' + (branchTarget >= 0 ? ' -> Q' + (branchTarget + 1) : '')}
+                      >
+                        <span style={{ color: 'rgba(255,255,255,0.7)' }}>{opt.text}</span>
+                        <span style={{
+                          fontWeight: 700, fontSize: 11, color: pillColor,
+                          padding: '1px 5px', background: pillColor + '18', borderRadius: 4,
+                        }}>
+                          {score > 0 ? '+' : ''}{score}
+                        </span>
+                        {branchTarget >= 0 && (
+                          <span style={{ fontSize: 10, color: COLORS.TEXT_SUBTLE }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+                              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                            </svg>
+                            Q{branchTarget + 1}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Outcome cards */}
+        {outcomes.length > 0 && (
+          <div style={{ marginTop: 28 }}>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: COLORS.TEXT_SUBTLE, marginBottom: 10 }}>
+              Outcomes ({outcomes.length})
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {sortedOutcomes.map(function (oc, i) {
+                var color = ROUTE_COLORS[i % ROUTE_COLORS.length];
+                var lo = oc.score_min != null ? oc.score_min : '?';
+                var hi = oc.score_max != null ? oc.score_max : '?';
+                return (
+                  <div
+                    key={oc.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '12px 16px',
+                      background: COLORS.ELEVATED,
+                      border: '1px solid ' + COLORS.BORDER,
+                      borderLeft: '3px solid ' + color,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.TEXT }}>{oc.title}</div>
+                      {oc.description && (
+                        <div style={{ fontSize: 12, color: COLORS.TEXT_MUTED, marginTop: 2 }}>{oc.description}</div>
+                      )}
+                    </div>
+                    <div style={{
+                      padding: '4px 10px',
+                      background: color + '15',
+                      border: '1px solid ' + color + '30',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: color,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {lo} - {hi} pts
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Branching info */}
+        {hasBranching && (
+          <div style={{
+            marginTop: 20,
+            padding: '12px 16px',
+            background: 'rgba(251,146,60,0.08)',
+            border: '1px solid rgba(251,146,60,0.2)',
+            borderRadius: 8,
+            fontSize: 12,
+            color: '#fb923c',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: 6 }}>
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            This quiz uses branching logic. Some answers skip to specific questions (shown with arrows above).
+          </div>
+        )}
+
+        {/* Coverage warnings */}
+        {outcomes.length > 0 && (function () {
+          var gaps: string[] = [];
+          // Check for gaps between outcome ranges
+          for (var i = 0; i < sortedOutcomes.length - 1; i++) {
+            var currMax = sortedOutcomes[i].score_max;
+            var nextMin = sortedOutcomes[i + 1].score_min;
+            if (currMax != null && nextMin != null && nextMin > currMax + 1) {
+              gaps.push('Gap between ' + currMax + ' and ' + nextMin);
+            }
+          }
+          // Check if outcomes cover full range
+          if (sortedOutcomes.length > 0) {
+            var firstMin = sortedOutcomes[0].score_min;
+            var lastMax = sortedOutcomes[sortedOutcomes.length - 1].score_max;
+            if (firstMin != null && firstMin > minPossible) {
+              gaps.push('No outcome covers scores below ' + firstMin);
+            }
+            if (lastMax != null && lastMax < maxPossible) {
+              gaps.push('No outcome covers scores above ' + lastMax);
+            }
+          }
+          if (gaps.length === 0) return null;
+          return (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              borderRadius: 8,
+              fontSize: 12,
+              color: COLORS.ERROR,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: 6 }}>
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              Score coverage issues:
+              <ul style={{ margin: '6px 0 0 0', paddingLeft: 18 }}>
+                {gaps.map(function (g, gi) { return <li key={gi} style={{ marginBottom: 2 }}>{g}</li>; })}
+              </ul>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
