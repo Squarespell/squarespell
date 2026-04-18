@@ -10,7 +10,7 @@
  * quizzes in the dropdown lets them spot differences across sites.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
@@ -103,6 +103,218 @@ function ColorSwatch({ label, value }: { label: string; value: string }) {
   );
 }
 
+// -----------------------------------------------------------------------
+// Scrape-from-URL input
+// -----------------------------------------------------------------------
+
+function ScrapeUrlInput({
+  onResult,
+  loading,
+  onLoadingChange,
+  token,
+}: {
+  onResult: (brand: any) => void;
+  loading: boolean;
+  onLoadingChange: (v: boolean) => void;
+  token: string | null;
+}) {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+
+  async function handleScrape() {
+    const trimmed = url.trim();
+    if (!trimmed || !token) return;
+    setError('');
+    onLoadingChange(true);
+    try {
+      const res = await fetch(`${API}/api/scrape-brand`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Scrape failed (${res.status})`);
+      }
+      const data = await res.json();
+      onResult(data);
+    } catch (e: any) {
+      setError(e.message || 'Something went wrong');
+    } finally {
+      onLoadingChange(false);
+    }
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleScrape(); }}
+          placeholder="https://your-squarespace-site.com"
+          style={{
+            flex: 1,
+            padding: '11px 14px',
+            background: C.SURFACE,
+            border: `1px solid ${C.BORDER}`,
+            borderRadius: 10,
+            fontSize: 13.5,
+            color: C.TEXT,
+            fontFamily: '"DM Sans",system-ui,sans-serif',
+            outline: 'none',
+          }}
+        />
+        <PrimaryButton
+          onClick={handleScrape}
+          disabled={loading || !url.trim()}
+        >
+          {loading ? 'Scanning...' : 'Import brand'}
+        </PrimaryButton>
+      </div>
+      {error && (
+        <div style={{ fontSize: 12.5, color: '#ef4444', lineHeight: 1.4 }}>
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// Brand display (shared between quiz-derived and scraped brands)
+// -----------------------------------------------------------------------
+
+function BrandDisplay({ brand, label }: {
+  brand: { colors?: Record<string, string>; font_family?: string; site_name?: string; favicon_url?: string };
+  label?: string;
+}) {
+  const colors = Object.entries(brand.colors || {}).filter(([, v]) => typeof v === 'string' && v);
+
+  return (
+    <div style={{ display: 'grid', gap: 20 }}>
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          {brand.favicon_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={brand.favicon_url}
+              alt=""
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 10,
+                background: C.SURFACE,
+                border: `1px solid ${C.BORDER}`,
+                objectFit: 'contain',
+                padding: 6,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 10,
+                background: C.SURFACE,
+                border: `1px solid ${C.BORDER}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: C.TEXT_MUTED,
+                fontSize: 18,
+                fontWeight: 700,
+              }}
+            >
+              {(brand.site_name || '?').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
+              {brand.site_name || 'Unknown brand'}
+            </div>
+            {label && (
+              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>{label}</div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <h2 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
+          Palette
+        </h2>
+        {colors.length === 0 ? (
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
+            No colors were detected.
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: 12,
+            }}
+          >
+            {colors.map(([l, value]) => (
+              <ColorSwatch key={l} label={l} value={value as string} />
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card>
+        <h2 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
+          Typography
+        </h2>
+        <div
+          style={{
+            padding: 20,
+            border: `1px solid ${C.BORDER}`,
+            borderRadius: 12,
+            background: C.SURFACE,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: C.TEXT_MUTED,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: 10,
+            }}
+          >
+            Font family
+          </div>
+          <div
+            style={{
+              fontSize: 26,
+              color: C.TEXT,
+              fontFamily: brand.font_family || 'inherit',
+              marginBottom: 6,
+              lineHeight: 1.2,
+            }}
+          >
+            The quick brown fox jumps over the lazy dog.
+          </div>
+          <div style={{ fontSize: 12.5, color: C.TEXT_MUTED, fontFamily: 'ui-monospace,monospace' }}>
+            {brand.font_family || 'sans-serif (fallback)'}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// Page
+// -----------------------------------------------------------------------
+
 export default function BrandKitPage() {
   const { token, status: authStatus } = useDashboardAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -110,6 +322,10 @@ export default function BrandKitPage() {
   const [quiz, setQuiz] = useState<QuizFull | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
+
+  // Standalone scrape state (independent of quiz selection)
+  const [scrapedBrand, setScrapedBrand] = useState<any>(null);
+  const [scraping, setScraping] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -158,11 +374,6 @@ export default function BrandKitPage() {
     };
   }, [token, selectedId]);
 
-  const colors = useMemo(() => {
-    const raw = quiz?.branding?.colors ?? {};
-    return Object.entries(raw).filter(([, v]) => typeof v === 'string' && v);
-  }, [quiz]);
-
   if (authStatus === 'loading') {
     return (
       <DashboardShell title="Brand kit">
@@ -171,6 +382,9 @@ export default function BrandKitPage() {
     );
   }
 
+  // Determine which brand to display: scraped (priority) or quiz-derived
+  const quizBrand = quiz?.branding || null;
+
   return (
     <DashboardShell title="Brand kit">
       <PageHeader
@@ -178,9 +392,42 @@ export default function BrandKitPage() {
         subtitle="The brand signals Squarespell detected from your website"
       />
 
+      {/* ---- Import from URL (always visible) ---- */}
+      <Card style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 10 }}>
+          <h2 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
+            Import from URL
+          </h2>
+          <p style={{ margin: 0, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
+            Paste any Squarespace site URL to detect its palette, fonts, and brand name.
+          </p>
+        </div>
+        <ScrapeUrlInput
+          token={token}
+          loading={scraping}
+          onLoadingChange={setScraping}
+          onResult={(data) => {
+            setScrapedBrand({
+              colors: data.colors,
+              font_family: data.font_family,
+              site_name: data.site_name,
+              favicon_url: data.favicon_url,
+            });
+          }}
+        />
+      </Card>
+
+      {/* ---- Scraped brand result ---- */}
+      {scrapedBrand && (
+        <div style={{ marginBottom: 24 }}>
+          <BrandDisplay brand={scrapedBrand} label="Imported from URL" />
+        </div>
+      )}
+
+      {/* ---- Quiz-derived brand (existing behavior) ---- */}
       {loadingList ? (
         <PageLoading />
-      ) : quizzes.length === 0 ? (
+      ) : quizzes.length === 0 && !scrapedBrand ? (
         <EmptyState
           icon={
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -192,10 +439,10 @@ export default function BrandKitPage() {
             </svg>
           }
           title="No brand kit yet"
-          body="When you create a quiz from your website, Squarespell scrapes your palette, fonts, logo, and brand name. Start a quiz to see your brand kit here."
+          body="Paste a URL above to import your brand, or create a quiz to auto-detect your palette, fonts, and logo."
           action={<PrimaryButton href="/tools/quiz-funnel/build">+ Create a quiz</PrimaryButton>}
         />
-      ) : (
+      ) : quizzes.length > 0 ? (
         <div style={{ display: 'grid', gap: 20 }}>
           <Card>
             <div
@@ -219,7 +466,7 @@ export default function BrandKitPage() {
                     marginBottom: 6,
                   }}
                 >
-                  Showing brand from
+                  Brand from quiz
                 </div>
                 <select
                   value={selectedId}
@@ -248,7 +495,7 @@ export default function BrandKitPage() {
                   href={quiz.settings.website_url as string}
                   target="_blank"
                 >
-                  Visit site ↗
+                  Visit site
                 </GhostButton>
               )}
             </div>
@@ -256,134 +503,20 @@ export default function BrandKitPage() {
 
           {loadingQuiz || !quiz ? (
             <PageLoading />
-          ) : (
+          ) : quizBrand ? (
             <>
-              <Card>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 16,
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  {quiz.branding?.favicon_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={quiz.branding.favicon_url}
-                      alt=""
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 10,
-                        background: C.SURFACE,
-                        border: `1px solid ${C.BORDER}`,
-                        objectFit: 'contain',
-                        padding: 6,
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 10,
-                        background: C.SURFACE,
-                        border: `1px solid ${C.BORDER}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: C.TEXT_MUTED,
-                        fontSize: 18,
-                        fontWeight: 700,
-                      }}
-                    >
-                      {(quiz.branding?.site_name || quiz.title || '?').charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
-                      {quiz.branding?.site_name || 'Unknown brand'}
-                    </div>
-                    <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
-                      Detected from {quiz.title || 'this quiz'}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card>
-                <h2 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-                  Palette
-                </h2>
-                {colors.length === 0 ? (
-                  <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
-                    No colors were detected. You can still edit the quiz to pick your own palette.
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                      gap: 12,
-                    }}
-                  >
-                    {colors.map(([label, value]) => (
-                      <ColorSwatch key={label} label={label} value={value as string} />
-                    ))}
-                  </div>
-                )}
-              </Card>
-
-              <Card>
-                <h2 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-                  Typography
-                </h2>
-                <div
-                  style={{
-                    padding: 20,
-                    border: `1px solid ${C.BORDER}`,
-                    borderRadius: 12,
-                    background: C.SURFACE,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: C.TEXT_MUTED,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: 10,
-                    }}
-                  >
-                    Font family
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 26,
-                      color: C.TEXT,
-                      fontFamily: quiz.branding?.font_family || 'inherit',
-                      marginBottom: 6,
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    The quick brown fox jumps over the lazy dog.
-                  </div>
-                  <div style={{ fontSize: 12.5, color: C.TEXT_MUTED, fontFamily: 'ui-monospace,monospace' }}>
-                    {quiz.branding?.font_family || 'sans-serif (fallback)'}
-                  </div>
-                </div>
-              </Card>
-
-              <Card>
+              <BrandDisplay
+                brand={quizBrand}
+                label={`Detected from ${quiz.title || 'this quiz'}`}
+              />
+              <Card style={{ marginTop: 0 }}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
                   <div style={{ minWidth: 0, flex: '1 1 280px' }}>
                     <h3 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
                       Want to tweak it?
                     </h3>
                     <p style={{ margin: 0, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
-                      You can override any color or font directly on the quiz you're viewing. Changes
+                      You can override any color or font directly on the quiz. Changes
                       apply instantly to the live embed.
                     </p>
                   </div>
@@ -391,9 +524,15 @@ export default function BrandKitPage() {
                 </div>
               </Card>
             </>
+          ) : (
+            <Card>
+              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
+                No brand data found on this quiz. Use the URL import above to scan your site.
+              </div>
+            </Card>
           )}
         </div>
-      )}
+      ) : null}
     </DashboardShell>
   );
 }
