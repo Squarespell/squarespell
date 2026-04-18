@@ -62,3 +62,41 @@ services:
         sync: false
     healthCheckPath: /health
     autoDeploy: true
+
+  # Cron job: process scheduled email campaigns every 5 minutes
+  - type: cron
+    name: squarespell-scheduled-sends
+    runtime: node
+    region: oregon
+    plan: starter
+    schedule: "*/5 * * * *"
+    rootDir: backend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: >
+      node -e "
+        const https = require('https');
+        const url = process.env.BACKEND_URL || 'https://squarespell-api.onrender.com';
+        const data = JSON.stringify({});
+        const req = https.request(url + '/api/cron/process-scheduled-sends', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-cron-secret': process.env.CRON_SECRET || ''
+          }
+        }, (res) => {
+          let body = '';
+          res.on('data', c => body += c);
+          res.on('end', () => {
+            console.log('Status:', res.statusCode, body);
+            process.exit(res.statusCode === 200 ? 0 : 1);
+          });
+        });
+        req.on('error', (e) => { console.error(e); process.exit(1); });
+        req.write(data);
+        req.end();
+      "
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false

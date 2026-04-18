@@ -9,6 +9,7 @@ import { sendResultEmail } from '../services/resultEmail';
 import { isUnsubscribed, buildUnsubscribeHeaders, buildUnsubscribeUrl } from '../services/unsubscribe';
 import { enqueueSequenceEmails, processEmailQueue } from '../services/emailSequence';
 import { runCleanup } from '../services/databaseCleanup';
+import { processScheduledCampaigns } from '../services/scheduledSendDispatcher';
 import * as quizPaymentsService from '../services/quizPayments';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
@@ -1069,6 +1070,21 @@ cronRouter.post('/process-email-queue', async (_req, res) => {
   } catch (err: any) {
     console.error('[Cron] process-email-queue failed:', err);
     res.status(500).json({ error: err?.message || 'queue drain failed' });
+  }
+});
+
+cronRouter.post('/process-scheduled-sends', async (req, res) => {
+  const cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const result = await processScheduledCampaigns();
+    console.log(`[Cron] scheduled-sends: processed ${result.processed} campaign(s)`);
+    res.json({ ok: true, ...result });
+  } catch (err: any) {
+    console.error('[Cron] process-scheduled-sends failed:', err);
+    res.status(500).json({ error: err?.message || 'scheduled send dispatch failed' });
   }
 });
 

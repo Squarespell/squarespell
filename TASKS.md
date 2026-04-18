@@ -23,7 +23,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [ ] PLG guest-session to draft-claim E2E
 - [ ] GDPR consent gating on quiz + email
 - [x] Send test email to self
-- [ ] Schedule picker UI
+- [x] Schedule picker UI
 - [ ] Render cron dispatcher for scheduled sends
 
 ## P2
