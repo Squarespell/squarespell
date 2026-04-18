@@ -24,12 +24,18 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export type CampaignMode = 'blast' | 'live';
+export type AnswerFilter = {
+  question_id: string;
+  value: string;
+};
+
 export type SourceFilters = {
   outcome_id?: string;
   min_score?: number;
   max_score?: number;
   since?: string;
   until?: string;
+  answer_filters?: AnswerFilter[];
 };
 
 export type Campaign = {
@@ -84,6 +90,17 @@ export async function listSourceQuizzes(): Promise<SourceQuiz[]> {
 
 export async function listOutcomesForQuiz(quizId: string): Promise<string[]> {
   return req(`/api/emails/source-quizzes/${quizId}/outcomes`);
+}
+
+export type QuizQuestion = {
+  id: string;
+  text: string;
+  type: string;
+  options: { id: string; text: string }[];
+};
+
+export async function listQuestionsForQuiz(quizId: string): Promise<QuizQuestion[]> {
+  return req(`/api/emails/source-quizzes/${quizId}/questions`);
 }
 
 export async function previewRecipients(quizId: string, filters: SourceFilters = {}) {

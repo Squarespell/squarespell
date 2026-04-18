@@ -29,6 +29,15 @@ async function resolveRecipients(
   if (typeof filters?.max_score === 'number') q = q.lte('score', filters.max_score);
   if (filters?.since) q = q.gte('created_at', filters.since);
   if (filters?.until) q = q.lte('created_at', filters.until);
+  // Answer-based segment filters: each rule matches a specific question -> value
+  if (Array.isArray(filters?.answer_filters) && filters.answer_filters.length > 0) {
+    for (const af of filters.answer_filters) {
+      if (af.question_id && af.value) {
+        // JSONB containment: answers @> {"questionId": "value"}
+        q = q.contains('answers', { [af.question_id]: af.value });
+      }
+    }
+  }
   const { data, error } = await q;
   if (error) throw error;
   const seen = new Set<string>();
@@ -92,6 +101,24 @@ r.get('/source-quizzes/:id/outcomes', async (req, res) => {
   const set = new Set<string>();
   (data || []).forEach((r: any) => r.outcome_id && set.add(r.outcome_id));
   res.json([...set]);
+});
+
+// Questions for answer-based segment filters
+r.get('/source-quizzes/:id/questions', async (req, res) => {
+  const tenantId = req.dbUserId;
+  const { data, error } = await supabase.from('quizzes')
+    .select('questions')
+    .eq('id', req.params.id).eq('user_id', tenantId).single();
+  if (error) return res.status(500).json({ error: error.message });
+  const questions = (data?.questions || []) as any[];
+  // Return simplified question objects with id, text, and options
+  const simplified = questions.map((q: any) => ({
+    id: q.id,
+    text: q.text || q.label || 'Untitled question',
+    type: q.type || 'single_select',
+    options: (q.options || []).map((o: any) => ({ id: o.id, text: o.text || o.label || '' })),
+  }));
+  res.json(simplified);
 });
 
 r.get('/campaigns', async (req, res) => {

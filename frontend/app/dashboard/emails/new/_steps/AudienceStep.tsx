@@ -3,8 +3,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 import { PrimaryButton } from '../../../_components/PageShell';
 import {
-  listSourceQuizzes, listOutcomesForQuiz, previewRecipients,
-  SourceQuiz, SourceFilters,
+  listSourceQuizzes, listOutcomesForQuiz, listQuestionsForQuiz, previewRecipients,
+  SourceQuiz, SourceFilters, QuizQuestion, AnswerFilter,
 } from '../../../../../lib/emails';
 
 export type AudienceState = {
@@ -26,6 +26,7 @@ export function AudienceStep({
   const [quizzes, setQuizzes] = useState<SourceQuiz[] | null>(null);
   const [quizError, setQuizError] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [count, setCount] = useState<number | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -41,8 +42,9 @@ export function AudienceStep({
   }, []);
 
   useEffect(() => {
-    if (!state.sourceQuizId) { setOutcomes([]); return; }
+    if (!state.sourceQuizId) { setOutcomes([]); setQuestions([]); return; }
     listOutcomesForQuiz(state.sourceQuizId).then(setOutcomes).catch(() => setOutcomes([]));
+    listQuestionsForQuiz(state.sourceQuizId).then(setQuestions).catch(() => setQuestions([]));
   }, [state.sourceQuizId]);
 
   useEffect(() => {
@@ -163,6 +165,84 @@ export function AudienceStep({
                       style={inputStyle} />
                   </div>
                 </div>
+
+                {questions.length > 0 && (
+                  <>
+                    <div style={{ borderTop: '1px solid ' + C.BORDER, margin: '14px 0 10px', paddingTop: 12 }}>
+                      <Label>Segment by answer</Label>
+                      <div style={{ color: C.TEXT_SUBTLE, fontSize: 12, marginBottom: 10 }}>
+                        Only include leads who gave a specific answer to a question.
+                      </div>
+                    </div>
+                    {(state.filters.answer_filters || []).map(function (af, idx) {
+                      const q = questions.find(function (qq) { return qq.id === af.question_id; });
+                      return (
+                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginBottom: 8, alignItems: 'end' }}>
+                          <div>
+                            <MiniLabel>Question</MiniLabel>
+                            <select
+                              value={af.question_id}
+                              onChange={function (e) {
+                                var updated = (state.filters.answer_filters || []).slice();
+                                updated[idx] = { question_id: e.target.value, value: '' };
+                                setState({ filters: { ...state.filters, answer_filters: updated } });
+                              }}
+                              style={inputStyle}
+                            >
+                              <option value="">Pick a question</option>
+                              {questions.filter(function (qq) { return qq.options.length > 0; }).map(function (qq) {
+                                return <option key={qq.id} value={qq.id}>{qq.text}</option>;
+                              })}
+                            </select>
+                          </div>
+                          <div>
+                            <MiniLabel>Answered</MiniLabel>
+                            <select
+                              value={af.value}
+                              onChange={function (e) {
+                                var updated = (state.filters.answer_filters || []).slice();
+                                updated[idx] = { ...updated[idx], value: e.target.value };
+                                setState({ filters: { ...state.filters, answer_filters: updated } });
+                              }}
+                              style={inputStyle}
+                            >
+                              <option value="">Pick an answer</option>
+                              {(q?.options || []).map(function (o) {
+                                return <option key={o.id} value={o.id}>{o.text}</option>;
+                              })}
+                            </select>
+                          </div>
+                          <button
+                            onClick={function () {
+                              var updated = (state.filters.answer_filters || []).filter(function (_, i) { return i !== idx; });
+                              setState({ filters: { ...state.filters, answer_filters: updated.length > 0 ? updated : undefined } });
+                            }}
+                            style={{
+                              padding: '8px 10px', background: 'transparent', border: '1px solid ' + C.BORDER,
+                              borderRadius: 8, color: C.TEXT_MUTED, cursor: 'pointer', fontSize: 12,
+                            }}
+                            title="Remove filter"
+                          >
+                            <IconX size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button
+                      onClick={function () {
+                        var current = state.filters.answer_filters || [];
+                        setState({ filters: { ...state.filters, answer_filters: current.concat([{ question_id: '', value: '' }]) } });
+                      }}
+                      style={{
+                        padding: '7px 14px', background: 'transparent', border: '1px dashed ' + C.BORDER,
+                        borderRadius: 8, color: C.ACCENT, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                        display: 'flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <IconPlus size={12} /> Add answer filter
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </>
@@ -348,6 +428,20 @@ function IconCheck({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+function IconX({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+function IconPlus({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   );
 }

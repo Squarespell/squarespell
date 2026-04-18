@@ -52,8 +52,8 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Bot filtering toggle
 - [ ] Segments = quiz answers audience builder
 - [x] Add Templates sidebar nav entry under Emails
-- [ ] Wire template gallery into New Campaign wizard
-- [ ] Template gallery for 7 Squarespace site types
+- [x] Wire template gallery into New Campaign wizard
+- [x] Template gallery for 7 Squarespace site types
 
 ## P4
 
