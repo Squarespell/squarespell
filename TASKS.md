@@ -41,8 +41,8 @@ Durable task list. Edit freely. Order within a priority band is rough.
 
 ## P3
 
-- [ ] Visual editor canvas (drag-drop blocks)
-- [ ] Inspector panel (right sidebar, edit block props)
+- [x] Visual editor canvas (drag-drop blocks)
+- [x] Inspector panel (right sidebar, edit block props)
 - [x] Live preview iframe that updates on edit
 - [x] Mobile / desktop preview toggle
 - [x] Dark-mode email-client preview
