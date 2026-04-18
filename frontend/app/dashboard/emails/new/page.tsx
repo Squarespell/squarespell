@@ -59,12 +59,13 @@ export default function NewCampaignPage() {
         source_quiz_id: audience.sourceKind === 'quiz' ? audience.sourceQuizId : undefined,
         source_filters: audience.sourceKind === 'quiz' ? audience.filters : undefined,
       } as any);
-      if (!send) { router.push('/dashboard/emails'); return; }
+      if (!send) { router.push(`/dashboard/emails/${campaign.id}`); return; }
       const manualList = audience.sourceKind === 'manual'
         ? audience.manualRecipients.split(/[\s,;\n]+/).map(s => s.trim()).filter(s => s.includes('@'))
         : undefined;
       const r = await sendCampaign(campaign.id, manualList);
       setResult(r);
+      setTimeout(() => router.push(`/dashboard/emails/${campaign.id}`), 1500);
     } catch (e: any) {
       setResult({ error: e.message });
     } finally {

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { PageHeader, Card, EmptyState, PrimaryButton, PageLoading, Pill } from '../_components/PageShell';
@@ -32,6 +33,7 @@ function quotaBarColor(pct: number): string {
 
 export default function EmailsPage() {
   const { token, status: authStatus } = useDashboardAuth();
+  const router = useRouter();
   const [items, setItems] = useState<Campaign[]>([]);
   const [quota, setQuota] = useState<{used:number;cap:number;plan:string}|null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,7 +150,7 @@ export default function EmailsPage() {
               </thead>
               <tbody>
                 {items.map(c => (
-                  <tr key={c.id} style={{ borderTop: `1px solid ${C.BORDER}` }}>
+                  <tr key={c.id} onClick={() => router.push(`/dashboard/emails/${c.id}`)} style={{ borderTop: `1px solid ${C.BORDER}`, cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     <td style={{ padding: '14px 12px', color: C.TEXT, fontWeight: 500 }}>
                       <Link href={`/dashboard/emails/${c.id}`} style={{ color: C.TEXT, textDecoration: 'none' }}>
                         {c.name || 'Untitled campaign'}
