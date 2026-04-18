@@ -167,7 +167,7 @@ export function TopBanner({ token, announcement }: TopBannerProps) {
     setDismissed(next);
     setBanner(null);
     try {
-      localStorage.setItem('sq_banner_dismissed', JSON.stringify([...next]));
+      localStorage.setItem('sq_banner_dismissed', JSON.stringify(Array.from(next)));
     } catch { /* ignore */ }
   }
 
