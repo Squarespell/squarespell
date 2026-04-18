@@ -111,3 +111,20 @@ export async function previewRecipients(quizId: string, filters: SourceFilters =
 export async function testSendCampaign(id: string, to: string) {
   return req(`/api/emails/campaigns/${id}/test-send`, { method: 'POST', body: JSON.stringify({ to }) });
 }
+
+export type CampaignStats = {
+  total: number;
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+  hard_bounced: number;
+  soft_bounced: number;
+  complained: number;
+  failed: number;
+};
+
+export async function getCampaignStats(id: string): Promise<CampaignStats> {
+  return req(`/api/emails/campaigns/${id}/stats`);
+}

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 import { PageHeader, Card, PrimaryButton, PageLoading, Pill } from '../../_components/PageShell';
 import { useDashboardAuth } from '../../_components/useDashboardAuth';
-import { getCampaign, sendCampaign, testSendCampaign, updateCampaign, deleteCampaign, Campaign } from '../../../../lib/emails';
+import { getCampaign, sendCampaign, testSendCampaign, updateCampaign, deleteCampaign, getCampaignStats, Campaign, CampaignStats } from '../../../../lib/emails';
 
 type StatusVariant = 'live' | 'draft' | 'neutral' | 'accent';
 function statusVariant(s: string): StatusVariant {
@@ -63,6 +63,10 @@ export default function CampaignDetailPage() {
   // Delete
   const [deleting, setDeleting] = useState(false);
 
+  // Performance report
+  const [stats, setStats] = useState<CampaignStats | null>(null);
+  const [sourceQuiz, setSourceQuiz] = useState<any>(null);
+
   useEffect(() => {
     if (!token || !campaignId) return;
     let cancelled = false;
@@ -75,6 +79,16 @@ export default function CampaignDetailPage() {
           setEditSubject(c.subject || '');
           setEditFromName(c.from_name || '');
           setEditFromEmail(c.from_email || '');
+          // Fetch stats if sent
+          if (c.status === 'sent' || c.status === 'sending') {
+            getCampaignStats(c.id).then(function (s) { if (!cancelled) setStats(s); }).catch(function () {});
+          }
+          // Fetch source quiz title
+          if (c.source_quiz_id) {
+            import('../../../../lib/api').then(function (mod) {
+              mod.api.getQuiz(c.source_quiz_id!).then(function (q: any) { if (!cancelled) setSourceQuiz(q); }).catch(function () {});
+            });
+          }
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || 'Campaign not found');
@@ -220,6 +234,75 @@ export default function CampaignDetailPage() {
           )}
         </div>
       </Card>
+
+      {/* Source quiz link */}
+      {sourceQuiz && (
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 600 }}>Source quiz</div>
+            <Link href={'/dashboard/' + campaign.source_quiz_id} style={{ color: C.ACCENT, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+              {sourceQuiz.title || 'Untitled quiz'}
+            </Link>
+            <Link href={'/dashboard/analytics/' + campaign.source_quiz_id} style={{ color: C.TEXT_MUTED, fontSize: 12, textDecoration: 'none', marginLeft: 8 }}>
+              View quiz analytics
+              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, verticalAlign: 'middle' }}>
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </Link>
+          </div>
+        </Card>
+      )}
+
+      {/* Performance report (shown for sent campaigns) */}
+      {stats && stats.total > 0 && (
+        <Card>
+          <div style={{ color: C.TEXT, fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Performance report</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+            {[
+              { label: 'Delivered', value: stats.delivered, pct: stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0, color: '#4ade80' },
+              { label: 'Opened', value: stats.opened, pct: stats.delivered > 0 ? Math.round((stats.opened / stats.delivered) * 100) : 0, color: '#60a5fa' },
+              { label: 'Clicked', value: stats.clicked, pct: stats.delivered > 0 ? Math.round((stats.clicked / stats.delivered) * 100) : 0, color: C.ACCENT },
+              { label: 'Bounced', value: stats.bounced, pct: stats.total > 0 ? Math.round((stats.bounced / stats.total) * 100) : 0, color: stats.bounced > 0 ? '#f59e0b' : C.TEXT_SUBTLE },
+              { label: 'Complained', value: stats.complained, pct: stats.total > 0 ? Math.round((stats.complained / stats.total) * 100) : 0, color: stats.complained > 0 ? '#ff5c5c' : C.TEXT_SUBTLE },
+            ].map(function (m) {
+              return (
+                <div key={m.label} style={{ padding: '14px 16px', background: C.ELEVATED, border: '1px solid ' + C.BORDER, borderRadius: 10 }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: m.color, fontVariantNumeric: 'tabular-nums' }}>
+                    {m.pct}%
+                  </div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4, fontWeight: 600 }}>{m.label}</div>
+                  <div style={{ fontSize: 12, color: C.TEXT_SUBTLE, marginTop: 2 }}>{m.value.toLocaleString()} of {(m.label === 'Bounced' || m.label === 'Complained' ? stats.total : stats.delivered).toLocaleString()}</div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Visual bars */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { label: 'Delivery rate', pct: stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0, color: '#4ade80' },
+              { label: 'Open rate', pct: stats.delivered > 0 ? Math.round((stats.opened / stats.delivered) * 100) : 0, color: '#60a5fa' },
+              { label: 'Click rate', pct: stats.delivered > 0 ? Math.round((stats.clicked / stats.delivered) * 100) : 0, color: C.ACCENT },
+            ].map(function (bar) {
+              return (
+                <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 90, fontSize: 12, color: C.TEXT_MUTED, fontWeight: 500, flexShrink: 0 }}>{bar.label}</div>
+                  <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ width: bar.pct + '%', height: '100%', background: bar.color, borderRadius: 4, transition: 'width 0.3s ease' }} />
+                  </div>
+                  <div style={{ width: 40, fontSize: 12, color: C.TEXT, fontWeight: 600, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{bar.pct}%</div>
+                </div>
+              );
+            })}
+          </div>
+          {stats.hard_bounced > 0 && (
+            <div style={{ marginTop: 14, fontSize: 12, color: '#f59e0b' }}>
+              {stats.hard_bounced} hard bounce{stats.hard_bounced !== 1 ? 's' : ''}, {stats.soft_bounced} soft bounce{stats.soft_bounced !== 1 ? 's' : ''}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Edit fields - only for drafts */}
       {isDraft ? (
