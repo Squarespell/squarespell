@@ -56,4 +56,6 @@ export const api = {
   submitLead:           (quizId: string, d: any)    => req('/api/quiz/' + quizId + '/lead',    { method: 'POST', body: JSON.stringify(d) }),
   getPublicQuiz:        (slug: string)              => req('/api/quiz/' + slug),
   trackEvent:           (quizId: string, d: any)    => req('/api/quiz/' + quizId + '/track',   { method: 'POST', body: JSON.stringify(d) }),
+  getOutcomeAutomations:(quizId: string)            => req('/api/quizzes/' + quizId + '/outcome-automations'),
+  syncOutcomeAutomations:(quizId: string, d: any)   => req('/api/quizzes/' + quizId + '/outcome-automations', { method: 'PUT', body: JSON.stringify(d) }),
 };

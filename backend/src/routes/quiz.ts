@@ -385,6 +385,136 @@ router.delete('/:id/sequences/:sequenceId', async (req: AuthenticatedRequest, re
   }
 });
 
+// ── Outcome Automations (one-node MVP) ────────────────────────────────────
+// GET /api/quizzes/:id/outcome-automations - load existing auto-sequences
+router.get('/:id/outcome-automations', async (req: AuthenticatedRequest, res) => {
+  try {
+    const quizId = req.params.id;
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .select('id, user_id')
+      .eq('id', quizId)
+      .single();
+    if (quizError || !quiz || quiz.user_id !== req.dbUserId) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    const { data: sequences } = await supabase
+      .from('email_sequences')
+      .select('id, name, emails, conditions, enabled')
+      .eq('quiz_id', quizId)
+      .like('name', 'auto:%');
+
+    const automations = (sequences || []).map((seq: any) => {
+      const cond = seq.conditions as any;
+      const email = (seq.emails as any[])?.[0] || {};
+      return {
+        outcome_id: cond?.outcome_ids?.[0] || '',
+        enabled: seq.enabled,
+        subject: email.subject || '',
+        body: email.body || '',
+        cta_url: email.cta_url || '',
+        cta_text: email.cta_text || '',
+        sequence_id: seq.id,
+      };
+    });
+
+    res.json(automations);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message ?? 'Failed to load automations' });
+  }
+});
+
+// PUT /api/quizzes/:id/outcome-automations
+// Syncs inline automation configs from the builder to email_sequences.
+// Each automation creates a single-email sequence keyed to one outcome.
+router.put('/:id/outcome-automations', async (req: AuthenticatedRequest, res) => {
+  try {
+    const quizId = req.params.id;
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .select('id, user_id')
+      .eq('id', quizId)
+      .single();
+    if (quizError || !quiz || quiz.user_id !== req.dbUserId) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    // automations: array of { outcome_id, enabled, subject, body, cta_url?, cta_text? }
+    const automations: Array<{
+      outcome_id: string;
+      enabled: boolean;
+      subject: string;
+      body: string;
+      cta_url?: string;
+      cta_text?: string;
+    }> = req.body.automations || [];
+
+    // Fetch existing auto-sequences for this quiz (tagged via name convention)
+    const { data: existing } = await supabase
+      .from('email_sequences')
+      .select('id, name, conditions')
+      .eq('quiz_id', quizId)
+      .like('name', 'auto:%');
+    const existingByOutcome = new Map<string, string>();
+    for (const seq of existing || []) {
+      const cond = seq.conditions as any;
+      const oid = cond?.outcome_ids?.[0];
+      if (oid) existingByOutcome.set(oid, seq.id);
+    }
+
+    const results: Array<{ outcome_id: string; sequence_id: string; action: string }> = [];
+
+    for (const auto of automations) {
+      const seqId = existingByOutcome.get(auto.outcome_id);
+      if (auto.enabled && auto.subject) {
+        const emailPayload: EmailInSequence = {
+          delay_days: 0,
+          subject: auto.subject,
+          body: auto.body || '',
+          cta_url: auto.cta_url || undefined,
+          cta_text: auto.cta_text || undefined,
+        };
+        if (seqId) {
+          // Update existing
+          await supabase.from('email_sequences').update({
+            emails: [emailPayload],
+            enabled: true,
+            updated_at: new Date().toISOString(),
+          }).eq('id', seqId);
+          results.push({ outcome_id: auto.outcome_id, sequence_id: seqId, action: 'updated' });
+        } else {
+          // Create new
+          const { data: created } = await supabase.from('email_sequences').insert({
+            quiz_id: quizId,
+            name: `auto:${auto.outcome_id}`,
+            emails: [emailPayload],
+            conditions: { outcome_ids: [auto.outcome_id] },
+            enabled: true,
+          }).select('id').single();
+          if (created) {
+            results.push({ outcome_id: auto.outcome_id, sequence_id: created.id, action: 'created' });
+          }
+        }
+        existingByOutcome.delete(auto.outcome_id);
+      } else if (seqId) {
+        // Disable or remove the automation
+        await supabase.from('email_sequences').update({
+          enabled: false,
+          updated_at: new Date().toISOString(),
+        }).eq('id', seqId);
+        results.push({ outcome_id: auto.outcome_id, sequence_id: seqId, action: 'disabled' });
+        existingByOutcome.delete(auto.outcome_id);
+      }
+    }
+
+    res.json({ ok: true, results });
+  } catch (err: any) {
+    console.error('Outcome automation sync error:', err);
+    res.status(500).json({ error: err.message ?? 'Failed to sync automations' });
+  }
+});
+
 // ── A/B Testing ───────────────────────────────────────────────────────────
 // POST /api/quizzes/:id/ab-tests - create a new A/B test
 router.post('/:id/ab-tests', async (req: AuthenticatedRequest, res) => {

@@ -173,6 +173,12 @@ export default function QuizBuilderPage() {
   const [toast, setToast] = useState('');
   const toastTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // Outcome automations (inline follow-up emails)
+  const [automations, setAutomations] = useState<Record<string, {
+    enabled: boolean; subject: string; body: string; cta_url: string; cta_text: string;
+  }>>({});
+  const automationSyncRef = useRef<NodeJS.Timeout | null>(null);
+
   /* ========================= Load Quiz ========================= */
   useEffect(() => {
     const loadQuiz = async () => {
@@ -182,6 +188,20 @@ export default function QuizBuilderPage() {
         const data = await api.getQuiz(quizId);
         setQuiz(data as QuizData);
         setOriginalTitle(data.title);
+        // Load outcome automations
+        try {
+          const autos = await api.getOutcomeAutomations(quizId);
+          const map: Record<string, any> = {};
+          for (const a of autos) {
+            if (a.outcome_id) {
+              map[a.outcome_id] = {
+                enabled: a.enabled, subject: a.subject || '',
+                body: a.body || '', cta_url: a.cta_url || '', cta_text: a.cta_text || '',
+              };
+            }
+          }
+          setAutomations(map);
+        } catch {}
       } catch (err: any) {
         setError(err?.message || 'Failed to load quiz');
       } finally {
@@ -362,6 +382,31 @@ export default function QuizBuilderPage() {
     }
   }, [quiz, autosave, showToast]);
 
+  /* =================== Automation Sync ======================== */
+  const syncAutomations = useCallback((nextAutos: Record<string, any>) => {
+    if (!quizId) return;
+    if (automationSyncRef.current) clearTimeout(automationSyncRef.current);
+    automationSyncRef.current = setTimeout(async () => {
+      try {
+        const payload = Object.entries(nextAutos).map(([outcomeId, config]) => ({
+          outcome_id: outcomeId, ...config,
+        }));
+        await api.syncOutcomeAutomations(quizId, { automations: payload });
+      } catch (err) {
+        console.error('[AutoSync] Failed:', err);
+      }
+    }, 1500);
+  }, [quizId]);
+
+  const updateAutomation = useCallback((outcomeId: string, field: string, value: any) => {
+    setAutomations(prev => {
+      const current = prev[outcomeId] || { enabled: false, subject: '', body: '', cta_url: '', cta_text: '' };
+      const next = { ...prev, [outcomeId]: { ...current, [field]: value } };
+      syncAutomations(next);
+      return next;
+    });
+  }, [syncAutomations]);
+
   /* ========================= Outcomes ========================= */
   const addOutcome = useCallback(() => {
     if (!quiz) return;
@@ -505,6 +550,8 @@ export default function QuizBuilderPage() {
               onAdd={addOutcome}
               onUpdate={updateOutcome}
               onDelete={deleteOutcome}
+              automations={automations}
+              onAutomationUpdate={updateAutomation}
             />
           )}
         </div>
@@ -1229,11 +1276,15 @@ function OutcomesPanel({
   onAdd,
   onUpdate,
   onDelete,
+  automations,
+  onAutomationUpdate,
 }: {
   outcomes: Outcome[];
   onAdd: () => void;
   onUpdate: (idx: number, field: string, value: any) => void;
   onDelete: (idx: number) => void;
+  automations: Record<string, { enabled: boolean; subject: string; body: string; cta_url: string; cta_text: string }>;
+  onAutomationUpdate: (outcomeId: string, field: string, value: any) => void;
 }) {
   return (
     <div style={{ padding: 24 }}>
@@ -1436,6 +1487,80 @@ function OutcomesPanel({
                       outline: 'none',
                     }}
                   />
+                </div>
+
+                {/* Follow-up Email Automation */}
+                <div style={{
+                  borderTop: `1px solid ${COLORS.BORDER}`,
+                  paddingTop: 12,
+                  marginTop: 4,
+                }}>
+                  <label style={{
+                    display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                    fontSize: 12, fontWeight: 600, color: COLORS.TEXT_MUTED,
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={automations[outcome.id]?.enabled || false}
+                      onChange={(e) => onAutomationUpdate(outcome.id, 'enabled', e.target.checked)}
+                      style={{ accentColor: COLORS.ACCENT }}
+                    />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Send follow-up email when reached
+                  </label>
+                  {automations[outcome.id]?.enabled && (
+                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <input
+                        type="text"
+                        value={automations[outcome.id]?.subject || ''}
+                        onChange={(e) => onAutomationUpdate(outcome.id, 'subject', e.target.value)}
+                        placeholder="Email subject line"
+                        style={{
+                          width: '100%', padding: '8px 10px',
+                          background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}`,
+                          borderRadius: 4, color: COLORS.TEXT, fontSize: 12, outline: 'none',
+                        }}
+                      />
+                      <textarea
+                        value={automations[outcome.id]?.body || ''}
+                        onChange={(e) => onAutomationUpdate(outcome.id, 'body', e.target.value)}
+                        placeholder="Email body (HTML or plain text). Use {{outcome_name}}, {{first_name}}, {{quiz_name}} for personalization."
+                        style={{
+                          width: '100%', padding: '8px 10px',
+                          background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}`,
+                          borderRadius: 4, color: COLORS.TEXT, fontSize: 12,
+                          fontFamily: 'inherit', resize: 'vertical', minHeight: 60, outline: 'none',
+                        }}
+                      />
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8 }}>
+                        <input
+                          type="text"
+                          value={automations[outcome.id]?.cta_url || ''}
+                          onChange={(e) => onAutomationUpdate(outcome.id, 'cta_url', e.target.value)}
+                          placeholder="CTA link (optional)"
+                          style={{
+                            width: '100%', padding: '8px 10px',
+                            background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}`,
+                            borderRadius: 4, color: COLORS.TEXT, fontSize: 12, outline: 'none',
+                          }}
+                        />
+                        <input
+                          type="text"
+                          value={automations[outcome.id]?.cta_text || ''}
+                          onChange={(e) => onAutomationUpdate(outcome.id, 'cta_text', e.target.value)}
+                          placeholder="Button text"
+                          style={{
+                            width: '100%', padding: '8px 10px',
+                            background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}`,
+                            borderRadius: 4, color: COLORS.TEXT, fontSize: 12, outline: 'none',
+                          }}
+                        />
+                      </div>
+                      <p style={{ fontSize: 11, color: COLORS.TEXT_SUBTLE, margin: 0 }}>
+                        Sends immediately when a respondent reaches this outcome.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <button

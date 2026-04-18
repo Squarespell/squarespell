@@ -20,7 +20,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 - [x] Resend webhook handler (delivered/opened/clicked/bounced/complained)
 - [x] email_events table + indexes
 - [x] Scrape Squarespace fonts + palette for BrandKit autofill
-- [ ] PLG guest-session to draft-claim E2E
+- [x] PLG guest-session to draft-claim E2E
 - [x] GDPR consent gating on quiz + email
 - [x] Send test email to self
 - [x] Schedule picker UI
