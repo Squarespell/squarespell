@@ -112,40 +112,57 @@ async function sendCampaign(campaign: any): Promise<{
     }
   }
 
-  // Send each email
-  let sentCount = 0;
+  // ── Prepare all emails, then send in batches of 100 via Resend batch API ──
+  const BATCH_SIZE = 100;
+  type Prepared = { to: string; sendId: string; payload: Parameters<typeof resendProvider.send>[0] };
+  const prepared: Prepared[] = [];
   for (const to of allowed) {
     const { data: send, error: sendErr } = await supabase.from('email_sends').insert({
       campaign_id: campaign.id, tenant_id: tenantId, to_email: to, status: 'queued',
     }).select().single();
     if (sendErr) { errors.push(`${to}: insert failed - ${sendErr.message}`); continue; }
-    try {
-      const leadRow = leadsByEmail[to] || { email: to };
-      const mergeCtx = buildMergeContextFromData(leadRow, quizData || {});
-      const resolvedSubject = applyMergeTags(campaign.subject || '', mergeCtx);
-      let resolvedHtml = applyMergeTags(campaign.html || '', mergeCtx);
 
-      // CAN-SPAM footer
-      const footer = canSpamFooterHtml(to, { siteName: campaign.from_name });
-      if (resolvedHtml.includes('</body>')) {
-        resolvedHtml = resolvedHtml.replace('</body>', footer + '</body>');
-      } else {
-        resolvedHtml += footer;
-      }
+    const leadRow = leadsByEmail[to] || { email: to };
+    const mergeCtx = buildMergeContextFromData(leadRow, quizData || {});
+    const resolvedSubject = applyMergeTags(campaign.subject || '', mergeCtx);
+    let resolvedHtml = applyMergeTags(campaign.html || '', mergeCtx);
 
-      const { messageId } = await resendProvider.send({
+    const footer = canSpamFooterHtml(to, { siteName: campaign.from_name });
+    if (resolvedHtml.includes('</body>')) {
+      resolvedHtml = resolvedHtml.replace('</body>', footer + '</body>');
+    } else {
+      resolvedHtml += footer;
+    }
+    prepared.push({
+      to,
+      sendId: send!.id,
+      payload: {
         to, from: campaign.from_email, fromName: campaign.from_name,
         subject: resolvedSubject, html: resolvedHtml,
         headers: { 'X-Send-Id': send!.id, ...buildUnsubscribeHeaders(to) },
         tags: [{ name: 'campaign', value: campaign.id }],
-      });
-      await supabase.from('email_sends').update({
-        provider_message_id: messageId, status: 'sent', sent_at: new Date().toISOString(),
-      }).eq('id', send!.id);
-      sentCount++;
+      },
+    });
+  }
+
+  let sentCount = 0;
+  for (let i = 0; i < prepared.length; i += BATCH_SIZE) {
+    const chunk = prepared.slice(i, i + BATCH_SIZE);
+    try {
+      const { messageIds } = await resendProvider.sendBatch(chunk.map(p => p.payload));
+      const now = new Date().toISOString();
+      for (let j = 0; j < chunk.length; j++) {
+        const mid = messageIds[j] || '';
+        await supabase.from('email_sends').update({
+          provider_message_id: mid, status: 'sent', sent_at: now,
+        }).eq('id', chunk[j].sendId);
+        sentCount++;
+      }
     } catch (e: any) {
-      await supabase.from('email_sends').update({ status: 'failed' }).eq('id', send!.id);
-      errors.push(`${to}: ${e.message}`);
+      for (const item of chunk) {
+        await supabase.from('email_sends').update({ status: 'failed' }).eq('id', item.sendId);
+        errors.push(`${item.to}: ${e.message}`);
+      }
     }
   }
 

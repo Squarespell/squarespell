@@ -294,50 +294,75 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     }
   }
 
+  // ── Prepare all emails, then send in batches of 100 via Resend batch API ──
+  const BATCH_SIZE = 100;
   const results: any[] = [];
+  let totalSent = 0;
+
+  // 1. Insert all email_sends rows and build payloads
+  type Prepared = { to: string; sendId: string; payload: Parameters<typeof resendProvider.send>[0] };
+  const prepared: Prepared[] = [];
   for (const to of allowed) {
     const { data: send, error: sendErr } = await supabase.from('email_sends').insert({
       campaign_id: c.id, tenant_id: tenantId, to_email: to, status: 'queued',
     }).select().single();
     if (sendErr) { results.push({ to, ok: false, error: sendErr.message }); continue; }
-    try {
-      // Build per-recipient merge context and resolve tags
-      const leadRow = leadsByEmail[to] || { email: to };
-      const mergeCtx = buildMergeContextFromData(leadRow, quizData || {});
-      const resolvedSubject = applyMergeTags(c.subject || '', mergeCtx);
-      let resolvedHtml = applyMergeTags(c.html || '', mergeCtx);
 
-      // Inject CAN-SPAM footer with business address + unsubscribe link
-      const footer = canSpamFooterHtml(to, { siteName: c.from_name });
-      if (resolvedHtml.includes('</body>')) {
-        resolvedHtml = resolvedHtml.replace('</body>', footer + '</body>');
-      } else {
-        resolvedHtml += footer;
-      }
-      const { messageId } = await resendProvider.send({
+    const leadRow = leadsByEmail[to] || { email: to };
+    const mergeCtx = buildMergeContextFromData(leadRow, quizData || {});
+    const resolvedSubject = applyMergeTags(c.subject || '', mergeCtx);
+    let resolvedHtml = applyMergeTags(c.html || '', mergeCtx);
+
+    const footer = canSpamFooterHtml(to, { siteName: c.from_name });
+    if (resolvedHtml.includes('</body>')) {
+      resolvedHtml = resolvedHtml.replace('</body>', footer + '</body>');
+    } else {
+      resolvedHtml += footer;
+    }
+    prepared.push({
+      to,
+      sendId: send!.id,
+      payload: {
         to, from: c.from_email, fromName: c.from_name,
         subject: resolvedSubject, html: resolvedHtml,
         headers: { 'X-Send-Id': send!.id, ...buildUnsubscribeHeaders(to) },
         tags: [{ name: 'campaign', value: c.id }],
-      });
-      await supabase.from('email_sends').update({
-        provider_message_id: messageId, status: 'sent', sent_at: new Date().toISOString(),
-      }).eq('id', send!.id);
-      results.push({ to, ok: true });
+      },
+    });
+  }
+
+  // 2. Send in chunks of BATCH_SIZE via batch API
+  for (let i = 0; i < prepared.length; i += BATCH_SIZE) {
+    const chunk = prepared.slice(i, i + BATCH_SIZE);
+    try {
+      const { messageIds } = await resendProvider.sendBatch(chunk.map(p => p.payload));
+      const now = new Date().toISOString();
+      for (let j = 0; j < chunk.length; j++) {
+        const mid = messageIds[j] || '';
+        await supabase.from('email_sends').update({
+          provider_message_id: mid, status: 'sent', sent_at: now,
+        }).eq('id', chunk[j].sendId);
+        results.push({ to: chunk[j].to, ok: true });
+        totalSent++;
+      }
     } catch (e: any) {
-      await supabase.from('email_sends').update({ status: 'failed' }).eq('id', send!.id);
-      results.push({ to, ok: false, error: e.message });
+      // Entire batch failed - mark all sends in this chunk as failed
+      for (const item of chunk) {
+        await supabase.from('email_sends').update({ status: 'failed' }).eq('id', item.sendId);
+        results.push({ to: item.to, ok: false, error: e.message });
+      }
     }
   }
+
   await supabase.from('email_quota_usage').upsert({
-    tenant_id: tenantId, period_start: periodStart, sends: used + allowed.length,
+    tenant_id: tenantId, period_start: periodStart, sends: used + totalSent,
   }, { onConflict: 'tenant_id,period_start' });
   await supabase.from('email_campaigns').update({
     last_run_at: new Date().toISOString(),
-    sent_count: (c.sent_count || 0) + allowed.length,
+    sent_count: (c.sent_count || 0) + totalSent,
   }).eq('id', c.id);
   res.json({
-    sent: allowed.length,
+    sent: totalSent,
     skipped: recipients.length - allowed.length,
     resolved: recipients.length,
     results,
