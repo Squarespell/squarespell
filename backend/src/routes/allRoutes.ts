@@ -762,6 +762,140 @@ integrationsRouter.post('/test/:id', async (req: AuthenticatedRequest, res) => {
 // ── Analytics ─────────────────────────────────────────────────────────────────
 export const analyticsRouter = Router();
 analyticsRouter.use(requireAuth, attachUser);
+
+// ── Attribution pipeline ─────────────────────────────────────────────────────
+// GET /api/analytics/attribution - cross-quiz attribution data
+// Returns per-quiz and per-outcome metrics: leads, emails sent/opened/clicked, revenue
+analyticsRouter.get('/attribution', async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = req.dbUserId;
+
+    // Get all user's quizzes
+    const { data: quizzes } = await supabase
+      .from('quizzes')
+      .select('id, title, outcomes, view_count, lead_count')
+      .eq('user_id', userId)
+      .is('archived_at', null);
+
+    if (!quizzes || quizzes.length === 0) {
+      return res.json({ quizzes: [], totals: { leads: 0, emails_sent: 0, emails_opened: 0, emails_clicked: 0, revenue_cents: 0 } });
+    }
+
+    const quizIds = quizzes.map((q: any) => q.id);
+
+    // Get lead counts per quiz + outcome
+    const { data: leads } = await supabase
+      .from('leads')
+      .select('id, quiz_id, outcome_id')
+      .in('quiz_id', quizIds);
+
+    // Get email send stats: join sends through campaigns with source_quiz_id
+    const { data: campaigns } = await supabase
+      .from('email_campaigns')
+      .select('id, source_quiz_id')
+      .in('source_quiz_id', quizIds);
+
+    const campaignIds = (campaigns || []).map((c: any) => c.id);
+    const campaignQuizMap: Record<string, string> = {};
+    for (const c of campaigns || []) {
+      if (c.source_quiz_id) campaignQuizMap[c.id] = c.source_quiz_id;
+    }
+
+    let sends: any[] = [];
+    if (campaignIds.length > 0) {
+      const { data: sendData } = await supabase
+        .from('email_sends')
+        .select('id, campaign_id, status, opened_at, clicked_at')
+        .in('campaign_id', campaignIds);
+      sends = sendData || [];
+    }
+
+    // Get revenue from quiz_payments
+    const { data: payments } = await supabase
+      .from('quiz_payments')
+      .select('quiz_id, amount_cents, status')
+      .in('quiz_id', quizIds)
+      .eq('status', 'completed');
+
+    // Aggregate per quiz
+    const quizMetrics: Record<string, { leads: number; emails_sent: number; emails_opened: number; emails_clicked: number; revenue_cents: number; outcomes: Record<string, { leads: number }> }> = {};
+
+    for (const q of quizzes) {
+      quizMetrics[q.id] = { leads: 0, emails_sent: 0, emails_opened: 0, emails_clicked: 0, revenue_cents: 0, outcomes: {} };
+    }
+
+    // Count leads per quiz and outcome
+    for (const l of leads || []) {
+      const m = quizMetrics[l.quiz_id];
+      if (!m) continue;
+      m.leads++;
+      const oid = l.outcome_id || '_none';
+      if (!m.outcomes[oid]) m.outcomes[oid] = { leads: 0 };
+      m.outcomes[oid].leads++;
+    }
+
+    // Count email metrics per quiz
+    for (const s of sends) {
+      const quizId = campaignQuizMap[s.campaign_id];
+      if (!quizId || !quizMetrics[quizId]) continue;
+      quizMetrics[quizId].emails_sent++;
+      if (s.opened_at) quizMetrics[quizId].emails_opened++;
+      if (s.clicked_at) quizMetrics[quizId].emails_clicked++;
+    }
+
+    // Count revenue per quiz
+    for (const p of payments || []) {
+      const m = quizMetrics[p.quiz_id];
+      if (!m) continue;
+      m.revenue_cents += p.amount_cents || 0;
+    }
+
+    // Build response
+    const totals = { leads: 0, emails_sent: 0, emails_opened: 0, emails_clicked: 0, revenue_cents: 0 };
+    const quizResults = quizzes.map((q: any) => {
+      const m = quizMetrics[q.id];
+      totals.leads += m.leads;
+      totals.emails_sent += m.emails_sent;
+      totals.emails_opened += m.emails_opened;
+      totals.emails_clicked += m.emails_clicked;
+      totals.revenue_cents += m.revenue_cents;
+
+      // Resolve outcome names
+      const outcomeNames: Record<string, string> = {};
+      const outcomes = q.outcomes as any[] || [];
+      for (const o of outcomes) {
+        if (o.id) outcomeNames[o.id] = o.label || o.title || o.id;
+      }
+
+      const outcomeList = Object.entries(m.outcomes).map(([oid, data]) => ({
+        outcome_id: oid,
+        outcome_name: outcomeNames[oid] || (oid === '_none' ? 'No outcome' : oid),
+        leads: (data as any).leads,
+      }));
+
+      return {
+        quiz_id: q.id,
+        quiz_title: q.title,
+        views: q.view_count || 0,
+        leads: m.leads,
+        emails_sent: m.emails_sent,
+        emails_opened: m.emails_opened,
+        emails_clicked: m.emails_clicked,
+        revenue_cents: m.revenue_cents,
+        outcomes: outcomeList,
+      };
+    });
+
+    // Sort by leads descending
+    quizResults.sort((a: any, b: any) => b.leads - a.leads);
+
+    res.json({ quizzes: quizResults, totals });
+  } catch (err: any) {
+    log.error('[Attribution] Error:', { err: err.message });
+    res.status(500).json({ error: err.message || 'Failed to compute attribution' });
+  }
+});
+
 analyticsRouter.get('/:quizId', async (req: AuthenticatedRequest, res) => {
   const { data: quiz } = await supabase.from('quizzes').select('id,view_count,lead_count').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
   if (!quiz) return res.status(404).json({ error: 'Not found' });

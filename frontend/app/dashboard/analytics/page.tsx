@@ -132,6 +132,25 @@ export default function AnalyticsPage() {
       <PageHeader
         title="Analytics"
         subtitle="Performance across every quiz you've published"
+        actions={
+          <Link
+            href="/dashboard/analytics/attribution"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '11px 20px', background: 'transparent',
+              color: C.TEXT, border: '1px solid ' + C.BORDER,
+              borderRadius: 100, fontSize: 13, fontWeight: 600,
+              textDecoration: 'none', fontFamily: '"DM Sans",system-ui,sans-serif',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-4" />
+            </svg>
+            Attribution
+          </Link>
+        }
       />
 
       {loading ? (
