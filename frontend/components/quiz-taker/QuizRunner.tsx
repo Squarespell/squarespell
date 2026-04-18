@@ -152,7 +152,7 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
   const sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const isEmbedded = sp?.get('embed') === '1';
   const bgColor = sp?.get('bg') || branding.colors?.background || '#0a0f05';
-  const accent = sp?.get('accent') || branding.colors?.primary || '#D2FF1D';
+  const accent = sp?.get('accent') || branding.colors?.primary || '#0D7377';
   const textColor = sp?.get('fg') || branding.colors?.text || '#e8f5c8';
   const font = sp?.get('font') || branding.font_family || 'Poppins';
   const hasTurnstile = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;

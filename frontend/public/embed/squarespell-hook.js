@@ -12,7 +12,7 @@
  * https://app.squarespell.com/tools/quiz-funnel/build?url=... where the
  * full Stage 1 -> 6 funnel takes over.
  *
- * Styling matches prototype-v4 tokens exactly - dark base, #D2FF1D accent,
+ * Styling matches prototype-v4 tokens exactly - dark base, #0D7377 accent,
  * DM Sans, 100px pill radius on the primary button. Self-contained; no
  * external dependencies.
  */
@@ -60,8 +60,8 @@
         'width:6px;' +
         'height:6px;' +
         'border-radius:50%;' +
-        'background:#D2FF1D;' +
-        'box-shadow:0 0 0 4px rgba(210,255,29,0.15);' +
+        'background:#0D7377;' +
+        'box-shadow:0 0 0 4px rgba(13,115,119,0.15);' +
       '}' +
       '#' + WIDGET_ID + ' form{' +
         'display:flex;' +
@@ -74,7 +74,7 @@
         'transition:border-color 0.2s cubic-bezier(0.16,1,0.3,1);' +
       '}' +
       '#' + WIDGET_ID + ' form:focus-within{' +
-        'border-color:rgba(210,255,29,0.35);' +
+        'border-color:rgba(13,115,119,0.35);' +
       '}' +
       '#' + WIDGET_ID + ' .sq-hook-prefix{' +
         'color:#5b6273;' +
@@ -95,8 +95,8 @@
       '}' +
       '#' + WIDGET_ID + ' input::placeholder{color:#5b6273;}' +
       '#' + WIDGET_ID + ' button{' +
-        'background:#D2FF1D;' +
-        'color:#07090c;' +
+        'background:#0D7377;' +
+        'color:#F7F7F5;' +
         'border:0;' +
         'border-radius:100px;' +
         'padding:12px 22px;' +

@@ -53,7 +53,7 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
         background: c.bg,
         border: `1px solid ${c.border}`,
         borderRadius: 10,
-        color: '#f0f2f5',
+        color: '#1A1A1A',
         fontSize: 14,
         fontFamily: '"DM Sans", system-ui, sans-serif',
         fontWeight: 500,

@@ -574,7 +574,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                                   background: isWinner ? 'rgba(13,115,119,.06)' : 'transparent',
                                 }}
                               >
-                                <td style={{ padding: '12px 0', color: isWinner ? 'var(--acc)' : '#f0f2f5' }}>
+                                <td style={{ padding: '12px 0', color: isWinner ? 'var(--acc)' : '#1A1A1A' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     {getQuizTitle(variant.quiz_id)}
                                     {isWinner && <span style={{ fontSize: 11, background: 'var(--acc)', color: '#FFFFFF', borderRadius: 4, padding: '2px 8px', fontWeight: 600 }}>Winner</span>}

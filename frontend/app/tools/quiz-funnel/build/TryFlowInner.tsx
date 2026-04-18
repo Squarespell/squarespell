@@ -1547,14 +1547,14 @@ export function TryFlowInner({
                     <div className="edit-group">
                       <div className="edit-group-label">Brand Colors (auto-detected)</div>
                       <div className="brand-preview">
-                        <div className="brand-preview-bar" style={{ background: brand.colors.primary || '#D2FF1D' }}>
-                          <span className="brand-preview-text" style={{ color: brand.colors.background || '#0a0f05' }}>{brand?.site_name || 'Your Site'}</span>
+                        <div className="brand-preview-bar" style={{ background: brand.colors.primary || '#0D7377' }}>
+                          <span className="brand-preview-text" style={{ color: brand.colors.background || '#F7F7F5' }}>{brand?.site_name || 'Your Site'}</span>
                         </div>
-                        <div className="brand-preview-body" style={{ background: brand.colors.background || '#0a0f05' }}>
-                          <div className="brand-preview-q" style={{ color: brand.colors.text || '#fff' }}>Sample question here?</div>
-                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#D2FF1D', color: brand.colors.text || '#fff' }}>Option A</div>
-                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#D2FF1D', color: brand.colors.text || '#fff' }}>Option B</div>
-                          <div className="brand-preview-btn" style={{ background: brand.colors.primary || '#D2FF1D', color: brand.colors.background || '#0a0f05' }}>Next</div>
+                        <div className="brand-preview-body" style={{ background: brand.colors.background || '#F7F7F5' }}>
+                          <div className="brand-preview-q" style={{ color: brand.colors.text || '#1A1A1A' }}>Sample question here?</div>
+                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#0D7377', color: brand.colors.text || '#1A1A1A' }}>Option A</div>
+                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#0D7377', color: brand.colors.text || '#1A1A1A' }}>Option B</div>
+                          <div className="brand-preview-btn" style={{ background: brand.colors.primary || '#0D7377', color: brand.colors.background || '#FFFFFF' }}>Next</div>
                         </div>
                       </div>
                     </div>

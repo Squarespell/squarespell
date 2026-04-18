@@ -25,12 +25,12 @@ export default function HomePage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#07090c',
+        background: '#F7F7F5',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: "'DM Sans', system-ui, sans-serif",
-        color: 'rgba(240,242,245,0.35)',
+        color: 'rgba(26,26,26,0.35)',
         fontSize: 13,
       }}
     >

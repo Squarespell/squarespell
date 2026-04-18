@@ -82,7 +82,7 @@
       '@keyframes sq-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}',
       '.squarespell-skeleton.hidden{opacity:0;pointer-events:none;transition:opacity 0.3s ease}',
       '.squarespell-fallback{display:none;text-align:center;padding:20px;font-size:14px}',
-      '.squarespell-fallback a{display:inline-block;padding:12px 24px;background:#D2FF1D;color:#0a0f05;border-radius:20px;font-weight:700;text-decoration:none}',
+      '.squarespell-fallback a{display:inline-block;padding:12px 24px;background:#0D7377;color:#0a0f05;border-radius:20px;font-weight:700;text-decoration:none}',
       /* Popup mode styles */
       '.squarespell-popup-btn{padding:12px 24px;border:none;border-radius:20px;font-weight:700;font-size:14px;cursor:pointer;transition:opacity 0.2s ease}',
       '.squarespell-popup-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center}',
@@ -92,7 +92,7 @@
       '.squarespell-popup-close:hover{color:#000}',
       '.squarespell-popup-iframe{width:100%;border:none;display:block;height:600px}',
       /* Slidein mode styles */
-      '.squarespell-slidein-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);background:#D2FF1D;color:#0a0f05;border:none;border-radius:20px 0 0 20px;padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer;z-index:9998;writing-mode:vertical-rl;text-orientation:mixed;transform:translateY(-50%) rotateZ(180deg)}',
+      '.squarespell-slidein-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);background:#0D7377;color:#0a0f05;border:none;border-radius:20px 0 0 20px;padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer;z-index:9998;writing-mode:vertical-rl;text-orientation:mixed;transform:translateY(-50%) rotateZ(180deg)}',
       '.squarespell-slidein-panel{position:fixed;right:0;top:0;bottom:0;width:400px;background:white;box-shadow:-2px 0 10px rgba(0,0,0,0.2);z-index:9999;transform:translateX(100%);transition:transform 0.3s ease;overflow:auto;max-width:100vw}',
       '.squarespell-slidein-panel.active{transform:translateX(0)}',
       '.squarespell-slidein-close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;z-index:10000}',
@@ -107,7 +107,7 @@
   function buildWidget(slug, fixedHeight, mode, buttonText, accentColor) {
     var brand = detectHostBrand();
     var url = buildIframeUrl(slug, brand);
-    var finalAccent = accentColor || brand.accent || '#D2FF1D';
+    var finalAccent = accentColor || brand.accent || '#0D7377';
 
     // Default mode is 'inline'
     if (!mode || mode === 'inline') {

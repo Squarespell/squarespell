@@ -64,11 +64,11 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     subjectSuggestion: '{{firstName}}, this is for you',
     html: shell(`
       <div style="background:#111;color:#fff;padding:28px;border-radius:12px;margin-bottom:20px;text-align:center;">
-        <div style="font-size:13px;letter-spacing:2px;color:#d2ff1d;margin-bottom:8px;">LIMITED OFFER</div>
+        <div style="font-size:13px;letter-spacing:2px;color:#0D7377;margin-bottom:8px;">LIMITED OFFER</div>
         <div style="font-size:28px;font-weight:700;">20% off - 48 hours only</div>
       </div>
       <p style="margin:0 0 20px;color:#444;line-height:1.55;">{{firstName}}, we picked something we think fits your result ({{outcomeTitle}}). It's on us for the next 48 hours.</p>
-      <a href="{{ctaUrl}}" style="display:inline-block;background:#d2ff1d;color:#0a0a0a;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:700;">Claim 20% off</a>
+      <a href="{{ctaUrl}}" style="display:inline-block;background:#0D7377;color:#0a0a0a;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:700;">Claim 20% off</a>
     `),
   },
   {

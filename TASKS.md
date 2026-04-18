@@ -4,8 +4,12 @@ Durable task list. Edit freely. Order within a priority band is rough.
 
 ## In flight
 
-- [ ] End-to-end smoke test after deploy (login, paste URL, pick goal, generate, land in builder)
-- [ ] Verify POST /api/quizzes/from-url works from app.squarespell.com
+(none)
+
+## Recently completed
+
+- [x] End-to-end smoke test after deploy (login, paste URL, pick goal, generate, land in builder)
+- [x] Verify POST /api/quizzes/from-url works from app.squarespell.com
 
 ## P0 (do next)
 

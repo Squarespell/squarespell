@@ -13,7 +13,7 @@ export interface BrandKit {
   logoUrl?: string;
   logoDarkUrl?: string;       // optional dark-mode variant
   colorMode?: ColorMode;      // which palette variant is active
-  primaryColor: string;       // hex, e.g. "#d2ff1d"
+  primaryColor: string;       // hex, e.g. "#0D7377"
   onPrimaryColor: string;     // text color that sits on primaryColor
   secondaryColor?: string;
   backgroundColor: string;    // email body background
@@ -62,15 +62,15 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
   id: 'default',
   user_id: '',
   brandName: 'Your brand',
-  primaryColor: '#d2ff1d',
-  onPrimaryColor: '#0b0b0c',
+  primaryColor: '#0D7377',
+  onPrimaryColor: '#FFFFFF',
   secondaryColor: '#9ca3af',
-  backgroundColor: '#0b0b0c',
-  surfaceColor: '#141416',
-  textColor: '#ececec',
-  mutedTextColor: '#c7c7cc',
-  borderColor: '#222222',
-  accentColor: '#d2ff1d',
+  backgroundColor: '#F7F7F5',
+  surfaceColor: '#FFFFFF',
+  textColor: '#1A1A1A',
+  mutedTextColor: '#6b7280',
+  borderColor: '#E4E3E0',
+  accentColor: '#0D7377',
   headingFont: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   bodyFont: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   headingWeight: 600,
@@ -87,10 +87,10 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
 
 // A light-mode variant for brands that aren't dark by default.
 export const LIGHT_BRAND_KIT_DEFAULTS: Partial<BrandKit> = {
-  backgroundColor: '#f7f7f8',
+  backgroundColor: '#F7F7F5',
   surfaceColor: '#ffffff',
-  textColor: '#0b0b0c',
+  textColor: '#1A1A1A',
   mutedTextColor: '#6b7280',
-  borderColor: '#e5e7eb',
-  onPrimaryColor: '#0b0b0c',
+  borderColor: '#E4E3E0',
+  onPrimaryColor: '#1A1A1A',
 };

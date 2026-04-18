@@ -82,14 +82,14 @@ export default function ToolsHub() {
 
 const CSS = `
 .tools-hub {
-  --bg: #07090c;
-  --panel: #0e1116;
-  --border: rgba(240,242,245,0.08);
-  --border-strong: rgba(240,242,245,0.14);
-  --text: rgba(240,242,245,0.92);
-  --muted: rgba(240,242,245,0.55);
-  --dim: rgba(240,242,245,0.35);
-  --accent: #D2FF1D;
+  --bg: #F7F7F5;
+  --panel: #FFFFFF;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+  --text: #1A1A1A;
+  --muted: #6B6B6B;
+  --dim: #A0A0A0;
+  --accent: #0D7377;
 
   background: var(--bg);
   color: var(--text);
@@ -107,7 +107,7 @@ const CSS = `
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #E4E3E0;
 }
 .th-logo {
   display: inline-flex;
@@ -120,7 +120,7 @@ const CSS = `
 .th-logo-dot {
   width: 10px; height: 10px; border-radius: 3px;
   background: var(--accent);
-  box-shadow: 0 0 16px rgba(210,255,29,0.6);
+  box-shadow: 0 0 16px rgba(13,115,119,0.6);
 }
 .th-nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--muted); }
 .th-nav-links a:hover { color: var(--text); }
@@ -135,8 +135,8 @@ const CSS = `
   display: inline-block;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(210,255,29,0.12);
-  border: 1px solid rgba(210,255,29,0.28);
+  background: rgba(13,115,119,0.12);
+  border: 1px solid rgba(13,115,119,0.28);
   color: var(--accent);
   font-size: 11px;
   font-weight: 600;
@@ -151,7 +151,7 @@ const CSS = `
   margin: 0 0 20px;
 }
 .th-title-accent {
-  background: linear-gradient(180deg, #D2FF1D 0%, #a8d614 100%);
+  background: linear-gradient(180deg, #0D7377 0%, #0a5a5e 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -177,7 +177,7 @@ const CSS = `
   position: relative;
   padding: 40px 34px 34px;
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid #E4E3E0;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
@@ -185,9 +185,9 @@ const CSS = `
   min-height: 280px;
 }
 .th-card:hover {
-  border-color: rgba(210,255,29,0.3);
+  border-color: rgba(13,115,119,0.3);
   transform: translateY(-4px);
-  box-shadow: 0 30px 70px -30px rgba(210,255,29,0.2);
+  box-shadow: 0 30px 70px -30px rgba(13,115,119,0.2);
 }
 .th-badge {
   position: absolute;
@@ -201,16 +201,16 @@ const CSS = `
 }
 .th-badge-new {
   background: var(--accent);
-  color: #0a0d10;
+  color: #FFFFFF;
 }
 .th-badge-beta {
-  background: rgba(99,102,241,0.18);
-  border: 1px solid rgba(99,102,241,0.4);
-  color: #818cf8;
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: #4f46e5;
 }
 .th-badge-soon {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border-strong);
+  background: rgba(0,0,0,0.04);
+  border: 1px solid #E4E3E0;
   color: var(--muted);
 }
 .th-card-eyebrow {
@@ -244,7 +244,7 @@ const CSS = `
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 32px 40px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #E4E3E0;
   font-size: 12px;
   color: var(--dim);
   text-align: center;

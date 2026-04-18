@@ -33,11 +33,11 @@ function OAuthPopupContent() {
   }, [isLoaded, isSignedIn, signIn, strategy, dest])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", system-ui, sans-serif' }}>
-      <div style={{ textAlign: 'center', color: '#f0f2f5' }}>
-        <div style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid #D2FF1D', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 16px' }}/>
+    <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", system-ui, sans-serif' }}>
+      <div style={{ textAlign: 'center', color: '#1A1A1A' }}>
+        <div style={{ width: '32px', height: '32px', border: '3px solid #E4E3E0', borderTop: '3px solid #0D7377', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 16px' }}/>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ fontSize: '16px', color: 'rgba(240,242,245,0.5)' }}>Connecting...</p>
+        <p style={{ fontSize: '16px', color: '#6B6B6B' }}>Connecting...</p>
       </div>
     </div>
   )

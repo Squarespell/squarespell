@@ -73,7 +73,7 @@ function UnsubscribeContent() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#07090c',
+      background: '#F7F7F5',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -81,41 +81,43 @@ function UnsubscribeContent() {
       padding: '24px',
     }}>
       <div style={{
-        background: '#0f1219',
+        background: '#FFFFFF',
         borderRadius: '16px',
         padding: '48px 40px',
         maxWidth: '480px',
         width: '100%',
         textAlign: 'center',
+        border: '1px solid #E4E3E0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}>
-        <div style={{ color: '#D2FF1D', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' as const, marginBottom: '24px', fontWeight: 700 }}>
+        <div style={{ color: '#0D7377', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' as const, marginBottom: '24px', fontWeight: 700 }}>
           Squarespell
         </div>
 
         {status === 'loading' && (
-          <p style={{ color: '#888', fontSize: '15px' }}>Loading preferences...</p>
+          <p style={{ color: '#6B6B6B', fontSize: '15px' }}>Loading preferences...</p>
         )}
 
         {status === 'error' && (
           <>
-            <h1 style={{ color: '#f0f2f5', fontSize: '24px', marginBottom: '16px' }}>Invalid Link</h1>
-            <p style={{ color: '#888', fontSize: '15px' }}>This unsubscribe link is invalid or expired.</p>
+            <h1 style={{ color: '#1A1A1A', fontSize: '24px', marginBottom: '16px' }}>Invalid Link</h1>
+            <p style={{ color: '#6B6B6B', fontSize: '15px' }}>This unsubscribe link is invalid or expired.</p>
           </>
         )}
 
         {status === 'subscribed' && (
           <>
-            <h1 style={{ color: '#f0f2f5', fontSize: '24px', marginBottom: '16px' }}>Email Preferences</h1>
-            <p style={{ color: '#a0a0b0', fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
-              Unsubscribe <strong style={{ color: '#f0f2f5' }}>{resolvedEmail}</strong> from all Squarespell emails?
+            <h1 style={{ color: '#1A1A1A', fontSize: '24px', marginBottom: '16px' }}>Email Preferences</h1>
+            <p style={{ color: '#6B6B6B', fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
+              Unsubscribe <strong style={{ color: '#1A1A1A' }}>{resolvedEmail}</strong> from all Squarespell emails?
             </p>
             <button
               onClick={handleUnsubscribe}
               disabled={working}
               style={{
                 padding: '14px 32px',
-                background: '#D2FF1D',
-                color: '#07090c',
+                background: '#0D7377',
+                color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: 700,
@@ -131,11 +133,11 @@ function UnsubscribeContent() {
 
         {status === 'unsubscribed' && (
           <>
-            <h1 style={{ color: '#f0f2f5', fontSize: '24px', marginBottom: '16px' }}>Unsubscribed</h1>
-            <p style={{ color: '#a0a0b0', fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
-              <strong style={{ color: '#f0f2f5' }}>{resolvedEmail}</strong> has been unsubscribed from all Squarespell emails.
+            <h1 style={{ color: '#1A1A1A', fontSize: '24px', marginBottom: '16px' }}>Unsubscribed</h1>
+            <p style={{ color: '#6B6B6B', fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
+              <strong style={{ color: '#1A1A1A' }}>{resolvedEmail}</strong> has been unsubscribed from all Squarespell emails.
             </p>
-            <p style={{ color: '#666', fontSize: '13px', marginBottom: '24px' }}>
+            <p style={{ color: '#6B6B6B', fontSize: '13px', marginBottom: '24px' }}>
               Changed your mind?
             </p>
             <button
@@ -144,8 +146,8 @@ function UnsubscribeContent() {
               style={{
                 padding: '12px 24px',
                 background: 'transparent',
-                color: '#D2FF1D',
-                border: '1px solid #D2FF1D',
+                color: '#0D7377',
+                border: '1px solid #E4E3E0',
                 borderRadius: '8px',
                 fontWeight: 600,
                 fontSize: '14px',
@@ -158,8 +160,8 @@ function UnsubscribeContent() {
           </>
         )}
 
-        <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #1a1f2e', fontSize: '12px', color: '#666' }}>
-          <a href="https://squarespell.com" style={{ color: '#D2FF1D', textDecoration: 'none' }}>squarespell.com</a>
+        <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #E4E3E0', fontSize: '12px', color: '#6B6B6B' }}>
+          <a href="https://squarespell.com" style={{ color: '#0D7377', textDecoration: 'none' }}>squarespell.com</a>
         </div>
       </div>
     </div>
@@ -169,8 +171,8 @@ function UnsubscribeContent() {
 export default function UnsubscribePage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#07090c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888', fontFamily: 'sans-serif' }}>Loading...</p>
+      <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#6B6B6B', fontFamily: 'sans-serif' }}>Loading...</p>
       </div>
     }>
       <UnsubscribeContent />

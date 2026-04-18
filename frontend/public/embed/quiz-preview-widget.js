@@ -27,10 +27,10 @@ function init() {
       '.sqsp-widget *{box-sizing:border-box}',
       '.sqsp-input-wrap{display:flex;gap:8px;margin-bottom:12px}',
       '@media(max-width:600px){.sqsp-input-wrap{flex-direction:column}}',
-      '.sqsp-input{flex:1;height:52px;background:#0d1018;border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:0 18px;font-size:16px;color:#f0f2f5;font-family:"DM Sans",system-ui,sans-serif;outline:none;transition:border-color 0.2s}',
-      '.sqsp-input:focus{border-color:rgba(210,255,29,0.4)}',
+      '.sqsp-input{flex:1;height:52px;background:#0d1018;border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:0 18px;font-size:16px;color:#1A1A1A;font-family:"DM Sans",system-ui,sans-serif;outline:none;transition:border-color 0.2s}',
+      '.sqsp-input:focus{border-color:rgba(13,115,119,0.4)}',
       '.sqsp-input::placeholder{color:rgba(240,242,245,0.3)}',
-      '.sqsp-btn{height:52px;padding:0 28px;background:#D2FF1D;color:#07090c;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:"DM Sans",system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:transform 0.15s,opacity 0.15s;display:flex;align-items:center;gap:8px}',
+      '.sqsp-btn{height:52px;padding:0 28px;background:#0D7377;color:#F7F7F5;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:"DM Sans",system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:transform 0.15s,opacity 0.15s;display:flex;align-items:center;gap:8px}',
       '.sqsp-btn:hover{transform:translateY(-1px);opacity:0.92}',
       '.sqsp-btn:active{transform:translateY(0)}',
       '.sqsp-btn svg{flex-shrink:0}',
@@ -39,7 +39,7 @@ function init() {
       '.sqsp-trust svg{flex-shrink:0}',
       '.sqsp-err{font-size:13px;color:#f87171;margin-bottom:8px;min-height:20px}',
       '@keyframes sqsp-spin{to{transform:rotate(360deg)}}',
-      '.sqsp-spinner{width:18px;height:18px;border:2px solid rgba(7,9,12,0.2);border-top:2px solid #07090c;border-radius:50%;animation:sqsp-spin 0.6s linear infinite}',
+      '.sqsp-spinner{width:18px;height:18px;border:2px solid rgba(7,9,12,0.2);border-top:2px solid #F7F7F5;border-radius:50%;animation:sqsp-spin 0.6s linear infinite}',
     ].join('\n');
     document.head.appendChild(style);
   }

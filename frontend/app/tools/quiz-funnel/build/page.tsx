@@ -15,7 +15,7 @@ import { TryFlowInner } from './TryFlowInner';
 
 export default function TryPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#07090c' }} />}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F7F7F5' }} />}>
       <TryFlowInner />
     </Suspense>
   );

@@ -23,11 +23,11 @@
  *   4. Pricing section  → najaf.framer.ai#pricing (clean 3-card grid)
  *
  * Color tokens kept consistent with the rest of the app:
- *   - bg:    #07090c
- *   - panel: #0e1116
- *   - accent: #D2FF1D (Squarespell lime)
- *   - text:  rgba(240,242,245,0.92)
- *   - muted: rgba(240,242,245,0.55)
+ *   - bg:    #F7F7F5
+ *   - panel: #FFFFFF
+ *   - accent: #0D7377 (Squarespell teal)
+ *   - text:  #1A1A1A
+ *   - muted: #6B6B6B
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -385,8 +385,8 @@ export default function LandingPage() {
             body="Colors, type, and copy pulled from your site automatically. It looks like you built it."
             visual={
               <div className="ssp-feature-swatches">
-                <span className="ssp-swatch" style={{ background: '#D2FF1D' }} />
-                <span className="ssp-swatch" style={{ background: '#0e1116' }} />
+                <span className="ssp-swatch" style={{ background: '#0D7377' }} />
+                <span className="ssp-swatch" style={{ background: '#FFFFFF' }} />
                 <span className="ssp-swatch" style={{ background: '#6366f1' }} />
                 <span className="ssp-swatch" style={{ background: '#ec4899' }} />
               </div>
@@ -445,10 +445,10 @@ export default function LandingPage() {
             <div className="ssp-metrics-label">Visitor → Lead conversion</div>
             <div className="ssp-gauge">
               <svg viewBox="0 0 120 70" width="100%" height="100%">
-                <path d="M10 60 A50 50 0 0 1 110 60" stroke="rgba(240,242,245,0.1)" strokeWidth="10" fill="none" strokeLinecap="round" />
+                <path d="M10 60 A50 50 0 0 1 110 60" stroke="rgba(0,0,0,0.08)" strokeWidth="10" fill="none" strokeLinecap="round" />
                 <path
                   d="M10 60 A50 50 0 0 1 110 60"
-                  stroke="#D2FF1D"
+                  stroke="#0D7377"
                   strokeWidth="10"
                   fill="none"
                   strokeLinecap="round"
@@ -473,8 +473,8 @@ export default function LandingPage() {
               <svg viewBox="0 0 300 80" width="100%" height="80" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="lg1" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#D2FF1D" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#D2FF1D" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#0D7377" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#0D7377" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 <path
@@ -483,7 +483,7 @@ export default function LandingPage() {
                 />
                 <path
                   d="M0 65 L30 60 L60 55 L90 58 L120 45 L150 40 L180 32 L210 28 L240 18 L270 14 L300 8"
-                  stroke="#D2FF1D"
+                  stroke="#0D7377"
                   strokeWidth="2"
                   fill="none"
                   strokeLinecap="round"
@@ -696,16 +696,16 @@ function FeatureCard({
 
 const CSS = `
 .ssp-landing {
-  --bg: #07090c;
-  --panel: #0e1116;
-  --panel-2: #12161d;
-  --border: rgba(240,242,245,0.08);
-  --border-strong: rgba(240,242,245,0.14);
-  --text: rgba(240,242,245,0.92);
-  --muted: rgba(240,242,245,0.55);
-  --dim: rgba(240,242,245,0.35);
-  --accent: #D2FF1D;
-  --accent-dim: rgba(210,255,29,0.12);
+  --bg: #F7F7F5;
+  --panel: #FFFFFF;
+  --panel-2: #F5F5F3;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+  --text: #1A1A1A;
+  --muted: #6B6B6B;
+  --dim: #9A9A9A;
+  --accent: #0D7377;
+  --accent-dim: rgba(13,115,119,0.12);
 
   background: var(--bg);
   color: var(--text);
@@ -722,8 +722,8 @@ const CSS = `
 .ssp-nav {
   position: sticky; top: 0; z-index: 50;
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  background: rgba(7,9,12,0.72);
-  border-bottom: 1px solid var(--border);
+  background: rgba(247,247,245,0.72);
+  border-bottom: 1px solid #E4E3E0;
 }
 .ssp-nav-inner {
   max-width: 1200px; margin: 0 auto; padding: 16px 32px;
@@ -736,7 +736,7 @@ const CSS = `
 .ssp-logo-dot {
   width: 10px; height: 10px; border-radius: 3px;
   background: var(--accent);
-  box-shadow: 0 0 16px rgba(210,255,29,0.6);
+  box-shadow: 0 0 16px rgba(13,115,119,0.6);
 }
 .ssp-nav-links {
   display: flex; gap: 28px; font-size: 14px; color: var(--muted);
@@ -761,20 +761,20 @@ const CSS = `
 .ssp-btn-sm { padding: 9px 16px; font-size: 13px; }
 .ssp-btn-lg { padding: 15px 26px; font-size: 15px; }
 .ssp-btn-primary {
-  background: var(--accent); color: #0a0d10;
-  box-shadow: 0 8px 26px -10px rgba(210,255,29,0.6);
+  background: var(--accent); color: #FFFFFF;
+  box-shadow: 0 8px 26px -10px rgba(13,115,119,0.6);
 }
 .ssp-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 30px -10px rgba(210,255,29,0.8);
+  box-shadow: 0 12px 30px -10px rgba(13,115,119,0.8);
 }
 .ssp-btn-ghost {
   background: transparent; color: var(--text);
-  border-color: var(--border-strong);
+  border-color: #E4E3E0;
 }
 .ssp-btn-ghost:hover {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(240,242,245,0.24);
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.12);
 }
 
 /* ----- hero ----- */
@@ -788,7 +788,7 @@ const CSS = `
   position: absolute; top: -100px; left: 50%;
   width: 900px; height: 500px;
   transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(210,255,29,0.18) 0%, rgba(210,255,29,0) 55%);
+  background: radial-gradient(ellipse at center, rgba(13,115,119,0.08) 0%, rgba(13,115,119,0) 55%);
   pointer-events: none;
   filter: blur(20px);
 }
@@ -800,7 +800,7 @@ const CSS = `
   display: inline-flex; align-items: center; gap: 8px;
   padding: 7px 14px; border-radius: 999px;
   background: var(--accent-dim);
-  border: 1px solid rgba(210,255,29,0.28);
+  border: 1px solid rgba(13,115,119,0.28);
   color: var(--accent);
   font-size: 11px; font-weight: 600;
   letter-spacing: 0.08em;
@@ -824,7 +824,7 @@ const CSS = `
   margin: 0 0 24px;
 }
 .ssp-hero-title-accent {
-  background: linear-gradient(180deg, #D2FF1D 0%, #a8d614 100%);
+  background: linear-gradient(180deg, #0D7377 0%, #0a5a5e 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
 }
@@ -845,21 +845,21 @@ const CSS = `
 }
 .ssp-hero-gen-field {
   display: flex; align-items: center;
-  background: rgba(14,17,22,0.85);
-  border: 1px solid var(--border-strong);
+  background: #FFFFFF;
+  border: 1px solid #E4E3E0;
   border-radius: 14px;
   padding: 8px 8px 8px 22px;
   gap: 6px;
   transition: all 0.22s;
   box-shadow:
-    0 20px 50px -20px rgba(0,0,0,0.6),
-    0 0 0 0 rgba(210,255,29,0);
+    0 20px 50px -20px rgba(0,0,0,0.04),
+    0 0 0 0 rgba(13,115,119,0);
 }
 .ssp-hero-gen-field:focus-within {
-  border-color: rgba(210,255,29,0.45);
+  border-color: rgba(13,115,119,0.45);
   box-shadow:
-    0 20px 50px -20px rgba(0,0,0,0.6),
-    0 0 0 4px rgba(210,255,29,0.12);
+    0 20px 50px -20px rgba(0,0,0,0.04),
+    0 0 0 4px rgba(13,115,119,0.12);
 }
 .ssp-hero-gen-prefix {
   color: var(--dim);
@@ -884,7 +884,7 @@ const CSS = `
 .ssp-hero-gen-input:disabled { opacity: 0.6; }
 .ssp-hero-gen-btn {
   background: var(--accent);
-  color: #0a0d10;
+  color: #FFFFFF;
   border: 0;
   font-family: inherit;
   font-weight: 700;
@@ -895,11 +895,11 @@ const CSS = `
   cursor: pointer;
   transition: all 0.18s;
   flex-shrink: 0;
-  box-shadow: 0 6px 18px -8px rgba(210,255,29,0.6);
+  box-shadow: 0 6px 18px -8px rgba(13,115,119,0.6);
 }
 .ssp-hero-gen-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px -8px rgba(210,255,29,0.8);
+  box-shadow: 0 10px 24px -8px rgba(13,115,119,0.8);
 }
 .ssp-hero-gen-btn:disabled {
   opacity: 0.55;
@@ -913,8 +913,8 @@ const CSS = `
   text-align: center;
 }
 .ssp-hero-gen-hint code {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.04);
+  border: 1px solid #E4E3E0;
   padding: 3px 8px;
   border-radius: 6px;
   color: var(--muted);
@@ -975,22 +975,22 @@ const CSS = `
 .ssp-mockup-orbit {
   position: absolute; left: 50%; top: 50%;
   border-radius: 50%;
-  border: 1px dashed rgba(210,255,29,0.15);
+  border: 1px dashed rgba(13,115,119,0.15);
   pointer-events: none;
   transform: translate(-50%, -50%);
 }
 .ssp-mockup-orbit-1 { width: 720px; height: 720px; animation: spin 60s linear infinite; }
-.ssp-mockup-orbit-2 { width: 520px; height: 520px; animation: spin 40s linear infinite reverse; border-color: rgba(210,255,29,0.08); }
+.ssp-mockup-orbit-2 { width: 520px; height: 520px; animation: spin 40s linear infinite reverse; border-color: rgba(13,115,119,0.08); }
 @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
 .ssp-mockup-card {
   background: var(--panel);
-  border: 1px solid var(--border-strong);
+  border: 1px solid #E4E3E0;
   border-radius: 16px;
   box-shadow:
-    0 40px 80px -24px rgba(0,0,0,0.7),
-    0 0 0 1px rgba(240,242,245,0.04),
-    0 0 60px -20px rgba(210,255,29,0.22);
+    0 40px 80px -24px rgba(0,0,0,0.04),
+    0 0 0 1px rgba(0,0,0,0.04),
+    0 0 60px -20px rgba(13,115,119,0.08);
   position: relative;
 }
 .ssp-mockup-card-main {
@@ -1005,12 +1005,12 @@ const CSS = `
 }
 .ssp-mockup-browser {
   display: flex; align-items: center; gap: 14px;
-  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  padding: 14px 18px; border-bottom: 1px solid #E4E3E0;
 }
 .ssp-mockup-browser-dots { display: flex; gap: 6px; }
 .ssp-mockup-browser-dots span {
   width: 10px; height: 10px; border-radius: 50%;
-  background: rgba(240,242,245,0.14);
+  background: rgba(0,0,0,0.12);
 }
 .ssp-mockup-browser-dots span:first-child { background: #ff5f56; }
 .ssp-mockup-browser-dots span:nth-child(2) { background: #ffbd2e; }
@@ -1033,7 +1033,7 @@ const CSS = `
   margin-bottom: 18px;
 }
 .ssp-mockup-progress {
-  height: 3px; background: rgba(255,255,255,0.08);
+  height: 3px; background: rgba(0,0,0,0.08);
   border-radius: 2px; margin-bottom: 22px; overflow: hidden;
 }
 .ssp-mockup-progress-fill {
@@ -1050,13 +1050,13 @@ const CSS = `
 .ssp-mockup-option {
   display: flex; align-items: center; gap: 12px;
   padding: 13px 16px; border-radius: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid #E4E3E0;
   font-size: 14px; color: var(--muted);
   transition: all 0.25s;
 }
 .ssp-mockup-option-selected {
-  border-color: rgba(210,255,29,0.5);
-  background: rgba(210,255,29,0.06);
+  border-color: rgba(13,115,119,0.5);
+  background: rgba(13,115,119,0.06);
   color: var(--text);
 }
 .ssp-mockup-radio {
@@ -1067,12 +1067,12 @@ const CSS = `
 .ssp-mockup-radio-on {
   border-color: var(--accent);
   background: var(--accent);
-  box-shadow: inset 0 0 0 3px var(--panel);
+  box-shadow: inset 0 0 0 3px #FFFFFF;
 }
 .ssp-mockup-next {
   margin-top: 20px; padding: 12px 22px;
   display: inline-block;
-  background: var(--accent); color: #0a0d10;
+  background: var(--accent); color: #FFFFFF;
   border-radius: 8px; font-weight: 600; font-size: 13px;
 }
 
@@ -1124,13 +1124,13 @@ const CSS = `
   position: absolute; top: 18px; right: 18px;
   width: 9px; height: 9px; border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 0 rgba(210,255,29,0.5);
+  box-shadow: 0 0 0 0 rgba(13,115,119,0.5);
   animation: pulse-ring 2s infinite;
 }
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(210,255,29,0.6); }
-  70% { box-shadow: 0 0 0 10px rgba(210,255,29,0); }
-  100% { box-shadow: 0 0 0 0 rgba(210,255,29,0); }
+  0% { box-shadow: 0 0 0 0 rgba(13,115,119,0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(13,115,119,0); }
+  100% { box-shadow: 0 0 0 0 rgba(13,115,119,0); }
 }
 
 @media (max-width: 720px) {
@@ -1173,8 +1173,8 @@ const CSS = `
 .ssp-eyebrow {
   display: inline-block;
   padding: 6px 12px; border-radius: 999px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.04);
+  border: 1px solid #E4E3E0;
   color: var(--accent);
   font-size: 11px; font-weight: 600;
   letter-spacing: 0.1em;
@@ -1236,7 +1236,7 @@ const CSS = `
   grid-column: span 3;
   padding: 32px 30px;
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid #E4E3E0;
   border-radius: 18px;
   transition: all 0.25s;
   min-height: 280px;
@@ -1244,15 +1244,15 @@ const CSS = `
 }
 .ssp-feature-wide { grid-column: span 6; }
 .ssp-feature:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(0,0,0,0.12);
   transform: translateY(-3px);
-  box-shadow: 0 26px 60px -30px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .ssp-feature-visual {
   flex: 1; min-height: 120px;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 22px;
-  background: rgba(255,255,255,0.02);
+  background: rgba(0,0,0,0.02);
   border-radius: 12px;
   padding: 24px;
 }
@@ -1278,7 +1278,7 @@ const CSS = `
 .ssp-feature-swatches { display: flex; gap: 14px; }
 .ssp-swatch {
   width: 44px; height: 44px; border-radius: 12px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid #E4E3E0;
   animation: swatch-pop 3s ease-in-out infinite;
 }
 .ssp-swatch:nth-child(2) { animation-delay: 0.3s; }
@@ -1292,8 +1292,8 @@ const CSS = `
 .ssp-feature-pill {
   display: inline-flex; align-items: center; gap: 10px;
   padding: 14px 22px; border-radius: 10px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--border-strong);
+  background: rgba(0,0,0,0.03);
+  border: 1px solid #E4E3E0;
   font-size: 15px; color: var(--text);
 }
 .ssp-feature-pill-dot {
@@ -1307,8 +1307,8 @@ const CSS = `
 .ssp-feature-row {
   display: flex; justify-content: space-between;
   padding: 10px 14px;
-  background: rgba(0,0,0,0.25);
-  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.03);
+  border: 1px solid #E4E3E0;
   border-radius: 8px;
   font-size: 13px; font-family: ui-monospace, monospace;
 }
@@ -1327,7 +1327,7 @@ const CSS = `
 .ssp-feature-toggle-thumb {
   position: absolute; top: 3px; right: 3px;
   width: 20px; height: 20px; border-radius: 50%;
-  background: #0a0d10;
+  background: #FFFFFF;
   animation: toggle 3s ease-in-out infinite;
 }
 @keyframes toggle {
@@ -1354,7 +1354,7 @@ const CSS = `
 .ssp-metrics-card {
   padding: 28px 30px;
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid #E4E3E0;
   border-radius: 18px;
   display: flex; flex-direction: column;
   transition: all 0.2s;
@@ -1362,7 +1362,7 @@ const CSS = `
   overflow: hidden;
 }
 .ssp-metrics-card:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(0,0,0,0.12);
 }
 .ssp-metrics-label {
   font-size: 12px; color: var(--dim);
@@ -1459,14 +1459,14 @@ const CSS = `
 }
 .ssp-bar span {
   width: 100%;
-  background: rgba(240,242,245,0.12);
+  background: rgba(0,0,0,0.08);
   border-radius: 6px 6px 0 0;
   min-height: 0;
   transition: height 1.5s ease-out;
 }
 .ssp-bar-accent span {
   background: var(--accent);
-  box-shadow: 0 0 20px -4px rgba(210,255,29,0.5);
+  box-shadow: 0 0 20px -4px rgba(13,115,119,0.5);
 }
 .ssp-bar label {
   font-size: 11px; color: var(--dim);
@@ -1485,7 +1485,7 @@ const CSS = `
 .ssp-billing-toggle {
   display: flex; justify-content: center; align-items: center; gap: 4px;
   margin-bottom: 48px;
-  background: var(--panel); border: 1px solid var(--border);
+  background: var(--panel); border: 1px solid #E4E3E0;
   border-radius: 12px; padding: 4px; width: fit-content; margin-left: auto; margin-right: auto;
 }
 .ssp-toggle-btn {
@@ -1496,7 +1496,7 @@ const CSS = `
   font-family: inherit;
 }
 .ssp-toggle-btn.ssp-toggle-active {
-  background: var(--text); color: #0a0d10;
+  background: var(--accent); color: #FFFFFF;
 }
 .ssp-toggle-save {
   background: rgba(74,222,128,0.15); color: #4ade80;
@@ -1518,25 +1518,25 @@ const CSS = `
 .ssp-plan {
   padding: 38px 32px 32px;
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid #E4E3E0;
   border-radius: 18px;
   display: flex; flex-direction: column;
   position: relative;
   transition: all 0.2s;
 }
 .ssp-plan:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(0,0,0,0.12);
   transform: translateY(-3px);
 }
 .ssp-plan-featured {
-  border-color: rgba(210,255,29,0.45);
-  background: linear-gradient(180deg, rgba(210,255,29,0.04) 0%, var(--panel) 50%);
-  box-shadow: 0 26px 70px -30px rgba(210,255,29,0.3);
+  border-color: rgba(13,115,119,0.45);
+  background: linear-gradient(180deg, rgba(13,115,119,0.04) 0%, var(--panel) 50%);
+  box-shadow: 0 26px 70px -30px rgba(13,115,119,0.12);
 }
 .ssp-plan-badge {
   position: absolute; top: 18px; right: 18px;
   padding: 5px 12px; border-radius: 999px;
-  background: var(--accent); color: #0a0d10;
+  background: var(--accent); color: #FFFFFF;
   font-size: 11px; font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -1555,7 +1555,7 @@ const CSS = `
   display: flex; align-items: baseline; gap: 4px;
   margin-bottom: 30px;
   padding-bottom: 30px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #E4E3E0;
 }
 .ssp-plan-price-num {
   font-size: 52px; font-weight: 700;
@@ -1578,7 +1578,7 @@ const CSS = `
   width: 18px; height: 18px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  background: var(--accent-dim);
+  background: rgba(13,115,119,0.12);
   font-size: 10px;
   flex-shrink: 0;
 }
@@ -1599,15 +1599,15 @@ const CSS = `
 }
 .ssp-faq-item {
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid #E4E3E0;
   border-radius: 14px;
   padding: 22px 26px;
   text-align: left; cursor: pointer;
   font-family: inherit; color: inherit;
   transition: all 0.2s;
 }
-.ssp-faq-item:hover { border-color: var(--border-strong); }
-.ssp-faq-open { border-color: rgba(210,255,29,0.3); }
+.ssp-faq-item:hover { border-color: rgba(0,0,0,0.12); }
+.ssp-faq-open { border-color: rgba(13,115,119,0.3); }
 .ssp-faq-q {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 16px; font-weight: 600;
@@ -1631,8 +1631,8 @@ const CSS = `
 .ssp-final-inner {
   position: relative;
   padding: 90px 40px;
-  background: radial-gradient(ellipse at top, rgba(210,255,29,0.12) 0%, var(--panel) 60%);
-  border: 1px solid rgba(210,255,29,0.2);
+  background: radial-gradient(ellipse at top, rgba(13,115,119,0.06) 0%, var(--panel) 60%);
+  border: 1px solid rgba(13,115,119,0.2);
   border-radius: 24px;
   text-align: center;
   overflow: hidden;
@@ -1640,8 +1640,8 @@ const CSS = `
 .ssp-final-inner::before {
   content: ''; position: absolute; inset: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(210,255,29,0.08), transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(210,255,29,0.05), transparent 50%);
+    radial-gradient(circle at 20% 30%, rgba(13,115,119,0.04), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(13,115,119,0.02), transparent 50%);
   pointer-events: none;
 }
 .ssp-final-title {
@@ -1663,7 +1663,7 @@ const CSS = `
 /* ----- footer ----- */
 .ssp-footer {
   margin-top: 120px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #E4E3E0;
   padding: 60px 32px 30px;
 }
 .ssp-footer-inner {
@@ -1694,7 +1694,7 @@ const CSS = `
 .ssp-footer-bottom {
   max-width: 1200px; margin: 50px auto 0;
   padding-top: 24px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #E4E3E0;
   font-size: 12px; color: var(--dim);
   text-align: center;
 }

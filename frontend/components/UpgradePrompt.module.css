@@ -11,7 +11,7 @@
 .planPrice { font-size: 36px; font-weight: 800; color: #e8f5c8; line-height: 1; margin-bottom: 16px; display: flex; align-items: baseline; justify-content: center; gap: 2px; }
 .planCurrency { font-size: 18px; }
 .planPeriod { font-size: 13px; color: #4a6020; margin-left: 2px; }
-.upgradeBtn { width: 100%; padding: 12px; background: #D2FF1D; color: #0a0f05; border: none; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+.upgradeBtn { width: 100%; padding: 12px; background: #0D7377; color: #0a0f05; border: none; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
 .upgradeBtn:hover:not(:disabled) { opacity: 0.88; }
 .upgradeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 .note { font-size: 11px; color: #4a6020; margin-top: 20px; }
