@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
@@ -41,7 +42,7 @@ type Catalog = {
 
 const CATALOG: Catalog[] = [
   { type: 'webhook', name: 'Custom webhook', tagline: 'POST every lead to your own URL.', available: true },
-  { type: 'zapier', name: 'Zapier', tagline: 'Trigger any of 5,000+ Zapier apps.', available: false },
+  { type: 'zapier', name: 'Zapier', tagline: 'Trigger any of 5,000+ Zapier apps.', available: true },
   { type: 'mailchimp', name: 'Mailchimp', tagline: 'Push leads straight into a Mailchimp audience.', available: false },
   { type: 'klaviyo', name: 'Klaviyo', tagline: 'Sync leads + outcome tags into Klaviyo.', available: false },
   { type: 'convertkit', name: 'ConvertKit', tagline: 'Subscribe leads to a ConvertKit form or tag.', available: false },
@@ -247,6 +248,7 @@ function IntegrationRow({
 
 export default function IntegrationsPage() {
   const { token, status: authStatus } = useDashboardAuth();
+  const router = useRouter();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWebhookForm, setShowWebhookForm] = useState(false);
@@ -373,13 +375,21 @@ export default function IntegrationsPage() {
               {CATALOG.map((c) => (
                 <div
                   key={c.type}
+                  onClick={() => {
+                    if (c.type === 'webhook' && c.available) setShowWebhookForm(true);
+                    if (c.type === 'zapier' && c.available) router.push('/dashboard/integrations/api-keys');
+                  }}
                   style={{
                     padding: 16,
                     border: `1px solid ${C.BORDER}`,
                     borderRadius: 12,
                     background: c.available ? C.SURFACE : 'rgba(255,255,255,0.02)',
                     opacity: c.available ? 1 : 0.7,
+                    cursor: c.available ? 'pointer' : 'default',
+                    transition: 'border-color 0.15s',
                   }}
+                  onMouseEnter={e => { if (c.available) e.currentTarget.style.borderColor = C.TEXT_MUTED; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.BORDER; }}
                 >
                   <div
                     style={{
@@ -390,7 +400,7 @@ export default function IntegrationsPage() {
                     }}
                   >
                     <span style={{ fontSize: 13.5, fontWeight: 700, color: C.TEXT }}>{c.name}</span>
-                    {!c.available && <Pill>Soon</Pill>}
+                    {!c.available ? <Pill>Soon</Pill> : c.type !== 'webhook' ? <Pill variant='live'>Set up</Pill> : null}
                   </div>
                   <div style={{ fontSize: 12.5, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
                     {c.tagline}
