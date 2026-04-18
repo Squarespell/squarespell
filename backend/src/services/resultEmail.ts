@@ -63,7 +63,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   </head>
   <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;">
     <div style="display:none;max-height:0;overflow:hidden;color:transparent;line-height:0;">
-      Your ${quizTitle} results are ready — ${outcomeTitle}
+      Your ${quizTitle} results are ready - ${outcomeTitle}
     </div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;">
       <tr><td align="center" style="padding:24px 12px;">

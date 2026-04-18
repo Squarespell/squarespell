@@ -99,7 +99,7 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
       .replace(/^-|-$/g, '')
       .slice(0, 30) + '-' + Math.random().toString(36).slice(2, 8);
 
-    // Save the quiz. NOTE: the `quizzes` table has no `website_url` column —
+    // Save the quiz. NOTE: the `quizzes` table has no `website_url` column  - 
     // we stash the source URL inside the `settings` JSONB instead.
     const { data, error } = await supabase.from('quizzes').insert({
       user_id: userId,
@@ -355,7 +355,7 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
       return res.status(404).json({ error: 'Quiz not found or expired. Please generate a new one.' });
     }
 
-    // Save to DB with user's ID. We intentionally DON'T dedup by URL — claim tokens
+    // Save to DB with user's ID. We intentionally DON'T dedup by URL - claim tokens
     // are single-use and every publish should produce a distinct live quiz.
     // Also note: the `quizzes` table has no `website_url` column; we store the URL
     // inside the `settings` JSONB.
@@ -609,7 +609,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   res.status(201).json({ success: true, lead_id: leadId });
 });
 
-// GET /api/leads — list all leads for the authenticated user across every
+// GET /api/leads - list all leads for the authenticated user across every
 // quiz they own, joined with quiz title + slug. Used by the /dashboard/leads
 // unified inbox.
 leadsRouter.get('/leads', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
@@ -628,7 +628,7 @@ leadsRouter.get('/leads', requireAuth, attachUser, async (req: AuthenticatedRequ
   }
 });
 
-// GET /api/leads/:id — fetch single lead detail with full quiz and metadata
+// GET /api/leads/:id - fetch single lead detail with full quiz and metadata
 leadsRouter.get('/leads/:id', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
     const { data: lead, error } = await supabase
@@ -1183,7 +1183,7 @@ cronRouter.post('/weekly-digest', async (req, res) => {
         await resend.emails.send({
           from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
           to: user.email,
-          subject: `Your weekly quiz summary  -  ${totalViews} views this week`,
+          subject: `Your weekly quiz summary - ${totalViews} views this week`,
           html,
         });
 
@@ -1261,7 +1261,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
             await resend.emails.send({
               from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
               to: user.email,
-              subject: 'Welcome to Squarespell  -  Create your first quiz',
+              subject: 'Welcome to Squarespell - Create your first quiz',
               html,
             });
 
@@ -1322,7 +1322,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
           await resend.emails.send({
             from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
             to: user.email,
-            subject: 'Restore your Squarespell quizzes  -  Upgrade now',
+            subject: 'Restore your Squarespell quizzes - Upgrade now',
             html,
           });
 

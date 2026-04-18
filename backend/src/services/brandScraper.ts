@@ -38,7 +38,7 @@ export async function scrapeBrand(url: string) {
       redirect: 'follow',
     });
     const html = await res.text();
-    console.log(`[Scraper] Fetched ${url}  -  ${html.length} chars, status ${res.status}`);
+    console.log(`[Scraper] Fetched ${url} - ${html.length} chars, status ${res.status}`);
 
     // ── Site identity ──────────────────────────────────────────────────────
     const siteName =
@@ -90,7 +90,7 @@ export async function scrapeBrand(url: string) {
     let squarespaceContext = '';
     let isSquarespace = false;
 
-    // Detect Squarespace — Squarespell is Squarespace-ONLY, hard-fail otherwise
+    // Detect Squarespace - Squarespell is Squarespace-ONLY, hard-fail otherwise
     if (
       html.includes('Static.SQUARESPACE_CONTEXT') ||
       html.includes('static1.squarespace.com') ||
@@ -148,7 +148,7 @@ export async function scrapeBrand(url: string) {
     }
 
     // ── Strategy 3: Standard HTML extraction ──────────────────────────────
-    // Strip ONLY scripts, styles, footer, noscript  -  keep everything else
+    // Strip ONLY scripts, styles, footer, noscript - keep everything else
     const textContent = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -171,7 +171,7 @@ export async function scrapeBrand(url: string) {
     const ogTitle =
       html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i)?.[1] || '';
 
-    // Extract ALL headings (h1-h4)  -  these reveal core value props
+    // Extract ALL headings (h1-h4) - these reveal core value props
     const headings: string[] = [];
     const headingRegex = /<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/gi;
     let match;
@@ -180,7 +180,7 @@ export async function scrapeBrand(url: string) {
       if (clean.length > 3 && clean.length < 200) headings.push(clean);
     }
 
-    // Extract paragraphs  -  main content
+    // Extract paragraphs - main content
     const paragraphs: string[] = [];
     const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
     while ((match = pRegex.exec(html)) !== null && paragraphs.length < 12) {
@@ -229,7 +229,7 @@ export async function scrapeBrand(url: string) {
       }
     }
 
-    // Extract list items  -  often contain services, features, benefits
+    // Extract list items - often contain services, features, benefits
     const listItems: string[] = [];
     const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
     while ((match = liRegex.exec(html)) !== null && listItems.length < 20) {
@@ -237,7 +237,7 @@ export async function scrapeBrand(url: string) {
       if (clean.length > 5 && clean.length < 200) listItems.push(clean);
     }
 
-    // Extract button/CTA text  -  reveals key actions
+    // Extract button/CTA text - reveals key actions
     const ctaTexts: string[] = [];
     const btnRegex = /<(?:button|a)[^>]*class="[^"]*(?:btn|button|cta)[^"]*"[^>]*>([\s\S]*?)<\/(?:button|a)>/gi;
     while ((match = btnRegex.exec(html)) !== null && ctaTexts.length < 10) {
@@ -245,14 +245,14 @@ export async function scrapeBrand(url: string) {
       if (clean.length > 2 && clean.length < 60) ctaTexts.push(clean);
     }
 
-    // Extract image alt texts  -  describe products/services
+    // Extract image alt texts - describe products/services
     const altTexts: string[] = [];
     const imgRegex = /<img[^>]+alt="([^"]{5,120})"/gi;
     while ((match = imgRegex.exec(html)) !== null && altTexts.length < 10) {
       altTexts.push(match[1].trim());
     }
 
-    // Body text excerpt  -  first ~2500 chars of clean text
+    // Body text excerpt - first ~2500 chars of clean text
     const bodyText = textContent.slice(0, 2500);
 
     // ── Build comprehensive business summary ──────────────────────────────
@@ -378,7 +378,7 @@ export async function scrapeBrand(url: string) {
       return 1;
     };
 
-    // "Colorful" test — used to prefer saturated colors over greyscale when picking primary.
+    // "Colorful" test - used to prefer saturated colors over greyscale when picking primary.
     // Rejects low-alpha values (< 0.5) because a 14%-alpha lime renders invisible as a CTA.
     const isColorful = (color: string): boolean => {
       if (getAlpha(color) < 0.5) return false;
@@ -415,7 +415,7 @@ export async function scrapeBrand(url: string) {
     while ((vm = varRegex.exec(resolvedCss)) !== null) {
       const name = vm[1];
       const raw = vm[2].toLowerCase().replace(/\s+/g, '');
-      // Skip any remaining unresolved var() references — they'd render as broken CSS in the preview
+      // Skip any remaining unresolved var() references - they'd render as broken CSS in the preview
       if (raw.includes('var(')) continue;
       if (!varOccurrences[name]) varOccurrences[name] = {};
       varOccurrences[name][raw] = (varOccurrences[name][raw] || 0) + 1;

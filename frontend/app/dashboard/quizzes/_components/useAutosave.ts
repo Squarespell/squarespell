@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useAutosave — debounced autosave + unsaved-changes tracking for the quiz editor.
+ * useAutosave - debounced autosave + unsaved-changes tracking for the quiz editor.
  *
  * Behaviour:
  *   - Every time `data` changes (shallow-compared via JSON.stringify), schedule
@@ -13,7 +13,7 @@
  *   - Installs a window.beforeunload listener while unsaved changes exist so
  *     the browser prompts the user before tab close / navigation away.
  *
- * The hook is generic — pass in any serializable data + a save callback.
+ * The hook is generic - pass in any serializable data + a save callback.
  * The save callback must throw on failure so status can go to 'error'.
  *
  * Usage in builder/page.tsx:
@@ -34,7 +34,7 @@
  *
  *   <AutosaveStatus status={status} lastSavedAt={lastSavedAt} />
  *
- * The existing manual Save button can call saveNow() — it will cancel any
+ * The existing manual Save button can call saveNow() - it will cancel any
  * pending debounce and save immediately.
  */
 
@@ -71,7 +71,7 @@ export function useAutosave<T>({
   enabled,
   onSave,
   debounceMs = 2000,
-  beforeUnloadMessage = 'You have unsaved changes — are you sure you want to leave?',
+  beforeUnloadMessage = 'You have unsaved changes - are you sure you want to leave?',
 }: UseAutosaveOptions<T>): UseAutosaveResult {
   const [status, setStatus] = useState<AutosaveStatus>('saved');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
@@ -107,7 +107,7 @@ export function useAutosave<T>({
   }, [enabled, data, currentSnapshot]);
 
   /* ------------------------------------------------------------------ */
-  /* Core save function — cancels debounce, sends to server, updates    */
+  /* Core save function - cancels debounce, sends to server, updates    */
   /* status + lastSavedAt. Handles "edited again during in-flight       */
   /* save" by scheduling a follow-up save immediately.                   */
   /* ------------------------------------------------------------------ */
@@ -131,7 +131,7 @@ export function useAutosave<T>({
       // If more edits arrived while we were saving, kick off another save.
       // We compare the latest data (closure captures current, but re-read via
       // a microtask to pick up any sync-state changes that happened during
-      // await — in practice React will re-render and re-run the hook, but
+      // await - in practice React will re-render and re-run the hook, but
       // this is belt-and-suspenders).
       const afterSnapshot = safeStringify(data);
       if (afterSnapshot !== lastSavedSnapshot.current) {
@@ -182,7 +182,7 @@ export function useAutosave<T>({
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       // Chrome requires `returnValue` to be set. Modern browsers ignore the
-      // custom string and show their own — that's fine.
+      // custom string and show their own - that's fine.
       e.returnValue = beforeUnloadMessage;
       return beforeUnloadMessage;
     };
@@ -191,7 +191,7 @@ export function useAutosave<T>({
   }, [status, beforeUnloadMessage]);
 
   /* ------------------------------------------------------------------ */
-  /* Manual saveNow — cancels debounce, flushes immediately.            */
+  /* Manual saveNow - cancels debounce, flushes immediately.            */
   /* ------------------------------------------------------------------ */
   const saveNow = useCallback(async () => {
     if (debounceTimer.current) {
@@ -228,7 +228,7 @@ function safeStringify(value: unknown): string {
 }
 
 /* ------------------------------------------------------------------ */
-/* AutosaveStatusBadge — optional UI helper. Renders a small status   */
+/* AutosaveStatusBadge - optional UI helper. Renders a small status   */
 /* pill to drop next to the Save button.                               */
 /* ------------------------------------------------------------------ */
 
@@ -239,7 +239,7 @@ export function formatAutosaveLabel(status: AutosaveStatus, lastSavedAt: Date | 
     case 'unsaved':
       return 'Unsaved changes';
     case 'error':
-      return 'Save failed — retry';
+      return 'Save failed - retry';
     case 'saved':
     default:
       if (!lastSavedAt) return 'All changes saved';

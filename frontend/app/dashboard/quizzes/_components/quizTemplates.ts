@@ -1,11 +1,11 @@
 /**
- * quizTemplates.ts — frontend catalog of quiz archetypes.
+ * quizTemplates.ts - frontend catalog of quiz archetypes.
  *
  * This is the UI-facing config used by the NewQuizModal to render the
  * template picker. Each entry has display metadata (icon, name, blurb)
  * plus a stable `id` that matches the backend config in
  * `backend/src/config/quizTemplates.ts`. The backend owns the actual
- * LLM steering prompts — this file is UI-only.
+ * LLM steering prompts - this file is UI-only.
  *
  * Keep both files in sync on the `id` field. If you rename an id, update
  * the backend mirror and write a migration for existing quizzes whose
@@ -92,7 +92,7 @@ export const QUIZ_TEMPLATES: QuizTemplate[] = [
   {
     id: 'knowledge_check',
     name: 'Knowledge Check',
-    blurb: 'Educational — scored right vs. wrong.',
+    blurb: 'Educational - scored right vs. wrong.',
     icon: '🧠',
     examples: [
       'How much do you know about wine?',
@@ -175,10 +175,10 @@ export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<
     const name = err instanceof Error ? err.name : "";
     const msg = err instanceof Error ? err.message : String(err);
     if (name === "AbortError") {
-      throw new Error("The generator took too long to respond. Our service may be warming up — please wait 30 seconds and try again.");
+      throw new Error("The generator took too long to respond. Our service may be warming up - please wait 30 seconds and try again.");
     }
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-      throw new Error("Could not reach the generator (" + API + "). If this is the first request in a while, it may be starting up — wait 30 seconds and retry. If it keeps failing, check that ad-blockers are not blocking onrender.com.");
+      throw new Error("Could not reach the generator (" + API + "). If this is the first request in a while, it may be starting up - wait 30 seconds and retry. If it keeps failing, check that ad-blockers are not blocking onrender.com.");
     }
     throw new Error("Network error: " + msg);
   }

@@ -124,7 +124,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res) => {
   res.json({ success: true });
 });
 
-// POST /api/quizzes/:id/duplicate — clone an existing quiz as a new draft
+// POST /api/quizzes/:id/duplicate - clone an existing quiz as a new draft
 router.post('/:id/duplicate', guardQuizCreation, async (req: AuthenticatedRequest, res) => {
   try {
     const { data: source, error: srcErr } = await supabase
@@ -136,7 +136,7 @@ router.post('/:id/duplicate', guardQuizCreation, async (req: AuthenticatedReques
     if (srcErr || !source) return res.status(404).json({ error: 'Quiz not found' });
 
     const srcTitle = (source.title as string) || 'Untitled Quiz';
-    // Avoid piling up "(Copy) (Copy) (Copy)" — cap to a single suffix
+    // Avoid piling up "(Copy) (Copy) (Copy)" - cap to a single suffix
     const newTitle = /\(Copy\)$/i.test(srcTitle.trim()) ? srcTitle : `${srcTitle} (Copy)`;
 
     const { data, error } = await supabase

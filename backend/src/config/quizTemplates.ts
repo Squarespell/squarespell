@@ -1,5 +1,5 @@
 /**
- * quizTemplates.ts — backend catalog of quiz archetypes.
+ * quizTemplates.ts - backend catalog of quiz archetypes.
  *
  * Owns the LLM steering prompts for each template. The frontend catalog
  * at frontend/app/dashboard/quizzes/_components/quizTemplates.ts owns
@@ -7,7 +7,7 @@
  *
  * The `system_prompt` strings are surfaced to the quiz generator as a
  * high-weight onboarding pair so the LLM can shape its output toward the
- * chosen archetype. They're intentionally instructional and specific —
+ * chosen archetype. They're intentionally instructional and specific  - 
  * vague prompts produce mushy quizzes.
  */
 
@@ -68,7 +68,7 @@ export const QUIZ_TEMPLATES: Record<QuizTemplateId, QuizTemplate> = {
       'Outcomes map to specific size/fit recommendations backed by the ' +
       'answers given. Questions capture the functional dimensions that drive ' +
       'fit (body measurements where relevant, preferences, use cases, ' +
-      'environmental factors). Keep it short — fit guides win on speed. ' +
+      'environmental factors). Keep it short - fit guides win on speed. ' +
       '4–6 questions max. Include a disclaimer outcome-copy about trying ' +
       'the item when applicable.',
   },
@@ -79,7 +79,7 @@ export const QUIZ_TEMPLATES: Record<QuizTemplateId, QuizTemplate> = {
       'Build a quiz that diagnoses the user\'s specific type, condition, or ' +
       'need (skin type, hair type, fitness level, goal category, etc.). ' +
       'Outcomes name the diagnosed type and pair it with actionable ' +
-      'recommendations — at least one product/content recommendation and one ' +
+      'recommendations - at least one product/content recommendation and one ' +
       'piece of advice. Questions should be precise and feel expert-informed ' +
       'without being dry. 5–8 questions. Tone: knowledgeable friend, not ' +
       'clinical doctor.',

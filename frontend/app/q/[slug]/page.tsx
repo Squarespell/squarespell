@@ -1,5 +1,5 @@
 /**
- * /q/[slug] — permanent redirect to the canonical /quiz/[slug] route.
+ * /q/[slug] - permanent redirect to the canonical /quiz/[slug] route.
  *
  * Why this exists:
  *   Historical dashboard helpers (and published marketing snippets) advertised
@@ -39,6 +39,6 @@ export default function QuizShortlink({ params, searchParams }: Props) {
   if (!slug) {
     redirect('/');
   }
-  // 308 — preserves method + is cacheable. OK for embed iframes.
+  // 308 - preserves method + is cacheable. OK for embed iframes.
   permanentRedirect(`/quiz/${encodeURIComponent(slug)}${stringifySearchParams(searchParams)}`);
 }

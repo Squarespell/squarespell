@@ -596,7 +596,7 @@ export default function QuizPage() {
             We just emailed your personalized report to <strong>{email}</strong>.
           </p>
           <p style={{margin:'0 0 24px',color:'#777',fontSize:14}}>
-            Don’t see it in a minute? Check <strong>Promotions</strong> or <strong>Spam</strong> —
+            Don’t see it in a minute? Check <strong>Promotions</strong> or <strong>Spam</strong>  - 
             mark it as <em>Not Spam</em> so future emails land in your Inbox.
           </p>
           <button

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Shared dashboard modals — ConfirmDialog (destructive actions) and
+ * Shared dashboard modals - ConfirmDialog (destructive actions) and
  * PublishModal (one-click share surface with Link / Embed / Preview tabs).
  *
  * Both share a single backdrop + sheet primitive so the visual language is
@@ -13,7 +13,7 @@ import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { embedSnippet, publicQuizUrl } from '@/lib/urls';
 
 /* ------------------------------------------------------------------ */
-/* Sheet — shared backdrop + centered card                             */
+/* Sheet - shared backdrop + centered card                             */
 /* ------------------------------------------------------------------ */
 
 function Sheet({
@@ -79,7 +79,7 @@ function Sheet({
 }
 
 /* ------------------------------------------------------------------ */
-/* ConfirmDialog — destructive confirmation                            */
+/* ConfirmDialog - destructive confirmation                            */
 /* ------------------------------------------------------------------ */
 
 export function ConfirmDialog({
@@ -200,7 +200,7 @@ export function ConfirmDialog({
 }
 
 /* ------------------------------------------------------------------ */
-/* PublishModal — Link / Embed / Preview tabs                          */
+/* PublishModal - Link / Embed / Preview tabs                          */
 /* ------------------------------------------------------------------ */
 
 type Tab = 'link' | 'embed' | 'preview';
@@ -369,7 +369,7 @@ export function PublishModal({
 
         {tab === 'embed' && (
           <>
-            <CopyRow label="Recommended — Squarespace Code Block" value={snippet} />
+            <CopyRow label="Recommended - Squarespace Code Block" value={snippet} />
             <details style={{ marginTop: 4 }}>
               <summary style={{ cursor: 'pointer', fontSize: 12.5, color: C.TEXT_MUTED, marginBottom: 10 }}>
                 Need a plain iframe instead?
@@ -406,7 +406,7 @@ export function PublishModal({
               loading="lazy"
             />
             <div style={{ padding: '10px 14px', fontSize: 11.5, color: C.TEXT_MUTED, background: C.SURFACE, borderTop: `1px solid ${C.BORDER}` }}>
-              Live preview — exactly what visitors will see.
+              Live preview - exactly what visitors will see.
             </div>
           </div>
         )}

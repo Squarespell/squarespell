@@ -273,7 +273,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
       console.warn(`[FromUrl] Rejected non-Squarespace site: ${err.hostname}`);
-      // Refund the rate-limit slot — the user didn't actually use AI generation
+      // Refund the rate-limit slot - the user didn't actually use AI generation
       const entry = fromUrlRateMap.get(userId);
       if (entry && entry.count > 0) entry.count -= 1;
       return res.status(422).json({

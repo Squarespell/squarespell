@@ -211,7 +211,7 @@ export default function CampaignDetailPage() {
         </div>
       </Card>
 
-      {/* Edit fields — only for drafts */}
+      {/* Edit fields - only for drafts */}
       {isDraft ? (
         <Card>
           <div style={{ color: C.TEXT, fontSize: 14, fontWeight: 600, marginBottom: 14 }}>Campaign details</div>

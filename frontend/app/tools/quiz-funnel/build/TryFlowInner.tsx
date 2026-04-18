@@ -151,7 +151,7 @@ export interface TryFlowInnerProps {
    *  Stage 6 (success screen), false to stay put (the handler is responsible
    *  for surfacing its own error). Ignored in preview mode. */
   onPublish?: () => Promise<boolean>;
-  /** User's current plan — used to gate paid-only features like branding removal. */
+  /** User's current plan - used to gate paid-only features like branding removal. */
   plan?: 'trial' | 'starter' | 'pro' | 'agency' | 'free';
 }
 
@@ -836,7 +836,7 @@ export function TryFlowInner({
   const cardBg = bgIsDark ? mix(brandBg, '#ffffff', 0.06) : '#ffffff';
   // Softer hairline border (WCAG-agnostic; visual only)
   const hairlineBorder = bgIsDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)';
-  // Subtle dual-layer ambient shadow — tight + diffuse, low alpha, no "chunk".
+  // Subtle dual-layer ambient shadow - tight + diffuse, low alpha, no "chunk".
   // On dark surfaces the shadow is effectively invisible; the border + tint
   // do the lifting instead.
   const cardShadow = bgIsDark
@@ -856,7 +856,7 @@ export function TryFlowInner({
   const bodyOnBg = aaAgainst(brandBg, brandText);
   const headingOnCard = bgIsDark ? '#ffffff' : '#0a0a0a';
   const bodyOnCard = aaAgainst(cardBg, brandText);
-  // Secondary / muted text — 60% of the body color, keeping contrast >= 3:1.
+  // Secondary / muted text - 60% of the body color, keeping contrast >= 3:1.
   const mutedOnCard = bgIsDark ? 'rgba(255,255,255,0.62)' : 'rgba(0,0,0,0.56)';
 
   const s4VisitorVars: React.CSSProperties = {

@@ -66,7 +66,7 @@ export default function GlobalError({
           Something went wrong
         </h1>
         <p style={{ fontSize: 14, opacity: 0.66, lineHeight: 1.55, margin: '0 0 24px' }}>
-          We hit a snag loading this page. It is usually temporary — try again
+          We hit a snag loading this page. It is usually temporary - try again
           in a moment or head back home.
         </p>
 
