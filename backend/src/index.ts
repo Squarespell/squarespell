@@ -1,4 +1,22 @@
 import 'dotenv/config';
+import * as Sentry from '@sentry/node';
+
+// Sentry must be initialized before other imports to catch all errors.
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 0.1,
+    // Filter out health check transactions to reduce noise
+    beforeSendTransaction(event) {
+      if (event.transaction === 'GET /health' || event.transaction === 'GET /api/health') {
+        return null;
+      }
+      return event;
+    },
+  });
+}
+
 import publicReportRouter from './routes/publicReport';
 import express from 'express';
 import cors from 'cors';
@@ -113,5 +131,10 @@ app.use('/api/emails', emailsRouter);
 app.use('/api/webhooks', resendWebhookRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+// Sentry error handler must be registered after all routes
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 app.listen(PORT, () => log.info('Backend running', { port: Number(PORT) }));

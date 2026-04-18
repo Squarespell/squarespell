@@ -80,7 +80,7 @@ Durable task list. Edit freely. Order within a priority band is rough.
 ## P6 (Observability)
 
 - [ ] Sentry error alerting
-- [ ] Structured logging across API + workers
+- [x] Structured logging across API + workers
 
 ## Done log (recent)
 
