@@ -97,7 +97,15 @@ r.get('/source-quizzes/:id/outcomes', async (req, res) => {
 r.get('/campaigns', async (req, res) => {
   const tenantId = req.dbUserId;
   const { data, error } = await supabase.from('email_campaigns')
-    .select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false });
+    .select('*').eq('tenant_id', tenantId).neq('status', 'archived').order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+r.get('/campaigns/archived', async (req, res) => {
+  const tenantId = req.dbUserId;
+  const { data, error } = await supabase.from('email_campaigns')
+    .select('*').eq('tenant_id', tenantId).eq('status', 'archived').order('updated_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data || []);
 });
@@ -187,9 +195,23 @@ r.delete('/campaigns/:id', async (req, res) => {
     return res.status(400).json({ error: 'Cannot delete while sending' });
   }
   const { error } = await supabase.from('email_campaigns')
-    .delete().eq('id', req.params.id).eq('tenant_id', tenantId);
+    .update({ status: 'archived' }).eq('id', req.params.id).eq('tenant_id', tenantId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ deleted: true });
+});
+
+r.post('/campaigns/:id/restore', async (req, res) => {
+  const tenantId = req.dbUserId;
+  const { data: existing } = await supabase.from('email_campaigns')
+    .select('status').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!existing) return res.status(404).json({ error: 'Campaign not found' });
+  if (existing.status !== 'archived') {
+    return res.status(400).json({ error: 'Campaign is not archived' });
+  }
+  const { data, error } = await supabase.from('email_campaigns')
+    .update({ status: 'draft' }).eq('id', req.params.id).eq('tenant_id', tenantId).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 r.post('/campaigns/:id/send', emailQuota, async (req, res) => {

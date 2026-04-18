@@ -40,6 +40,15 @@ router.post('/', guardQuizCreation, async (req: AuthenticatedRequest, res) => {
   res.status(201).json(data);
 });
 
+router.get('/archived/list', async (req: AuthenticatedRequest, res) => {
+  const { data, error } = await supabase.from('quizzes')
+    .select('id,title,status,slug,lead_count,view_count,created_at,updated_at')
+    .eq('user_id', req.dbUserId).eq('status', 'archived')
+    .order('updated_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 router.get('/:id', async (req: AuthenticatedRequest, res) => {
   const { data, error } = await supabase.from('quizzes').select('*').eq('id', req.params.id).eq('user_id', req.dbUserId).single();
   if (error || !data) return res.status(404).json({ error: 'Quiz not found' });
@@ -123,6 +132,20 @@ router.delete('/:id', async (req: AuthenticatedRequest, res) => {
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
+
+router.post('/:id/restore', async (req: AuthenticatedRequest, res) => {
+  const { data: existing } = await supabase.from('quizzes')
+    .select('status').eq('id', req.params.id).eq('user_id', req.dbUserId).single();
+  if (!existing) return res.status(404).json({ error: 'Quiz not found' });
+  if (existing.status !== 'archived') {
+    return res.status(400).json({ error: 'Quiz is not archived' });
+  }
+  const { data, error } = await supabase.from('quizzes')
+    .update({ status: 'draft' }).eq('id', req.params.id).eq('user_id', req.dbUserId).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 
 // POST /api/quizzes/:id/duplicate - clone an existing quiz as a new draft
 router.post('/:id/duplicate', guardQuizCreation, async (req: AuthenticatedRequest, res) => {
