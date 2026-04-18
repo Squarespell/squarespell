@@ -246,7 +246,7 @@ function SignUpContent() {
             </form>
 
             <p style={{ textAlign: 'center', fontSize: '14px', color: 'rgba(240,242,245,0.35)', marginTop: '24px' }}>
-              Already have an account? <a href="/sign-in" style={{ color: ACC, fontWeight: 600, textDecoration: 'none' }}>Sign in</a>
+              Already have an account? <a href={fromTry ? `/sign-in?from=try${claimParam ? `&claim=${claimParam}` : ''}` : '/sign-in'} style={{ color: ACC, fontWeight: 600, textDecoration: 'none' }}>Sign in</a>
             </p>
 
             <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(240,242,245,0.15)', marginTop: '20px', lineHeight: 1.5 }}>

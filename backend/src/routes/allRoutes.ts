@@ -127,8 +127,58 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
   }
 });
 
-// ── In-memory cache for preview quizzes (before user signs up) ───────────────
-const previewQuizCache = new Map<string, { quiz: any; brand: any; url: string; createdAt: number }>();
+// ── Preview drafts persistence (Supabase preview_drafts table) ───────────────
+// Replaced the in-memory Map with durable Supabase storage so drafts survive
+// backend restarts and work across multiple instances.
+async function storePreviewDraft(claimToken: string, quiz: any, brand: any, url: string): Promise<void> {
+  const { error } = await supabase.from('preview_drafts').insert({
+    claim_token: claimToken, quiz, brand: brand || {}, url,
+  });
+  if (error) {
+    console.error('[PreviewDraft] Insert failed:', error.message);
+    throw error;
+  }
+  // Async cleanup: delete unclaimed drafts older than 24 hours
+  supabase.from('preview_drafts')
+    .delete()
+    .is('claimed_at', null)
+    .lt('created_at', new Date(Date.now() - 86400000).toISOString())
+    .then(({ error: cleanErr }) => {
+      if (cleanErr) console.warn('[PreviewDraft] Cleanup error:', cleanErr.message);
+    });
+}
+
+async function getPreviewDraft(claimToken: string): Promise<{ quiz: any; brand: any; url: string } | null> {
+  const { data, error } = await supabase.from('preview_drafts')
+    .select('quiz, brand, url')
+    .eq('claim_token', claimToken)
+    .is('claimed_at', null)
+    .single();
+  if (error || !data) return null;
+  return data;
+}
+
+async function patchPreviewDraft(claimToken: string, quizUpdates: Record<string, any>): Promise<any | null> {
+  const draft = await getPreviewDraft(claimToken);
+  if (!draft) return null;
+  const updated = { ...draft.quiz };
+  const allowed = ['title', 'questions', 'outcomes', 'branding', 'settings'];
+  for (const key of allowed) {
+    if (quizUpdates[key] !== undefined) updated[key] = quizUpdates[key];
+  }
+  const { error } = await supabase.from('preview_drafts')
+    .update({ quiz: updated })
+    .eq('claim_token', claimToken)
+    .is('claimed_at', null);
+  if (error) return null;
+  return updated;
+}
+
+async function markDraftClaimed(claimToken: string, userId: string): Promise<void> {
+  await supabase.from('preview_drafts')
+    .update({ claimed_at: new Date().toISOString(), claimed_by: userId })
+    .eq('claim_token', claimToken);
+}
 
 // ── In-memory cache for onboarding sessions (stage 2 state) ──────────────────
 // Keyed by session_token. Stores the scraped brand + the owner's answers so
@@ -167,19 +217,11 @@ previewRouter.post('/preview-generate', async (req, res) => {
     const quiz = await generateQuiz(normalizedUrl, 'general', 'Generate more leads', brand);
     console.log(`[Preview] Quiz generated: "${quiz.title}"`);
 
-    // Step 3: Generate a claim token and store quiz in memory cache
-    // (We can't save to DB without a user_id due to NOT NULL constraint)
+    // Step 3: Generate a claim token and persist draft to Supabase
     const claimToken = crypto.randomBytes(16).toString('hex');
-    previewQuizCache.set(claimToken, {
-      quiz, brand, url: normalizedUrl,
-      createdAt: Date.now(),
-    });
-    // Clean old entries (older than 24 hours so OAuth roundtrip never loses them)
-    for (const [k, v] of previewQuizCache.entries()) {
-      if (Date.now() - v.createdAt > 86400000) previewQuizCache.delete(k);
-    }
+    await storePreviewDraft(claimToken, quiz, brand, normalizedUrl);
 
-    console.log(`[Preview] Quiz cached with claim token: ${claimToken.slice(0, 8)}...`);
+    console.log(`[Preview] Quiz stored with claim token: ${claimToken.slice(0, 8)}...`);
     res.json({ brand, quiz, claim_token: claimToken });
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
@@ -296,15 +338,7 @@ previewRouter.post('/preview-build-quiz', async (req, res) => {
     console.log(`[PreviewBuildQuiz] Quiz generated: "${quiz.title}"`);
 
     const claimToken = crypto.randomBytes(16).toString('hex');
-    previewQuizCache.set(claimToken, {
-      quiz,
-      brand: session.brand,
-      url: session.url,
-      createdAt: Date.now(),
-    });
-    for (const [k, v] of previewQuizCache.entries()) {
-      if (Date.now() - v.createdAt > 86400000) previewQuizCache.delete(k);
-    }
+    await storePreviewDraft(claimToken, quiz, session.brand, session.url);
 
     res.json({ quiz, brand: session.brand, claim_token: claimToken, url: session.url });
   } catch (err: any) {
@@ -313,29 +347,23 @@ previewRouter.post('/preview-build-quiz', async (req, res) => {
   }
 });
 
-// ── Patch a cached draft quiz (edits made before sign up) ────────────────────
+// ── Patch a persisted draft quiz (edits made before sign up) ─────────────────
 previewRouter.patch('/preview-quiz/:token', async (req, res) => {
   const token = req.params.token;
-  const cached = previewQuizCache.get(token);
-  if (!cached) return res.status(404).json({ error: 'Draft not found or expired' });
-  const allowed = ['title', 'questions', 'outcomes', 'branding', 'settings'];
-  const updated = { ...cached.quiz };
-  for (const key of allowed) {
-    if (req.body[key] !== undefined) updated[key] = req.body[key];
-  }
-  previewQuizCache.set(token, { ...cached, quiz: updated });
+  const updated = await patchPreviewDraft(token, req.body);
+  if (!updated) return res.status(404).json({ error: 'Draft not found or expired' });
   res.json({ ok: true, quiz: updated });
 });
 
-// ── Read a cached draft quiz back (for stage 4 visitor preview) ──────────────
+// ── Read a persisted draft quiz back (for stage 4 visitor preview) ────────────
 previewRouter.get('/preview-quiz/:token', async (req, res) => {
   const token = req.params.token;
-  const cached = previewQuizCache.get(token);
-  if (!cached) return res.status(404).json({ error: 'Draft not found or expired' });
-  res.json({ quiz: cached.quiz, brand: cached.brand, url: cached.url });
+  const draft = await getPreviewDraft(token);
+  if (!draft) return res.status(404).json({ error: 'Draft not found or expired' });
+  res.json({ quiz: draft.quiz, brand: draft.brand, url: draft.url });
 });
 
-// ── Claim a preview quiz (save from cache to DB for authenticated user) ──────
+// ── Claim a preview quiz (save from Supabase draft to quizzes for authenticated user) ──
 previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
     const { claim_token, quiz: bodyQuiz, brand: bodyBrand, url: bodyUrl } = req.body;
@@ -343,24 +371,19 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
     if (!claim_token && !bodyQuiz) return res.status(400).json({ error: 'claim_token or quiz payload required' });
 
-    // Look up quiz in memory cache, fall back to body payload if cache miss
-    // (cache is lost if the backend restarts between generate and claim)
+    // Look up quiz in Supabase preview_drafts, fall back to body payload
     let quiz: any, brand: any, url: string;
-    const cached = claim_token ? previewQuizCache.get(claim_token) : null;
-    if (cached) {
-      quiz = cached.quiz; brand = cached.brand; url = cached.url;
+    const draft = claim_token ? await getPreviewDraft(claim_token) : null;
+    if (draft) {
+      quiz = draft.quiz; brand = draft.brand; url = draft.url;
     } else if (bodyQuiz && bodyUrl) {
-      console.log(`[Claim] Cache miss; using body payload fallback`);
+      console.log(`[Claim] Draft not found; using body payload fallback`);
       quiz = bodyQuiz; brand = bodyBrand || {}; url = bodyUrl;
     } else {
-      console.log(`[Claim] Token not found in cache and no fallback payload: ${(claim_token || '').slice(0, 8)}...`);
+      console.log(`[Claim] Token not found and no fallback payload: ${(claim_token || '').slice(0, 8)}...`);
       return res.status(404).json({ error: 'Quiz not found or expired. Please generate a new one.' });
     }
 
-    // Save to DB with user's ID. We intentionally DON'T dedup by URL - claim tokens
-    // are single-use and every publish should produce a distinct live quiz.
-    // Also note: the `quizzes` table has no `website_url` column; we store the URL
-    // inside the `settings` JSONB.
     const slug = (brand?.site_name || 'quiz')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -388,8 +411,8 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
       throw saveErr;
     }
 
-    // Remove from cache
-    if (claim_token) previewQuizCache.delete(claim_token);
+    // Mark draft as claimed
+    if (claim_token) await markDraftClaimed(claim_token, userId);
 
     console.log(`[Claim] Quiz ${saved.id} saved for user ${userId}, slug: ${saved.slug}`);
     res.json({ claimed: true, quiz_id: saved.id, slug: saved.slug });

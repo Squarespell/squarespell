@@ -1,16 +1,20 @@
 'use client'
 import { useSignIn, useSignUp, useAuth } from '@clerk/nextjs'
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 const ACC = '#D2FF1D'
 const BG = '#07090c'
 
-export default function SignInPage() {
+function SignInContent() {
   const { signIn, isLoaded } = useSignIn()
   const { signUp, isLoaded: signUpLoaded } = useSignUp()
   const { isSignedIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromTry = searchParams.get('from') === 'try'
+  const claimParam = searchParams.get('claim') || ''
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -18,9 +22,14 @@ export default function SignInPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [appleLoading, setAppleLoading] = useState(false)
 
+  // Preserve claim token through to dashboard after sign-in
+  const destUrl = fromTry
+    ? `/dashboard?new=true${claimParam ? `&claim=${claimParam}` : ''}`
+    : '/dashboard'
+
   useEffect(() => {
-    if (isSignedIn) router.replace('/dashboard')
-  }, [isSignedIn, router])
+    if (isSignedIn) router.replace(destUrl)
+  }, [isSignedIn, router, destUrl])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,7 +39,7 @@ export default function SignInPage() {
     try {
       const result = await signIn.create({ identifier: email, password })
       if (result.status === 'complete') {
-        window.location.href = '/dashboard'
+        window.location.href = destUrl
       }
     } catch (err: any) {
       setError(err?.errors?.[0]?.message || 'Incorrect email or password.')
@@ -46,12 +55,12 @@ export default function SignInPage() {
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: window.location.origin + '/sso-callback',
-        redirectUrlComplete: window.location.origin + '/dashboard',
+        redirectUrlComplete: window.location.origin + destUrl,
       })
     } catch {
       setGoogleLoading(false)
     }
-  }, [isLoaded, signIn, googleLoading])
+  }, [isLoaded, signIn, googleLoading, destUrl])
 
   const handleApple = useCallback(async () => {
     if (!isLoaded || appleLoading) return
@@ -60,12 +69,12 @@ export default function SignInPage() {
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_apple',
         redirectUrl: window.location.origin + '/sso-callback',
-        redirectUrlComplete: window.location.origin + '/dashboard',
+        redirectUrlComplete: window.location.origin + destUrl,
       })
     } catch {
       setAppleLoading(false)
     }
-  }, [isLoaded, signIn, appleLoading])
+  }, [isLoaded, signIn, appleLoading, destUrl])
 
   if (isSignedIn) return (
     <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -168,9 +177,13 @@ export default function SignInPage() {
         </form>
 
         <p style={{ textAlign: 'center', fontSize: '14px', color: 'rgba(240,242,245,0.35)', marginTop: '24px' }}>
-          Don&apos;t have an account? <a href="/sign-up" style={{ color: ACC, fontWeight: 600, textDecoration: 'none' }}>Start free trial</a>
+          Don&apos;t have an account? <a href={fromTry ? `/sign-up?from=try${claimParam ? `&claim=${claimParam}` : ''}` : '/sign-up'} style={{ color: ACC, fontWeight: 600, textDecoration: 'none' }}>Start free trial</a>
         </p>
       </div>
     </div>
   )
+}
+
+export default function SignInPage() {
+  return <Suspense fallback={<div style={{ minHeight: '100vh', background: BG }} />}><SignInContent /></Suspense>
 }
