@@ -49,16 +49,22 @@ export default function NewCampaignPage() {
   const saveOrSend = async (send: boolean) => {
     setSending(true); setResult(null);
     try {
-      const campaign = await createCampaign({
-        name: name || design.subject || 'Untitled',
-        subject: design.subject,
-        from_name: design.fromName,
-        from_email: design.fromEmail,
-        html: design.html,
-        mode,
-        source_quiz_id: audience.sourceKind === 'quiz' ? audience.sourceQuizId : undefined,
-        source_filters: audience.sourceKind === 'quiz' ? audience.filters : undefined,
-      } as any);
+      let campaign: any;
+      if (draftId) {
+        campaign = { id: draftId };
+      } else {
+        campaign = await createCampaign({
+          name: name || design.subject || 'Untitled',
+          subject: design.subject,
+          from_name: design.fromName,
+          from_email: design.fromEmail,
+          html: design.html,
+          mode,
+          source_quiz_id: audience.sourceKind === 'quiz' ? audience.sourceQuizId : undefined,
+          source_filters: audience.sourceKind === 'quiz' ? audience.filters : undefined,
+        } as any);
+        setDraftId(campaign.id);
+      }
       if (!send) { router.push(`/dashboard/emails/${campaign.id}`); return; }
       const manualList = audience.sourceKind === 'manual'
         ? audience.manualRecipients.split(/[\s,;\n]+/).map(s => s.trim()).filter(s => s.includes('@'))
@@ -73,14 +79,22 @@ export default function NewCampaignPage() {
     }
   };
 
+  const [draftId, setDraftId] = useState<string | null>(null);
+
   const testSend = async (to: string) => {
-    const draft = await createCampaign({
-      name: '[TEST] ' + (name || design.subject || 'Untitled'),
-      subject: '[TEST] ' + design.subject,
-      from_name: design.fromName, from_email: design.fromEmail, html: design.html,
-      mode: 'blast',
-    } as any);
-    await testSendCampaign(draft.id, to);
+    let id = draftId;
+    if (!id) {
+      const draft = await createCampaign({
+        name: name || design.subject || 'Untitled',
+        subject: design.subject,
+        from_name: design.fromName, from_email: design.fromEmail, html: design.html,
+        mode, source_quiz_id: audience.sourceKind === 'quiz' ? audience.sourceQuizId : undefined,
+        source_filters: audience.sourceKind === 'quiz' ? audience.filters : undefined,
+      } as any);
+      id = draft.id;
+      setDraftId(id);
+    }
+    await testSendCampaign(id, to);
   };
 
   return (
