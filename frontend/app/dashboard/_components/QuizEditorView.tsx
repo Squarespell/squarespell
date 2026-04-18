@@ -248,6 +248,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   }
 
   const [quiz, setQuiz] = useState<DbQuiz | null>(null);
+  const [userPlan, setUserPlan] = useState<'trial' | 'starter' | 'pro' | 'agency' | 'free'>('trial');
   const [resolvedId, setResolvedId] = useState<string>('');
   const [state, setState] = useState<'loading' | 'error' | 'empty' | 'ready'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
@@ -295,6 +296,26 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     return () => { cancelled = true; };
   }, [quizId]);
 
+  // Fetch user plan for feature gating (branding toggle, etc.)
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPlan() {
+      try {
+        const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+        const token = await getToken();
+        if (!token || cancelled) return;
+        const res = await fetch(`${API}/api/user/plan`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled && data.plan) setUserPlan(data.plan);
+      } catch {}
+    }
+    fetchPlan();
+    return () => { cancelled = true; };
+  }, [getToken]);
+
   if (state === 'loading') return <EditorLoading label="Loading editor…" />;
   if (state === 'error') return <EditorError message={errorMsg} />;
   if (state === 'empty') return <EditorEmpty />;
@@ -312,6 +333,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
           initialUrl={quiz.branding?.site_url || quiz.source_url || ''}
           initialStage={3}
           onPublish={handlePublish}
+          plan={userPlan}
         />
       </div>
       {publishError && (

@@ -151,6 +151,8 @@ export interface TryFlowInnerProps {
    *  Stage 6 (success screen), false to stay put (the handler is responsible
    *  for surfacing its own error). Ignored in preview mode. */
   onPublish?: () => Promise<boolean>;
+  /** User's current plan — used to gate paid-only features like branding removal. */
+  plan?: 'trial' | 'starter' | 'pro' | 'agency' | 'free';
 }
 
 export function TryFlowInner({
@@ -161,6 +163,7 @@ export function TryFlowInner({
   initialUrl = '',
   initialStage,
   onPublish,
+  plan = 'trial',
 }: TryFlowInnerProps = {}) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -1561,23 +1564,37 @@ export function TryFlowInner({
 
                   <div className="edit-group">
                     <div className="edit-group-label">Branding</div>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-                      <input
-                        type="checkbox"
-                        id="show-branding-toggle"
-                        checked={quiz?.settings?.show_branding !== false}
-                        onChange={(e) => {
-                          const newSettings = { ...quiz?.settings, show_branding: e.target.checked };
-                          updateQuiz({ ...quiz, settings: newSettings } as Quiz);
-                          flashToast(e.target.checked ? 'Branding enabled' : 'Branding hidden');
-                        }}
-                        style={{ marginTop: 3, cursor: 'pointer', accentColor: 'var(--accent)' }}
-                      />
-                      <label htmlFor="show-branding-toggle" style={{ cursor: 'pointer', fontSize: 13, userSelect: 'none' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Show Squarespell branding</div>
-                        <div style={{ fontSize: 12, opacity: 0.6, lineHeight: 1.4 }}>Display "Powered by Squarespell" badge at bottom of quiz</div>
-                      </label>
-                    </div>
+                    {(() => {
+                      const canRemove = ['pro', 'agency'].includes(plan);
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+                          <input
+                            type="checkbox"
+                            id="show-branding-toggle"
+                            checked={quiz?.settings?.show_branding !== false}
+                            disabled={!canRemove}
+                            onChange={(e) => {
+                              if (!canRemove) return;
+                              const newSettings = { ...quiz?.settings, show_branding: e.target.checked };
+                              updateQuiz({ ...quiz, settings: newSettings } as Quiz);
+                              flashToast(e.target.checked ? 'Branding enabled' : 'Branding hidden');
+                            }}
+                            style={{ marginTop: 3, cursor: canRemove ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)', opacity: canRemove ? 1 : 0.4 }}
+                          />
+                          <label htmlFor="show-branding-toggle" style={{ cursor: canRemove ? 'pointer' : 'default', fontSize: 13, userSelect: 'none' }}>
+                            <div style={{ fontWeight: 600, marginBottom: 4 }}>Show Squarespell branding</div>
+                            <div style={{ fontSize: 12, opacity: 0.6, lineHeight: 1.4 }}>
+                              Display &quot;Powered by Squarespell&quot; badge at bottom of quiz
+                            </div>
+                            {!canRemove && (
+                              <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 6, fontWeight: 600, opacity: 0.9 }}>
+                                &#x1F512; Upgrade to Pro to remove branding
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="divider" />
