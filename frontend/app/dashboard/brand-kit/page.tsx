@@ -12,7 +12,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
+import { DashboardShell } from '../_components/DashboardShell';
+import { DASHBOARD_COLORS as C } from '../_components/dashboardColors';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import {
   PageHeader,

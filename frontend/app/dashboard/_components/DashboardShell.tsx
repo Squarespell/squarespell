@@ -21,18 +21,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { TopBanner } from './TopBanner';
+import { DASHBOARD_COLORS } from './dashboardColors';
 
-const COLORS = {
-  BG: '#07090c',
-  SURFACE: '#0a0d12',
-  ELEVATED: '#0f1319',
-  BORDER: '#1a1f29',
-  HAIRLINE: 'rgba(255,255,255,0.05)',
-  TEXT: '#f4f6f8',
-  TEXT_MUTED: '#8a919c',
-  TEXT_SUBTLE: '#5e6470',
-  ACCENT: '#D2FF1D',
-};
+const COLORS = DASHBOARD_COLORS;
 
 type NavItem = {
   href: string;
@@ -664,4 +655,5 @@ export function DashboardShell({
   );
 }
 
-export const DASHBOARD_COLORS = COLORS;
+// Re-export for backward compatibility - prefer importing from dashboardColors.ts directly
+export { DASHBOARD_COLORS } from './dashboardColors';
