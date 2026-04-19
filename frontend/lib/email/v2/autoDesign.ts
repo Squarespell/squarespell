@@ -57,6 +57,7 @@ export interface AutoDesignResult {
   preheader: string;
   brandApplied: boolean;
   quizContentApplied: boolean;
+  sourceCanvaId: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -158,5 +159,6 @@ export function autoDesignTemplate(
     preheader: preheader,
     brandApplied: !!brandKit,
     quizContentApplied: !!(quiz && quiz.outcomes && quiz.outcomes.length > 0),
+    sourceCanvaId: template.id,
   };
 }

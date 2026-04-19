@@ -243,11 +243,14 @@ export function DesignStep({
     ? { id: '__ai_designed__', title: aiDesign.title, description: aiDesign.description, category: 'ai', isV2: true, html: aiDesign.html, subject: aiDesign.subject, preheader: aiDesign.preheader } as TemplateItem
     : allItems.find(function(t) { return t.id === state.templateId; });
 
-  // Reorder items: recommended first, then rest
+  // Reorder items: recommended first, then rest; exclude the AI-picked template to avoid duplicate
+  var aiSourceId = aiDesign ? aiDesign.sourceCanvaId : '';
   var orderedItems = useMemo(function() {
     var rec: TemplateItem[] = [];
     var rest: TemplateItem[] = [];
     for (var i = 0; i < visible.length; i++) {
+      // Skip the template already shown as AI Recommendation card
+      if (aiSourceId && visible[i].id === aiSourceId) continue;
       if (visible[i].id === recommendedId) {
         rec.push(visible[i]);
       } else {
@@ -255,7 +258,7 @@ export function DesignStep({
       }
     }
     return rec.concat(rest);
-  }, [visible, recommendedId]);
+  }, [visible, recommendedId, aiSourceId]);
 
   // ==============================
   // PHASE 1: Full-width template gallery
