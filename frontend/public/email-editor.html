@@ -370,7 +370,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .email-canvas {
   width: 600px; min-height: 400px; background: #FFFFFF;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-radius: 4px;
-  position: relative;
+  position: relative; padding-top: 14px;
 }
 
 /* --- Editing mode styles --- */
@@ -382,30 +382,37 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .editing .email-section {
   position: relative; transition: outline 0.12s, box-shadow 0.12s;
   cursor: pointer;
+  border: 1px dashed rgba(13,115,119,0.25);
+  margin: 4px 0;
+  border-radius: 6px;
 }
 /* Section divider line between sections */
 .editing .email-section::after {
-  content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px;
-  height: 1px; background: rgba(13,115,119,0.12); pointer-events: none;
+  content: ''; position: absolute; left: 0; right: 0; bottom: -5px;
+  height: 2px; background: transparent; pointer-events: none;
   z-index: 2;
 }
-/* Section label badge (top-left) */
+/* Section label badge (top-right) - ALWAYS VISIBLE */
 .editing .email-section .section-label {
-  position: absolute; top: 4px; left: 4px; z-index: 10;
-  padding: 2px 8px; border-radius: 4px;
-  background: rgba(13,115,119,0.08); color: #0D7377;
-  font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
-  opacity: 0; transition: opacity 0.15s; pointer-events: none;
+  position: absolute; top: -10px; right: 12px; z-index: 10;
+  padding: 3px 10px; border-radius: 4px;
+  background: #0D7377; color: #FFFFFF;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+  opacity: 1; pointer-events: none;
+  box-shadow: 0 1px 4px rgba(13,115,119,0.3);
 }
-.editing .email-section:hover .section-label { opacity: 1; }
-.editing .email-section.section-selected .section-label { opacity: 1; background: #0D7377; color: #FFFFFF; }
+.editing .email-section:hover .section-label { background: #065F63; }
+.editing .email-section.section-selected .section-label { background: #0D7377; box-shadow: 0 2px 8px rgba(13,115,119,0.4); }
 /* Hover state */
-.editing .email-section:hover { outline: 2px solid rgba(13,115,119,0.35); outline-offset: -2px; }
+.editing .email-section:hover {
+  border-color: #0D7377; border-style: solid;
+  box-shadow: 0 0 0 1px rgba(13,115,119,0.15);
+}
 .editing .email-section:hover > .section-toolbar { opacity: 1; pointer-events: auto; }
 /* Selected state - strong teal border */
 .editing .email-section.section-selected {
-  outline: 2px solid #0D7377; outline-offset: -2px;
-  box-shadow: inset 0 0 0 1px rgba(13,115,119,0.1);
+  border: 2px solid #0D7377; border-style: solid;
+  box-shadow: 0 0 0 3px rgba(13,115,119,0.12);
 }
 
 /* --- Section toolbar --- */
