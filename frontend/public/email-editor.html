@@ -155,13 +155,18 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .block-picker {
   position: fixed; background: #FFFFFF; border-radius: 14px;
   border: 1px solid #E4E3E0; box-shadow: 0 12px 40px rgba(0,0,0,0.18);
-  z-index: 110; padding: 12px; width: 220px; display: none;
+  z-index: 110; padding: 14px; width: 240px; max-height: 70vh; overflow-y: auto; display: none;
 }
 .block-picker.visible { display: block; }
 .block-picker-title {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
-  color: #9CA3AF; font-weight: 600; margin-bottom: 8px; padding: 0 4px;
+  font-size: 13px; font-weight: 700; color: #1A1A1A;
+  margin-bottom: 12px; padding: 0 4px;
 }
+.bp-category {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+  color: #9CA3AF; font-weight: 600; margin: 12px 0 6px 4px;
+}
+.bp-category:first-of-type { margin-top: 0; }
 .block-picker-item {
   display: flex; align-items: center; gap: 10px; padding: 8px 10px;
   border-radius: 8px; cursor: pointer; transition: background 0.1s;
@@ -297,6 +302,11 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   display: flex; flex-direction: column; gap: 3px; opacity: 0; transition: opacity 0.15s;
   z-index: 20; pointer-events: none;
 }
+/* Always show a subtle delete button even without hover */
+.editing .email-section > .section-toolbar .stb-delete {
+  opacity: 0.35; pointer-events: auto;
+}
+.editing .email-section:hover > .section-toolbar .stb-delete { opacity: 1; }
 .section-toolbar button {
   width: 32px; height: 32px; border-radius: 8px; border: 1px solid #E4E3E0;
   background: #FFFFFF; cursor: pointer; font-size: 14px; display: flex;
@@ -612,8 +622,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 }
 
 /* Two column */
-.two-col { display: flex; gap: 20px; }
-.two-col > div { flex: 1; min-height: 60px; }
+.two-col { display: flex; gap: 24px; }
+.two-col > div { flex: 1; min-height: 60px; min-width: 0; }
 .col-add-btn {
   display: flex; align-items: center; justify-content: center; gap: 4px;
   margin-top: 8px; padding: 6px; border: 1.5px dashed #D1D5DB; border-radius: 6px;
@@ -770,7 +780,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
      BLOCK PICKER (add content between sections)
      ================================================================ -->
 <div class="block-picker" id="blockPicker">
-  <div class="block-picker-title">Add section</div>
+  <div class="block-picker-title">Add block</div>
+  <div class="bp-category">Content</div>
   <button class="block-picker-item" onclick="insertBlock('text')">
     <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></div>
     <div><div style="font-weight:600;">Text</div><div style="font-size:11px;color:#6B7280;">Paragraph or heading</div></div>
@@ -783,6 +794,28 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
     <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="22" height="14" rx="7" ry="7"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
     <div><div style="font-weight:600;">Button</div><div style="font-size:11px;color:#6B7280;">Call-to-action button</div></div>
   </button>
+  <button class="block-picker-item" onclick="insertBlock('quote')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3z"/></svg></div>
+    <div><div style="font-weight:600;">Quote</div><div style="font-size:11px;color:#6B7280;">Blockquote or testimonial</div></div>
+  </button>
+  <div class="bp-category">Layout</div>
+  <button class="block-picker-item" onclick="insertBlock('twocol-imgtext')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="18" rx="1"/><line x1="15" y1="7" x2="21" y2="7"/><line x1="15" y1="11" x2="21" y2="11"/><line x1="15" y1="15" x2="19" y2="15"/></svg></div>
+    <div><div style="font-weight:600;">Image + Text</div><div style="font-size:11px;color:#6B7280;">Image left, text right</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('twocol-textimg')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="7" x2="9" y2="7"/><line x1="3" y1="11" x2="9" y2="11"/><line x1="3" y1="15" x2="7" y2="15"/><rect x="13" y="3" width="8" height="18" rx="1"/></svg></div>
+    <div><div style="font-weight:600;">Text + Image</div><div style="font-size:11px;color:#6B7280;">Text left, image right</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('twocol-imgimg')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg></div>
+    <div><div style="font-weight:600;">Two images</div><div style="font-size:11px;color:#6B7280;">Side-by-side images</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('twocol-texttext')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="10" y2="6"/><line x1="3" y1="10" x2="9" y2="10"/><line x1="3" y1="14" x2="10" y2="14"/><line x1="14" y1="6" x2="21" y2="6"/><line x1="14" y1="10" x2="20" y2="10"/><line x1="14" y1="14" x2="21" y2="14"/></svg></div>
+    <div><div style="font-weight:600;">Two text columns</div><div style="font-size:11px;color:#6B7280;">Side-by-side text</div></div>
+  </button>
+  <div class="bp-category">Structure</div>
   <button class="block-picker-item" onclick="insertBlock('spacer')">
     <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><polyline points="8 4 12 0 16 4"/><polyline points="8 20 12 24 16 20"/></svg></div>
     <div><div style="font-weight:600;">Spacer</div><div style="font-size:11px;color:#6B7280;">Add vertical space</div></div>
@@ -790,14 +823,6 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   <button class="block-picker-item" onclick="insertBlock('divider')">
     <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="22" y2="12"/></svg></div>
     <div><div style="font-weight:600;">Divider</div><div style="font-size:11px;color:#6B7280;">Horizontal line</div></div>
-  </button>
-  <button class="block-picker-item" onclick="insertBlock('twocol')">
-    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg></div>
-    <div><div style="font-weight:600;">Two columns</div><div style="font-size:11px;color:#6B7280;">Side-by-side layout</div></div>
-  </button>
-  <button class="block-picker-item" onclick="insertBlock('quote')">
-    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3z"/></svg></div>
-    <div><div style="font-weight:600;">Quote</div><div style="font-size:11px;color:#6B7280;">Blockquote or testimonial</div></div>
   </button>
   <button class="block-picker-item" onclick="insertBlock('social')">
     <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div>
@@ -2399,7 +2424,25 @@ window.addEventListener('message', function(e) {
         });
 
         // Make images clickable for replacement
+        // Convert empty/broken logo images to nice placeholders
         canvas.querySelectorAll('img').forEach(function(img) {
+          var alt = (img.getAttribute('alt') || '').toLowerCase();
+          var src = img.getAttribute('src') || '';
+          if ((alt === 'logo' || alt.indexOf('logo') >= 0) && (!src || src === '#' || src.indexOf('data:') < 0)) {
+            // Replace broken logo img with styled placeholder
+            var placeholder = document.createElement('div');
+            placeholder.className = 'editable-logo logo-placeholder';
+            placeholder.onclick = function() { openLogoPanel(placeholder); };
+            placeholder.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo';
+            // If it's wrapped in an <a>, replace inside the <a>
+            var parent = img.parentElement;
+            if (parent && parent.tagName === 'A') {
+              parent.parentElement.replaceChild(placeholder, parent);
+            } else {
+              img.parentElement.replaceChild(placeholder, img);
+            }
+            return;
+          }
           if (!img.classList.contains('editable-img') && !img.classList.contains('editable-logo')) {
             img.classList.add('editable-img');
             img.onclick = function() { openImagePanel(img); };
@@ -2588,30 +2631,23 @@ function insertBlock(type) {
       '<div class="section-inner" style="padding:8px 32px;">' +
       '<hr style="border:none;border-top:1px solid #E4E3E0;margin:0;">' +
       '</div>' + toolbar + '</td>';
-  } else if (type === 'twocol') {
+  } else if (type.indexOf('twocol') === 0) {
+    var colImgHtml = '<div class="img-placeholder editable-img" onclick="openImagePanel(this)" data-placeholder="true" style="min-height:160px;border-radius:8px;">' +
+      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+      '<span>Add image</span></div>';
+    var colTextHtml = '<h3 class="editable-text" style="font-size:18px;font-weight:700;color:' + globalColors.text + ';margin:0 0 8px;" data-ph="Heading..."></h3>' +
+      '<p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;margin:0;" data-ph="Type your content here..."></p>' +
+      '<a href="#" class="editable-btn" style="display:inline-block;margin-top:12px;padding:10px 24px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:13px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Learn more</a>';
+    var leftCol, rightCol;
+    if (type === 'twocol-imgtext' || type === 'twocol-imgtext') { leftCol = colImgHtml; rightCol = colTextHtml; }
+    else if (type === 'twocol-textimg') { leftCol = colTextHtml; rightCol = colImgHtml; }
+    else if (type === 'twocol-imgimg') { leftCol = colImgHtml; rightCol = colImgHtml; }
+    else { leftCol = colTextHtml; rightCol = colTextHtml; }
     html = '<td class="email-section" data-sid="' + sid + '">' +
       '<div class="section-inner" style="padding:24px 32px;">' +
       '<div class="two-col">' +
-      '<div class="col-cell" style="flex:1;">' +
-      '<div class="img-placeholder editable-img col-img-placeholder" onclick="openImagePanel(this)" data-placeholder="true" style="min-height:120px;margin-bottom:12px;">' +
-      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
-      '<span>Add image</span>' +
-      '</div>' +
-      '<p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;" data-ph="Type something..."></p>' +
-      '<button class="col-add-btn" onclick="addColContent(this)">' +
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add button' +
-      '</button>' +
-      '</div>' +
-      '<div class="col-cell" style="flex:1;">' +
-      '<div class="img-placeholder editable-img col-img-placeholder" onclick="openImagePanel(this)" data-placeholder="true" style="min-height:120px;margin-bottom:12px;">' +
-      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
-      '<span>Add image</span>' +
-      '</div>' +
-      '<p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;" data-ph="Type something..."></p>' +
-      '<button class="col-add-btn" onclick="addColContent(this)">' +
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add button' +
-      '</button>' +
-      '</div>' +
+      '<div class="col-cell" style="flex:1;">' + leftCol + '</div>' +
+      '<div class="col-cell" style="flex:1;">' + rightCol + '</div>' +
       '</div></div>' + toolbar + '</td>';
   } else if (type === 'quote') {
     html = '<td class="email-section" data-sid="' + sid + '">' +

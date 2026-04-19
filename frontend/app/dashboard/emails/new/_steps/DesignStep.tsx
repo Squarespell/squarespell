@@ -371,20 +371,21 @@ export function DesignStep({
                       </div>
                     </div>
                   </button>
-                  {/* Preview eye button */}
+                  {/* Preview eye button - bottom-left of thumbnail */}
                   <button
                     onClick={function(e) { e.stopPropagation(); setPreviewItem(t); }}
                     title="Preview template"
                     style={{
-                      position: 'absolute', bottom: 14, right: 14,
-                      width: 32, height: 32, borderRadius: 8,
-                      background: C.ELEVATED, border: '1px solid ' + C.BORDER,
+                      position: 'absolute', bottom: 52, left: 10,
+                      width: 30, height: 30, borderRadius: 8,
+                      background: 'rgba(255,255,255,0.92)', border: '1px solid ' + C.BORDER,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.15s',
-                      zIndex: 5,
+                      zIndex: 5, backdropFilter: 'blur(4px)',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
                     }}
-                    onMouseOver={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; (e.currentTarget as HTMLElement).style.color = C.ACCENT; }}
-                    onMouseOut={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.BORDER; (e.currentTarget as HTMLElement).style.color = C.TEXT_MUTED; }}
+                    onMouseOver={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; (e.currentTarget as HTMLElement).style.color = C.ACCENT; (e.currentTarget as HTMLElement).style.background = '#FFFFFF'; }}
+                    onMouseOut={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.BORDER; (e.currentTarget as HTMLElement).style.color = C.TEXT_MUTED; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.92)'; }}
                   >
                     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
