@@ -191,6 +191,10 @@ export function DesignStep({
     return function() { window.removeEventListener('message', handleMessage); };
   }, [setState]);
 
+  // Keep a ref to the latest HTML so the editor-ready effect always has the current value
+  var latestHtmlRef = useRef(state.html);
+  latestHtmlRef.current = state.html;
+
   // When editor becomes ready, send the current template HTML once
   var didSendInitial = useRef(false);
   useEffect(function() {
@@ -200,10 +204,10 @@ export function DesignStep({
     didSendInitial.current = true;
     // Hide the template picker in the iframe since user already chose in gallery
     editorRef.current.contentWindow.postMessage({ type: 'sq-hide-templates' }, '*');
-    if (state.html) {
+    if (latestHtmlRef.current) {
       editorRef.current.contentWindow.postMessage({
         type: 'sq-load-template',
-        html: state.html,
+        html: latestHtmlRef.current,
       }, '*');
     }
   }, [editorReady]); // eslint-disable-line react-hooks/exhaustive-deps
