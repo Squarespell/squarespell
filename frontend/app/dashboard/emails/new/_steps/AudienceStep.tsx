@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 import { PrimaryButton } from '../../../_components/PageShell';
+import { Select } from '../../../_components/Select';
 import {
   listSourceQuizzes, listOutcomesForQuiz, listQuestionsForQuiz, previewRecipients,
   SourceQuiz, SourceFilters, QuizQuestion, QuizOutcome, AnswerFilter,
@@ -131,12 +132,15 @@ export function AudienceStep({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                   <div>
                     <MiniLabel>Result</MiniLabel>
-                    <select value={state.filters.outcome_id || ''}
-                      onChange={e => setState({ filters: { ...state.filters, outcome_id: e.target.value || undefined } })}
-                      style={selectStyle}>
-                      <option value="">Any result</option>
-                      {outcomes.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                    </select>
+                    <Select
+                      value={state.filters.outcome_id || ''}
+                      onChange={v => setState({ filters: { ...state.filters, outcome_id: v || undefined } })}
+                      placeholder="Any result"
+                      options={[
+                        { value: '', label: 'Any result' },
+                        ...outcomes.map(o => ({ value: o.id, label: o.name })),
+                      ]}
+                    />
                   </div>
                   <div>
                     <MiniLabel>Min score</MiniLabel>
@@ -180,37 +184,39 @@ export function AudienceStep({
                         <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginBottom: 8, alignItems: 'end' }}>
                           <div>
                             <MiniLabel>Question</MiniLabel>
-                            <select
+                            <Select
                               value={af.question_id}
-                              onChange={function (e) {
+                              onChange={function (v) {
                                 var updated = (state.filters.answer_filters || []).slice();
-                                updated[idx] = { question_id: e.target.value, value: '' };
+                                updated[idx] = { question_id: v, value: '' };
                                 setState({ filters: { ...state.filters, answer_filters: updated } });
                               }}
-                              style={selectStyle}
-                            >
-                              <option value="">Pick a question</option>
-                              {questions.filter(function (qq) { return qq.options.length > 0; }).map(function (qq) {
-                                return <option key={qq.id} value={qq.id}>{qq.text}</option>;
-                              })}
-                            </select>
+                              placeholder="Pick a question"
+                              options={[
+                                { value: '', label: 'Pick a question' },
+                                ...questions.filter(function (qq) { return qq.options.length > 0; }).map(function (qq) {
+                                  return { value: qq.id, label: qq.text };
+                                }),
+                              ]}
+                            />
                           </div>
                           <div>
                             <MiniLabel>Answered</MiniLabel>
-                            <select
+                            <Select
                               value={af.value}
-                              onChange={function (e) {
+                              onChange={function (v) {
                                 var updated = (state.filters.answer_filters || []).slice();
-                                updated[idx] = { ...updated[idx], value: e.target.value };
+                                updated[idx] = { ...updated[idx], value: v };
                                 setState({ filters: { ...state.filters, answer_filters: updated } });
                               }}
-                              style={selectStyle}
-                            >
-                              <option value="">Pick an answer</option>
-                              {(q?.options || []).map(function (o) {
-                                return <option key={o.id} value={o.id}>{o.text}</option>;
-                              })}
-                            </select>
+                              placeholder="Pick an answer"
+                              options={[
+                                { value: '', label: 'Pick an answer' },
+                                ...(q?.options || []).map(function (o) {
+                                  return { value: o.id, label: o.text };
+                                }),
+                              ]}
+                            />
                           </div>
                           <button
                             onClick={function () {
@@ -455,14 +461,4 @@ const MiniLabel = ({ children }: any) => (
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', background: C.SURFACE,
   border: `1px solid ${C.BORDER}`, borderRadius: 10, color: C.TEXT, fontSize: 13, boxSizing: 'border-box',
-};
-const selectStyle: React.CSSProperties = {
-  ...inputStyle,
-  appearance: 'none' as const,
-  WebkitAppearance: 'none' as const,
-  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236B6B6B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 12px center',
-  paddingRight: 32,
-  cursor: 'pointer',
 };
