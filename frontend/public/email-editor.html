@@ -4241,7 +4241,10 @@ var origEscapeHandler = null; // will integrate below
 // INIT
 // ================================================================
 buildFontPicker();
-renderTemplate();
+// Only render default V2 template when opened standalone (not embedded in campaign flow)
+if (window.parent === window) {
+  renderTemplate();
+}
 // Push initial state for undo
 setTimeout(function() {
   var canvas = document.getElementById('emailCanvas');

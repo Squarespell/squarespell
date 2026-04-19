@@ -223,9 +223,13 @@ export function DesignStep({
     });
   }, [setState]);
 
+  // Stable cache-bust value: only changes when entering editor phase
+  var [editorCacheBust, setEditorCacheBust] = useState(Date.now);
+
   // Enter editor phase
   var handleEditTemplate = useCallback(function() {
     setEditorReady(false);
+    setEditorCacheBust(Date.now());
     setPhase('editor');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [setPhase]);
@@ -813,7 +817,7 @@ export function DesignStep({
       <iframe
         ref={editorRef}
         title="Email editor"
-        src={'/email-editor.html?v=' + Date.now()}
+        src={'/email-editor.html?v=' + editorCacheBust}
         style={{
           flex: 1, border: 'none', width: '100%', minHeight: 0,
         }}
