@@ -188,10 +188,31 @@ function NewCampaignPageInner() {
   );
 }
 
+class DebugBoundary extends React.Component<{ children: React.ReactNode }, { err: Error | null }> {
+  state: { err: Error | null } = { err: null };
+  static getDerivedStateFromError(err: Error) { return { err }; }
+  componentDidCatch(err: Error, info: React.ErrorInfo) {
+    console.error('[NewCampaign] CRASH:', err.message, err.stack, info.componentStack);
+  }
+  render() {
+    if (this.state.err) return (
+      <DashboardShell>
+        <div style={{ padding: 40, color: '#c53030' }}>
+          <h2>Debug: {this.state.err.message}</h2>
+          <pre style={{ fontSize: 11, whiteSpace: 'pre-wrap', color: '#666' }}>{this.state.err.stack}</pre>
+        </div>
+      </DashboardShell>
+    );
+    return this.props.children;
+  }
+}
+
 export default function NewCampaignPage() {
   return (
-    <Suspense fallback={<DashboardShell><div style={{ padding: 40, color: C.TEXT_SUBTLE }}>Loading...</div></DashboardShell>}>
-      <NewCampaignPageInner />
-    </Suspense>
+    <DebugBoundary>
+      <Suspense fallback={<DashboardShell><div style={{ padding: 40, color: C.TEXT_SUBTLE }}>Loading...</div></DashboardShell>}>
+        <NewCampaignPageInner />
+      </Suspense>
+    </DebugBoundary>
   );
 }
