@@ -400,7 +400,7 @@ export function DesignStep({
                           <path d="M2 17l10 5 10-5" />
                           <path d="M2 12l10 5 10-5" />
                         </svg>
-                        AI Designed for You
+                        AI Recommendation
                       </div>
                       {aiDesign.brandApplied && (
                         <div style={{
@@ -554,7 +554,7 @@ export function DesignStep({
                             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                             </svg>
-                            Recommended
+                            AI Recommendation
                           </div>
                         )}
                       </div>
@@ -731,7 +731,7 @@ export function DesignStep({
   // PHASE 2: Full-width editor
   // ==============================
   return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+    <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Compact top bar - template + subject + preheader */}
       <div style={{
         padding: '14px 20px', borderBottom: '1px solid ' + C.BORDER,
@@ -832,7 +832,7 @@ export function DesignStep({
         title="Email editor"
         src="/email-editor.html"
         style={{
-          flex: 1, border: 'none', width: '100%', minHeight: 0,
+          flex: 1, border: 'none', width: '100%', minHeight: 700,
         }}
       />
 

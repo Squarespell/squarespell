@@ -279,10 +279,10 @@ export function autoDesignTemplate(
 
   return {
     templateId: '__ai_designed__',
-    title: 'AI Designed' + (brandName ? ' for ' + brandName : ''),
+    title: 'AI Recommendation' + (brandName ? ' for ' + brandName : ''),
     description: quiz
-      ? 'Auto-branded template with your ' + (quiz.title || 'quiz') + ' content, colors, and logo'
-      : 'Auto-branded template with your website colors, fonts, and logo',
+      ? 'Auto-designed with your brand colors, logo, and ' + (quiz.title || 'quiz') + ' content - ready to customize'
+      : 'Auto-designed with your website colors, fonts, and logo - ready to customize',
     html: html,
     subject: subject,
     preheader: preheader,

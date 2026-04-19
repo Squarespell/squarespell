@@ -292,9 +292,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .editing .editable-img:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: pointer; border-radius: 3px; }
 .editing .editable-btn:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: pointer; border-radius: 3px; }
 .editing .editable-logo:hover { outline: 2px dashed rgba(13,115,119,0.4); outline-offset: 2px; cursor: pointer; }
-.editing .email-section { position: relative; transition: outline 0.12s, box-shadow 0.12s; outline: 1px dashed rgba(13,115,119,0.25); outline-offset: -1px; }
-.editing .email-section + .email-section { margin-top: 0; }
-.editing .email-section:hover { outline: 2px solid #0D7377; outline-offset: -2px; }
+.editing .email-section {
+  position: relative; transition: outline 0.12s, box-shadow 0.12s, border-color 0.12s;
+  border-left: 3px solid rgba(13,115,119,0.15);
+}
+.editing .email-section::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 1px; background: rgba(13,115,119,0.18); pointer-events: none;
+}
+.editing .email-section:hover { outline: 2px solid #0D7377; outline-offset: -2px; border-left-color: #0D7377; }
 .editing .email-section:hover > .section-toolbar { opacity: 1; pointer-events: auto; }
 
 /* --- Section toolbar --- */

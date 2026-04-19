@@ -1,6 +1,9 @@
 // ============================================================================
 // Phase 3: Tasks 3.1-3.3 - Three Production Templates
 // ============================================================================
+// Canva-quality email templates with real stock images, proper visual
+// hierarchy, beautiful color usage, and professional layouts.
+// ============================================================================
 
 import type {
   EmailTemplateV2,
@@ -13,6 +16,26 @@ import type {
 import { uid, DEFAULT_GLOBAL_STYLES, BLOCK_COMPATIBILITY } from './schema';
 
 const C = BLOCK_COMPATIBILITY;
+
+// ---------------------------------------------------------------------------
+// Unsplash stock images (direct hotlinks, 600px wide for email)
+// ---------------------------------------------------------------------------
+var IMG = {
+  // Hero images
+  heroWorkspace: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=600&h=300&fit=crop&auto=format',
+  heroCreative: 'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=600&h=300&fit=crop&auto=format',
+  heroSuccess: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=300&fit=crop&auto=format',
+  heroProduct: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=280&fit=crop&auto=format',
+  heroGift: 'https://images.unsplash.com/photo-1549465220-1a8b9238f7e8?w=600&h=280&fit=crop&auto=format',
+  // Card images
+  cardStrategy: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=280&h=180&fit=crop&auto=format',
+  cardDesign: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=280&h=180&fit=crop&auto=format',
+  cardGrowth: 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=280&h=180&fit=crop&auto=format',
+  cardTeam: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=280&h=180&fit=crop&auto=format',
+  // Recommendation
+  recProduct: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=560&h=200&fit=crop&auto=format',
+  recCourse: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=560&h=200&fit=crop&auto=format',
+};
 
 // ---------------------------------------------------------------------------
 // Helper: wrap blocks into section > row > column structure
@@ -55,20 +78,20 @@ function makeSection(role: 'header' | 'body' | 'footer', rows: Row[], bg?: strin
 }
 
 // ---------------------------------------------------------------------------
-// Task 3.1 - Quiz Result Email Template
+// Task 3.1 - Quiz Result Email Template (Canva-quality redesign)
 // ---------------------------------------------------------------------------
 
-export const quizResultTemplate: EmailTemplateV2 = {
+export var quizResultTemplate: EmailTemplateV2 = {
   metadata: {
     id: 'tpl_quiz_result',
     name: 'Quiz Result Email',
-    version: 1,
-    createdAt: '2026-04-19T00:00:00.000Z',
-    updatedAt: '2026-04-19T00:00:00.000Z',
+    version: 2,
+    createdAt: '2026-04-20T00:00:00.000Z',
+    updatedAt: '2026-04-20T00:00:00.000Z',
     tags: ['quiz', 'result', 'post-quiz'],
     thumbnail: '',
     category: 'quiz-result',
-    description: 'Delivers the quiz result with score, category, recommendations, and a retake option.',
+    description: 'Delivers quiz results with a bold hero image, score display, personalized recommendations, and social proof.',
     subject: '{{first_name}}, your result is ready: {{result_category}}',
     preheader: 'You scored {{score}} - here is what that means.',
     mergeTags: ['first_name', 'score', 'result_category', 'result_description', 'recommendation', 'cta_url', 'quiz_url', 'company_name', 'unsubscribe_link'],
@@ -76,7 +99,7 @@ export const quizResultTemplate: EmailTemplateV2 = {
   globalStyles: { ...DEFAULT_GLOBAL_STYLES },
   layout: { type: 'single-column' },
   sections: [
-    // HEADER
+    // HEADER - Clean logo
     makeSection('header', [
       makeRow([
         { id: uid(), type: 'preheader_text', editable: true, compatibility: C.preheader_text, properties: { text: 'You scored {{score}} - here is what that means.' }, styles: {} },
@@ -84,31 +107,58 @@ export const quizResultTemplate: EmailTemplateV2 = {
       ]),
     ]),
 
-    // BODY
+    // HERO IMAGE - Full-width lifestyle photo
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'score_display', editable: true, compatibility: C.score_display, properties: { scoreValue: '{{score}}', maxScore: '100', label: 'Your match score', format: 'number' }, styles: { align: 'center', scoreColor: '#0D7377', scoreFontSize: 56, scoreFontWeight: 800, labelColor: '#6B7280', labelFontSize: 14, backgroundColor: '#F7F7F5', borderRadius: 16, paddingTop: 32, paddingBottom: 32 } },
+        { id: uid(), type: 'image', editable: true, compatibility: C.image, properties: { src: IMG.heroSuccess, alt: 'Your personalized results', width: 600, href: '', caption: '' }, styles: { align: 'center', borderRadius: 12, paddingTop: 0, paddingBottom: 0 } },
       ]),
+    ], '#FFFFFF'),
+
+    // SCORE DISPLAY - Bold centered score
+    makeSection('body', [
+      makeRow([
+        { id: uid(), type: 'score_display', editable: true, compatibility: C.score_display, properties: { scoreValue: '{{score}}', maxScore: '100', label: 'Your match score', format: 'number' }, styles: { align: 'center', scoreColor: '#0D7377', scoreFontSize: 64, scoreFontWeight: 800, labelColor: '#6B7280', labelFontSize: 14, backgroundColor: '#F0FDFA', borderRadius: 16, paddingTop: 36, paddingBottom: 36 } },
+      ]),
+    ]),
+
+    // RESULT CATEGORY - Your result with description
+    makeSection('body', [
       makeRow([
         { id: uid(), type: 'result_category', editable: true, compatibility: C.result_category, properties: { categoryName: '{{result_category}}', eyebrow: 'YOUR RESULT', description: '{{result_description}}' }, styles: { align: 'left', eyebrowColor: '#0D7377', eyebrowFontSize: 11, eyebrowLetterSpacing: 2, categoryColor: '#1A1A1A', categoryFontSize: 32, categoryFontWeight: 700, descriptionColor: '#6B7280', descriptionFontSize: 15, paddingTop: 24, paddingBottom: 16 } },
       ]),
+    ]),
+
+    // WHAT THIS MEANS
+    makeSection('body', [
       makeRow([
-        { id: uid(), type: 'result_description', editable: true, compatibility: C.result_description, properties: { heading: 'What this means for you', body: 'Based on your answers, this result reflects where you are right now. The recommendations below are tailored to help you move forward with clarity and confidence.', showDivider: true }, styles: { headingColor: '#1A1A1A', headingFontSize: 20, bodyColor: '#4B5563', bodyFontSize: 15, lineHeight: 1.6, dividerColor: '#E4E3E0', paddingTop: 12, paddingBottom: 12 } },
+        { id: uid(), type: 'result_description', editable: true, compatibility: C.result_description, properties: { heading: 'What this means for you', body: 'Based on your answers, this result reflects where you are right now. The recommendations below are tailored to help you move forward with clarity and confidence.', showDivider: true }, styles: { headingColor: '#1A1A1A', headingFontSize: 22, bodyColor: '#4B5563', bodyFontSize: 15, lineHeight: 1.6, dividerColor: '#E4E3E0', paddingTop: 12, paddingBottom: 12 } },
+      ]),
+    ]),
+
+    // RECOMMENDATION CARD - With image
+    makeSection('body', [
+      makeRow([
+        { id: uid(), type: 'recommendation_card', editable: true, compatibility: C.recommendation_card, properties: { imageUrl: IMG.recProduct, imageAlt: 'Personalized recommendation', title: 'Our top pick for you', body: '{{recommendation}}', ctaText: 'See the full plan', ctaHref: '{{cta_url}}', badge: 'Recommended' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: true, titleFontSize: 18, bodyFontSize: 14, ctaColor: '#FFFFFF', ctaBackgroundColor: '#0D7377', paddingInner: 20 } },
+      ]),
+    ]),
+
+    // CTA + RETAKE
+    makeSection('body', [
+      makeRow([
+        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'View your full results', href: '{{cta_url}}', variant: 'primary', fullWidth: true }, styles: { align: 'center', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 17, fontWeight: 700, borderRadius: 10, paddingX: 32, paddingY: 16, marginTop: 8, marginBottom: 8 } },
       ]),
       makeRow([
-        { id: uid(), type: 'recommendation_card', editable: true, compatibility: C.recommendation_card, properties: { imageUrl: '', imageAlt: '', title: 'Our top pick for you', body: '{{recommendation}}', ctaText: 'See the full plan', ctaHref: '{{cta_url}}', badge: 'Recommended' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: false, titleFontSize: 18, bodyFontSize: 14, ctaColor: '#FFFFFF', ctaBackgroundColor: '#0D7377', paddingInner: 20 } },
-      ]),
-      makeRow([
-        { id: uid(), type: 'spacer', editable: true, compatibility: C.spacer, properties: { height: 16 }, styles: {} },
+        { id: uid(), type: 'spacer', editable: true, compatibility: C.spacer, properties: { height: 8 }, styles: {} },
       ]),
       makeRow([
         { id: uid(), type: 'retake_quiz_button', editable: true, compatibility: C.retake_quiz_button, properties: { text: 'Retake the quiz', href: '{{quiz_url}}', subtitle: 'Your answers may have changed since last time' }, styles: { align: 'center', backgroundColor: '#F7F7F5', textColor: '#1A1A1A', fontSize: 15, borderRadius: 8, subtitleColor: '#6B7280', subtitleFontSize: 12, paddingTop: 12, paddingBottom: 12 } },
       ]),
+    ]),
+
+    // SOCIAL PROOF - Testimonial
+    makeSection('body', [
       makeRow([
-        { id: uid(), type: 'spacer', editable: true, compatibility: C.spacer, properties: { height: 16 }, styles: {} },
-      ]),
-      makeRow([
-        { id: uid(), type: 'blockquote', editable: true, compatibility: C.blockquote, properties: { text: 'The quiz put me on exactly the right path. I stopped guessing and started building within a day.', citation: 'Priya Sharma', citationTitle: 'Independent designer', rating: 5 }, styles: { borderLeftColor: '#0D7377', borderLeftWidth: 3, backgroundColor: '#F7F7F5', fontSize: 16, fontStyle: 'italic', paddingTop: 16, paddingBottom: 16, paddingLeft: 20, paddingRight: 20 } },
+        { id: uid(), type: 'blockquote', editable: true, compatibility: C.blockquote, properties: { text: 'The quiz put me on exactly the right path. I stopped guessing and started building within a day.', citation: 'Priya Sharma', citationTitle: 'Independent designer', rating: 5 }, styles: { borderLeftColor: '#0D7377', borderLeftWidth: 3, backgroundColor: '#F7F7F5', fontSize: 16, fontStyle: 'italic', paddingTop: 20, paddingBottom: 20, paddingLeft: 24, paddingRight: 24 } },
       ]),
     ]),
 
@@ -125,20 +175,20 @@ export const quizResultTemplate: EmailTemplateV2 = {
 };
 
 // ---------------------------------------------------------------------------
-// Task 3.2 - Lead Nurture Email Template
+// Task 3.2 - Lead Nurture Email Template (Canva-quality redesign)
 // ---------------------------------------------------------------------------
 
-export const leadNurtureTemplate: EmailTemplateV2 = {
+export var leadNurtureTemplate: EmailTemplateV2 = {
   metadata: {
     id: 'tpl_lead_nurture',
     name: 'Lead Nurture Email',
-    version: 1,
-    createdAt: '2026-04-19T00:00:00.000Z',
-    updatedAt: '2026-04-19T00:00:00.000Z',
+    version: 2,
+    createdAt: '2026-04-20T00:00:00.000Z',
+    updatedAt: '2026-04-20T00:00:00.000Z',
     tags: ['nurture', 'follow-up', 'education'],
     thumbnail: '',
     category: 'lead-nurture',
-    description: 'Day-3 follow-up with personalized content, a two-column feature-benefit layout, and social proof.',
+    description: 'Day-3 follow-up with a hero banner, two-column feature cards with images, and a clear call to action.',
     subject: '{{first_name}}, one thing worth reading',
     preheader: 'A short guide based on your quiz result.',
     mergeTags: ['first_name', 'result_category', 'cta_url', 'company_name', 'unsubscribe_link'],
@@ -154,38 +204,60 @@ export const leadNurtureTemplate: EmailTemplateV2 = {
       ]),
     ]),
 
-    // BANNER
+    // HERO IMAGE - Full-width creative workspace
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'full_width_banner', editable: true, compatibility: C.full_width_banner, properties: { headline: 'Built for your result', subheadline: 'A short playbook for people who landed on {{result_category}}.', ctaText: '', ctaHref: '', backgroundImageUrl: '' }, styles: { backgroundColor: '#0D7377', textColor: '#FFFFFF', textAlign: 'left', minHeight: 160, paddingTop: 40, paddingBottom: 40, paddingLeft: 32, paddingRight: 32, overlayOpacity: 0 } },
+        { id: uid(), type: 'image', editable: true, compatibility: C.image, properties: { src: IMG.heroCreative, alt: 'Built for your result', width: 600, href: '', caption: '' }, styles: { align: 'center', borderRadius: 0, paddingTop: 0, paddingBottom: 0 } },
       ]),
     ], '#FFFFFF'),
 
-    // BODY
+    // BANNER - Colored text section
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'heading', editable: true, compatibility: C.heading, properties: { text: 'Hi {{first_name}}, here is what usually works.', level: 2 }, styles: { align: 'left', color: '#1A1A1A', fontSize: 24, fontWeight: 600, letterSpacing: -0.3, paddingTop: 8, paddingBottom: 4 } },
+        { id: uid(), type: 'full_width_banner', editable: true, compatibility: C.full_width_banner, properties: { headline: 'Built for your result', subheadline: 'A short playbook for people who landed on {{result_category}}.', ctaText: '', ctaHref: '', backgroundImageUrl: '' }, styles: { backgroundColor: '#0D7377', textColor: '#FFFFFF', textAlign: 'left', minHeight: 120, paddingTop: 32, paddingBottom: 32, paddingLeft: 32, paddingRight: 32, overlayOpacity: 0 } },
+      ]),
+    ], '#FFFFFF'),
+
+    // BODY - Personal greeting + content
+    makeSection('body', [
+      makeRow([
+        { id: uid(), type: 'heading', editable: true, compatibility: C.heading, properties: { text: 'Hi {{first_name}}, here is what usually works.', level: 2 }, styles: { align: 'left', color: '#1A1A1A', fontSize: 26, fontWeight: 700, letterSpacing: -0.3, paddingTop: 8, paddingBottom: 4 } },
       ]),
       makeRow([
-        { id: uid(), type: 'paragraph', editable: true, compatibility: C.paragraph, properties: { html: 'You took our quiz and landed on <strong>{{result_category}}</strong>. Most people with this result share one challenge: knowing where to start. Here is the 3-step playbook that works.' }, styles: { align: 'left', color: '#4B5563', fontSize: 16, lineHeight: 1.6, paddingTop: 4, paddingBottom: 12 } },
+        { id: uid(), type: 'paragraph', editable: true, compatibility: C.paragraph, properties: { html: 'You took our quiz and landed on <strong>{{result_category}}</strong>. Most people with this result share one challenge: knowing where to start. Here is the 3-step playbook that works.' }, styles: { align: 'left', color: '#4B5563', fontSize: 16, lineHeight: 1.6, paddingTop: 4, paddingBottom: 16 } },
       ]),
+    ]),
+
+    // TWO-COLUMN CARDS - With images
+    makeSection('body', [
       makeRow([
         { id: uid(), type: 'two_column_layout', editable: true, compatibility: C.two_column_layout,
           properties: { ratio: '50-50', stackOnMobile: true, reverseOnMobile: false },
-          styles: { gap: 20, paddingTop: 8, paddingBottom: 8, backgroundColor: '' },
+          styles: { gap: 20, paddingTop: 0, paddingBottom: 8, backgroundColor: '' },
           leftColumn: [
-            { id: uid(), type: 'card_block', editable: true, compatibility: C.card_block, properties: { imageUrl: '', imageAlt: '', title: 'Step 1: Pick one channel', body: 'Stop trying to be everywhere. Choose the platform where your audience already is.', ctaText: 'Read more', ctaHref: '{{cta_url}}' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: false, imageHeight: 0, paddingInner: 20 } },
+            { id: uid(), type: 'card_block', editable: true, compatibility: C.card_block, properties: { imageUrl: IMG.cardStrategy, imageAlt: 'Focus your strategy', title: 'Step 1: Pick one channel', body: 'Stop trying to be everywhere. Choose the platform where your audience already is.', ctaText: 'Read more', ctaHref: '{{cta_url}}' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: true, imageHeight: 160, paddingInner: 20 } },
           ],
           rightColumn: [
-            { id: uid(), type: 'card_block', editable: true, compatibility: C.card_block, properties: { imageUrl: '', imageAlt: '', title: 'Step 2: Write one clear offer', body: 'Before you design anything, clarify what you are offering and who it is for.', ctaText: 'Read more', ctaHref: '{{cta_url}}' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: false, imageHeight: 0, paddingInner: 20 } },
+            { id: uid(), type: 'card_block', editable: true, compatibility: C.card_block, properties: { imageUrl: IMG.cardDesign, imageAlt: 'Craft your offer', title: 'Step 2: Write one clear offer', body: 'Before you design anything, clarify what you are offering and who it is for.', ctaText: 'Read more', ctaHref: '{{cta_url}}' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: true, imageHeight: 160, paddingInner: 20 } },
           ],
         } as any,
       ]),
+    ]),
+
+    // CTA
+    makeSection('body', [
       makeRow([
-        { id: uid(), type: 'spacer', editable: true, compatibility: C.spacer, properties: { height: 16 }, styles: {} },
+        { id: uid(), type: 'divider', editable: true, compatibility: C.divider, properties: { lineStyle: 'solid' }, styles: { color: '#E4E3E0', thickness: 1, width: '100%', marginTop: 8, marginBottom: 16 } },
       ]),
       makeRow([
-        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Read the full playbook', href: '{{cta_url}}', variant: 'primary', fullWidth: false }, styles: { align: 'left', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 16, fontWeight: 600, borderRadius: 8, paddingX: 24, paddingY: 14, marginTop: 8, marginBottom: 8 } },
+        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Read the full playbook', href: '{{cta_url}}', variant: 'primary', fullWidth: false }, styles: { align: 'left', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 16, fontWeight: 600, borderRadius: 10, paddingX: 28, paddingY: 14, marginTop: 0, marginBottom: 8 } },
+      ]),
+    ]),
+
+    // SOCIAL PROOF
+    makeSection('body', [
+      makeRow([
+        { id: uid(), type: 'blockquote', editable: true, compatibility: C.blockquote, properties: { text: 'This playbook saved me weeks of trial and error. Clear, actionable, and perfectly matched to my situation.', citation: 'Alex Chen', citationTitle: 'Startup founder', rating: 5 }, styles: { borderLeftColor: '#0D7377', borderLeftWidth: 3, backgroundColor: '#F0FDFA', fontSize: 16, fontStyle: 'italic', paddingTop: 20, paddingBottom: 20, paddingLeft: 24, paddingRight: 24 } },
       ]),
     ]),
 
@@ -202,20 +274,20 @@ export const leadNurtureTemplate: EmailTemplateV2 = {
 };
 
 // ---------------------------------------------------------------------------
-// Task 3.3 - Promotional Offer Email Template
+// Task 3.3 - Promotional Offer Email Template (Canva-quality redesign)
 // ---------------------------------------------------------------------------
 
-export const promotionalOfferTemplate: EmailTemplateV2 = {
+export var promotionalOfferTemplate: EmailTemplateV2 = {
   metadata: {
     id: 'tpl_promo_offer',
     name: 'Promotional Offer Email',
-    version: 1,
-    createdAt: '2026-04-19T00:00:00.000Z',
-    updatedAt: '2026-04-19T00:00:00.000Z',
+    version: 2,
+    createdAt: '2026-04-20T00:00:00.000Z',
+    updatedAt: '2026-04-20T00:00:00.000Z',
     tags: ['promo', 'offer', 'discount', 'urgency'],
     thumbnail: '',
     category: 'promotional',
-    description: '48-hour offer matched to the quiz outcome tier with countdown urgency, comparison bar, and clear CTA.',
+    description: '48-hour offer with bold hero image, urgency countdown, comparison bar, and clear CTA.',
     subject: '{{first_name}}, 20% off the thing that fits your result',
     preheader: '48 hours only - matched to your {{result_category}} result.',
     mergeTags: ['first_name', 'score', 'result_category', 'expiry_date', 'cta_url', 'company_name', 'unsubscribe_link'],
@@ -231,32 +303,48 @@ export const promotionalOfferTemplate: EmailTemplateV2 = {
       ]),
     ]),
 
-    // BANNER
+    // HERO - Dark banner with bold text
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'full_width_banner', editable: true, compatibility: C.full_width_banner, properties: { headline: '20% off, matched to your result', subheadline: 'We picked the product that fits {{result_category}} and took 20% off for {{expiry_date}}.', ctaText: '', ctaHref: '', backgroundImageUrl: '' }, styles: { backgroundColor: '#1A1A1A', textColor: '#FFFFFF', textAlign: 'center', minHeight: 180, paddingTop: 48, paddingBottom: 48, paddingLeft: 32, paddingRight: 32, overlayOpacity: 0 } },
+        { id: uid(), type: 'full_width_banner', editable: true, compatibility: C.full_width_banner, properties: { headline: '20% off, matched to your result', subheadline: 'We picked the product that fits {{result_category}} and took 20% off for {{expiry_date}}.', ctaText: 'Shop now', ctaHref: '{{cta_url}}', backgroundImageUrl: IMG.heroGift }, styles: { backgroundColor: '#1A1A1A', textColor: '#FFFFFF', textAlign: 'center', minHeight: 240, paddingTop: 56, paddingBottom: 56, paddingLeft: 40, paddingRight: 40, overlayOpacity: 0.6 } },
       ]),
     ], '#FFFFFF'),
 
-    // BODY
+    // BADGE + URGENCY
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'score_badge', editable: true, compatibility: C.score_badge, properties: { badgeText: '{{result_category}}', subtext: 'Your tier - matched from your quiz score', iconType: 'trophy' }, styles: { align: 'center', badgeColor: '#FFFFFF', badgeBackgroundColor: '#0D7377', badgeFontSize: 18, badgeBorderRadius: 999, subtextColor: '#6B7280', subtextFontSize: 13, paddingTop: 24, paddingBottom: 16 } },
+        { id: uid(), type: 'score_badge', editable: true, compatibility: C.score_badge, properties: { badgeText: '{{result_category}}', subtext: 'Your tier - matched from your quiz score', iconType: 'trophy' }, styles: { align: 'center', badgeColor: '#FFFFFF', badgeBackgroundColor: '#0D7377', badgeFontSize: 18, badgeBorderRadius: 999, subtextColor: '#6B7280', subtextFontSize: 13, paddingTop: 28, paddingBottom: 12 } },
       ]),
       makeRow([
-        { id: uid(), type: 'paragraph', editable: true, compatibility: C.paragraph, properties: { html: 'Hi {{first_name}}, most offer emails are generic. This one is not. We looked at your {{result_category}} result and the 20% is tied to the one product that actually matches it.' }, styles: { align: 'center', color: '#4B5563', fontSize: 16, lineHeight: 1.6, paddingTop: 8, paddingBottom: 16 } },
+        { id: uid(), type: 'heading', editable: true, compatibility: C.heading, properties: { text: '{{expiry_date}} left', level: 2 }, styles: { align: 'center', color: '#DC2626', fontSize: 28, fontWeight: 700, letterSpacing: 0, paddingTop: 4, paddingBottom: 8 } },
       ]),
+    ]),
+
+    // PRODUCT IMAGE
+    makeSection('body', [
       makeRow([
-        { id: uid(), type: 'heading', editable: true, compatibility: C.heading, properties: { text: '{{expiry_date}} left', level: 2 }, styles: { align: 'center', color: '#C53030', fontSize: 28, fontWeight: 700, letterSpacing: 0, paddingTop: 8, paddingBottom: 8 } },
+        { id: uid(), type: 'image', editable: true, compatibility: C.image, properties: { src: IMG.heroProduct, alt: 'Featured product', width: 560, href: '{{cta_url}}', caption: '' }, styles: { align: 'center', borderRadius: 12, paddingTop: 0, paddingBottom: 16 } },
       ]),
+    ]),
+
+    // BODY TEXT
+    makeSection('body', [
+      makeRow([
+        { id: uid(), type: 'paragraph', editable: true, compatibility: C.paragraph, properties: { html: 'Hi {{first_name}}, most offer emails are generic. This one is not. We looked at your <strong>{{result_category}}</strong> result and the 20% is tied to the one product that actually matches it.' }, styles: { align: 'center', color: '#4B5563', fontSize: 16, lineHeight: 1.6, paddingTop: 0, paddingBottom: 16 } },
+      ]),
+    ]),
+
+    // COMPARISON BAR
+    makeSection('body', [
       makeRow([
         { id: uid(), type: 'comparison_bar', editable: true, compatibility: C.comparison_bar, properties: { label: 'How your score compares', yourScore: '{{score}}', averageScore: '62', maxScore: '100', yourLabel: 'You', averageLabel: 'Average' }, styles: { yourColor: '#0D7377', averageColor: '#D1D5DB', barHeight: 12, barBackgroundColor: '#F3F4F6', barBorderRadius: 6, labelColor: '#1A1A1A', labelFontSize: 13, paddingTop: 16, paddingBottom: 16 } },
       ]),
+    ], '#F7F7F5'),
+
+    // CTA
+    makeSection('body', [
       makeRow([
-        { id: uid(), type: 'spacer', editable: true, compatibility: C.spacer, properties: { height: 8 }, styles: {} },
-      ]),
-      makeRow([
-        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Claim my 20% off', href: '{{cta_url}}', variant: 'primary', fullWidth: true }, styles: { align: 'center', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 18, fontWeight: 700, borderRadius: 10, paddingX: 32, paddingY: 18, marginTop: 8, marginBottom: 8 } },
+        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Claim my 20% off', href: '{{cta_url}}', variant: 'primary', fullWidth: true }, styles: { align: 'center', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 18, fontWeight: 700, borderRadius: 10, paddingX: 32, paddingY: 18, marginTop: 16, marginBottom: 8 } },
       ]),
       makeRow([
         { id: uid(), type: 'paragraph', editable: true, compatibility: C.paragraph, properties: { html: '<em>No code needed. The link applies the discount automatically.</em>' }, styles: { align: 'center', color: '#9CA3AF', fontSize: 13, lineHeight: 1.5, paddingTop: 4, paddingBottom: 16 } },
@@ -276,7 +364,7 @@ export const promotionalOfferTemplate: EmailTemplateV2 = {
 };
 
 // Export all v2 templates
-export const V2_TEMPLATES: EmailTemplateV2[] = [
+export var V2_TEMPLATES: EmailTemplateV2[] = [
   quizResultTemplate,
   leadNurtureTemplate,
   promotionalOfferTemplate,
