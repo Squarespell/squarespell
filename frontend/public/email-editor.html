@@ -126,23 +126,29 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 
 /* --- Section insert point (+ button between sections) --- */
 .section-insert-point {
-  position: relative; height: 0; z-index: 15; display: flex;
+  position: relative; height: 24px; z-index: 15; display: flex;
   align-items: center; justify-content: center;
 }
+.section-insert-point::before {
+  content: ''; position: absolute; left: 32px; right: 32px; top: 50%;
+  height: 1px; background: #D1D5DB;
+  transition: background 0.15s;
+}
+.section-insert-point:hover::before { background: #0D7377; }
 .section-insert-btn {
-  position: absolute; top: -14px;
+  position: relative;
   width: 28px; height: 28px; border-radius: 50%;
-  background: #0D7377; color: #FFFFFF; border: 2px solid #FFFFFF;
+  background: #FFFFFF; color: #0D7377; border: 1.5px solid #D1D5DB;
   cursor: pointer; font-size: 18px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  opacity: 0; transition: opacity 0.15s, transform 0.15s;
-  transform: scale(0.8); z-index: 16;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  opacity: 1; transition: all 0.15s;
+  z-index: 16;
 }
-.email-section:hover + .section-insert-point .section-insert-btn,
-.section-insert-point:hover .section-insert-btn,
-.section-insert-btn.visible {
-  opacity: 1; transform: scale(1);
+.section-insert-btn:hover {
+  background: #0D7377; color: #FFFFFF; border-color: #0D7377;
+  box-shadow: 0 2px 8px rgba(13,115,119,0.3);
+  transform: scale(1.1);
 }
 
 /* --- Block picker popover --- */
@@ -963,7 +969,7 @@ function tplQuizResult() {
   '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
   '<a href="#" class="editable-text" style="font-size:12px;color:#6B7280;text-decoration:none;">View in browser</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)" title="Move up">&#8593;</button><button onclick="moveSection(this,1)" title="Move down">&#8595;</button><button onclick="dupeSection(this)" title="Duplicate">&#9783;</button><button onclick="addSectionBelow(this)" title="Add below">+</button><button onclick="deleteSection(this)" title="Delete">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)" title="Move up">&#8593;</button><button onclick="moveSection(this,1)" title="Move down">&#8595;</button><button onclick="dupeSection(this)" title="Duplicate">&#9783;</button><button onclick="addSectionBelow(this)" title="Add below">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)" title="Delete">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Hero
@@ -2241,9 +2247,18 @@ window.addEventListener('message', function(e) {
           }
         });
 
-        // Wrap table rows as email sections with toolbars if not already
+        // Wrap table rows as email sections with toolbars
+        // Only target top-level TRs in the main email table (not nested inner-table TRs)
         var toolbar = '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>';
-        canvas.querySelectorAll('tr').forEach(function(tr) {
+        // Find the main content table (the outermost table or first nested table with rows)
+        var mainTable = canvas.querySelector('table table tbody') || canvas.querySelector('table table') || canvas.querySelector('table tbody') || canvas.querySelector('table');
+        var topLevelTrs = mainTable ? Array.from(mainTable.children).filter(function(el) { return el.tagName === 'TR'; }) : [];
+        // If tbody, get its children
+        if (topLevelTrs.length === 0 && mainTable) {
+          var tbody = mainTable.querySelector('tbody');
+          if (tbody) topLevelTrs = Array.from(tbody.children).filter(function(el) { return el.tagName === 'TR'; });
+        }
+        topLevelTrs.forEach(function(tr) {
           var td = tr.querySelector('td');
           if (td && !td.classList.contains('email-section') && !tr.classList.contains('insert-point-tr')) {
             td.classList.add('email-section');
@@ -2336,11 +2351,24 @@ var insertAfterTr = null;
 function showBlockPicker(btn) {
   var picker = document.getElementById('blockPicker');
   var rect = btn.getBoundingClientRect();
-  picker.style.left = (rect.left + rect.width / 2 - 110) + 'px';
+  // Position picker centered on button, below it
+  var pickerLeft = rect.left + rect.width / 2 - 110;
+  // Clamp to viewport
+  if (pickerLeft < 8) pickerLeft = 8;
+  if (pickerLeft + 220 > window.innerWidth) pickerLeft = window.innerWidth - 228;
+  picker.style.left = pickerLeft + 'px';
   picker.style.top = (rect.bottom + 8) + 'px';
-  // Find the TR before this insert point
-  var insertPoint = btn.parentElement;
-  insertAfterTr = insertPoint.previousElementSibling;
+  // Find the insert-point-tr that contains this button
+  var insertPointTr = btn.closest('.insert-point-tr');
+  // The section TR is the previous sibling that has .email-section (skip other insert-point-trs)
+  insertAfterTr = null;
+  if (insertPointTr) {
+    var prev = insertPointTr.previousElementSibling;
+    while (prev) {
+      if (prev.querySelector('.email-section')) { insertAfterTr = prev; break; }
+      prev = prev.previousElementSibling;
+    }
+  }
   picker.classList.add('visible');
   btn.classList.add('visible');
 }
@@ -2447,19 +2475,22 @@ function insertBlock(type) {
 // Add insert points between sections
 function addInsertPoints() {
   // Remove existing insert points
-  document.querySelectorAll('.section-insert-point').forEach(function(p) { p.remove(); });
+  document.querySelectorAll('.insert-point-tr').forEach(function(p) { p.remove(); });
   var canvas = document.getElementById('emailCanvas');
   if (!canvas) return;
   // Only add in editing mode
   if (mode !== 'edit') return;
-  var trs = canvas.querySelectorAll('tr');
-  trs.forEach(function(tr) {
-    var td = tr.querySelector('.email-section');
-    if (!td) return;
-    var insertPoint = document.createElement('div');
-    insertPoint.className = 'section-insert-point';
-    insertPoint.innerHTML = '<button class="section-insert-btn" onclick="showBlockPicker(this)" title="Add section">+</button>';
-    // Insert the point as a visual element after the TR
+  var trs = Array.from(canvas.querySelectorAll('tr'));
+  var sectionTrs = trs.filter(function(tr) { return tr.querySelector('.email-section'); });
+  // Add insert point BEFORE first section
+  if (sectionTrs.length > 0) {
+    var firstTr = sectionTrs[0];
+    var topInsert = createInsertPointEl();
+    firstTr.parentElement.insertBefore(createInsertTr(topInsert), firstTr);
+  }
+  // Add insert point AFTER each section
+  sectionTrs.forEach(function(tr) {
+    var insertPoint = createInsertPointEl();
     if (tr.nextSibling) {
       tr.parentElement.insertBefore(createInsertTr(insertPoint), tr.nextSibling);
     } else {
@@ -2468,10 +2499,16 @@ function addInsertPoints() {
   });
 }
 
+function createInsertPointEl() {
+  var div = document.createElement('div');
+  div.className = 'section-insert-point';
+  div.innerHTML = '<button class="section-insert-btn" onclick="showBlockPicker(this)" title="Add block">+</button>';
+  return div;
+}
+
 function createInsertTr(insertPointDiv) {
   var tr = document.createElement('tr');
   tr.className = 'insert-point-tr';
-  tr.style.height = '0';
   var td = document.createElement('td');
   td.style.padding = '0';
   td.style.border = 'none';
