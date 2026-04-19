@@ -59,6 +59,7 @@ function NewCampaignPageInner() {
   const [name, setName] = useState('');
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [draftId, setDraftId] = useState<string | null>(null);
 
   // Keep recipient count in sync for the review step
   useEffect(() => {
@@ -106,8 +107,6 @@ function NewCampaignPageInner() {
       setSending(false);
     }
   };
-
-  const [draftId, setDraftId] = useState<string | null>(null);
 
   const testSend = async (to: string) => {
     let id = draftId;

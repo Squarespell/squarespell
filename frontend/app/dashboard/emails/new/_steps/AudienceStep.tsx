@@ -131,7 +131,7 @@ export function AudienceStep({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                   <div>
                     <MiniLabel>Result</MiniLabel>
-  2                 <select value={state.filters.outcome_id || ''}
+                    <select value={state.filters.outcome_id || ''}
                       onChange={e => setState({ filters: { ...state.filters, outcome_id: e.target.value || undefined } })}
                       style={inputStyle}>
                       <option value="">Any result</option>
