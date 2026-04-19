@@ -86,6 +86,8 @@ export function DesignStep({
   var [editorReady, setEditorReady] = useState(false);
   var [phase, setPhase] = useState<'gallery' | 'editor'>('gallery');
 
+  useEffect(function() { injectDesignFocusStyles(); }, []);
+
   // Categories
   var categories = useMemo(function() {
     var cats = ['all'];
@@ -198,7 +200,7 @@ export function DesignStep({
             <Field label="Subject line">
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
-                  placeholder="Your result is in" style={inputStyle} />
+                  placeholder="Your result is in" className="sq-dinput" style={inputStyle} />
                 <button
                   onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
                   style={{
@@ -219,11 +221,11 @@ export function DesignStep({
             </Field>
             <Field label="From name">
               <input value={state.fromName} onChange={function(e) { setState({ fromName: e.target.value }); }}
-                placeholder="Your brand" style={inputStyle} />
+                placeholder="Your brand" className="sq-dinput" style={inputStyle} />
             </Field>
             <Field label="From email">
               <input value={state.fromEmail} onChange={function(e) { setState({ fromEmail: e.target.value }); }}
-                placeholder="hello@yourdomain.com" style={inputStyle} />
+                placeholder="hello@yourdomain.com" className="sq-dinput" style={inputStyle} />
             </Field>
           </div>
 
@@ -233,7 +235,7 @@ export function DesignStep({
               <div style={{ flex: 1 }}>
                 <Field label="Subject line (B)">
                   <input value={state.subjectB || ''} onChange={function(e) { setState({ subjectB: e.target.value }); }}
-                    placeholder="Try a different angle" style={inputStyle} />
+                    placeholder="Try a different angle" className="sq-dinput" style={inputStyle} />
                 </Field>
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingBottom: 8 }}>
@@ -444,7 +446,7 @@ export function DesignStep({
         <Field label="Subject line">
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
-              placeholder="Your result is in" style={inputStyle} />
+              placeholder="Your result is in" className="sq-dinput" style={inputStyle} />
             <button
               onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
               style={{
@@ -463,13 +465,13 @@ export function DesignStep({
         {/* From name */}
         <Field label="From name">
           <input value={state.fromName} onChange={function(e) { setState({ fromName: e.target.value }); }}
-            placeholder="Your brand" style={inputStyle} />
+            placeholder="Your brand" className="sq-dinput" style={inputStyle} />
         </Field>
 
         {/* From email */}
         <Field label="From email">
           <input value={state.fromEmail} onChange={function(e) { setState({ fromEmail: e.target.value }); }}
-            placeholder="hello@yourdomain.com" style={inputStyle} />
+            placeholder="hello@yourdomain.com" className="sq-dinput" style={inputStyle} />
         </Field>
       </div>
 
@@ -482,7 +484,7 @@ export function DesignStep({
           <div style={{ flex: 1 }}>
             <Field label="Subject line (B)">
               <input value={state.subjectB || ''} onChange={function(e) { setState({ subjectB: e.target.value }); }}
-                placeholder="Try a different angle" style={inputStyle} />
+                placeholder="Try a different angle" className="sq-dinput" style={inputStyle} />
             </Field>
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingBottom: 4 }}>
@@ -535,8 +537,19 @@ var Field = function({ label, children }: any) {
   );
 };
 
+/* ---- Focus-highlight style injected once ---- */
+var FOCUS_STYLE_ID = 'sq-design-focus';
+function injectDesignFocusStyles() {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(FOCUS_STYLE_ID)) return;
+  var style = document.createElement('style');
+  style.id = FOCUS_STYLE_ID;
+  style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }';
+  document.head.appendChild(style);
+}
+
 var inputStyle: React.CSSProperties = {
   width: '100%', padding: '8px 10px', background: C.ELEVATED,
   border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13,
-  boxSizing: 'border-box',
+  boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
 };

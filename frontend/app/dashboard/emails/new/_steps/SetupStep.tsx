@@ -4,6 +4,17 @@ import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 import { PrimaryButton } from '../../../_components/PageShell';
 import { listSourceQuizzes, SourceQuiz } from '../../../../../lib/emails';
 
+/* ---- Focus-highlight style injected once ---- */
+var FOCUS_STYLE_ID_SETUP = 'sq-setup-focus';
+function injectSetupFocusStyles() {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(FOCUS_STYLE_ID_SETUP)) return;
+  var style = document.createElement('style');
+  style.id = FOCUS_STYLE_ID_SETUP;
+  style.textContent = '.sq-sinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }';
+  document.head.appendChild(style);
+}
+
 export type DripEmail = {
   id: string;
   delayDays: number;
@@ -27,6 +38,8 @@ export function SetupStep({
 }) {
   var [quizzes, setQuizzes] = useState<SourceQuiz[] | null>(null);
   var [search, setSearch] = useState('');
+
+  useEffect(function() { injectSetupFocusStyles(); }, []);
 
   useEffect(function() {
     listSourceQuizzes()
@@ -54,6 +67,7 @@ export function SetupStep({
           Campaign name
         </label>
         <input
+          className="sq-sinput"
           type="text"
           value={state.campaignName}
           onChange={function(e) { setState({ campaignName: e.target.value }); }}
@@ -62,6 +76,7 @@ export function SetupStep({
             width: '100%', padding: '12px 14px', borderRadius: 10,
             border: '1px solid ' + C.BORDER, fontSize: 14, color: C.TEXT,
             background: C.SURFACE, outline: 'none',
+            transition: 'border-color 0.15s, box-shadow 0.15s',
           }}
         />
         <div style={{ fontSize: 12, color: C.TEXT_SUBTLE, marginTop: 4 }}>
@@ -162,11 +177,13 @@ export function SetupStep({
                       });
                       setState({ dripEmails: updated });
                     }}
+                    className="sq-sinput"
                     placeholder="Email label"
                     style={{
                       flex: 1, padding: '8px 10px', borderRadius: 8,
                       border: '1px solid ' + C.BORDER, fontSize: 13, color: C.TEXT,
                       background: C.SURFACE, outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
                     }}
                   />
                   {/* Delay input */}
@@ -263,6 +280,7 @@ export function SetupStep({
           <>
             {quizzes.length > 4 && (
               <input
+                className="sq-sinput"
                 type="text"
                 value={search}
                 onChange={function(e) { setSearch(e.target.value); }}
@@ -271,6 +289,7 @@ export function SetupStep({
                   width: '100%', padding: '10px 12px', borderRadius: 8,
                   border: '1px solid ' + C.BORDER, fontSize: 13, color: C.TEXT,
                   background: C.SURFACE, marginBottom: 12, outline: 'none',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
               />
             )}
