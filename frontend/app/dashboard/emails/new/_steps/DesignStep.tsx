@@ -466,11 +466,9 @@ export function DesignStep({
                     </button>
                   </div>
                   {/* Info */}
-                  <div style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT }}>{aiDesign.title}</div>
-                    </div>
-                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4 }}>
+                  <div style={{ padding: '12px 16px', height: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{aiDesign.title}</div>
+                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as any}>
                       {aiDesign.description}
                     </div>
                   </div>
@@ -581,12 +579,10 @@ export function DesignStep({
                       </button>
                     </div>
                     {/* Info */}
-                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3 }}>{t.title}</div>
-                        <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4 }}>
-                          {t.description.length > 80 ? t.description.slice(0, 80) + '...' : t.description}
-                        </div>
+                    <div style={{ padding: '12px 14px', height: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                      <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as any}>
+                        {t.description}
                       </div>
                     </div>
                   </button>
