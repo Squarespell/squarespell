@@ -413,7 +413,10 @@ function alignToStyle(align: Alignment): string {
 // --- Core Content Block Renderers ---
 
 function renderLogo(b: LogoBlock, gs: GlobalStyles): string {
-  var img = `<img src="${b.properties.src || gs.branding.logoUrl}" alt="${b.properties.alt || gs.branding.logoAlt}" width="${b.properties.width || gs.branding.logoWidth}" style="display:block;border:0;outline:none;max-width:100%;height:auto;">`;
+  var src = b.properties.src || gs.branding.logoUrl;
+  // If no logo URL, render nothing (the editor will show a placeholder instead)
+  if (!src) return '';
+  var img = `<img src="${src}" alt="${b.properties.alt || gs.branding.logoAlt}" width="${b.properties.width || gs.branding.logoWidth}" style="display:block;border:0;outline:none;max-width:100%;height:auto;">`;
   if (b.properties.href) img = `<a href="${b.properties.href}" target="_blank">${img}</a>`;
   return `<div style="${alignToStyle(b.styles.align)}padding-top:${b.styles.paddingTop}px;padding-bottom:${b.styles.paddingBottom}px;">${img}</div>`;
 }

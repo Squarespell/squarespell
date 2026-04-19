@@ -657,7 +657,7 @@ export function DesignStep({
                 <div style={{ flex: 1, overflow: 'auto' }}>
                   <iframe
                     title="Template preview"
-                    srcDoc={previewItem.html.replace(/<img[^>]*alt=["']?[Ll]ogo["']?[^>]*src=["']?#["']?[^>]*\/?>/gi, '').replace(/<img[^>]*src=["']?#["']?[^>]*alt=["']?[Ll]ogo["']?[^>]*\/?>/gi, '')}
+                    srcDoc={previewItem.html.replace(/<a[^>]*>[\s]*<img[^>]*src=["']?["']?[^>]*alt=["']?Logo["']?[^>]*\/?>[\s]*<\/a>/gi, '').replace(/<img[^>]*src=["']?["']?[^>]*alt=["']?Logo["']?[^>]*\/?>/gi, '').replace(/<div[^>]*>[\s]*<\/div>/g, '')}
                     style={{ width: '100%', height: 600, border: 'none' }}
                   />
                 </div>
