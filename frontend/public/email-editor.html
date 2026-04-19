@@ -1638,6 +1638,121 @@ function downloadExport() {
 }
 
 // ================================================================
+// PARENT FRAME COMMUNICATION (postMessage API)
+// ================================================================
+window.addEventListener('message', function(e) {
+  if (!e.data || !e.data.type) return;
+
+  // Load template HTML from parent campaign flow
+  if (e.data.type === 'sq-load-template') {
+    var canvas = document.getElementById('emailCanvas');
+    if (canvas && e.data.html) {
+      // Extract the body content from full HTML
+      var doc = new DOMParser().parseFromString(e.data.html, 'text/html');
+      var body = doc.body;
+      if (body) {
+        canvas.innerHTML = body.innerHTML;
+        // Re-enable editing attributes
+        canvas.classList.add('editing');
+        canvas.querySelectorAll('[contenteditable]').forEach(function(el) {
+          el.setAttribute('contenteditable', 'true');
+        });
+      }
+    }
+  }
+
+  // Hide the template picker section (user already chose in gallery)
+  if (e.data.type === 'sq-hide-templates') {
+    var tplSection = document.querySelector('.panel-section');
+    if (tplSection) {
+      var label = tplSection.querySelector('.panel-label');
+      if (label && label.textContent === 'Templates') {
+        tplSection.style.display = 'none';
+      }
+    }
+  }
+});
+
+// Notify parent that editor is ready
+if (window.parent !== window) {
+  window.parent.postMessage({ type: 'sq-editor-ready' }, '*');
+}
+
+// Broadcast HTML changes to parent on save or any mutation
+var htmlBroadcastTimer = null;
+function broadcastHtml() {
+  if (window.parent === window) return;
+  clearTimeout(htmlBroadcastTimer);
+  htmlBroadcastTimer = setTimeout(function() {
+    var canvas = document.getElementById('emailCanvas');
+    if (!canvas) return;
+    var clone = canvas.cloneNode(true);
+    // Clean up editing UI artifacts
+    clone.querySelectorAll('.section-toolbar').forEach(function(el) { el.remove(); });
+    clone.querySelectorAll('.text-toolbar').forEach(function(el) { el.remove(); });
+    clone.classList.remove('editing');
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;">' + clone.innerHTML + '</body></html>';
+    window.parent.postMessage({ type: 'sq-editor-html', html: html }, '*');
+  }, 500);
+}
+
+// Watch for content changes to auto-broadcast
+var observer = new MutationObserver(function() { broadcastHtml(); });
+var canvasEl = document.getElementById('emailCanvas');
+if (canvasEl) {
+  observer.observe(canvasEl, { childList: true, subtree: true, characterData: true, attributes: true });
+}
+
+// Also broadcast on save button clicks
+var origSave = window.saveTemplate;
+window.saveTemplate = function() {
+  if (typeof origSave === 'function') origSave();
+  broadcastHtml();
+};
+
+// ================================================================
+// COLLAPSIBLE SIDEBAR SECTIONS
+// ================================================================
+(function() {
+  var sections = document.querySelectorAll('.panel-section');
+  sections.forEach(function(sec) {
+    var label = sec.querySelector('.panel-label');
+    if (!label) return;
+    // Make label clickable to toggle
+    label.style.cursor = 'pointer';
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    label.style.justifyContent = 'space-between';
+    label.style.userSelect = 'none';
+    var arrow = document.createElement('span');
+    arrow.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    arrow.style.transition = 'transform 0.2s';
+    arrow.className = 'section-arrow';
+    label.appendChild(arrow);
+
+    // Wrap content after label
+    var content = document.createElement('div');
+    content.className = 'section-content';
+    content.style.transition = 'max-height 0.25s ease, opacity 0.2s';
+    content.style.overflow = 'hidden';
+    var children = [];
+    var child = label.nextSibling;
+    while (child) {
+      children.push(child);
+      child = child.nextSibling;
+    }
+    children.forEach(function(c) { content.appendChild(c); });
+    sec.appendChild(content);
+
+    label.addEventListener('click', function() {
+      var isHidden = content.style.display === 'none';
+      content.style.display = isHidden ? '' : 'none';
+      arrow.style.transform = isHidden ? '' : 'rotate(-90deg)';
+    });
+  });
+})();
+
+// ================================================================
 // INIT
 // ================================================================
 buildColorSwatches();

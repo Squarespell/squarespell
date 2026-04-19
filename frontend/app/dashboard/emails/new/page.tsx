@@ -1,5 +1,5 @@
 'use client';
-import React, { Suspense, useEffect, useState, useMemo } from 'react';
+import React, { Suspense, useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '../../_components/DashboardShell';
 import { PageHeader } from '../../_components/PageShell';
@@ -12,13 +12,14 @@ import {
 import { Stepper, StepKey } from './_components/Stepper';
 import { SetupStep, SetupState } from './_steps/SetupStep';
 import { AudienceStep, AudienceState } from './_steps/AudienceStep';
-import { DesignStep, DesignState } from './_steps/DesignStep';
+import { DesignStep, DesignState, DesignPhase } from './_steps/DesignStep';
 import { ReviewStep } from './_steps/ReviewStep';
 import { api } from '../../../../lib/api';
 
 function NewCampaignPageInner() {
   var { status } = useDashboardAuth();
   var router = useRouter();
+  var shellRef = useRef<HTMLDivElement>(null);
 
   // Step 1 - Setup
   var [step, setStep] = useState<StepKey>('setup');
@@ -33,11 +34,19 @@ function NewCampaignPageInner() {
   var [design, setDesign] = useState<DesignState>({
     templateId: '', subject: '', html: '', fromName: '', fromEmail: '',
   });
+  // Lift design phase to parent so Back navigation preserves it
+  var [designPhase, setDesignPhase] = useState<DesignPhase>('gallery');
+
   var [mode, setMode] = useState<CampaignMode>('blast');
   var [recipientCount, setRecipientCount] = useState(0);
   var [sending, setSending] = useState(false);
   var [result, setResult] = useState<any>(null);
   var [draftId, setDraftId] = useState<string | null>(null);
+
+  // Scroll to top on step change
+  useEffect(function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   // Auto-fill From Name / From Email from brand kit + user profile on mount
   useEffect(function() {
@@ -138,71 +147,75 @@ function NewCampaignPageInner() {
 
   return (
     <DashboardShell>
-      <PageHeader
-        title="New campaign"
-        subtitle="Setup - Audience - Design - Send"
-      />
-      <Stepper current={step} onJump={setStep} />
+      <div ref={shellRef}>
+        <PageHeader
+          title="New campaign"
+          subtitle="Setup - Audience - Design - Send"
+        />
+        <Stepper current={step} onJump={setStep} />
 
-      {step === 'setup' && (
-        <SetupStep
-          state={setup}
-          setState={function(u) { setSetup(function(s) { return Object.assign({}, s, u); }); }}
-          onNext={handleSetupNext}
-        />
-      )}
-      {step === 'audience' && (
-        <AudienceStep
-          state={audience}
-          setState={function(u) { setAudience(function(s) { return Object.assign({}, s, u); }); }}
-          onNext={handleAudienceNext}
-          onBack={function() { setStep('setup'); }}
-        />
-      )}
-      {step === 'design' && (
-        <DesignStep
-          state={design}
-          setState={function(u) { setDesign(function(s) { return Object.assign({}, s, u); }); }}
-          onNext={handleDesignNext}
-          onBack={function() { setStep('audience'); }}
-        />
-      )}
-      {step === 'review' && (
-        <ReviewStep
-          audience={audience} design={design}
-          mode={mode} setMode={setMode}
-          recipientCount={recipientCount}
-          onBack={function() { setStep('design'); }}
-          onSend={function() { saveOrSend(true); }}
-          onSchedule={async function(scheduledAt: string) {
-            setSending(true); setResult(null);
-            try {
-              var id = draftId;
-              if (!id) {
-                var draft = await createCampaign({
-                  name: setup.campaignName || design.subject || 'Untitled',
-                  subject: design.subject,
-                  from_name: design.fromName, from_email: design.fromEmail, html: design.html,
-                  mode: mode, source_quiz_id: audience.sourceKind === 'quiz' ? audience.sourceQuizId : undefined,
-                  source_filters: audience.sourceKind === 'quiz' ? audience.filters : undefined,
-                } as any);
-                id = draft.id;
-                setDraftId(id);
+        {step === 'setup' && (
+          <SetupStep
+            state={setup}
+            setState={function(u) { setSetup(function(s) { return Object.assign({}, s, u); }); }}
+            onNext={handleSetupNext}
+          />
+        )}
+        {step === 'audience' && (
+          <AudienceStep
+            state={audience}
+            setState={function(u) { setAudience(function(s) { return Object.assign({}, s, u); }); }}
+            onNext={handleAudienceNext}
+            onBack={function() { setStep('setup'); }}
+          />
+        )}
+        {step === 'design' && (
+          <DesignStep
+            state={design}
+            setState={function(u) { setDesign(function(s) { return Object.assign({}, s, u); }); }}
+            phase={designPhase}
+            setPhase={setDesignPhase}
+            onNext={handleDesignNext}
+            onBack={function() { setStep('audience'); }}
+          />
+        )}
+        {step === 'review' && (
+          <ReviewStep
+            audience={audience} design={design}
+            mode={mode} setMode={setMode}
+            recipientCount={recipientCount}
+            onBack={function() { setStep('design'); }}
+            onSend={function() { saveOrSend(true); }}
+            onSchedule={async function(scheduledAt: string) {
+              setSending(true); setResult(null);
+              try {
+                var id = draftId;
+                if (!id) {
+                  var draft = await createCampaign({
+                    name: setup.campaignName || design.subject || 'Untitled',
+                    subject: design.subject,
+                    from_name: design.fromName, from_email: design.fromEmail, html: design.html,
+                    mode: mode, source_quiz_id: audience.sourceKind === 'quiz' ? audience.sourceQuizId : undefined,
+                    source_filters: audience.sourceKind === 'quiz' ? audience.filters : undefined,
+                  } as any);
+                  id = draft.id;
+                  setDraftId(id);
+                }
+                await updateCampaign(id, { scheduled_at: scheduledAt, status: 'scheduled' } as any);
+                setResult({ scheduled: true, scheduledAt: scheduledAt });
+                setTimeout(function() { router.push('/dashboard/emails/' + id); }, 1500);
+              } catch (e: any) {
+                setResult({ error: e.message });
+              } finally {
+                setSending(false);
               }
-              await updateCampaign(id, { scheduled_at: scheduledAt, status: 'scheduled' } as any);
-              setResult({ scheduled: true, scheduledAt: scheduledAt });
-              setTimeout(function() { router.push('/dashboard/emails/' + id); }, 1500);
-            } catch (e: any) {
-              setResult({ error: e.message });
-            } finally {
-              setSending(false);
-            }
-          }}
-          onSaveDraft={function() { saveOrSend(false); }}
-          onTestSend={testSend}
-          sending={sending} result={result}
-        />
-      )}
+            }}
+            onSaveDraft={function() { saveOrSend(false); }}
+            onTestSend={testSend}
+            sending={sending} result={result}
+          />
+        )}
+      </div>
     </DashboardShell>
   );
 }
