@@ -124,6 +124,94 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .device-toggle button.active { background: #0D7377; color: #FFFFFF; }
 .device-toggle button + button { border-left: 1px solid #E4E3E0; }
 
+/* --- Section insert point (+ button between sections) --- */
+.section-insert-point {
+  position: relative; height: 0; z-index: 15; display: flex;
+  align-items: center; justify-content: center;
+}
+.section-insert-btn {
+  position: absolute; top: -14px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #0D7377; color: #FFFFFF; border: 2px solid #FFFFFF;
+  cursor: pointer; font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  opacity: 0; transition: opacity 0.15s, transform 0.15s;
+  transform: scale(0.8); z-index: 16;
+}
+.email-section:hover + .section-insert-point .section-insert-btn,
+.section-insert-point:hover .section-insert-btn,
+.section-insert-btn.visible {
+  opacity: 1; transform: scale(1);
+}
+
+/* --- Block picker popover --- */
+.block-picker {
+  position: fixed; background: #FFFFFF; border-radius: 14px;
+  border: 1px solid #E4E3E0; box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+  z-index: 110; padding: 12px; width: 220px; display: none;
+}
+.block-picker.visible { display: block; }
+.block-picker-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+  color: #9CA3AF; font-weight: 600; margin-bottom: 8px; padding: 0 4px;
+}
+.block-picker-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border-radius: 8px; cursor: pointer; transition: background 0.1s;
+  border: none; background: none; width: 100%; text-align: left; font-size: 13px;
+  color: #1A1A1A;
+}
+.block-picker-item:hover { background: #F0FDFA; }
+.block-picker-icon {
+  width: 32px; height: 32px; border-radius: 8px; background: #F7F7F5;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  color: #0D7377;
+}
+.block-picker-item:hover .block-picker-icon { background: #E8F4F4; }
+
+/* --- Section style panel (background + padding) --- */
+.section-style-panel {
+  position: fixed; background: #FFFFFF; border-radius: 14px;
+  border: 1px solid #E4E3E0; box-shadow: 0 8px 30px rgba(0,0,0,0.14);
+  z-index: 95; padding: 16px; width: 260px; display: none;
+}
+.section-style-panel.visible { display: block; }
+.section-style-panel .ssp-title {
+  font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-style-panel .ssp-close {
+  width: 24px; height: 24px; border: none; background: none; cursor: pointer;
+  color: #9CA3AF; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+}
+.section-style-panel .ssp-close:hover { background: #F7F7F5; color: #4B5563; }
+.section-style-panel .ssp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-style-panel .ssp-label { font-size: 12px; color: #4B5563; font-weight: 500; }
+.section-style-panel .ssp-color-dot {
+  width: 28px; height: 28px; border-radius: 8px; border: 2px solid #E4E3E0;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.section-style-panel .ssp-color-dot:hover { border-color: #9CA3AF; }
+.section-style-panel .ssp-hex-row {
+  display: flex; gap: 6px; margin-bottom: 12px;
+}
+.section-style-panel .ssp-hex-row input {
+  flex: 1; padding: 6px 8px; border: 1px solid #E4E3E0; border-radius: 6px;
+  font-size: 12px; font-family: monospace;
+}
+.section-style-panel .ssp-hex-row input:focus { outline: none; border-color: #0D7377; }
+.section-style-panel .ssp-slider-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.section-style-panel .ssp-slider-row input[type="range"] { flex: 1; }
+.section-style-panel .ssp-slider-row span {
+  font-size: 11px; color: #6B7280; min-width: 35px; text-align: right;
+}
+
 /* --- Undo/redo buttons --- */
 .undo-redo { display: flex; gap: 2px; }
 .undo-redo button {
@@ -557,6 +645,73 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 </div>
 
 <!-- ================================================================
+     BLOCK PICKER (add content between sections)
+     ================================================================ -->
+<div class="block-picker" id="blockPicker">
+  <div class="block-picker-title">Add section</div>
+  <button class="block-picker-item" onclick="insertBlock('text')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></div>
+    <div><div style="font-weight:600;">Text</div><div style="font-size:11px;color:#6B7280;">Paragraph or heading</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('image')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+    <div><div style="font-weight:600;">Image</div><div style="font-size:11px;color:#6B7280;">Full-width image</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('button')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="22" height="14" rx="7" ry="7"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+    <div><div style="font-weight:600;">Button</div><div style="font-size:11px;color:#6B7280;">Call-to-action button</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('spacer')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><polyline points="8 4 12 0 16 4"/><polyline points="8 20 12 24 16 20"/></svg></div>
+    <div><div style="font-weight:600;">Spacer</div><div style="font-size:11px;color:#6B7280;">Add vertical space</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('divider')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="22" y2="12"/></svg></div>
+    <div><div style="font-weight:600;">Divider</div><div style="font-size:11px;color:#6B7280;">Horizontal line</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('twocol')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg></div>
+    <div><div style="font-weight:600;">Two columns</div><div style="font-size:11px;color:#6B7280;">Side-by-side layout</div></div>
+  </button>
+</div>
+
+<!-- ================================================================
+     SECTION STYLE PANEL (per-section background + padding)
+     ================================================================ -->
+<div class="section-style-panel" id="sectionStylePanel">
+  <div class="ssp-title">
+    <span>Section style</span>
+    <button class="ssp-close" onclick="closeSectionStylePanel()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ssp-row">
+    <span class="ssp-label">Background</span>
+    <div class="ssp-color-dot" id="sspBgDot" style="background:#FFFFFF;" onclick="document.getElementById('sspBgInput').focus()"></div>
+  </div>
+  <div class="ssp-hex-row">
+    <input type="text" id="sspBgInput" value="#FFFFFF" maxlength="7" placeholder="#FFFFFF" onkeydown="if(event.key==='Enter')applySectionBg()">
+    <input type="color" id="sspBgNative" value="#FFFFFF" style="width:32px;height:28px;border:1px solid #E4E3E0;border-radius:6px;cursor:pointer;padding:0;" onchange="document.getElementById('sspBgInput').value=this.value;applySectionBg()">
+  </div>
+  <div class="ssp-label" style="margin-bottom:6px;">Padding</div>
+  <div class="ssp-slider-row">
+    <span class="ssp-label" style="min-width:28px;font-size:11px;">Top</span>
+    <input type="range" id="sspPadTop" min="0" max="80" value="24" oninput="applySectionPadding()">
+    <span id="sspPadTopVal">24px</span>
+  </div>
+  <div class="ssp-slider-row">
+    <span class="ssp-label" style="min-width:28px;font-size:11px;">Bottom</span>
+    <input type="range" id="sspPadBot" min="0" max="80" value="24" oninput="applySectionPadding()">
+    <span id="sspPadBotVal">24px</span>
+  </div>
+  <div class="ssp-slider-row">
+    <span class="ssp-label" style="min-width:28px;font-size:11px;">Sides</span>
+    <input type="range" id="sspPadSide" min="0" max="60" value="32" oninput="applySectionPadding()">
+    <span id="sspPadSideVal">32px</span>
+  </div>
+</div>
+
+<!-- ================================================================
      COLOR POPOVER (floating)
      ================================================================ -->
 <div class="color-popover" id="colorPopover">
@@ -734,7 +889,7 @@ function tplQuizResult() {
   '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.6));">' +
   '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Your Results Are In, {{first_name}}</h1>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Score Section
@@ -747,7 +902,7 @@ function tplQuizResult() {
   '<h2 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:16px;">Your Quiz Score</h2>' +
   '<p class="editable-text" style="font-size:14px;color:#6B7280;margin-top:4px;">Top 15% of all respondents</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Result Category
@@ -757,7 +912,7 @@ function tplQuizResult() {
   '<h2 class="editable-text" style="font-size:28px;font-weight:700;color:' + globalColors.text + ';margin-top:8px;">You\'re a Growth-Stage Founder</h2>' +
   '<p class="editable-text" style="font-size:15px;color:#4B5563;line-height:1.6;margin-top:12px;">Your answers reveal that you have already achieved product-market fit and are now focused on scaling your operations. You understand your core customer deeply but need systems to reach them at scale. The recommendations below are tailored specifically for founders at your stage of growth.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Recommendation Card
@@ -771,7 +926,7 @@ function tplQuizResult() {
   '<p class="editable-text" style="font-size:14px;color:#6B7280;line-height:1.5;margin-top:8px;">A 12-week hands-on program designed for founders who have found product-market fit and are ready to build the systems that scale. Includes weekly coaching calls, templates, and a private community.</p>' +
   '<a href="#" class="editable-btn" style="display:inline-block;margin-top:16px;padding:12px 28px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Learn More</a>' +
   '</div></div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Testimonial
@@ -785,7 +940,7 @@ function tplQuizResult() {
   '<div class="editable-text" style="font-size:12px;color:#6B7280;">Founder, Elevate Consulting</div>' +
   '<div class="stars" style="margin-top:4px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>' +
   '</div></div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Retake Button
@@ -793,7 +948,7 @@ function tplQuizResult() {
   '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
   '<a href="#" class="editable-btn" style="display:inline-block;padding:12px 32px;border:2px solid ' + globalColors.primary + ';color:' + globalColors.primary + ';text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;background:transparent;" onclick="event.preventDefault();openBtnPanel(this)">Retake the Quiz</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Footer
@@ -811,7 +966,7 @@ function tplQuizResult() {
   '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:12px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
   '<p style="font-size:10px;color:#BFBFBF;margin-top:6px;">Copyright 2026 Squarespell. All rights reserved.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   '</table></td></tr></table></div>';
@@ -831,7 +986,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:20px 32px;">' +
   '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Hero
@@ -841,7 +996,7 @@ function tplLeadNurture() {
   '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.65));">' +
   '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Ready to Take the Next Step?</h1>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Intro
@@ -849,7 +1004,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:32px;">' +
   '<p class="editable-text" style="font-size:16px;color:' + globalColors.text + ';line-height:1.7;">Hi {{first_name}}, based on your quiz results, we put together a personalized action plan just for you. Most people in your position share a common challenge: they know what they want to build but struggle to figure out where to begin. The strategies below are specifically designed for people at your stage, and they have worked for hundreds of founders just like you.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Two-column features
@@ -867,7 +1022,7 @@ function tplLeadNurture() {
   '<p class="editable-text" style="font-size:13px;color:#6B7280;line-height:1.5;margin-top:6px;">Set up three core metrics that map directly to revenue. When you know your numbers, every decision becomes clearer and faster.</p>' +
   '</div>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // 3-col value prop
@@ -878,7 +1033,7 @@ function tplLeadNurture() {
   '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Quick Results</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">See measurable progress within your first week</p></div>' +
   '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Expert Support</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">One-on-one coaching available when you need it</p></div>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // CTA
@@ -886,7 +1041,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
   '<a href="#" class="editable-btn" style="display:inline-block;padding:14px 36px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Book Your Free Strategy Call</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // PS
@@ -894,7 +1049,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:0 32px 24px;">' +
   '<p class="editable-text" style="font-size:14px;color:#6B7280;font-style:italic;line-height:1.6;">P.S. This offer expires in 48 hours. We keep our coaching groups intentionally small to give every member real attention, so spots fill up fast. Don\'t wait on this one.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Footer
@@ -909,7 +1064,7 @@ function tplLeadNurture() {
   '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
   '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   '</table></td></tr></table></div>';
@@ -926,7 +1081,7 @@ function tplPromoOffer() {
   // Top banner
   '<table width="100%" cellpadding="0" cellspacing="0"><tr><td class="email-section" data-sid="' + uid() + '" style="background:' + globalColors.primary + ';text-align:center;padding:10px 16px;">' +
   '<span class="editable-text" style="color:#FFFFFF;font-size:13px;font-weight:600;letter-spacing:1px;">LIMITED TIME OFFER - 48 HOURS ONLY</span>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr></table>' +
 
   '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:0 0 8px 8px;overflow:hidden;margin-top:0;">' +
@@ -936,7 +1091,7 @@ function tplPromoOffer() {
   '<div class="section-inner" style="padding:20px 32px;">' +
   '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Hero
@@ -946,7 +1101,7 @@ function tplPromoOffer() {
   '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;">' +
   '<h1 class="editable-text" style="color:#FFFFFF;font-size:32px;font-weight:800;text-align:center;margin:0;">You Unlocked a Special Offer</h1>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Score badge
@@ -955,7 +1110,7 @@ function tplPromoOffer() {
   '<div class="tier-badge" style="background:#F59E0B;color:#FFFFFF;">Gold Tier</div>' +
   '<p class="editable-text" style="font-size:15px;color:#4B5563;margin-top:12px;">Based on your quiz score, you qualify for our best discount:</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Offer box
@@ -972,7 +1127,7 @@ function tplPromoOffer() {
   '<li class="editable-text">Lifetime access to templates and playbooks library</li>' +
   '<li class="editable-text">Priority support via email and live chat</li>' +
   '</ul></div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Countdown
@@ -985,7 +1140,7 @@ function tplPromoOffer() {
   '<div class="countdown-box"><div class="countdown-num">47</div><div class="countdown-lbl">Mins</div></div>' +
   '<div class="countdown-box"><div class="countdown-num">12</div><div class="countdown-lbl">Secs</div></div>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // CTA
@@ -993,7 +1148,7 @@ function tplPromoOffer() {
   '<div class="section-inner" style="padding:16px 32px;text-align:center;">' +
   '<a href="#" class="editable-btn" style="display:inline-block;padding:16px 48px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:18px;font-weight:700;" onclick="event.preventDefault();openBtnPanel(this)">Claim Your Discount Now &#8594;</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Guarantee
@@ -1003,7 +1158,7 @@ function tplPromoOffer() {
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
   '<span class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">30-Day Money Back Guarantee</span>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Secondary CTA
@@ -1011,7 +1166,7 @@ function tplPromoOffer() {
   '<div class="section-inner" style="padding:8px 32px 24px;text-align:center;">' +
   '<a href="#" class="editable-text" style="font-size:14px;color:#6B7280;text-decoration:underline;">Not ready? Remind me tomorrow</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   // Footer
@@ -1021,7 +1176,7 @@ function tplPromoOffer() {
   '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
   '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
   '</td></tr>' +
 
   '</table></td></tr></table></div>';
@@ -1050,6 +1205,7 @@ function renderTemplate() {
   else canvas.innerHTML = tplPromoOffer();
   bindEditableText();
   updateSectionButtons();
+  addInsertPoints();
 }
 
 // ================================================================
@@ -1062,7 +1218,13 @@ function setMode(m) {
   document.getElementById('btnPreview').classList.toggle('active', m === 'preview');
   canvas.classList.toggle('editing', m === 'edit');
   document.getElementById('leftPanel').classList.toggle('hidden', m === 'preview');
+  // Show/hide insert points
+  document.querySelectorAll('.insert-point-tr').forEach(function(tr) {
+    tr.style.display = m === 'edit' ? '' : 'none';
+  });
   closeAllPanels();
+  closeBlockPicker();
+  closeSectionStylePanel();
 }
 
 // ================================================================
@@ -1363,12 +1525,18 @@ function moveSection(btn, dir) {
   var td = getSectionTd(btn);
   var tr = td.parentElement;
   var tbody = tr.parentElement;
-  if (dir === -1 && tr.previousElementSibling) {
-    tbody.insertBefore(tr, tr.previousElementSibling);
-  } else if (dir === 1 && tr.nextElementSibling) {
-    tbody.insertBefore(tr.nextElementSibling, tr);
+  // Skip insert-point-tr rows when finding siblings
+  var prev = tr.previousElementSibling;
+  while (prev && prev.classList.contains('insert-point-tr')) prev = prev.previousElementSibling;
+  var next = tr.nextElementSibling;
+  while (next && next.classList.contains('insert-point-tr')) next = next.nextElementSibling;
+  if (dir === -1 && prev) {
+    tbody.insertBefore(tr, prev);
+  } else if (dir === 1 && next) {
+    tbody.insertBefore(next, tr);
   }
   updateSectionButtons();
+  addInsertPoints();
 }
 
 function dupeSection(btn) {
@@ -1379,6 +1547,7 @@ function dupeSection(btn) {
   tr.parentElement.insertBefore(clone, tr.nextSibling);
   bindEditableText();
   updateSectionButtons();
+  addInsertPoints();
 }
 
 function deleteSection(btn) {
@@ -1387,11 +1556,12 @@ function deleteSection(btn) {
   var hasContent = td.querySelector('.editable-text, .editable-img, .editable-btn');
   if (hasContent) {
     showConfirm('Delete this section and all its content?', function(yes) {
-      if (yes) { tr.remove(); updateSectionButtons(); }
+      if (yes) { tr.remove(); updateSectionButtons(); addInsertPoints(); }
     });
   } else {
     tr.remove();
     updateSectionButtons();
+    addInsertPoints();
   }
 }
 
@@ -1403,18 +1573,22 @@ function addSectionBelow(btn) {
     '<div class="section-inner" style="padding:32px;text-align:center;">' +
     '<p class="editable-text" style="font-size:15px;color:#6B7280;">New section - click to edit text</p>' +
     '</div>' +
-    '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+    '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
     '</td>';
   tr.parentElement.insertBefore(newTr, tr.nextSibling);
   bindEditableText();
   updateSectionButtons();
+  addInsertPoints();
 }
 
 function updateSectionButtons() {
   document.querySelectorAll('.email-section').forEach(function(td) {
     var tr = td.parentElement;
     if (!tr || !tr.parentElement) return;
-    var trs = Array.from(tr.parentElement.children);
+    // Filter out insert-point-tr rows
+    var trs = Array.from(tr.parentElement.children).filter(function(t) {
+      return !t.classList.contains('insert-point-tr');
+    });
     var idx = trs.indexOf(tr);
     var toolbar = td.querySelector('.section-toolbar');
     if (!toolbar) return;
@@ -1767,6 +1941,7 @@ function exportHTML() {
 
   // Strip editor UI
   clone.querySelectorAll('.section-toolbar').forEach(function(t) { t.remove(); });
+  clone.querySelectorAll('.insert-point-tr').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('[contenteditable]').forEach(function(e) { e.removeAttribute('contenteditable'); });
   clone.classList.remove('editing');
   clone.querySelectorAll('.active').forEach(function(e) { e.classList.remove('active'); });
@@ -1869,6 +2044,7 @@ function broadcastHtml() {
     // Clean up editing UI artifacts
     clone.querySelectorAll('.section-toolbar').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.text-toolbar').forEach(function(el) { el.remove(); });
+    clone.querySelectorAll('.insert-point-tr').forEach(function(el) { el.remove(); });
     clone.classList.remove('editing');
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;">' + clone.innerHTML + '</body></html>';
     window.parent.postMessage({ type: 'sq-editor-html', html: html }, '*');
@@ -1888,6 +2064,205 @@ window.saveTemplate = function() {
   if (typeof origSave === 'function') origSave();
   broadcastHtml();
 };
+
+// ================================================================
+// BLOCK PICKER - Insert content sections
+// ================================================================
+var insertAfterTr = null;
+
+function showBlockPicker(btn) {
+  var picker = document.getElementById('blockPicker');
+  var rect = btn.getBoundingClientRect();
+  picker.style.left = (rect.left + rect.width / 2 - 110) + 'px';
+  picker.style.top = (rect.bottom + 8) + 'px';
+  // Find the TR before this insert point
+  var insertPoint = btn.parentElement;
+  insertAfterTr = insertPoint.previousElementSibling;
+  picker.classList.add('visible');
+  btn.classList.add('visible');
+}
+
+function closeBlockPicker() {
+  document.getElementById('blockPicker').classList.remove('visible');
+  document.querySelectorAll('.section-insert-btn.visible').forEach(function(b) { b.classList.remove('visible'); });
+  insertAfterTr = null;
+}
+
+function insertBlock(type) {
+  var html = '';
+  var sid = uid();
+  var toolbar = '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>';
+
+  if (type === 'text') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:24px 32px;">' +
+      '<p class="editable-text" style="font-size:15px;color:' + globalColors.text + ';line-height:1.6;">Click here to edit this text. Add your own copy, change the font size, or customize the style.</p>' +
+      '</div>' + toolbar + '</td>';
+  } else if (type === 'image') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner">' +
+      '<img class="editable-img" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=300&fit=crop" alt="Click to replace" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
+      '</div>' + toolbar + '</td>';
+  } else if (type === 'button') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
+      '<a href="#" class="editable-btn" style="display:inline-block;padding:14px 32px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Click to edit</a>' +
+      '</div>' + toolbar + '</td>';
+  } else if (type === 'spacer') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:24px 0;"></div>' + toolbar + '</td>';
+  } else if (type === 'divider') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:8px 32px;">' +
+      '<hr style="border:none;border-top:1px solid #E4E3E0;margin:0;">' +
+      '</div>' + toolbar + '</td>';
+  } else if (type === 'twocol') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:24px 32px;">' +
+      '<div class="two-col">' +
+      '<div style="flex:1;"><p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;">Left column text. Click to edit.</p></div>' +
+      '<div style="flex:1;"><p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;">Right column text. Click to edit.</p></div>' +
+      '</div></div>' + toolbar + '</td>';
+  }
+
+  var newTr = document.createElement('tr');
+  newTr.innerHTML = html;
+
+  if (insertAfterTr && insertAfterTr.parentElement) {
+    insertAfterTr.parentElement.insertBefore(newTr, insertAfterTr.nextSibling);
+  } else {
+    // Fallback: add to end
+    var tbody = document.querySelector('#emailCanvas table table tbody, #emailCanvas table table');
+    if (tbody) tbody.appendChild(newTr);
+  }
+
+  bindEditableText();
+  updateSectionButtons();
+  addInsertPoints();
+  closeBlockPicker();
+  broadcastHtml();
+}
+
+// Add insert points between sections
+function addInsertPoints() {
+  // Remove existing insert points
+  document.querySelectorAll('.section-insert-point').forEach(function(p) { p.remove(); });
+  var canvas = document.getElementById('emailCanvas');
+  if (!canvas) return;
+  // Only add in editing mode
+  if (mode !== 'edit') return;
+  var trs = canvas.querySelectorAll('tr');
+  trs.forEach(function(tr) {
+    var td = tr.querySelector('.email-section');
+    if (!td) return;
+    var insertPoint = document.createElement('div');
+    insertPoint.className = 'section-insert-point';
+    insertPoint.innerHTML = '<button class="section-insert-btn" onclick="showBlockPicker(this)" title="Add section">+</button>';
+    // Insert the point as a visual element after the TR
+    if (tr.nextSibling) {
+      tr.parentElement.insertBefore(createInsertTr(insertPoint), tr.nextSibling);
+    } else {
+      tr.parentElement.appendChild(createInsertTr(insertPoint));
+    }
+  });
+}
+
+function createInsertTr(insertPointDiv) {
+  var tr = document.createElement('tr');
+  tr.className = 'insert-point-tr';
+  tr.style.height = '0';
+  var td = document.createElement('td');
+  td.style.padding = '0';
+  td.style.border = 'none';
+  td.style.position = 'relative';
+  td.appendChild(insertPointDiv);
+  tr.appendChild(td);
+  return tr;
+}
+
+// Close block picker on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.block-picker') && !e.target.closest('.section-insert-btn')) {
+    closeBlockPicker();
+  }
+});
+
+// ================================================================
+// SECTION STYLE PANEL - Per-section background + padding
+// ================================================================
+var activeSectionEl = null;
+
+function openSectionStyle(btn) {
+  var td = getSectionTd(btn);
+  activeSectionEl = td;
+  var inner = td.querySelector('.section-inner');
+  if (!inner) return;
+
+  var panel = document.getElementById('sectionStylePanel');
+
+  // Read current values
+  var bgColor = inner.style.backgroundColor || '';
+  var bgHex = bgColor ? rgbToHex(bgColor) : '#FFFFFF';
+  document.getElementById('sspBgInput').value = bgHex;
+  document.getElementById('sspBgNative').value = bgHex;
+  document.getElementById('sspBgDot').style.background = bgHex;
+
+  var cs = window.getComputedStyle(inner);
+  var padTop = parseInt(cs.paddingTop) || 0;
+  var padBot = parseInt(cs.paddingBottom) || 0;
+  var padSide = parseInt(cs.paddingLeft) || 0;
+  document.getElementById('sspPadTop').value = padTop;
+  document.getElementById('sspPadTopVal').textContent = padTop + 'px';
+  document.getElementById('sspPadBot').value = padBot;
+  document.getElementById('sspPadBotVal').textContent = padBot + 'px';
+  document.getElementById('sspPadSide').value = padSide;
+  document.getElementById('sspPadSideVal').textContent = padSide + 'px';
+
+  // Position near the section
+  var rect = td.getBoundingClientRect();
+  var leftPanel = document.getElementById('leftPanel');
+  var lpRect = leftPanel.getBoundingClientRect();
+  panel.style.left = (lpRect.left + 8) + 'px';
+  panel.style.top = Math.min(rect.top, window.innerHeight - 300) + 'px';
+  panel.classList.add('visible');
+}
+
+function closeSectionStylePanel() {
+  document.getElementById('sectionStylePanel').classList.remove('visible');
+  activeSectionEl = null;
+}
+
+function applySectionBg() {
+  if (!activeSectionEl) return;
+  var val = document.getElementById('sspBgInput').value.trim();
+  if (!/^#[0-9A-Fa-f]{6}$/.test(val)) return;
+  var inner = activeSectionEl.querySelector('.section-inner');
+  if (inner) inner.style.backgroundColor = val;
+  document.getElementById('sspBgDot').style.background = val;
+  document.getElementById('sspBgNative').value = val;
+  broadcastHtml();
+}
+
+function applySectionPadding() {
+  if (!activeSectionEl) return;
+  var inner = activeSectionEl.querySelector('.section-inner');
+  if (!inner) return;
+  var top = document.getElementById('sspPadTop').value;
+  var bot = document.getElementById('sspPadBot').value;
+  var side = document.getElementById('sspPadSide').value;
+  document.getElementById('sspPadTopVal').textContent = top + 'px';
+  document.getElementById('sspPadBotVal').textContent = bot + 'px';
+  document.getElementById('sspPadSideVal').textContent = side + 'px';
+  inner.style.padding = top + 'px ' + side + 'px ' + bot + 'px ' + side + 'px';
+  broadcastHtml();
+}
+
+// Close section style panel on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.section-style-panel') && !e.target.closest('.section-toolbar')) {
+    closeSectionStylePanel();
+  }
+});
 
 // ================================================================
 // COLLAPSIBLE SIDEBAR SECTIONS
@@ -1913,7 +2288,6 @@ window.saveTemplate = function() {
     var content = document.createElement('div');
     content.className = 'section-content';
     content.style.transition = 'max-height 0.25s ease, opacity 0.2s';
-    content.style.overflow = 'hidden';
     var children = [];
     var child = label.nextSibling;
     while (child) {
