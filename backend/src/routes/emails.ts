@@ -567,51 +567,73 @@ r.delete('/suppressions/:id', async (req, res) => {
   }
 });
 
-// ── Unsplash proxy (free images for email editor) ────────────────────────────
+// ── Free images proxy (Pexels / Unsplash / picsum fallback) ──────────────────
 r.get('/unsplash/search', async (req, res) => {
   try {
     const query = (req.query.q as string || '').trim();
     const page = parseInt(req.query.page as string) || 1;
     if (!query) return res.json({ results: [] });
 
-    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
-    if (!accessKey) {
-      // Fallback to picsum if no Unsplash key configured
-      const results: any[] = [];
-      for (let i = 0; i < 12; i++) {
-        const seed = query.replace(/\s/g, '') + i + page;
-        results.push({
-          id: seed,
-          thumb: 'https://picsum.photos/seed/' + seed + '/200/140',
-          regular: 'https://picsum.photos/seed/' + seed + '/600/400',
-          alt: query,
-          credit: 'Lorem Picsum',
-          creditUrl: 'https://picsum.photos',
-        });
+    // Try Pexels first
+    const pexelsKey = process.env.PEXELS_ACCESS_KEY;
+    if (pexelsKey) {
+      const url = 'https://api.pexels.com/v1/search?query=' + encodeURIComponent(query) + '&per_page=12&page=' + page;
+      const resp = await fetch(url, {
+        headers: { Authorization: pexelsKey },
+      });
+      if (resp.ok) {
+        const data: any = await resp.json();
+        const results = (data.photos || []).map((p: any) => ({
+          id: String(p.id),
+          thumb: p.src?.medium || p.src?.small,
+          regular: p.src?.large || p.src?.original,
+          alt: p.alt || query,
+          credit: p.photographer || 'Pexels',
+          creditUrl: p.photographer_url || 'https://pexels.com',
+        }));
+        return res.json({ results });
       }
-      return res.json({ results });
+      log.error('Pexels API error', { status: resp.status });
     }
 
-    const url = 'https://api.unsplash.com/search/photos?query=' + encodeURIComponent(query) + '&per_page=12&page=' + page;
-    const resp = await fetch(url, {
-      headers: { Authorization: 'Client-ID ' + accessKey },
-    });
-    if (!resp.ok) {
+    // Try Unsplash as second option
+    const unsplashKey = process.env.UNSPLASH_ACCESS_KEY;
+    if (unsplashKey) {
+      const url = 'https://api.unsplash.com/search/photos?query=' + encodeURIComponent(query) + '&per_page=12&page=' + page;
+      const resp = await fetch(url, {
+        headers: { Authorization: 'Client-ID ' + unsplashKey },
+      });
+      if (resp.ok) {
+        const data: any = await resp.json();
+        const results = (data.results || []).map((p: any) => ({
+          id: p.id,
+          thumb: p.urls?.small || p.urls?.thumb,
+          regular: p.urls?.regular,
+          alt: p.alt_description || query,
+          credit: p.user?.name || 'Unsplash',
+          creditUrl: p.user?.links?.html || 'https://unsplash.com',
+        }));
+        return res.json({ results });
+      }
       log.error('Unsplash API error', { status: resp.status });
-      return res.status(502).json({ error: 'Unsplash API error' });
     }
-    const data: any = await resp.json();
-    const results = (data.results || []).map((p: any) => ({
-      id: p.id,
-      thumb: p.urls?.small || p.urls?.thumb,
-      regular: p.urls?.regular,
-      alt: p.alt_description || query,
-      credit: p.user?.name || 'Unsplash',
-      creditUrl: p.user?.links?.html || 'https://unsplash.com',
-    }));
+
+    // Fallback to picsum
+    const results: any[] = [];
+    for (let i = 0; i < 12; i++) {
+      const seed = query.replace(/\s/g, '') + i + page;
+      results.push({
+        id: seed,
+        thumb: 'https://picsum.photos/seed/' + seed + '/200/140',
+        regular: 'https://picsum.photos/seed/' + seed + '/600/400',
+        alt: query,
+        credit: 'Lorem Picsum',
+        creditUrl: 'https://picsum.photos',
+      });
+    }
     res.json({ results });
   } catch (err: any) {
-    log.error('Unsplash proxy error', { err });
+    log.error('Image search proxy error', { err });
     res.status(500).json({ error: err.message ?? 'Failed to search images' });
   }
 });
