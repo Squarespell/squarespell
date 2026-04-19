@@ -89,6 +89,7 @@ export function DesignStep({
   var [search, setSearch] = useState('');
   var editorRef = useRef<HTMLIFrameElement>(null);
   var [editorReady, setEditorReady] = useState(false);
+  var [previewItem, setPreviewItem] = useState<TemplateItem | null>(null);
 
   useEffect(function() { injectDesignFocusStyles(); }, []);
 
@@ -185,6 +186,19 @@ export function DesignStep({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [setPhase]);
 
+  var handleStartFromScratch = useCallback(function() {
+    var blankHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tbody><tr><td style="padding:32px;text-align:center;color:#9CA3AF;font-size:14px;font-family:sans-serif;">Start adding blocks to build your email</td></tr></tbody></table></body></html>';
+    setState({
+      templateId: '__scratch__',
+      subject: '',
+      preheader: '',
+      html: blankHtml,
+    });
+    setEditorReady(false);
+    setPhase('editor');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [setState, setPhase]);
+
   var selectedItem = allItems.find(function(t) { return t.id === state.templateId; });
 
   // Reorder items: recommended first, then rest
@@ -259,75 +273,124 @@ export function DesignStep({
 
           {/* Template grid - 3 columns */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            {/* Start from scratch card */}
+            <button
+              onClick={handleStartFromScratch}
+              style={{
+                textAlign: 'center' as any, padding: 0, overflow: 'hidden',
+                borderRadius: 14, cursor: 'pointer',
+                border: '2px dashed ' + C.BORDER,
+                background: C.SURFACE,
+                transition: 'all 0.15s',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                minHeight: 270,
+              }}
+              onMouseOver={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; }}
+              onMouseOut={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.BORDER; }}
+            >
+              <div style={{
+                width: 48, height: 48, borderRadius: 14, background: C.ACCENT_LIGHT,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+              }}>
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>Start from scratch</div>
+              <div style={{ fontSize: 12, color: C.TEXT_MUTED, maxWidth: 180, lineHeight: 1.4 }}>Build your email from a blank canvas using the block editor</div>
+            </button>
+
             {orderedItems.map(function(t) {
               var selected = t.id === state.templateId;
               var isRecommended = t.id === recommendedId;
               return (
-                <button
-                  key={t.id}
-                  onClick={function() { handleSelectTemplate(t); }}
-                  style={{
-                    textAlign: 'left' as any, padding: 0, overflow: 'hidden',
-                    borderRadius: 14, cursor: 'pointer',
-                    border: '2px solid ' + (selected ? C.ACCENT : C.BORDER),
-                    background: C.SURFACE,
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {/* Thumbnail */}
-                  <div style={{
-                    height: 200, overflow: 'hidden', background: '#F7F7F5',
-                    position: 'relative', borderBottom: '1px solid ' + C.BORDER,
-                  }}>
-                    <iframe
-                      title={t.title + ' preview'}
-                      srcDoc={t.html}
-                      style={{
-                        width: '200%', height: '400px', border: 0,
-                        transform: 'scale(0.5)', transformOrigin: 'top left',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    {/* Badges */}
-                    <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4 }}>
-                      {isRecommended && (
+                <div key={t.id} style={{ position: 'relative' }}>
+                  <button
+                    onClick={function() { handleSelectTemplate(t); }}
+                    style={{
+                      textAlign: 'left' as any, padding: 0, overflow: 'hidden',
+                      borderRadius: 14, cursor: 'pointer', width: '100%',
+                      border: '2px solid ' + (selected ? C.ACCENT : C.BORDER),
+                      background: C.SURFACE,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    <div style={{
+                      height: 200, overflow: 'hidden', background: '#F7F7F5',
+                      position: 'relative', borderBottom: '1px solid ' + C.BORDER,
+                    }}>
+                      <iframe
+                        title={t.title + ' preview'}
+                        srcDoc={t.html}
+                        style={{
+                          width: '200%', height: '400px', border: 0,
+                          transform: 'scale(0.5)', transformOrigin: 'top left',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      {/* Badges */}
+                      <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4 }}>
+                        {isRecommended && (
+                          <div style={{
+                            padding: '4px 10px', borderRadius: 20,
+                            background: C.ACCENT, color: '#FFFFFF',
+                            fontSize: 11, fontWeight: 700,
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          }}>
+                            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            Recommended
+                          </div>
+                        )}
+                      </div>
+                      {/* Selected check */}
+                      {selected && (
                         <div style={{
-                          padding: '4px 10px', borderRadius: 20,
-                          background: C.ACCENT, color: '#FFFFFF',
-                          fontSize: 11, fontWeight: 700,
-                          display: 'flex', alignItems: 'center', gap: 4,
+                          position: 'absolute', top: 8, right: 8,
+                          width: 26, height: 26, borderRadius: 13,
+                          background: C.ACCENT, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                         }}>
-                          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12" />
                           </svg>
-                          Recommended
                         </div>
                       )}
                     </div>
-                    {/* Selected check */}
-                    {selected && (
-                      <div style={{
-                        position: 'absolute', top: 8, right: 8,
-                        width: 26, height: 26, borderRadius: 13,
-                        background: C.ACCENT, display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
+                    {/* Info */}
+                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3 }}>{t.title}</div>
+                        <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4 }}>
+                          {t.description.length > 80 ? t.description.slice(0, 80) + '...' : t.description}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  {/* Info */}
-                  <div style={{ padding: '12px 14px' }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3 }}>{t.title}</div>
-                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4 }}>
-                      {t.description.length > 80 ? t.description.slice(0, 80) + '...' : t.description}
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  {/* Preview eye button */}
+                  <button
+                    onClick={function(e) { e.stopPropagation(); setPreviewItem(t); }}
+                    title="Preview template"
+                    style={{
+                      position: 'absolute', bottom: 14, right: 14,
+                      width: 32, height: 32, borderRadius: 8,
+                      background: C.ELEVATED, border: '1px solid ' + C.BORDER,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.15s',
+                      zIndex: 5,
+                    }}
+                    onMouseOver={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; (e.currentTarget as HTMLElement).style.color = C.ACCENT; }}
+                    onMouseOut={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.BORDER; (e.currentTarget as HTMLElement).style.color = C.TEXT_MUTED; }}
+                  >
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
               );
             })}
             {orderedItems.length === 0 && (
@@ -336,6 +399,72 @@ export function DesignStep({
               </div>
             )}
           </div>
+
+          {/* Template preview modal */}
+          {previewItem && (
+            <div
+              onClick={function() { setPreviewItem(null); }}
+              style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+                zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backdropFilter: 'blur(2px)',
+              }}
+            >
+              <div
+                onClick={function(e) { e.stopPropagation(); }}
+                style={{
+                  background: C.SURFACE, borderRadius: 16, width: 680, maxHeight: '90vh',
+                  overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+                }}
+              >
+                {/* Header */}
+                <div style={{
+                  padding: '16px 20px', borderBottom: '1px solid ' + C.BORDER,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT }}>{previewItem.title}</div>
+                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>{previewItem.description}</div>
+                  </div>
+                  <button
+                    onClick={function() { setPreviewItem(null); }}
+                    style={{
+                      width: 32, height: 32, borderRadius: 8, border: 'none',
+                      background: C.ELEVATED, cursor: 'pointer', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', color: C.TEXT_MUTED,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+                {/* Preview iframe */}
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <iframe
+                    title="Template preview"
+                    srcDoc={previewItem.html}
+                    style={{ width: '100%', height: 600, border: 'none' }}
+                  />
+                </div>
+                {/* Footer actions */}
+                <div style={{
+                  padding: '14px 20px', borderTop: '1px solid ' + C.BORDER,
+                  display: 'flex', justifyContent: 'flex-end', gap: 10,
+                }}>
+                  <GhostButton onClick={function() { setPreviewItem(null); }}>Close</GhostButton>
+                  <PrimaryButton onClick={function() {
+                    handleSelectTemplate(previewItem!);
+                    setPreviewItem(null);
+                  }}>
+                    Use this template
+                  </PrimaryButton>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sticky bottom action bar - appears when a template is selected */}

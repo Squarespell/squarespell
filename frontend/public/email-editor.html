@@ -510,15 +510,53 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .tooltip:hover::after { opacity: 1; }
 
 /* --- Confirm dialog --- */
-.confirm-dialog {
-  position: fixed; background: #FFFFFF; border-radius: 12px; padding: 20px;
-  border: 1px solid #E4E3E0; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  z-index: 210; min-width: 320px; display: none;
-  top: 50%; left: 50%; transform: translate(-50%, -50%);
+.confirm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200;
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(2px);
 }
-.confirm-dialog.visible { display: block; }
-.confirm-dialog p { font-size: 14px; color: #1A1A1A; margin-bottom: 16px; line-height: 1.5; }
+.confirm-overlay.visible { display: flex; }
+.confirm-dialog {
+  background: #FFFFFF; border-radius: 12px; padding: 24px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.2);
+  min-width: 360px; max-width: 420px;
+}
+.confirm-dialog h4 { font-size: 16px; font-weight: 600; color: #1A1A1A; margin-bottom: 8px; }
+.confirm-dialog p { font-size: 14px; color: #6B7280; margin-bottom: 20px; line-height: 1.5; }
 .confirm-dialog .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+.confirm-dialog .btn-cancel {
+  padding: 8px 20px; border-radius: 8px; border: 1px solid #E4E3E0;
+  background: #FFFFFF; color: #374151; font-size: 14px; cursor: pointer; font-weight: 500;
+}
+.confirm-dialog .btn-cancel:hover { background: #F9FAFB; }
+.confirm-dialog .btn-danger {
+  padding: 8px 20px; border-radius: 8px; border: none;
+  background: #DC2626; color: #FFFFFF; font-size: 14px; cursor: pointer; font-weight: 500;
+}
+.confirm-dialog .btn-danger:hover { background: #B91C1C; }
+
+/* --- Right-click context menu --- */
+.ctx-menu {
+  position: fixed; background: #FFFFFF; border-radius: 10px;
+  border: 1px solid #E4E3E0; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 210; padding: 4px; min-width: 180px; display: none;
+}
+.ctx-menu.visible { display: block; }
+.ctx-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 8px 12px; border: none; background: none; color: #374151;
+  font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 6px;
+  text-align: left; transition: background 0.1s;
+}
+.ctx-menu button:hover { background: #F3F4F6; }
+.ctx-menu button.ctx-danger { color: #DC2626; }
+.ctx-menu button.ctx-danger:hover { background: #FEF2F2; }
+.ctx-sep { height: 1px; background: #E4E3E0; margin: 3px 6px; }
+
+/* --- Keyboard shortcut hint in toolbar --- */
+.shortcut-hint {
+  font-size: 10px; color: #9CA3AF; margin-left: auto; font-weight: 400;
+}
 
 /* ================================================================
    EMAIL TEMPLATE STYLES (shared)
@@ -530,10 +568,12 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 
 /* Logo placeholder */
 .logo-placeholder {
-  width: 140px; height: 44px; background: #E4E3E0; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: #6B7280; font-weight: 500; cursor: pointer;
+  width: 160px; height: 48px; background: #F9FAFB; border: 1.5px dashed #D1D5DB; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 12px; color: #9CA3AF; font-weight: 500; cursor: pointer; transition: all 0.15s;
 }
+.logo-placeholder:hover { border-color: #0D7377; background: #F0FDFA; color: #0D7377; }
+.logo-placeholder svg { flex-shrink: 0; }
 .logo-img { max-width: 140px; max-height: 60px; cursor: pointer; }
 
 /* Score circle */
@@ -573,7 +613,23 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 
 /* Two column */
 .two-col { display: flex; gap: 20px; }
-.two-col > div { flex: 1; }
+.two-col > div { flex: 1; min-height: 60px; }
+.col-add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  margin-top: 8px; padding: 6px; border: 1.5px dashed #D1D5DB; border-radius: 6px;
+  background: transparent; color: #9CA3AF; font-size: 11px; cursor: pointer;
+  transition: all 0.15s; width: 100%;
+}
+.col-add-btn:hover { border-color: #0D7377; color: #0D7377; background: #F0FDFA; }
+.col-cell { min-width: 0; }
+.col-img-placeholder { min-height: 120px !important; }
+
+/* Text placeholder for empty editable-text */
+.editing .editable-text:empty::before {
+  content: attr(data-ph);
+  color: #C4C4C4; pointer-events: none; font-style: italic;
+}
+.editing .editable-text[data-ph]:focus:empty::before { color: #D1D5DB; }
 .three-col { display: flex; gap: 16px; }
 .three-col > div { flex: 1; text-align: center; }
 .three-col-icon { font-size: 28px; margin-bottom: 8px; }
@@ -919,6 +975,9 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   <div class="btn-editor-row"><label>New tab</label><button class="toggle-switch" id="btnNewTab" onclick="toggleBtnNewTab(this)"></button></div>
   <div class="btn-editor-row"><label>BG Color</label><input type="color" id="btnBgColor" class="color-swatch-input" onchange="updateBtnBgColor(this.value)"></div>
   <div class="btn-editor-row"><label>Text Color</label><input type="color" id="btnTxtColor" class="color-swatch-input" value="#FFFFFF" onchange="updateBtnTxtColor(this.value)"></div>
+  <div class="btn-editor-row"><label>V. Padding</label><input type="range" class="range-slider" id="btnPadV" min="4" max="28" value="14" oninput="updateBtnPadding()"><span id="btnPadVVal" style="font-size:12px;color:#6B7280;min-width:30px;text-align:right;">14px</span></div>
+  <div class="btn-editor-row"><label>H. Padding</label><input type="range" class="range-slider" id="btnPadH" min="8" max="60" value="32" oninput="updateBtnPadding()"><span id="btnPadHVal" style="font-size:12px;color:#6B7280;min-width:30px;text-align:right;">32px</span></div>
+  <div class="btn-editor-row"><label>Font size</label><input type="range" class="range-slider" id="btnFontSize" min="10" max="24" value="15" oninput="updateBtnFontSize(this.value)"><span id="btnFontSizeVal" style="font-size:12px;color:#6B7280;min-width:30px;text-align:right;">15px</span></div>
   <div class="btn-editor-row"><label>Radius</label><input type="range" class="range-slider" id="btnRadius" min="0" max="30" value="8" oninput="updateBtnRadius(this.value)"><span id="btnRadiusVal" style="font-size:12px;color:#6B7280;min-width:30px;text-align:right;">8px</span></div>
   <div class="btn-editor-row"><label>Full width</label><button class="toggle-switch" id="btnFullWidth" onclick="toggleBtnFullWidth(this)"></button></div>
 </div>
@@ -946,11 +1005,27 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 <!-- ================================================================
      CONFIRM DIALOG
      ================================================================ -->
-<div class="confirm-dialog" id="confirmDialog">
-  <p id="confirmMsg"></p>
-  <div class="btn-row">
-    <button class="topbar-btn" onclick="closeConfirm(false)">Cancel</button>
-    <button class="topbar-btn primary" onclick="closeConfirm(true)">Confirm</button>
+<!-- ================================================================
+     RIGHT-CLICK CONTEXT MENU
+     ================================================================ -->
+<div class="ctx-menu" id="ctxMenu">
+  <button onclick="ctxAction('moveUp')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg> Move up</button>
+  <button onclick="ctxAction('moveDown')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg> Move down</button>
+  <div class="ctx-sep"></div>
+  <button onclick="ctxAction('duplicate')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Duplicate</button>
+  <button onclick="ctxAction('style')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> Style</button>
+  <div class="ctx-sep"></div>
+  <button class="ctx-danger" onclick="ctxAction('delete')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-dialog" id="confirmDialog">
+    <h4 id="confirmTitle">Are you sure?</h4>
+    <p id="confirmMsg"></p>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeConfirm(false)">Cancel</button>
+      <button class="btn-danger" onclick="closeConfirm(true)">Delete</button>
+    </div>
   </div>
 </div>
 
@@ -997,7 +1072,7 @@ function tplQuizResult() {
   // Header
   '<tr><td class="email-section" data-sid="' + uid() + '">' +
   '<div class="section-inner" style="padding:20px 32px;display:flex;align-items:center;justify-content:space-between;">' +
-  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
+  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo</div>' +
   '<a href="#" class="editable-text" style="font-size:12px;color:#6B7280;text-decoration:none;">View in browser</a>' +
   '</div>' +
   sectionToolbarHtml() +
@@ -1105,7 +1180,7 @@ function tplLeadNurture() {
   // Header
   '<tr><td class="email-section" data-sid="' + uid() + '">' +
   '<div class="section-inner" style="padding:20px 32px;">' +
-  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
+  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo</div>' +
   '</div>' +
   sectionToolbarHtml() +
   '</td></tr>' +
@@ -1210,7 +1285,7 @@ function tplPromoOffer() {
   // Header
   '<tr><td class="email-section" data-sid="' + uid() + '">' +
   '<div class="section-inner" style="padding:20px 32px;">' +
-  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
+  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo</div>' +
   '</div>' +
   sectionToolbarHtml() +
   '</td></tr>' +
@@ -1434,6 +1509,9 @@ function applyLink() {
   document.execCommand('createLink', false, url);
   document.getElementById('linkPopover').classList.remove('visible');
   broadcastHtml();
+}
+function closeLinkPopover() {
+  document.getElementById('linkPopover').classList.remove('visible');
 }
 
 // Merge tag dropdown
@@ -1677,6 +1755,25 @@ function openBtnPanel(el) {
   var radius = parseInt(el.style.borderRadius) || 8;
   document.getElementById('btnRadius').value = radius;
   document.getElementById('btnRadiusVal').textContent = radius + 'px';
+  // Padding
+  var padParts = (el.style.padding || '14px 32px').replace(/px/g, '').split(/\s+/);
+  var padV = parseInt(padParts[0]) || 14;
+  var padH = parseInt(padParts[1] || padParts[0]) || 32;
+  document.getElementById('btnPadV').value = padV;
+  document.getElementById('btnPadVVal').textContent = padV + 'px';
+  document.getElementById('btnPadH').value = padH;
+  document.getElementById('btnPadHVal').textContent = padH + 'px';
+  // Font size
+  var fs = parseInt(el.style.fontSize) || 15;
+  document.getElementById('btnFontSize').value = fs;
+  document.getElementById('btnFontSizeVal').textContent = fs + 'px';
+  // Full width state
+  var fwBtn = document.getElementById('btnFullWidth');
+  if (el.style.display === 'block' && el.style.width === '100%') {
+    fwBtn.classList.add('on');
+  } else {
+    fwBtn.classList.remove('on');
+  }
   panel.classList.add('visible');
 }
 function closeBtn() { document.getElementById('buttonPanel').classList.remove('visible'); }
@@ -1700,6 +1797,34 @@ function toggleBtnFullWidth(el) {
     activeBtnEl.style.width = el.classList.contains('on') ? '100%' : '';
     activeBtnEl.style.textAlign = 'center';
   }
+}
+function updateBtnPadding() {
+  var v = document.getElementById('btnPadV').value;
+  var h = document.getElementById('btnPadH').value;
+  document.getElementById('btnPadVVal').textContent = v + 'px';
+  document.getElementById('btnPadHVal').textContent = h + 'px';
+  if (activeBtnEl) activeBtnEl.style.padding = v + 'px ' + h + 'px';
+}
+function updateBtnFontSize(val) {
+  document.getElementById('btnFontSizeVal').textContent = val + 'px';
+  if (activeBtnEl) activeBtnEl.style.fontSize = val + 'px';
+}
+
+// ================================================================
+// TWO-COLUMN ADD BUTTON
+// ================================================================
+function addColContent(btn) {
+  if (mode !== 'edit') return;
+  var col = btn.closest('.col-cell') || btn.parentElement;
+  var link = document.createElement('a');
+  link.href = '#';
+  link.className = 'editable-btn';
+  link.style.cssText = 'display:inline-block;margin-top:8px;padding:10px 24px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;';
+  link.textContent = 'Click to edit';
+  link.onclick = function(ev) { ev.preventDefault(); openBtnPanel(link); };
+  col.insertBefore(link, btn);
+  btn.remove();
+  broadcastHtml();
 }
 
 function rgbToHex(rgb) {
@@ -2154,13 +2279,14 @@ function closeAllPanels() {
   closeBtn();
 }
 
-function showConfirm(msg, cb) {
+function showConfirm(msg, cb, title) {
   confirmCb = cb;
   document.getElementById('confirmMsg').textContent = msg;
-  document.getElementById('confirmDialog').classList.add('visible');
+  document.getElementById('confirmTitle').textContent = title || 'Are you sure?';
+  document.getElementById('confirmOverlay').classList.add('visible');
 }
 function closeConfirm(result) {
-  document.getElementById('confirmDialog').classList.remove('visible');
+  document.getElementById('confirmOverlay').classList.remove('visible');
   if (confirmCb) confirmCb(result);
   confirmCb = null;
 }
@@ -2192,7 +2318,10 @@ function exportHTML() {
   clone.querySelectorAll('.section-toolbar').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('.insert-point-tr').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('.img-placeholder').forEach(function(t) { t.remove(); });
+  clone.querySelectorAll('.col-add-btn').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('[contenteditable]').forEach(function(e) { e.removeAttribute('contenteditable'); });
+  clone.querySelectorAll('[data-ph]').forEach(function(e) { e.removeAttribute('data-ph'); });
+  clone.querySelectorAll('[data-placeholder]').forEach(function(e) { e.removeAttribute('data-placeholder'); });
   clone.classList.remove('editing');
   clone.querySelectorAll('.active').forEach(function(e) { e.classList.remove('active'); });
 
@@ -2369,6 +2498,9 @@ function broadcastHtml() {
     clone.querySelectorAll('.section-toolbar').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.text-toolbar').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.insert-point-tr').forEach(function(el) { el.remove(); });
+    clone.querySelectorAll('.col-add-btn').forEach(function(el) { el.remove(); });
+    clone.querySelectorAll('.img-placeholder').forEach(function(el) { el.remove(); });
+    clone.querySelectorAll('[data-ph]').forEach(function(el) { el.removeAttribute('data-ph'); });
     clone.classList.remove('editing');
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;">' + clone.innerHTML + '</body></html>';
     window.parent.postMessage({ type: 'sq-editor-html', html: html }, '*');
@@ -2460,8 +2592,26 @@ function insertBlock(type) {
     html = '<td class="email-section" data-sid="' + sid + '">' +
       '<div class="section-inner" style="padding:24px 32px;">' +
       '<div class="two-col">' +
-      '<div style="flex:1;"><p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;">Left column text. Click to edit.</p></div>' +
-      '<div style="flex:1;"><p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;">Right column text. Click to edit.</p></div>' +
+      '<div class="col-cell" style="flex:1;">' +
+      '<div class="img-placeholder editable-img col-img-placeholder" onclick="openImagePanel(this)" data-placeholder="true" style="min-height:120px;margin-bottom:12px;">' +
+      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+      '<span>Add image</span>' +
+      '</div>' +
+      '<p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;" data-ph="Type something..."></p>' +
+      '<button class="col-add-btn" onclick="addColContent(this)">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add button' +
+      '</button>' +
+      '</div>' +
+      '<div class="col-cell" style="flex:1;">' +
+      '<div class="img-placeholder editable-img col-img-placeholder" onclick="openImagePanel(this)" data-placeholder="true" style="min-height:120px;margin-bottom:12px;">' +
+      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+      '<span>Add image</span>' +
+      '</div>' +
+      '<p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;" data-ph="Type something..."></p>' +
+      '<button class="col-add-btn" onclick="addColContent(this)">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add button' +
+      '</button>' +
+      '</div>' +
       '</div></div>' + toolbar + '</td>';
   } else if (type === 'quote') {
     html = '<td class="email-section" data-sid="' + sid + '">' +
@@ -2693,6 +2843,101 @@ document.addEventListener('click', function(e) {
 })();
 
 // ================================================================
+// RIGHT-CLICK CONTEXT MENU
+// ================================================================
+var ctxTargetSection = null;
+
+function closeCtxMenu() {
+  document.getElementById('ctxMenu').classList.remove('visible');
+  ctxTargetSection = null;
+}
+
+document.addEventListener('contextmenu', function(e) {
+  if (mode !== 'edit') return;
+  var section = e.target.closest('.email-section');
+  if (!section) return;
+  e.preventDefault();
+  ctxTargetSection = section;
+  var menu = document.getElementById('ctxMenu');
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 260) + 'px';
+  menu.classList.add('visible');
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ctx-menu')) closeCtxMenu();
+});
+
+function ctxAction(action) {
+  closeCtxMenu();
+  if (!ctxTargetSection) return;
+  var fakeBtn = document.createElement('button');
+  ctxTargetSection.appendChild(fakeBtn);
+  if (action === 'moveUp') moveSection(fakeBtn, -1);
+  else if (action === 'moveDown') moveSection(fakeBtn, 1);
+  else if (action === 'duplicate') dupeSection(fakeBtn);
+  else if (action === 'style') openSectionStyle(fakeBtn);
+  else if (action === 'delete') deleteSection(fakeBtn);
+  if (fakeBtn.parentElement) fakeBtn.remove();
+}
+
+// ================================================================
+// KEYBOARD SHORTCUTS
+// ================================================================
+document.addEventListener('keydown', function(e) {
+  if (mode !== 'edit') return;
+
+  // Delete / Backspace on focused section (not when editing text)
+  if ((e.key === 'Delete' || e.key === 'Backspace') && !e.target.closest('[contenteditable="true"]') && !e.target.closest('input') && !e.target.closest('select') && !e.target.closest('textarea')) {
+    var hovered = document.querySelector('.email-section:hover');
+    if (hovered) {
+      e.preventDefault();
+      var fakeBtn = document.createElement('button');
+      hovered.appendChild(fakeBtn);
+      deleteSection(fakeBtn);
+      if (fakeBtn.parentElement) fakeBtn.remove();
+    }
+  }
+
+  // Ctrl/Cmd + D to duplicate hovered section
+  if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+    var hovered = document.querySelector('.email-section:hover');
+    if (hovered) {
+      e.preventDefault();
+      var fakeBtn = document.createElement('button');
+      hovered.appendChild(fakeBtn);
+      dupeSection(fakeBtn);
+      if (fakeBtn.parentElement) fakeBtn.remove();
+    }
+  }
+
+  // Escape to close all panels
+  if (e.key === 'Escape') {
+    closeBlockPicker();
+    closeBtn();
+    closeImage();
+    closeSectionStylePanel();
+    closeCtxMenu();
+    closeLinkPopover();
+    closeMergeTagDropdown();
+  }
+});
+
+// ================================================================
+// ADD data-ph TO EDITABLE TEXT ON INSERT
+// ================================================================
+var origInsertBlock = insertBlock;
+insertBlock = function(type) {
+  origInsertBlock(type);
+  // Add placeholder attributes to newly inserted editable text
+  document.querySelectorAll('.editable-text:not([data-ph])').forEach(function(el) {
+    if (!el.getAttribute('data-ph')) {
+      el.setAttribute('data-ph', 'Type something...');
+    }
+  });
+};
+
+// ================================================================
 // INIT
 // ================================================================
 buildFontPicker();
@@ -2702,6 +2947,10 @@ setTimeout(function() {
   var canvas = document.getElementById('emailCanvas');
   if (canvas) undoStack.push(canvas.innerHTML);
   updateUndoRedoBtns();
+  // Add placeholder hints to existing text blocks
+  document.querySelectorAll('.editable-text:not([data-ph])').forEach(function(el) {
+    el.setAttribute('data-ph', 'Type something...');
+  });
 }, 100);
 </script>
 </body>
