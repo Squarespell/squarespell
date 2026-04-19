@@ -806,7 +806,7 @@ export function DesignStep({
       <iframe
         ref={editorRef}
         title="Email editor"
-        src="/email-editor.html"
+        src={'/email-editor.html?v=' + Date.now()}
         style={{
           flex: 1, border: 'none', width: '100%', minHeight: 0,
         }}

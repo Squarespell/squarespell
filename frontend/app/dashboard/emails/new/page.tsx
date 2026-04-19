@@ -146,9 +146,9 @@ function NewCampaignPageInner() {
   };
 
   return (
-    <DashboardShell>
+    <DashboardShell contentPadding="20px 36px 56px">
       <div ref={shellRef}>
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 12 }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.TEXT }}>New campaign</h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: C.TEXT_MUTED }}>Setup - Audience - Design - Send</p>
         </div>

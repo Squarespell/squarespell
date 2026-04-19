@@ -132,8 +132,8 @@ export default function EmailsPage() {
   var totalSent = items.reduce(function(sum, c) { return sum + (c.sent_count || 0); }, 0);
 
   return (
-    <DashboardShell>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+    <DashboardShell contentPadding="20px 36px 56px">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.TEXT }}>Emails</h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: C.TEXT_MUTED }}>Send campaigns and automations to your leads.</p>

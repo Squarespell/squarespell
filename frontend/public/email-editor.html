@@ -179,7 +179,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 
 /* --- Section Editor Panel (right side, like Squarespace) --- */
 .section-editor-panel {
-  width: 380px; height: calc(100vh - 52px);
+  width: 400px; height: calc(100vh - 52px);
   background: #FFFFFF; border-left: 1px solid #E4E3E0;
   box-shadow: -2px 0 8px rgba(0,0,0,0.08);
   z-index: 30; display: flex; flex-direction: column; overflow: hidden;
@@ -396,7 +396,7 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
   display: flex; justify-content: center; align-items: flex-start;
 }
 .email-canvas {
-  width: 680px; min-height: 400px; background: #FFFFFF;
+  width: calc(100% - 40px); max-width: 780px; min-height: 400px; background: #FFFFFF;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-radius: 4px;
   position: relative; padding-top: 14px;
 }
@@ -549,12 +549,14 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
 .img-placeholder:hover span { color: #0D7377; }
 
 /* --- Logo upload panel --- */
-.logo-panel, .image-panel, .button-panel {
+.logo-panel, .button-panel {
   position: fixed; background: #FFFFFF; border-radius: 12px;
   border: 1px solid #E4E3E0; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   z-index: 90; padding: 16px; min-width: 300px; display: none;
 }
-.logo-panel.visible, .image-panel.visible, .button-panel.visible { display: block; }
+.logo-panel.visible, .button-panel.visible { display: block; }
+/* Old floating image panel - hidden, replaced by sidebar */
+.image-panel { display: none !important; }
 .panel-title { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
 .panel-input {
   width: 100%; padding: 8px 10px; border: 1px solid #E4E3E0; border-radius: 8px;
@@ -1843,7 +1845,7 @@ document.addEventListener('click', function(e) {
   if (mode !== 'edit') return;
   if (!e.target.closest('.editable-text') && !e.target.closest('.text-toolbar')) { deactivateText(); closeMergeTagDropdown(); document.getElementById('linkPopover').classList.remove('visible'); }
   if (!e.target.closest('.editable-logo') && !e.target.closest('.logo-panel')) closeLogo();
-  if (!e.target.closest('.editable-img') && !e.target.closest('.image-panel')) closeImage();
+  // Old floating image panel removed - image editing now in sidebar
   if (!e.target.closest('.editable-btn') && !e.target.closest('.button-panel')) closeBtn();
 });
 
@@ -2964,6 +2966,34 @@ window.addEventListener('message', function(e) {
           return true;
         });
 
+        // Helper: drill into single-child wrappers (table > tbody > tr > td, or single div/center)
+        // to find the actual content container
+        function drillToContent(el) {
+          var max = 10;
+          while (max-- > 0) {
+            var visChildren = getContentChildren(el);
+            if (visChildren.length !== 1) return el;
+            var only = visChildren[0];
+            // Drill into TABLE or TBODY that wraps content
+            if (only.tagName === 'TABLE') {
+              var tb = only.querySelector(':scope > tbody') || only;
+              var trs = Array.from(tb.children).filter(function(c) { return c.tagName === 'TR'; });
+              if (trs.length === 1 && trs[0].children[0] && trs[0].children[0].tagName === 'TD') {
+                el = trs[0].children[0];
+                continue;
+              }
+              return el; // multiple TRs -- stop drilling
+            }
+            // Drill into single DIV or CENTER wrapper
+            if (only.tagName === 'DIV' || only.tagName === 'CENTER') {
+              el = only;
+              continue;
+            }
+            return el;
+          }
+          return el;
+        }
+
         allTrs.forEach(function(tr) {
           var td = tr.children[0];
           if (!td || td.tagName !== 'TD') return;
@@ -2983,8 +3013,13 @@ window.addEventListener('message', function(e) {
             }
           }
 
+          // Canva templates: drill into nested wrappers (table > tbody > tr > td) to find real content
+          contentTd = drillToContent(contentTd);
+
           var children = getContentChildren(contentTd);
 
+          // Also try to split by inner tables if children are mostly tables
+          // Canva often wraps each content piece in its own table inside a TD
           if (children.length > 1) {
             // SPLIT: each content child becomes its own section TR
             children.forEach(function(child, ci) {
@@ -2994,6 +3029,45 @@ window.addEventListener('message', function(e) {
               containerBody.insertBefore(blockTr, tr);
             });
             tr.remove();
+          } else if (children.length === 1 && children[0].tagName === 'TABLE') {
+            // Single table child -- check if IT has multiple TRs we should split
+            var innerTable = children[0];
+            var itb = innerTable.querySelector(':scope > tbody') || innerTable;
+            var innerTrs = Array.from(itb.children).filter(function(c) { return c.tagName === 'TR'; });
+            // Filter spacers from inner TRs
+            innerTrs = innerTrs.filter(function(itr) {
+              var itd = itr.children[0];
+              if (!itd || itd.tagName !== 'TD') return false;
+              var h = itd.getAttribute('height');
+              var s = itd.getAttribute('style') || '';
+              var t = itd.textContent.trim();
+              if (h && s.indexOf('font-size:0') >= 0 && (t === '' || t === '\u00a0')) return false;
+              if (!t && itd.children.length === 0) return false;
+              return true;
+            });
+            if (innerTrs.length > 1) {
+              // Split each inner TR into its own section
+              innerTrs.forEach(function(itr, ci) {
+                var bpt = (ci === 0) ? pad.top : '4px';
+                var bpb = (ci === innerTrs.length - 1) ? pad.bottom : '4px';
+                var itd = itr.children[0];
+                var node = itd || itr;
+                var blockTr = createBlockSectionTr(node, sectionBg, pad.right, pad.left, bpt, bpb);
+                containerBody.insertBefore(blockTr, tr);
+              });
+              tr.remove();
+            } else {
+              // Wrap as single section
+              td.classList.add('email-section');
+              td.setAttribute('data-sid', uid());
+              if (!td.querySelector('.section-inner')) {
+                var inner = document.createElement('div');
+                inner.className = 'section-inner';
+                while (td.firstChild) inner.appendChild(td.firstChild);
+                td.appendChild(inner);
+              }
+              td.insertAdjacentHTML('beforeend', toolbar);
+            }
           } else {
             // Single content or already granular -- wrap as one section
             td.classList.add('email-section');
@@ -3825,8 +3899,17 @@ function generateSectionContentFields(td) {
     '<div class="sep-section-type-desc" id="sepSectionDesc">' + info.desc + '</div></div></div>' +
     '<div class="sep-divider"></div>';
 
-  // Add editable text fields
-  var textElements = inner.querySelectorAll('.editable-text');
+  // Add editable text fields (only those with actual visible content)
+  var textElements = Array.from(inner.querySelectorAll('.editable-text')).filter(function(el) {
+    var text = el.textContent.trim();
+    if (!text) return false;
+    // Skip elements that are hidden
+    var elStyle = el.getAttribute('style') || '';
+    if (elStyle.indexOf('display:none') >= 0 || elStyle.indexOf('display: none') >= 0) return false;
+    // Skip very tiny elements that are just whitespace/nbsp
+    if (text === '\u00a0' || text === '&nbsp;') return false;
+    return true;
+  });
   if (textElements.length > 0) {
     html += '<div class="sep-group"><div class="sep-group-label">Text Fields</div>';
     textElements.forEach(function(el, idx) {
@@ -3834,8 +3917,9 @@ function generateSectionContentFields(td) {
       var currentText = el.textContent || '';
       var tag = el.tagName || '';
       var fieldLabel = (tag === 'H1' || tag === 'H2' || tag === 'H3') ? 'Heading' : 'Text';
+      var minH = currentText.length > 100 ? '100px' : '60px';
       html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">' + fieldLabel + ' ' + (idx + 1) + '</label>' +
-        '<textarea id="' + fieldId + '" style="width:100%;resize:vertical;min-height:80px;padding:10px 12px;border:1px solid #E4E3E0;border-radius:8px;font-family:inherit;font-size:13px;line-height:1.5;color:#1A1A1A;box-sizing:border-box;" placeholder="Edit text..." oninput="updateEditableText(' + idx + ',this.value)">' + currentText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea></div>';
+        '<textarea id="' + fieldId + '" style="width:100%;resize:vertical;min-height:' + minH + ';padding:10px 12px;border:1px solid #E4E3E0;border-radius:8px;font-family:inherit;font-size:13px;line-height:1.5;color:#1A1A1A;box-sizing:border-box;" placeholder="Edit text..." oninput="updateEditableText(' + idx + ',this.value)">' + currentText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea></div>';
     });
     html += '</div>';
   }
@@ -4005,8 +4089,8 @@ function removeLogo() {
     var placeholder = document.createElement('div');
     placeholder.className = 'logo-placeholder';
     placeholder.style.cssText = 'width:140px;height:50px;background:#F3F4F6;border:2px dashed #D1D5DB;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:#9CA3AF;';
-    placeholder.textContent = 'Logo';
-    placeholder.onclick = function() { document.getElementById('sidebarLogoInput').click(); };
+    placeholder.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo';
+    placeholder.onclick = function() { showGlobalStylesView(); };
     img.parentElement.replaceChild(placeholder, img);
   });
   broadcastHtml();
