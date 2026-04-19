@@ -51,7 +51,7 @@ export type Campaign = {
   created_at: string;
 };
 
-export type SourceQuiz = { id: string; title: string; slug: string };
+export type SourceQuiz = { id: string; title: string; slug: string; lead_count?: number };
 
 export async function getCampaign(id: string): Promise<Campaign> {
   return req(`/api/emails/campaigns/${id}`);
