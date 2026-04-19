@@ -179,7 +179,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 
 /* --- Section Editor Panel (right side, like Squarespace) --- */
 .section-editor-panel {
-  width: 320px; height: calc(100vh - 52px);
+  width: 380px; height: calc(100vh - 52px);
   background: #FFFFFF; border-left: 1px solid #E4E3E0;
   box-shadow: -2px 0 8px rgba(0,0,0,0.08);
   z-index: 30; display: flex; flex-direction: column; overflow: hidden;
@@ -396,7 +396,7 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
   display: flex; justify-content: center; align-items: flex-start;
 }
 .email-canvas {
-  width: 600px; min-height: 400px; background: #FFFFFF;
+  width: 680px; min-height: 400px; background: #FFFFFF;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-radius: 4px;
   position: relative; padding-top: 14px;
 }
@@ -1853,14 +1853,8 @@ document.addEventListener('click', function(e) {
 function openLogoPanel(el) {
   if (mode !== 'edit') return;
   activeLogoEl = el;
-  var panel = document.getElementById('logoPanel');
-  var rect = el.getBoundingClientRect();
-  panel.style.left = (rect.right + 12) + 'px';
-  panel.style.top = rect.top + 'px';
-  if (rect.right + 320 > window.innerWidth) {
-    panel.style.left = (rect.left - 320) + 'px';
-  }
-  panel.classList.add('visible');
+  // Show sidebar global styles (which has logo upload) instead of floating panel
+  showGlobalStylesView();
 }
 function closeLogo() { document.getElementById('logoPanel').classList.remove('visible'); }
 
@@ -1913,17 +1907,143 @@ function uploadBrandLogo(input) {
 // ================================================================
 function openImagePanel(el) {
   if (mode !== 'edit') return;
-  event.stopPropagation();
+  if (event) event.stopPropagation();
   activeImgEl = el;
-  var panel = document.getElementById('imagePanel');
-  var rect = el.getBoundingClientRect();
-  panel.style.left = Math.min(rect.left, window.innerWidth - 340) + 'px';
-  panel.style.top = Math.min(rect.bottom + 8, window.innerHeight - 400) + 'px';
-  document.getElementById('imgAltInput').value = el.alt || '';
-  panel.classList.add('visible');
-  // Load initial unsplash
-  searchUnsplash('business');
+
+  // Find parent section and select it
+  var sectionTd = el.closest('.email-section');
+  if (sectionTd) {
+    if (selectedSectionEl) selectedSectionEl.classList.remove('section-selected');
+    selectedSectionEl = sectionTd;
+    sectionTd.classList.add('section-selected');
+  }
+
+  // Show image editor in sidebar
+  document.getElementById('sepGlobalStyles').style.display = 'none';
+  document.getElementById('sepSectionContent').style.display = 'none';
+  var existingPicker = document.getElementById('sepBlockPicker');
+  if (existingPicker) existingPicker.remove();
+  document.getElementById('sepTitle').textContent = 'Edit Image';
+  document.getElementById('sepCloseBtn').style.display = '';
+  switchSepTab('content');
+
+  var contentDiv = document.getElementById('sepTabContent');
+  var imgSrc = (el.tagName === 'IMG') ? el.src : '';
+  var imgAlt = (el.tagName === 'IMG') ? (el.alt || '') : '';
+
+  var html = '<div id="sepImageEditor">' +
+    '<div class="sep-section-type">' +
+    '<div class="sep-section-type-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>' +
+    '<div><div class="sep-section-type-label">Image</div><div class="sep-section-type-desc">Replace or edit this image</div></div></div>' +
+    '<div class="sep-divider"></div>';
+
+  // Current image preview
+  if (imgSrc && el.tagName === 'IMG') {
+    html += '<div class="sep-group"><div class="sep-group-label">Current Image</div>' +
+      '<div style="border:1px solid #E4E3E0;border-radius:8px;overflow:hidden;margin-bottom:12px;">' +
+      '<img src="' + imgSrc + '" style="width:100%;display:block;height:auto;" alt="preview">' +
+      '</div></div>';
+  }
+
+  // Upload button
+  html += '<div class="sep-group"><div class="sep-group-label">Replace Image</div>' +
+    '<input type="file" id="sidebarImgInput" accept="image/*" style="display:none" onchange="handleSidebarImgFile(this)">' +
+    '<button class="sep-btn" onclick="document.getElementById(\'sidebarImgInput\').click()" style="margin-bottom:8px;">' +
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+    'Upload from computer</button></div>';
+
+  // URL input
+  html += '<div class="sep-group"><div class="sep-group-label">Image URL</div>' +
+    '<div style="display:flex;gap:6px;margin-bottom:8px;">' +
+    '<input type="text" id="sidebarImgUrl" class="sep-color-input" style="flex:1;padding:8px 10px;font-size:13px;" placeholder="https://...">' +
+    '<button class="sep-btn" style="width:auto;padding:8px 14px;margin-bottom:0;" onclick="handleSidebarImgUrl()">Apply</button>' +
+    '</div></div>';
+
+  // Unsplash search
+  html += '<div class="sep-group"><div class="sep-group-label">Free Photos (Unsplash)</div>' +
+    '<input type="text" id="sidebarUnsplashSearch" class="sep-color-input" style="padding:8px 10px;font-size:13px;margin-bottom:8px;" placeholder="Search free photos..." oninput="searchSidebarUnsplash(this.value)">' +
+    '<div id="sidebarUnsplashGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;max-height:300px;overflow-y:auto;border-radius:6px;"></div></div>';
+
+  // Alt text
+  html += '<div class="sep-group"><div class="sep-group-label">Alt Text</div>' +
+    '<input type="text" id="sidebarImgAlt" class="sep-color-input" style="padding:8px 10px;font-size:13px;" placeholder="Describe this image..." value="' + imgAlt.replace(/"/g, '&quot;') + '" oninput="if(activeImgEl&&activeImgEl.tagName===\'IMG\')activeImgEl.alt=this.value"></div>';
+
+  html += '</div>';
+  contentDiv.innerHTML = html;
+
+  // Preload unsplash results
+  searchSidebarUnsplash('business');
 }
+
+function handleSidebarImgFile(input) {
+  if (!input.files[0] || !activeImgEl) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    setImageSrc(e.target.result);
+    broadcastHtml();
+    pushUndoState();
+    openImagePanel(activeImgEl);
+  };
+  reader.readAsDataURL(input.files[0]);
+  input.value = '';
+}
+
+function handleSidebarImgUrl() {
+  var url = document.getElementById('sidebarImgUrl').value.trim();
+  if (!url || !activeImgEl) return;
+  setImageSrc(url);
+  broadcastHtml();
+  pushUndoState();
+  openImagePanel(activeImgEl);
+}
+
+function searchSidebarUnsplash(query) {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() {
+    var grid = document.getElementById('sidebarUnsplashGrid');
+    if (!grid) return;
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">Searching...</div>';
+    if (!query) { grid.innerHTML = ''; return; }
+    var apiBase = 'https://squarespell-api.onrender.com';
+    fetch(apiBase + '/api/emails/unsplash/search?q=' + encodeURIComponent(query))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        grid.innerHTML = '';
+        var results = data.results || [];
+        if (results.length === 0) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">No images found</div>';
+          return;
+        }
+        results.forEach(function(photo) {
+          var wrap = document.createElement('div');
+          wrap.style.cssText = 'position:relative;cursor:pointer;border-radius:6px;overflow:hidden;';
+          var img = document.createElement('img');
+          img.src = photo.thumb;
+          img.alt = photo.alt || query;
+          img.loading = 'lazy';
+          img.style.cssText = 'width:100%;display:block;height:auto;';
+          img.onclick = function() {
+            if (activeImgEl) {
+              setImageSrc(photo.regular, photo.alt || '');
+              broadcastHtml();
+              pushUndoState();
+              openImagePanel(activeImgEl);
+            }
+          };
+          wrap.appendChild(img);
+          var credit = document.createElement('div');
+          credit.style.cssText = 'position:absolute;bottom:2px;left:2px;right:2px;font-size:8px;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px;';
+          credit.textContent = photo.credit || '';
+          wrap.appendChild(credit);
+          grid.appendChild(wrap);
+        });
+      })
+      .catch(function() {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">Could not load photos</div>';
+      });
+  }, 400);
+}
+
 function closeImage() { document.getElementById('imagePanel').classList.remove('visible'); }
 
 function switchImgTab(tab) {
@@ -2705,7 +2825,7 @@ window.addEventListener('message', function(e) {
             // Replace broken logo img with styled placeholder
             var placeholder = document.createElement('div');
             placeholder.className = 'editable-logo logo-placeholder';
-            placeholder.onclick = function() { openLogoPanel(placeholder); };
+            placeholder.onclick = function() { showGlobalStylesView(); };
             placeholder.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo';
             // If it's wrapped in an <a>, replace inside the <a>
             var parent = img.parentElement;
@@ -2762,6 +2882,9 @@ window.addEventListener('message', function(e) {
             if (n.nodeType !== 1) return false;
             var tag = n.tagName;
             if (tag === 'DIV' && n.children.length === 0 && n.textContent.trim() === '') return false;
+            // Skip hidden mobile-fallback elements (Canva templates use display:none for mobile layouts)
+            var elStyle = n.getAttribute ? (n.getAttribute('style') || '') : '';
+            if (elStyle.indexOf('display:none') >= 0 || elStyle.indexOf('display: none') >= 0) return false;
             return true;
           });
         }
@@ -2798,6 +2921,47 @@ window.addEventListener('message', function(e) {
         // Collect all TRs from the container
         var allTrs = Array.from(containerBody.children).filter(function(el) {
           return el.tagName === 'TR' && !el.classList.contains('insert-point-tr');
+        });
+
+        // Canva-style template detection: if very few TRs found, drill into nested content table
+        if (allTrs.length <= 5) {
+          var bestInnerBody = null;
+          var bestInnerCount = 0;
+          for (var ai = 0; ai < allTrs.length; ai++) {
+            var aitd = allTrs[ai].children[0];
+            if (!aitd || aitd.tagName !== 'TD') continue;
+            var nestedTables = aitd.querySelectorAll('table');
+            for (var ti = 0; ti < nestedTables.length; ti++) {
+              var ntb = nestedTables[ti].querySelector(':scope > tbody') || nestedTables[ti];
+              var ntrs = Array.from(ntb.children).filter(function(c) { return c.tagName === 'TR'; });
+              if (ntrs.length > bestInnerCount) {
+                bestInnerCount = ntrs.length;
+                bestInnerBody = ntb;
+              }
+            }
+          }
+          if (bestInnerBody && bestInnerCount > 5) {
+            containerBody = bestInnerBody;
+            allTrs = Array.from(containerBody.children).filter(function(el) {
+              return el.tagName === 'TR' && !el.classList.contains('insert-point-tr');
+            });
+          }
+        }
+
+        // Filter out spacer-only TRs (common in Canva templates: <td height="16">&nbsp;</td>)
+        allTrs = allTrs.filter(function(tr) {
+          var td = tr.children[0];
+          if (!td || td.tagName !== 'TD') return false;
+          var heightAttr = td.getAttribute('height');
+          var style = td.getAttribute('style') || '';
+          var text = td.textContent.trim();
+          // Skip spacer rows: have height attribute, font-size:0, and only contain &nbsp; or empty
+          if (heightAttr && style.indexOf('font-size:0') >= 0 && (text === '' || text === '\u00a0')) return false;
+          // Skip empty vertical-align rows
+          if (!text && td.children.length === 0 && style.indexOf('vertical-align') >= 0) return false;
+          // Skip 100% height filler rows
+          if (style.indexOf('height:100%') >= 0 && td.children.length === 0) return false;
+          return true;
         });
 
         allTrs.forEach(function(tr) {
@@ -2884,7 +3048,7 @@ window.addEventListener('message', function(e) {
             placeholder.className = 'editable-logo logo-placeholder';
             placeholder.style.cssText = 'width:140px;height:50px;background:#F3F4F6;border:2px dashed #D1D5DB;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-size:11px;color:#9CA3AF;';
             placeholder.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo';
-            placeholder.onclick = function() { document.getElementById('sidebarLogoInput').click(); };
+            placeholder.onclick = function() { showGlobalStylesView(); };
             inner.appendChild(placeholder);
           }
         });
@@ -3160,7 +3324,19 @@ function insertBlock(type) {
     var emailCont = document.querySelector('#emailCanvas table.email-container');
     if (!emailCont) emailCont = document.querySelector('#emailCanvas table.container') || document.querySelector('#emailCanvas table table');
     var tbodyFallback = emailCont ? (emailCont.querySelector(':scope > tbody') || emailCont) : null;
-    if (tbodyFallback) tbodyFallback.appendChild(newTr);
+    // For Canva templates, find the container with actual email-section TRs
+    if (tbodyFallback) {
+      var existingSections = tbodyFallback.querySelectorAll(':scope > tr > td.email-section');
+      if (existingSections.length === 0) {
+        var allSections = document.querySelectorAll('#emailCanvas .email-section');
+        if (allSections.length > 0) {
+          var lastSection = allSections[allSections.length - 1];
+          var lastTr = lastSection.closest('tr');
+          if (lastTr && lastTr.parentElement) tbodyFallback = lastTr.parentElement;
+        }
+      }
+      tbodyFallback.appendChild(newTr);
+    }
   }
 
   bindEditableText();
@@ -3169,6 +3345,14 @@ function insertBlock(type) {
   addSectionLabels();
   closeBlockPicker();
   broadcastHtml();
+
+  // For image blocks, auto-open the image editor sidebar for the new placeholder
+  if (type === 'image') {
+    var newPlaceholder = newTr.querySelector('.img-placeholder.editable-img');
+    if (newPlaceholder) {
+      setTimeout(function() { openImagePanel(newPlaceholder); }, 100);
+    }
+  }
 }
 
 // Add insert points between sections
@@ -3648,7 +3832,10 @@ function generateSectionContentFields(td) {
     textElements.forEach(function(el, idx) {
       var fieldId = 'sepTextField' + idx;
       var currentText = el.textContent || '';
-      html += '<textarea id="' + fieldId + '" class="sep-color-input" style="resize:vertical;min-height:60px;padding:8px;border:1px solid #E4E3E0;border-radius:6px;font-family:inherit;margin-bottom:8px;" placeholder="Edit text..." oninput="updateEditableText(' + idx + ',this.value)">' + currentText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
+      var tag = el.tagName || '';
+      var fieldLabel = (tag === 'H1' || tag === 'H2' || tag === 'H3') ? 'Heading' : 'Text';
+      html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">' + fieldLabel + ' ' + (idx + 1) + '</label>' +
+        '<textarea id="' + fieldId + '" style="width:100%;resize:vertical;min-height:80px;padding:10px 12px;border:1px solid #E4E3E0;border-radius:8px;font-family:inherit;font-size:13px;line-height:1.5;color:#1A1A1A;box-sizing:border-box;" placeholder="Edit text..." oninput="updateEditableText(' + idx + ',this.value)">' + currentText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea></div>';
     });
     html += '</div>';
   }
@@ -3658,7 +3845,14 @@ function generateSectionContentFields(td) {
   if (imgElements.length > 0) {
     html += '<div class="sep-group"><div class="sep-group-label">Images</div>';
     imgElements.forEach(function(el, idx) {
-      html += '<button class="sep-btn" style="margin-bottom:8px;" onclick="updateEditableImage(' + idx + ')">Change Image ' + (idx + 1) + '</button>';
+      var thumbSrc = (el.tagName === 'IMG') ? el.src : '';
+      if (thumbSrc) {
+        html += '<div style="margin-bottom:10px;border:1px solid #E4E3E0;border-radius:8px;overflow:hidden;cursor:pointer;" onclick="var imgs=selectedSectionEl.querySelector(\'.section-inner\').querySelectorAll(\'.editable-img\');if(imgs[' + idx + '])openImagePanel(imgs[' + idx + ']);">' +
+          '<img src="' + thumbSrc + '" style="width:100%;display:block;height:auto;max-height:120px;object-fit:cover;">' +
+          '<div style="padding:8px 10px;font-size:12px;color:#0D7377;font-weight:600;text-align:center;">Click to change</div></div>';
+      } else {
+        html += '<button class="sep-btn" style="margin-bottom:8px;padding:12px 14px;font-size:13px;" onclick="var imgs=selectedSectionEl.querySelector(\'.section-inner\').querySelectorAll(\'.editable-img\');if(imgs[' + idx + '])openImagePanel(imgs[' + idx + ']);">Change Image ' + (idx + 1) + '</button>';
+      }
     });
     html += '</div>';
   }
@@ -3673,9 +3867,9 @@ function generateSectionContentFields(td) {
       var btnText = el.textContent || '';
       var btnUrl = el.getAttribute('href') || '#';
       html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">Button ' + (idx + 1) + ' Text</label>' +
-        '<input type="text" id="' + fieldId + '" value="' + btnText.replace(/"/g, '&quot;') + '" class="sep-color-input" onchange="updateEditableBtn(' + idx + ',this.value,null)">' +
-        '</div><div style="margin-bottom:8px;"><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">Button ' + (idx + 1) + ' URL</label>' +
-        '<input type="text" id="' + urlId + '" value="' + btnUrl.replace(/"/g, '&quot;') + '" class="sep-color-input" onchange="updateEditableBtn(' + idx + ',null,this.value)">' +
+        '<input type="text" id="' + fieldId + '" value="' + btnText.replace(/"/g, '&quot;') + '" style="width:100%;padding:8px 10px;border:1px solid #E4E3E0;border-radius:8px;font-size:13px;color:#1A1A1A;box-sizing:border-box;" onchange="updateEditableBtn(' + idx + ',this.value,null)">' +
+        '</div><div style="margin-bottom:10px;"><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">Button ' + (idx + 1) + ' URL</label>' +
+        '<input type="text" id="' + urlId + '" value="' + btnUrl.replace(/"/g, '&quot;') + '" style="width:100%;padding:8px 10px;border:1px solid #E4E3E0;border-radius:8px;font-size:13px;color:#1A1A1A;box-sizing:border-box;" onchange="updateEditableBtn(' + idx + ',null,this.value)">' +
         '</div>';
     });
     html += '</div>';

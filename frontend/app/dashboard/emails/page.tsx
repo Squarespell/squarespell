@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
-import { PageHeader, Card, EmptyState, PrimaryButton, PageLoading, Pill } from '../_components/PageShell';
+import { Card, EmptyState, PrimaryButton, PageLoading, Pill } from '../_components/PageShell';
 import { listCampaigns, getQuota, deleteCampaign, createCampaign, Campaign } from '../../../lib/emails';
 
 type StatusVariant = 'live' | 'draft' | 'neutral' | 'accent';
@@ -133,15 +133,15 @@ export default function EmailsPage() {
 
   return (
     <DashboardShell>
-      <PageHeader
-        title="Emails"
-        subtitle="Send campaigns and automations to your leads."
-        actions={
-          <Link href="/dashboard/emails/new">
-            <PrimaryButton>New campaign</PrimaryButton>
-          </Link>
-        }
-      />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.TEXT }}>Emails</h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: C.TEXT_MUTED }}>Send campaigns and automations to your leads.</p>
+        </div>
+        <Link href="/dashboard/emails/new">
+          <PrimaryButton>New campaign</PrimaryButton>
+        </Link>
+      </div>
 
       {quota && (
         <Card>

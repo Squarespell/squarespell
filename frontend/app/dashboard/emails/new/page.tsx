@@ -2,7 +2,7 @@
 import React, { Suspense, useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardShell } from '../../_components/DashboardShell';
-import { PageHeader } from '../../_components/PageShell';
+
 import { useDashboardAuth } from '../../_components/useDashboardAuth';
 import { DASHBOARD_COLORS as C } from '../../_components/dashboardColors';
 import {
@@ -148,10 +148,10 @@ function NewCampaignPageInner() {
   return (
     <DashboardShell>
       <div ref={shellRef}>
-        <PageHeader
-          title="New campaign"
-          subtitle="Setup - Audience - Design - Send"
-        />
+        <div style={{ marginBottom: 16 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.TEXT }}>New campaign</h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: C.TEXT_MUTED }}>Setup - Audience - Design - Send</p>
+        </div>
         <Stepper current={step} onJump={setStep} />
 
         {step === 'setup' && (
