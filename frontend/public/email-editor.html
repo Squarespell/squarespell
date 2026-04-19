@@ -39,12 +39,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 /* --- Layout --- */
 .editor-layout { display: flex; height: calc(100vh - 52px); }
 
-/* --- Left Panel --- */
-.left-panel {
-  width: 280px; background: #FFFFFF; border-right: 1px solid #E4E3E0;
-  overflow-y: auto; flex-shrink: 0; padding: 16px;
-}
-.left-panel.hidden { display: none; }
+/* --- Left Panel (hidden - consolidated into right sidebar) --- */
+.left-panel { display: none !important; }
 .panel-section { margin-bottom: 20px; }
 .panel-label {
   font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
@@ -186,10 +182,28 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   width: 320px; height: calc(100vh - 52px);
   background: #FFFFFF; border-left: 1px solid #E4E3E0;
   box-shadow: -2px 0 8px rgba(0,0,0,0.08);
-  z-index: 30; display: none; flex-direction: column; overflow: hidden;
+  z-index: 30; display: flex; flex-direction: column; overflow: hidden;
   flex-shrink: 0;
 }
-.section-editor-panel.visible { display: flex; }
+/* Logo upload placeholder */
+.logo-upload-box {
+  border: 2px dashed #D1D5DB; border-radius: 10px; padding: 24px;
+  text-align: center; cursor: pointer; transition: all 0.15s;
+  background: #FAFAFA; margin-bottom: 12px;
+}
+.logo-upload-box:hover { border-color: #0D7377; background: #F0FDFA; }
+.logo-upload-box svg { margin: 0 auto 8px; display: block; color: #9CA3AF; }
+.logo-upload-box span { font-size: 12px; color: #6B7280; font-weight: 500; }
+.logo-preview-box {
+  border: 1px solid #E4E3E0; border-radius: 10px; padding: 16px;
+  text-align: center; position: relative; margin-bottom: 12px; background: #FAFAFA;
+}
+.logo-preview-box img { max-width: 100%; max-height: 80px; display: block; margin: 0 auto; }
+.logo-preview-box .logo-remove-btn {
+  position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
+  border-radius: 50%; border: none; background: rgba(0,0,0,0.5); color: #FFF;
+  cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
+}
 .sep-header {
   padding: 16px 20px; border-bottom: 2px solid #E4E3E0;
   display: flex; align-items: center; justify-content: space-between;
@@ -908,11 +922,11 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
         <!-- Templates injected here by JS -->
       </div>
     </div>
-    <!-- Section Editor Panel sits beside the canvas -->
+    <!-- Right Sidebar (always visible, Squarespace-style) -->
     <div class="section-editor-panel" id="sectionEditorPanel">
       <div class="sep-header">
-        <span class="sep-header-title" id="sepTitle">Section</span>
-        <button class="sep-close" onclick="closeSectionEditor()">
+        <span class="sep-header-title" id="sepTitle">Site Styles</span>
+        <button class="sep-close" id="sepCloseBtn" onclick="closeSectionEditor()" style="display:none;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -921,27 +935,87 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
         <button class="sep-tab" onclick="switchSepTab('design')" data-tab="design">Design</button>
       </div>
       <div class="sep-body">
+        <!-- CONTENT TAB -->
         <div id="sepTabContent">
-          <div class="sep-section-type" id="sepSectionType">
-            <div class="sep-section-type-icon" id="sepSectionIcon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          <!-- Default: Global styles (shown when no section selected) -->
+          <div id="sepGlobalStyles">
+            <!-- Logo / Brand -->
+            <div class="sep-group">
+              <div class="sep-group-label">Logo</div>
+              <div id="logoUploadArea">
+                <div class="logo-upload-box" onclick="document.getElementById('sidebarLogoInput').click()">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span>Upload your logo</span>
+                </div>
+              </div>
+              <input type="file" id="sidebarLogoInput" accept="image/*" style="display:none" onchange="uploadSidebarLogo(this)">
+              <div id="logoSizeControl" style="display:none;">
+                <div class="sep-row"><label>Width</label><input type="range" id="logoWidthSlider" min="60" max="300" value="140" oninput="updateLogoSize(this.value)"><span class="sep-val" id="logoWidthVal">140px</span></div>
+              </div>
             </div>
-            <div>
-              <div class="sep-section-type-label" id="sepSectionLabel">Section</div>
-              <div class="sep-section-type-desc" id="sepSectionDesc">Click elements inside to edit</div>
+            <!-- Colors -->
+            <div class="sep-group">
+              <div class="sep-group-label">Colors</div>
+              <div class="color-compact-row" onclick="openColorPopover('primary', this)">
+                <div class="color-dot" id="previewPrimary" style="background:#0D7377;"></div>
+                <span class="color-dot-label">Primary</span>
+                <span class="color-dot-hex" id="hexLabelPrimary">#0D7377</span>
+              </div>
+              <div class="color-compact-row" onclick="openColorPopover('background', this)">
+                <div class="color-dot" id="previewBg" style="background:#FFFFFF;"></div>
+                <span class="color-dot-label">Background</span>
+                <span class="color-dot-hex" id="hexLabelBg">#FFFFFF</span>
+              </div>
+              <div class="color-compact-row" onclick="openColorPopover('text', this)">
+                <div class="color-dot" id="previewText" style="background:#1A1A1A;"></div>
+                <span class="color-dot-label">Text</span>
+                <span class="color-dot-hex" id="hexLabelText">#1A1A1A</span>
+              </div>
+            </div>
+            <!-- Font -->
+            <div class="sep-group">
+              <div class="sep-group-label">Font</div>
+              <div class="font-picker-wrap" id="fontPickerWrap">
+                <div class="font-picker-trigger" id="fontPickerTrigger" onclick="toggleFontPicker()">
+                  <span id="fontPickerLabel" style="font-family: Inter, sans-serif;">Inter</span>
+                  <svg class="fp-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="font-picker-dropdown" id="fontPickerDropdown">
+                  <input type="text" class="font-picker-search" id="fontSearch" placeholder="Search fonts..." oninput="filterFonts(this.value)">
+                  <div class="font-picker-list" id="fontPickerList"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Website -->
+            <div class="sep-group">
+              <div class="sep-group-label">Website</div>
+              <input type="url" class="sep-color-input" id="brandWebsite" placeholder="https://yoursite.com" style="width:100%;box-sizing:border-box;">
             </div>
           </div>
-          <div class="sep-group">
-            <div class="sep-group-label">Actions</div>
-            <button class="sep-btn" onclick="sepAction('moveUp')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="18 15 12 9 6 15"/></svg>Move up</button>
-            <button class="sep-btn" onclick="sepAction('moveDown')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="6 9 12 15 18 9"/></svg>Move down</button>
-            <button class="sep-btn" onclick="sepAction('duplicate')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Duplicate</button>
-            <button class="sep-btn danger" onclick="sepAction('delete')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete section</button>
+          <!-- Section-specific content (hidden by default) -->
+          <div id="sepSectionContent" style="display:none;">
+            <div class="sep-section-type" id="sepSectionType">
+              <div class="sep-section-type-icon" id="sepSectionIcon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              </div>
+              <div>
+                <div class="sep-section-type-label" id="sepSectionLabel">Section</div>
+                <div class="sep-section-type-desc" id="sepSectionDesc">Click elements inside to edit</div>
+              </div>
+            </div>
+            <div class="sep-group">
+              <div class="sep-group-label">Actions</div>
+              <button class="sep-btn" onclick="sepAction('moveUp')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="18 15 12 9 6 15"/></svg>Move up</button>
+              <button class="sep-btn" onclick="sepAction('moveDown')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="6 9 12 15 18 9"/></svg>Move down</button>
+              <button class="sep-btn" onclick="sepAction('duplicate')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Duplicate</button>
+              <button class="sep-btn danger" onclick="sepAction('delete')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete section</button>
+            </div>
           </div>
         </div>
+        <!-- DESIGN TAB -->
         <div id="sepTabDesign" style="display:none;">
-          <div class="sep-group">
-            <div class="sep-group-label">Background</div>
+          <div class="sep-group" id="sepSectionDesign">
+            <div class="sep-group-label">Section Background</div>
             <div class="sep-color-row">
               <div class="sep-color-dot" id="sepBgDot" style="background:#FFFFFF;" onclick="document.getElementById('sepBgNative').click()"></div>
               <input type="text" class="sep-color-input" id="sepBgHex" value="#FFFFFF" maxlength="7" onkeydown="if(event.key==='Enter')applySepBg()">
@@ -2787,6 +2861,23 @@ window.addEventListener('message', function(e) {
         addInsertPoints();
         addSectionLabels();
 
+        // Add logo placeholder to empty header sections
+        canvas.querySelectorAll('.email-section').forEach(function(td) {
+          var inner = td.querySelector('.section-inner');
+          if (!inner) return;
+          // Check if this is the first section and has no visible content (empty logo section)
+          var hasContent = inner.querySelector('img, h1, h2, h3, p, a, table, div:not(:empty)');
+          var isEmpty = !hasContent && inner.textContent.trim() === '';
+          if (isEmpty) {
+            var placeholder = document.createElement('div');
+            placeholder.className = 'editable-logo logo-placeholder';
+            placeholder.style.cssText = 'width:140px;height:50px;background:#F3F4F6;border:2px dashed #D1D5DB;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-size:11px;color:#9CA3AF;';
+            placeholder.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo';
+            placeholder.onclick = function() { document.getElementById('sidebarLogoInput').click(); };
+            inner.appendChild(placeholder);
+          }
+        });
+
         // Push initial undo state
         undoStack = [canvas.innerHTML];
         redoStack = [];
@@ -2827,6 +2918,7 @@ function broadcastHtml() {
     clone.querySelectorAll('.insert-point-tr').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.col-add-btn').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.img-placeholder').forEach(function(el) { el.remove(); });
+    clone.querySelectorAll('.logo-placeholder').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.section-label').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('[data-ph]').forEach(function(el) { el.removeAttribute('data-ph'); });
     clone.querySelectorAll('[data-sid]').forEach(function(el) { el.removeAttribute('data-sid'); });
@@ -2875,19 +2967,29 @@ function showBlockPicker(btn) {
       prev = prev.previousElementSibling;
     }
   }
-  // Close section editor if open
-  closeSectionEditor();
+  // Deselect any section
+  if (selectedSectionEl) selectedSectionEl.classList.remove('section-selected');
+  selectedSectionEl = null;
   // Show the block picker in sidebar
   showBlockPickerInSidebar();
   btn.classList.add('visible');
 }
 
 function showBlockPickerInSidebar() {
-  // Clear and show block picker items in sidebar
+  // Hide global styles and section content, show block picker
+  document.getElementById('sepGlobalStyles').style.display = 'none';
+  document.getElementById('sepSectionContent').style.display = 'none';
+  document.getElementById('sepTitle').textContent = 'Add Block';
+  document.getElementById('sepCloseBtn').style.display = '';
+  switchSepTab('content');
+
+  // Get or create block picker container
+  var existingPicker = document.getElementById('sepBlockPicker');
+  if (existingPicker) existingPicker.remove();
   var contentDiv = document.getElementById('sepTabContent');
   if (!contentDiv) return;
-  // Build everything with DOM - never use innerHTML += which kills onclick handlers
-  contentDiv.innerHTML = '';
+  var pickerDiv = document.createElement('div');
+  pickerDiv.id = 'sepBlockPicker';
   var wrapper = document.createElement('div');
   wrapper.style.padding = '8px 0';
   var title = document.createElement('div');
@@ -2934,21 +3036,18 @@ function showBlockPickerInSidebar() {
     wrapper.appendChild(btn);
   });
 
-  contentDiv.appendChild(wrapper);
-
-  // Show the sidebar panel
-  document.getElementById('sectionEditorPanel').classList.add('visible');
-  // Update header title
-  var headerTitle = document.querySelector('.sep-header-title');
-  if (headerTitle) headerTitle.textContent = 'Add Block';
-  // Switch to content tab
-  switchSepTab('content');
+  pickerDiv.appendChild(wrapper);
+  contentDiv.appendChild(pickerDiv);
 }
 
 function closeBlockPicker() {
   document.getElementById('blockPicker').classList.remove('visible');
   document.querySelectorAll('.section-insert-btn.visible').forEach(function(b) { b.classList.remove('visible'); });
   insertAfterTr = null;
+  // Remove block picker from sidebar and return to global styles
+  var picker = document.getElementById('sepBlockPicker');
+  if (picker) picker.remove();
+  showGlobalStylesView();
 }
 
 function insertBlock(type) {
@@ -3485,8 +3584,10 @@ function openSectionEditor(td) {
     generateSectionContentFields(td);
   }
 
-  // Show panel
-  document.getElementById('sectionEditorPanel').classList.add('visible');
+  // Switch to section-specific view
+  document.getElementById('sepGlobalStyles').style.display = 'none';
+  document.getElementById('sepSectionContent').style.display = '';
+  document.getElementById('sepCloseBtn').style.display = '';
   // Reset to content tab
   switchSepTab('content');
 }
@@ -3494,7 +3595,7 @@ function openSectionEditor(td) {
 function generateSectionContentFields(td) {
   var inner = td.querySelector('.section-inner');
   if (!inner) return;
-  var contentDiv = document.getElementById('sepTabContent');
+  var contentDiv = document.getElementById('sepSectionContent');
   if (!contentDiv) return;
 
   // Build the section type info and actions
@@ -3590,9 +3691,106 @@ function updateEditableBtn(idx, text, url) {
 }
 
 function closeSectionEditor() {
-  document.getElementById('sectionEditorPanel').classList.remove('visible');
+  // Don't hide panel - return to global styles view
   if (selectedSectionEl) selectedSectionEl.classList.remove('section-selected');
   selectedSectionEl = null;
+  showGlobalStylesView();
+}
+
+function showGlobalStylesView() {
+  document.getElementById('sepTitle').textContent = 'Site Styles';
+  document.getElementById('sepCloseBtn').style.display = 'none';
+  document.getElementById('sepGlobalStyles').style.display = '';
+  document.getElementById('sepSectionContent').style.display = 'none';
+  switchSepTab('content');
+}
+
+// Logo upload from sidebar
+var currentLogoUrl = '';
+function uploadSidebarLogo(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    currentLogoUrl = e.target.result;
+    updateLogoDisplay();
+    // Also update any logo placeholder in canvas
+    var canvas = document.getElementById('emailCanvas');
+    var placeholder = canvas.querySelector('.logo-placeholder');
+    if (placeholder) {
+      var img = document.createElement('img');
+      img.src = currentLogoUrl;
+      img.className = 'editable-logo logo-img';
+      img.style.maxWidth = '140px';
+      img.style.height = 'auto';
+      img.style.display = 'block';
+      img.onclick = function() { openLogoPanel(img); };
+      placeholder.parentElement.replaceChild(img, placeholder);
+    }
+    // Also inject into any empty logo sections
+    canvas.querySelectorAll('.email-section').forEach(function(td) {
+      var inner = td.querySelector('.section-inner');
+      if (!inner) return;
+      var info = detectSectionType(td);
+      if (info.type === 'header' && !inner.querySelector('img')) {
+        var img = document.createElement('img');
+        img.src = currentLogoUrl;
+        img.className = 'editable-logo logo-img';
+        img.style.maxWidth = '140px';
+        img.style.height = 'auto';
+        img.style.display = 'block';
+        img.onclick = function() { openLogoPanel(img); };
+        inner.insertBefore(img, inner.firstChild);
+      }
+    });
+    broadcastHtml();
+    pushUndoState();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateLogoDisplay() {
+  var area = document.getElementById('logoUploadArea');
+  if (!area) return;
+  if (currentLogoUrl) {
+    area.innerHTML = '<div class="logo-preview-box">' +
+      '<img src="' + currentLogoUrl + '" alt="Logo">' +
+      '<button class="logo-remove-btn" onclick="removeLogo()" title="Remove">' +
+      '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button></div>';
+    document.getElementById('logoSizeControl').style.display = '';
+  } else {
+    area.innerHTML = '<div class="logo-upload-box" onclick="document.getElementById(\'sidebarLogoInput\').click()">' +
+      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+      '<span>Upload your logo</span></div>';
+    document.getElementById('logoSizeControl').style.display = 'none';
+  }
+}
+
+function removeLogo() {
+  currentLogoUrl = '';
+  updateLogoDisplay();
+  // Remove logo from canvas
+  var canvas = document.getElementById('emailCanvas');
+  canvas.querySelectorAll('.logo-img, .editable-logo').forEach(function(img) {
+    var placeholder = document.createElement('div');
+    placeholder.className = 'logo-placeholder';
+    placeholder.style.cssText = 'width:140px;height:50px;background:#F3F4F6;border:2px dashed #D1D5DB;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:#9CA3AF;';
+    placeholder.textContent = 'Logo';
+    placeholder.onclick = function() { document.getElementById('sidebarLogoInput').click(); };
+    img.parentElement.replaceChild(placeholder, img);
+  });
+  broadcastHtml();
+}
+
+function updateLogoSize(val) {
+  document.getElementById('logoWidthVal').textContent = val + 'px';
+  var canvas = document.getElementById('emailCanvas');
+  canvas.querySelectorAll('.logo-img, .editable-logo').forEach(function(img) {
+    img.style.maxWidth = val + 'px';
+    img.style.width = val + 'px';
+  });
+  broadcastHtml();
 }
 
 function switchSepTab(tab) {
