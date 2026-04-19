@@ -177,6 +177,7 @@ function NewCampaignPageInner() {
             setPhase={setDesignPhase}
             onNext={handleDesignNext}
             onBack={function() { setStep('audience'); }}
+            quizId={setup.quizId}
           />
         )}
         {step === 'review' && (

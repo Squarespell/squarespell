@@ -9,6 +9,9 @@ import { renderBlocks } from '../../../../../lib/email/renderBlocks';
 import { V2_TEMPLATES } from '../../../../../lib/email/v2/templates';
 import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/renderer';
 import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
+import { autoDesignTemplate } from '../../../../../lib/email/v2/autoDesign';
+import type { BrandKitFromAPI, QuizData, AutoDesignResult } from '../../../../../lib/email/v2/autoDesign';
+import { api } from '../../../../../lib/api';
 
 export type DesignState = {
   templateId: string;
@@ -74,7 +77,7 @@ var V2_LABELS: Record<string, string> = {
 };
 
 export function DesignStep({
-  state, setState, phase, setPhase, onNext, onBack, quizCategory,
+  state, setState, phase, setPhase, onNext, onBack, quizCategory, quizId,
 }: {
   state: DesignState;
   setState: (u: Partial<DesignState>) => void;
@@ -83,6 +86,7 @@ export function DesignStep({
   onNext: () => void;
   onBack: () => void;
   quizCategory?: string;
+  quizId?: string;
 }) {
   var allItems = useMemo(buildItems, []);
   var [filter, setFilter] = useState('all');
@@ -90,8 +94,37 @@ export function DesignStep({
   var editorRef = useRef<HTMLIFrameElement>(null);
   var [editorReady, setEditorReady] = useState(false);
   var [previewItem, setPreviewItem] = useState<TemplateItem | null>(null);
+  var [aiDesign, setAiDesign] = useState<AutoDesignResult | null>(null);
+  var [aiDesignLoading, setAiDesignLoading] = useState(false);
 
   useEffect(function() { injectDesignFocusStyles(); }, []);
+
+  // Fetch brand kit + quiz data and auto-generate AI designed template
+  var aiDesignFetched = useRef(false);
+  useEffect(function() {
+    if (aiDesignFetched.current) return;
+    aiDesignFetched.current = true;
+    setAiDesignLoading(true);
+
+    var brandKitPromise = api.getBrandKit().catch(function() { return null; });
+    var quizPromise = quizId
+      ? api.getQuiz(quizId).catch(function() { return null; })
+      : Promise.resolve(null);
+
+    Promise.all([brandKitPromise, quizPromise]).then(function(results) {
+      var bk = results[0] as BrandKitFromAPI | null;
+      var quiz = results[1] as QuizData | null;
+
+      // Only generate if we have at least a brand kit or quiz data
+      if (bk || quiz) {
+        var result = autoDesignTemplate(bk, quiz);
+        setAiDesign(result);
+      }
+      setAiDesignLoading(false);
+    }).catch(function() {
+      setAiDesignLoading(false);
+    });
+  }, [quizId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Categories
   var categories = useMemo(function() {
@@ -140,6 +173,22 @@ export function DesignStep({
       didAutoSelect.current = true;
     }
   }, [allItems, recommendedId, state.templateId, setState]);
+
+  // Auto-select AI designed template when it becomes available
+  var didAiAutoSelect = useRef(false);
+  useEffect(function() {
+    if (didAiAutoSelect.current) return;
+    if (!aiDesign) return;
+    // Only auto-select if still in gallery phase and user hasn't manually picked something else
+    if (phase !== 'gallery') return;
+    didAiAutoSelect.current = true;
+    setState({
+      templateId: aiDesign.templateId,
+      subject: aiDesign.subject,
+      preheader: aiDesign.preheader,
+      html: aiDesign.html,
+    });
+  }, [aiDesign, phase, setState]);
 
   // Listen for messages from editor iframe
   useEffect(function() {
@@ -199,7 +248,9 @@ export function DesignStep({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [setState, setPhase]);
 
-  var selectedItem = allItems.find(function(t) { return t.id === state.templateId; });
+  var selectedItem = state.templateId === '__ai_designed__' && aiDesign
+    ? { id: '__ai_designed__', title: aiDesign.title, description: aiDesign.description, category: 'ai', isV2: true, html: aiDesign.html, subject: aiDesign.subject, preheader: aiDesign.preheader } as TemplateItem
+    : allItems.find(function(t) { return t.id === state.templateId; });
 
   // Reorder items: recommended first, then rest
   var orderedItems = useMemo(function() {
@@ -300,11 +351,172 @@ export function DesignStep({
               <div style={{ fontSize: 12, color: C.TEXT_MUTED, maxWidth: 180, lineHeight: 1.4 }}>Build your email from a blank canvas using the block editor</div>
             </button>
 
+            {/* AI Auto-Designed template card */}
+            {aiDesign && (
+              <div style={{ position: 'relative', gridColumn: 'span 2' }} className="sq-tpl-card">
+                <button
+                  onClick={function() {
+                    setState({
+                      templateId: aiDesign.templateId,
+                      subject: aiDesign.subject,
+                      preheader: aiDesign.preheader,
+                      html: aiDesign.html,
+                    });
+                  }}
+                  style={{
+                    textAlign: 'left' as any, padding: 0, overflow: 'hidden',
+                    borderRadius: 14, cursor: 'pointer', width: '100%',
+                    border: '2px solid ' + (state.templateId === '__ai_designed__' ? C.ACCENT : C.BORDER),
+                    background: 'linear-gradient(135deg, #F0FDFA 0%, #F7F7F5 100%)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {/* Thumbnail - spans wider */}
+                  <div style={{
+                    height: 220, overflow: 'hidden', background: '#F7F7F5',
+                    position: 'relative', borderBottom: '1px solid ' + C.BORDER,
+                    display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+                  }}>
+                    <iframe
+                      title="AI designed preview"
+                      srcDoc={aiDesign.html}
+                      style={{
+                        width: '200%', height: '440px', border: 0,
+                        transform: 'scale(0.5)', transformOrigin: 'top left',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    {/* AI Designed badge */}
+                    <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6 }}>
+                      <div style={{
+                        padding: '5px 12px', borderRadius: 20,
+                        background: 'linear-gradient(135deg, #0D7377 0%, #059669 100%)',
+                        color: '#FFFFFF', fontSize: 11, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
+                      }}>
+                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                          <path d="M2 17l10 5 10-5" />
+                          <path d="M2 12l10 5 10-5" />
+                        </svg>
+                        AI Designed for You
+                      </div>
+                      {aiDesign.brandApplied && (
+                        <div style={{
+                          padding: '5px 10px', borderRadius: 20,
+                          background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)',
+                          color: C.TEXT, fontSize: 10, fontWeight: 600,
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          border: '1px solid ' + C.BORDER,
+                        }}>
+                          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          Brand applied
+                        </div>
+                      )}
+                      {aiDesign.quizContentApplied && (
+                        <div style={{
+                          padding: '5px 10px', borderRadius: 20,
+                          background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)',
+                          color: C.TEXT, fontSize: 10, fontWeight: 600,
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          border: '1px solid ' + C.BORDER,
+                        }}>
+                          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          Quiz content
+                        </div>
+                      )}
+                    </div>
+                    {/* Selected check */}
+                    {state.templateId === '__ai_designed__' && (
+                      <div style={{
+                        position: 'absolute', top: 8, right: 8,
+                        width: 26, height: 26, borderRadius: 13,
+                        background: C.ACCENT, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                    )}
+                    {/* Preview eye */}
+                    <button
+                      onClick={function(e) {
+                        e.stopPropagation();
+                        setPreviewItem({
+                          id: '__ai_designed__',
+                          title: aiDesign!.title,
+                          description: aiDesign!.description,
+                          category: 'ai',
+                          isV2: true,
+                          html: aiDesign!.html,
+                          subject: aiDesign!.subject,
+                          preheader: aiDesign!.preheader,
+                        });
+                      }}
+                      title="Preview template"
+                      className="sq-tpl-eye"
+                      style={{
+                        position: 'absolute', bottom: 8, right: 8,
+                        width: 30, height: 30, borderRadius: 8,
+                        background: 'rgba(255,255,255,0.92)', border: '1px solid ' + C.BORDER,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.2s',
+                        zIndex: 5, backdropFilter: 'blur(4px)',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                        opacity: 0, pointerEvents: 'none',
+                      }}
+                    >
+                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                  </div>
+                  {/* Info */}
+                  <div style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT }}>{aiDesign.title}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4 }}>
+                      {aiDesign.description}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Loading state for AI design */}
+            {aiDesignLoading && !aiDesign && (
+              <div style={{
+                gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                minHeight: 270, borderRadius: 14, border: '2px dashed ' + C.BORDER,
+                background: 'linear-gradient(135deg, #F0FDFA 0%, #F7F7F5 100%)',
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 18, border: '3px solid ' + C.BORDER,
+                    borderTopColor: C.ACCENT, animation: 'spin 0.8s linear infinite',
+                    margin: '0 auto 12px',
+                  }} />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT }}>Designing your template...</div>
+                  <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 4 }}>Applying your brand colors, logo and quiz content</div>
+                </div>
+              </div>
+            )}
+
             {orderedItems.map(function(t) {
               var selected = t.id === state.templateId;
               var isRecommended = t.id === recommendedId;
               return (
-                <div key={t.id} style={{ position: 'relative' }}>
+                <div key={t.id} style={{ position: 'relative' }}
+                  className="sq-tpl-card"
+                >
                   <button
                     onClick={function() { handleSelectTemplate(t); }}
                     style={{
@@ -360,6 +572,26 @@ export function DesignStep({
                           </svg>
                         </div>
                       )}
+                      {/* Preview eye button - inside thumbnail, bottom-right, hover-only */}
+                      <button
+                        onClick={function(e) { e.stopPropagation(); setPreviewItem(t); }}
+                        title="Preview template"
+                        className="sq-tpl-eye"
+                        style={{
+                          position: 'absolute', bottom: 8, right: 8,
+                          width: 30, height: 30, borderRadius: 8,
+                          background: 'rgba(255,255,255,0.92)', border: '1px solid ' + C.BORDER,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.2s',
+                          zIndex: 5, backdropFilter: 'blur(4px)',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                          opacity: 0, pointerEvents: 'none',
+                        }}
+                      >
+                        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
                     </div>
                     {/* Info */}
                     <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -370,26 +602,6 @@ export function DesignStep({
                         </div>
                       </div>
                     </div>
-                  </button>
-                  {/* Preview eye button - bottom-left of thumbnail */}
-                  <button
-                    onClick={function(e) { e.stopPropagation(); setPreviewItem(t); }}
-                    title="Preview template"
-                    style={{
-                      position: 'absolute', bottom: 52, left: 10,
-                      width: 30, height: 30, borderRadius: 8,
-                      background: 'rgba(255,255,255,0.92)', border: '1px solid ' + C.BORDER,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.15s',
-                      zIndex: 5, backdropFilter: 'blur(4px)',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                    }}
-                    onMouseOver={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; (e.currentTarget as HTMLElement).style.color = C.ACCENT; (e.currentTarget as HTMLElement).style.background = '#FFFFFF'; }}
-                    onMouseOut={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.BORDER; (e.currentTarget as HTMLElement).style.color = C.TEXT_MUTED; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.92)'; }}
-                  >
-                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                    </svg>
                   </button>
                 </div>
               );
@@ -519,7 +731,7 @@ export function DesignStep({
   // PHASE 2: Full-width editor
   // ==============================
   return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
       {/* Compact top bar - template + subject + preheader */}
       <div style={{
         padding: '14px 20px', borderBottom: '1px solid ' + C.BORDER,
@@ -620,7 +832,7 @@ export function DesignStep({
         title="Email editor"
         src="/email-editor.html"
         style={{
-          flex: 1, border: 'none', width: '100%', minHeight: 640,
+          flex: 1, border: 'none', width: '100%', minHeight: 0,
         }}
       />
 
@@ -658,7 +870,10 @@ function injectDesignFocusStyles() {
   if (document.getElementById(FOCUS_STYLE_ID)) return;
   var style = document.createElement('style');
   style.id = FOCUS_STYLE_ID;
-  style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }';
+  style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }' +
+    ' .sq-tpl-card:hover .sq-tpl-eye { opacity: 1 !important; pointer-events: auto !important; }' +
+    ' .sq-tpl-card:hover .sq-tpl-eye:hover { border-color: ' + C.ACCENT + ' !important; color: ' + C.ACCENT + ' !important; background: #FFFFFF !important; }' +
+    ' @keyframes spin { to { transform: rotate(360deg); } }';
   document.head.appendChild(style);
 }
 
