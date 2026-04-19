@@ -107,20 +107,7 @@ export function DesignStep({
           </>
         ) : (
           <>
-            <h2 style={{ margin: '0 0 18px', fontSize: 20, color: C.TEXT }}>Pick a template</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 24 }}>
-              {EMAIL_TEMPLATES.map(t => (
-                <button key={t.id} onClick={() => pickTemplate(t)} style={{
-                  textAlign: 'left', padding: '12px 14px',
-                  background: state.templateId === t.id ? C.ACCENT_LIGHT : C.ELEVATED,
-                  border: `1px solid ${state.templateId === t.id ? C.ACCENT : C.BORDER}`,
-                  borderRadius: 10, cursor: 'pointer',
-                }}>
-                  <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 13 }}>{t.name}</div>
-                  <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 2 }}>{t.description}</div>
-                </button>
-              ))}
-            </div>
+            <h2 style={{ margin: '0 0 18px', fontSize: 20, color: C.TEXT }}>Customize your email</h2>
 
             <Field label="Subject line">
               <input value={state.subject} onChange={e => setState({ subject: e.target.value })}
@@ -137,52 +124,44 @@ export function DesignStep({
               </Field>
             </div>
 
-            {showHtml ? (
-              <>
-                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Label>HTML source</Label>
-                  <button onClick={() => setShowHtml(false)} style={{
-                    background: 'transparent', border: `1px solid ${C.BORDER}`,
-                    color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
-                  }}>Done editing</button>
-                </div>
-                <textarea value={state.html} onChange={e => setState({ html: e.target.value })}
-                  style={{ ...inputStyle, minHeight: 220, fontFamily: 'ui-monospace,monospace', fontSize: 12 }} />
-                <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 6 }}>
-                  Variables: {'{{firstName}}'}, {'{{outcomeTitle}}'}, {'{{quizTitle}}'}, {'{{ctaUrl}}'}, {'{{brand}}'}
-                </div>
-              </>
-            ) : (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <Label>Content</Label>
-                  <button onClick={() => setShowHtml(true)} style={{
-                    background: 'transparent', border: `1px solid ${C.BORDER}`,
-                    color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
-                  }}>Edit HTML</button>
-                </div>
+            <div style={{ marginTop: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Label>Content</Label>
+                <button onClick={() => setShowHtml(!showHtml)} style={{
+                  background: 'transparent', border: '1px solid ' + C.BORDER,
+                  color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+                }}>{showHtml ? 'Done editing' : 'Edit HTML'}</button>
+              </div>
+              {showHtml ? (
+                <>
+                  <textarea value={state.html} onChange={e => setState({ html: e.target.value })}
+                    style={{ ...inputStyle, minHeight: 220, fontFamily: 'ui-monospace,monospace', fontSize: 12 }} />
+                  <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 6 }}>
+                    Variables: {'{{firstName}}'}, {'{{outcomeTitle}}'}, {'{{quizTitle}}'}, {'{{ctaUrl}}'}, {'{{brand}}'}
+                  </div>
+                </>
+              ) : (
                 <div style={{
-                  background: C.ELEVATED, border: `1px solid ${C.BORDER}`, borderRadius: 10,
+                  background: C.ELEVATED, border: '1px solid ' + C.BORDER, borderRadius: 10,
                   padding: 16, color: C.TEXT_SUBTLE, fontSize: 13, lineHeight: 1.5,
                 }}>
                   <div style={{ marginBottom: 8, color: C.TEXT, fontWeight: 600, fontSize: 14 }}>
                     {state.subject || 'No subject set'}
                   </div>
                   <div style={{ color: C.TEXT_SUBTLE, fontSize: 12 }}>
-                    Template selected. The preview on the right shows how your email will look.
-                    Use "Edit HTML" to customize the content directly.
+                    The preview on the right shows how your email will look. Use "Edit HTML" to customize the content directly.
                   </div>
                   <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {['{{firstName}}', '{{outcomeTitle}}', '{{quizTitle}}', '{{ctaUrl}}', '{{brand}}'].map(tag => (
                       <span key={tag} style={{
-                        background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 6,
+                        background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 6,
                         padding: '2px 8px', fontSize: 11, color: C.TEXT_MUTED, fontFamily: 'ui-monospace, monospace',
                       }}>{tag}</span>
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </>
         )}
       </div>

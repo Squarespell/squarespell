@@ -101,31 +101,60 @@ export function AudienceStep({
 
       {state.sourceKind === 'quiz' ? (
         quizzes === null ? (
-          <div style={{ padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>Loading your quizzes&hellip;</div>
+          <div style={{ padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>Loading your quizzes...</div>
         ) : quizzes.length === 0 ? (
           <EmptyQuizzesCard error={quizError} />
         ) : (
           <>
-            {quizzes.length > 5 && (
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={`Search ${quizzes.length} quizzes`}
-                style={{ ...inputStyle, marginBottom: 12 }}
-              />
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginBottom: 20 }}>
-              {filteredQuizzes.map(q => (
-                <QuizCard key={q.id} quiz={q}
-                  active={state.sourceQuizId === q.id}
-                  onClick={() => setState({ sourceQuizId: q.id, filters: {} })} />
-              ))}
-              {filteredQuizzes.length === 0 && (
-                <div style={{ color: C.TEXT_MUTED, fontSize: 13, padding: 20, textAlign: 'center', gridColumn: '1 / -1' }}>
-                  No quizzes match &ldquo;{search}&rdquo;
+            {/* If quiz was pre-selected from Setup step, show selected quiz banner instead of grid */}
+            {state.sourceQuizId ? (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px',
+                background: C.ACCENT_LIGHT, border: '1px solid ' + C.ACCENT,
+                borderRadius: 12, marginBottom: 20,
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                  background: C.ACCENT, color: '#FFFFFF',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 15, fontWeight: 700,
+                }}>
+                  {((quizzes.find(function(q) { return q.id === state.sourceQuizId; }) || {}).title || '?').charAt(0).toUpperCase()}
                 </div>
-              )}
-            </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 14 }}>
+                    {(quizzes.find(function(q) { return q.id === state.sourceQuizId; }) || {}).title || 'Selected quiz'}
+                  </div>
+                  <div style={{ color: C.TEXT_SUBTLE, fontSize: 12, marginTop: 2 }}>
+                    Selected in setup - filters below let you narrow the audience
+                  </div>
+                </div>
+                <div style={{ color: C.ACCENT }}><IconCheck size={18} /></div>
+              </div>
+            ) : (
+              <>
+                {quizzes.length > 5 && (
+                  <input
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder={'Search ' + quizzes.length + ' quizzes'}
+                    style={{ ...inputStyle, marginBottom: 12 }}
+                  />
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginBottom: 20 }}>
+                  {filteredQuizzes.map(q => (
+                    <QuizCard key={q.id} quiz={q}
+                      active={state.sourceQuizId === q.id}
+                      onClick={() => setState({ sourceQuizId: q.id, filters: {} })} />
+                  ))}
+                  {filteredQuizzes.length === 0 && (
+                    <div style={{ color: C.TEXT_MUTED, fontSize: 13, padding: 20, textAlign: 'center', gridColumn: '1 / -1' }}>
+                      No quizzes match "{search}"
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
             {state.sourceQuizId && (
               <div style={{ background: C.ELEVATED, border: `1px solid ${C.BORDER}`, borderRadius: 12, padding: 16, marginBottom: 4 }}>
