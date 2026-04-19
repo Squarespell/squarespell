@@ -181,6 +181,90 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 }
 .block-picker-item:hover .block-picker-icon { background: #E8F4F4; }
 
+/* --- Section Editor Panel (right side, like Squarespace) --- */
+.section-editor-panel {
+  width: 300px; height: calc(100vh - 52px);
+  background: #FFFFFF; border-left: 1px solid #E4E3E0;
+  z-index: 30; display: none; flex-direction: column; overflow: hidden;
+  flex-shrink: 0;
+}
+.section-editor-panel.visible { display: flex; }
+.sep-header {
+  padding: 14px 16px; border-bottom: 1px solid #E4E3E0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sep-header-title { font-size: 14px; font-weight: 700; color: #1A1A1A; }
+.sep-close {
+  width: 28px; height: 28px; border: none; background: none; cursor: pointer;
+  color: #9CA3AF; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+}
+.sep-close:hover { background: #F7F7F5; color: #4B5563; }
+.sep-tabs {
+  display: flex; border-bottom: 1px solid #E4E3E0;
+}
+.sep-tab {
+  flex: 1; padding: 10px 0; text-align: center; font-size: 12px; font-weight: 600;
+  color: #9CA3AF; cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent; transition: all 0.15s;
+}
+.sep-tab:hover { color: #4B5563; }
+.sep-tab.active { color: #0D7377; border-bottom-color: #0D7377; }
+.sep-body { flex: 1; overflow-y: auto; padding: 16px; }
+.sep-group { margin-bottom: 16px; }
+.sep-group-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: #9CA3AF; font-weight: 600; margin-bottom: 8px;
+}
+.sep-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; gap: 8px;
+}
+.sep-row label { font-size: 12px; color: #4B5563; font-weight: 500; min-width: 70px; }
+.sep-row input[type="range"] { flex: 1; }
+.sep-row span.sep-val { font-size: 11px; color: #6B7280; min-width: 35px; text-align: right; }
+.sep-color-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.sep-color-dot {
+  width: 28px; height: 28px; border-radius: 8px; border: 2px solid #E4E3E0;
+  cursor: pointer; flex-shrink: 0;
+}
+.sep-color-dot:hover { border-color: #9CA3AF; }
+.sep-color-input {
+  flex: 1; padding: 6px 8px; border: 1px solid #E4E3E0; border-radius: 6px;
+  font-size: 12px; font-family: monospace; color: #1A1A1A;
+}
+.sep-color-input:focus { outline: none; border-color: #0D7377; }
+.sep-section-type {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: #F7F7F5; border-radius: 8px; margin-bottom: 12px;
+}
+.sep-section-type-icon {
+  width: 32px; height: 32px; border-radius: 8px; background: rgba(13,115,119,0.1);
+  display: flex; align-items: center; justify-content: center; color: #0D7377; flex-shrink: 0;
+}
+.sep-section-type-label { font-size: 13px; font-weight: 600; color: #1A1A1A; }
+.sep-section-type-desc { font-size: 11px; color: #6B7280; }
+.sep-btn {
+  width: 100%; padding: 8px 12px; border: 1px solid #E4E3E0; border-radius: 8px;
+  background: #FFFFFF; cursor: pointer; font-size: 12px; font-weight: 500;
+  color: #1A1A1A; transition: all 0.15s; text-align: center; margin-bottom: 6px;
+}
+.sep-btn:hover { background: #F7F7F5; border-color: #0D7377; color: #0D7377; }
+.sep-btn.danger { color: #DC2626; }
+.sep-btn.danger:hover { background: #FEF2F2; border-color: #DC2626; }
+/* Logo alignment row */
+.sep-align-row {
+  display: flex; gap: 4px; margin-bottom: 10px;
+}
+.sep-align-btn {
+  flex: 1; padding: 6px 0; border: 1px solid #E4E3E0; border-radius: 6px;
+  background: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: #6B7280; transition: all 0.12s;
+}
+.sep-align-btn:hover { border-color: #0D7377; color: #0D7377; }
+.sep-align-btn.active { background: #0D7377; border-color: #0D7377; color: #FFFFFF; }
+
 /* --- Section style panel (background + padding) --- */
 .section-style-panel {
   position: fixed; background: #FFFFFF; border-radius: 14px;
@@ -293,15 +377,33 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .editing .editable-btn:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: pointer; border-radius: 3px; }
 .editing .editable-logo:hover { outline: 2px dashed rgba(13,115,119,0.4); outline-offset: 2px; cursor: pointer; }
 .editing .email-section {
-  position: relative; transition: outline 0.12s, box-shadow 0.12s, border-color 0.12s;
-  border-left: 3px solid rgba(13,115,119,0.15);
+  position: relative; transition: outline 0.12s, box-shadow 0.12s;
+  cursor: pointer;
 }
+/* Section divider line between sections */
 .editing .email-section::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
-  height: 1px; background: rgba(13,115,119,0.18); pointer-events: none;
+  content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px;
+  height: 1px; background: rgba(13,115,119,0.12); pointer-events: none;
+  z-index: 2;
 }
-.editing .email-section:hover { outline: 2px solid #0D7377; outline-offset: -2px; border-left-color: #0D7377; }
+/* Section label badge (top-left) */
+.editing .email-section .section-label {
+  position: absolute; top: 4px; left: 4px; z-index: 10;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(13,115,119,0.08); color: #0D7377;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+  opacity: 0; transition: opacity 0.15s; pointer-events: none;
+}
+.editing .email-section:hover .section-label { opacity: 1; }
+.editing .email-section.section-selected .section-label { opacity: 1; background: #0D7377; color: #FFFFFF; }
+/* Hover state */
+.editing .email-section:hover { outline: 2px solid rgba(13,115,119,0.35); outline-offset: -2px; }
 .editing .email-section:hover > .section-toolbar { opacity: 1; pointer-events: auto; }
+/* Selected state - strong teal border */
+.editing .email-section.section-selected {
+  outline: 2px solid #0D7377; outline-offset: -2px;
+  box-shadow: inset 0 0 0 1px rgba(13,115,119,0.1);
+}
 
 /* --- Section toolbar --- */
 .section-toolbar {
@@ -775,10 +877,73 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
     </div>
   </div>
 
-  <!-- RIGHT PANEL -->
-  <div class="right-panel" id="rightPanel">
-    <div class="email-canvas editing" id="emailCanvas">
-      <!-- Templates injected here by JS -->
+  <!-- RIGHT PANEL (split: canvas + section editor) -->
+  <div style="flex:1;display:flex;overflow:hidden;position:relative;">
+    <div class="right-panel" id="rightPanel" style="flex:1;">
+      <div class="email-canvas editing" id="emailCanvas">
+        <!-- Templates injected here by JS -->
+      </div>
+    </div>
+    <!-- Section Editor Panel sits beside the canvas -->
+    <div class="section-editor-panel" id="sectionEditorPanel">
+      <div class="sep-header">
+        <span class="sep-header-title" id="sepTitle">Section</span>
+        <button class="sep-close" onclick="closeSectionEditor()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sep-tabs">
+        <button class="sep-tab active" onclick="switchSepTab('content')" data-tab="content">Content</button>
+        <button class="sep-tab" onclick="switchSepTab('design')" data-tab="design">Design</button>
+      </div>
+      <div class="sep-body">
+        <div id="sepTabContent">
+          <div class="sep-section-type" id="sepSectionType">
+            <div class="sep-section-type-icon" id="sepSectionIcon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </div>
+            <div>
+              <div class="sep-section-type-label" id="sepSectionLabel">Section</div>
+              <div class="sep-section-type-desc" id="sepSectionDesc">Click elements inside to edit</div>
+            </div>
+          </div>
+          <div class="sep-group">
+            <div class="sep-group-label">Actions</div>
+            <button class="sep-btn" onclick="sepAction('moveUp')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="18 15 12 9 6 15"/></svg>Move up</button>
+            <button class="sep-btn" onclick="sepAction('moveDown')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="6 9 12 15 18 9"/></svg>Move down</button>
+            <button class="sep-btn" onclick="sepAction('duplicate')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Duplicate</button>
+            <button class="sep-btn danger" onclick="sepAction('delete')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete section</button>
+          </div>
+        </div>
+        <div id="sepTabDesign" style="display:none;">
+          <div class="sep-group">
+            <div class="sep-group-label">Background</div>
+            <div class="sep-color-row">
+              <div class="sep-color-dot" id="sepBgDot" style="background:#FFFFFF;" onclick="document.getElementById('sepBgNative').click()"></div>
+              <input type="text" class="sep-color-input" id="sepBgHex" value="#FFFFFF" maxlength="7" onkeydown="if(event.key==='Enter')applySepBg()">
+              <input type="color" id="sepBgNative" value="#FFFFFF" style="width:0;height:0;border:0;padding:0;position:absolute;opacity:0;" onchange="document.getElementById('sepBgHex').value=this.value;applySepBg()">
+            </div>
+          </div>
+          <div class="sep-group">
+            <div class="sep-group-label">Padding</div>
+            <div class="sep-row"><label>Top</label><input type="range" id="sepPadTop" min="0" max="80" value="24" oninput="applySepPadding()"><span class="sep-val" id="sepPadTopVal">24px</span></div>
+            <div class="sep-row"><label>Bottom</label><input type="range" id="sepPadBot" min="0" max="80" value="24" oninput="applySepPadding()"><span class="sep-val" id="sepPadBotVal">24px</span></div>
+            <div class="sep-row"><label>Sides</label><input type="range" id="sepPadSide" min="0" max="60" value="32" oninput="applySepPadding()"><span class="sep-val" id="sepPadSideVal">32px</span></div>
+          </div>
+          <div class="sep-group" id="sepLogoAlignGroup" style="display:none;">
+            <div class="sep-group-label">Logo Alignment</div>
+            <div class="sep-align-row">
+              <button class="sep-align-btn active" onclick="setLogoAlign('left', this)" title="Left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></button>
+              <button class="sep-align-btn" onclick="setLogoAlign('center', this)" title="Center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg></button>
+              <button class="sep-align-btn" onclick="setLogoAlign('right', this)" title="Right"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg></button>
+            </div>
+          </div>
+          <div class="sep-group" id="sepBorderRadiusGroup">
+            <div class="sep-group-label">Border Radius</div>
+            <div class="sep-row"><label>Radius</label><input type="range" id="sepBorderRadius" min="0" max="24" value="0" oninput="applySepBorderRadius()"><span class="sep-val" id="sepBorderRadiusVal">0px</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1434,6 +1599,7 @@ function renderTemplate() {
   bindEditableText();
   updateSectionButtons();
   addInsertPoints();
+  addSectionLabels();
 }
 
 // ================================================================
@@ -2351,11 +2517,13 @@ function exportHTML() {
   clone.querySelectorAll('.insert-point-tr').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('.img-placeholder').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('.col-add-btn').forEach(function(t) { t.remove(); });
+  clone.querySelectorAll('.section-label').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('[contenteditable]').forEach(function(e) { e.removeAttribute('contenteditable'); });
   clone.querySelectorAll('[data-ph]').forEach(function(e) { e.removeAttribute('data-ph'); });
   clone.querySelectorAll('[data-placeholder]').forEach(function(e) { e.removeAttribute('data-placeholder'); });
   clone.classList.remove('editing');
   clone.querySelectorAll('.active').forEach(function(e) { e.classList.remove('active'); });
+  clone.querySelectorAll('.section-selected').forEach(function(e) { e.classList.remove('section-selected'); });
 
   // Replace merge tags with sample data
   var sampleData = {
@@ -2509,6 +2677,7 @@ window.addEventListener('message', function(e) {
         bindEditableText();
         updateSectionButtons();
         addInsertPoints();
+        addSectionLabels();
 
         // Push initial undo state
         undoStack = [canvas.innerHTML];
@@ -2550,7 +2719,9 @@ function broadcastHtml() {
     clone.querySelectorAll('.insert-point-tr').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.col-add-btn').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.img-placeholder').forEach(function(el) { el.remove(); });
+    clone.querySelectorAll('.section-label').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('[data-ph]').forEach(function(el) { el.removeAttribute('data-ph'); });
+    clone.querySelectorAll('.section-selected').forEach(function(el) { el.classList.remove('section-selected'); });
     clone.classList.remove('editing');
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;">' + clone.innerHTML + '</body></html>';
     window.parent.postMessage({ type: 'sq-editor-html', html: html }, '*');
@@ -2710,6 +2881,7 @@ function insertBlock(type) {
   bindEditableText();
   updateSectionButtons();
   addInsertPoints();
+  addSectionLabels();
   closeBlockPicker();
   broadcastHtml();
 }
@@ -2960,6 +3132,7 @@ document.addEventListener('keydown', function(e) {
     closeBtn();
     closeImage();
     closeSectionStylePanel();
+    closeSectionEditor();
     closeCtxMenu();
     closeLinkPopover();
     closeMergeTagDropdown();
@@ -2979,6 +3152,244 @@ insertBlock = function(type) {
     }
   });
 };
+
+// ================================================================
+// SECTION EDITOR PANEL (Squarespace-style)
+// ================================================================
+var selectedSectionEl = null;
+
+function detectSectionType(td) {
+  var inner = td.querySelector('.section-inner');
+  if (!inner) return { type: 'section', label: 'Section', desc: 'Click elements inside to edit', icon: 'rect' };
+  var html = inner.innerHTML.toLowerCase();
+  if (inner.querySelector('.editable-logo, .logo-placeholder, .logo-img')) return { type: 'header', label: 'Header', desc: 'Logo and navigation', icon: 'header' };
+  if (inner.querySelector('.score-circle')) return { type: 'score', label: 'Score', desc: 'Quiz score display', icon: 'score' };
+  if (inner.querySelector('.social-row, .social-icon')) return { type: 'footer', label: 'Footer', desc: 'Social links and unsubscribe', icon: 'footer' };
+  if (inner.querySelector('.offer-box')) return { type: 'offer', label: 'Offer', desc: 'Pricing and features', icon: 'offer' };
+  if (inner.querySelector('.countdown-row')) return { type: 'countdown', label: 'Countdown', desc: 'Timer countdown', icon: 'countdown' };
+  if (inner.querySelector('.tier-badge')) return { type: 'badge', label: 'Badge', desc: 'Tier or category badge', icon: 'badge' };
+  if (inner.querySelector('.guarantee-strip')) return { type: 'guarantee', label: 'Guarantee', desc: 'Trust strip', icon: 'guarantee' };
+  if (inner.querySelector('.two-col')) return { type: 'twocol', label: 'Two Columns', desc: 'Side-by-side content', icon: 'twocol' };
+  if (inner.querySelector('.three-col')) return { type: 'threecol', label: 'Three Columns', desc: 'Three column layout', icon: 'threecol' };
+  var imgs = inner.querySelectorAll('.editable-img, img');
+  if (imgs.length > 0 && inner.querySelector('h1, h2')) return { type: 'hero', label: 'Hero', desc: 'Hero image with heading', icon: 'hero' };
+  if (imgs.length > 0 && imgs.length === 1 && !inner.querySelector('h1, h2, h3, p')) return { type: 'image', label: 'Image', desc: 'Full-width image', icon: 'image' };
+  var btns = inner.querySelectorAll('.editable-btn');
+  if (btns.length > 0 && !inner.querySelector('h1, h2, h3, p')) return { type: 'button', label: 'Button', desc: 'Call to action', icon: 'button' };
+  if (html.indexOf('testimonial') >= 0 || html.indexOf('italic') >= 0 || inner.querySelector('img[style*="border-radius:50%"]')) return { type: 'testimonial', label: 'Testimonial', desc: 'Customer review', icon: 'testimonial' };
+  if (inner.querySelector('.img-placeholder')) return { type: 'image', label: 'Image', desc: 'Image placeholder', icon: 'image' };
+  var headings = inner.querySelectorAll('h1, h2, h3');
+  var paragraphs = inner.querySelectorAll('p');
+  if (headings.length > 0 && paragraphs.length > 0) return { type: 'content', label: 'Content', desc: 'Text with heading', icon: 'content' };
+  if (headings.length > 0) return { type: 'heading', label: 'Heading', desc: 'Section heading', icon: 'heading' };
+  if (paragraphs.length > 0) return { type: 'text', label: 'Text', desc: 'Text paragraph', icon: 'text' };
+  return { type: 'section', label: 'Section', desc: 'Click elements inside to edit', icon: 'rect' };
+}
+
+function getSepIconSvg(icon) {
+  var icons = {
+    header: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    hero: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg>',
+    score: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    content: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="4" y1="14" x2="16" y2="14"/><line x1="4" y1="18" x2="12" y2="18"/></svg>',
+    text: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>',
+    heading: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M6 12h12"/></svg>',
+    image: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    button: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="5" width="22" height="14" rx="7"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+    twocol: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>',
+    threecol: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="5" height="18" rx="1"/><rect x="9.5" y="3" width="5" height="18" rx="1"/><rect x="17" y="3" width="5" height="18" rx="1"/></svg>',
+    footer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="15" x2="21" y2="15"/></svg>',
+    testimonial: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"/></svg>',
+    offer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+    countdown: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    badge: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    guarantee: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    rect: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>'
+  };
+  return icons[icon] || icons.rect;
+}
+
+function openSectionEditor(td) {
+  // Deselect previous
+  if (selectedSectionEl) selectedSectionEl.classList.remove('section-selected');
+  selectedSectionEl = td;
+  td.classList.add('section-selected');
+
+  var info = detectSectionType(td);
+  document.getElementById('sepTitle').textContent = info.label;
+  document.getElementById('sepSectionLabel').textContent = info.label;
+  document.getElementById('sepSectionDesc').textContent = info.desc;
+  document.getElementById('sepSectionIcon').innerHTML = getSepIconSvg(info.icon);
+
+  // Read design values
+  var inner = td.querySelector('.section-inner');
+  if (inner) {
+    var cs = window.getComputedStyle(inner);
+    var bgColor = inner.style.backgroundColor || '';
+    var bgHex = bgColor ? rgbToHex(bgColor) : '#FFFFFF';
+    document.getElementById('sepBgHex').value = bgHex;
+    document.getElementById('sepBgNative').value = bgHex.length === 7 ? bgHex : '#FFFFFF';
+    document.getElementById('sepBgDot').style.background = bgHex;
+
+    var padTop = parseInt(cs.paddingTop) || 0;
+    var padBot = parseInt(cs.paddingBottom) || 0;
+    var padSide = parseInt(cs.paddingLeft) || 0;
+    document.getElementById('sepPadTop').value = padTop;
+    document.getElementById('sepPadTopVal').textContent = padTop + 'px';
+    document.getElementById('sepPadBot').value = padBot;
+    document.getElementById('sepPadBotVal').textContent = padBot + 'px';
+    document.getElementById('sepPadSide').value = padSide;
+    document.getElementById('sepPadSideVal').textContent = padSide + 'px';
+
+    // Show logo alignment if section has a logo
+    var hasLogo = !!inner.querySelector('.editable-logo, .logo-placeholder, .logo-img');
+    document.getElementById('sepLogoAlignGroup').style.display = hasLogo ? '' : 'none';
+    if (hasLogo) {
+      var align = inner.style.textAlign || 'left';
+      if (inner.style.display === 'flex') {
+        if (inner.style.justifyContent === 'center') align = 'center';
+        else if (inner.style.justifyContent === 'flex-end') align = 'right';
+        else align = 'left';
+      }
+      document.querySelectorAll('#sepLogoAlignGroup .sep-align-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      var alignBtns = document.querySelectorAll('#sepLogoAlignGroup .sep-align-btn');
+      if (align === 'left' && alignBtns[0]) alignBtns[0].classList.add('active');
+      else if (align === 'center' && alignBtns[1]) alignBtns[1].classList.add('active');
+      else if (align === 'right' && alignBtns[2]) alignBtns[2].classList.add('active');
+    }
+
+    // Border radius
+    var radius = parseInt(inner.style.borderRadius) || 0;
+    document.getElementById('sepBorderRadius').value = radius;
+    document.getElementById('sepBorderRadiusVal').textContent = radius + 'px';
+  }
+
+  // Show panel
+  document.getElementById('sectionEditorPanel').classList.add('visible');
+  // Reset to content tab
+  switchSepTab('content');
+}
+
+function closeSectionEditor() {
+  document.getElementById('sectionEditorPanel').classList.remove('visible');
+  if (selectedSectionEl) selectedSectionEl.classList.remove('section-selected');
+  selectedSectionEl = null;
+}
+
+function switchSepTab(tab) {
+  document.querySelectorAll('.sep-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelector('.sep-tab[data-tab="' + tab + '"]').classList.add('active');
+  document.getElementById('sepTabContent').style.display = tab === 'content' ? '' : 'none';
+  document.getElementById('sepTabDesign').style.display = tab === 'design' ? '' : 'none';
+}
+
+function applySepBg() {
+  if (!selectedSectionEl) return;
+  var val = document.getElementById('sepBgHex').value.trim();
+  if (!/^#[0-9A-Fa-f]{6}$/.test(val)) return;
+  var inner = selectedSectionEl.querySelector('.section-inner');
+  if (inner) inner.style.backgroundColor = val;
+  document.getElementById('sepBgDot').style.background = val;
+  document.getElementById('sepBgNative').value = val;
+  broadcastHtml();
+}
+
+function applySepPadding() {
+  if (!selectedSectionEl) return;
+  var inner = selectedSectionEl.querySelector('.section-inner');
+  if (!inner) return;
+  var top = document.getElementById('sepPadTop').value;
+  var bot = document.getElementById('sepPadBot').value;
+  var side = document.getElementById('sepPadSide').value;
+  document.getElementById('sepPadTopVal').textContent = top + 'px';
+  document.getElementById('sepPadBotVal').textContent = bot + 'px';
+  document.getElementById('sepPadSideVal').textContent = side + 'px';
+  inner.style.padding = top + 'px ' + side + 'px ' + bot + 'px ' + side + 'px';
+  broadcastHtml();
+}
+
+function applySepBorderRadius() {
+  if (!selectedSectionEl) return;
+  var inner = selectedSectionEl.querySelector('.section-inner');
+  if (!inner) return;
+  var val = document.getElementById('sepBorderRadius').value;
+  document.getElementById('sepBorderRadiusVal').textContent = val + 'px';
+  inner.style.borderRadius = val + 'px';
+  broadcastHtml();
+}
+
+function setLogoAlign(align, btn) {
+  if (!selectedSectionEl) return;
+  var inner = selectedSectionEl.querySelector('.section-inner');
+  if (!inner) return;
+  // Update active state
+  document.querySelectorAll('#sepLogoAlignGroup .sep-align-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  // Apply alignment
+  if (inner.style.display === 'flex') {
+    if (align === 'left') inner.style.justifyContent = 'flex-start';
+    else if (align === 'center') inner.style.justifyContent = 'center';
+    else inner.style.justifyContent = 'flex-end';
+  } else {
+    inner.style.textAlign = align;
+  }
+  broadcastHtml();
+}
+
+function sepAction(action) {
+  if (!selectedSectionEl) return;
+  var fakeBtn = document.createElement('button');
+  selectedSectionEl.appendChild(fakeBtn);
+  // Temporarily set up the section toolbar parent for getSectionTd
+  var tempToolbar = document.createElement('div');
+  tempToolbar.className = 'section-toolbar';
+  tempToolbar.appendChild(fakeBtn);
+  selectedSectionEl.appendChild(tempToolbar);
+
+  if (action === 'moveUp') moveSection(fakeBtn, -1);
+  else if (action === 'moveDown') moveSection(fakeBtn, 1);
+  else if (action === 'duplicate') dupeSection(fakeBtn);
+  else if (action === 'delete') {
+    closeSectionEditor();
+    deleteSection(fakeBtn);
+  }
+  if (tempToolbar.parentElement) tempToolbar.remove();
+}
+
+// Add section labels to all sections
+function addSectionLabels() {
+  document.querySelectorAll('.email-section').forEach(function(td) {
+    if (td.querySelector('.section-label')) return; // already has one
+    var info = detectSectionType(td);
+    var label = document.createElement('div');
+    label.className = 'section-label';
+    label.textContent = info.label;
+    td.appendChild(label);
+  });
+}
+
+// Click handler for section selection
+document.addEventListener('click', function(e) {
+  if (mode !== 'edit') return;
+  // Don't intercept clicks on editable elements, toolbars, panels
+  if (e.target.closest('.editable-text[contenteditable="true"]') || e.target.closest('.text-toolbar') ||
+      e.target.closest('.section-toolbar') || e.target.closest('.section-editor-panel') ||
+      e.target.closest('.block-picker') || e.target.closest('.logo-panel') ||
+      e.target.closest('.image-panel') || e.target.closest('.button-panel') ||
+      e.target.closest('.section-style-panel') || e.target.closest('.color-popover') ||
+      e.target.closest('.section-insert-point') || e.target.closest('.ctx-menu') ||
+      e.target.closest('.confirm-overlay') || e.target.closest('.modal-overlay')) return;
+
+  var section = e.target.closest('.email-section');
+  if (section) {
+    openSectionEditor(section);
+  }
+});
+
+// Close section editor on Escape
+var origEscapeHandler = null; // will integrate below
 
 // ================================================================
 // INIT

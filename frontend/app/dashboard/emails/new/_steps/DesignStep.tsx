@@ -353,7 +353,7 @@ export function DesignStep({
 
             {/* AI Auto-Designed template card */}
             {aiDesign && (
-              <div style={{ position: 'relative', gridColumn: 'span 2' }} className="sq-tpl-card">
+              <div style={{ position: 'relative' }} className="sq-tpl-card">
                 <button
                   onClick={function() {
                     setState({
@@ -371,17 +371,16 @@ export function DesignStep({
                     transition: 'all 0.15s',
                   }}
                 >
-                  {/* Thumbnail - spans wider */}
+                  {/* Thumbnail */}
                   <div style={{
-                    height: 220, overflow: 'hidden', background: '#F7F7F5',
+                    height: 200, overflow: 'hidden', background: '#F7F7F5',
                     position: 'relative', borderBottom: '1px solid ' + C.BORDER,
-                    display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
                   }}>
                     <iframe
                       title="AI designed preview"
                       srcDoc={aiDesign.html}
                       style={{
-                        width: '200%', height: '440px', border: 0,
+                        width: '200%', height: '400px', border: 0,
                         transform: 'scale(0.5)', transformOrigin: 'top left',
                         pointerEvents: 'none',
                       }}
@@ -494,8 +493,8 @@ export function DesignStep({
             {/* Loading state for AI design */}
             {aiDesignLoading && !aiDesign && (
               <div style={{
-                gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: 270, borderRadius: 14, border: '2px dashed ' + C.BORDER,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                minHeight: 200, borderRadius: 14, border: '2px dashed ' + C.BORDER,
                 background: 'linear-gradient(135deg, #F0FDFA 0%, #F7F7F5 100%)',
               }}>
                 <div style={{ textAlign: 'center' }}>
