@@ -320,6 +320,50 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 }
 .text-toolbar select option { background: #1A1A1A; }
 
+/* --- Link popover inside text toolbar --- */
+.link-popover {
+  position: absolute; top: 100%; left: 0; margin-top: 6px;
+  background: #1A1A1A; border-radius: 8px; padding: 8px;
+  display: none; gap: 6px; align-items: center; z-index: 101;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-width: 260px;
+}
+.link-popover.visible { display: flex; }
+.link-popover input {
+  flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  color: #fff; border-radius: 6px; padding: 6px 10px; font-size: 12px; outline: none;
+  min-width: 160px;
+}
+.link-popover input:focus { border-color: #0D7377; }
+.link-popover button {
+  width: auto !important; padding: 6px 12px !important; font-size: 12px !important;
+  background: #0D7377 !important; color: #fff; border-radius: 6px;
+}
+.link-popover button:hover { background: #0B6264 !important; }
+
+/* --- Merge tag dropdown --- */
+.merge-tag-dropdown {
+  position: absolute; top: 100%; right: 0; margin-top: 6px;
+  background: #1A1A1A; border-radius: 8px; padding: 4px;
+  display: none; flex-direction: column; z-index: 101;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-width: 180px;
+}
+.merge-tag-dropdown.visible { display: flex; }
+.merge-tag-dropdown button {
+  width: 100% !important; height: auto !important; padding: 8px 12px !important;
+  font-size: 12px !important; font-weight: 400 !important; text-align: left !important;
+  justify-content: flex-start !important; border-radius: 6px;
+}
+.merge-tag-dropdown button:hover { background: rgba(255,255,255,0.15); }
+.merge-tag-dropdown .mt-label { font-weight: 600; font-size: 10px; color: rgba(255,255,255,0.4); padding: 6px 12px 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* --- Social links block editing --- */
+.social-links-row { display: flex; justify-content: center; gap: 12px; padding: 8px 0; }
+.social-links-row a {
+  display: inline-block; width: 36px; height: 36px; border-radius: 50%;
+  background: #6B7280; text-align: center; line-height: 36px; text-decoration: none;
+}
+.social-links-row a svg { vertical-align: middle; }
+
 /* --- Logo upload panel --- */
 .logo-panel, .image-panel, .button-panel {
   position: fixed; background: #FFFFFF; border-radius: 12px;
@@ -668,6 +712,18 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
     <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg></div>
     <div><div style="font-weight:600;">Two columns</div><div style="font-size:11px;color:#6B7280;">Side-by-side layout</div></div>
   </button>
+  <button class="block-picker-item" onclick="insertBlock('quote')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3z"/></svg></div>
+    <div><div style="font-weight:600;">Quote</div><div style="font-size:11px;color:#6B7280;">Blockquote or testimonial</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('social')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div>
+    <div><div style="font-weight:600;">Social links</div><div style="font-size:11px;color:#6B7280;">Social media icons</div></div>
+  </button>
+  <button class="block-picker-item" onclick="insertBlock('footer')">
+    <div class="block-picker-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="15" x2="21" y2="15"/></svg></div>
+    <div><div style="font-weight:600;">Footer</div><div style="font-size:11px;color:#6B7280;">Unsubscribe + address</div></div>
+  </button>
 </div>
 
 <!-- ================================================================
@@ -731,7 +787,17 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   <button onclick="execCmd('italic')" title="Italic"><em>I</em></button>
   <button onclick="execCmd('underline')" title="Underline"><u>U</u></button>
   <div class="separator"></div>
-  <button onclick="execLink()" title="Add Link">
+  <button onclick="execAlign('left')" title="Align Left">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+  </button>
+  <button onclick="execAlign('center')" title="Align Center">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+  </button>
+  <button onclick="execAlign('right')" title="Align Right">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+  </button>
+  <div class="separator"></div>
+  <button onclick="toggleLinkPopover()" title="Add Link" id="linkBtn">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
   </button>
   <div class="separator"></div>
@@ -744,6 +810,29 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   </select>
   <div class="separator"></div>
   <input type="color" value="#1A1A1A" style="width:28px;height:28px;border:none;cursor:pointer;background:none;" onchange="execTextColor(this.value)" title="Text Color">
+  <div class="separator"></div>
+  <button onclick="toggleMergeTagDropdown()" title="Insert merge tag" id="mergeTagBtn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/><line x1="14" y1="4" x2="10" y2="20"/></svg>
+  </button>
+  <!-- Link popover -->
+  <div class="link-popover" id="linkPopover">
+    <input type="url" id="linkUrlInput" placeholder="https://example.com" onkeydown="if(event.key==='Enter'){applyLink();event.preventDefault();}">
+    <button onclick="applyLink()">Apply</button>
+  </div>
+  <!-- Merge tag dropdown -->
+  <div class="merge-tag-dropdown" id="mergeTagDropdown">
+    <div class="mt-label">Subscriber</div>
+    <button onclick="insertMergeTag('first_name')">First name</button>
+    <button onclick="insertMergeTag('last_name')">Last name</button>
+    <button onclick="insertMergeTag('email')">Email address</button>
+    <div class="mt-label">Quiz</div>
+    <button onclick="insertMergeTag('quiz_name')">Quiz name</button>
+    <button onclick="insertMergeTag('outcome_name')">Outcome name</button>
+    <button onclick="insertMergeTag('quiz_score')">Quiz score</button>
+    <div class="mt-label">Links</div>
+    <button onclick="insertMergeTag('unsubscribe_url')">Unsubscribe link</button>
+    <button onclick="insertMergeTag('view_in_browser_url')">View in browser</button>
+  </div>
 </div>
 
 <!-- ================================================================
@@ -1265,10 +1354,71 @@ function showTextToolbar(el) {
 }
 
 function execCmd(cmd) { document.execCommand(cmd, false, null); }
-function execLink() {
-  var url = prompt('Enter URL:');
-  if (url) document.execCommand('createLink', false, url);
+
+function execAlign(align) {
+  if (!activeTextEl) return;
+  activeTextEl.style.textAlign = align;
+  broadcastHtml();
 }
+
+// Link popover
+var savedSelection = null;
+function saveSelection() {
+  var sel = window.getSelection();
+  if (sel.rangeCount > 0) savedSelection = sel.getRangeAt(0).cloneRange();
+}
+function restoreSelection() {
+  if (!savedSelection) return;
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(savedSelection);
+}
+function toggleLinkPopover() {
+  var pop = document.getElementById('linkPopover');
+  var isOpen = pop.classList.contains('visible');
+  closeMergeTagDropdown();
+  if (isOpen) { pop.classList.remove('visible'); return; }
+  saveSelection();
+  // Pre-fill if selection is inside a link
+  var sel = window.getSelection();
+  var anchor = sel.anchorNode ? sel.anchorNode.parentElement : null;
+  if (anchor && anchor.tagName === 'A') {
+    document.getElementById('linkUrlInput').value = anchor.getAttribute('href') || '';
+  } else {
+    document.getElementById('linkUrlInput').value = '';
+  }
+  pop.classList.add('visible');
+  document.getElementById('linkUrlInput').focus();
+}
+function applyLink() {
+  var url = document.getElementById('linkUrlInput').value.trim();
+  if (!url) return;
+  restoreSelection();
+  document.execCommand('createLink', false, url);
+  document.getElementById('linkPopover').classList.remove('visible');
+  broadcastHtml();
+}
+
+// Merge tag dropdown
+function toggleMergeTagDropdown() {
+  var dd = document.getElementById('mergeTagDropdown');
+  var isOpen = dd.classList.contains('visible');
+  document.getElementById('linkPopover').classList.remove('visible');
+  if (isOpen) { dd.classList.remove('visible'); return; }
+  saveSelection();
+  dd.classList.add('visible');
+}
+function closeMergeTagDropdown() {
+  document.getElementById('mergeTagDropdown').classList.remove('visible');
+}
+function insertMergeTag(tag) {
+  restoreSelection();
+  var text = '{{' + tag + '}}';
+  document.execCommand('insertText', false, text);
+  closeMergeTagDropdown();
+  broadcastHtml();
+}
+
 function execFontSize(size) {
   if (!size || !activeTextEl) return;
   activeTextEl.style.fontSize = size;
@@ -1280,7 +1430,7 @@ function execTextColor(color) {
 // Close panels on outside click
 document.addEventListener('click', function(e) {
   if (mode !== 'edit') return;
-  if (!e.target.closest('.editable-text') && !e.target.closest('.text-toolbar')) deactivateText();
+  if (!e.target.closest('.editable-text') && !e.target.closest('.text-toolbar')) { deactivateText(); closeMergeTagDropdown(); document.getElementById('linkPopover').classList.remove('visible'); }
   if (!e.target.closest('.editable-logo') && !e.target.closest('.logo-panel')) closeLogo();
   if (!e.target.closest('.editable-img') && !e.target.closest('.image-panel')) closeImage();
   if (!e.target.closest('.editable-btn') && !e.target.closest('.button-panel')) closeBtn();
@@ -2236,6 +2386,44 @@ function insertBlock(type) {
       '<div style="flex:1;"><p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;">Left column text. Click to edit.</p></div>' +
       '<div style="flex:1;"><p class="editable-text" style="font-size:14px;color:' + globalColors.text + ';line-height:1.6;">Right column text. Click to edit.</p></div>' +
       '</div></div>' + toolbar + '</td>';
+  } else if (type === 'quote') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:24px 32px;">' +
+      '<div style="border-left:4px solid ' + globalColors.primary + ';padding:16px 20px;background:' + (globalColors.bg === '#FFFFFF' ? '#F9FAFB' : 'rgba(255,255,255,0.05)') + ';border-radius:0 8px 8px 0;">' +
+      '<p class="editable-text" style="font-size:16px;color:' + globalColors.text + ';line-height:1.6;font-style:italic;margin:0;">Click to edit this quote or testimonial text.</p>' +
+      '<p class="editable-text" style="font-size:13px;color:#6B7280;margin:8px 0 0 0;">-- Author name</p>' +
+      '</div></div>' + toolbar + '</td>';
+  } else if (type === 'social') {
+    var iconColor = globalColors.bg === '#FFFFFF' ? '#374151' : '#9CA3AF';
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:20px 32px;text-align:center;">' +
+      '<div style="display:inline-block;">' +
+      '<a href="#" class="editable-btn" style="display:inline-block;margin:0 6px;text-decoration:none;" onclick="event.preventDefault();openBtnPanel(this)" title="Facebook">' +
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + iconColor + '"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>' +
+      '</a>' +
+      '<a href="#" class="editable-btn" style="display:inline-block;margin:0 6px;text-decoration:none;" onclick="event.preventDefault();openBtnPanel(this)" title="Instagram">' +
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + iconColor + '"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>' +
+      '</a>' +
+      '<a href="#" class="editable-btn" style="display:inline-block;margin:0 6px;text-decoration:none;" onclick="event.preventDefault();openBtnPanel(this)" title="X / Twitter">' +
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + iconColor + '"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>' +
+      '</a>' +
+      '<a href="#" class="editable-btn" style="display:inline-block;margin:0 6px;text-decoration:none;" onclick="event.preventDefault();openBtnPanel(this)" title="LinkedIn">' +
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + iconColor + '"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>' +
+      '</a>' +
+      '<a href="#" class="editable-btn" style="display:inline-block;margin:0 6px;text-decoration:none;" onclick="event.preventDefault();openBtnPanel(this)" title="YouTube">' +
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + iconColor + '"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>' +
+      '</a>' +
+      '</div></div>' + toolbar + '</td>';
+  } else if (type === 'footer') {
+    html = '<td class="email-section" data-sid="' + sid + '">' +
+      '<div class="section-inner" style="padding:32px 32px 24px;background:#F3F4F6;text-align:center;">' +
+      '<p class="editable-text" style="font-size:12px;color:#6B7280;line-height:1.8;margin:0;">You received this email because you signed up via one of our quizzes.</p>' +
+      '<p style="font-size:12px;color:#6B7280;line-height:1.8;margin:8px 0 0;">' +
+      '<a href="{{unsubscribe_url}}" style="color:#0D7377;text-decoration:underline;">Unsubscribe</a>' +
+      ' &middot; <a href="{{view_in_browser_url}}" style="color:#0D7377;text-decoration:underline;">View in browser</a>' +
+      '</p>' +
+      '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin:12px 0 0;">Your Company Name, 123 Street, City, State 00000</p>' +
+      '</div>' + toolbar + '</td>';
   }
 
   var newTr = document.createElement('tr');
