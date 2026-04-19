@@ -18,11 +18,12 @@ export type AudienceState = {
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 
 export function AudienceStep({
-  state, setState, onNext,
+  state, setState, onNext, onBack,
 }: {
   state: AudienceState;
   setState: (u: Partial<AudienceState>) => void;
   onNext: () => void;
+  onBack?: () => void;
 }) {
   const [quizzes, setQuizzes] = useState<SourceQuiz[] | null>(null);
   const [quizError, setQuizError] = useState<string | null>(null);
