@@ -183,43 +183,45 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 
 /* --- Section Editor Panel (right side, like Squarespace) --- */
 .section-editor-panel {
-  width: 300px; height: calc(100vh - 52px);
+  width: 320px; height: calc(100vh - 52px);
   background: #FFFFFF; border-left: 1px solid #E4E3E0;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.08);
   z-index: 30; display: none; flex-direction: column; overflow: hidden;
   flex-shrink: 0;
 }
 .section-editor-panel.visible { display: flex; }
 .sep-header {
-  padding: 14px 16px; border-bottom: 1px solid #E4E3E0;
+  padding: 16px 20px; border-bottom: 2px solid #E4E3E0;
   display: flex; align-items: center; justify-content: space-between;
 }
-.sep-header-title { font-size: 14px; font-weight: 700; color: #1A1A1A; }
+.sep-header-title { font-size: 15px; font-weight: 800; color: #1A1A1A; }
 .sep-close {
   width: 28px; height: 28px; border: none; background: none; cursor: pointer;
   color: #9CA3AF; border-radius: 6px; display: flex; align-items: center; justify-content: center;
 }
 .sep-close:hover { background: #F7F7F5; color: #4B5563; }
 .sep-tabs {
-  display: flex; border-bottom: 1px solid #E4E3E0;
+  display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #E4E3E0;
 }
 .sep-tab {
-  flex: 1; padding: 10px 0; text-align: center; font-size: 12px; font-weight: 600;
-  color: #9CA3AF; cursor: pointer; border: none; background: none;
-  border-bottom: 2px solid transparent; transition: all 0.15s;
+  flex: 1; padding: 8px 12px; text-align: center; font-size: 12px; font-weight: 600;
+  color: #6B7280; cursor: pointer; border: none; background: transparent;
+  border-radius: 6px; transition: all 0.15s;
 }
-.sep-tab:hover { color: #4B5563; }
-.sep-tab.active { color: #0D7377; border-bottom-color: #0D7377; }
-.sep-body { flex: 1; overflow-y: auto; padding: 16px; }
-.sep-group { margin-bottom: 16px; }
+.sep-tab:hover { color: #374151; background: #F3F4F6; }
+.sep-tab.active { background: #0D7377; color: #FFFFFF; border-radius: 8px; }
+.sep-body { flex: 1; overflow-y: auto; padding: 20px; }
+.sep-group { margin-bottom: 18px; }
+.sep-divider { height: 1px; background: #E4E3E0; margin: 12px 0; }
 .sep-group-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-  color: #9CA3AF; font-weight: 600; margin-bottom: 8px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+  color: #6B7280; font-weight: 700; margin-bottom: 10px;
 }
 .sep-row {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 10px; gap: 8px;
 }
-.sep-row label { font-size: 12px; color: #4B5563; font-weight: 500; min-width: 70px; }
+.sep-row label { font-size: 12px; color: #374151; font-weight: 600; min-width: 70px; }
 .sep-row input[type="range"] { flex: 1; }
 .sep-row span.sep-val { font-size: 11px; color: #6B7280; min-width: 35px; text-align: right; }
 .sep-color-row {
@@ -236,19 +238,20 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 }
 .sep-color-input:focus { outline: none; border-color: #0D7377; }
 .sep-section-type {
-  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-  background: #F7F7F5; border-radius: 8px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  background: #F9FAFB; border-radius: 12px; margin-bottom: 16px;
+  border: 1px solid #F3F4F6;
 }
 .sep-section-type-icon {
-  width: 32px; height: 32px; border-radius: 8px; background: rgba(13,115,119,0.1);
+  width: 40px; height: 40px; border-radius: 10px; background: #F0FDFA;
   display: flex; align-items: center; justify-content: center; color: #0D7377; flex-shrink: 0;
 }
-.sep-section-type-label { font-size: 13px; font-weight: 600; color: #1A1A1A; }
-.sep-section-type-desc { font-size: 11px; color: #6B7280; }
+.sep-section-type-label { font-size: 14px; font-weight: 700; color: #1A1A1A; }
+.sep-section-type-desc { font-size: 12px; color: #6B7280; }
 .sep-btn {
-  width: 100%; padding: 8px 12px; border: 1px solid #E4E3E0; border-radius: 8px;
-  background: #FFFFFF; cursor: pointer; font-size: 12px; font-weight: 500;
-  color: #1A1A1A; transition: all 0.15s; text-align: center; margin-bottom: 6px;
+  width: 100%; padding: 10px 14px; border: 1px solid #E4E3E0; border-radius: 8px;
+  background: #FFFFFF; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: #1A1A1A; transition: all 0.15s; text-align: center; margin-bottom: 8px;
 }
 .sep-btn:hover { background: #F7F7F5; border-color: #0D7377; color: #0D7377; }
 .sep-btn.danger { color: #DC2626; }
@@ -361,7 +364,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .font-picker-option.active .fp-check { display: inline; }
 /* --- Right Panel (Preview) --- */
 .right-panel {
-  flex: 1; overflow-y: auto; background: #F0F0ED; padding: 24px 60px 24px 24px;
+  flex: 1; overflow-y: auto; background: #F0F0ED; padding: 20px;
   display: flex; justify-content: center; align-items: flex-start;
 }
 .email-canvas {
@@ -731,7 +734,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 }
 
 /* Two column */
-.two-col { display: flex; gap: 24px; }
+.two-col { display: flex; gap: 16px; }
 .two-col > div { flex: 1; min-height: 60px; min-width: 0; }
 .col-add-btn {
   display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -740,8 +743,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   transition: all 0.15s; width: 100%;
 }
 .col-add-btn:hover { border-color: #0D7377; color: #0D7377; background: #F0FDFA; }
-.col-cell { min-width: 0; }
-.col-img-placeholder { min-height: 120px !important; }
+.col-cell { flex: 1; min-width: 0; }
+.col-img-placeholder { min-height: 160px !important; }
 
 /* Text placeholder for empty editable-text */
 .editing .editable-text:empty::before {
@@ -2748,15 +2751,6 @@ window.saveTemplate = function() {
 var insertAfterTr = null;
 
 function showBlockPicker(btn) {
-  var picker = document.getElementById('blockPicker');
-  var rect = btn.getBoundingClientRect();
-  // Position picker centered on button, below it
-  var pickerLeft = rect.left + rect.width / 2 - 110;
-  // Clamp to viewport
-  if (pickerLeft < 8) pickerLeft = 8;
-  if (pickerLeft + 220 > window.innerWidth) pickerLeft = window.innerWidth - 228;
-  picker.style.left = pickerLeft + 'px';
-  picker.style.top = (rect.bottom + 8) + 'px';
   // Find the insert-point-tr that contains this button
   var insertPointTr = btn.closest('.insert-point-tr');
   // The section TR is the previous sibling that has .email-section (skip other insert-point-trs)
@@ -2768,8 +2762,62 @@ function showBlockPicker(btn) {
       prev = prev.previousElementSibling;
     }
   }
-  picker.classList.add('visible');
+  // Close section editor if open
+  closeSectionEditor();
+  // Show the block picker in sidebar
+  showBlockPickerInSidebar();
   btn.classList.add('visible');
+}
+
+function showBlockPickerInSidebar() {
+  // Clear and show block picker items in sidebar
+  var contentDiv = document.getElementById('sepTabContent');
+  if (!contentDiv) return;
+  contentDiv.innerHTML = '<div style="padding:8px 0;"><div class="block-picker-title" style="padding:0 4px;margin-bottom:12px;">Add Block</div>';
+
+  var blocks = [
+    { id: 'text', label: 'Text', icon: 'text-lines' },
+    { id: 'image', label: 'Image', icon: 'image' },
+    { id: 'button', label: 'Button', icon: 'button' },
+    { id: 'spacer', label: 'Spacer', icon: 'arrow-down-up' },
+    { id: 'divider', label: 'Divider', icon: 'minus' },
+    { id: 'twocol-imgtext', label: 'Two Cols: Image + Text', icon: 'columns' },
+    { id: 'twocol-textimg', label: 'Two Cols: Text + Image', icon: 'columns' },
+    { id: 'twocol-imgimg', label: 'Two Cols: Image + Image', icon: 'columns' },
+    { id: 'quote', label: 'Quote', icon: 'quote' },
+    { id: 'social', label: 'Social Links', icon: 'share-2' },
+    { id: 'footer', label: 'Footer', icon: 'footer' }
+  ];
+
+  blocks.forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'block-picker-item';
+    btn.style.width = '100%';
+    btn.style.textAlign = 'left';
+    btn.style.padding = '10px 8px';
+    btn.style.marginBottom = '4px';
+    btn.onclick = function() { insertBlock(block.id); };
+    btn.innerHTML = '<div class="block-picker-icon" style="width:28px;height:28px;margin-right:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+      (block.icon === 'text-lines' ? '<path d="M17 6H3M21 12H3M18 18H3"/>' :
+       block.icon === 'image' ? '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>' :
+       block.icon === 'button' ? '<rect x="1" y="5" width="22" height="14" rx="7"/><line x1="8" y1="12" x2="16" y2="12"/>' :
+       block.icon === 'arrow-down-up' ? '<polyline points="12 5 12 19M5 12l7-7 7 7"/>' :
+       block.icon === 'minus' ? '<line x1="5" y1="12" x2="19" y2="12"/>' :
+       block.icon === 'columns' ? '<rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/>' :
+       block.icon === 'quote' ? '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"/>' :
+       block.icon === 'share-2' ? '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>' :
+       block.icon === 'footer' ? '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="15" x2="21" y2="15"/>' :
+       '<rect x="3" y="3" width="18" height="18" rx="2"/>') +
+      '</svg></div><span>' + block.label + '</span>';
+    contentDiv.appendChild(btn);
+  });
+
+  contentDiv.innerHTML += '</div>';
+
+  // Show the sidebar panel
+  document.getElementById('sectionEditorPanel').classList.add('visible');
+  // Switch to content tab
+  switchSepTab('content');
 }
 
 function closeBlockPicker() {
@@ -3264,12 +3312,113 @@ function openSectionEditor(td) {
     var radius = parseInt(inner.style.borderRadius) || 0;
     document.getElementById('sepBorderRadius').value = radius;
     document.getElementById('sepBorderRadiusVal').textContent = radius + 'px';
+
+    // Generate content fields in sidebar
+    generateSectionContentFields(td);
   }
 
   // Show panel
   document.getElementById('sectionEditorPanel').classList.add('visible');
   // Reset to content tab
   switchSepTab('content');
+}
+
+function generateSectionContentFields(td) {
+  var inner = td.querySelector('.section-inner');
+  if (!inner) return;
+  var contentDiv = document.getElementById('sepTabContent');
+  if (!contentDiv) return;
+
+  // Build the section type info and actions
+  var info = detectSectionType(td);
+  var html = '<div class="sep-section-type" id="sepSectionType">' +
+    '<div class="sep-section-type-icon" id="sepSectionIcon">' + getSepIconSvg(info.icon) + '</div>' +
+    '<div><div class="sep-section-type-label" id="sepSectionLabel">' + info.label + '</div>' +
+    '<div class="sep-section-type-desc" id="sepSectionDesc">' + info.desc + '</div></div></div>' +
+    '<div class="sep-divider"></div>';
+
+  // Add editable text fields
+  var textElements = inner.querySelectorAll('.editable-text');
+  if (textElements.length > 0) {
+    html += '<div class="sep-group"><div class="sep-group-label">Text Fields</div>';
+    textElements.forEach(function(el, idx) {
+      var fieldId = 'sepTextField' + idx;
+      var currentText = el.textContent || '';
+      html += '<textarea id="' + fieldId + '" class="sep-color-input" style="resize:vertical;min-height:60px;padding:8px;border:1px solid #E4E3E0;border-radius:6px;font-family:inherit;margin-bottom:8px;" placeholder="Edit text..." oninput="updateEditableText(' + idx + ',this.value)">' + currentText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
+    });
+    html += '</div>';
+  }
+
+  // Add editable image fields
+  var imgElements = inner.querySelectorAll('.editable-img');
+  if (imgElements.length > 0) {
+    html += '<div class="sep-group"><div class="sep-group-label">Images</div>';
+    imgElements.forEach(function(el, idx) {
+      html += '<button class="sep-btn" style="margin-bottom:8px;" onclick="updateEditableImage(' + idx + ')">Change Image ' + (idx + 1) + '</button>';
+    });
+    html += '</div>';
+  }
+
+  // Add editable button fields
+  var btnElements = inner.querySelectorAll('.editable-btn');
+  if (btnElements.length > 0) {
+    html += '<div class="sep-group"><div class="sep-group-label">Buttons</div>';
+    btnElements.forEach(function(el, idx) {
+      var fieldId = 'sepBtnText' + idx;
+      var urlId = 'sepBtnUrl' + idx;
+      var btnText = el.textContent || '';
+      var btnUrl = el.getAttribute('href') || '#';
+      html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">Button ' + (idx + 1) + ' Text</label>' +
+        '<input type="text" id="' + fieldId + '" value="' + btnText.replace(/"/g, '&quot;') + '" class="sep-color-input" onchange="updateEditableBtn(' + idx + ',this.value,null)">' +
+        '</div><div style="margin-bottom:8px;"><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">Button ' + (idx + 1) + ' URL</label>' +
+        '<input type="text" id="' + urlId + '" value="' + btnUrl.replace(/"/g, '&quot;') + '" class="sep-color-input" onchange="updateEditableBtn(' + idx + ',null,this.value)">' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Add the actions section
+  html += '<div class="sep-group"><div class="sep-group-label">Actions</div>' +
+    '<button class="sep-btn" onclick="sepAction(\'moveUp\')" style="margin-bottom:8px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="18 15 12 9 6 15"/></svg>Move up</button>' +
+    '<button class="sep-btn" onclick="sepAction(\'moveDown\')" style="margin-bottom:8px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="6 9 12 15 18 9"/></svg>Move down</button>' +
+    '<button class="sep-btn" onclick="sepAction(\'duplicate\')" style="margin-bottom:8px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Duplicate</button>' +
+    '<button class="sep-btn danger" onclick="sepAction(\'delete\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete section</button>' +
+    '</div>';
+
+  contentDiv.innerHTML = html;
+}
+
+function updateEditableText(idx, value) {
+  if (!selectedSectionEl) return;
+  var inner = selectedSectionEl.querySelector('.section-inner');
+  if (!inner) return;
+  var textElements = inner.querySelectorAll('.editable-text');
+  if (idx < textElements.length) {
+    textElements[idx].textContent = value;
+    broadcastHtml();
+  }
+}
+
+function updateEditableImage(idx) {
+  if (!selectedSectionEl) return;
+  var inner = selectedSectionEl.querySelector('.section-inner');
+  if (!inner) return;
+  var imgElements = inner.querySelectorAll('.editable-img');
+  if (idx < imgElements.length) {
+    openImagePanel(imgElements[idx]);
+  }
+}
+
+function updateEditableBtn(idx, text, url) {
+  if (!selectedSectionEl) return;
+  var inner = selectedSectionEl.querySelector('.section-inner');
+  if (!inner) return;
+  var btnElements = inner.querySelectorAll('.editable-btn');
+  if (idx < btnElements.length) {
+    if (text !== null) btnElements[idx].textContent = text;
+    if (url !== null) btnElements[idx].setAttribute('href', url);
+    broadcastHtml();
+  }
 }
 
 function closeSectionEditor() {
@@ -3327,6 +3476,8 @@ function setLogoAlign(align, btn) {
   // Update active state
   document.querySelectorAll('#sepLogoAlignGroup .sep-align-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
+  // Find the logo element
+  var logoEl = inner.querySelector('.editable-logo, .logo-placeholder, .logo-img, img');
   // Apply alignment
   if (inner.style.display === 'flex') {
     if (align === 'left') inner.style.justifyContent = 'flex-start';
@@ -3334,6 +3485,19 @@ function setLogoAlign(align, btn) {
     else inner.style.justifyContent = 'flex-end';
   } else {
     inner.style.textAlign = align;
+  }
+  // Also set text-align on inner div
+  inner.style.textAlign = align;
+  // If logo is inside a table, set align on the td
+  var parentTd = logoEl ? logoEl.closest('td') : null;
+  if (parentTd) parentTd.setAttribute('align', align);
+  // Set text-align on any td children that wrap the logo
+  if (inner.querySelector('table')) {
+    inner.querySelectorAll('td').forEach(function(td) {
+      if (td.querySelector('.editable-logo, .logo-placeholder, .logo-img, img')) {
+        td.style.textAlign = align;
+      }
+    });
   }
   broadcastHtml();
 }

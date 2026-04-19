@@ -469,7 +469,7 @@ export function DesignStep({
                         cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.2s',
                         zIndex: 5, backdropFilter: 'blur(4px)',
                         boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                        opacity: 0, pointerEvents: 'none',
+                        opacity: 1, pointerEvents: 'auto',
                       }}
                     >
                       <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -542,7 +542,7 @@ export function DesignStep({
                       />
                       {/* Badges */}
                       <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4 }}>
-                        {isRecommended && (
+                        {isRecommended && !aiDesign && (
                           <div style={{
                             padding: '4px 10px', borderRadius: 20,
                             background: C.ACCENT, color: '#FFFFFF',
@@ -584,7 +584,7 @@ export function DesignStep({
                           cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.2s',
                           zIndex: 5, backdropFilter: 'blur(4px)',
                           boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                          opacity: 0, pointerEvents: 'none',
+                          opacity: 1, pointerEvents: 'auto',
                         }}
                       >
                         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -870,8 +870,7 @@ function injectDesignFocusStyles() {
   var style = document.createElement('style');
   style.id = FOCUS_STYLE_ID;
   style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }' +
-    ' .sq-tpl-card:hover .sq-tpl-eye { opacity: 1 !important; pointer-events: auto !important; }' +
-    ' .sq-tpl-card:hover .sq-tpl-eye:hover { border-color: ' + C.ACCENT + ' !important; color: ' + C.ACCENT + ' !important; background: #FFFFFF !important; }' +
+    ' .sq-tpl-eye:hover { border-color: ' + C.ACCENT + ' !important; color: ' + C.ACCENT + ' !important; background: #FFFFFF !important; transform: scale(1.08); }' +
     ' @keyframes spin { to { transform: rotate(360deg); } }';
   document.head.appendChild(style);
 }
