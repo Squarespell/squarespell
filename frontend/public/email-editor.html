@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squarespell Email Editor</title>
+<style>
+/* ================================================================
+   TASK 3.1 - EDITOR SHELL
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F0F0ED; color: #1A1A1A; overflow: hidden; height: 100vh; }
+
+/* --- Top Bar --- */
+.topbar {
+  height: 52px; background: #FFFFFF; border-bottom: 1px solid #E4E3E0;
+  display: flex; align-items: center; padding: 0 16px; gap: 12px; z-index: 50; position: relative;
+}
+.topbar-logo { width: 28px; height: 28px; background: #0D7377; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.topbar-logo svg { width: 16px; height: 16px; }
+.topbar-title { font-size: 14px; font-weight: 600; color: #1A1A1A; flex: 1; }
+.topbar-btn {
+  padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: 1px solid #E4E3E0; background: #FFFFFF; color: #1A1A1A;
+  transition: all 0.15s;
+}
+.topbar-btn:hover { background: #F7F7F5; }
+.topbar-btn.primary { background: #0D7377; color: #FFFFFF; border-color: #0D7377; }
+.topbar-btn.primary:hover { background: #0B6164; }
+.topbar-toggle {
+  display: flex; border: 1px solid #E4E3E0; border-radius: 8px; overflow: hidden;
+}
+.topbar-toggle button {
+  padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer;
+  border: none; background: #FFFFFF; color: #6B7280; transition: all 0.15s;
+}
+.topbar-toggle button.active { background: #0D7377; color: #FFFFFF; }
+
+/* --- Layout --- */
+.editor-layout { display: flex; height: calc(100vh - 52px); }
+
+/* --- Left Panel --- */
+.left-panel {
+  width: 280px; background: #FFFFFF; border-right: 1px solid #E4E3E0;
+  overflow-y: auto; flex-shrink: 0; padding: 16px;
+}
+.left-panel.hidden { display: none; }
+.panel-section { margin-bottom: 20px; }
+.panel-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+  color: #9CA3AF; margin-bottom: 8px; font-weight: 600;
+}
+.template-card {
+  padding: 10px 12px; border: 2px solid #E4E3E0; border-radius: 10px;
+  cursor: pointer; margin-bottom: 8px; transition: all 0.15s;
+}
+.template-card:hover { border-color: #0D7377; }
+.template-card.active { border-color: #0D7377; background: #F0FDFA; }
+.template-card-title { font-size: 13px; font-weight: 600; color: #1A1A1A; }
+.template-card-desc { font-size: 11px; color: #6B7280; margin-top: 2px; }
+
+/* --- Color control --- */
+.color-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.color-row label { font-size: 12px; color: #4B5563; }
+.color-swatch-input {
+  width: 32px; height: 32px; border: 2px solid #E4E3E0; border-radius: 8px;
+  cursor: pointer; padding: 0; overflow: hidden;
+}
+.color-swatch-input::-webkit-color-swatch-wrapper { padding: 0; }
+.color-swatch-input::-webkit-color-swatch { border: none; border-radius: 6px; }
+
+/* --- Font picker --- */
+.font-select {
+  width: 100%; padding: 8px 10px; border: 1px solid #E4E3E0; border-radius: 8px;
+  font-size: 13px; color: #1A1A1A; background: #FFFFFF; cursor: pointer;
+}
+
+/* --- Right Panel (Preview) --- */
+.right-panel {
+  flex: 1; overflow-y: auto; background: #F0F0ED; padding: 24px;
+  display: flex; justify-content: center;
+}
+.email-canvas {
+  width: 600px; min-height: 400px; background: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-radius: 4px;
+  position: relative;
+}
+
+/* --- Editing mode styles --- */
+.editing .editable-text:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: text; border-radius: 3px; }
+.editing .editable-text.active { outline: 2px solid #0D7377; outline-offset: 2px; border-radius: 3px; }
+.editing .editable-img:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: pointer; border-radius: 3px; }
+.editing .editable-btn:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: pointer; border-radius: 3px; }
+.editing .editable-logo:hover { outline: 2px dashed rgba(13,115,119,0.4); outline-offset: 2px; cursor: pointer; }
+.editing .email-section { position: relative; }
+.editing .email-section:hover > .section-toolbar { opacity: 1; }
+
+/* --- Section toolbar --- */
+.section-toolbar {
+  position: absolute; left: -40px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 4px; opacity: 0; transition: opacity 0.15s;
+  z-index: 20;
+}
+.section-toolbar button {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid #E4E3E0;
+  background: #FFFFFF; cursor: pointer; font-size: 14px; display: flex;
+  align-items: center; justify-content: center; color: #6B7280;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.12s;
+}
+.section-toolbar button:hover { background: #F7F7F5; color: #1A1A1A; }
+.section-toolbar button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* --- Floating text toolbar --- */
+.text-toolbar {
+  position: fixed; display: none; background: #1A1A1A; border-radius: 8px;
+  padding: 4px; gap: 2px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  flex-wrap: wrap;
+}
+.text-toolbar.visible { display: flex; }
+.text-toolbar button {
+  width: 32px; height: 32px; border: none; background: transparent;
+  color: #FFFFFF; cursor: pointer; border-radius: 6px; font-size: 13px;
+  font-weight: 600; display: flex; align-items: center; justify-content: center;
+}
+.text-toolbar button:hover { background: rgba(255,255,255,0.15); }
+.text-toolbar button.active { background: rgba(255,255,255,0.25); }
+.text-toolbar .separator { width: 1px; background: rgba(255,255,255,0.2); margin: 4px 2px; }
+.text-toolbar select {
+  background: transparent; color: #FFFFFF; border: none; font-size: 12px;
+  cursor: pointer; padding: 4px;
+}
+.text-toolbar select option { background: #1A1A1A; }
+
+/* --- Logo upload panel --- */
+.logo-panel, .image-panel, .button-panel {
+  position: fixed; background: #FFFFFF; border-radius: 12px;
+  border: 1px solid #E4E3E0; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 90; padding: 16px; min-width: 300px; display: none;
+}
+.logo-panel.visible, .image-panel.visible, .button-panel.visible { display: block; }
+.panel-title { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
+.panel-input {
+  width: 100%; padding: 8px 10px; border: 1px solid #E4E3E0; border-radius: 8px;
+  font-size: 13px; margin-bottom: 8px;
+}
+.panel-input:focus { outline: none; border-color: #0D7377; }
+.panel-btn {
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: 1px solid #E4E3E0; background: #FFFFFF; color: #1A1A1A;
+  transition: all 0.15s; width: 100%; margin-bottom: 6px;
+}
+.panel-btn:hover { background: #F7F7F5; }
+.panel-btn.primary { background: #0D7377; color: #FFFFFF; border-color: #0D7377; }
+
+/* --- Image panel tabs --- */
+.tab-row { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid #E4E3E0; }
+.tab-btn {
+  padding: 8px 14px; font-size: 12px; font-weight: 500; cursor: pointer;
+  border: none; background: none; color: #6B7280; border-bottom: 2px solid transparent;
+}
+.tab-btn.active { color: #0D7377; border-bottom-color: #0D7377; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.unsplash-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px;
+}
+.unsplash-grid img {
+  width: 100%; height: 70px; object-fit: cover; border-radius: 6px;
+  cursor: pointer; border: 2px solid transparent; transition: border-color 0.12s;
+}
+.unsplash-grid img:hover { border-color: #0D7377; }
+
+/* --- Button editor --- */
+.btn-editor-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.btn-editor-row label { font-size: 12px; color: #4B5563; min-width: 80px; }
+.btn-editor-row input[type="text"], .btn-editor-row input[type="url"] {
+  flex: 1; padding: 6px 10px; border: 1px solid #E4E3E0; border-radius: 6px; font-size: 13px;
+}
+.btn-editor-row input:focus { outline: none; border-color: #0D7377; }
+.range-slider { flex: 1; }
+.toggle-switch {
+  width: 36px; height: 20px; background: #E4E3E0; border-radius: 10px;
+  cursor: pointer; position: relative; transition: background 0.2s; border: none;
+}
+.toggle-switch.on { background: #0D7377; }
+.toggle-switch::after {
+  content: ''; width: 16px; height: 16px; background: #FFFFFF; border-radius: 50%;
+  position: absolute; top: 2px; left: 2px; transition: transform 0.2s;
+}
+.toggle-switch.on::after { transform: translateX(16px); }
+
+/* --- Per-block color picker --- */
+.block-color-picker {
+  position: fixed; background: #FFFFFF; border-radius: 12px;
+  border: 1px solid #E4E3E0; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 95; padding: 12px; display: none; min-width: 200px;
+}
+.block-color-picker.visible { display: block; }
+.swatch-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.swatch {
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  border: 2px solid transparent; transition: border-color 0.12s;
+}
+.swatch:hover { border-color: #1A1A1A; }
+.hex-input-row { display: flex; gap: 6px; }
+.hex-input {
+  flex: 1; padding: 6px 8px; border: 1px solid #E4E3E0; border-radius: 6px;
+  font-size: 12px; font-family: monospace;
+}
+
+/* --- Export Modal --- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal-box {
+  background: #FFFFFF; border-radius: 14px; width: 90%; max-width: 800px;
+  max-height: 85vh; overflow: hidden; display: flex; flex-direction: column;
+}
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid #E4E3E0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-size: 16px; font-weight: 600; }
+.modal-close {
+  width: 32px; height: 32px; border: none; background: none; cursor: pointer;
+  font-size: 18px; color: #6B7280; border-radius: 8px;
+}
+.modal-close:hover { background: #F7F7F5; }
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.modal-body pre {
+  background: #1A1A1A; color: #E4E3E0; padding: 16px; border-radius: 10px;
+  font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre-wrap;
+  word-break: break-all; max-height: 50vh;
+}
+.modal-footer {
+  padding: 12px 20px; border-top: 1px solid #E4E3E0;
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+.modal-footer .topbar-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+.modal-footer .topbar-btn.disabled:hover { background: #FFFFFF; }
+.tooltip { position: relative; }
+.tooltip::after {
+  content: attr(data-tooltip); position: absolute; bottom: 110%; left: 50%;
+  transform: translateX(-50%); background: #1A1A1A; color: #FFFFFF;
+  padding: 4px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.tooltip:hover::after { opacity: 1; }
+
+/* --- Confirm dialog --- */
+.confirm-dialog {
+  position: fixed; background: #FFFFFF; border-radius: 12px; padding: 20px;
+  border: 1px solid #E4E3E0; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 210; min-width: 320px; display: none;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+.confirm-dialog.visible { display: block; }
+.confirm-dialog p { font-size: 14px; color: #1A1A1A; margin-bottom: 16px; line-height: 1.5; }
+.confirm-dialog .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ================================================================
+   EMAIL TEMPLATE STYLES (shared)
+   ================================================================ */
+.email-body { width: 100%; }
+.email-container { max-width: 600px; margin: 0 auto; }
+.email-section { position: relative; }
+.email-section .section-inner { padding: 0; }
+
+/* Logo placeholder */
+.logo-placeholder {
+  width: 140px; height: 44px; background: #E4E3E0; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #6B7280; font-weight: 500; cursor: pointer;
+}
+.logo-img { max-width: 140px; max-height: 60px; cursor: pointer; }
+
+/* Score circle */
+.score-circle {
+  width: 120px; height: 120px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 0 auto;
+}
+.score-number { font-size: 42px; font-weight: 800; line-height: 1; }
+.score-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+/* Badge */
+.tier-badge {
+  display: inline-block; padding: 6px 18px; border-radius: 20px;
+  font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+}
+
+/* Countdown boxes */
+.countdown-row { display: flex; gap: 12px; justify-content: center; }
+.countdown-box {
+  width: 64px; text-align: center; background: #F7F7F5; border-radius: 10px;
+  padding: 12px 8px; border: 1px solid #E4E3E0;
+}
+.countdown-num { font-size: 28px; font-weight: 800; color: #1A1A1A; }
+.countdown-lbl { font-size: 10px; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+/* Star rating */
+.stars { color: #F59E0B; font-size: 16px; letter-spacing: 2px; }
+
+/* Social icons row */
+.social-row { display: flex; gap: 12px; justify-content: center; }
+.social-icon {
+  width: 36px; height: 36px; border-radius: 50%; background: #E4E3E0;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; color: #6B7280; font-size: 14px;
+}
+
+/* Two column */
+.two-col { display: flex; gap: 20px; }
+.two-col > div { flex: 1; }
+.three-col { display: flex; gap: 16px; }
+.three-col > div { flex: 1; text-align: center; }
+.three-col-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* Offer box */
+.offer-box {
+  border: 2px solid #E4E3E0; border-radius: 12px; padding: 24px; text-align: center;
+}
+.price-old { font-size: 20px; color: #9CA3AF; text-decoration: line-through; }
+.price-new { font-size: 48px; font-weight: 800; }
+.savings-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+}
+.offer-list { list-style: none; text-align: left; max-width: 360px; margin: 16px auto 0; }
+.offer-list li { padding: 6px 0; font-size: 14px; color: #4B5563; }
+.offer-list li::before { content: '\2713'; color: #0D7377; font-weight: 700; margin-right: 8px; }
+
+/* Guarantee strip */
+.guarantee-strip {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px; border-radius: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     TOP BAR
+     ================================================================ -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+  </div>
+  <div class="topbar-title" id="topbarTitle">Quiz Result Email</div>
+  <div class="topbar-toggle">
+    <button class="active" id="btnEdit" onclick="setMode('edit')">Edit</button>
+    <button id="btnPreview" onclick="setMode('preview')">Preview</button>
+  </div>
+  <button class="topbar-btn" onclick="saveTemplate()">Save</button>
+  <button class="topbar-btn primary" onclick="exportHTML()">Export HTML</button>
+</div>
+
+<!-- ================================================================
+     LAYOUT
+     ================================================================ -->
+<div class="editor-layout">
+  <!-- LEFT PANEL -->
+  <div class="left-panel" id="leftPanel">
+    <!-- Template Switcher -->
+    <div class="panel-section">
+      <div class="panel-label">Templates</div>
+      <div class="template-card active" data-tpl="quiz-result" onclick="switchTemplate('quiz-result')">
+        <div class="template-card-title">Quiz Result</div>
+        <div class="template-card-desc">Score, result category, recommendations</div>
+      </div>
+      <div class="template-card" data-tpl="lead-nurture" onclick="switchTemplate('lead-nurture')">
+        <div class="template-card-title">Lead Nurture</div>
+        <div class="template-card-desc">Follow-up with personalized content</div>
+      </div>
+      <div class="template-card" data-tpl="promo-offer" onclick="switchTemplate('promo-offer')">
+        <div class="template-card-title">Promotional Offer</div>
+        <div class="template-card-desc">Discount with countdown timer</div>
+      </div>
+    </div>
+
+    <!-- Global Colors -->
+    <div class="panel-section">
+      <div class="panel-label">Global Colors</div>
+      <div class="color-row">
+        <label>Primary</label>
+        <input type="color" class="color-swatch-input" id="globalPrimary" value="#0D7377" onchange="applyGlobalColor('primary', this.value)">
+      </div>
+      <div class="color-row">
+        <label>Background</label>
+        <input type="color" class="color-swatch-input" id="globalBg" value="#FFFFFF" onchange="applyGlobalColor('background', this.value)">
+      </div>
+      <div class="color-row">
+        <label>Text</label>
+        <input type="color" class="color-swatch-input" id="globalText" value="#1A1A1A" onchange="applyGlobalColor('text', this.value)">
+      </div>
+    </div>
+
+    <!-- Font Picker -->
+    <div class="panel-section">
+      <div class="panel-label">Font Family</div>
+      <select class="font-select" id="fontPicker" onchange="applyGlobalFont(this.value)">
+        <option value="Inter, sans-serif">Inter</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+        <option value="'Times New Roman', serif">Times New Roman</option>
+        <option value="'Courier New', monospace">Courier New</option>
+      </select>
+    </div>
+
+    <!-- Brand Kit -->
+    <div class="panel-section">
+      <div class="panel-label">Brand Kit</div>
+      <button class="panel-btn" onclick="document.getElementById('brandLogoInput').click()">Upload Logo</button>
+      <input type="file" id="brandLogoInput" accept="image/*" style="display:none" onchange="uploadBrandLogo(this)">
+      <div class="btn-editor-row" style="margin-top: 8px;">
+        <label style="font-size: 12px;">Website</label>
+        <input type="url" class="panel-input" id="brandWebsite" placeholder="https://yoursite.com" style="margin-bottom:0">
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel" id="rightPanel">
+    <div class="email-canvas editing" id="emailCanvas">
+      <!-- Templates injected here by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     FLOATING TEXT TOOLBAR (Task 3.3)
+     ================================================================ -->
+<div class="text-toolbar" id="textToolbar">
+  <button onclick="execCmd('bold')" title="Bold"><strong>B</strong></button>
+  <button onclick="execCmd('italic')" title="Italic"><em>I</em></button>
+  <button onclick="execCmd('underline')" title="Underline"><u>U</u></button>
+  <div class="separator"></div>
+  <button onclick="execLink()" title="Add Link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+  </button>
+  <div class="separator"></div>
+  <select onchange="execFontSize(this.value)" title="Font Size">
+    <option value="">Size</option>
+    <option value="12px">S</option>
+    <option value="16px">M</option>
+    <option value="20px">L</option>
+    <option value="28px">XL</option>
+  </select>
+  <div class="separator"></div>
+  <input type="color" value="#1A1A1A" style="width:28px;height:28px;border:none;cursor:pointer;background:none;" onchange="execTextColor(this.value)" title="Text Color">
+</div>
+
+<!-- ================================================================
+     LOGO UPLOAD PANEL (Task 3.2)
+     ================================================================ -->
+<div class="logo-panel" id="logoPanel">
+  <div class="panel-title">Logo</div>
+  <button class="panel-btn" onclick="document.getElementById('logoFileInput').click()">Upload from device</button>
+  <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoFile(this)">
+  <div style="text-align:center;color:#9CA3AF;font-size:12px;margin:6px 0;">or</div>
+  <input type="url" class="panel-input" id="logoUrlInput" placeholder="Paste image URL...">
+  <button class="panel-btn primary" onclick="handleLogoUrl()">Apply</button>
+  <div style="margin-top: 10px; border-top: 1px solid #E4E3E0; padding-top: 10px;">
+    <label style="font-size: 12px; color: #6B7280;">Logo link URL</label>
+    <input type="url" class="panel-input" id="logoLinkInput" placeholder="https://yoursite.com">
+  </div>
+</div>
+
+<!-- ================================================================
+     IMAGE REPLACE PANEL (Task 3.4)
+     ================================================================ -->
+<div class="image-panel" id="imagePanel">
+  <div class="panel-title">Replace Image</div>
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchImgTab('upload')">Upload</button>
+    <button class="tab-btn" onclick="switchImgTab('url')">URL</button>
+    <button class="tab-btn" onclick="switchImgTab('unsplash')">Free Images</button>
+  </div>
+  <div class="tab-content active" id="imgTabUpload">
+    <div style="border:2px dashed #E4E3E0;border-radius:10px;padding:24px;text-align:center;cursor:pointer;" onclick="document.getElementById('imgFileInput').click()" id="imgDropZone">
+      <div style="font-size:13px;color:#6B7280;">Click or drag an image here</div>
+    </div>
+    <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleImgFile(this)">
+  </div>
+  <div class="tab-content" id="imgTabUrl">
+    <input type="url" class="panel-input" id="imgUrlInput" placeholder="Paste image URL...">
+    <div id="imgUrlPreview" style="margin:8px 0;text-align:center;"></div>
+    <button class="panel-btn primary" onclick="handleImgUrl()">Apply</button>
+  </div>
+  <div class="tab-content" id="imgTabUnsplash">
+    <input type="text" class="panel-input" id="unsplashSearch" placeholder="Search free images..." onkeyup="searchUnsplash(this.value)">
+    <div class="unsplash-grid" id="unsplashGrid"></div>
+  </div>
+  <div style="margin-top:10px;border-top:1px solid #E4E3E0;padding-top:10px;">
+    <label style="font-size:12px;color:#6B7280;">Alt text</label>
+    <input type="text" class="panel-input" id="imgAltInput" placeholder="Describe this image..." onchange="applyImgAlt(this.value)">
+  </div>
+</div>
+
+<!-- ================================================================
+     BUTTON EDITOR PANEL (Task 3.5)
+     ================================================================ -->
+<div class="button-panel" id="buttonPanel">
+  <div class="panel-title">Button Settings</div>
+  <div class="btn-editor-row"><label>Text</label><input type="text" id="btnTextInput" oninput="updateBtnText(this.value)"></div>
+  <div class="btn-editor-row"><label>Link URL</label><input type="url" id="btnLinkInput" oninput="updateBtnLink(this.value)"></div>
+  <div class="btn-editor-row"><label>New tab</label><button class="toggle-switch" id="btnNewTab" onclick="toggleBtnNewTab(this)"></button></div>
+  <div class="btn-editor-row"><label>BG Color</label><input type="color" id="btnBgColor" class="color-swatch-input" onchange="updateBtnBgColor(this.value)"></div>
+  <div class="btn-editor-row"><label>Text Color</label><input type="color" id="btnTxtColor" class="color-swatch-input" value="#FFFFFF" onchange="updateBtnTxtColor(this.value)"></div>
+  <div class="btn-editor-row"><label>Radius</label><input type="range" class="range-slider" id="btnRadius" min="0" max="30" value="8" oninput="updateBtnRadius(this.value)"><span id="btnRadiusVal" style="font-size:12px;color:#6B7280;min-width:30px;text-align:right;">8px</span></div>
+  <div class="btn-editor-row"><label>Full width</label><button class="toggle-switch" id="btnFullWidth" onclick="toggleBtnFullWidth(this)"></button></div>
+</div>
+
+<!-- ================================================================
+     EXPORT MODAL (Task 3.11)
+     ================================================================ -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Export HTML</h3>
+      <button class="modal-close" onclick="closeExportModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <pre id="exportCode"></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="topbar-btn" onclick="copyExport()">Copy to Clipboard</button>
+      <button class="topbar-btn" onclick="downloadExport()">Download .html</button>
+      <button class="topbar-btn disabled tooltip" data-tooltip="Connect your ESP in Settings" style="cursor:not-allowed;opacity:0.5;">Send Test Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     CONFIRM DIALOG
+     ================================================================ -->
+<div class="confirm-dialog" id="confirmDialog">
+  <p id="confirmMsg"></p>
+  <div class="btn-row">
+    <button class="topbar-btn" onclick="closeConfirm(false)">Cancel</button>
+    <button class="topbar-btn primary" onclick="closeConfirm(true)">Confirm</button>
+  </div>
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+// ================================================================
+// STATE
+// ================================================================
+var currentTemplate = 'quiz-result';
+var mode = 'edit'; // 'edit' | 'preview'
+var activeTextEl = null;
+var originalText = '';
+var activeLogoEl = null;
+var activeImgEl = null;
+var activeBtnEl = null;
+var confirmCb = null;
+var globalColors = { primary: '#0D7377', background: '#FFFFFF', text: '#1A1A1A' };
+var globalFont = 'Inter, sans-serif';
+var sectionIdCounter = 0;
+
+function uid() { return 's' + (++sectionIdCounter) + '_' + Math.random().toString(36).substr(2, 6); }
+
+// ================================================================
+// TASK 3.8 - TEMPLATE 1: QUIZ RESULT
+// ================================================================
+function tplQuizResult() {
+  return '<div class="email-body" style="background:#F7F7F5;font-family:' + globalFont + ';">' +
+  '<!-- Preheader --><div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F7F7F5;">Your quiz results are ready, Jordan. See your score and personalized recommendations inside.</div>' +
+  '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F5;"><tr><td align="center" style="padding:24px 16px;">' +
+  '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:8px;overflow:hidden;">' +
+
+  // Header
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:20px 32px;display:flex;align-items:center;justify-content:space-between;">' +
+  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
+  '<a href="#" class="editable-text" style="font-size:12px;color:#6B7280;text-decoration:none;">View in browser</a>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)" title="Move up">&#8593;</button><button onclick="moveSection(this,1)" title="Move down">&#8595;</button><button onclick="dupeSection(this)" title="Duplicate">&#9783;</button><button onclick="addSectionBelow(this)" title="Add below">+</button><button onclick="deleteSection(this)" title="Delete">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Hero
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="position:relative;">' +
+  '<img class="editable-img" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=300&fit=crop" alt="Success and achievement" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
+  '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.6));">' +
+  '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Your Results Are In, {{first_name}}</h1>' +
+  '</div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Score Section
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:40px 32px;text-align:center;">' +
+  '<div class="score-circle" style="background:' + globalColors.primary + ';">' +
+  '<div class="score-number" style="color:#FFFFFF;">82</div>' +
+  '<div class="score-label" style="color:rgba(255,255,255,0.8);">Score</div>' +
+  '</div>' +
+  '<h2 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:16px;">Your Quiz Score</h2>' +
+  '<p class="editable-text" style="font-size:14px;color:#6B7280;margin-top:4px;">Top 15% of all respondents</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Result Category
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:24px 32px;">' +
+  '<div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:' + globalColors.primary + ';font-weight:600;" class="editable-text">YOUR RESULT</div>' +
+  '<h2 class="editable-text" style="font-size:28px;font-weight:700;color:' + globalColors.text + ';margin-top:8px;">You\'re a Growth-Stage Founder</h2>' +
+  '<p class="editable-text" style="font-size:15px;color:#4B5563;line-height:1.6;margin-top:12px;">Your answers reveal that you have already achieved product-market fit and are now focused on scaling your operations. You understand your core customer deeply but need systems to reach them at scale. The recommendations below are tailored specifically for founders at your stage of growth.</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Recommendation Card
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:0 32px 32px;">' +
+  '<div style="border:1px solid #E4E3E0;border-radius:12px;overflow:hidden;">' +
+  '<img class="editable-img" src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=200&fit=crop" alt="Recommended product" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
+  '<div style="padding:20px;">' +
+  '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:' + globalColors.primary + ';font-weight:600;" class="editable-text">Recommended for You</div>' +
+  '<h3 class="editable-text" style="font-size:18px;font-weight:600;color:' + globalColors.text + ';margin-top:6px;">Growth Accelerator Program</h3>' +
+  '<p class="editable-text" style="font-size:14px;color:#6B7280;line-height:1.5;margin-top:8px;">A 12-week hands-on program designed for founders who have found product-market fit and are ready to build the systems that scale. Includes weekly coaching calls, templates, and a private community.</p>' +
+  '<a href="#" class="editable-btn" style="display:inline-block;margin-top:16px;padding:12px 28px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Learn More</a>' +
+  '</div></div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Testimonial
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:24px 32px;background:#F7F7F5;">' +
+  '<div style="display:flex;gap:16px;align-items:flex-start;">' +
+  '<img class="editable-img" src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=80&h=80&fit=crop" alt="Priya Sharma" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;" onclick="openImagePanel(this)">' +
+  '<div>' +
+  '<p class="editable-text" style="font-size:15px;color:#4B5563;line-height:1.6;font-style:italic;">"The quiz pinpointed exactly where I was in my business journey. The Growth Accelerator program completely changed how I approach scaling - I went from 5 to 25 clients in three months."</p>' +
+  '<div class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';margin-top:8px;">Priya Sharma</div>' +
+  '<div class="editable-text" style="font-size:12px;color:#6B7280;">Founder, Elevate Consulting</div>' +
+  '<div class="stars" style="margin-top:4px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>' +
+  '</div></div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Retake Button
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
+  '<a href="#" class="editable-btn" style="display:inline-block;padding:12px 32px;border:2px solid ' + globalColors.primary + ';color:' + globalColors.primary + ';text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;background:transparent;" onclick="event.preventDefault();openBtnPanel(this)">Retake the Quiz</a>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Footer
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:24px 32px;text-align:center;border-top:1px solid #E4E3E0;">' +
+  '<div class="social-row" style="margin-bottom:16px;">' +
+  '<a href="#" class="social-icon" title="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>' +
+  '<a href="#" class="social-icon" title="Twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>' +
+  '<a href="#" class="social-icon" title="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>' +
+  '</div>' +
+  '<p class="editable-text" style="font-size:12px;color:#9CA3AF;line-height:1.5;">You received this email because you completed a quiz on our site.</p>' +
+  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
+  '<span style="font-size:12px;color:#9CA3AF;"> | </span>' +
+  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Email preferences</a>' +
+  '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:12px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
+  '<p style="font-size:10px;color:#BFBFBF;margin-top:6px;">Copyright 2026 Squarespell. All rights reserved.</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  '</table></td></tr></table></div>';
+}
+
+// ================================================================
+// TASK 3.9 - TEMPLATE 2: LEAD NURTURE
+// ================================================================
+function tplLeadNurture() {
+  return '<div class="email-body" style="background:#F7F7F5;font-family:' + globalFont + ';">' +
+  '<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F7F7F5;">We have something for you, Jordan. Based on your quiz results, here is your next step.</div>' +
+  '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F5;"><tr><td align="center" style="padding:24px 16px;">' +
+  '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:8px;overflow:hidden;">' +
+
+  // Header
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:20px 32px;">' +
+  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Hero
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="position:relative;">' +
+  '<img class="editable-img" src="https://images.unsplash.com/photo-1553484771-047a44eee27b?w=600&h=300&fit=crop" alt="Business growth" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
+  '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.65));">' +
+  '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Ready to Take the Next Step?</h1>' +
+  '</div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Intro
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:32px;">' +
+  '<p class="editable-text" style="font-size:16px;color:' + globalColors.text + ';line-height:1.7;">Hi {{first_name}}, based on your quiz results, we put together a personalized action plan just for you. Most people in your position share a common challenge: they know what they want to build but struggle to figure out where to begin. The strategies below are specifically designed for people at your stage, and they have worked for hundreds of founders just like you.</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Two-column features
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:0 32px 32px;">' +
+  '<div class="two-col">' +
+  '<div style="flex:1;">' +
+  '<img class="editable-img" src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=280&h=180&fit=crop" alt="Strategy" style="width:100%;border-radius:8px;display:block;height:auto;" onclick="openImagePanel(this)">' +
+  '<h3 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:12px;">Find Your Focus Channel</h3>' +
+  '<p class="editable-text" style="font-size:13px;color:#6B7280;line-height:1.5;margin-top:6px;">Stop spreading yourself thin across every platform. Pick the one where your ideal clients already spend their time and go deep.</p>' +
+  '</div>' +
+  '<div style="flex:1;">' +
+  '<img class="editable-img" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=280&h=180&fit=crop" alt="Results" style="width:100%;border-radius:8px;display:block;height:auto;" onclick="openImagePanel(this)">' +
+  '<h3 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:12px;">Track What Matters</h3>' +
+  '<p class="editable-text" style="font-size:13px;color:#6B7280;line-height:1.5;margin-top:6px;">Set up three core metrics that map directly to revenue. When you know your numbers, every decision becomes clearer and faster.</p>' +
+  '</div>' +
+  '</div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // 3-col value prop
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:24px 32px;background:#F7F7F5;">' +
+  '<div class="three-col">' +
+  '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Proven Framework</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">Tested by 500+ founders across 40 industries</p></div>' +
+  '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Quick Results</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">See measurable progress within your first week</p></div>' +
+  '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Expert Support</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">One-on-one coaching available when you need it</p></div>' +
+  '</div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // CTA
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
+  '<a href="#" class="editable-btn" style="display:inline-block;padding:14px 36px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Book Your Free Strategy Call</a>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // PS
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:0 32px 24px;">' +
+  '<p class="editable-text" style="font-size:14px;color:#6B7280;font-style:italic;line-height:1.6;">P.S. This offer expires in 48 hours. We keep our coaching groups intentionally small to give every member real attention, so spots fill up fast. Don\'t wait on this one.</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Footer
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:24px 32px;text-align:center;border-top:1px solid #E4E3E0;">' +
+  '<div class="social-row" style="margin-bottom:12px;">' +
+  '<a href="#" class="social-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>' +
+  '<a href="#" class="social-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>' +
+  '<a href="#" class="social-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>' +
+  '</div>' +
+  '<p class="editable-text" style="font-size:12px;color:#9CA3AF;">You received this because you took our quiz.</p>' +
+  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
+  '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  '</table></td></tr></table></div>';
+}
+
+// ================================================================
+// TASK 3.10 - TEMPLATE 3: PROMOTIONAL OFFER
+// ================================================================
+function tplPromoOffer() {
+  return '<div class="email-body" style="background:#F7F7F5;font-family:' + globalFont + ';">' +
+  '<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F7F7F5;">Your exclusive offer expires soon. Based on your quiz score, you qualify for a special discount.</div>' +
+  '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F5;"><tr><td align="center" style="padding:0;">' +
+
+  // Top banner
+  '<table width="100%" cellpadding="0" cellspacing="0"><tr><td class="email-section" data-sid="' + uid() + '" style="background:' + globalColors.primary + ';text-align:center;padding:10px 16px;">' +
+  '<span class="editable-text" style="color:#FFFFFF;font-size:13px;font-weight:600;letter-spacing:1px;">LIMITED TIME OFFER - 48 HOURS ONLY</span>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr></table>' +
+
+  '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:0 0 8px 8px;overflow:hidden;margin-top:0;">' +
+
+  // Header
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:20px 32px;">' +
+  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Hero
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="position:relative;">' +
+  '<img class="editable-img" src="https://images.unsplash.com/photo-1607082349566-187342175e2f?w=600&h=300&fit=crop" alt="Special offer" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
+  '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;">' +
+  '<h1 class="editable-text" style="color:#FFFFFF;font-size:32px;font-weight:800;text-align:center;margin:0;">You Unlocked a Special Offer</h1>' +
+  '</div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Score badge
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:32px;text-align:center;">' +
+  '<div class="tier-badge" style="background:#F59E0B;color:#FFFFFF;">Gold Tier</div>' +
+  '<p class="editable-text" style="font-size:15px;color:#4B5563;margin-top:12px;">Based on your quiz score, you qualify for our best discount:</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Offer box
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:0 32px 24px;">' +
+  '<div class="offer-box">' +
+  '<div class="price-old editable-text">$297</div>' +
+  '<div class="price-new editable-text" style="color:' + globalColors.primary + ';margin-top:4px;">$97</div>' +
+  '<div class="savings-badge editable-text" style="background:#ECFDF5;color:#059669;margin-top:8px;">Save $200 Today</div>' +
+  '<ul class="offer-list">' +
+  '<li class="editable-text">Complete Growth Accelerator Program (12 weeks)</li>' +
+  '<li class="editable-text">Weekly one-on-one coaching calls with a mentor</li>' +
+  '<li class="editable-text">Private community access with 500+ founders</li>' +
+  '<li class="editable-text">Lifetime access to templates and playbooks library</li>' +
+  '<li class="editable-text">Priority support via email and live chat</li>' +
+  '</ul></div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Countdown
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:16px 32px;text-align:center;">' +
+  '<p class="editable-text" style="font-size:13px;color:#6B7280;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Offer expires in</p>' +
+  '<div class="countdown-row">' +
+  '<div class="countdown-box"><div class="countdown-num">01</div><div class="countdown-lbl">Days</div></div>' +
+  '<div class="countdown-box"><div class="countdown-num">23</div><div class="countdown-lbl">Hours</div></div>' +
+  '<div class="countdown-box"><div class="countdown-num">47</div><div class="countdown-lbl">Mins</div></div>' +
+  '<div class="countdown-box"><div class="countdown-num">12</div><div class="countdown-lbl">Secs</div></div>' +
+  '</div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // CTA
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:16px 32px;text-align:center;">' +
+  '<a href="#" class="editable-btn" style="display:inline-block;padding:16px 48px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:18px;font-weight:700;" onclick="event.preventDefault();openBtnPanel(this)">Claim Your Discount Now &#8594;</a>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Guarantee
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:16px 32px;">' +
+  '<div class="guarantee-strip" style="background:#F7F7F5;border-radius:8px;">' +
+  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
+  '<span class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">30-Day Money Back Guarantee</span>' +
+  '</div></div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Secondary CTA
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:8px 32px 24px;text-align:center;">' +
+  '<a href="#" class="editable-text" style="font-size:14px;color:#6B7280;text-decoration:underline;">Not ready? Remind me tomorrow</a>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  // Footer
+  '<tr><td class="email-section" data-sid="' + uid() + '">' +
+  '<div class="section-inner" style="padding:20px 32px;text-align:center;border-top:1px solid #E4E3E0;">' +
+  '<p class="editable-text" style="font-size:12px;color:#9CA3AF;">You received this because you took our quiz and scored in the Gold tier.</p>' +
+  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
+  '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
+  '</div>' +
+  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  '</td></tr>' +
+
+  '</table></td></tr></table></div>';
+}
+
+// ================================================================
+// TEMPLATE SWITCHER
+// ================================================================
+var templateNames = { 'quiz-result': 'Quiz Result Email', 'lead-nurture': 'Lead Nurture Email', 'promo-offer': 'Promotional Offer Email' };
+
+function switchTemplate(id) {
+  currentTemplate = id;
+  document.querySelectorAll('.template-card').forEach(function(c) {
+    c.classList.toggle('active', c.getAttribute('data-tpl') === id);
+  });
+  document.getElementById('topbarTitle').textContent = templateNames[id];
+  renderTemplate();
+  closeAllPanels();
+}
+
+function renderTemplate() {
+  sectionIdCounter = 0;
+  var canvas = document.getElementById('emailCanvas');
+  if (currentTemplate === 'quiz-result') canvas.innerHTML = tplQuizResult();
+  else if (currentTemplate === 'lead-nurture') canvas.innerHTML = tplLeadNurture();
+  else canvas.innerHTML = tplPromoOffer();
+  bindEditableText();
+  updateSectionButtons();
+}
+
+// ================================================================
+// MODE TOGGLE
+// ================================================================
+function setMode(m) {
+  mode = m;
+  var canvas = document.getElementById('emailCanvas');
+  document.getElementById('btnEdit').classList.toggle('active', m === 'edit');
+  document.getElementById('btnPreview').classList.toggle('active', m === 'preview');
+  canvas.classList.toggle('editing', m === 'edit');
+  document.getElementById('leftPanel').classList.toggle('hidden', m === 'preview');
+  closeAllPanels();
+}
+
+// ================================================================
+// TASK 3.3 - INLINE TEXT EDITING
+// ================================================================
+function bindEditableText() {
+  document.querySelectorAll('.editable-text').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      if (mode !== 'edit') return;
+      e.stopPropagation();
+      if (activeTextEl && activeTextEl !== el) deactivateText();
+      activeTextEl = el;
+      originalText = el.innerHTML;
+      el.setAttribute('contenteditable', 'true');
+      el.classList.add('active');
+      el.focus();
+      showTextToolbar(el);
+    });
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        el.innerHTML = originalText;
+        deactivateText();
+      }
+    });
+  });
+}
+
+function deactivateText() {
+  if (!activeTextEl) return;
+  activeTextEl.removeAttribute('contenteditable');
+  activeTextEl.classList.remove('active');
+  activeTextEl = null;
+  document.getElementById('textToolbar').classList.remove('visible');
+}
+
+function showTextToolbar(el) {
+  var tb = document.getElementById('textToolbar');
+  var rect = el.getBoundingClientRect();
+  tb.style.left = rect.left + 'px';
+  tb.style.top = (rect.top - 44) + 'px';
+  if (rect.top < 60) tb.style.top = (rect.bottom + 8) + 'px';
+  tb.classList.add('visible');
+}
+
+function execCmd(cmd) { document.execCommand(cmd, false, null); }
+function execLink() {
+  var url = prompt('Enter URL:');
+  if (url) document.execCommand('createLink', false, url);
+}
+function execFontSize(size) {
+  if (!size || !activeTextEl) return;
+  activeTextEl.style.fontSize = size;
+}
+function execTextColor(color) {
+  document.execCommand('foreColor', false, color);
+}
+
+// Close panels on outside click
+document.addEventListener('click', function(e) {
+  if (mode !== 'edit') return;
+  if (!e.target.closest('.editable-text') && !e.target.closest('.text-toolbar')) deactivateText();
+  if (!e.target.closest('.editable-logo') && !e.target.closest('.logo-panel')) closeLogo();
+  if (!e.target.closest('.editable-img') && !e.target.closest('.image-panel')) closeImage();
+  if (!e.target.closest('.editable-btn') && !e.target.closest('.button-panel')) closeBtn();
+});
+
+// ================================================================
+// TASK 3.2 - LOGO UPLOAD
+// ================================================================
+function openLogoPanel(el) {
+  if (mode !== 'edit') return;
+  activeLogoEl = el;
+  var panel = document.getElementById('logoPanel');
+  var rect = el.getBoundingClientRect();
+  panel.style.left = (rect.right + 12) + 'px';
+  panel.style.top = rect.top + 'px';
+  if (rect.right + 320 > window.innerWidth) {
+    panel.style.left = (rect.left - 320) + 'px';
+  }
+  panel.classList.add('visible');
+}
+function closeLogo() { document.getElementById('logoPanel').classList.remove('visible'); }
+
+function handleLogoFile(input) {
+  if (!input.files[0] || !activeLogoEl) return;
+  var reader = new FileReader();
+  reader.onload = function(e) { applyLogo(e.target.result); };
+  reader.readAsDataURL(input.files[0]);
+  input.value = '';
+}
+
+function handleLogoUrl() {
+  var url = document.getElementById('logoUrlInput').value.trim();
+  if (!url) return;
+  applyLogo(url);
+  document.getElementById('logoUrlInput').value = '';
+}
+
+function applyLogo(src) {
+  if (!activeLogoEl) return;
+  var img = document.createElement('img');
+  img.className = 'editable-logo logo-img';
+  img.src = src;
+  img.alt = 'Logo';
+  img.onclick = function() { openLogoPanel(img); };
+  activeLogoEl.parentNode.replaceChild(img, activeLogoEl);
+  activeLogoEl = img;
+  closeLogo();
+}
+
+function uploadBrandLogo(input) {
+  if (!input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.querySelectorAll('.editable-logo').forEach(function(el) {
+      var img = document.createElement('img');
+      img.className = 'editable-logo logo-img';
+      img.src = e.target.result;
+      img.alt = 'Logo';
+      img.onclick = function() { openLogoPanel(img); };
+      el.parentNode.replaceChild(img, el);
+    });
+  };
+  reader.readAsDataURL(input.files[0]);
+  input.value = '';
+}
+
+// ================================================================
+// TASK 3.4 - IMAGE REPLACE
+// ================================================================
+function openImagePanel(el) {
+  if (mode !== 'edit') return;
+  event.stopPropagation();
+  activeImgEl = el;
+  var panel = document.getElementById('imagePanel');
+  var rect = el.getBoundingClientRect();
+  panel.style.left = Math.min(rect.left, window.innerWidth - 340) + 'px';
+  panel.style.top = Math.min(rect.bottom + 8, window.innerHeight - 400) + 'px';
+  document.getElementById('imgAltInput').value = el.alt || '';
+  panel.classList.add('visible');
+  // Load initial unsplash
+  searchUnsplash('business');
+}
+function closeImage() { document.getElementById('imagePanel').classList.remove('visible'); }
+
+function switchImgTab(tab) {
+  document.querySelectorAll('#imagePanel .tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('#imagePanel .tab-content').forEach(function(c) { c.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById('imgTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+}
+
+function handleImgFile(input) {
+  if (!input.files[0] || !activeImgEl) return;
+  var reader = new FileReader();
+  reader.onload = function(e) { activeImgEl.src = e.target.result; closeImage(); };
+  reader.readAsDataURL(input.files[0]);
+  input.value = '';
+}
+
+function handleImgUrl() {
+  var url = document.getElementById('imgUrlInput').value.trim();
+  if (!url || !activeImgEl) return;
+  activeImgEl.src = url;
+  document.getElementById('imgUrlInput').value = '';
+  closeImage();
+}
+
+var searchTimer = null;
+function searchUnsplash(query) {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() {
+    var grid = document.getElementById('unsplashGrid');
+    grid.innerHTML = '';
+    if (!query) return;
+    var keywords = ['office','team','workspace','nature','technology','city','creative','modern','abstract'];
+    var terms = query.split(' ');
+    for (var i = 0; i < 9; i++) {
+      var img = document.createElement('img');
+      var kw = terms[0] + ',' + (keywords[i] || 'minimal');
+      img.src = 'https://images.unsplash.com/photo-' + (1500000000000 + i * 50000000000) + '-000000000000?w=200&h=140&fit=crop&q=60';
+      // Use picsum for reliable free images
+      img.src = 'https://picsum.photos/seed/' + query.replace(/\s/g,'') + i + '/200/140';
+      img.alt = query;
+      img.onclick = (function(src) { return function() {
+        if (activeImgEl) {
+          activeImgEl.src = 'https://picsum.photos/seed/' + query.replace(/\s/g,'') + src + '/600/400';
+          closeImage();
+        }
+      };})(i);
+      grid.appendChild(img);
+    }
+  }, 300);
+}
+
+function applyImgAlt(val) { if (activeImgEl) activeImgEl.alt = val; }
+
+// Drag and drop on drop zone
+var dropZone = document.getElementById('imgDropZone');
+if (dropZone) {
+  dropZone.addEventListener('dragover', function(e) { e.preventDefault(); e.currentTarget.style.borderColor = '#0D7377'; });
+  dropZone.addEventListener('dragleave', function(e) { e.currentTarget.style.borderColor = '#E4E3E0'; });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault(); e.currentTarget.style.borderColor = '#E4E3E0';
+    if (e.dataTransfer.files[0] && activeImgEl) {
+      var reader = new FileReader();
+      reader.onload = function(ev) { activeImgEl.src = ev.target.result; closeImage(); };
+      reader.readAsDataURL(e.dataTransfer.files[0]);
+    }
+  });
+}
+
+// ================================================================
+// TASK 3.5 - BUTTON EDITOR
+// ================================================================
+function openBtnPanel(el) {
+  if (mode !== 'edit') return;
+  activeBtnEl = el;
+  var panel = document.getElementById('buttonPanel');
+  var rect = el.getBoundingClientRect();
+  panel.style.left = Math.min(rect.left, window.innerWidth - 340) + 'px';
+  panel.style.top = Math.min(rect.bottom + 8, window.innerHeight - 350) + 'px';
+  document.getElementById('btnTextInput').value = el.textContent.trim();
+  document.getElementById('btnLinkInput').value = el.getAttribute('href') || '';
+  document.getElementById('btnBgColor').value = rgbToHex(el.style.backgroundColor) || globalColors.primary;
+  document.getElementById('btnTxtColor').value = rgbToHex(el.style.color) || '#FFFFFF';
+  var radius = parseInt(el.style.borderRadius) || 8;
+  document.getElementById('btnRadius').value = radius;
+  document.getElementById('btnRadiusVal').textContent = radius + 'px';
+  panel.classList.add('visible');
+}
+function closeBtn() { document.getElementById('buttonPanel').classList.remove('visible'); }
+
+function updateBtnText(val) { if (activeBtnEl) activeBtnEl.textContent = val; }
+function updateBtnLink(val) { if (activeBtnEl) activeBtnEl.href = val; }
+function toggleBtnNewTab(el) {
+  el.classList.toggle('on');
+  if (activeBtnEl) activeBtnEl.target = el.classList.contains('on') ? '_blank' : '';
+}
+function updateBtnBgColor(val) { if (activeBtnEl) activeBtnEl.style.backgroundColor = val; }
+function updateBtnTxtColor(val) { if (activeBtnEl) activeBtnEl.style.color = val; }
+function updateBtnRadius(val) {
+  document.getElementById('btnRadiusVal').textContent = val + 'px';
+  if (activeBtnEl) activeBtnEl.style.borderRadius = val + 'px';
+}
+function toggleBtnFullWidth(el) {
+  el.classList.toggle('on');
+  if (activeBtnEl) {
+    activeBtnEl.style.display = el.classList.contains('on') ? 'block' : 'inline-block';
+    activeBtnEl.style.width = el.classList.contains('on') ? '100%' : '';
+    activeBtnEl.style.textAlign = 'center';
+  }
+}
+
+function rgbToHex(rgb) {
+  if (!rgb) return '';
+  if (rgb.charAt(0) === '#') return rgb;
+  var match = rgb.match(/\d+/g);
+  if (!match || match.length < 3) return '#000000';
+  return '#' + match.slice(0,3).map(function(n) { return ('0' + parseInt(n).toString(16)).slice(-2); }).join('');
+}
+
+// ================================================================
+// TASK 3.6 - SECTION CONTROLS
+// ================================================================
+function getSectionTd(btn) {
+  return btn.closest('.section-toolbar').parentElement;
+}
+
+function moveSection(btn, dir) {
+  var td = getSectionTd(btn);
+  var tr = td.parentElement;
+  var tbody = tr.parentElement;
+  if (dir === -1 && tr.previousElementSibling) {
+    tbody.insertBefore(tr, tr.previousElementSibling);
+  } else if (dir === 1 && tr.nextElementSibling) {
+    tbody.insertBefore(tr.nextElementSibling, tr);
+  }
+  updateSectionButtons();
+}
+
+function dupeSection(btn) {
+  var td = getSectionTd(btn);
+  var tr = td.parentElement;
+  var clone = tr.cloneNode(true);
+  // Rebind events
+  tr.parentElement.insertBefore(clone, tr.nextSibling);
+  bindEditableText();
+  updateSectionButtons();
+}
+
+function deleteSection(btn) {
+  var td = getSectionTd(btn);
+  var tr = td.parentElement;
+  var hasContent = td.querySelector('.editable-text, .editable-img, .editable-btn');
+  if (hasContent) {
+    showConfirm('Delete this section and all its content?', function(yes) {
+      if (yes) { tr.remove(); updateSectionButtons(); }
+    });
+  } else {
+    tr.remove();
+    updateSectionButtons();
+  }
+}
+
+function addSectionBelow(btn) {
+  var td = getSectionTd(btn);
+  var tr = td.parentElement;
+  var newTr = document.createElement('tr');
+  newTr.innerHTML = '<td class="email-section" data-sid="' + uid() + '">' +
+    '<div class="section-inner" style="padding:32px;text-align:center;">' +
+    '<p class="editable-text" style="font-size:15px;color:#6B7280;">New section - click to edit text</p>' +
+    '</div>' +
+    '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+    '</td>';
+  tr.parentElement.insertBefore(newTr, tr.nextSibling);
+  bindEditableText();
+  updateSectionButtons();
+}
+
+function updateSectionButtons() {
+  document.querySelectorAll('.email-section').forEach(function(td) {
+    var tr = td.parentElement;
+    if (!tr || !tr.parentElement) return;
+    var trs = Array.from(tr.parentElement.children);
+    var idx = trs.indexOf(tr);
+    var toolbar = td.querySelector('.section-toolbar');
+    if (!toolbar) return;
+    var buttons = toolbar.querySelectorAll('button');
+    if (buttons[0]) buttons[0].disabled = (idx === 0);
+    if (buttons[1]) buttons[1].disabled = (idx === trs.length - 1);
+  });
+}
+
+// ================================================================
+// TASK 3.7 - GLOBAL COLOR PICKER
+// ================================================================
+function applyGlobalColor(type, value) {
+  globalColors[type] = value;
+  // Re-render to apply
+  renderTemplate();
+}
+
+function applyGlobalFont(value) {
+  globalFont = value;
+  renderTemplate();
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function closeAllPanels() {
+  deactivateText();
+  closeLogo();
+  closeImage();
+  closeBtn();
+}
+
+function showConfirm(msg, cb) {
+  confirmCb = cb;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmDialog').classList.add('visible');
+}
+function closeConfirm(result) {
+  document.getElementById('confirmDialog').classList.remove('visible');
+  if (confirmCb) confirmCb(result);
+  confirmCb = null;
+}
+
+function saveTemplate() {
+  // Visual save feedback
+  var btn = event.target;
+  var orig = btn.textContent;
+  btn.textContent = 'Saved';
+  btn.style.background = '#059669';
+  btn.style.color = '#FFFFFF';
+  btn.style.borderColor = '#059669';
+  setTimeout(function() {
+    btn.textContent = orig;
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }, 1500);
+}
+
+// ================================================================
+// TASK 3.11 - EXPORT HTML
+// ================================================================
+function exportHTML() {
+  var canvas = document.getElementById('emailCanvas');
+  var clone = canvas.cloneNode(true);
+
+  // Strip editor UI
+  clone.querySelectorAll('.section-toolbar').forEach(function(t) { t.remove(); });
+  clone.querySelectorAll('[contenteditable]').forEach(function(e) { e.removeAttribute('contenteditable'); });
+  clone.classList.remove('editing');
+  clone.querySelectorAll('.active').forEach(function(e) { e.classList.remove('active'); });
+
+  // Replace merge tags with sample data
+  var sampleData = {
+    '{{first_name}}': 'Jordan',
+    '{{score}}': '82',
+    '{{result_category}}': 'Growth-Stage Founder',
+    '{{result_description}}': 'Your answers reveal that you have achieved product-market fit and are ready to scale.',
+    '{{recommendation}}': 'Growth Accelerator Program',
+    '{{company_name}}': 'Squarespell',
+    '{{quiz_name}}': 'Business Growth Assessment',
+    '{{expiry_date}}': '48 hours'
+  };
+
+  var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + templateNames[currentTemplate] + '</title>\n</head>\n<body style="margin:0;padding:0;">\n' + clone.innerHTML + '\n</body>\n</html>';
+
+  Object.keys(sampleData).forEach(function(tag) {
+    html = html.split(tag).join(sampleData[tag]);
+  });
+
+  document.getElementById('exportCode').textContent = html;
+  document.getElementById('exportModal').classList.add('visible');
+}
+
+function closeExportModal() {
+  document.getElementById('exportModal').classList.remove('visible');
+}
+
+function copyExport() {
+  var code = document.getElementById('exportCode').textContent;
+  navigator.clipboard.writeText(code).then(function() {
+    var btns = document.querySelectorAll('.modal-footer .topbar-btn');
+    btns[0].textContent = 'Copied!';
+    setTimeout(function() { btns[0].textContent = 'Copy to Clipboard'; }, 1500);
+  });
+}
+
+function downloadExport() {
+  var code = document.getElementById('exportCode').textContent;
+  var blob = new Blob([code], { type: 'text/html' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = currentTemplate + '.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ================================================================
+// INIT
+// ================================================================
+renderTemplate();
+</script>
+</body>
+</html>
