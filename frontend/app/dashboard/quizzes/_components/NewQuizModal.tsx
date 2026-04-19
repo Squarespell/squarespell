@@ -139,6 +139,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const urlRef = useRef<HTMLInputElement>(null);
+  const primaryColorRef = useRef<HTMLInputElement>(null);
+  const accentColorRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -539,11 +541,12 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                     </div>
                     <div className="sq-style-body">
                       <div className="sq-swatches">
-                        <div className="sq-swatch">
+                        <div className="sq-swatch" onClick={() => primaryColorRef.current?.click()}>
                           <span className="sq-swatch-role">Primary</span>
                           <span className="sq-swatch-wrap">
                             <label className="sq-swatch-picker">
                               <input
+                                ref={primaryColorRef}
                                 type="color"
                                 className="sq-swatch-input"
                                 value={isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY}
@@ -554,6 +557,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                               type="text"
                               className="sq-swatch-text"
                               value={(isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY).toUpperCase()}
+                              onClick={(e) => e.stopPropagation()}
                               onChange={(e) => {
                                 var v = e.target.value;
                                 if (!v.startsWith('#')) v = '#' + v;
@@ -566,11 +570,12 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                             />
                           </span>
                         </div>
-                        <div className="sq-swatch">
+                        <div className="sq-swatch" onClick={() => accentColorRef.current?.click()}>
                           <span className="sq-swatch-role">Accent</span>
                           <span className="sq-swatch-wrap">
                             <label className="sq-swatch-picker">
                               <input
+                                ref={accentColorRef}
                                 type="color"
                                 className="sq-swatch-input"
                                 value={isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT}
@@ -581,6 +586,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                               type="text"
                               className="sq-swatch-text"
                               value={(isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT).toUpperCase()}
+                              onClick={(e) => e.stopPropagation()}
                               onChange={(e) => {
                                 var v = e.target.value;
                                 if (!v.startsWith('#')) v = '#' + v;
@@ -1124,6 +1130,8 @@ const styles = `
   cursor: default;
   align-self: flex-start;
   transition: background 120ms;
+  pointer-events: none;
+  opacity: 0.85;
 }
 @media (max-width: 720px) {
   .sq-style-body { grid-template-columns: 1fr; }
