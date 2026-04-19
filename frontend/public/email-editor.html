@@ -2664,73 +2664,117 @@ window.addEventListener('message', function(e) {
           }
         });
 
-        // Wrap table rows as email sections with toolbars
-        // GRANULAR SPLITTING: break each TR into individual content blocks
+        // Wrap content blocks as individual editable sections
+        // Each block (image, heading, paragraph, button, etc.) becomes its own section
         var toolbar = sectionToolbarHtml();
-        // Find the main content table
-        var mainTable = canvas.querySelector('table table tbody') || canvas.querySelector('table table') || canvas.querySelector('table tbody') || canvas.querySelector('table');
-        var topLevelTrs = mainTable ? Array.from(mainTable.children).filter(function(el) { return el.tagName === 'TR'; }) : [];
-        if (topLevelTrs.length === 0 && mainTable) {
-          var tbody = mainTable.querySelector('tbody');
-          if (tbody) topLevelTrs = Array.from(tbody.children).filter(function(el) { return el.tagName === 'TR'; });
-        }
 
-        // Split multi-element TDs into separate TRs for granular editing
-        var parentContainer = (topLevelTrs.length > 0) ? topLevelTrs[0].parentElement : null;
-        topLevelTrs.forEach(function(tr) {
-          var td = tr.querySelector('td');
-          if (!td || tr.classList.contains('insert-point-tr')) return;
-          // Get direct children that are content elements
-          var children = Array.from(td.childNodes).filter(function(n) {
-            if (n.nodeType === 3) return n.textContent.trim().length > 0; // text nodes
+        // Find the correct content table:
+        // V2: table.email-container (sections are its direct TRs)
+        // V1: table.container or table table (blocks are already individual TRs)
+        var emailContainer = canvas.querySelector('table.email-container');
+        var isV2 = !!emailContainer;
+        if (!emailContainer) {
+          emailContainer = canvas.querySelector('table.container') || canvas.querySelector('table table') || canvas.querySelector('table');
+        }
+        var containerBody = emailContainer;
+        var tbodyCheck = emailContainer.querySelector(':scope > tbody');
+        if (tbodyCheck) containerBody = tbodyCheck;
+
+        // Helper: filter meaningful content children from a node
+        function getContentChildren(parentEl) {
+          return Array.from(parentEl.childNodes).filter(function(n) {
+            if (n.nodeType === 3) return n.textContent.trim().length > 0;
+            if (n.nodeType === 8) return false; // skip HTML comments (MSO conditionals)
             if (n.nodeType !== 1) return false;
             var tag = n.tagName;
-            // Skip empty divs, whitespace
             if (tag === 'DIV' && n.children.length === 0 && n.textContent.trim() === '') return false;
             return true;
           });
+        }
 
-          // If TD has 3+ direct content children, split into individual TRs
-          if (children.length >= 3) {
-            var groups = splitIntoContentGroups(children);
-            if (groups.length > 1) {
-              var tdStyle = td.getAttribute('style') || '';
-              // Extract padding from original TD
-              var padMatch = tdStyle.match(/padding\s*:\s*([^;]+)/);
-              var origPad = padMatch ? padMatch[1].trim() : '24px 32px';
-              groups.forEach(function(group, gi) {
-                var newTr = document.createElement('tr');
-                var newTd = document.createElement('td');
-                newTd.setAttribute('style', tdStyle);
-                newTd.classList.add('email-section');
-                newTd.setAttribute('data-sid', uid());
-                var inner = document.createElement('div');
-                inner.className = 'section-inner';
-                // Copy the padding from td to inner, reset td padding
-                inner.style.padding = origPad;
-                group.forEach(function(node) { inner.appendChild(node.cloneNode(true)); });
-                newTd.appendChild(inner);
-                newTd.insertAdjacentHTML('beforeend', sectionToolbarHtml());
-                newTr.appendChild(newTd);
-                tr.parentElement.insertBefore(newTr, tr);
-              });
-              tr.remove();
-              return; // skip normal wrapping for this TR
+        // Helper: parse padding from style string
+        function parsePadding(styleStr) {
+          var result = { top: '0', right: '32px', bottom: '0', left: '32px' };
+          var match = styleStr.match(/padding\s*:\s*([^;]+)/);
+          if (match) {
+            var pp = match[1].trim().split(/\s+/);
+            if (pp.length === 4) { result.top = pp[0]; result.right = pp[1]; result.bottom = pp[2]; result.left = pp[3]; }
+            else if (pp.length === 2) { result.top = pp[0]; result.right = pp[1]; result.bottom = pp[0]; result.left = pp[1]; }
+            else if (pp.length === 1) { result.top = result.right = result.bottom = result.left = pp[0]; }
+          }
+          return result;
+        }
+
+        // Helper: create a section TR for a single content block
+        function createBlockSectionTr(contentNode, bgColor, padRight, padLeft, padTop, padBottom) {
+          var newTr = document.createElement('tr');
+          var newTd = document.createElement('td');
+          newTd.setAttribute('style', 'background-color:' + bgColor + ';padding:' + padTop + ' ' + padRight + ' ' + padBottom + ' ' + padLeft + ';');
+          newTd.classList.add('email-section');
+          newTd.setAttribute('data-sid', uid());
+          var inner = document.createElement('div');
+          inner.className = 'section-inner';
+          inner.appendChild(contentNode.cloneNode(true));
+          newTd.appendChild(inner);
+          newTd.insertAdjacentHTML('beforeend', sectionToolbarHtml());
+          newTr.appendChild(newTd);
+          return newTr;
+        }
+
+        // Collect all TRs from the container
+        var allTrs = Array.from(containerBody.children).filter(function(el) {
+          return el.tagName === 'TR' && !el.classList.contains('insert-point-tr');
+        });
+
+        allTrs.forEach(function(tr) {
+          var td = tr.children[0];
+          if (!td || td.tagName !== 'TD') return;
+
+          var sectionStyle = td.getAttribute('style') || '';
+          var bgMatch = sectionStyle.match(/background-color\s*:\s*([^;]+)/);
+          var sectionBg = bgMatch ? bgMatch[1].trim() : '#FFFFFF';
+          var pad = parsePadding(sectionStyle);
+
+          // For V2 templates, dig into the row table to find the content column
+          var contentTd = td;
+          if (isV2) {
+            var rowTable = td.querySelector(':scope > table');
+            if (rowTable) {
+              var innerTd = rowTable.querySelector('td');
+              if (innerTd) contentTd = innerTd;
             }
           }
 
-          // Normal single-section wrapping
-          td.classList.add('email-section');
-          td.setAttribute('data-sid', uid());
-          if (!td.querySelector('.section-inner')) {
-            var inner = document.createElement('div');
-            inner.className = 'section-inner';
-            while (td.firstChild) {
-              inner.appendChild(td.firstChild);
+          var children = getContentChildren(contentTd);
+
+          if (children.length > 1) {
+            // SPLIT: each content child becomes its own section TR
+            children.forEach(function(child, ci) {
+              var bpt = (ci === 0) ? pad.top : '4px';
+              var bpb = (ci === children.length - 1) ? pad.bottom : '4px';
+              var blockTr = createBlockSectionTr(child, sectionBg, pad.right, pad.left, bpt, bpb);
+              containerBody.insertBefore(blockTr, tr);
+            });
+            tr.remove();
+          } else {
+            // Single content or already granular -- wrap as one section
+            td.classList.add('email-section');
+            td.setAttribute('data-sid', uid());
+            // Flatten row table wrapper if present (V2)
+            if (isV2 && contentTd !== td) {
+              var inner = document.createElement('div');
+              inner.className = 'section-inner';
+              while (contentTd.firstChild) inner.appendChild(contentTd.firstChild);
+              td.innerHTML = '';
+              td.appendChild(inner);
+            } else if (!td.querySelector('.section-inner')) {
+              var inner = document.createElement('div');
+              inner.className = 'section-inner';
+              while (td.firstChild) inner.appendChild(td.firstChild);
+              td.appendChild(inner);
             }
-            td.appendChild(inner);
+            td.insertAdjacentHTML('beforeend', toolbar);
           }
-          td.insertAdjacentHTML('beforeend', toolbar);
         });
 
         // Re-enable contenteditable on already-marked elements
@@ -2785,7 +2829,15 @@ function broadcastHtml() {
     clone.querySelectorAll('.img-placeholder').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('.section-label').forEach(function(el) { el.remove(); });
     clone.querySelectorAll('[data-ph]').forEach(function(el) { el.removeAttribute('data-ph'); });
+    clone.querySelectorAll('[data-sid]').forEach(function(el) { el.removeAttribute('data-sid'); });
     clone.querySelectorAll('.section-selected').forEach(function(el) { el.classList.remove('section-selected'); });
+    clone.querySelectorAll('.email-section').forEach(function(el) { el.classList.remove('email-section'); });
+    // Unwrap section-inner divs (keep their children)
+    clone.querySelectorAll('.section-inner').forEach(function(inner) {
+      var parent = inner.parentElement;
+      while (inner.firstChild) parent.insertBefore(inner.firstChild, inner);
+      inner.remove();
+    });
     clone.classList.remove('editing');
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;">' + clone.innerHTML + '</body></html>';
     window.parent.postMessage({ type: 'sq-editor-html', html: html }, '*');
@@ -2994,9 +3046,11 @@ function insertBlock(type) {
   if (insertAfterTr && insertAfterTr.parentElement) {
     insertAfterTr.parentElement.insertBefore(newTr, insertAfterTr.nextSibling);
   } else {
-    // Fallback: add to end
-    var tbody = document.querySelector('#emailCanvas table table tbody, #emailCanvas table table');
-    if (tbody) tbody.appendChild(newTr);
+    // Fallback: add to end of the correct container
+    var emailCont = document.querySelector('#emailCanvas table.email-container');
+    if (!emailCont) emailCont = document.querySelector('#emailCanvas table.container') || document.querySelector('#emailCanvas table table');
+    var tbodyFallback = emailCont ? (emailCont.querySelector(':scope > tbody') || emailCont) : null;
+    if (tbodyFallback) tbodyFallback.appendChild(newTr);
   }
 
   bindEditableText();
