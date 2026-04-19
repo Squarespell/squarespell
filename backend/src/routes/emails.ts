@@ -80,15 +80,32 @@ r.get('/recipients/preview', async (req, res) => {
   }
 });
 
-// Quizzes dropdown for the source picker
+// Quizzes dropdown for the source picker - only live quizzes with lead counts
 r.get('/source-quizzes', async (req, res) => {
   const tenantId = req.dbUserId;
   const { data, error } = await supabase.from('quizzes')
     .select('id, title, slug')
     .eq('user_id', tenantId)
+    .eq('status', 'live')
     .order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
+  // Attach lead counts
+  const quizIds = (data || []).map((q: any) => q.id);
+  let countMap: Record<string, number> = {};
+  if (quizIds.length > 0) {
+    const { data: counts } = await supabase.from('leads')
+      .select('quiz_id')
+      .eq('user_id', tenantId)
+      .in('quiz_id', quizIds);
+    (counts || []).forEach((r: any) => {
+      countMap[r.quiz_id] = (countMap[r.quiz_id] || 0) + 1;
+    });
+  }
+  const enriched = (data || []).map((q: any) => ({
+    ...q,
+    lead_count: countMap[q.id] || 0,
+  }));
+  res.json(enriched);
 });
 
 // Outcomes for filter dropdown - returns { id, name } objects
