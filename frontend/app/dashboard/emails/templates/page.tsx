@@ -1,8 +1,8 @@
 'use client';
 
-// Templates gallery. Previews block-based templates rendered via
-// renderBlocks() against DEFAULT_BRAND_KIT + SAMPLE_CONTEXT so designers
-// see a realistic preview before picking a source quiz.
+// Templates gallery. Shows both v1 block-based templates and v2 section-based
+// templates in a unified grid. V2 templates render through the new TABLE-based
+// render engine with Outlook/mobile support.
 
 import { useMemo, useState } from 'react';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
@@ -11,10 +11,90 @@ import { EMAIL_TEMPLATES, CATEGORY_LABELS, SITE_TYPE_LABELS } from '../../../../
 import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
 import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
 import { renderBlocks } from '../../../../lib/email/renderBlocks';
+import { V2_TEMPLATES } from '../../../../lib/email/v2/templates';
+import { renderTemplateV2, SAMPLE_DATA } from '../../../../lib/email/v2/renderer';
 import type { EmailTemplate, TemplateCategory, SiteType } from '../../../../lib/email/blocks';
+import type { EmailTemplateV2 } from '../../../../lib/email/v2/schema';
 
-const FILTERS: (TemplateCategory | 'all')[] = [
+// ---------------------------------------------------------------------------
+// Unified gallery item type
+// ---------------------------------------------------------------------------
+
+interface GalleryItem {
+  id: string;
+  title: string;
+  oneLiner: string;
+  whyQuizNative: string;
+  category: string;
+  siteType?: string;
+  defaultSubject: string;
+  defaultPreheader: string;
+  mergeTags: string[];
+  isV2: boolean;
+  v1?: EmailTemplate;
+  v2?: EmailTemplateV2;
+}
+
+// Map v2 category to the label set
+var V2_CATEGORY_LABELS: Record<string, string> = {
+  ...CATEGORY_LABELS,
+  'quiz-result': 'Quiz result',
+  'lead-nurture': 'Lead nurture',
+  'promotional': 'Promotional',
+};
+
+function adaptV2(t: EmailTemplateV2): GalleryItem {
+  return {
+    id: t.metadata.id,
+    title: t.metadata.name,
+    oneLiner: t.metadata.description,
+    whyQuizNative: 'Built on the v2 render engine with TABLE-based layout, Outlook MSO conditionals, VML button fallbacks, and mobile responsive design.',
+    category: t.metadata.category,
+    defaultSubject: t.metadata.subject,
+    defaultPreheader: t.metadata.preheader,
+    mergeTags: t.metadata.mergeTags,
+    isV2: true,
+    v2: t,
+  };
+}
+
+function adaptV1(t: EmailTemplate): GalleryItem {
+  return {
+    id: t.id,
+    title: t.title,
+    oneLiner: t.oneLiner,
+    whyQuizNative: t.whyQuizNative,
+    category: t.category,
+    siteType: t.siteType,
+    defaultSubject: t.defaultSubject,
+    defaultPreheader: t.defaultPreheader,
+    mergeTags: t.mergeTags,
+    isV2: false,
+    v1: t,
+  };
+}
+
+function renderGalleryPreview(item: GalleryItem): string {
+  if (item.isV2 && item.v2) {
+    return renderTemplateV2(item.v2, SAMPLE_DATA);
+  }
+  if (item.v1) {
+    return renderBlocks(item.v1.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {
+      preheader: item.v1.defaultPreheader,
+    });
+  }
+  return '';
+}
+
+// ---------------------------------------------------------------------------
+// Filters
+// ---------------------------------------------------------------------------
+
+var ALL_CATEGORIES = [
   'all',
+  'quiz-result',
+  'lead-nurture',
+  'promotional',
   'post-quiz',
   'outcome',
   'nurture',
@@ -23,7 +103,7 @@ const FILTERS: (TemplateCategory | 'all')[] = [
   'discount',
 ];
 
-const SITE_FILTERS: (SiteType | 'all')[] = [
+var SITE_FILTERS: (SiteType | 'all')[] = [
   'all',
   'portfolio',
   'restaurant',
@@ -34,13 +114,23 @@ const SITE_FILTERS: (SiteType | 'all')[] = [
   'services',
 ];
 
-export default function EmailTemplatesPage() {
-  const [filter, setFilter] = useState<TemplateCategory | 'all'>('all');
-  const [siteFilter, setSiteFilter] = useState<SiteType | 'all'>('all');
-  const [selected, setSelected] = useState<EmailTemplate | null>(null);
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
-  const visible = useMemo(() => {
-    var list = EMAIL_TEMPLATES;
+export default function EmailTemplatesPage() {
+  var [filter, setFilter] = useState('all');
+  var [siteFilter, setSiteFilter] = useState<SiteType | 'all'>('all');
+  var [selected, setSelected] = useState<GalleryItem | null>(null);
+
+  var allItems = useMemo(function () {
+    var v2Items = V2_TEMPLATES.map(adaptV2);
+    var v1Items = EMAIL_TEMPLATES.map(adaptV1);
+    return v2Items.concat(v1Items);
+  }, []);
+
+  var visible = useMemo(function () {
+    var list = allItems;
     if (filter !== 'all') {
       list = list.filter(function (t) { return t.category === filter; });
     }
@@ -48,14 +138,21 @@ export default function EmailTemplatesPage() {
       list = list.filter(function (t) { return t.siteType === siteFilter; });
     }
     return list;
-  }, [filter, siteFilter]);
+  }, [allItems, filter, siteFilter]);
 
-  const previewHtml = useMemo(() => {
+  var previewHtml = useMemo(function () {
     if (!selected) return '';
-    return renderBlocks(selected.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {
-      preheader: selected.defaultPreheader,
-    });
+    return renderGalleryPreview(selected);
   }, [selected]);
+
+  // Only show category filters that have at least one template
+  var activeCategories = useMemo(function () {
+    var cats = new Set<string>();
+    for (var i = 0; i < allItems.length; i++) {
+      cats.add(allItems[i].category);
+    }
+    return ALL_CATEGORIES.filter(function (c) { return c === 'all' || cats.has(c); });
+  }, [allItems]);
 
   return (
     <DashboardShell>
@@ -66,9 +163,9 @@ export default function EmailTemplatesPage() {
 
       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Email type</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        {FILTERS.map(function (f) {
-          const active = f === filter;
-          const label = f === 'all' ? 'All' : (CATEGORY_LABELS[f] || f);
+        {activeCategories.map(function (f) {
+          var active = f === filter;
+          var label = f === 'all' ? 'All' : (V2_CATEGORY_LABELS[f] || CATEGORY_LABELS[f as TemplateCategory] || f);
           return (
             <button
               key={f}
@@ -92,8 +189,8 @@ export default function EmailTemplatesPage() {
       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Site type</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
         {SITE_FILTERS.map(function (f) {
-          const active = f === siteFilter;
-          const label = f === 'all' ? 'All' : (SITE_TYPE_LABELS[f] || f);
+          var active = f === siteFilter;
+          var label = f === 'all' ? 'All' : (SITE_TYPE_LABELS[f] || f);
           return (
             <button
               key={f}
@@ -123,9 +220,7 @@ export default function EmailTemplatesPage() {
         }}
       >
         {visible.map(function (t) {
-          const thumb = renderBlocks(t.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {
-            preheader: t.defaultPreheader,
-          });
+          var thumb = renderGalleryPreview(t);
           return (
             <Card key={t.id} style={{ padding: 0, overflow: 'hidden' }}>
               <div
@@ -153,9 +248,10 @@ export default function EmailTemplatesPage() {
               <div style={{ padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT }}>{t.title}</div>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    {t.siteType ? <Pill variant="accent">{SITE_TYPE_LABELS[t.siteType] || t.siteType}</Pill> : null}
-                    <Pill variant="accent">{CATEGORY_LABELS[t.category] || t.category}</Pill>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    {t.isV2 ? <Pill variant="accent">V2</Pill> : null}
+                    {t.siteType ? <Pill variant="accent">{SITE_TYPE_LABELS[t.siteType as SiteType] || t.siteType}</Pill> : null}
+                    <Pill variant="accent">{V2_CATEGORY_LABELS[t.category] || CATEGORY_LABELS[t.category as TemplateCategory] || t.category}</Pill>
                   </div>
                 </div>
                 <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5, marginBottom: 14 }}>
@@ -220,9 +316,10 @@ export default function EmailTemplatesPage() {
           >
             <div style={{ padding: 20, borderRight: '1px solid ' + C.BORDER, overflow: 'auto' }}>
               <div style={{ fontSize: 18, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>{selected.title}</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {selected.siteType ? <Pill variant="accent">{SITE_TYPE_LABELS[selected.siteType] || selected.siteType}</Pill> : null}
-                <Pill variant="accent">{CATEGORY_LABELS[selected.category]}</Pill>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {selected.isV2 ? <Pill variant="accent">V2</Pill> : null}
+                {selected.siteType ? <Pill variant="accent">{SITE_TYPE_LABELS[selected.siteType as SiteType] || selected.siteType}</Pill> : null}
+                <Pill variant="accent">{V2_CATEGORY_LABELS[selected.category] || CATEGORY_LABELS[selected.category as TemplateCategory]}</Pill>
               </div>
               <div style={{ marginTop: 16, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.6 }}>
                 {selected.oneLiner}
