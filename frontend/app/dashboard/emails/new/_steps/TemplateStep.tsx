@@ -9,6 +9,7 @@ import { renderBlocks } from '../../../../../lib/email/renderBlocks';
 import { V2_TEMPLATES } from '../../../../../lib/email/v2/templates';
 import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/renderer';
 import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
+import { CANVA_TEMPLATES } from '../../../../../lib/email/canvaTemplates';
 
 // Unified gallery item for both v1 and v2
 interface TemplateItem {
@@ -27,23 +28,22 @@ interface TemplateItem {
 function buildItems(): TemplateItem[] {
   var items: TemplateItem[] = [];
 
-  // V2 templates first
-  for (var i = 0; i < V2_TEMPLATES.length; i++) {
-    var t2 = V2_TEMPLATES[i];
+  // Canva templates (primary)
+  for (var k = 0; k < CANVA_TEMPLATES.length; k++) {
+    var ct = CANVA_TEMPLATES[k];
     items.push({
-      id: t2.metadata.id,
-      title: t2.metadata.name,
-      description: t2.metadata.description,
-      category: t2.metadata.category,
+      id: ct.id,
+      title: ct.name,
+      description: ct.description,
+      category: ct.category,
       isV2: true,
-      html: renderTemplateV2(t2, SAMPLE_DATA),
-      subject: t2.metadata.subject,
-      preheader: t2.metadata.preheader,
-      v2: t2,
+      html: ct.html,
+      subject: ct.subject,
+      preheader: ct.preheader,
     });
   }
 
-  // V1 templates
+  // V1 templates (legacy)
   for (var j = 0; j < BLOCK_TEMPLATES.length; j++) {
     var t1 = BLOCK_TEMPLATES[j];
     items.push({

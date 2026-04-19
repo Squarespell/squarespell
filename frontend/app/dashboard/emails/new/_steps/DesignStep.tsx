@@ -11,6 +11,7 @@ import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/rende
 import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
 import { autoDesignTemplate } from '../../../../../lib/email/v2/autoDesign';
 import type { BrandKitFromAPI, QuizData, AutoDesignResult } from '../../../../../lib/email/v2/autoDesign';
+import { CANVA_TEMPLATES, CANVA_CATEGORIES } from '../../../../../lib/email/canvaTemplates';
 import { api } from '../../../../../lib/api';
 
 export type DesignState = {
@@ -41,40 +42,27 @@ interface TemplateItem {
 
 function buildItems(): TemplateItem[] {
   var items: TemplateItem[] = [];
-  for (var i = 0; i < V2_TEMPLATES.length; i++) {
-    var t2 = V2_TEMPLATES[i];
+  // Canva templates (primary - professional designs)
+  for (var k = 0; k < CANVA_TEMPLATES.length; k++) {
+    var ct = CANVA_TEMPLATES[k];
     items.push({
-      id: t2.metadata.id,
-      title: t2.metadata.name,
-      description: t2.metadata.description,
-      category: t2.metadata.category,
+      id: ct.id,
+      title: ct.name,
+      description: ct.description,
+      category: ct.category,
       isV2: true,
-      html: renderTemplateV2(t2, SAMPLE_DATA),
-      subject: t2.metadata.subject,
-      preheader: t2.metadata.preheader,
-    });
-  }
-  for (var j = 0; j < BLOCK_TEMPLATES.length; j++) {
-    var t1 = BLOCK_TEMPLATES[j];
-    items.push({
-      id: t1.id,
-      title: t1.title,
-      description: t1.oneLiner,
-      category: t1.category,
-      isV2: false,
-      html: renderBlocks(t1.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, { preheader: t1.defaultPreheader }),
-      subject: t1.defaultSubject,
-      preheader: t1.defaultPreheader,
+      html: ct.html,
+      subject: ct.subject,
+      preheader: ct.preheader,
     });
   }
   return items;
 }
 
-var V2_LABELS: Record<string, string> = {
-  'quiz-result': 'Quiz result',
-  'lead-nurture': 'Lead nurture',
-  'promotional': 'Promotional',
-};
+var V2_LABELS: Record<string, string> = {};
+for (var ci = 0; ci < CANVA_CATEGORIES.length; ci++) {
+  V2_LABELS[CANVA_CATEGORIES[ci]] = CANVA_CATEGORIES[ci];
+}
 
 export function DesignStep({
   state, setState, phase, setPhase, onNext, onBack, quizCategory, quizId,

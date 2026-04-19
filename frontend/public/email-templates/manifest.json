@@ -1,0 +1,107 @@
+[
+  {
+    "id": "canva-ecom-elegant",
+    "name": "Elegant E-commerce",
+    "category": "E-commerce",
+    "desc": "Warm beige and brown tones with elegant serif typography",
+    "file": "canva-ecom-elegant.html"
+  },
+  {
+    "id": "canva-ecom-minimal",
+    "name": "Minimal E-commerce",
+    "category": "E-commerce",
+    "desc": "Clean black and white minimalist product showcase",
+    "file": "canva-ecom-minimal.html"
+  },
+  {
+    "id": "canva-ecom-bold",
+    "name": "Bold E-commerce",
+    "category": "E-commerce",
+    "desc": "Vibrant blue and pink with bold, poppy style",
+    "file": "canva-ecom-bold.html"
+  },
+  {
+    "id": "canva-edu-handdrawn",
+    "name": "Education & Training",
+    "category": "Education",
+    "desc": "Warm cream and yellow with hand-drawn human-centric style",
+    "file": "canva-edu-handdrawn.html"
+  },
+  {
+    "id": "canva-fitness-darkblue",
+    "name": "Fitness - Dark Blue",
+    "category": "Fitness",
+    "desc": "Professional fitness layout in cream and dark blue",
+    "file": "canva-fitness-darkblue.html"
+  },
+  {
+    "id": "canva-fitness-green",
+    "name": "Fitness - Fresh Green",
+    "category": "Fitness",
+    "desc": "Clean wellness layout in light yellow and green",
+    "file": "canva-fitness-green.html"
+  },
+  {
+    "id": "canva-health-minimal",
+    "name": "Healthcare - Minimal",
+    "category": "Healthcare",
+    "desc": "Clean medical layout in white, black, and grey",
+    "file": "canva-health-minimal.html"
+  },
+  {
+    "id": "canva-health-pastel",
+    "name": "Healthcare - Pastel",
+    "category": "Healthcare",
+    "desc": "Soft pastel pink and blue healthcare design",
+    "file": "canva-health-pastel.html"
+  },
+  {
+    "id": "canva-health-purple",
+    "name": "Healthcare - Purple",
+    "category": "Healthcare",
+    "desc": "Pastel purple and blue medical template",
+    "file": "canva-health-purple.html"
+  },
+  {
+    "id": "canva-media-minimal",
+    "name": "Media & Publishing",
+    "category": "Media",
+    "desc": "Minimal black, white and beige publishing layout",
+    "file": "canva-media-minimal.html"
+  },
+  {
+    "id": "canva-realestate-grey",
+    "name": "Real Estate - Modern",
+    "category": "Real Estate",
+    "desc": "Modern grey and orange real estate template",
+    "file": "canva-realestate-grey.html"
+  },
+  {
+    "id": "canva-realestate-green",
+    "name": "Real Estate - Green",
+    "category": "Real Estate",
+    "desc": "Green and beige hand-drawn real estate design",
+    "file": "canva-realestate-green.html"
+  },
+  {
+    "id": "canva-saas-green2",
+    "name": "SaaS - Dark Green Alt",
+    "category": "SaaS",
+    "desc": "Modern dark green SaaS template with animations",
+    "file": "canva-saas-green2.html"
+  },
+  {
+    "id": "canva-saas-green",
+    "name": "SaaS - Dark Green",
+    "category": "SaaS",
+    "desc": "Futuristic beige and dark green B2B layout",
+    "file": "canva-saas-green.html"
+  },
+  {
+    "id": "canva-saas-darkgreen",
+    "name": "SaaS - Futuristic",
+    "category": "SaaS",
+    "desc": "Dark green and black modern B2B design",
+    "file": "canva-saas-darkgreen.html"
+  }
+]
