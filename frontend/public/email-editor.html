@@ -61,10 +61,39 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 
 /* --- Color control --- */
 .color-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
-.color-row label { font-size: 12px; color: #4B5563; }
+.color-row-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+}
+.color-row-header label { font-size: 12px; color: #4B5563; font-weight: 500; }
+.color-row-header .color-preview {
+  width: 24px; height: 24px; border-radius: 6px; border: 2px solid #E4E3E0;
+}
+.color-swatches {
+  display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px;
+}
+.color-swatches .cs {
+  width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.12s; flex-shrink: 0;
+}
+.color-swatches .cs:hover { border-color: #1A1A1A; transform: scale(1.1); }
+.color-swatches .cs.active { border-color: #0D7377; box-shadow: 0 0 0 2px rgba(13,115,119,0.3); }
+.color-hex-row {
+  display: flex; gap: 6px; align-items: center;
+}
+.color-hex-row input {
+  flex: 1; padding: 6px 8px; border: 1px solid #E4E3E0; border-radius: 6px;
+  font-size: 12px; font-family: monospace; color: #1A1A1A;
+}
+.color-hex-row input:focus { outline: none; border-color: #0D7377; }
+.color-hex-row .color-apply-btn {
+  padding: 6px 10px; border: 1px solid #E4E3E0; border-radius: 6px;
+  background: #FFFFFF; cursor: pointer; font-size: 11px; font-weight: 600;
+  color: #0D7377; transition: all 0.12s;
+}
+.color-hex-row .color-apply-btn:hover { background: #F0FDFA; border-color: #0D7377; }
+/* Keep native for button panel */
 .color-swatch-input {
   width: 32px; height: 32px; border: 2px solid #E4E3E0; border-radius: 8px;
   cursor: pointer; padding: 0; overflow: hidden;
@@ -72,10 +101,44 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .color-swatch-input::-webkit-color-swatch-wrapper { padding: 0; }
 .color-swatch-input::-webkit-color-swatch { border: none; border-radius: 6px; }
 
-/* --- Font picker --- */
-.font-select {
-  width: 100%; padding: 8px 10px; border: 1px solid #E4E3E0; border-radius: 8px;
+/* --- Font picker (custom styled) --- */
+.font-picker-wrap { position: relative; }
+.font-picker-trigger {
+  width: 100%; padding: 8px 12px; border: 1px solid #E4E3E0; border-radius: 8px;
   font-size: 13px; color: #1A1A1A; background: #FFFFFF; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color 0.15s;
+}
+.font-picker-trigger:hover { border-color: #0D7377; }
+.font-picker-trigger .fp-arrow {
+  width: 16px; height: 16px; color: #6B7280; flex-shrink: 0;
+}
+.font-picker-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: #FFFFFF; border: 1px solid #E4E3E0; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 80;
+  max-height: 320px; display: none; flex-direction: column;
+}
+.font-picker-dropdown.open { display: flex; }
+.font-picker-search {
+  padding: 8px 12px; border: none; border-bottom: 1px solid #E4E3E0;
+  font-size: 12px; color: #1A1A1A; outline: none; border-radius: 10px 10px 0 0;
+}
+.font-picker-list {
+  overflow-y: auto; flex: 1; max-height: 260px;
+}
+.font-picker-option {
+  padding: 8px 12px; cursor: pointer; font-size: 14px; color: #1A1A1A;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.1s;
+}
+.font-picker-option:hover { background: #F7F7F5; }
+.font-picker-option.active { background: #F0FDFA; color: #0D7377; font-weight: 600; }
+.font-picker-option .fp-check { color: #0D7377; display: none; }
+.font-picker-option.active .fp-check { display: inline; }
+.font-picker-option .fp-badge {
+  font-size: 9px; padding: 2px 5px; border-radius: 4px;
+  background: #F0FDFA; color: #0D7377; font-weight: 600; letter-spacing: 0.5px;
 }
 
 /* --- Right Panel (Preview) --- */
@@ -357,7 +420,6 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
     <button id="btnPreview" onclick="setMode('preview')">Preview</button>
   </div>
   <button class="topbar-btn" onclick="saveTemplate()">Save</button>
-  <button class="topbar-btn primary" onclick="exportHTML()">Export HTML</button>
 </div>
 
 <!-- ================================================================
@@ -386,33 +448,54 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
     <!-- Global Colors -->
     <div class="panel-section">
       <div class="panel-label">Global Colors</div>
-      <div class="color-row">
-        <label>Primary</label>
-        <input type="color" class="color-swatch-input" id="globalPrimary" value="#0D7377" onchange="applyGlobalColor('primary', this.value)">
+      <div class="color-row" id="colorRowPrimary">
+        <div class="color-row-header">
+          <label>Primary</label>
+          <div class="color-preview" id="previewPrimary" style="background:#0D7377;"></div>
+        </div>
+        <div class="color-swatches" id="swatchesPrimary"></div>
+        <div class="color-hex-row">
+          <input type="text" id="hexPrimary" value="#0D7377" maxlength="7" placeholder="#000000" onkeydown="if(event.key==='Enter')applyColorHex('primary')">
+          <button class="color-apply-btn" onclick="applyColorHex('primary')">Apply</button>
+        </div>
       </div>
-      <div class="color-row">
-        <label>Background</label>
-        <input type="color" class="color-swatch-input" id="globalBg" value="#FFFFFF" onchange="applyGlobalColor('background', this.value)">
+      <div class="color-row" id="colorRowBg">
+        <div class="color-row-header">
+          <label>Background</label>
+          <div class="color-preview" id="previewBg" style="background:#FFFFFF;"></div>
+        </div>
+        <div class="color-swatches" id="swatchesBg"></div>
+        <div class="color-hex-row">
+          <input type="text" id="hexBg" value="#FFFFFF" maxlength="7" placeholder="#FFFFFF" onkeydown="if(event.key==='Enter')applyColorHex('background')">
+          <button class="color-apply-btn" onclick="applyColorHex('background')">Apply</button>
+        </div>
       </div>
-      <div class="color-row">
-        <label>Text</label>
-        <input type="color" class="color-swatch-input" id="globalText" value="#1A1A1A" onchange="applyGlobalColor('text', this.value)">
+      <div class="color-row" id="colorRowText">
+        <div class="color-row-header">
+          <label>Text</label>
+          <div class="color-preview" id="previewText" style="background:#1A1A1A;"></div>
+        </div>
+        <div class="color-swatches" id="swatchesText"></div>
+        <div class="color-hex-row">
+          <input type="text" id="hexText" value="#1A1A1A" maxlength="7" placeholder="#1A1A1A" onkeydown="if(event.key==='Enter')applyColorHex('text')">
+          <button class="color-apply-btn" onclick="applyColorHex('text')">Apply</button>
+        </div>
       </div>
     </div>
 
-    <!-- Font Picker -->
+    <!-- Font Picker (custom styled) -->
     <div class="panel-section">
       <div class="panel-label">Font Family</div>
-      <select class="font-select" id="fontPicker" onchange="applyGlobalFont(this.value)">
-        <option value="Inter, sans-serif">Inter</option>
-        <option value="Georgia, serif">Georgia</option>
-        <option value="Helvetica, Arial, sans-serif">Helvetica</option>
-        <option value="Arial, sans-serif">Arial</option>
-        <option value="Verdana, sans-serif">Verdana</option>
-        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-        <option value="'Times New Roman', serif">Times New Roman</option>
-        <option value="'Courier New', monospace">Courier New</option>
-      </select>
+      <div class="font-picker-wrap" id="fontPickerWrap">
+        <div class="font-picker-trigger" id="fontPickerTrigger" onclick="toggleFontPicker()">
+          <span id="fontPickerLabel" style="font-family: Inter, sans-serif;">Inter</span>
+          <svg class="fp-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="font-picker-dropdown" id="fontPickerDropdown">
+          <input type="text" class="font-picker-search" id="fontSearch" placeholder="Search fonts..." oninput="filterFonts(this.value)">
+          <div class="font-picker-list" id="fontPickerList"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Brand Kit -->
@@ -1098,26 +1181,53 @@ function searchUnsplash(query) {
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = setTimeout(function() {
     var grid = document.getElementById('unsplashGrid');
-    grid.innerHTML = '';
-    if (!query) return;
-    var keywords = ['office','team','workspace','nature','technology','city','creative','modern','abstract'];
-    var terms = query.split(' ');
-    for (var i = 0; i < 9; i++) {
-      var img = document.createElement('img');
-      var kw = terms[0] + ',' + (keywords[i] || 'minimal');
-      img.src = 'https://images.unsplash.com/photo-' + (1500000000000 + i * 50000000000) + '-000000000000?w=200&h=140&fit=crop&q=60';
-      // Use picsum for reliable free images
-      img.src = 'https://picsum.photos/seed/' + query.replace(/\s/g,'') + i + '/200/140';
-      img.alt = query;
-      img.onclick = (function(src) { return function() {
-        if (activeImgEl) {
-          activeImgEl.src = 'https://picsum.photos/seed/' + query.replace(/\s/g,'') + src + '/600/400';
-          closeImage();
+    grid.innerHTML = '<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">Searching...</div>';
+    if (!query) { grid.innerHTML = ''; return; }
+
+    // Determine API base (parent window origin for iframe, or same origin)
+    var apiBase = '';
+    try {
+      if (window.parent !== window && window.parent.location.origin) {
+        apiBase = window.parent.location.origin;
+      }
+    } catch(e) { /* cross-origin, use relative */ }
+
+    fetch(apiBase + '/api/emails/unsplash/search?q=' + encodeURIComponent(query))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        grid.innerHTML = '';
+        var results = data.results || [];
+        if (results.length === 0) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">No images found</div>';
+          return;
         }
-      };})(i);
-      grid.appendChild(img);
-    }
-  }, 300);
+        results.forEach(function(photo) {
+          var wrap = document.createElement('div');
+          wrap.style.cssText = 'position:relative;cursor:pointer;';
+          var img = document.createElement('img');
+          img.src = photo.thumb;
+          img.alt = photo.alt || query;
+          img.loading = 'lazy';
+          img.onclick = function() {
+            if (activeImgEl) {
+              activeImgEl.src = photo.regular;
+              activeImgEl.alt = photo.alt || '';
+              closeImage();
+            }
+          };
+          wrap.appendChild(img);
+          // Credit
+          var credit = document.createElement('div');
+          credit.style.cssText = 'position:absolute;bottom:2px;left:2px;right:2px;font-size:8px;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px;';
+          credit.textContent = photo.credit || '';
+          wrap.appendChild(credit);
+          grid.appendChild(wrap);
+        });
+      })
+      .catch(function() {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">Failed to load images</div>';
+      });
+  }, 400);
 }
 
 function applyImgAlt(val) { if (activeImgEl) activeImgEl.alt = val; }
@@ -1264,14 +1374,173 @@ function updateSectionButtons() {
 // ================================================================
 function applyGlobalColor(type, value) {
   globalColors[type] = value;
-  // Re-render to apply
+  // Update UI
+  var previewId = type === 'background' ? 'previewBg' : type === 'text' ? 'previewText' : 'previewPrimary';
+  var hexId = type === 'background' ? 'hexBg' : type === 'text' ? 'hexText' : 'hexPrimary';
+  var swatchContId = type === 'background' ? 'swatchesBg' : type === 'text' ? 'swatchesText' : 'swatchesPrimary';
+  var el = document.getElementById(previewId);
+  if (el) el.style.background = value;
+  var hex = document.getElementById(hexId);
+  if (hex) hex.value = value;
+  // Mark active swatch
+  var cont = document.getElementById(swatchContId);
+  if (cont) {
+    cont.querySelectorAll('.cs').forEach(function(s) {
+      s.classList.toggle('active', s.getAttribute('data-color').toLowerCase() === value.toLowerCase());
+    });
+  }
   renderTemplate();
+}
+
+var COLOR_PALETTES = {
+  primary: ['#0D7377','#2563EB','#7C3AED','#DC2626','#EA580C','#D97706','#059669','#DB2777','#4F46E5','#0891B2','#65A30D','#1A1A1A','#6B7280','#374151'],
+  background: ['#FFFFFF','#F7F7F5','#FEF3C7','#ECFDF5','#EFF6FF','#FDF2F8','#F0F0ED','#F5F3FF','#FEF2F2','#F0FDFA','#FFFBEB','#F1F5F9','#1A1A1A','#111827'],
+  text: ['#1A1A1A','#111827','#374151','#4B5563','#6B7280','#9CA3AF','#0D7377','#2563EB','#DC2626','#059669','#7C3AED','#EA580C','#FFFFFF','#F7F7F5'],
+};
+
+function buildColorSwatches() {
+  ['primary','background','text'].forEach(function(type) {
+    var contId = type === 'background' ? 'swatchesBg' : type === 'text' ? 'swatchesText' : 'swatchesPrimary';
+    var cont = document.getElementById(contId);
+    if (!cont) return;
+    cont.innerHTML = '';
+    var palette = COLOR_PALETTES[type] || [];
+    var current = globalColors[type];
+    palette.forEach(function(color) {
+      var sw = document.createElement('div');
+      sw.className = 'cs' + (color.toLowerCase() === current.toLowerCase() ? ' active' : '');
+      sw.setAttribute('data-color', color);
+      sw.style.background = color;
+      if (color === '#FFFFFF' || color === '#F7F7F5') sw.style.border = '2px solid #E4E3E0';
+      sw.onclick = function() { applyGlobalColor(type, color); };
+      cont.appendChild(sw);
+    });
+  });
+}
+
+function applyColorHex(type) {
+  var hexId = type === 'background' ? 'hexBg' : type === 'text' ? 'hexText' : 'hexPrimary';
+  var val = document.getElementById(hexId).value.trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    applyGlobalColor(type, val);
+  }
 }
 
 function applyGlobalFont(value) {
   globalFont = value;
+  // Update trigger label
+  var label = document.getElementById('fontPickerLabel');
+  if (label) {
+    var fontName = value.split(',')[0].replace(/'/g, '').trim();
+    label.textContent = fontName;
+    label.style.fontFamily = value;
+  }
+  // Mark active in list
+  document.querySelectorAll('#fontPickerList .font-picker-option').forEach(function(opt) {
+    opt.classList.toggle('active', opt.getAttribute('data-value') === value);
+  });
+  closeFontPicker();
   renderTemplate();
 }
+
+var FONT_LIST = [
+  { name: 'Inter', value: 'Inter, sans-serif', google: true },
+  { name: 'Poppins', value: 'Poppins, sans-serif', google: true },
+  { name: 'Roboto', value: 'Roboto, sans-serif', google: true },
+  { name: 'Open Sans', value: "'Open Sans', sans-serif", google: true },
+  { name: 'Lato', value: 'Lato, sans-serif', google: true },
+  { name: 'Montserrat', value: 'Montserrat, sans-serif', google: true },
+  { name: 'Raleway', value: 'Raleway, sans-serif', google: true },
+  { name: 'Nunito', value: 'Nunito, sans-serif', google: true },
+  { name: 'Playfair Display', value: "'Playfair Display', serif", google: true },
+  { name: 'Merriweather', value: 'Merriweather, serif', google: true },
+  { name: 'Source Sans Pro', value: "'Source Sans Pro', sans-serif", google: true },
+  { name: 'Oswald', value: 'Oswald, sans-serif', google: true },
+  { name: 'Rubik', value: 'Rubik, sans-serif', google: true },
+  { name: 'Work Sans', value: "'Work Sans', sans-serif", google: true },
+  { name: 'DM Sans', value: "'DM Sans', sans-serif", google: true },
+  { name: 'Outfit', value: 'Outfit, sans-serif', google: true },
+  { name: 'Space Grotesk', value: "'Space Grotesk', sans-serif", google: true },
+  { name: 'Plus Jakarta Sans', value: "'Plus Jakarta Sans', sans-serif", google: true },
+  { name: 'Cabin', value: 'Cabin, sans-serif', google: true },
+  { name: 'Karla', value: 'Karla, sans-serif', google: true },
+  { name: 'Libre Baskerville', value: "'Libre Baskerville', serif", google: true },
+  { name: 'Crimson Text', value: "'Crimson Text', serif", google: true },
+  { name: 'EB Garamond', value: "'EB Garamond', serif", google: true },
+  { name: 'Bitter', value: 'Bitter, serif', google: true },
+  { name: 'Georgia', value: 'Georgia, serif', google: false },
+  { name: 'Helvetica', value: 'Helvetica, Arial, sans-serif', google: false },
+  { name: 'Arial', value: 'Arial, sans-serif', google: false },
+  { name: 'Verdana', value: 'Verdana, sans-serif', google: false },
+  { name: 'Trebuchet MS', value: "'Trebuchet MS', sans-serif", google: false },
+  { name: 'Times New Roman', value: "'Times New Roman', serif", google: false },
+  { name: 'Courier New', value: "'Courier New', monospace", google: false },
+];
+
+var fontsLoaded = {};
+function loadGoogleFont(name) {
+  if (fontsLoaded[name]) return;
+  fontsLoaded[name] = true;
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=' + name.replace(/ /g, '+') + ':wght@400;600;700&display=swap';
+  document.head.appendChild(link);
+}
+
+function buildFontPicker() {
+  var list = document.getElementById('fontPickerList');
+  if (!list) return;
+  // Preload Google Fonts
+  FONT_LIST.forEach(function(f) { if (f.google) loadGoogleFont(f.name); });
+  renderFontList(FONT_LIST);
+}
+
+function renderFontList(fonts) {
+  var list = document.getElementById('fontPickerList');
+  list.innerHTML = '';
+  fonts.forEach(function(f) {
+    var opt = document.createElement('div');
+    opt.className = 'font-picker-option' + (f.value === globalFont ? ' active' : '');
+    opt.setAttribute('data-value', f.value);
+    opt.style.fontFamily = f.value;
+    opt.innerHTML = '<span>' + f.name + '</span><span style="display:flex;align-items:center;gap:4px;">' +
+      (f.google ? '<span class="fp-badge">Google</span>' : '') +
+      '<span class="fp-check">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+      '</span></span>';
+    opt.onclick = function() { applyGlobalFont(f.value); };
+    list.appendChild(opt);
+  });
+}
+
+function toggleFontPicker() {
+  var dd = document.getElementById('fontPickerDropdown');
+  var isOpen = dd.classList.contains('open');
+  if (isOpen) { closeFontPicker(); } else {
+    dd.classList.add('open');
+    document.getElementById('fontSearch').value = '';
+    renderFontList(FONT_LIST);
+    document.getElementById('fontSearch').focus();
+  }
+}
+
+function closeFontPicker() {
+  document.getElementById('fontPickerDropdown').classList.remove('open');
+}
+
+function filterFonts(query) {
+  var q = query.toLowerCase();
+  var filtered = FONT_LIST.filter(function(f) {
+    return f.name.toLowerCase().indexOf(q) >= 0;
+  });
+  renderFontList(filtered);
+}
+
+// Close font picker when clicking outside
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('fontPickerWrap');
+  if (wrap && !wrap.contains(e.target)) { closeFontPicker(); }
+});
 
 // ================================================================
 // HELPERS
@@ -1371,6 +1640,8 @@ function downloadExport() {
 // ================================================================
 // INIT
 // ================================================================
+buildColorSwatches();
+buildFontPicker();
 renderTemplate();
 </script>
 </body>

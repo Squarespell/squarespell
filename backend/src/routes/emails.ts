@@ -567,4 +567,53 @@ r.delete('/suppressions/:id', async (req, res) => {
   }
 });
 
+// ── Unsplash proxy (free images for email editor) ────────────────────────────
+r.get('/unsplash/search', async (req, res) => {
+  try {
+    const query = (req.query.q as string || '').trim();
+    const page = parseInt(req.query.page as string) || 1;
+    if (!query) return res.json({ results: [] });
+
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+    if (!accessKey) {
+      // Fallback to picsum if no Unsplash key configured
+      const results: any[] = [];
+      for (let i = 0; i < 12; i++) {
+        const seed = query.replace(/\s/g, '') + i + page;
+        results.push({
+          id: seed,
+          thumb: 'https://picsum.photos/seed/' + seed + '/200/140',
+          regular: 'https://picsum.photos/seed/' + seed + '/600/400',
+          alt: query,
+          credit: 'Lorem Picsum',
+          creditUrl: 'https://picsum.photos',
+        });
+      }
+      return res.json({ results });
+    }
+
+    const url = 'https://api.unsplash.com/search/photos?query=' + encodeURIComponent(query) + '&per_page=12&page=' + page;
+    const resp = await fetch(url, {
+      headers: { Authorization: 'Client-ID ' + accessKey },
+    });
+    if (!resp.ok) {
+      log.error('Unsplash API error', { status: resp.status });
+      return res.status(502).json({ error: 'Unsplash API error' });
+    }
+    const data: any = await resp.json();
+    const results = (data.results || []).map((p: any) => ({
+      id: p.id,
+      thumb: p.urls?.small || p.urls?.thumb,
+      regular: p.urls?.regular,
+      alt: p.alt_description || query,
+      credit: p.user?.name || 'Unsplash',
+      creditUrl: p.user?.links?.html || 'https://unsplash.com',
+    }));
+    res.json({ results });
+  } catch (err: any) {
+    log.error('Unsplash proxy error', { err });
+    res.status(500).json({ error: err.message ?? 'Failed to search images' });
+  }
+});
+
 export default r;
