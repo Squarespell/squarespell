@@ -191,19 +191,22 @@ export function DesignStep({
     return function() { window.removeEventListener('message', handleMessage); };
   }, [setState]);
 
-  // When editor becomes ready, send the current template HTML + hide template sidebar
+  // When editor becomes ready, send the current template HTML once
+  var didSendInitial = useRef(false);
   useEffect(function() {
-    if (editorReady && editorRef.current && editorRef.current.contentWindow) {
-      // Hide the template picker in the iframe since user already chose in gallery
-      editorRef.current.contentWindow.postMessage({ type: 'sq-hide-templates' }, '*');
-      if (state.html) {
-        editorRef.current.contentWindow.postMessage({
-          type: 'sq-load-template',
-          html: state.html,
-        }, '*');
-      }
+    if (!editorReady) { didSendInitial.current = false; return; }
+    if (didSendInitial.current) return;
+    if (!editorRef.current || !editorRef.current.contentWindow) return;
+    didSendInitial.current = true;
+    // Hide the template picker in the iframe since user already chose in gallery
+    editorRef.current.contentWindow.postMessage({ type: 'sq-hide-templates' }, '*');
+    if (state.html) {
+      editorRef.current.contentWindow.postMessage({
+        type: 'sq-load-template',
+        html: state.html,
+      }, '*');
     }
-  }, [editorReady, state.html]);
+  }, [editorReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Select template from gallery
   var handleSelectTemplate = useCallback(function(item: TemplateItem) {
