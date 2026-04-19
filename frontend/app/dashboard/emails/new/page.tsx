@@ -32,7 +32,7 @@ function NewCampaignPageInner() {
 
   // Step 3 - Design (template + editor merged)
   var [design, setDesign] = useState<DesignState>({
-    templateId: '', subject: '', html: '', fromName: '', fromEmail: '',
+    templateId: '', subject: '', preheader: '', html: '', fromName: '', fromEmail: '',
   });
   // Lift design phase to parent so Back navigation preserves it
   var [designPhase, setDesignPhase] = useState<DesignPhase>('gallery');
@@ -182,6 +182,7 @@ function NewCampaignPageInner() {
         {step === 'review' && (
           <ReviewStep
             audience={audience} design={design}
+            setDesign={function(u) { setDesign(function(s) { return Object.assign({}, s, u); }); }}
             mode={mode} setMode={setMode}
             recipientCount={recipientCount}
             onBack={function() { setStep('design'); }}

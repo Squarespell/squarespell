@@ -59,40 +59,80 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .template-card-title { font-size: 13px; font-weight: 600; color: #1A1A1A; }
 .template-card-desc { font-size: 11px; color: #6B7280; margin-top: 2px; }
 
-/* --- Color control --- */
-.color-row {
-  margin-bottom: 14px;
+/* --- Color control (compact row + floating popover) --- */
+.color-compact-row {
+  display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer;
+  border-radius: 6px; transition: background 0.1s;
 }
-.color-row-header {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+.color-compact-row:hover { background: #F7F7F5; }
+.color-dot {
+  width: 28px; height: 28px; border-radius: 8px; border: 2px solid #E4E3E0;
+  flex-shrink: 0; transition: all 0.15s;
 }
-.color-row-header label { font-size: 12px; color: #4B5563; font-weight: 500; }
-.color-row-header .color-preview {
-  width: 24px; height: 24px; border-radius: 6px; border: 2px solid #E4E3E0;
+.color-compact-row:hover .color-dot { border-color: #9CA3AF; }
+.color-dot-label { font-size: 12px; color: #4B5563; font-weight: 500; flex: 1; }
+.color-dot-hex { font-size: 11px; color: #9CA3AF; font-family: monospace; }
+.color-popover {
+  position: fixed; background: #FFFFFF; border-radius: 14px;
+  border: 1px solid #E4E3E0; box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  z-index: 100; padding: 16px; width: 260px; display: none;
 }
-.color-swatches {
-  display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px;
+.color-popover.visible { display: block; }
+.color-popover-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
 }
-.color-swatches .cs {
-  width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
-  border: 2px solid transparent; transition: all 0.12s; flex-shrink: 0;
+.color-popover-header span { font-size: 13px; font-weight: 600; color: #1A1A1A; }
+.color-popover-close {
+  width: 24px; height: 24px; border: none; background: none; cursor: pointer;
+  color: #9CA3AF; border-radius: 6px; display: flex; align-items: center; justify-content: center;
 }
-.color-swatches .cs:hover { border-color: #1A1A1A; transform: scale(1.1); }
-.color-swatches .cs.active { border-color: #0D7377; box-shadow: 0 0 0 2px rgba(13,115,119,0.3); }
-.color-hex-row {
+.color-popover-close:hover { background: #F7F7F5; color: #4B5563; }
+.color-popover .color-swatches {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 12px;
+}
+.color-popover .color-swatches .cs {
+  width: 28px; height: 28px; border-radius: 7px; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.12s;
+}
+.color-popover .color-swatches .cs:hover { border-color: #1A1A1A; transform: scale(1.1); }
+.color-popover .color-swatches .cs.active { border-color: #0D7377; box-shadow: 0 0 0 2px rgba(13,115,119,0.3); }
+.color-popover .color-hex-row {
   display: flex; gap: 6px; align-items: center;
 }
-.color-hex-row input {
-  flex: 1; padding: 6px 8px; border: 1px solid #E4E3E0; border-radius: 6px;
+.color-popover .color-hex-row input {
+  flex: 1; padding: 7px 10px; border: 1px solid #E4E3E0; border-radius: 8px;
   font-size: 12px; font-family: monospace; color: #1A1A1A;
 }
-.color-hex-row input:focus { outline: none; border-color: #0D7377; }
-.color-hex-row .color-apply-btn {
-  padding: 6px 10px; border: 1px solid #E4E3E0; border-radius: 6px;
-  background: #FFFFFF; cursor: pointer; font-size: 11px; font-weight: 600;
-  color: #0D7377; transition: all 0.12s;
+.color-popover .color-hex-row input:focus { outline: none; border-color: #0D7377; box-shadow: 0 0 0 3px rgba(13,115,119,0.1); }
+.color-popover .color-hex-row .color-apply-btn {
+  padding: 7px 14px; border: 1px solid #0D7377; border-radius: 8px;
+  background: #0D7377; cursor: pointer; font-size: 12px; font-weight: 600;
+  color: #FFFFFF; transition: all 0.12s;
 }
-.color-hex-row .color-apply-btn:hover { background: #F0FDFA; border-color: #0D7377; }
+.color-popover .color-hex-row .color-apply-btn:hover { background: #0B6164; }
+
+/* --- Device toggle in topbar --- */
+.device-toggle {
+  display: flex; border: 1px solid #E4E3E0; border-radius: 8px; overflow: hidden; margin-left: auto;
+}
+.device-toggle button {
+  padding: 6px 10px; border: none; background: #FFFFFF; cursor: pointer;
+  color: #9CA3AF; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.device-toggle button:hover { color: #4B5563; }
+.device-toggle button.active { background: #0D7377; color: #FFFFFF; }
+.device-toggle button + button { border-left: 1px solid #E4E3E0; }
+
+/* --- Undo/redo buttons --- */
+.undo-redo { display: flex; gap: 2px; }
+.undo-redo button {
+  width: 32px; height: 32px; border: 1px solid #E4E3E0; border-radius: 8px;
+  background: #FFFFFF; cursor: pointer; color: #6B7280; display: flex;
+  align-items: center; justify-content: center; transition: all 0.12s;
+}
+.undo-redo button:hover:not(:disabled) { background: #F7F7F5; color: #1A1A1A; }
+.undo-redo button:disabled { opacity: 0.3; cursor: not-allowed; }
 /* Keep native for button panel */
 .color-swatch-input {
   width: 32px; height: 32px; border: 2px solid #E4E3E0; border-radius: 8px;
@@ -419,6 +459,22 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
     <button class="active" id="btnEdit" onclick="setMode('edit')">Edit</button>
     <button id="btnPreview" onclick="setMode('preview')">Preview</button>
   </div>
+  <div class="undo-redo">
+    <button id="undoBtn" onclick="undoAction()" title="Undo" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    </button>
+    <button id="redoBtn" onclick="redoAction()" title="Redo" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+    </button>
+  </div>
+  <div class="device-toggle" id="deviceToggle">
+    <button class="active" id="deviceDesktop" onclick="setDevice('desktop')" title="Desktop preview">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </button>
+    <button id="deviceMobile" onclick="setDevice('mobile')" title="Mobile preview">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    </button>
+  </div>
   <button class="topbar-btn" onclick="saveTemplate()">Save</button>
 </div>
 
@@ -445,41 +501,23 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
       </div>
     </div>
 
-    <!-- Global Colors -->
+    <!-- Global Colors (compact rows + popover) -->
     <div class="panel-section">
       <div class="panel-label">Global Colors</div>
-      <div class="color-row" id="colorRowPrimary">
-        <div class="color-row-header">
-          <label>Primary</label>
-          <div class="color-preview" id="previewPrimary" style="background:#0D7377;"></div>
-        </div>
-        <div class="color-swatches" id="swatchesPrimary"></div>
-        <div class="color-hex-row">
-          <input type="text" id="hexPrimary" value="#0D7377" maxlength="7" placeholder="#000000" onkeydown="if(event.key==='Enter')applyColorHex('primary')">
-          <button class="color-apply-btn" onclick="applyColorHex('primary')">Apply</button>
-        </div>
+      <div class="color-compact-row" onclick="openColorPopover('primary', this)">
+        <div class="color-dot" id="previewPrimary" style="background:#0D7377;"></div>
+        <span class="color-dot-label">Primary</span>
+        <span class="color-dot-hex" id="hexLabelPrimary">#0D7377</span>
       </div>
-      <div class="color-row" id="colorRowBg">
-        <div class="color-row-header">
-          <label>Background</label>
-          <div class="color-preview" id="previewBg" style="background:#FFFFFF;"></div>
-        </div>
-        <div class="color-swatches" id="swatchesBg"></div>
-        <div class="color-hex-row">
-          <input type="text" id="hexBg" value="#FFFFFF" maxlength="7" placeholder="#FFFFFF" onkeydown="if(event.key==='Enter')applyColorHex('background')">
-          <button class="color-apply-btn" onclick="applyColorHex('background')">Apply</button>
-        </div>
+      <div class="color-compact-row" onclick="openColorPopover('background', this)">
+        <div class="color-dot" id="previewBg" style="background:#FFFFFF;"></div>
+        <span class="color-dot-label">Background</span>
+        <span class="color-dot-hex" id="hexLabelBg">#FFFFFF</span>
       </div>
-      <div class="color-row" id="colorRowText">
-        <div class="color-row-header">
-          <label>Text</label>
-          <div class="color-preview" id="previewText" style="background:#1A1A1A;"></div>
-        </div>
-        <div class="color-swatches" id="swatchesText"></div>
-        <div class="color-hex-row">
-          <input type="text" id="hexText" value="#1A1A1A" maxlength="7" placeholder="#1A1A1A" onkeydown="if(event.key==='Enter')applyColorHex('text')">
-          <button class="color-apply-btn" onclick="applyColorHex('text')">Apply</button>
-        </div>
+      <div class="color-compact-row" onclick="openColorPopover('text', this)">
+        <div class="color-dot" id="previewText" style="background:#1A1A1A;"></div>
+        <span class="color-dot-label">Text</span>
+        <span class="color-dot-hex" id="hexLabelText">#1A1A1A</span>
       </div>
     </div>
 
@@ -515,6 +553,23 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
     <div class="email-canvas editing" id="emailCanvas">
       <!-- Templates injected here by JS -->
     </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     COLOR POPOVER (floating)
+     ================================================================ -->
+<div class="color-popover" id="colorPopover">
+  <div class="color-popover-header">
+    <span id="colorPopoverTitle">Primary</span>
+    <button class="color-popover-close" onclick="closeColorPopover()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="color-swatches" id="popoverSwatches"></div>
+  <div class="color-hex-row">
+    <input type="text" id="popoverHexInput" value="#0D7377" maxlength="7" placeholder="#000000" onkeydown="if(event.key==='Enter')applyPopoverHex()">
+    <button class="color-apply-btn" onclick="applyPopoverHex()">Apply</button>
   </div>
 </div>
 
@@ -1370,25 +1425,30 @@ function updateSectionButtons() {
 }
 
 // ================================================================
-// TASK 3.7 - GLOBAL COLOR PICKER
+// TASK 3.7 - GLOBAL COLOR PICKER (floating popover)
 // ================================================================
+var activeColorType = null;
+
 function applyGlobalColor(type, value) {
   globalColors[type] = value;
-  // Update UI
+  // Update compact row UI
   var previewId = type === 'background' ? 'previewBg' : type === 'text' ? 'previewText' : 'previewPrimary';
-  var hexId = type === 'background' ? 'hexBg' : type === 'text' ? 'hexText' : 'hexPrimary';
-  var swatchContId = type === 'background' ? 'swatchesBg' : type === 'text' ? 'swatchesText' : 'swatchesPrimary';
+  var hexLabelId = type === 'background' ? 'hexLabelBg' : type === 'text' ? 'hexLabelText' : 'hexLabelPrimary';
   var el = document.getElementById(previewId);
   if (el) el.style.background = value;
-  var hex = document.getElementById(hexId);
-  if (hex) hex.value = value;
-  // Mark active swatch
-  var cont = document.getElementById(swatchContId);
-  if (cont) {
-    cont.querySelectorAll('.cs').forEach(function(s) {
-      s.classList.toggle('active', s.getAttribute('data-color').toLowerCase() === value.toLowerCase());
-    });
+  var hexLabel = document.getElementById(hexLabelId);
+  if (hexLabel) hexLabel.textContent = value.toUpperCase();
+  // Update popover swatches if open
+  if (activeColorType === type) {
+    document.getElementById('popoverHexInput').value = value;
+    var cont = document.getElementById('popoverSwatches');
+    if (cont) {
+      cont.querySelectorAll('.cs').forEach(function(s) {
+        s.classList.toggle('active', s.getAttribute('data-color').toLowerCase() === value.toLowerCase());
+      });
+    }
   }
+  pushUndoState();
   renderTemplate();
 }
 
@@ -1398,33 +1458,152 @@ var COLOR_PALETTES = {
   text: ['#1A1A1A','#111827','#374151','#4B5563','#6B7280','#9CA3AF','#0D7377','#2563EB','#DC2626','#059669','#7C3AED','#EA580C','#FFFFFF','#F7F7F5'],
 };
 
-function buildColorSwatches() {
-  ['primary','background','text'].forEach(function(type) {
-    var contId = type === 'background' ? 'swatchesBg' : type === 'text' ? 'swatchesText' : 'swatchesPrimary';
-    var cont = document.getElementById(contId);
-    if (!cont) return;
-    cont.innerHTML = '';
-    var palette = COLOR_PALETTES[type] || [];
-    var current = globalColors[type];
-    palette.forEach(function(color) {
-      var sw = document.createElement('div');
-      sw.className = 'cs' + (color.toLowerCase() === current.toLowerCase() ? ' active' : '');
-      sw.setAttribute('data-color', color);
-      sw.style.background = color;
-      if (color === '#FFFFFF' || color === '#F7F7F5') sw.style.border = '2px solid #E4E3E0';
-      sw.onclick = function() { applyGlobalColor(type, color); };
-      cont.appendChild(sw);
-    });
+function openColorPopover(type, rowEl) {
+  activeColorType = type;
+  var popover = document.getElementById('colorPopover');
+  var title = document.getElementById('colorPopoverTitle');
+  var hexInput = document.getElementById('popoverHexInput');
+  var swatchCont = document.getElementById('popoverSwatches');
+
+  title.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+  hexInput.value = globalColors[type];
+
+  // Build swatches
+  swatchCont.innerHTML = '';
+  var palette = COLOR_PALETTES[type] || [];
+  var current = globalColors[type];
+  palette.forEach(function(color) {
+    var sw = document.createElement('div');
+    sw.className = 'cs' + (color.toLowerCase() === current.toLowerCase() ? ' active' : '');
+    sw.setAttribute('data-color', color);
+    sw.style.background = color;
+    if (color === '#FFFFFF' || color === '#F7F7F5') sw.style.border = '2px solid #E4E3E0';
+    sw.onclick = function(e) { e.stopPropagation(); applyGlobalColor(type, color); };
+    swatchCont.appendChild(sw);
   });
+
+  // Position below the row
+  var rect = rowEl.getBoundingClientRect();
+  popover.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+  popover.style.top = (rect.bottom + 8) + 'px';
+  if (rect.bottom + 260 > window.innerHeight) {
+    popover.style.top = (rect.top - 260) + 'px';
+  }
+  popover.classList.add('visible');
 }
 
-function applyColorHex(type) {
-  var hexId = type === 'background' ? 'hexBg' : type === 'text' ? 'hexText' : 'hexPrimary';
-  var val = document.getElementById(hexId).value.trim();
+function closeColorPopover() {
+  document.getElementById('colorPopover').classList.remove('visible');
+  activeColorType = null;
+}
+
+function applyPopoverHex() {
+  if (!activeColorType) return;
+  var val = document.getElementById('popoverHexInput').value.trim();
   if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-    applyGlobalColor(type, val);
+    applyGlobalColor(activeColorType, val);
   }
 }
+
+// Close popover when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.color-popover') && !e.target.closest('.color-compact-row')) {
+    closeColorPopover();
+  }
+});
+
+// ================================================================
+// DEVICE PREVIEW TOGGLE
+// ================================================================
+var currentDevice = 'desktop';
+function setDevice(device) {
+  currentDevice = device;
+  document.getElementById('deviceDesktop').classList.toggle('active', device === 'desktop');
+  document.getElementById('deviceMobile').classList.toggle('active', device === 'mobile');
+  var canvas = document.getElementById('emailCanvas');
+  var rightPanel = document.getElementById('rightPanel');
+  if (device === 'mobile') {
+    canvas.style.width = '375px';
+    canvas.style.margin = '0 auto';
+    canvas.style.transition = 'width 0.3s ease';
+    rightPanel.style.justifyContent = 'center';
+  } else {
+    canvas.style.width = '600px';
+    canvas.style.transition = 'width 0.3s ease';
+    rightPanel.style.justifyContent = 'center';
+  }
+}
+
+// ================================================================
+// UNDO / REDO
+// ================================================================
+var undoStack = [];
+var redoStack = [];
+var undoTimer = null;
+var isUndoRedoing = false;
+
+function pushUndoState() {
+  if (isUndoRedoing) return;
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(function() {
+    var canvas = document.getElementById('emailCanvas');
+    if (!canvas) return;
+    var html = canvas.innerHTML;
+    if (undoStack.length > 0 && undoStack[undoStack.length - 1] === html) return;
+    undoStack.push(html);
+    if (undoStack.length > 50) undoStack.shift();
+    redoStack = [];
+    updateUndoRedoBtns();
+  }, 600);
+}
+
+function undoAction() {
+  if (undoStack.length < 2) return;
+  isUndoRedoing = true;
+  var current = undoStack.pop();
+  redoStack.push(current);
+  var prev = undoStack[undoStack.length - 1];
+  var canvas = document.getElementById('emailCanvas');
+  canvas.innerHTML = prev;
+  bindEditableText();
+  updateSectionButtons();
+  updateUndoRedoBtns();
+  broadcastHtml();
+  isUndoRedoing = false;
+}
+
+function redoAction() {
+  if (redoStack.length === 0) return;
+  isUndoRedoing = true;
+  var next = redoStack.pop();
+  undoStack.push(next);
+  var canvas = document.getElementById('emailCanvas');
+  canvas.innerHTML = next;
+  bindEditableText();
+  updateSectionButtons();
+  updateUndoRedoBtns();
+  broadcastHtml();
+  isUndoRedoing = false;
+}
+
+function updateUndoRedoBtns() {
+  var ub = document.getElementById('undoBtn');
+  var rb = document.getElementById('redoBtn');
+  if (ub) ub.disabled = undoStack.length < 2;
+  if (rb) rb.disabled = redoStack.length === 0;
+}
+
+// Keyboard shortcuts for undo/redo
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    undoAction();
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault();
+    redoAction();
+  }
+});
 
 function applyGlobalFont(value) {
   globalFont = value;
@@ -1696,8 +1875,8 @@ function broadcastHtml() {
   }, 500);
 }
 
-// Watch for content changes to auto-broadcast
-var observer = new MutationObserver(function() { broadcastHtml(); });
+// Watch for content changes to auto-broadcast and push undo state
+var observer = new MutationObserver(function() { broadcastHtml(); pushUndoState(); });
 var canvasEl = document.getElementById('emailCanvas');
 if (canvasEl) {
   observer.observe(canvasEl, { childList: true, subtree: true, characterData: true, attributes: true });
@@ -1755,9 +1934,14 @@ window.saveTemplate = function() {
 // ================================================================
 // INIT
 // ================================================================
-buildColorSwatches();
 buildFontPicker();
 renderTemplate();
+// Push initial state for undo
+setTimeout(function() {
+  var canvas = document.getElementById('emailCanvas');
+  if (canvas) undoStack.push(canvas.innerHTML);
+  updateUndoRedoBtns();
+}, 100);
 </script>
 </body>
 </html>

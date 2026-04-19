@@ -13,6 +13,7 @@ import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
 export type DesignState = {
   templateId: string;
   subject: string;
+  preheader: string;
   html: string;
   fromName: string;
   fromEmail: string;
@@ -134,7 +135,7 @@ export function DesignStep({
     var recId = recommendedId || allItems[0].id;
     var item = allItems.find(function(t) { return t.id === recId; });
     if (item) {
-      setState({ templateId: item.id, subject: item.subject, html: item.html });
+      setState({ templateId: item.id, subject: item.subject, preheader: item.preheader, html: item.html });
       didAutoSelect.current = true;
     }
   }, [allItems, recommendedId, state.templateId, setState]);
@@ -172,6 +173,7 @@ export function DesignStep({
     setState({
       templateId: item.id,
       subject: item.subject,
+      preheader: item.preheader,
       html: item.html,
     });
   }, [setState]);
@@ -362,7 +364,7 @@ export function DesignStep({
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, verticalAlign: 'middle' }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Edit template
               </PrimaryButton>
-              <PrimaryButton onClick={onNext} disabled={!state.subject || !state.fromEmail}>
+              <PrimaryButton onClick={onNext} disabled={!state.subject}>
                 Continue to send
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6, verticalAlign: 'middle' }}><polyline points="9 18 15 12 9 6" /></svg>
               </PrimaryButton>
@@ -388,13 +390,13 @@ export function DesignStep({
   // ==============================
   return (
     <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* Compact top bar - balanced grid */}
+      {/* Compact top bar - template + subject + preheader */}
       <div style={{
         padding: '14px 20px', borderBottom: '1px solid ' + C.BORDER,
-        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, alignItems: 'end',
+        display: 'flex', gap: 12, alignItems: 'end',
       }}>
         {/* Change template button */}
-        <div>
+        <div style={{ flexShrink: 0 }}>
           <div style={{ color: C.TEXT_MUTED, fontSize: 10, textTransform: 'uppercase' as any, letterSpacing: 1, marginBottom: 4 }}>Template</div>
           <button
             onClick={function() { setPhase('gallery'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
@@ -402,50 +404,59 @@ export function DesignStep({
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
               background: C.ELEVATED, border: '1px solid ' + C.BORDER,
               borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-              color: C.TEXT, width: '100%', boxSizing: 'border-box',
+              color: C.TEXT, boxSizing: 'border-box',
             }}
           >
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
               <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
             </svg>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {selectedItem ? selectedItem.title : 'Choose template'}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>
+              {selectedItem ? selectedItem.title : 'Choose'}
             </span>
           </button>
         </div>
 
         {/* Subject */}
-        <Field label="Subject line">
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
-              placeholder="Your result is in" className="sq-dinput" style={inputStyle} />
-            <button
-              onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4, padding: '8px 10px',
-                background: state.abEnabled ? C.ACCENT_LIGHT : 'transparent',
-                border: '1px solid ' + (state.abEnabled ? C.ACCENT : C.BORDER),
-                borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                color: state.abEnabled ? C.ACCENT : C.TEXT_MUTED, whiteSpace: 'nowrap', flexShrink: 0,
-              }}
-            >
-              A/B
-            </button>
-          </div>
-        </Field>
+        <div style={{ flex: 1 }}>
+          <Field label="Subject line">
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
+                placeholder="Your result is in" className="sq-dinput" style={inputStyle} />
+              <button
+                onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4, padding: '8px 10px',
+                  background: state.abEnabled ? C.ACCENT_LIGHT : 'transparent',
+                  border: '1px solid ' + (state.abEnabled ? C.ACCENT : C.BORDER),
+                  borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                  color: state.abEnabled ? C.ACCENT : C.TEXT_MUTED, whiteSpace: 'nowrap', flexShrink: 0,
+                }}
+              >
+                A/B
+              </button>
+            </div>
+          </Field>
+        </div>
 
-        {/* From name */}
-        <Field label="From name">
-          <input value={state.fromName} onChange={function(e) { setState({ fromName: e.target.value }); }}
-            placeholder="Your brand" className="sq-dinput" style={inputStyle} />
-        </Field>
-
-        {/* From email */}
-        <Field label="From email">
-          <input value={state.fromEmail} onChange={function(e) { setState({ fromEmail: e.target.value }); }}
-            placeholder="hello@yourdomain.com" className="sq-dinput" style={inputStyle} />
-        </Field>
+        {/* Preheader / Preview text */}
+        <div style={{ flex: 1 }}>
+          <Field label="Preview text">
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input value={state.preheader || ''} onChange={function(e) { setState({ preheader: e.target.value }); }}
+                placeholder="Text shown after subject in inbox" className="sq-dinput" style={inputStyle} />
+              <div style={{
+                flexShrink: 0, width: 24, height: 24, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: C.TEXT_MUTED,
+              }} title="Preview text appears after the subject line in most email clients">
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </div>
+            </div>
+          </Field>
+        </div>
       </div>
 
       {/* A/B expanded row */}
@@ -492,7 +503,7 @@ export function DesignStep({
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: 'middle' }}><polyline points="15 18 9 12 15 6" /></svg>
           Back to templates
         </GhostButton>
-        <PrimaryButton onClick={onNext} disabled={!state.templateId || !state.subject || !state.fromEmail}>
+        <PrimaryButton onClick={onNext} disabled={!state.templateId || !state.subject}>
           Continue to send
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, verticalAlign: 'middle' }}><polyline points="9 18 15 12 9 6" /></svg>
         </PrimaryButton>

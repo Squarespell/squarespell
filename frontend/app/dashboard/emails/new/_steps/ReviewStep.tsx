@@ -9,12 +9,13 @@ import type { CampaignMode } from '../../../../../lib/emails';
 export type SendTiming = 'now' | 'scheduled';
 
 export function ReviewStep({
-  audience, design, mode, setMode, recipientCount,
+  audience, design, setDesign, mode, setMode, recipientCount,
   onBack, onSend, onSchedule, onTestSend, onSaveDraft,
   sending, result,
 }: {
   audience: AudienceState;
   design: DesignState;
+  setDesign: (u: Partial<DesignState>) => void;
   mode: CampaignMode;
   setMode: (m: CampaignMode) => void;
   recipientCount: number;
@@ -52,11 +53,44 @@ export function ReviewStep({
         Last check. Send a test to yourself first if you want.
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 22 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 22 }}>
         <Stat label="Recipients" value={String(recipientCount)} />
         <Stat label="Subject" value={design.subject || 'None'} truncate />
-        <Stat label="From" value={`${design.fromName || 'None'} <${design.fromEmail || 'None'}>`} truncate />
         <Stat label="Source" value={audience.sourceKind === 'quiz' ? 'Quiz leads' : 'Manual list'} />
+      </div>
+
+      {/* From Name / From Email */}
+      <div style={{
+        background: C.ELEVATED, border: '1px solid ' + C.BORDER,
+        borderRadius: 12, padding: 16, marginBottom: 22,
+      }}>
+        <Label>Sender details</Label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <div style={{ color: C.TEXT_MUTED, fontSize: 11, marginBottom: 4 }}>From name</div>
+            <input
+              value={design.fromName}
+              onChange={function(e) { setDesign({ fromName: e.target.value }); }}
+              placeholder="Your brand name"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <div style={{ color: C.TEXT_MUTED, fontSize: 11, marginBottom: 4 }}>From email</div>
+            <input
+              value={design.fromEmail}
+              onChange={function(e) { setDesign({ fromEmail: e.target.value }); }}
+              placeholder="hello@yourdomain.com"
+              style={inputStyle}
+            />
+          </div>
+        </div>
+        {!design.fromEmail && (
+          <div style={{ marginTop: 8, fontSize: 12, color: C.DANGER, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            From email is required to send
+          </div>
+        )}
       </div>
 
       <Label>Send mode</Label>
@@ -215,7 +249,7 @@ export function ReviewStep({
           <GhostButton onClick={onSaveDraft}>Save draft</GhostButton>
           <PrimaryButton
             onClick={() => setConfirmOpen(true)}
-            disabled={sending || recipientCount === 0 || (timing === 'scheduled' && !scheduledDate)}
+            disabled={sending || recipientCount === 0 || !design.fromEmail || (timing === 'scheduled' && !scheduledDate)}
           >
             {timing === 'scheduled'
               ? 'Schedule send'
