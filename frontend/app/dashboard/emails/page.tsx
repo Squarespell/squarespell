@@ -132,7 +132,7 @@ export default function EmailsPage() {
   var totalSent = items.reduce(function(sum, c) { return sum + (c.sent_count || 0); }, 0);
 
   return (
-    <DashboardShell contentPadding="20px 36px 56px">
+    <DashboardShell contentPadding="20px 36px 56px" hideTopbar>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.TEXT }}>Emails</h1>

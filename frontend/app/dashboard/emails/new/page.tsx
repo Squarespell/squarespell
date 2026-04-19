@@ -146,7 +146,7 @@ function NewCampaignPageInner() {
   };
 
   return (
-    <DashboardShell contentPadding="20px 36px 56px">
+    <DashboardShell contentPadding="20px 36px 56px" hideTopbar>
       <div ref={shellRef}>
         <div style={{ marginBottom: 12 }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.TEXT }}>New campaign</h1>
