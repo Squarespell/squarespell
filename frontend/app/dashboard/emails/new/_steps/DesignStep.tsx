@@ -148,37 +148,34 @@ export function DesignStep({
     return allItems.length > 0 ? allItems[0].id : '';
   }, [allItems, quizCategory]);
 
-  // Auto-select recommended template on mount if nothing selected
+  // Auto-select: wait for AI design to finish, then pick AI result or fallback to first template
   var didAutoSelect = useRef(false);
+  var userManuallySelected = useRef(false);
   useEffect(function() {
     if (didAutoSelect.current) return;
+    if (userManuallySelected.current) return;
     if (state.templateId) { didAutoSelect.current = true; return; }
+    // Wait until AI design loading is complete before auto-selecting
+    if (aiDesignLoading) return;
+    didAutoSelect.current = true;
+    // Prefer AI design if available
+    if (aiDesign) {
+      setState({
+        templateId: aiDesign.templateId,
+        subject: aiDesign.subject,
+        preheader: aiDesign.preheader,
+        html: aiDesign.html,
+      });
+      return;
+    }
+    // Fallback: select first template
     if (allItems.length === 0) return;
     var recId = recommendedId || allItems[0].id;
     var item = allItems.find(function(t) { return t.id === recId; });
     if (item) {
       setState({ templateId: item.id, subject: item.subject, preheader: item.preheader, html: item.html });
-      didAutoSelect.current = true;
     }
-  }, [allItems, recommendedId, state.templateId, setState]);
-
-  // Auto-select AI designed template when it becomes available
-  // Only if user has NOT manually clicked a different template
-  var didAiAutoSelect = useRef(false);
-  var userManuallySelected = useRef(false);
-  useEffect(function() {
-    if (didAiAutoSelect.current) return;
-    if (userManuallySelected.current) return;
-    if (!aiDesign) return;
-    if (phase !== 'gallery') return;
-    didAiAutoSelect.current = true;
-    setState({
-      templateId: aiDesign.templateId,
-      subject: aiDesign.subject,
-      preheader: aiDesign.preheader,
-      html: aiDesign.html,
-    });
-  }, [aiDesign, phase, setState]);
+  }, [allItems, recommendedId, state.templateId, setState, aiDesignLoading, aiDesign]);
 
   // Listen for messages from editor iframe
   useEffect(function() {
