@@ -18,6 +18,11 @@ export type DesignState = {
   fromEmail: string;
   /** When present, editor uses block mode. Changes sync back to `html`. */
   blocks?: Block[];
+  /** A/B testing */
+  abEnabled?: boolean;
+  subjectB?: string;
+  abTestPercent?: number;   // percent of audience for test (e.g. 20)
+  abWaitHours?: number;     // hours before picking winner (e.g. 4)
 };
 
 export function DesignStep({
@@ -109,10 +114,65 @@ export function DesignStep({
           <>
             <h2 style={{ margin: '0 0 18px', fontSize: 20, color: C.TEXT }}>Customize your email</h2>
 
-            <Field label="Subject line">
+            <Field label="Subject line (A)">
               <input value={state.subject} onChange={e => setState({ subject: e.target.value })}
                 placeholder="Your result is in" style={inputStyle} />
             </Field>
+
+            {/* A/B subject line toggle */}
+            <div style={{ marginBottom: 14 }}>
+              <button
+                onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
+                  background: state.abEnabled ? C.ACCENT_LIGHT : 'transparent',
+                  border: '1px solid ' + (state.abEnabled ? C.ACCENT : C.BORDER),
+                  borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                  color: state.abEnabled ? C.ACCENT : C.TEXT_MUTED,
+                }}
+              >
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
+                  <path d="M18 2l4 4-4 4" />
+                  <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" />
+                  <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" />
+                  <path d="M18 14l4 4-4 4" />
+                </svg>
+                {state.abEnabled ? 'A/B test enabled' : 'A/B test subject line'}
+              </button>
+
+              {state.abEnabled && (
+                <div style={{ marginTop: 10, padding: 14, background: C.ELEVATED, border: '1px solid ' + C.BORDER, borderRadius: 10 }}>
+                  <Field label="Subject line (B)">
+                    <input value={state.subjectB || ''} onChange={function(e) { setState({ subjectB: e.target.value }); }}
+                      placeholder="Try a different angle" style={inputStyle} />
+                  </Field>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <MiniLabel>Test size</MiniLabel>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input type="number" min={10} max={50} value={state.abTestPercent || 20}
+                          onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
+                          style={{ ...inputStyle, width: 60, textAlign: 'center' }} />
+                        <span style={{ color: C.TEXT_SUBTLE, fontSize: 11 }}>% of audience</span>
+                      </div>
+                    </div>
+                    <div>
+                      <MiniLabel>Wait before picking winner</MiniLabel>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input type="number" min={1} max={48} value={state.abWaitHours || 4}
+                          onChange={function(e) { setState({ abWaitHours: Math.min(48, Math.max(1, Number(e.target.value))) }); }}
+                          style={{ ...inputStyle, width: 60, textAlign: 'center' }} />
+                        <span style={{ color: C.TEXT_SUBTLE, fontSize: 11 }}>hours</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 8 }}>
+                    We send A to {(state.abTestPercent || 20) / 2}% and B to {(state.abTestPercent || 20) / 2}% of your audience. After {state.abWaitHours || 4}h, the winning subject goes to the remaining {100 - (state.abTestPercent || 20)}%.
+                  </div>
+                </div>
+              )}
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <Field label="From name">
                 <input value={state.fromName} onChange={e => setState({ fromName: e.target.value })}
@@ -256,6 +316,9 @@ const Field = ({ label, children }: any) => (
 );
 const Label = ({ children }: any) => (
   <div style={{ color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{children}</div>
+);
+const MiniLabel = ({ children }: any) => (
+  <div style={{ color: C.TEXT_MUTED, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 }}>{children}</div>
 );
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', background: C.ELEVATED,

@@ -281,6 +281,84 @@ export function AudienceStep({
                 )}
               </div>
             )}
+
+            {/* Exclude section */}
+            {state.sourceQuizId && (
+              <div style={{ background: C.ELEVATED, border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 16, marginTop: 12 }}>
+                <Label>Exclude (optional)</Label>
+                <div style={{ color: C.TEXT_SUBTLE, fontSize: 12, marginBottom: 12 }}>
+                  Remove specific leads from this send.
+                </div>
+
+                {/* Exclude by outcome */}
+                {outcomes.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <MiniLabel>Exclude by result</MiniLabel>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {outcomes.map(function(o) {
+                        var excluded = (state.filters.exclude_outcome_ids || []).indexOf(o.id) >= 0;
+                        return (
+                          <button
+                            key={o.id}
+                            onClick={function() {
+                              var current = state.filters.exclude_outcome_ids || [];
+                              var next = excluded
+                                ? current.filter(function(eid) { return eid !== o.id; })
+                                : current.concat([o.id]);
+                              setState({ filters: { ...state.filters, exclude_outcome_ids: next.length > 0 ? next : undefined } });
+                            }}
+                            style={{
+                              padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+                              cursor: 'pointer',
+                              background: excluded ? '#fee2e2' : 'transparent',
+                              color: excluded ? '#dc2626' : C.TEXT_MUTED,
+                              border: '1px solid ' + (excluded ? '#fca5a5' : C.BORDER),
+                            }}
+                          >
+                            {excluded ? <><IconX size={10} /> </> : null}{o.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Exclude already emailed */}
+                <div>
+                  <button
+                    onClick={function() {
+                      setState({ filters: { ...state.filters, exclude_already_emailed: !state.filters.exclude_already_emailed } });
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+                      background: state.filters.exclude_already_emailed ? '#f0fdf4' : 'transparent',
+                      border: '1px solid ' + (state.filters.exclude_already_emailed ? '#86efac' : C.BORDER),
+                      borderRadius: 8, cursor: 'pointer', fontSize: 12, color: C.TEXT,
+                      width: '100%', textAlign: 'left',
+                    }}
+                  >
+                    <div style={{
+                      width: 18, height: 18, borderRadius: 4,
+                      border: '2px solid ' + (state.filters.exclude_already_emailed ? '#22c55e' : C.BORDER),
+                      background: state.filters.exclude_already_emailed ? '#22c55e' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      {state.filters.exclude_already_emailed && (
+                        <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Exclude already emailed</div>
+                      <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 2 }}>
+                        Skip leads who received a previous campaign from this quiz
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )
       ) : (

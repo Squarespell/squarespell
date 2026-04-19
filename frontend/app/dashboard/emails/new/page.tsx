@@ -30,7 +30,7 @@ function NewCampaignPageInner() {
 
   // Step 1 - Setup state
   var [step, setStep] = useState<StepKey>('setup');
-  var [setup, setSetup] = useState<SetupState>({ campaignName: '', quizId: '' });
+  var [setup, setSetup] = useState<SetupState>({ campaignName: '', quizId: '', campaignType: 'blast', dripEmails: [] });
 
   // Step 2 - Template selection
   var [selectedTemplateId, setSelectedTemplateId] = useState('');

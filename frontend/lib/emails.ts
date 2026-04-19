@@ -36,6 +36,8 @@ export type SourceFilters = {
   since?: string;
   until?: string;
   answer_filters?: AnswerFilter[];
+  exclude_outcome_ids?: string[];
+  exclude_already_emailed?: boolean;
 };
 
 export type Campaign = {

@@ -26,13 +26,16 @@ export function ReviewStep({
   sending: boolean;
   result: any;
 }) {
-  const [testEmail, setTestEmail] = useState('');
-  const [testSending, setTestSending] = useState(false);
-  const [testStatus, setTestStatus] = useState<string | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [timing, setTiming] = useState<SendTiming>('now');
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('09:00');
+  var [testEmail, setTestEmail] = useState('');
+  var [testSending, setTestSending] = useState(false);
+  var [testStatus, setTestStatus] = useState<string | null>(null);
+  var [confirmOpen, setConfirmOpen] = useState(false);
+  var [timing, setTiming] = useState<SendTiming>('now');
+  var [scheduledDate, setScheduledDate] = useState('');
+  var [scheduledTime, setScheduledTime] = useState('09:00');
+  var [resendEnabled, setResendEnabled] = useState(false);
+  var [resendHours, setResendHours] = useState(24);
+  var [resendSubject, setResendSubject] = useState('');
 
   const sendTest = async () => {
     if (!testEmail) return;
@@ -112,8 +115,87 @@ export function ReviewStep({
         </div>
       )}
 
+      {/* Resend to unopened */}
       <div style={{
-        background: C.ELEVATED, border: `1px solid ${C.BORDER}`,
+        background: C.ELEVATED, border: '1px solid ' + (resendEnabled ? C.ACCENT : C.BORDER),
+        borderRadius: 12, padding: 16, marginBottom: 22,
+      }}>
+        <button
+          onClick={function() { setResendEnabled(!resendEnabled); }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            textAlign: 'left', padding: 0,
+          }}
+        >
+          <div style={{
+            width: 20, height: 20, borderRadius: 4, flexShrink: 0,
+            border: '2px solid ' + (resendEnabled ? C.ACCENT : C.BORDER),
+            background: resendEnabled ? C.ACCENT : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {resendEnabled && (
+              <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+          <div>
+            <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 14 }}>Auto-resend to unopened</div>
+            <div style={{ color: C.TEXT_SUBTLE, fontSize: 12, marginTop: 2 }}>
+              Automatically resend with a new subject line to people who didn't open
+            </div>
+          </div>
+        </button>
+        {resendEnabled && (
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid ' + C.BORDER }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              <div>
+                <Label>Wait before resending</Label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="number" min={6} max={72} value={resendHours}
+                    onChange={function(e) { setResendHours(Math.min(72, Math.max(6, Number(e.target.value)))); }}
+                    style={{ ...inputStyle, width: 70, textAlign: 'center', flex: 'none' }} />
+                  <span style={{ color: C.TEXT_SUBTLE, fontSize: 12 }}>hours</span>
+                </div>
+              </div>
+              <div>
+                <Label>New subject line</Label>
+                <input value={resendSubject}
+                  onChange={function(e) { setResendSubject(e.target.value); }}
+                  placeholder={design.subject ? 'Re: ' + design.subject : 'Different subject'}
+                  style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ color: C.TEXT_SUBTLE, fontSize: 11 }}>
+              After {resendHours}h, we resend only to recipients who haven't opened the first email.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* A/B test summary */}
+      {design.abEnabled && design.subjectB && (
+        <div style={{
+          background: C.ACCENT_LIGHT, border: '1px solid ' + C.ACCENT,
+          borderRadius: 12, padding: 16, marginBottom: 22,
+          display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
+            <path d="M18 2l4 4-4 4" />
+          </svg>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: C.TEXT, fontWeight: 600, fontSize: 13 }}>A/B test active</div>
+            <div style={{ color: C.TEXT_SUBTLE, fontSize: 12, marginTop: 2 }}>
+              A: "{design.subject}" vs B: "{design.subjectB}" - {(design.abTestPercent || 20) / 2}% each, winner after {design.abWaitHours || 4}h
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        background: C.ELEVATED, border: '1px solid ' + C.BORDER,
         borderRadius: 12, padding: 16, marginBottom: 22,
       }}>
         <Label>Send a test first</Label>
