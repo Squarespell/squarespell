@@ -2856,6 +2856,17 @@ window.addEventListener('message', function(e) {
           el.setAttribute('contenteditable', 'true');
         });
 
+        // Re-attach click handlers lost during cloneNode (cloneNode copies classes but not JS event listeners)
+        canvas.querySelectorAll('.editable-img').forEach(function(img) {
+          img.onclick = function() { openImagePanel(img); };
+        });
+        canvas.querySelectorAll('.editable-btn').forEach(function(a) {
+          a.onclick = function(ev) { ev.preventDefault(); openBtnPanel(a); };
+        });
+        canvas.querySelectorAll('.editable-logo').forEach(function(logo) {
+          logo.onclick = function() { openLogoPanel(logo); };
+        });
+
         bindEditableText();
         updateSectionButtons();
         addInsertPoints();
@@ -3208,7 +3219,7 @@ function createInsertTr(insertPointDiv) {
 
 // Close block picker on outside click
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.block-picker') && !e.target.closest('.section-insert-btn')) {
+  if (!e.target.closest('.block-picker') && !e.target.closest('.section-insert-btn') && !e.target.closest('#sepBlockPicker') && !e.target.closest('.section-editor-panel')) {
     closeBlockPicker();
   }
 });
@@ -3597,6 +3608,30 @@ function generateSectionContentFields(td) {
   if (!inner) return;
   var contentDiv = document.getElementById('sepSectionContent');
   if (!contentDiv) return;
+
+  // Auto-annotate any elements missing editor classes (V2 templates may lack them after cloning)
+  inner.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div, blockquote').forEach(function(el) {
+    if (el.children.length === 0 && el.textContent.trim().length > 0 && !el.classList.contains('editable-text') && !el.classList.contains('editable-img') && !el.classList.contains('editable-btn') && !el.classList.contains('editable-logo') && !el.classList.contains('section-toolbar') && !el.classList.contains('section-label') && !el.closest('.section-toolbar')) {
+      el.classList.add('editable-text');
+    }
+  });
+  inner.querySelectorAll('img').forEach(function(img) {
+    if (!img.classList.contains('editable-img') && !img.classList.contains('editable-logo')) {
+      img.classList.add('editable-img');
+      img.onclick = function() { openImagePanel(img); };
+    }
+  });
+  inner.querySelectorAll('a').forEach(function(a) {
+    var display = a.style.display || '';
+    var bg = a.style.backgroundColor || a.style.background || '';
+    if ((display === 'inline-block' || display === 'block') && bg && bg !== 'transparent' && bg !== '') {
+      if (!a.classList.contains('editable-btn')) {
+        a.classList.add('editable-btn');
+        a.onclick = function(ev) { ev.preventDefault(); openBtnPanel(a); };
+        a.classList.remove('editable-text');
+      }
+    }
+  });
 
   // Build the section type info and actions
   var info = detectSectionType(td);
