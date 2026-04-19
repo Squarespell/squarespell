@@ -133,7 +133,7 @@ export function AudienceStep({
                     <MiniLabel>Result</MiniLabel>
                     <select value={state.filters.outcome_id || ''}
                       onChange={e => setState({ filters: { ...state.filters, outcome_id: e.target.value || undefined } })}
-                      style={inputStyle}>
+                      style={selectStyle}>
                       <option value="">Any result</option>
                       {outcomes.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                     </select>
@@ -156,13 +156,13 @@ export function AudienceStep({
                     <MiniLabel>From date</MiniLabel>
                     <input type="date" value={state.filters.since || ''}
                       onChange={e => setState({ filters: { ...state.filters, since: e.target.value || undefined } })}
-                      style={inputStyle} />
+                      style={{ ...inputStyle, colorScheme: 'light', cursor: 'pointer' }} />
                   </div>
                   <div>
                     <MiniLabel>Until date</MiniLabel>
                     <input type="date" value={state.filters.until || ''}
                       onChange={e => setState({ filters: { ...state.filters, until: e.target.value || undefined } })}
-                      style={inputStyle} />
+                      style={{ ...inputStyle, colorScheme: 'light', cursor: 'pointer' }} />
                   </div>
                 </div>
 
@@ -187,7 +187,7 @@ export function AudienceStep({
                                 updated[idx] = { question_id: e.target.value, value: '' };
                                 setState({ filters: { ...state.filters, answer_filters: updated } });
                               }}
-                              style={inputStyle}
+                              style={selectStyle}
                             >
                               <option value="">Pick a question</option>
                               {questions.filter(function (qq) { return qq.options.length > 0; }).map(function (qq) {
@@ -204,7 +204,7 @@ export function AudienceStep({
                                 updated[idx] = { ...updated[idx], value: e.target.value };
                                 setState({ filters: { ...state.filters, answer_filters: updated } });
                               }}
-                              style={inputStyle}
+                              style={selectStyle}
                             >
                               <option value="">Pick an answer</option>
                               {(q?.options || []).map(function (o) {
@@ -455,4 +455,14 @@ const MiniLabel = ({ children }: any) => (
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', background: C.SURFACE,
   border: `1px solid ${C.BORDER}`, borderRadius: 10, color: C.TEXT, fontSize: 13, boxSizing: 'border-box',
+};
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none' as const,
+  WebkitAppearance: 'none' as const,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236B6B6B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: 32,
+  cursor: 'pointer',
 };

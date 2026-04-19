@@ -78,7 +78,7 @@ export function DesignStep({
   return (
     <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 16, transition: 'grid-template-columns 0.2s ease' }}>
       {/* LEFT: block canvas or legacy editor */}
-      <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 20, overflow: 'auto', maxHeight: 'calc(100vh - 220px)' }}>
+      <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 20 }}>
         {isBlockMode ? (
           <>
             <h2 style={{ margin: '0 0 12px', fontSize: 16, color: C.TEXT, fontWeight: 700 }}>Blocks</h2>
@@ -188,7 +188,7 @@ export function DesignStep({
       </div>
 
       {/* CENTER/RIGHT: live preview */}
-      <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+      <div style={{ background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <h2 style={{ margin: 0, fontSize: 20, color: C.TEXT }}>Preview</h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -237,7 +237,7 @@ export function DesignStep({
             style={{
               width: view === 'desktop' ? '100%' : 375,
               maxWidth: view === 'desktop' ? 640 : 375,
-              minHeight: 560, border: 'none',
+              minHeight: 480, height: 'auto', border: 'none',
               background: darkMode ? '#1a1a2e' : '#fff',
               borderRadius: 8,
               transition: 'background 0.2s ease',
