@@ -84,7 +84,7 @@ export function DesignStep({
   var [search, setSearch] = useState('');
   var editorRef = useRef<HTMLIFrameElement>(null);
   var [editorReady, setEditorReady] = useState(false);
-  var [phase, setPhase] = useState<'gallery' | 'editor'>(state.templateId ? 'editor' : 'gallery');
+  var [phase, setPhase] = useState<'gallery' | 'editor'>('gallery');
 
   // Categories
   var categories = useMemo(function() {
@@ -131,7 +131,7 @@ export function DesignStep({
     if (item) {
       setState({ templateId: item.id, subject: item.subject, html: item.html });
       didAutoSelect.current = true;
-      setPhase('editor');
+      // Stay on gallery so users can browse all templates
     }
   }, [allItems, recommendedId, state.templateId, setState]);
 
@@ -413,63 +413,64 @@ export function DesignStep({
   // ==============================
   return (
     <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* Compact top bar */}
+      {/* Compact top bar - balanced grid */}
       <div style={{
         padding: '14px 20px', borderBottom: '1px solid ' + C.BORDER,
-        display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap',
+        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, alignItems: 'end',
       }}>
         {/* Change template button */}
-        <button
-          onClick={function() { setPhase('gallery'); }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-            background: C.ELEVATED, border: '1px solid ' + C.BORDER,
-            borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            color: C.TEXT, whiteSpace: 'nowrap', flexShrink: 0, alignSelf: 'center',
-          }}
-        >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
-          </svg>
-          {selectedItem ? selectedItem.title : 'Change template'}
-        </button>
+        <div>
+          <div style={{ color: C.TEXT_MUTED, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Template</div>
+          <button
+            onClick={function() { setPhase('gallery'); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
+              background: C.ELEVATED, border: '1px solid ' + C.BORDER,
+              borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              color: C.TEXT, width: '100%', boxSizing: 'border-box',
+            }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {selectedItem ? selectedItem.title : 'Choose template'}
+            </span>
+          </button>
+        </div>
 
         {/* Subject */}
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <Field label="Subject line">
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
-                placeholder="Your result is in" style={inputStyle} />
-              <button
-                onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 4, padding: '8px 10px',
-                  background: state.abEnabled ? C.ACCENT_LIGHT : 'transparent',
-                  border: '1px solid ' + (state.abEnabled ? C.ACCENT : C.BORDER),
-                  borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                  color: state.abEnabled ? C.ACCENT : C.TEXT_MUTED, whiteSpace: 'nowrap', flexShrink: 0,
-                }}
-              >
-                A/B
-              </button>
-            </div>
-          </Field>
-        </div>
+        <Field label="Subject line">
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
+              placeholder="Your result is in" style={inputStyle} />
+            <button
+              onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4, padding: '8px 10px',
+                background: state.abEnabled ? C.ACCENT_LIGHT : 'transparent',
+                border: '1px solid ' + (state.abEnabled ? C.ACCENT : C.BORDER),
+                borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                color: state.abEnabled ? C.ACCENT : C.TEXT_MUTED, whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >
+              A/B
+            </button>
+          </div>
+        </Field>
 
-        {/* From */}
-        <div style={{ width: 160 }}>
-          <Field label="From name">
-            <input value={state.fromName} onChange={function(e) { setState({ fromName: e.target.value }); }}
-              placeholder="Your brand" style={inputStyle} />
-          </Field>
-        </div>
-        <div style={{ width: 200 }}>
-          <Field label="From email">
-            <input value={state.fromEmail} onChange={function(e) { setState({ fromEmail: e.target.value }); }}
-              placeholder="hello@yourdomain.com" style={inputStyle} />
-          </Field>
-        </div>
+        {/* From name */}
+        <Field label="From name">
+          <input value={state.fromName} onChange={function(e) { setState({ fromName: e.target.value }); }}
+            placeholder="Your brand" style={inputStyle} />
+        </Field>
+
+        {/* From email */}
+        <Field label="From email">
+          <input value={state.fromEmail} onChange={function(e) { setState({ fromEmail: e.target.value }); }}
+            placeholder="hello@yourdomain.com" style={inputStyle} />
+        </Field>
       </div>
 
       {/* A/B expanded row */}
@@ -484,7 +485,7 @@ export function DesignStep({
                 placeholder="Try a different angle" style={inputStyle} />
             </Field>
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingBottom: 8 }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingBottom: 4 }}>
             <input type="number" min={10} max={50} value={state.abTestPercent || 20}
               onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
               style={{ width: 50, padding: '8px 6px', background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13, textAlign: 'center', boxSizing: 'border-box' }} />
