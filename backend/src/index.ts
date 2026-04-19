@@ -82,6 +82,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/public/unsubscribe',
   '/api/public/resubscribe',
   '/api/webhooks',
+  '/api/emails/unsplash',
 ];
 
 const restrictedCors = cors({

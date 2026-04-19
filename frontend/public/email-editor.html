@@ -272,7 +272,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .font-picker-option.active .fp-check { display: inline; }
 /* --- Right Panel (Preview) --- */
 .right-panel {
-  flex: 1; overflow-y: auto; background: #F0F0ED; padding: 24px;
+  flex: 1; overflow-y: auto; background: #F0F0ED; padding: 24px 60px 24px 24px;
   display: flex; justify-content: center;
 }
 .email-canvas {
@@ -287,14 +287,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .editing .editable-img:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: pointer; border-radius: 3px; }
 .editing .editable-btn:hover { outline: 2px solid rgba(13,115,119,0.3); outline-offset: 2px; cursor: pointer; border-radius: 3px; }
 .editing .editable-logo:hover { outline: 2px dashed rgba(13,115,119,0.4); outline-offset: 2px; cursor: pointer; }
-.editing .email-section { position: relative; }
-.editing .email-section:hover > .section-toolbar { opacity: 1; }
+.editing .email-section { position: relative; transition: outline 0.12s, box-shadow 0.12s; }
+.editing .email-section:hover { outline: 2px solid #0D7377; outline-offset: -2px; }
+.editing .email-section:hover > .section-toolbar { opacity: 1; pointer-events: auto; }
 
 /* --- Section toolbar --- */
 .section-toolbar {
-  position: absolute; left: -40px; top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 4px; opacity: 0; transition: opacity 0.15s;
-  z-index: 20;
+  position: absolute; right: -44px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 3px; opacity: 0; transition: opacity 0.15s;
+  z-index: 20; pointer-events: none;
 }
 .section-toolbar button {
   width: 32px; height: 32px; border-radius: 8px; border: 1px solid #E4E3E0;
@@ -302,8 +303,16 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   align-items: center; justify-content: center; color: #6B7280;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.12s;
 }
-.section-toolbar button:hover { background: #F7F7F5; color: #1A1A1A; }
+.section-toolbar button:hover { background: #F0FDFA; color: #0D7377; border-color: #0D7377; }
 .section-toolbar button:disabled { opacity: 0.3; cursor: not-allowed; }
+.section-toolbar button.stb-delete { color: #DC2626; }
+.section-toolbar button.stb-delete:hover { background: #FEF2F2; color: #DC2626; border-color: #DC2626; }
+.section-toolbar .stb-label {
+  position: absolute; right: 100%; margin-right: 6px; top: 50%; transform: translateY(-50%);
+  background: #1A1A1A; color: #FFFFFF; font-size: 11px; padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.1s;
+}
+.section-toolbar button:hover .stb-label { opacity: 1; }
 
 /* --- Floating text toolbar --- */
 .text-toolbar {
@@ -369,6 +378,18 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   background: #6B7280; text-align: center; line-height: 36px; text-decoration: none;
 }
 .social-links-row a svg { vertical-align: middle; }
+
+/* --- Image placeholder --- */
+.img-placeholder {
+  width: 100%; min-height: 200px; background: #F3F4F6; border: 2px dashed #D1D5DB;
+  border-radius: 8px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; cursor: pointer; transition: all 0.15s;
+}
+.img-placeholder:hover { border-color: #0D7377; background: #F0FDFA; }
+.img-placeholder svg { color: #9CA3AF; }
+.img-placeholder:hover svg { color: #0D7377; }
+.img-placeholder span { font-size: 13px; color: #9CA3AF; font-weight: 500; }
+.img-placeholder:hover span { color: #0D7377; }
 
 /* --- Logo upload panel --- */
 .logo-panel, .image-panel, .button-panel {
@@ -865,7 +886,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
   <div class="tab-row">
     <button class="tab-btn active" onclick="switchImgTab('upload')">Upload</button>
     <button class="tab-btn" onclick="switchImgTab('url')">URL</button>
-    <button class="tab-btn" onclick="switchImgTab('unsplash')">Free Images</button>
+    <button class="tab-btn" onclick="switchImgTab('unsplash')">Browse Images</button>
   </div>
   <div class="tab-content active" id="imgTabUpload">
     <div style="border:2px dashed #E4E3E0;border-radius:10px;padding:24px;text-align:center;cursor:pointer;" onclick="document.getElementById('imgFileInput').click()" id="imgDropZone">
@@ -952,6 +973,16 @@ var globalColors = { primary: '#0D7377', background: '#FFFFFF', text: '#1A1A1A' 
 var globalFont = 'Inter, sans-serif';
 var sectionIdCounter = 0;
 
+function sectionToolbarHtml() {
+  return '<div class="section-toolbar">' +
+    '<button onclick="moveSection(this,-1)" title="Move up"><span class="stb-label">Move up</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>' +
+    '<button onclick="moveSection(this,1)" title="Move down"><span class="stb-label">Move down</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>' +
+    '<button onclick="dupeSection(this)" title="Duplicate"><span class="stb-label">Duplicate</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>' +
+    '<button onclick="openSectionStyle(this)" title="Style"><span class="stb-label">Style</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>' +
+    '<button onclick="deleteSection(this)" title="Delete" class="stb-delete"><span class="stb-label">Delete</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>' +
+    '</div>';
+}
+
 function uid() { return 's' + (++sectionIdCounter) + '_' + Math.random().toString(36).substr(2, 6); }
 
 // ================================================================
@@ -969,7 +1000,7 @@ function tplQuizResult() {
   '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
   '<a href="#" class="editable-text" style="font-size:12px;color:#6B7280;text-decoration:none;">View in browser</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)" title="Move up">&#8593;</button><button onclick="moveSection(this,1)" title="Move down">&#8595;</button><button onclick="dupeSection(this)" title="Duplicate">&#9783;</button><button onclick="addSectionBelow(this)" title="Add below">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)" title="Delete">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Hero
@@ -979,7 +1010,7 @@ function tplQuizResult() {
   '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.6));">' +
   '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Your Results Are In, {{first_name}}</h1>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Score Section
@@ -992,7 +1023,7 @@ function tplQuizResult() {
   '<h2 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:16px;">Your Quiz Score</h2>' +
   '<p class="editable-text" style="font-size:14px;color:#6B7280;margin-top:4px;">Top 15% of all respondents</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Result Category
@@ -1002,7 +1033,7 @@ function tplQuizResult() {
   '<h2 class="editable-text" style="font-size:28px;font-weight:700;color:' + globalColors.text + ';margin-top:8px;">You\'re a Growth-Stage Founder</h2>' +
   '<p class="editable-text" style="font-size:15px;color:#4B5563;line-height:1.6;margin-top:12px;">Your answers reveal that you have already achieved product-market fit and are now focused on scaling your operations. You understand your core customer deeply but need systems to reach them at scale. The recommendations below are tailored specifically for founders at your stage of growth.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Recommendation Card
@@ -1016,7 +1047,7 @@ function tplQuizResult() {
   '<p class="editable-text" style="font-size:14px;color:#6B7280;line-height:1.5;margin-top:8px;">A 12-week hands-on program designed for founders who have found product-market fit and are ready to build the systems that scale. Includes weekly coaching calls, templates, and a private community.</p>' +
   '<a href="#" class="editable-btn" style="display:inline-block;margin-top:16px;padding:12px 28px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Learn More</a>' +
   '</div></div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Testimonial
@@ -1030,7 +1061,7 @@ function tplQuizResult() {
   '<div class="editable-text" style="font-size:12px;color:#6B7280;">Founder, Elevate Consulting</div>' +
   '<div class="stars" style="margin-top:4px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>' +
   '</div></div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Retake Button
@@ -1038,7 +1069,7 @@ function tplQuizResult() {
   '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
   '<a href="#" class="editable-btn" style="display:inline-block;padding:12px 32px;border:2px solid ' + globalColors.primary + ';color:' + globalColors.primary + ';text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;background:transparent;" onclick="event.preventDefault();openBtnPanel(this)">Retake the Quiz</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Footer
@@ -1056,7 +1087,7 @@ function tplQuizResult() {
   '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:12px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
   '<p style="font-size:10px;color:#BFBFBF;margin-top:6px;">Copyright 2026 Squarespell. All rights reserved.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   '</table></td></tr></table></div>';
@@ -1076,7 +1107,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:20px 32px;">' +
   '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Hero
@@ -1086,7 +1117,7 @@ function tplLeadNurture() {
   '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.65));">' +
   '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Ready to Take the Next Step?</h1>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Intro
@@ -1094,7 +1125,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:32px;">' +
   '<p class="editable-text" style="font-size:16px;color:' + globalColors.text + ';line-height:1.7;">Hi {{first_name}}, based on your quiz results, we put together a personalized action plan just for you. Most people in your position share a common challenge: they know what they want to build but struggle to figure out where to begin. The strategies below are specifically designed for people at your stage, and they have worked for hundreds of founders just like you.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Two-column features
@@ -1112,7 +1143,7 @@ function tplLeadNurture() {
   '<p class="editable-text" style="font-size:13px;color:#6B7280;line-height:1.5;margin-top:6px;">Set up three core metrics that map directly to revenue. When you know your numbers, every decision becomes clearer and faster.</p>' +
   '</div>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // 3-col value prop
@@ -1123,7 +1154,7 @@ function tplLeadNurture() {
   '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Quick Results</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">See measurable progress within your first week</p></div>' +
   '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Expert Support</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">One-on-one coaching available when you need it</p></div>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // CTA
@@ -1131,7 +1162,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
   '<a href="#" class="editable-btn" style="display:inline-block;padding:14px 36px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Book Your Free Strategy Call</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // PS
@@ -1139,7 +1170,7 @@ function tplLeadNurture() {
   '<div class="section-inner" style="padding:0 32px 24px;">' +
   '<p class="editable-text" style="font-size:14px;color:#6B7280;font-style:italic;line-height:1.6;">P.S. This offer expires in 48 hours. We keep our coaching groups intentionally small to give every member real attention, so spots fill up fast. Don\'t wait on this one.</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Footer
@@ -1154,7 +1185,7 @@ function tplLeadNurture() {
   '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
   '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   '</table></td></tr></table></div>';
@@ -1171,7 +1202,7 @@ function tplPromoOffer() {
   // Top banner
   '<table width="100%" cellpadding="0" cellspacing="0"><tr><td class="email-section" data-sid="' + uid() + '" style="background:' + globalColors.primary + ';text-align:center;padding:10px 16px;">' +
   '<span class="editable-text" style="color:#FFFFFF;font-size:13px;font-weight:600;letter-spacing:1px;">LIMITED TIME OFFER - 48 HOURS ONLY</span>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr></table>' +
 
   '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:0 0 8px 8px;overflow:hidden;margin-top:0;">' +
@@ -1181,7 +1212,7 @@ function tplPromoOffer() {
   '<div class="section-inner" style="padding:20px 32px;">' +
   '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)">Your Logo</div>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Hero
@@ -1191,7 +1222,7 @@ function tplPromoOffer() {
   '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;">' +
   '<h1 class="editable-text" style="color:#FFFFFF;font-size:32px;font-weight:800;text-align:center;margin:0;">You Unlocked a Special Offer</h1>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Score badge
@@ -1200,7 +1231,7 @@ function tplPromoOffer() {
   '<div class="tier-badge" style="background:#F59E0B;color:#FFFFFF;">Gold Tier</div>' +
   '<p class="editable-text" style="font-size:15px;color:#4B5563;margin-top:12px;">Based on your quiz score, you qualify for our best discount:</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Offer box
@@ -1217,7 +1248,7 @@ function tplPromoOffer() {
   '<li class="editable-text">Lifetime access to templates and playbooks library</li>' +
   '<li class="editable-text">Priority support via email and live chat</li>' +
   '</ul></div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Countdown
@@ -1230,7 +1261,7 @@ function tplPromoOffer() {
   '<div class="countdown-box"><div class="countdown-num">47</div><div class="countdown-lbl">Mins</div></div>' +
   '<div class="countdown-box"><div class="countdown-num">12</div><div class="countdown-lbl">Secs</div></div>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // CTA
@@ -1238,7 +1269,7 @@ function tplPromoOffer() {
   '<div class="section-inner" style="padding:16px 32px;text-align:center;">' +
   '<a href="#" class="editable-btn" style="display:inline-block;padding:16px 48px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:18px;font-weight:700;" onclick="event.preventDefault();openBtnPanel(this)">Claim Your Discount Now &#8594;</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Guarantee
@@ -1248,7 +1279,7 @@ function tplPromoOffer() {
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
   '<span class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">30-Day Money Back Guarantee</span>' +
   '</div></div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Secondary CTA
@@ -1256,7 +1287,7 @@ function tplPromoOffer() {
   '<div class="section-inner" style="padding:8px 32px 24px;text-align:center;">' +
   '<a href="#" class="editable-text" style="font-size:14px;color:#6B7280;text-decoration:underline;">Not ready? Remind me tomorrow</a>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   // Footer
@@ -1266,7 +1297,7 @@ function tplPromoOffer() {
   '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
   '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
   '</div>' +
-  '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+  sectionToolbarHtml() +
   '</td></tr>' +
 
   '</table></td></tr></table></div>';
@@ -1528,10 +1559,30 @@ function switchImgTab(tab) {
   document.getElementById('imgTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
 }
 
+// Replace placeholder div with real img, or just set src if already img
+function setImageSrc(src, alt) {
+  if (!activeImgEl) return;
+  if (activeImgEl.tagName === 'IMG') {
+    activeImgEl.src = src;
+    if (alt) activeImgEl.alt = alt;
+  } else {
+    // Placeholder div - replace with img
+    var img = document.createElement('img');
+    img.className = 'editable-img';
+    img.src = src;
+    img.alt = alt || '';
+    img.style.cssText = 'width:100%;display:block;height:auto;';
+    img.onclick = function() { openImagePanel(img); };
+    activeImgEl.parentElement.replaceChild(img, activeImgEl);
+    activeImgEl = img;
+  }
+  broadcastHtml();
+}
+
 function handleImgFile(input) {
   if (!input.files[0] || !activeImgEl) return;
   var reader = new FileReader();
-  reader.onload = function(e) { activeImgEl.src = e.target.result; closeImage(); };
+  reader.onload = function(e) { setImageSrc(e.target.result); closeImage(); };
   reader.readAsDataURL(input.files[0]);
   input.value = '';
 }
@@ -1539,7 +1590,7 @@ function handleImgFile(input) {
 function handleImgUrl() {
   var url = document.getElementById('imgUrlInput').value.trim();
   if (!url || !activeImgEl) return;
-  activeImgEl.src = url;
+  setImageSrc(url);
   document.getElementById('imgUrlInput').value = '';
   closeImage();
 }
@@ -1552,13 +1603,8 @@ function searchUnsplash(query) {
     grid.innerHTML = '<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">Searching...</div>';
     if (!query) { grid.innerHTML = ''; return; }
 
-    // Determine API base (parent window origin for iframe, or same origin)
-    var apiBase = '';
-    try {
-      if (window.parent !== window && window.parent.location.origin) {
-        apiBase = window.parent.location.origin;
-      }
-    } catch(e) { /* cross-origin, use relative */ }
+    // Use backend API directly
+    var apiBase = 'https://squarespell-api.onrender.com';
 
     fetch(apiBase + '/api/emails/unsplash/search?q=' + encodeURIComponent(query))
       .then(function(res) { return res.json(); })
@@ -1578,8 +1624,7 @@ function searchUnsplash(query) {
           img.loading = 'lazy';
           img.onclick = function() {
             if (activeImgEl) {
-              activeImgEl.src = photo.regular;
-              activeImgEl.alt = photo.alt || '';
+              setImageSrc(photo.regular, photo.alt || '');
               closeImage();
             }
           };
@@ -1724,7 +1769,7 @@ function addSectionBelow(btn) {
     '<div class="section-inner" style="padding:32px;text-align:center;">' +
     '<p class="editable-text" style="font-size:15px;color:#6B7280;">New section - click to edit text</p>' +
     '</div>' +
-    '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>' +
+    sectionToolbarHtml() +
     '</td>';
   tr.parentElement.insertBefore(newTr, tr.nextSibling);
   bindEditableText();
@@ -2146,6 +2191,7 @@ function exportHTML() {
   // Strip editor UI
   clone.querySelectorAll('.section-toolbar').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('.insert-point-tr').forEach(function(t) { t.remove(); });
+  clone.querySelectorAll('.img-placeholder').forEach(function(t) { t.remove(); });
   clone.querySelectorAll('[contenteditable]').forEach(function(e) { e.removeAttribute('contenteditable'); });
   clone.classList.remove('editing');
   clone.querySelectorAll('.active').forEach(function(e) { e.classList.remove('active'); });
@@ -2249,7 +2295,7 @@ window.addEventListener('message', function(e) {
 
         // Wrap table rows as email sections with toolbars
         // Only target top-level TRs in the main email table (not nested inner-table TRs)
-        var toolbar = '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>';
+        var toolbar = sectionToolbarHtml();
         // Find the main content table (the outermost table or first nested table with rows)
         var mainTable = canvas.querySelector('table table tbody') || canvas.querySelector('table table') || canvas.querySelector('table tbody') || canvas.querySelector('table');
         var topLevelTrs = mainTable ? Array.from(mainTable.children).filter(function(el) { return el.tagName === 'TR'; }) : [];
@@ -2382,7 +2428,7 @@ function closeBlockPicker() {
 function insertBlock(type) {
   var html = '';
   var sid = uid();
-  var toolbar = '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>';
+  var toolbar = sectionToolbarHtml();
 
   if (type === 'text') {
     html = '<td class="email-section" data-sid="' + sid + '">' +
@@ -2391,8 +2437,11 @@ function insertBlock(type) {
       '</div>' + toolbar + '</td>';
   } else if (type === 'image') {
     html = '<td class="email-section" data-sid="' + sid + '">' +
-      '<div class="section-inner">' +
-      '<img class="editable-img" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=300&fit=crop" alt="Click to replace" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
+      '<div class="section-inner" style="padding:16px 32px;">' +
+      '<div class="img-placeholder editable-img" onclick="openImagePanel(this)" data-placeholder="true">' +
+      '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+      '<span>Click to add image</span>' +
+      '</div>' +
       '</div>' + toolbar + '</td>';
   } else if (type === 'button') {
     html = '<td class="email-section" data-sid="' + sid + '">' +
