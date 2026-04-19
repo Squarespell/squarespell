@@ -163,11 +163,13 @@ export function DesignStep({
   }, [allItems, recommendedId, state.templateId, setState]);
 
   // Auto-select AI designed template when it becomes available
+  // Only if user has NOT manually clicked a different template
   var didAiAutoSelect = useRef(false);
+  var userManuallySelected = useRef(false);
   useEffect(function() {
     if (didAiAutoSelect.current) return;
+    if (userManuallySelected.current) return;
     if (!aiDesign) return;
-    // Only auto-select if still in gallery phase and user hasn't manually picked something else
     if (phase !== 'gallery') return;
     didAiAutoSelect.current = true;
     setState({
@@ -208,6 +210,7 @@ export function DesignStep({
 
   // Select template from gallery
   var handleSelectTemplate = useCallback(function(item: TemplateItem) {
+    userManuallySelected.current = true;
     setState({
       templateId: item.id,
       subject: item.subject,
@@ -344,6 +347,7 @@ export function DesignStep({
               <div style={{ position: 'relative' }} className="sq-tpl-card">
                 <button
                   onClick={function() {
+                    userManuallySelected.current = true;
                     setState({
                       templateId: aiDesign.templateId,
                       subject: aiDesign.subject,
