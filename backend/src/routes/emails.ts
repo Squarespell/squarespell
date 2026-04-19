@@ -91,17 +91,32 @@ r.get('/source-quizzes', async (req, res) => {
   res.json(data || []);
 });
 
-// Outcomes for filter dropdown
+// Outcomes for filter dropdown - returns { id, name } objects
 r.get('/source-quizzes/:id/outcomes', async (req, res) => {
   const tenantId = req.dbUserId;
-  const { data, error } = await supabase.from('leads')
-    .select('outcome_id')
-    .eq('user_id', tenantId).eq('quiz_id', req.params.id)
-    .not('outcome_id', 'is', null);
-  if (error) return res.status(500).json({ error: error.message });
-  const set = new Set<string>();
-  (data || []).forEach((r: any) => r.outcome_id && set.add(r.outcome_id));
-  res.json([...set]);
+  // Fetch outcome IDs from leads AND outcome definitions from quiz
+  const [leadsResult, quizResult] = await Promise.all([
+    supabase.from('leads')
+      .select('outcome_id')
+      .eq('user_id', tenantId).eq('quiz_id', req.params.id)
+      .not('outcome_id', 'is', null),
+    supabase.from('quizzes')
+      .select('outcomes')
+      .eq('id', req.params.id).eq('user_id', tenantId).single(),
+  ]);
+  if (leadsResult.error) return res.status(500).json({ error: leadsResult.error.message });
+  const usedIds = new Set<string>();
+  (leadsResult.data || []).forEach((r: any) => r.outcome_id && usedIds.add(r.outcome_id));
+  // Build an id-to-name map from quiz outcomes
+  const outcomeDefs = (quizResult.data?.outcomes || []) as any[];
+  const nameMap: Record<string, string> = {};
+  outcomeDefs.forEach((o: any) => { if (o.id && o.title) nameMap[o.id] = o.title; });
+  // Return outcome objects with id and human-readable name
+  const results = Array.from(usedIds).map(id => ({
+    id,
+    name: nameMap[id] || id,
+  }));
+  res.json(results);
 });
 
 // Questions for answer-based segment filters
@@ -377,10 +392,25 @@ r.post('/campaigns/:id/test-send', async (req, res) => {
   const { data: c } = await supabase.from('email_campaigns').select('*')
     .eq('id', req.params.id).eq('tenant_id', tenantId).single();
   if (!c) return res.status(404).json({ error: 'not_found' });
+  // Replace merge tags with sample values for test send
+  const sampleTags: Record<string, string> = {
+    '{{firstName}}': 'Alex',
+    '{{outcomeTitle}}': 'Your Result',
+    '{{quizTitle}}': 'Your Quiz',
+    '{{ctaUrl}}': 'https://example.com',
+    '{{brand}}': c.from_name || 'Your Brand',
+    '{{unsubscribeUrl}}': 'https://example.com/unsubscribe',
+  };
+  let html = c.html;
+  let subject = c.subject;
+  for (const [tag, val] of Object.entries(sampleTags)) {
+    html = html.split(tag).join(val);
+    subject = subject.split(tag).join(val);
+  }
   try {
     const { messageId } = await resendProvider.send({
       to, from: c.from_email, fromName: c.from_name,
-      subject: '[TEST] ' + c.subject, html: c.html,
+      subject: '[TEST] ' + subject, html,
       tags: [{ name: 'campaign', value: c.id }, { name: 'test', value: '1' }],
     });
     res.json({ ok: true, messageId });

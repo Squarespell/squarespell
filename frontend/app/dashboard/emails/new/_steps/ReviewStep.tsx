@@ -83,13 +83,13 @@ export function ReviewStep({
               <input type="date" value={scheduledDate}
                 onChange={e => setScheduledDate(e.target.value)}
                 min={new Date().toISOString().slice(0, 10)}
-                style={{ ...inputStyle, colorScheme: 'dark' }} />
+                style={{ ...inputStyle, colorScheme: 'light' }} />
             </div>
             <div style={{ flex: '1 1 120px' }}>
               <Label>Time</Label>
               <input type="time" value={scheduledTime}
                 onChange={e => setScheduledTime(e.target.value)}
-                style={{ ...inputStyle, colorScheme: 'dark' }} />
+                style={{ ...inputStyle, colorScheme: 'light' }} />
             </div>
             <div style={{ flex: '1 1 200px', fontSize: 12, color: C.TEXT_MUTED, paddingBottom: 12 }}>
               {scheduledDate && scheduledTime ? (

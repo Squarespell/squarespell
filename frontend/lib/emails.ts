@@ -88,7 +88,9 @@ export async function listSourceQuizzes(): Promise<SourceQuiz[]> {
   return req('/api/emails/source-quizzes');
 }
 
-export async function listOutcomesForQuiz(quizId: string): Promise<string[]> {
+export type QuizOutcome = { id: string; name: string };
+
+export async function listOutcomesForQuiz(quizId: string): Promise<QuizOutcome[]> {
   return req(`/api/emails/source-quizzes/${quizId}/outcomes`);
 }
 

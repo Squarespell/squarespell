@@ -17,6 +17,7 @@ import { EMAIL_TEMPLATES as BLOCK_TEMPLATES } from '../../../../lib/email/templa
 import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
 import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
 import { renderBlocks } from '../../../../lib/email/renderBlocks';
+import { api } from '../../../../lib/api';
 
 function NewCampaignPageInner() {
   const { status } = useDashboardAuth();
@@ -60,6 +61,21 @@ function NewCampaignPageInner() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
+
+  // Auto-fill From Name / From Email from brand kit + user profile on mount
+  useEffect(() => {
+    Promise.all([
+      api.getBrandKit().catch(() => null),
+      api.getUserPlan().catch(() => null),
+    ]).then(([bk, profile]: any[]) => {
+      setDesign(prev => {
+        const updates: Partial<DesignState> = {};
+        if (!prev.fromName && bk?.site_name) updates.fromName = bk.site_name;
+        if (!prev.fromEmail && profile?.email) updates.fromEmail = profile.email;
+        return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
+      });
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep recipient count in sync for the review step
   useEffect(() => {
@@ -187,31 +203,10 @@ function NewCampaignPageInner() {
   );
 }
 
-class DebugBoundary extends React.Component<{ children: React.ReactNode }, { err: Error | null }> {
-  state: { err: Error | null } = { err: null };
-  static getDerivedStateFromError(err: Error) { return { err }; }
-  componentDidCatch(err: Error, info: React.ErrorInfo) {
-    console.error('[NewCampaign] CRASH:', err.message, err.stack, info.componentStack);
-  }
-  render() {
-    if (this.state.err) return (
-      <DashboardShell>
-        <div style={{ padding: 40, color: '#c53030' }}>
-          <h2>Debug: {this.state.err.message}</h2>
-          <pre style={{ fontSize: 11, whiteSpace: 'pre-wrap', color: '#666' }}>{this.state.err.stack}</pre>
-        </div>
-      </DashboardShell>
-    );
-    return this.props.children;
-  }
-}
-
 export default function NewCampaignPage() {
   return (
-    <DebugBoundary>
-      <Suspense fallback={<DashboardShell><div style={{ padding: 40, color: C.TEXT_SUBTLE }}>Loading...</div></DashboardShell>}>
-        <NewCampaignPageInner />
-      </Suspense>
-    </DebugBoundary>
+    <Suspense fallback={<DashboardShell><div style={{ padding: 40, color: C.TEXT_SUBTLE }}>Loading...</div></DashboardShell>}>
+      <NewCampaignPageInner />
+    </Suspense>
   );
 }

@@ -4,7 +4,7 @@ import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 import { PrimaryButton } from '../../../_components/PageShell';
 import {
   listSourceQuizzes, listOutcomesForQuiz, listQuestionsForQuiz, previewRecipients,
-  SourceQuiz, SourceFilters, QuizQuestion, AnswerFilter,
+  SourceQuiz, SourceFilters, QuizQuestion, QuizOutcome, AnswerFilter,
 } from '../../../../../lib/emails';
 
 export type AudienceState = {
@@ -25,7 +25,7 @@ export function AudienceStep({
 }) {
   const [quizzes, setQuizzes] = useState<SourceQuiz[] | null>(null);
   const [quizError, setQuizError] = useState<string | null>(null);
-  const [outcomes, setOutcomes] = useState<string[]>([]);
+  const [outcomes, setOutcomes] = useState<QuizOutcome[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [count, setCount] = useState<number | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -135,7 +135,7 @@ export function AudienceStep({
                       onChange={e => setState({ filters: { ...state.filters, outcome_id: e.target.value || undefined } })}
                       style={inputStyle}>
                       <option value="">Any result</option>
-                      {outcomes.map(o => <option key={o} value={o}>{o}</option>)}
+                      {outcomes.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                     </select>
                   </div>
                   <div>

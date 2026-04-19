@@ -73,7 +73,7 @@ export function DesignStep({
 
   // Three-column layout: blocks | preview | inspector (when selected)
   const hasInspector = isBlockMode && selectedBlock;
-  const gridCols = hasInspector ? '320px 1fr 300px' : isBlockMode ? '320px 1fr' : '1fr 1fr';
+  const gridCols = hasInspector ? '340px 1fr 300px' : isBlockMode ? '340px 1fr' : '1.1fr 0.9fr';
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 16, transition: 'grid-template-columns 0.2s ease' }}>
@@ -137,18 +137,52 @@ export function DesignStep({
               </Field>
             </div>
 
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Label>{showHtml ? 'HTML' : 'Content'}</Label>
-              <button onClick={() => setShowHtml(v => !v)} style={{
-                background: 'transparent', border: `1px solid ${C.BORDER}`,
-                color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
-              }}>{showHtml ? 'Edit visually' : 'Edit HTML'}</button>
-            </div>
-            <textarea value={state.html} onChange={e => setState({ html: e.target.value })}
-              style={{ ...inputStyle, minHeight: 220, fontFamily: showHtml ? 'ui-monospace,monospace' : 'inherit', fontSize: showHtml ? 12 : 13 }} />
-            <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 6 }}>
-              Variables: {'{{firstName}}'}, {'{{outcomeTitle}}'}, {'{{quizTitle}}'}, {'{{ctaUrl}}'}, {'{{brand}}'}
-            </div>
+            {showHtml ? (
+              <>
+                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Label>HTML source</Label>
+                  <button onClick={() => setShowHtml(false)} style={{
+                    background: 'transparent', border: `1px solid ${C.BORDER}`,
+                    color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+                  }}>Done editing</button>
+                </div>
+                <textarea value={state.html} onChange={e => setState({ html: e.target.value })}
+                  style={{ ...inputStyle, minHeight: 220, fontFamily: 'ui-monospace,monospace', fontSize: 12 }} />
+                <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, marginTop: 6 }}>
+                  Variables: {'{{firstName}}'}, {'{{outcomeTitle}}'}, {'{{quizTitle}}'}, {'{{ctaUrl}}'}, {'{{brand}}'}
+                </div>
+              </>
+            ) : (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <Label>Content</Label>
+                  <button onClick={() => setShowHtml(true)} style={{
+                    background: 'transparent', border: `1px solid ${C.BORDER}`,
+                    color: C.TEXT_MUTED, fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+                  }}>Edit HTML</button>
+                </div>
+                <div style={{
+                  background: C.ELEVATED, border: `1px solid ${C.BORDER}`, borderRadius: 10,
+                  padding: 16, color: C.TEXT_SUBTLE, fontSize: 13, lineHeight: 1.5,
+                }}>
+                  <div style={{ marginBottom: 8, color: C.TEXT, fontWeight: 600, fontSize: 14 }}>
+                    {state.subject || 'No subject set'}
+                  </div>
+                  <div style={{ color: C.TEXT_SUBTLE, fontSize: 12 }}>
+                    Template selected. The preview on the right shows how your email will look.
+                    Use "Edit HTML" to customize the content directly.
+                  </div>
+                  <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {['{{firstName}}', '{{outcomeTitle}}', '{{quizTitle}}', '{{ctaUrl}}', '{{brand}}'].map(tag => (
+                      <span key={tag} style={{
+                        background: C.SURFACE, border: `1px solid ${C.BORDER}`, borderRadius: 6,
+                        padding: '2px 8px', fontSize: 11, color: C.TEXT_MUTED, fontFamily: 'ui-monospace, monospace',
+                      }}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
