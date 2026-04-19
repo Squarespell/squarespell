@@ -264,11 +264,6 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .font-picker-option.active { background: #F0FDFA; color: #0D7377; font-weight: 600; }
 .font-picker-option .fp-check { color: #0D7377; display: none; }
 .font-picker-option.active .fp-check { display: inline; }
-.font-picker-option .fp-badge {
-  font-size: 9px; padding: 2px 5px; border-radius: 4px;
-  background: #F0FDFA; color: #0D7377; font-weight: 600; letter-spacing: 0.5px;
-}
-
 /* --- Right Panel (Preview) --- */
 .right-panel {
   flex: 1; overflow-y: auto; background: #F0F0ED; padding: 24px;
@@ -1797,6 +1792,7 @@ function applyGlobalFont(value) {
 }
 
 var FONT_LIST = [
+  // Sans-serif - Modern
   { name: 'Inter', value: 'Inter, sans-serif', google: true },
   { name: 'Poppins', value: 'Poppins, sans-serif', google: true },
   { name: 'Roboto', value: 'Roboto, sans-serif', google: true },
@@ -1805,9 +1801,8 @@ var FONT_LIST = [
   { name: 'Montserrat', value: 'Montserrat, sans-serif', google: true },
   { name: 'Raleway', value: 'Raleway, sans-serif', google: true },
   { name: 'Nunito', value: 'Nunito, sans-serif', google: true },
-  { name: 'Playfair Display', value: "'Playfair Display', serif", google: true },
-  { name: 'Merriweather', value: 'Merriweather, serif', google: true },
-  { name: 'Source Sans Pro', value: "'Source Sans Pro', sans-serif", google: true },
+  { name: 'Nunito Sans', value: "'Nunito Sans', sans-serif", google: true },
+  { name: 'Source Sans 3', value: "'Source Sans 3', sans-serif", google: true },
   { name: 'Oswald', value: 'Oswald, sans-serif', google: true },
   { name: 'Rubik', value: 'Rubik, sans-serif', google: true },
   { name: 'Work Sans', value: "'Work Sans', sans-serif", google: true },
@@ -1817,10 +1812,59 @@ var FONT_LIST = [
   { name: 'Plus Jakarta Sans', value: "'Plus Jakarta Sans', sans-serif", google: true },
   { name: 'Cabin', value: 'Cabin, sans-serif', google: true },
   { name: 'Karla', value: 'Karla, sans-serif', google: true },
+  { name: 'Manrope', value: 'Manrope, sans-serif', google: true },
+  { name: 'Figtree', value: 'Figtree, sans-serif', google: true },
+  { name: 'Sora', value: 'Sora, sans-serif', google: true },
+  { name: 'Albert Sans', value: "'Albert Sans', sans-serif", google: true },
+  { name: 'Lexend', value: 'Lexend, sans-serif', google: true },
+  { name: 'Urbanist', value: 'Urbanist, sans-serif', google: true },
+  { name: 'Quicksand', value: 'Quicksand, sans-serif', google: true },
+  { name: 'Barlow', value: 'Barlow, sans-serif', google: true },
+  { name: 'Mulish', value: 'Mulish, sans-serif', google: true },
+  { name: 'Jost', value: 'Jost, sans-serif', google: true },
+  { name: 'Archivo', value: 'Archivo, sans-serif', google: true },
+  { name: 'Red Hat Display', value: "'Red Hat Display', sans-serif", google: true },
+  { name: 'Be Vietnam Pro', value: "'Be Vietnam Pro', sans-serif", google: true },
+  { name: 'Exo 2', value: "'Exo 2', sans-serif", google: true },
+  { name: 'Signika', value: 'Signika, sans-serif', google: true },
+  { name: 'Catamaran', value: 'Catamaran, sans-serif', google: true },
+  { name: 'Noto Sans', value: "'Noto Sans', sans-serif", google: true },
+  { name: 'Ubuntu', value: 'Ubuntu, sans-serif', google: true },
+  { name: 'Titillium Web', value: "'Titillium Web', sans-serif", google: true },
+  { name: 'Overpass', value: 'Overpass, sans-serif', google: true },
+  { name: 'Public Sans', value: "'Public Sans', sans-serif", google: true },
+  { name: 'Mukta', value: 'Mukta, sans-serif', google: true },
+  // Serif - Elegant
+  { name: 'Playfair Display', value: "'Playfair Display', serif", google: true },
+  { name: 'Merriweather', value: 'Merriweather, serif', google: true },
   { name: 'Libre Baskerville', value: "'Libre Baskerville', serif", google: true },
   { name: 'Crimson Text', value: "'Crimson Text', serif", google: true },
   { name: 'EB Garamond', value: "'EB Garamond', serif", google: true },
   { name: 'Bitter', value: 'Bitter, serif', google: true },
+  { name: 'Lora', value: 'Lora, serif', google: true },
+  { name: 'Cormorant Garamond', value: "'Cormorant Garamond', serif", google: true },
+  { name: 'Spectral', value: 'Spectral, serif', google: true },
+  { name: 'Fraunces', value: 'Fraunces, serif', google: true },
+  { name: 'Source Serif 4', value: "'Source Serif 4', serif", google: true },
+  { name: 'Noto Serif', value: "'Noto Serif', serif", google: true },
+  { name: 'PT Serif', value: "'PT Serif', serif", google: true },
+  { name: 'DM Serif Display', value: "'DM Serif Display', serif", google: true },
+  { name: 'Vollkorn', value: 'Vollkorn, serif', google: true },
+  { name: 'Cardo', value: 'Cardo, serif', google: true },
+  { name: 'Literata', value: 'Literata, serif', google: true },
+  { name: 'Newsreader', value: 'Newsreader, serif', google: true },
+  // Display / Decorative
+  { name: 'Abril Fatface', value: "'Abril Fatface', serif", google: true },
+  { name: 'Bebas Neue', value: "'Bebas Neue', sans-serif", google: true },
+  { name: 'Righteous', value: 'Righteous, sans-serif', google: true },
+  { name: 'Passion One', value: "'Passion One', sans-serif", google: true },
+  { name: 'Anton', value: 'Anton, sans-serif', google: true },
+  // Monospace
+  { name: 'Fira Code', value: "'Fira Code', monospace", google: true },
+  { name: 'JetBrains Mono', value: "'JetBrains Mono', monospace", google: true },
+  { name: 'IBM Plex Mono', value: "'IBM Plex Mono', monospace", google: true },
+  { name: 'Space Mono', value: "'Space Mono', monospace", google: true },
+  // System / Web Safe
   { name: 'Georgia', value: 'Georgia, serif', google: false },
   { name: 'Helvetica', value: 'Helvetica, Arial, sans-serif', google: false },
   { name: 'Arial', value: 'Arial, sans-serif', google: false },
@@ -1828,6 +1872,11 @@ var FONT_LIST = [
   { name: 'Trebuchet MS', value: "'Trebuchet MS', sans-serif", google: false },
   { name: 'Times New Roman', value: "'Times New Roman', serif", google: false },
   { name: 'Courier New', value: "'Courier New', monospace", google: false },
+  { name: 'Tahoma', value: 'Tahoma, sans-serif', google: false },
+  { name: 'Palatino', value: 'Palatino, serif', google: false },
+  { name: 'Garamond', value: 'Garamond, serif', google: false },
+  { name: 'Book Antiqua', value: "'Book Antiqua', serif", google: false },
+  { name: 'Lucida Sans', value: "'Lucida Sans', sans-serif", google: false },
 ];
 
 var fontsLoaded = {};
@@ -1857,7 +1906,6 @@ function renderFontList(fonts) {
     opt.setAttribute('data-value', f.value);
     opt.style.fontFamily = f.value;
     opt.innerHTML = '<span>' + f.name + '</span><span style="display:flex;align-items:center;gap:4px;">' +
-      (f.google ? '<span class="fp-badge">Google</span>' : '') +
       '<span class="fp-check">' +
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
       '</span></span>';
@@ -2006,11 +2054,76 @@ window.addEventListener('message', function(e) {
       var body = doc.body;
       if (body) {
         canvas.innerHTML = body.innerHTML;
-        // Re-enable editing attributes
         canvas.classList.add('editing');
+
+        // Auto-annotate elements for editing if they don't have editor classes
+        // Make all text elements editable
+        canvas.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div, li, td, a, label, blockquote').forEach(function(el) {
+          // Skip elements that are containers for other elements, only target leaf text nodes
+          if (el.children.length === 0 || (el.children.length > 0 && el.textContent.trim().length > 0 && el.tagName !== 'DIV' && el.tagName !== 'TD' && el.tagName !== 'TR' && el.tagName !== 'TABLE')) {
+            if (!el.classList.contains('editable-text')) {
+              el.classList.add('editable-text');
+            }
+          }
+        });
+
+        // Make images clickable for replacement
+        canvas.querySelectorAll('img').forEach(function(img) {
+          if (!img.classList.contains('editable-img') && !img.classList.contains('editable-logo')) {
+            img.classList.add('editable-img');
+            img.onclick = function() { openImagePanel(img); };
+          }
+        });
+
+        // Make links styled as buttons editable
+        canvas.querySelectorAll('a').forEach(function(a) {
+          var style = window.getComputedStyle(a);
+          var display = a.style.display || style.display;
+          var bg = a.style.backgroundColor || a.style.background;
+          // If it looks like a button (inline-block/block with background)
+          if ((display === 'inline-block' || display === 'block') && bg && bg !== 'transparent' && bg !== '') {
+            if (!a.classList.contains('editable-btn')) {
+              a.classList.add('editable-btn');
+              a.onclick = function(ev) { ev.preventDefault(); openBtnPanel(a); };
+              // Remove editable-text if also applied
+              a.classList.remove('editable-text');
+            }
+          }
+        });
+
+        // Wrap table rows as email sections with toolbars if not already
+        var toolbar = '<div class="section-toolbar"><button onclick="moveSection(this,-1)">&#8593;</button><button onclick="moveSection(this,1)">&#8595;</button><button onclick="dupeSection(this)">&#9783;</button><button onclick="addSectionBelow(this)">+</button><button onclick="openSectionStyle(this)" title="Style">&#127912;</button><button onclick="deleteSection(this)">&#128465;</button></div>';
+        canvas.querySelectorAll('tr').forEach(function(tr) {
+          var td = tr.querySelector('td');
+          if (td && !td.classList.contains('email-section') && !tr.classList.contains('insert-point-tr')) {
+            td.classList.add('email-section');
+            td.setAttribute('data-sid', uid());
+            // Wrap content in section-inner if not already
+            if (!td.querySelector('.section-inner')) {
+              var inner = document.createElement('div');
+              inner.className = 'section-inner';
+              while (td.firstChild) {
+                inner.appendChild(td.firstChild);
+              }
+              td.appendChild(inner);
+            }
+            td.insertAdjacentHTML('beforeend', toolbar);
+          }
+        });
+
+        // Re-enable contenteditable on already-marked elements
         canvas.querySelectorAll('[contenteditable]').forEach(function(el) {
           el.setAttribute('contenteditable', 'true');
         });
+
+        bindEditableText();
+        updateSectionButtons();
+        addInsertPoints();
+
+        // Push initial undo state
+        undoStack = [canvas.innerHTML];
+        redoStack = [];
+        updateUndoRedoBtns();
       }
     }
   }
