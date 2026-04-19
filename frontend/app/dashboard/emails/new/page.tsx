@@ -11,61 +11,27 @@ import {
 } from '../../../../lib/emails';
 import { Stepper, StepKey } from './_components/Stepper';
 import { SetupStep, SetupState } from './_steps/SetupStep';
-import { TemplateStep } from './_steps/TemplateStep';
 import { AudienceStep, AudienceState } from './_steps/AudienceStep';
 import { DesignStep, DesignState } from './_steps/DesignStep';
 import { ReviewStep } from './_steps/ReviewStep';
-import { EMAIL_TEMPLATES } from './_steps/templates';
-import { EMAIL_TEMPLATES as BLOCK_TEMPLATES } from '../../../../lib/email/templates';
-import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
-import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
-import { renderBlocks } from '../../../../lib/email/renderBlocks';
 import { api } from '../../../../lib/api';
 
 function NewCampaignPageInner() {
   var { status } = useDashboardAuth();
   var router = useRouter();
-  var searchParams = useSearchParams();
-  var templateParam = searchParams.get('template');
 
-  // Step 1 - Setup state
+  // Step 1 - Setup
   var [step, setStep] = useState<StepKey>('setup');
   var [setup, setSetup] = useState<SetupState>({ campaignName: '', quizId: '', campaignType: 'blast', dripEmails: [] });
 
-  // Step 2 - Template selection
-  var [selectedTemplateId, setSelectedTemplateId] = useState('');
-  var [selectedTemplateItem, setSelectedTemplateItem] = useState<any>(null);
-
-  // Step 3 - Audience state (quiz pre-filled from setup)
+  // Step 2 - Audience
   var [audience, setAudience] = useState<AudienceState>({
     sourceKind: 'quiz', sourceQuizId: '', filters: {}, manualRecipients: '',
   });
 
-  // If ?template=<id> is in the URL, look up from the block-based gallery
-  var blockTpl = useMemo(function() {
-    if (!templateParam) return null;
-    return BLOCK_TEMPLATES.find(function (t) { return t.id === templateParam; }) || null;
-  }, [templateParam]);
-
-  var defaultTpl = EMAIL_TEMPLATES[0];
-  var [design, setDesign] = useState<DesignState>(function() {
-    if (blockTpl) {
-      var html = renderBlocks(blockTpl.blocks, DEFAULT_BRAND_KIT, SAMPLE_CONTEXT, {
-        preheader: blockTpl.defaultPreheader,
-      });
-      return {
-        templateId: blockTpl.id,
-        subject: blockTpl.defaultSubject,
-        html: html,
-        fromName: '',
-        fromEmail: '',
-        blocks: blockTpl.blocks,
-      };
-    }
-    return {
-      templateId: defaultTpl.id, subject: defaultTpl.subjectSuggestion,
-      html: defaultTpl.html, fromName: '', fromEmail: '',
-    };
+  // Step 3 - Design (template + editor merged)
+  var [design, setDesign] = useState<DesignState>({
+    templateId: '', subject: '', html: '', fromName: '', fromEmail: '',
   });
   var [mode, setMode] = useState<CampaignMode>('blast');
   var [recipientCount, setRecipientCount] = useState(0);
@@ -107,29 +73,7 @@ function NewCampaignPageInner() {
   // --- Step transitions ---
 
   var handleSetupNext = function() {
-    // Pass quiz selection from setup into audience state
     setAudience(function(prev) { return Object.assign({}, prev, { sourceQuizId: setup.quizId }); });
-    setStep('template');
-  };
-
-  var handleTemplateSelect = function(item: any) {
-    setSelectedTemplateId(item.id);
-    setSelectedTemplateItem(item);
-  };
-
-  var handleTemplateNext = function() {
-    // Apply selected template to design state
-    if (selectedTemplateItem) {
-      var item = selectedTemplateItem;
-      setDesign(function(prev) {
-        return Object.assign({}, prev, {
-          templateId: item.id,
-          subject: item.subject || prev.subject,
-          html: item.html,
-          blocks: item.blocks || undefined,
-        });
-      });
-    }
     setStep('audience');
   };
 
@@ -196,7 +140,7 @@ function NewCampaignPageInner() {
     <DashboardShell>
       <PageHeader
         title="New campaign"
-        subtitle="Setup - Template - Audience - Edit - Send"
+        subtitle="Setup - Audience - Design - Send"
       />
       <Stepper current={step} onJump={setStep} />
 
@@ -207,20 +151,12 @@ function NewCampaignPageInner() {
           onNext={handleSetupNext}
         />
       )}
-      {step === 'template' && (
-        <TemplateStep
-          selectedId={selectedTemplateId}
-          onSelect={handleTemplateSelect}
-          onNext={handleTemplateNext}
-          onBack={function() { setStep('setup'); }}
-        />
-      )}
       {step === 'audience' && (
         <AudienceStep
           state={audience}
           setState={function(u) { setAudience(function(s) { return Object.assign({}, s, u); }); }}
           onNext={handleAudienceNext}
-          onBack={function() { setStep('template'); }}
+          onBack={function() { setStep('setup'); }}
         />
       )}
       {step === 'design' && (

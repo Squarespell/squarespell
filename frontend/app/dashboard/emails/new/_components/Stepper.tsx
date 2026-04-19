@@ -2,13 +2,12 @@
 import React from 'react';
 import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 
-export type StepKey = 'setup' | 'template' | 'audience' | 'design' | 'review';
+export type StepKey = 'setup' | 'audience' | 'design' | 'review';
 
 var STEPS: { key: StepKey; label: string; hint: string }[] = [
   { key: 'setup',    label: 'Setup',    hint: 'Name your campaign' },
-  { key: 'template', label: 'Template', hint: 'Pick a starting design' },
   { key: 'audience', label: 'Audience', hint: 'Who gets this email' },
-  { key: 'design',   label: 'Edit',     hint: 'Customize the content' },
+  { key: 'design',   label: 'Design',   hint: 'Pick and edit your email' },
   { key: 'review',   label: 'Send',     hint: 'Preview and send' },
 ];
 
