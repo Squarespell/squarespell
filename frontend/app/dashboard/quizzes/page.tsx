@@ -208,96 +208,97 @@ export default function QuizzesPage() {
           }}
         >
           {quizzes.map((quiz) => (
-            <Card key={quiz.id} padding={20}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <h3
+            <Card key={quiz.id} padding={16}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Title + status row */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h3
+                      style={{
+                        margin: '0 0 6px 0',
+                        fontSize: 15,
+                        fontWeight: 700,
+                        color: C.TEXT,
+                        lineHeight: 1.3,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                      title={quiz.title}
+                    >
+                      {quiz.title}
+                    </h3>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <Pill variant={quiz.status === 'live' ? 'live' : 'draft'}>{quiz.status}</Pill>
+                      <span style={{ fontSize: 12, color: C.TEXT_MUTED }}>{formatDate(quiz.created_at)}</span>
+                    </div>
+                  </div>
+                  {/* Delete icon button - top right */}
+                  <button
+                    type="button"
+                    onClick={function(e) { e.stopPropagation(); setDeleteQuiz(quiz); }}
+                    title="Delete quiz"
                     style={{
-                      margin: '0 0 10px 0',
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: C.TEXT,
-                      lineHeight: 1.25,
+                      width: 30,
+                      height: 30,
+                      borderRadius: 7,
+                      background: 'transparent',
+                      border: '1px solid ' + C.BORDER,
+                      color: C.TEXT_MUTED,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      transition: 'all 0.15s ease',
+                      fontFamily: '"DM Sans",system-ui,sans-serif',
+                    }}
+                    onMouseEnter={function(e) {
+                      e.currentTarget.style.background = C.DANGER_LIGHT;
+                      e.currentTarget.style.borderColor = C.DANGER;
+                      e.currentTarget.style.color = C.DANGER;
+                    }}
+                    onMouseLeave={function(e) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.borderColor = C.BORDER;
+                      e.currentTarget.style.color = C.TEXT_MUTED;
                     }}
                   >
-                    {quiz.title}
-                  </h3>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Pill variant={quiz.status === 'live' ? 'live' : 'draft'}>{quiz.status}</Pill>
-                    <span style={{ fontSize: 12, color: C.TEXT_MUTED }}>{formatDate(quiz.created_at)}</span>
-                  </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                  </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div
-                    style={{
-                      padding: 12,
-                      background: C.SURFACE,
-                      borderRadius: 10,
-                      border: `1px solid ${C.BORDER}`,
-                    }}
-                  >
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-                      Views
-                    </div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT }}>{formatNumber(quiz.view_count)}</div>
+                {/* Inline stats row */}
+                <div style={{ display: 'flex', gap: 16, padding: '8px 0', borderTop: '1px solid ' + C.BORDER, borderBottom: '1px solid ' + C.BORDER }}>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Views</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginTop: 2 }}>{formatNumber(quiz.view_count)}</div>
                   </div>
-                  <div
-                    style={{
-                      padding: 12,
-                      background: C.SURFACE,
-                      borderRadius: 10,
-                      border: `1px solid ${C.BORDER}`,
-                    }}
-                  >
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-                      Leads
-                    </div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT }}>{formatNumber(quiz.lead_count)}</div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginTop: 2 }}>{formatNumber(quiz.lead_count)}</div>
                   </div>
+                  {quiz.view_count > 0 && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Conv.</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: C.ACCENT, marginTop: 2 }}>{quiz.view_count > 0 ? Math.round((quiz.lead_count / quiz.view_count) * 100) : 0}%</div>
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                  <GhostButton href={`/dashboard/${quiz.id}`}>Edit</GhostButton>
-                  <GhostButton href={`/quiz/${quiz.slug}`} target="_blank">
-                    View live
-                  </GhostButton>
-                  <GhostButton onClick={() => setPublishQuiz(quiz)}>
+                {/* Compact action row */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <GhostButton href={'/dashboard/' + quiz.id}>Edit</GhostButton>
+                  <GhostButton href={'/quiz/' + quiz.slug} target="_blank">View live</GhostButton>
+                  <GhostButton onClick={function() { setPublishQuiz(quiz); }}>
                     {quiz.status === 'live' ? 'Share' : 'Publish'}
                   </GhostButton>
                   <GhostButton
-                    onClick={() => handleDuplicate(quiz)}
+                    onClick={function() { handleDuplicate(quiz); }}
                     disabled={duplicatingId === quiz.id}
                   >
-                    {duplicatingId === quiz.id ? 'Duplicating…' : 'Duplicate'}
+                    {duplicatingId === quiz.id ? 'Duplicating...' : 'Duplicate'}
                   </GhostButton>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteQuiz(quiz)}
-                    style={{
-                      gridColumn: '1 / -1',
-                      padding: '11px 20px',
-                      background: 'transparent',
-                      color: C.DANGER,
-                      border: `1px solid ${C.BORDER}`,
-                      borderRadius: 8,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: '"DM Sans",system-ui,sans-serif',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = C.DANGER_LIGHT;
-                      e.currentTarget.style.borderColor = C.DANGER;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.borderColor = C.BORDER;
-                    }}
-                  >
-                    Delete
-                  </button>
                 </div>
               </div>
             </Card>

@@ -36,6 +36,7 @@ export function SmartRecommendations() {
   var { token } = useDashboardAuth();
   var [recs, setRecs] = useState<Rec[]>([]);
   var [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  var [expanded, setExpanded] = useState(false);
 
   useEffect(function() {
     if (!token) return;
@@ -52,16 +53,28 @@ export function SmartRecommendations() {
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+      <button
+        type="button"
+        onClick={function() { setExpanded(function(v) { return !v; }); }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: expanded ? 12 : 0,
+          background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
+          fontFamily: '"DM Sans",system-ui,sans-serif',
+        }}
+      >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.01em' }}>
           Recommended for you
         </h3>
-      </div>
+        <span style={{ fontSize: 11, color: C.TEXT_MUTED, fontWeight: 500 }}>({visible.length})</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {expanded && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {visible.slice(0, 3).map(function(rec) {
           var iconPath = ICONS[rec.type] || ICONS.create_quiz;
           return (
@@ -131,7 +144,7 @@ export function SmartRecommendations() {
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }

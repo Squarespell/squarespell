@@ -333,7 +333,20 @@ export default function LeadsPage() {
                         <td style={{ padding: '14px 18px', color: C.TEXT }}>{l.email}</td>
                         <td style={{ padding: '14px 18px' }}>
                           {l.quizzes ? (
-                            <Pill variant="accent">{l.quizzes.title}</Pill>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '3px 10px',
+                              borderRadius: 100,
+                              fontSize: 12,
+                              fontWeight: 600,
+                              background: C.ACCENT_LIGHT,
+                              color: C.ACCENT,
+                              whiteSpace: 'nowrap',
+                              maxWidth: 180,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}>{l.quizzes.title}</span>
                           ) : (
                             <span style={{ color: C.TEXT_MUTED }}>-</span>
                           )}
@@ -355,7 +368,7 @@ export default function LeadsPage() {
                               {l.score_label || 'Unknown'} ({l.score})
                             </div>
                           ) : (
-                            <span style={{ color: C.TEXT_MUTED, fontSize: 12 }}>-</span>
+                            <span style={{ color: C.TEXT_MUTED, fontSize: 12, fontStyle: 'italic' }}>No score</span>
                           )}
                         </td>
                         <td style={{ padding: '14px 18px', color: C.TEXT_MUTED }}>{formatDate(l.created_at)}</td>

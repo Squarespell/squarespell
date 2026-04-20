@@ -315,7 +315,7 @@ export function DashboardShell({
       }}
     >
       {/* Brand header */}
-      <div style={{ padding: '22px 20px 18px', borderBottom: `1px solid ${COLORS.BORDER}` }}>
+      <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${COLORS.BORDER}` }}>
         <Link
           href="/dashboard"
           style={{
@@ -327,10 +327,10 @@ export function DashboardShell({
         >
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               background: COLORS.ACCENT,
-              borderRadius: 9,
+              borderRadius: 8,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -339,14 +339,14 @@ export function DashboardShell({
           >
             {icons.logo}
           </div>
-          <span style={{ fontSize: 17, fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.03em' }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: COLORS.TEXT, letterSpacing: '-0.03em' }}>
             Squarespell
           </span>
         </Link>
       </div>
 
       {/* Search trigger */}
-      <div style={{ padding: '14px 14px 0' }}>
+      <div style={{ padding: '10px 14px 0' }}>
         <button
           type="button"
           onClick={() => {
@@ -391,17 +391,17 @@ export function DashboardShell({
       </div>
 
       {/* Primary nav */}
-      <nav aria-label="Main" style={{ flex: 1, padding: '14px 10px 14px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+      <nav aria-label="Main" style={{ flex: 1, padding: '8px 10px 8px', display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
         {NAV_SECTIONS.map((section, sectionIdx) => (
-          <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 16 }}>
+          <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 10 }}>
             <div
               style={{
-                fontSize: 11,
+                fontSize: 10.5,
                 fontWeight: 600,
                 color: COLORS.TEXT_SUBTLE,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
-                padding: '4px 14px 6px',
+                padding: '3px 14px 4px',
               }}
             >
               {section.label}
@@ -416,7 +416,7 @@ export function DashboardShell({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
-                    padding: '8px 12px',
+                    padding: '6px 12px',
                     margin: '1px 0',
                     borderRadius: 8,
                     textDecoration: 'none',
@@ -463,12 +463,12 @@ export function DashboardShell({
 
         <div
           style={{
-            fontSize: 11,
+            fontSize: 10.5,
             fontWeight: 600,
             color: COLORS.TEXT_SUBTLE,
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
-            padding: '20px 14px 6px',
+            padding: '10px 14px 4px',
           }}
         >
           Resources
@@ -488,7 +488,7 @@ export function DashboardShell({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
-                padding: '8px 12px',
+                padding: '6px 12px',
                 borderRadius: 8,
                 textDecoration: 'none',
                 color: COLORS.TEXT_SECONDARY,
@@ -516,13 +516,13 @@ export function DashboardShell({
       </nav>
 
       {/* Account footer */}
-      <div style={{ padding: '12px 12px 16px', borderTop: `1px solid ${COLORS.BORDER}` }}>
+      <div style={{ padding: '8px 12px 12px', borderTop: `1px solid ${COLORS.BORDER}` }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 10,
-            padding: '10px 12px',
+            padding: '8px 10px',
             background: COLORS.SURFACE,
             border: `1px solid ${COLORS.BORDER}`,
             borderRadius: 10,
@@ -530,8 +530,8 @@ export function DashboardShell({
         >
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               borderRadius: '50%',
               background: COLORS.ACCENT,
               color: '#FFFFFF',

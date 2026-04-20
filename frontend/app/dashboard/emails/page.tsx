@@ -31,6 +31,18 @@ function quotaBarColor(pct: number): string {
   return C.ACCENT;
 }
 
+function planDisplayName(raw: string): string {
+  var map: Record<string, string> = {
+    free: 'Free',
+    trial: 'Free trial',
+    starter: 'Free',
+    growth: 'Growth',
+    pro: 'Pro',
+    agency: 'Agency',
+  };
+  return map[raw] || raw;
+}
+
 function timeAgo(dateStr: string): string {
   var now = Date.now();
   var then = new Date(dateStr).getTime();
@@ -148,7 +160,7 @@ export default function EmailsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, marginBottom: 10 }}>
             <div>
               <div style={{ color: C.TEXT, fontWeight: 600 }}>Monthly email usage</div>
-              <div style={{ color: C.TEXT_MUTED, fontSize: 12, marginTop: 2 }}>Plan: {quota.plan}</div>
+              <div style={{ color: C.TEXT_MUTED, fontSize: 12, marginTop: 2 }}>Plan: {planDisplayName(quota.plan)}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: C.TEXT, fontWeight: 600 }}>
