@@ -314,41 +314,6 @@ function BlockCard({
               {preview}
             </div>
           )}
-          {/* Option pills for questions */}
-          {qb && qb.options.length > 0 && (
-            <div style={{
-              display: 'flex', flexWrap: 'wrap' as const, gap: 6, marginTop: 12,
-            }}>
-              {qb.options.map(function(opt, oi) {
-                return (
-                  <div key={opt.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 10px', borderRadius: 8,
-                    background: '#F2F4F7', fontSize: 13, color: C.TEXT,
-                    fontFamily: C.FONT,
-                  }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, color: C.ACCENT,
-                      width: 18, height: 18, borderRadius: 5,
-                      background: C.ACCENT + '14',
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      {String.fromCharCode(65 + oi)}
-                    </span>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, maxWidth: 160 }}>
-                      {opt.text || '(empty)'}
-                    </span>
-                    {(opt.score || 0) > 0 && (
-                      <span style={{ fontSize: 11, fontWeight: 600, color: C.ACCENT }}>
-                        +{opt.score}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         {/* Actions */}
@@ -1263,7 +1228,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
       ref={containerRef}
       style={{
         display: 'grid',
-        gridTemplateColumns: selectedBlock ? '1fr 380px' : showPreview ? '1fr 380px' : '1fr',
+        gridTemplateColumns: '1fr 380px',
         gap: 0,
         minHeight: '100%',
       }}
@@ -1413,82 +1378,124 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
         </div>
       </div>
 
-      {/* Inspector panel */}
-      {selectedBlock && (
-        <div style={{
-          borderLeft: '1px solid ' + C.HAIRLINE,
-          background: C.SURFACE,
-          padding: '0',
-          overflowY: 'auto',
-          maxHeight: 'calc(100vh - 60px)',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          {/* Inspector header */}
-          <div style={{
-            padding: '20px 22px',
-            borderBottom: '1px solid ' + C.BORDER,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            flexShrink: 0,
-          }}>
+      {/* Sidebar — always visible */}
+      <div style={{
+        borderLeft: '1px solid ' + C.BORDER,
+        background: C.SURFACE,
+        overflowY: 'auto',
+        position: 'sticky', top: 0, height: 'calc(100vh - 60px)',
+      }}>
+        {selectedBlock ? (
+          <>
+            {/* Inspector header */}
             <div style={{
-              fontSize: 15, fontWeight: 700, color: C.TEXT,
-              display: 'flex', alignItems: 'center', gap: 10,
-              fontFamily: C.FONT + ',system-ui,sans-serif',
+              padding: '20px 22px',
+              borderBottom: '1px solid ' + C.BORDER,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              position: 'sticky', top: 0, background: C.SURFACE, zIndex: 5,
             }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: blockColor(selectedBlock.type) + '10',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 15, fontWeight: 700, color: C.TEXT,
+                display: 'flex', alignItems: 'center', gap: 10,
+                fontFamily: C.FONT + ',system-ui,sans-serif',
               }}>
-                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={blockColor(selectedBlock.type)}
-                  strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d={QUIZ_PALETTE.find(function(p) { return p.type === selectedBlock.type; })?.icon || ''} />
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: blockColor(selectedBlock.type) + '10',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={blockColor(selectedBlock.type)}
+                    strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d={QUIZ_PALETTE.find(function(p) { return p.type === selectedBlock.type; })?.icon || ''} />
+                  </svg>
+                </div>
+                {blockLabel(selectedBlock)}
+              </div>
+              <button
+                type="button"
+                onClick={function() { setSelectedId(null); }}
+                style={{
+                  width: 30, height: 30, borderRadius: 8,
+                  background: 'transparent', border: '1px solid ' + C.BORDER,
+                  color: C.TEXT_MUTED, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+                onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.TEXT_MUTED; }}
+                onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
+              >
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
+                </svg>
+              </button>
+            </div>
+
+            {/* Inspector content */}
+            <div style={{ padding: '22px 22px' }}>
+              <BlockInspector
+                block={selectedBlock}
+                allBlocks={blocks}
+                onChange={updateBlock}
+                onDeselect={function() { setSelectedId(null); }}
+              />
+            </div>
+          </>
+        ) : (
+          /* Default sidebar — quiz overview when nothing selected */
+          <div style={{ padding: '28px 22px' }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: 'rgba(13,115,119,0.08)', color: C.ACCENT,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 10,
+              }}>
+                <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x={3} y={3} width={7} height={7} /><rect x={14} y={3} width={7} height={7} />
+                  <rect x={14} y={14} width={7} height={7} /><rect x={3} y={14} width={7} height={7} />
                 </svg>
               </div>
-              {blockLabel(selectedBlock)}
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, fontFamily: C.FONT, marginBottom: 4 }}>
+                Block Editor
+              </div>
+              <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
+                Click any block to edit it
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={function() { setSelectedId(null); }}
-              style={{
-                width: 30, height: 30, borderRadius: 8,
-                background: 'transparent', border: '1px solid ' + C.BORDER,
-                color: C.TEXT_MUTED, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-              onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.TEXT_MUTED; }}
-              onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
-            >
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
-              </svg>
-            </button>
-          </div>
 
-          {/* Inspector content */}
-          <div style={{ padding: '22px 22px', flex: 1, overflowY: 'auto' }}>
-            <BlockInspector
-              block={selectedBlock}
-              allBlocks={blocks}
-              onChange={updateBlock}
-              onDeselect={function() { setSelectedId(null); }}
-            />
-          </div>
-        </div>
-      )}
+            <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 12 }}>Overview</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ textAlign: 'center', background: C.SURFACE, borderRadius: 10, padding: '14px 8px', border: '1px solid ' + C.BORDER }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.ACCENT, marginBottom: 2 }}>
+                    {blocks.filter(function(b) { return b.type === 'question'; }).length}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Questions</div>
+                </div>
+                <div style={{ textAlign: 'center', background: C.SURFACE, borderRadius: 10, padding: '14px 8px', border: '1px solid ' + C.BORDER }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.ACCENT, marginBottom: 2 }}>
+                    {blocks.filter(function(b) { return b.type === 'outcome'; }).length}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Outcomes</div>
+                </div>
+                <div style={{ textAlign: 'center', background: C.SURFACE, borderRadius: 10, padding: '14px 8px', border: '1px solid ' + C.BORDER }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.ACCENT, marginBottom: 2 }}>
+                    {blocks.length}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Total blocks</div>
+                </div>
+                <div style={{ textAlign: 'center', background: C.SURFACE, borderRadius: 10, padding: '14px 8px', border: '1px solid ' + C.BORDER }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.ACCENT, marginBottom: 2 }}>
+                    {blocks.filter(function(b) { return b.type === 'leadGate'; }).length > 0 ? 'On' : 'Off'}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Lead gate</div>
+                </div>
+              </div>
+            </div>
 
-      {/* Live preview panel */}
-      {showPreview && !selectedBlock && (
-        <div style={{
-          borderLeft: '1px solid ' + C.HAIRLINE,
-          background: C.SIDEBAR,
-          padding: '20px 16px',
-          overflowY: 'auto',
-          maxHeight: 'calc(100vh - 60px)',
-        }}>
-          <LivePreview blocks={blocks} />
-        </div>
-      )}
+            {showPreview && <LivePreview blocks={blocks} />}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

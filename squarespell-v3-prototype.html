@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squarespell V3 - Faithful Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --white: #FFFFFF;
+  --gray-25: #FCFCFD;
+  --gray-50: #F9FAFB;
+  --gray-100: #F2F4F7;
+  --gray-200: #EAECF0;
+  --gray-300: #D0D5DD;
+  --gray-400: #98A2B3;
+  --gray-500: #667085;
+  --gray-600: #475467;
+  --gray-700: #344054;
+  --gray-800: #182230;
+  --gray-900: #101828;
+  --brand-50: #E0F5F6;
+  --brand-100: #B3E6E8;
+  --brand-500: #0D7377;
+  --brand-600: #0B6165;
+  --brand-700: #094F53;
+  --success-50: #ECFDF3;
+  --success-500: #12B76A;
+  --success-700: #027A48;
+  --error-50: #FEF3F2;
+  --error-500: #F04438;
+  --error-700: #B42318;
+  --warning-50: #FFFAEB;
+  --warning-700: #B54708;
+  --shadow-xs: 0px 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0px 1px 3px rgba(16, 24, 40, 0.1), 0px 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.1), 0px 2px 4px -2px rgba(16, 24, 40, 0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: var(--font); font-size: 14px; color: var(--gray-900); background: var(--white); line-height: 1.5; }
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+/* LAYOUT */
+.shell { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 280px; background: var(--white); border-right: 1px solid var(--gray-200);
+  display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; flex-shrink: 0;
+}
+.sb-brand { padding: 24px 16px 16px; display: flex; align-items: center; gap: 12px; }
+.sb-brand-icon {
+  width: 36px; height: 36px; background: linear-gradient(135deg, #0D7377, #0fa3a8);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(13,115,119,0.3);
+}
+.sb-brand-name { font-size: 18px; font-weight: 700; color: var(--gray-900); letter-spacing: -0.02em; }
+
+.sb-search {
+  margin: 4px 16px 8px; padding: 10px 14px; background: var(--white);
+  border: 1px solid var(--gray-300); border-radius: 8px;
+  display: flex; align-items: center; gap: 8px; color: var(--gray-500); font-size: 14px;
+  transition: all 0.15s ease;
+}
+.sb-search:hover { border-color: var(--gray-400); }
+.sb-search kbd { font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--gray-400); margin-left: auto; }
+
+.sb-nav { flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; }
+.sb-nav::-webkit-scrollbar { width: 0; }
+.sb-section { margin-top: 16px; }
+.sb-section:first-child { margin-top: 0; }
+.sb-section-label { font-size: 12px; font-weight: 600; color: var(--gray-500); padding: 8px 12px 4px; letter-spacing: -0.01em; }
+
+.sb-item {
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--gray-700);
+  transition: all 0.12s ease; margin: 1px 0;
+}
+.sb-item:hover { background: var(--gray-50); color: var(--gray-900); }
+.sb-item.active { background: var(--gray-50); color: var(--gray-900); font-weight: 600; }
+.sb-item svg { flex-shrink: 0; color: var(--gray-500); }
+.sb-item.active svg { color: var(--gray-700); }
+.sb-item-badge {
+  margin-left: auto; font-size: 12px; font-weight: 500; color: var(--gray-700);
+  background: var(--gray-100); padding: 2px 8px; border-radius: 16px; border: 1px solid var(--gray-200);
+}
+.sb-divider { height: 1px; background: var(--gray-200); margin: 12px 12px; }
+
+.sb-footer { padding: 16px; border-top: 1px solid var(--gray-200); }
+.sb-user { display: flex; align-items: center; gap: 12px; padding: 4px; }
+.sb-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, #0D7377, #0fa3a8); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600; flex-shrink: 0;
+}
+.sb-user-info { flex: 1; min-width: 0; }
+.sb-user-name { font-size: 14px; font-weight: 600; color: var(--gray-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-user-email { font-size: 12px; color: var(--gray-500); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-signout {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-400); flex-shrink: 0; transition: all 0.12s ease;
+}
+.sb-signout:hover { background: var(--error-50); color: var(--error-500); }
+
+/* MAIN */
+.main { flex: 1; min-width: 0; background: var(--white); display: flex; flex-direction: column; }
+
+/* TOPBAR */
+.topbar {
+  padding: 16px 32px; display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--gray-200); background: var(--white);
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar-title { font-size: 18px; font-weight: 600; color: var(--gray-900); letter-spacing: -0.02em; }
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+.topbar-icon-btn {
+  width: 40px; height: 40px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-500); border: 1px solid var(--gray-300); transition: all 0.12s ease;
+}
+.topbar-icon-btn:hover { background: var(--gray-50); color: var(--gray-700); }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+  background: var(--brand-500); color: #fff; border-radius: 8px; font-size: 14px; font-weight: 600;
+  border: 1px solid var(--brand-500); box-shadow: var(--shadow-xs); transition: all 0.15s ease;
+}
+.btn-primary:hover { background: var(--brand-600); border-color: var(--brand-600); }
+
+/* CONTENT */
+.content { flex: 1; padding: 32px; }
+
+/* RECOMMENDED */
+.reco-toggle {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+  padding: 0; color: var(--gray-700); font-size: 14px; font-weight: 600;
+}
+.reco-toggle svg:first-child { color: var(--brand-500); }
+.reco-count { font-size: 12px; font-weight: 500; color: var(--gray-500); }
+
+/* WELCOME + DATE PICKER */
+.welcome-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;
+  margin-bottom: 24px;
+}
+.welcome-title { font-size: 24px; font-weight: 600; color: var(--gray-900); letter-spacing: -0.02em; margin-bottom: 4px; }
+.welcome-desc { font-size: 14px; color: var(--gray-500); }
+.date-picker {
+  display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+  border: 1px solid var(--gray-300); border-radius: 8px;
+  font-size: 14px; font-weight: 500; color: var(--gray-700);
+  white-space: nowrap; box-shadow: var(--shadow-xs); transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+.date-picker:hover { border-color: var(--gray-400); }
+
+/* 5 STAT CARDS */
+.stat-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px;
+  padding: 20px; transition: all 0.2s ease; position: relative; overflow: hidden;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); }
+.stat-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.stat-label { font-size: 13px; font-weight: 500; color: var(--gray-500); }
+.stat-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.stat-icon.teal { background: var(--brand-50); color: var(--brand-500); }
+.stat-value {
+  font-size: 28px; font-weight: 700; color: var(--gray-900);
+  letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+}
+.stat-value .frac { font-size: 16px; font-weight: 500; color: var(--gray-400); }
+.stat-delta {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 500;
+}
+.stat-delta.up { color: var(--success-700); }
+.stat-delta.down { color: var(--error-700); }
+.stat-delta-label { color: var(--gray-500); font-weight: 400; margin-left: 2px; }
+/* Sparkline at bottom of card */
+.stat-spark { margin-top: 12px; display: block; }
+
+/* CHART SECTION */
+.chart-section {
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px;
+  margin-bottom: 24px; overflow: hidden;
+}
+.chart-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.chart-title { font-size: 16px; font-weight: 600; color: var(--gray-900); letter-spacing: -0.01em; }
+.chart-subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+.chart-legend { display: flex; align-items: center; gap: 16px; margin-top: 8px; font-size: 13px; color: var(--gray-500); }
+.chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.chart-range-tabs {
+  display: flex; border: 1px solid var(--gray-300); border-radius: 8px; overflow: hidden; flex-shrink: 0;
+}
+.chart-range-tab {
+  padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--gray-500);
+  background: var(--white); border-right: 1px solid var(--gray-300); transition: all 0.12s ease;
+}
+.chart-range-tab:last-child { border-right: none; }
+.chart-range-tab:hover { background: var(--gray-50); color: var(--gray-700); }
+.chart-range-tab.active { background: var(--gray-50); color: var(--gray-900); }
+.chart-body { padding: 16px 24px 20px; }
+
+/* BOTTOM PANELS */
+.panels { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+.panel {
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px;
+}
+.panel-title { font-size: 16px; font-weight: 600; color: var(--gray-900); letter-spacing: -0.01em; }
+.panel-link { font-size: 14px; font-weight: 600; color: var(--brand-500); display: flex; align-items: center; gap: 4px; }
+.panel-link:hover { color: var(--brand-700); }
+
+/* Quiz table header */
+.qtable-header {
+  display: grid; grid-template-columns: 1fr 80px 80px 100px;
+  padding: 8px 24px; font-size: 12px; font-weight: 600; color: var(--gray-500);
+  text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--gray-200);
+}
+.qtable-header span:not(:first-child) { text-align: right; }
+
+/* Quiz rows */
+.qrow {
+  display: grid; grid-template-columns: 1fr 80px 80px 100px;
+  align-items: center; padding: 14px 24px;
+  border-top: 1px solid var(--gray-100); transition: background 0.1s ease; cursor: pointer;
+}
+.qrow:first-of-type { border-top: none; }
+.qrow:hover { background: var(--gray-25); }
+.qrow-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.qrow-icon {
+  width: 36px; height: 36px; border-radius: 8px; background: var(--brand-50); color: var(--brand-500);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.qrow-text { min-width: 0; }
+.qrow-title { font-size: 14px; font-weight: 500; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qrow-meta { font-size: 12px; color: var(--gray-500); margin-top: 1px; }
+.qrow-num { font-size: 14px; font-weight: 500; color: var(--gray-700); text-align: right; }
+.qrow-cvr-cell { text-align: right; }
+.qrow-cvr { font-size: 14px; font-weight: 600; color: var(--brand-500); }
+.qrow-bar { height: 4px; background: var(--gray-100); border-radius: 4px; margin-top: 4px; overflow: hidden; }
+.qrow-bar-fill { height: 100%; background: var(--brand-500); border-radius: 4px; }
+
+/* Lead feed */
+.feed-title-row { display: flex; align-items: center; gap: 8px; }
+.feed-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-500); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.lrow {
+  display: flex; align-items: center; gap: 12px; padding: 10px 24px;
+  border-top: 1px solid var(--gray-100); transition: background 0.1s ease; cursor: pointer;
+}
+.lrow:hover { background: var(--gray-25); }
+.lrow-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--gray-100);
+  color: var(--gray-600); display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; flex-shrink: 0;
+}
+.lrow-info { flex: 1; min-width: 0; }
+.lrow-name { font-size: 14px; font-weight: 500; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lrow-quiz { font-size: 12px; color: var(--gray-500); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lrow-time { font-size: 12px; color: var(--gray-400); white-space: nowrap; flex-shrink: 0; }
+
+/* ANIMATIONS */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.anim { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.d1 { animation-delay: 0ms; } .d2 { animation-delay: 60ms; } .d3 { animation-delay: 80ms; }
+.d4 { animation-delay: 120ms; } .d5 { animation-delay: 160ms; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <span class="sb-brand-name">Squarespell</span>
+    </div>
+    <button class="sb-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <span style="flex:1;text-align:left;">Search...</span>
+      <kbd>Cmd+K</kbd>
+    </button>
+    <nav class="sb-nav">
+      <div class="sb-section">
+        <div class="sb-section-label">Workspace</div>
+        <a class="sb-item active" href="#">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+          Overview
+        </a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Quiz editor</a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Quizzes<span class="sb-item-badge">3</span></a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg>Leads</a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>Emails</a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Templates</a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 5-7"/></svg>Analytics</a>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-label">Growth</div>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Embed & install</a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Integrations</a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Brand kit</a>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-label">Account</div>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Billing & plan</a>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Trash</a>
+      </div>
+      <div class="sb-divider"></div>
+      <div class="sb-section">
+        <div class="sb-section-label">Resources</div>
+        <a class="sb-item" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Help & docs</a>
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar">H</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Hussnain</div>
+          <div class="sb-user-email">info@squarespell.com</div>
+        </div>
+        <button class="sb-signout" title="Sign out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Overview</span>
+      <div class="topbar-actions">
+        <button class="topbar-icon-btn" title="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </button>
+        <button class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New quiz
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- Recommended for you -->
+      <button class="reco-toggle anim d1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Recommended for you
+        <span class="reco-count">(3)</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
+      <!-- Welcome + Date picker -->
+      <div class="welcome-row anim d1">
+        <div>
+          <h1 class="welcome-title">Welcome back</h1>
+          <p class="welcome-desc">Here's how your quizzes are performing this month.</p>
+        </div>
+        <button class="date-picker">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Last 30 days
+        </button>
+      </div>
+
+      <!-- 5 STAT CARDS - exact match to live app -->
+      <div class="stat-grid anim d2">
+        <!-- Total views -->
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Total views</span>
+            <div class="stat-icon teal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">25</div>
+          <svg class="stat-spark" width="100%" height="32" viewBox="0 0 200 32" preserveAspectRatio="none">
+            <defs><linearGradient id="s1" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#0D7377" stop-opacity="0.12"/><stop offset="100%" stop-color="#0D7377" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,28 C20,26 40,22 60,24 C80,26 100,18 120,16 C140,14 160,10 180,8 C190,6 200,4 200,4 L200,32 L0,32Z" fill="url(#s1)"/>
+            <path d="M0,28 C20,26 40,22 60,24 C80,26 100,18 120,16 C140,14 160,10 180,8 C190,6 200,4 200,4" fill="none" stroke="#0D7377" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <!-- Leads captured -->
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Leads captured</span>
+            <div class="stat-icon teal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">5</div>
+          <svg class="stat-spark" width="100%" height="32" viewBox="0 0 200 32" preserveAspectRatio="none">
+            <defs><linearGradient id="s2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#0D7377" stop-opacity="0.12"/><stop offset="100%" stop-color="#0D7377" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,30 C30,28 60,20 90,22 C120,24 150,12 180,8 C190,6 200,4 200,4 L200,32 L0,32Z" fill="url(#s2)"/>
+            <path d="M0,30 C30,28 60,20 90,22 C120,24 150,12 180,8 C190,6 200,4 200,4" fill="none" stroke="#0D7377" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <!-- Completion rate -->
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Completion rate</span>
+            <div class="stat-icon teal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">56.0%</div>
+          <svg class="stat-spark" width="100%" height="32" viewBox="0 0 200 32" preserveAspectRatio="none">
+            <defs><linearGradient id="s3" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#12B76A" stop-opacity="0.12"/><stop offset="100%" stop-color="#12B76A" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,24 C30,22 50,18 80,16 C110,14 130,18 160,10 C180,6 200,4 200,4 L200,32 L0,32Z" fill="url(#s3)"/>
+            <path d="M0,24 C30,22 50,18 80,16 C110,14 130,18 160,10 C180,6 200,4 200,4" fill="none" stroke="#12B76A" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <!-- Lead rate -->
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Lead rate</span>
+            <div class="stat-icon teal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">20.0%</div>
+          <svg class="stat-spark" width="100%" height="32" viewBox="0 0 200 32" preserveAspectRatio="none">
+            <defs><linearGradient id="s4" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#0D7377" stop-opacity="0.12"/><stop offset="100%" stop-color="#0D7377" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,20 C40,18 80,22 120,14 C150,8 180,10 200,6 L200,32 L0,32Z" fill="url(#s4)"/>
+            <path d="M0,20 C40,18 80,22 120,14 C150,8 180,10 200,6" fill="none" stroke="#0D7377" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <!-- Active quizzes -->
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Active quizzes</span>
+            <div class="stat-icon teal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+          </div>
+          <div class="stat-value">3<span class="frac">/3</span></div>
+          <svg class="stat-spark" width="100%" height="32" viewBox="0 0 200 32" preserveAspectRatio="none">
+            <defs><linearGradient id="s5" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#7F56D9" stop-opacity="0.12"/><stop offset="100%" stop-color="#7F56D9" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,16 L66,16 L67,8 L133,8 L134,4 L200,4 L200,32 L0,32Z" fill="url(#s5)"/>
+            <path d="M0,16 L66,16 L67,8 L133,8 L134,4 L200,4" fill="none" stroke="#7F56D9" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- VIEWS & LEADS CHART -->
+      <div class="chart-section anim d3">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Views & leads</div>
+            <div class="chart-subtitle">Daily performance across all quizzes</div>
+            <div class="chart-legend">
+              <span><span class="chart-legend-dot" style="background:#0D7377"></span>Views</span>
+              <span><span class="chart-legend-dot" style="background:#98A2B3"></span>Leads</span>
+            </div>
+          </div>
+          <div class="chart-range-tabs">
+            <button class="chart-range-tab">7d</button>
+            <button class="chart-range-tab active">30d</button>
+            <button class="chart-range-tab">90d</button>
+          </div>
+        </div>
+        <div class="chart-body">
+          <svg viewBox="0 0 1000 220" preserveAspectRatio="none" width="100%" height="220" style="display:block;">
+            <defs>
+              <linearGradient id="vg" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#0D7377" stop-opacity="0.18"/>
+                <stop offset="100%" stop-color="#0D7377" stop-opacity="0.01"/>
+              </linearGradient>
+              <linearGradient id="lg" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#98A2B3" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="#98A2B3" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" x2="1000" y1="55" y2="55" stroke="#EAECF0" stroke-width="0.5"/>
+            <line x1="0" x2="1000" y1="110" y2="110" stroke="#EAECF0" stroke-width="0.5"/>
+            <line x1="0" x2="1000" y1="165" y2="165" stroke="#EAECF0" stroke-width="0.5"/>
+            <!-- Leads area -->
+            <path d="M0,190 C30,188 60,186 100,185 C140,184 180,180 220,182 C280,185 320,178 380,176 C440,174 500,178 560,172 C620,168 680,164 740,162 C800,160 860,156 920,152 C960,148 1000,144 1000,144 L1000,220 L0,220Z" fill="url(#lg)"/>
+            <path d="M0,190 C30,188 60,186 100,185 C140,184 180,180 220,182 C280,185 320,178 380,176 C440,174 500,178 560,172 C620,168 680,164 740,162 C800,160 860,156 920,152 C960,148 1000,144 1000,144" fill="none" stroke="#98A2B3" stroke-width="1.5"/>
+            <!-- Views area -->
+            <path d="M0,170 C30,168 60,162 100,158 C140,152 180,148 220,145 C280,140 320,135 380,128 C440,122 480,130 520,118 C560,108 600,104 660,96 C720,88 760,80 820,72 C880,64 920,56 960,48 C980,44 1000,38 1000,38 L1000,220 L0,220Z" fill="url(#vg)"/>
+            <path d="M0,170 C30,168 60,162 100,158 C140,152 180,148 220,145 C280,140 320,135 380,128 C440,122 480,130 520,118 C560,108 600,104 660,96 C720,88 760,80 820,72 C880,64 920,56 960,48 C980,44 1000,38 1000,38" fill="none" stroke="#0D7377" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- BOTTOM: Top quizzes + Live lead feed -->
+      <div class="panels anim d4">
+        <!-- Top performing quizzes -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Top performing quizzes</span>
+            <a href="#" class="panel-link">View all <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+          </div>
+          <div class="qtable-header">
+            <span>Quiz</span><span>Views</span><span>Leads</span><span>CVR</span>
+          </div>
+          <div class="qrow">
+            <div class="qrow-info">
+              <div class="qrow-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+              <div class="qrow-text">
+                <div class="qrow-title">Find Your Perfect Squarespace Plu...</div>
+                <div class="qrow-meta">Live / 5d Ago</div>
+              </div>
+            </div>
+            <span class="qrow-num">24</span>
+            <span class="qrow-num">5</span>
+            <div class="qrow-cvr-cell">
+              <div class="qrow-cvr">20.8%</div>
+              <div class="qrow-bar"><div class="qrow-bar-fill" style="width:80%"></div></div>
+            </div>
+          </div>
+          <div class="qrow">
+            <div class="qrow-info">
+              <div class="qrow-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+              <div class="qrow-text">
+                <div class="qrow-title">Find Your Nexus Narrative Solution</div>
+                <div class="qrow-meta">Live / 6d Ago</div>
+              </div>
+            </div>
+            <span class="qrow-num">1</span>
+            <span class="qrow-num">0</span>
+            <div class="qrow-cvr-cell">
+              <div class="qrow-cvr">0.0%</div>
+              <div class="qrow-bar"><div class="qrow-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="qrow">
+            <div class="qrow-info">
+              <div class="qrow-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+              <div class="qrow-text">
+                <div class="qrow-title">Find Your Ideal Squarespace Soluti...</div>
+                <div class="qrow-meta">Live / 6d Ago</div>
+              </div>
+            </div>
+            <span class="qrow-num">0</span>
+            <span class="qrow-num">0</span>
+            <div class="qrow-cvr-cell">
+              <div class="qrow-cvr">0.0%</div>
+              <div class="qrow-bar"><div class="qrow-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live lead feed -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title" style="display:flex;align-items:center;gap:8px;">Live lead feed <span class="feed-dot"></span></span>
+            <a href="#" class="panel-link">View all leads</a>
+          </div>
+          <div class="lrow">
+            <div class="lrow-avatar">AB</div>
+            <div class="lrow-info">
+              <div class="lrow-name">abc</div>
+              <div class="lrow-quiz">Find Your Perfect Squarespace Plugin or Templa...</div>
+            </div>
+            <span class="lrow-time">5d ago</span>
+          </div>
+          <div class="lrow">
+            <div class="lrow-avatar">AB</div>
+            <div class="lrow-info">
+              <div class="lrow-name">abc</div>
+              <div class="lrow-quiz">Find Your Perfect Squarespace Plugin or Templa...</div>
+            </div>
+            <span class="lrow-time">5d ago</span>
+          </div>
+          <div class="lrow">
+            <div class="lrow-avatar">AB</div>
+            <div class="lrow-info">
+              <div class="lrow-name">abc</div>
+              <div class="lrow-quiz">Find Your Perfect Squarespace Plugin or Templa...</div>
+            </div>
+            <span class="lrow-time">5d ago</span>
+          </div>
+          <div class="lrow">
+            <div class="lrow-avatar">HU</div>
+            <div class="lrow-info">
+              <div class="lrow-name">Hussnain</div>
+              <div class="lrow-quiz">Find Your Perfect Squarespace Plugin or Templa...</div>
+            </div>
+            <span class="lrow-time">5d ago</span>
+          </div>
+          <div class="lrow">
+            <div class="lrow-avatar">DE</div>
+            <div class="lrow-info">
+              <div class="lrow-name">Debug2</div>
+              <div class="lrow-quiz">Find Your Perfect Squarespace Plugin or Templa...</div>
+            </div>
+            <span class="lrow-time">5d ago</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
