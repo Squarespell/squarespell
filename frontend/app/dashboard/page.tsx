@@ -198,7 +198,7 @@ function BarChart({
               width={barWidth}
               height={barH}
               rx={Math.min(3, barWidth / 2)}
-              fill={C.PURPLE_500}
+              fill={C.ACCENT}
               opacity={0.85}
             />
           );
@@ -1020,11 +1020,11 @@ function OverviewInner() {
         </div>
       )}
 
-      {/* Stat strip */}
+      {/* Stat strip - all 5 cards */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: 16,
           marginBottom: 24,
         }}
@@ -1056,13 +1056,32 @@ function OverviewInner() {
           }
         />
         <OverviewStatCard
-          label="Conversion rate"
+          label="Completion rate"
+          value={analytics.completion_rate.toFixed(1) + '%'}
+          icon={
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          }
+        />
+        <OverviewStatCard
+          label="Lead rate"
           value={analytics.lead_rate.toFixed(1) + '%'}
           delta={analytics.lead_rate > 0 ? '-2%' : undefined}
           deltaLabel="vs last month"
           icon={
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          }
+        />
+        <OverviewStatCard
+          label="Active quizzes"
+          value={<>{activeQuizzes}<span style={{ fontSize: 16, color: C.GRAY_400, fontWeight: 500 }}> / {quizzes.length}</span></>}
+          icon={
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           }
         />
