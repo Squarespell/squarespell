@@ -10,8 +10,9 @@ import { V2_TEMPLATES } from '../../../../../lib/email/v2/templates';
 import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/renderer';
 import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
 import { autoDesignTemplate } from '../../../../../lib/email/v2/autoDesign';
-import type { AutoDesignResult } from '../../../../../lib/email/v2/autoDesign';
+import type { AutoDesignResult, BrandKitFromAPI, QuizData } from '../../../../../lib/email/v2/autoDesign';
 import { CANVA_TEMPLATES, CANVA_CATEGORIES } from '../../../../../lib/email/canvaTemplates';
+import { api } from '../../../../../lib/api';
 
 export type DesignState = {
   templateId: string;
@@ -84,10 +85,44 @@ export function DesignStep({
   var [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
   var [editorDevice, setEditorDevice] = useState<'desktop' | 'mobile'>('desktop');
 
-  // Compute AI design instantly (synchronous) - no loading, no glitch
-  var aiDesign = useMemo(function() {
+  // AI design: fetch quiz data + brand kit, then compute
+  var [aiDesign, setAiDesign] = useState<AutoDesignResult | null>(function() {
+    // Instant fallback with no data (template still picked, just no brand/content)
     return autoDesignTemplate(null, null);
-  }, []);
+  });
+
+  // Fetch quiz and brand data, then re-compute aiDesign with real data
+  var aiDataFetched = useRef(false);
+  useEffect(function() {
+    if (aiDataFetched.current) return;
+    aiDataFetched.current = true;
+
+    var brandPromise = api.getBrandKit().catch(function() { return null; });
+    var quizPromise = quizId
+      ? api.getQuiz(quizId).catch(function() { return null; })
+      : Promise.resolve(null);
+
+    Promise.all([brandPromise, quizPromise]).then(function(results: any[]) {
+      var brandKit: BrandKitFromAPI | null = results[0];
+      var quizRaw: any = results[1];
+
+      // Map quiz API response to QuizData shape
+      var quizData: QuizData | null = null;
+      if (quizRaw) {
+        quizData = {
+          id: quizRaw.id || quizId || '',
+          title: quizRaw.title || '',
+          slug: quizRaw.slug || '',
+          category: quizRaw.category || quizRaw.quiz_category || '',
+          outcomes: quizRaw.outcomes || [],
+          questions: quizRaw.questions || [],
+        };
+      }
+
+      var result = autoDesignTemplate(brandKit, quizData);
+      setAiDesign(result);
+    });
+  }, [quizId]);
 
   useEffect(function() { injectDesignFocusStyles(); }, []);
 
@@ -133,13 +168,17 @@ export function DesignStep({
     return allItems.length > 0 ? allItems[0].id : '';
   }, [allItems, quizCategory]);
 
-  // Auto-select AI design on mount (synchronous, no loading delay)
+  // Auto-select AI design on mount and when real data arrives
   var didAutoSelect = useRef(false);
   var userManuallySelected = useRef(false);
   useEffect(function() {
-    if (didAutoSelect.current) return;
-    if (state.templateId) { didAutoSelect.current = true; return; }
-    didAutoSelect.current = true;
+    // If user manually picked a template, don't override
+    if (userManuallySelected.current) return;
+    // First run: auto-select if nothing selected yet
+    if (!didAutoSelect.current) {
+      didAutoSelect.current = true;
+      if (state.templateId && state.templateId !== '__ai_designed__') return;
+    }
     if (aiDesign) {
       setState({
         templateId: aiDesign.templateId,
@@ -148,7 +187,7 @@ export function DesignStep({
         html: aiDesign.html,
       });
     }
-  }, [aiDesign, state.templateId, setState]);
+  }, [aiDesign]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for messages from editor iframe
   useEffect(function() {
