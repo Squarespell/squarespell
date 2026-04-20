@@ -242,6 +242,7 @@ function BlockCard({
   var preview = blockPreview(block);
   var color = blockColor(block.type);
   var questionNum = block.type === 'question' ? index + 1 : null;
+  var qb = block.type === 'question' ? (block as QuestionBlock) : null;
 
   return (
     <div
@@ -251,7 +252,7 @@ function BlockCard({
       onDrop={onDrop}
       style={{
         position: 'relative',
-        display: 'flex', alignItems: 'center', gap: 10,
+        display: 'flex', flexDirection: 'column', gap: 10,
         padding: '12px 14px',
         background: selected ? 'rgba(13,115,119,0.04)' : C.ELEVATED,
         border: '1px solid ' + (selected ? C.ACCENT : C.HAIRLINE),
@@ -262,99 +263,150 @@ function BlockCard({
         borderTopColor: dragOver ? C.ACCENT : (selected ? C.ACCENT : C.HAIRLINE),
       }}
     >
-      {/* Drag handle */}
-      <div
-        draggable
-        onDragStart={onDragStart}
-        style={{ cursor: 'grab', padding: '4px 2px', flexShrink: 0 }}
-      >
-        <DragHandle />
-      </div>
-
-      {/* Type badge */}
-      <div style={{
-        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-        background: color + '12',
-        border: '1px solid ' + color + '30',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative',
-      }}>
-        {questionNum !== null ? (
-          <span style={{ fontSize: 14, fontWeight: 700, color: color }}>{questionNum}</span>
-        ) : (
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color}
-            strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d={QUIZ_PALETTE.find(function(p) { return p.type === block.type; })?.icon || ''} />
-          </svg>
-        )}
-      </div>
-
-      {/* Block info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', marginBottom: 2,
-          color: selected ? C.ACCENT : C.TEXT_MUTED,
-        }}>
-          {label}
+      {/* Header row: drag handle, badge, info, actions */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Drag handle */}
+        <div
+          draggable
+          onDragStart={onDragStart}
+          style={{ cursor: 'grab', padding: '4px 2px', flexShrink: 0 }}
+        >
+          <DragHandle />
         </div>
-        {preview && (
+
+        {/* Type badge */}
+        <div style={{
+          width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+          background: color + '12',
+          border: '1px solid ' + color + '30',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative',
+        }}>
+          {questionNum !== null ? (
+            <span style={{ fontSize: 14, fontWeight: 700, color: color }}>{questionNum}</span>
+          ) : (
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color}
+              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d={QUIZ_PALETTE.find(function(p) { return p.type === block.type; })?.icon || ''} />
+            </svg>
+          )}
+        </div>
+
+        {/* Block info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 13, color: C.TEXT, fontWeight: 500,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', marginBottom: 2,
+            color: selected ? C.ACCENT : C.TEXT_MUTED,
           }}>
-            {preview}
+            {label}
           </div>
-        )}
-        {block.type === 'question' && (
-          <div style={{ fontSize: 11, color: C.TEXT_SUBTLE, marginTop: 3 }}>
-            {(block as QuestionBlock).options.length} options
-            {(block as QuestionBlock).questionStyle !== 'buttons' ? ' - ' + (block as QuestionBlock).questionStyle : ''}
-          </div>
-        )}
+          {preview && (
+            <div style={{
+              fontSize: 13, color: C.TEXT, fontWeight: 500,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {preview}
+            </div>
+          )}
+        </div>
+
+        {/* Inline actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
+          onClick={function(e) { e.stopPropagation(); }}
+        >
+          <button
+            type="button"
+            onClick={onDuplicate}
+            title="Duplicate"
+            style={{
+              width: 28, height: 28, borderRadius: 6,
+              background: 'transparent', border: 'none',
+              color: C.TEXT_SUBTLE, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseEnter={function(e) { e.currentTarget.style.background = C.SIDEBAR; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <rect x={9} y={9} width={13} height={13} rx={2} ry={2} />
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Delete"
+            style={{
+              width: 28, height: 28, borderRadius: 6,
+              background: 'transparent', border: 'none',
+              color: C.TEXT_SUBTLE, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.08)'; e.currentTarget.style.color = '#ff3b30'; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
+          >
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Inline actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
-        onClick={function(e) { e.stopPropagation(); }}
-      >
-        <button
-          type="button"
-          onClick={onDuplicate}
-          title="Duplicate"
-          style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: 'transparent', border: 'none',
-            color: C.TEXT_SUBTLE, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-          onMouseEnter={function(e) { e.currentTarget.style.background = C.SIDEBAR; }}
-          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
-        >
-          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <rect x={9} y={9} width={13} height={13} rx={2} ry={2} />
-            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          title="Delete"
-          style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: 'transparent', border: 'none',
-            color: C.TEXT_SUBTLE, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-          onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.08)'; e.currentTarget.style.color = '#ff3b30'; }}
-          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
-        >
-          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-          </svg>
-        </button>
-      </div>
+      {/* Question metadata and answer preview */}
+      {qb && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 46 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, color: C.TEXT_SUBTLE }}>
+              {qb.options.length} option{qb.options.length !== 1 ? 's' : ''}
+            </span>
+            {qb.questionStyle !== 'buttons' && (
+              <span style={{ fontSize: 11, color: C.TEXT_SUBTLE }}>
+                {qb.questionStyle}
+              </span>
+            )}
+          </div>
+          {/* Answer previews */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {qb.options.slice(0, 3).map(function(opt, oi) {
+              return (
+                <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: 4,
+                    background: C.ACCENT, color: '#FFFFFF',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 700, flexShrink: 0,
+                  }}>
+                    {String.fromCharCode(65 + oi)}
+                  </div>
+                  <div style={{
+                    fontSize: 12, color: C.TEXT,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    flex: 1,
+                  }}>
+                    {opt.text || '(empty)'}
+                  </div>
+                  {opt.score !== 0 && opt.score !== undefined && (
+                    <div style={{
+                      fontSize: 10, color: C.ACCENT, fontWeight: 600,
+                      background: C.ACCENT_LIGHT, padding: '2px 6px',
+                      borderRadius: 4, flexShrink: 0,
+                    }}>
+                      +{opt.score}pts
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {qb.options.length > 3 && (
+              <div style={{ fontSize: 10, color: C.TEXT_SUBTLE }}>
+                +{qb.options.length - 3} more
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -401,10 +453,12 @@ function BlockInspector({
   block,
   allBlocks,
   onChange,
+  onDeselect,
 }: {
   block: QuizBlock;
   allBlocks: QuizBlock[];
   onChange: (updated: QuizBlock) => void;
+  onDeselect?: () => void;
 }) {
   function updateField(key: string, value: any) {
     onChange(Object.assign({}, block, { [key]: value }));
@@ -413,16 +467,50 @@ function BlockInspector({
   // Question inspector
   if (block.type === 'question') {
     var qb = block as QuestionBlock;
+    var questionNum = allBlocks.filter(function(b) { return b.type === 'question'; }).findIndex(function(b) { return b.id === block.id; }) + 1;
     return (
       <div>
-        <InspectorField label="Question text">
+        {/* Hero header */}
+        <div style={{
+          marginBottom: 20, padding: '16px', borderRadius: 12,
+          background: C.ACCENT_LIGHT, border: '1px solid ' + C.ACCENT + '20',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 10,
+            background: C.ACCENT + '20', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 8px',
+          }}>
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT}
+              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx={12} cy={12} r={10} /><path d="M12 16v-4M12 8h.01" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
+            Question {questionNum}
+          </div>
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
+            Edit question text, type, and answers
+          </div>
+        </div>
+
+        {/* Question text card */}
+        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+          <label style={{
+            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6,
+          }}>
+            Question text
+          </label>
           <textarea
             value={qb.text}
             onChange={function(e) { updateField('text', e.target.value); }}
             style={Object.assign({}, inputStyle, { minHeight: 72, resize: 'vertical' as const })}
           />
-        </InspectorField>
+        </div>
 
+        {/* Subtitle */}
         <InspectorField label="Subtitle (optional)">
           <input
             value={qb.subtitle || ''}
@@ -432,6 +520,40 @@ function BlockInspector({
           />
         </InspectorField>
 
+        {/* Type toggle */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{
+            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
+          }}>
+            Type
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {['single', 'multiple'].map(function(type) {
+              var isActive = (qb as any).questionType === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={function() { updateField('questionType', type); }}
+                  style={{
+                    padding: '8px 12px', borderRadius: 8,
+                    background: isActive ? C.ACCENT : C.SIDEBAR,
+                    border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
+                    color: isActive ? '#FFFFFF' : C.TEXT_MUTED,
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'Inter,system-ui,sans-serif',
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  {type === 'single' ? 'Single select' : 'Multi-select'}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Answer style */}
         <InspectorField label="Answer style">
           <select
             value={qb.questionStyle}
@@ -445,14 +567,32 @@ function BlockInspector({
           </select>
         </InspectorField>
 
-        <InspectorField label="Options">
+        {/* Options section */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{
+            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
+          }}>
+            Answers
+          </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {qb.options.map(function(opt, oi) {
               return (
-                <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 11, color: C.TEXT_SUBTLE, width: 18, textAlign: 'center', flexShrink: 0 }}>
+                <div key={opt.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px', background: C.SIDEBAR, borderRadius: 8,
+                  border: '1px solid ' + C.BORDER,
+                }}>
+                  {/* Letter badge */}
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 6,
+                    background: C.ACCENT, color: '#FFFFFF',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700, flexShrink: 0,
+                  }}>
                     {String.fromCharCode(65 + oi)}
-                  </span>
+                  </div>
+                  {/* Option text */}
                   <input
                     value={opt.text}
                     onChange={function(e) {
@@ -460,9 +600,10 @@ function BlockInspector({
                       newOpts[oi] = Object.assign({}, opt, { text: e.target.value });
                       updateField('options', newOpts);
                     }}
-                    style={Object.assign({}, inputStyle, { flex: 1 })}
+                    style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
                     placeholder={'Option ' + String.fromCharCode(65 + oi)}
                   />
+                  {/* Score input */}
                   <input
                     type="number"
                     value={opt.score || 0}
@@ -471,9 +612,11 @@ function BlockInspector({
                       newOpts[oi] = Object.assign({}, opt, { score: parseInt(e.target.value) || 0 });
                       updateField('options', newOpts);
                     }}
-                    style={Object.assign({}, inputStyle, { width: 52, textAlign: 'center' as const, padding: '9px 6px' })}
+                    style={Object.assign({}, inputStyle, { width: 50, padding: '6px 4px', fontSize: 12, textAlign: 'center' as const })}
                     title="Score"
+                    placeholder="0"
                   />
+                  {/* Delete button */}
                   {qb.options.length > 2 && (
                     <button
                       type="button"
@@ -482,13 +625,15 @@ function BlockInspector({
                         updateField('options', newOpts);
                       }}
                       style={{
-                        width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+                        width: 28, height: 28, borderRadius: 6, flexShrink: 0,
                         background: 'transparent', border: 'none',
                         color: C.TEXT_SUBTLE, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
+                      onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.08)'; e.currentTarget.style.color = '#ff3b30'; }}
+                      onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
                     >
-                      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
                       </svg>
                     </button>
@@ -515,7 +660,9 @@ function BlockInspector({
               </button>
             )}
           </div>
-        </InspectorField>
+        </div>
+
+        {/* Delete button note: handled via inline delete on BlockCard */}
       </div>
     );
   }
@@ -592,16 +739,45 @@ function BlockInspector({
     var ob = block as OutcomeBlock;
     return (
       <div>
-        <InspectorField label="Title">
-          <input value={ob.title} onChange={function(e) { updateField('title', e.target.value); }} style={inputStyle} />
-        </InspectorField>
-        <InspectorField label="Description">
-          <textarea
-            value={ob.description}
-            onChange={function(e) { updateField('description', e.target.value); }}
-            style={Object.assign({}, inputStyle, { minHeight: 80, resize: 'vertical' as const })}
-          />
-        </InspectorField>
+        {/* Hero header */}
+        <div style={{
+          marginBottom: 20, padding: '16px', borderRadius: 12,
+          background: '#F0FDF4', border: '1px solid #BBF7D0',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 10,
+            background: '#ECFDF3', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 8px',
+          }}>
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#16A34A"
+              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
+            Outcome
+          </div>
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
+            Configure result display
+          </div>
+        </div>
+
+        {/* Title and description card */}
+        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+          <InspectorField label="Title">
+            <input value={ob.title} onChange={function(e) { updateField('title', e.target.value); }} style={inputStyle} />
+          </InspectorField>
+          <InspectorField label="Description">
+            <textarea
+              value={ob.description}
+              onChange={function(e) { updateField('description', e.target.value); }}
+              style={Object.assign({}, inputStyle, { minHeight: 80, resize: 'vertical' as const })}
+            />
+          </InspectorField>
+        </div>
+
         <InspectorField label="CTA text">
           <input value={ob.ctaText || ''} onChange={function(e) { updateField('ctaText', e.target.value); }} style={inputStyle} placeholder="Learn more" />
         </InspectorField>
@@ -625,6 +801,31 @@ function BlockInspector({
     var lgb = block as LeadGateBlock;
     return (
       <div>
+        {/* Hero header */}
+        <div style={{
+          marginBottom: 20, padding: '16px', borderRadius: 12,
+          background: '#FEF3F2', border: '1px solid #FEE4E2',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 10,
+            background: '#FEE4E2', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 8px',
+          }}>
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#B42318"
+              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <rect x={2} y={4} width={20} height={16} rx={2} /><path d="M22 4L12 13 2 4" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
+            Lead Gate
+          </div>
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
+            Capture leads before showing results
+          </div>
+        </div>
+
         <InspectorField label="Headline">
           <input value={lgb.headline} onChange={function(e) { updateField('headline', e.target.value); }} style={inputStyle} />
         </InspectorField>
@@ -1247,13 +1448,17 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
         <div style={{
           borderLeft: '1px solid ' + C.HAIRLINE,
           background: C.SURFACE,
-          padding: '20px 18px',
+          padding: '0',
           overflowY: 'auto',
           maxHeight: 'calc(100vh - 60px)',
+          display: 'flex', flexDirection: 'column',
         }}>
+          {/* Inspector header with type and close */}
           <div style={{
+            padding: '16px 18px',
+            borderBottom: '1px solid ' + C.HAIRLINE,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: 20,
+            flexShrink: 0,
           }}>
             <div style={{
               fontSize: 13, fontWeight: 700, color: C.TEXT,
@@ -1281,6 +1486,8 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
                 color: C.TEXT_SUBTLE, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
+              onMouseEnter={function(e) { e.currentTarget.style.background = C.SIDEBAR; }}
+              onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
             >
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
@@ -1288,11 +1495,15 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
             </button>
           </div>
 
-          <BlockInspector
-            block={selectedBlock}
-            allBlocks={blocks}
-            onChange={updateBlock}
-          />
+          {/* Inspector content */}
+          <div style={{ padding: '20px 18px', flex: 1, overflowY: 'auto' }}>
+            <BlockInspector
+              block={selectedBlock}
+              allBlocks={blocks}
+              onChange={updateBlock}
+              onDeselect={function() { setSelectedId(null); }}
+            />
+          </div>
         </div>
       )}
 
