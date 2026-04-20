@@ -641,6 +641,17 @@ export const FLOW_CSS = `
     text-overflow: ellipsis;
   }
   .answer-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,115,119,0.1); }
+  .answer-score-input {
+    width: 52px; flex-shrink: 0; text-align: center;
+    padding: 6px 4px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg-2); color: var(--accent);
+    outline: none; font-family: inherit;
+    -moz-appearance: textfield;
+  }
+  .answer-score-input::-webkit-inner-spin-button,
+  .answer-score-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .answer-score-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,115,119,0.1); }
   .answer-del {
     width: 30px; height: 30px; border-radius: 8px;
     background: var(--surface); border: 1px solid var(--border);
@@ -659,6 +670,35 @@ export const FLOW_CSS = `
   .add-answer-btn:hover { color: var(--accent); border-color: var(--accent); }
   .add-answer-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; }
   .divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer; }
+  .toggle-switch input { display: none; }
+  .toggle-track {
+    position: absolute; inset: 0; border-radius: 10px;
+    background: var(--border-2); transition: background 0.2s;
+  }
+  .toggle-track::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #FFFFFF; transition: transform 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-track::after { transform: translateX(16px); }
+  .outcome-card {
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; margin-bottom: 10px;
+  }
+  .outcome-card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .outcome-card-num {
+    font-size: 11px; font-weight: 700; color: var(--accent);
+    background: rgba(13,115,119,0.08); padding: 2px 8px; border-radius: 6px;
+  }
+  .outcome-card-range {
+    font-size: 11px; color: var(--text-dim); font-weight: 500;
+  }
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; font-size: 13px; }
   .stat-row + .stat-row { border-top: 1px solid var(--border); }
   .stat-label { color: var(--text-muted); }

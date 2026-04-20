@@ -459,6 +459,15 @@ export function TryFlowInner({
     const qs = quiz.questions.map((q, i) => i === qi ? { ...q, text } : q);
     updateQuiz({ ...quiz, questions: qs });
   };
+  var updateOptionScore = function(qi: number, oi: number, score: number) {
+    if (!quiz) return;
+    var qs = quiz.questions.map(function(q, i) {
+      if (i !== qi) return q;
+      var opts = q.options.map(function(o, j) { return j === oi ? { ...o, score: score } : o; });
+      return { ...q, options: opts };
+    });
+    updateQuiz({ ...quiz, questions: qs });
+  };
   var updateQuestionType = function(qi: number, type: string) {
     if (!quiz) return;
     var qs = quiz.questions.map(function(q, i) { return i === qi ? { ...q, type: type } : q; });
@@ -1449,6 +1458,15 @@ export function TryFlowInner({
                               onChange={(e) => updateOptionText(selectedIdx, oi, e.target.value)}
                               placeholder="Answer text"
                             />
+                            <input
+                              className="answer-score-input"
+                              type="number"
+                              min="0"
+                              max="10"
+                              value={o.score || 0}
+                              onChange={function(e) { updateOptionScore(selectedIdx, oi, parseInt(e.target.value) || 0); }}
+                              title="Score points"
+                            />
                             <div className="answer-reorder">
                               <button
                                 className="answer-reorder-btn"
@@ -1543,11 +1561,184 @@ export function TryFlowInner({
                   </div>
 
                   <div className="edit-group">
+                    <div className="edit-group-label">Title</div>
+                    <input
+                      className="field-input"
+                      value={quiz?.title || ''}
+                      onChange={function(e) { updateQuizTitle(e.target.value); }}
+                      placeholder="Quiz title"
+                    />
+                  </div>
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">Description</div>
+                    <textarea
+                      className="field-textarea"
+                      value={quiz?.description || ''}
+                      onChange={function(e) { if (quiz) updateQuiz({ ...quiz, description: e.target.value }); }}
+                      placeholder="Describe what visitors will learn from this quiz..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="divider" />
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">
+                      <span>Email gate</span>
+                      <label className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          checked={quiz?.leadGate?.enabled !== false}
+                          onChange={function(e) {
+                            if (!quiz) return;
+                            var gate = { ...(quiz.leadGate || {}), enabled: e.target.checked };
+                            updateQuiz({ ...quiz, leadGate: gate });
+                            flashToast(e.target.checked ? 'Email gate enabled' : 'Email gate disabled');
+                          }}
+                        />
+                        <span className="toggle-track"></span>
+                      </label>
+                    </div>
+                    {quiz?.leadGate?.enabled !== false && (
+                      <>
+                        <input
+                          className="field-input"
+                          value={quiz?.leadGate?.title || ''}
+                          onChange={function(e) {
+                            if (!quiz) return;
+                            var gate = { ...(quiz.leadGate || {}), title: e.target.value };
+                            updateQuiz({ ...quiz, leadGate: gate });
+                          }}
+                          placeholder="Gate heading (e.g. Your results are ready!)"
+                          style={{ marginBottom: 8 }}
+                        />
+                        <input
+                          className="field-input"
+                          value={quiz?.leadGate?.subtitle || ''}
+                          onChange={function(e) {
+                            if (!quiz) return;
+                            var gate = { ...(quiz.leadGate || {}), subtitle: e.target.value };
+                            updateQuiz({ ...quiz, leadGate: gate });
+                          }}
+                          placeholder="Subtitle (e.g. Enter your email to see your results)"
+                        />
+                      </>
+                    )}
+                  </div>
+
+                  <div className="divider" />
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">
+                      <span>Outcomes</span>
+                      <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{quiz?.outcomes?.length || 0}</span>
+                    </div>
+                    {quiz?.outcomes?.map(function(outcome, oi) {
+                      return (
+                        <div className="outcome-card" key={outcome.id + oi}>
+                          <div className="outcome-card-head">
+                            <span className="outcome-card-num">R{oi + 1}</span>
+                            <span className="outcome-card-range">Score {outcome.minScore ?? 0}–{outcome.maxScore ?? 0}</span>
+                          </div>
+                          <input
+                            className="field-input"
+                            value={outcome.title}
+                            onChange={function(e) {
+                              if (!quiz || !quiz.outcomes) return;
+                              var outcomes = quiz.outcomes.map(function(o, i) {
+                                return i === oi ? { ...o, title: e.target.value } : o;
+                              });
+                              updateQuiz({ ...quiz, outcomes: outcomes });
+                            }}
+                            placeholder="Outcome title"
+                            style={{ marginBottom: 6 }}
+                          />
+                          <textarea
+                            className="field-textarea"
+                            value={outcome.description}
+                            onChange={function(e) {
+                              if (!quiz || !quiz.outcomes) return;
+                              var outcomes = quiz.outcomes.map(function(o, i) {
+                                return i === oi ? { ...o, description: e.target.value } : o;
+                              });
+                              updateQuiz({ ...quiz, outcomes: outcomes });
+                            }}
+                            placeholder="Outcome description"
+                            rows={2}
+                            style={{ marginBottom: 6 }}
+                          />
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <input
+                              className="field-input"
+                              value={outcome.ctaText || ''}
+                              onChange={function(e) {
+                                if (!quiz || !quiz.outcomes) return;
+                                var outcomes = quiz.outcomes.map(function(o, i) {
+                                  return i === oi ? { ...o, ctaText: e.target.value } : o;
+                                });
+                                updateQuiz({ ...quiz, outcomes: outcomes });
+                              }}
+                              placeholder="CTA button text"
+                              style={{ flex: 1 }}
+                            />
+                            <input
+                              className="field-input"
+                              value={outcome.ctaUrl || ''}
+                              onChange={function(e) {
+                                if (!quiz || !quiz.outcomes) return;
+                                var outcomes = quiz.outcomes.map(function(o, i) {
+                                  return i === oi ? { ...o, ctaUrl: e.target.value } : o;
+                                });
+                                updateQuiz({ ...quiz, outcomes: outcomes });
+                              }}
+                              placeholder="CTA URL"
+                              style={{ flex: 1 }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>Min score</div>
+                              <input
+                                className="field-input"
+                                type="number"
+                                value={outcome.minScore ?? 0}
+                                onChange={function(e) {
+                                  if (!quiz || !quiz.outcomes) return;
+                                  var outcomes = quiz.outcomes.map(function(o, i) {
+                                    return i === oi ? { ...o, minScore: parseInt(e.target.value) || 0 } : o;
+                                  });
+                                  updateQuiz({ ...quiz, outcomes: outcomes });
+                                }}
+                              />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>Max score</div>
+                              <input
+                                className="field-input"
+                                type="number"
+                                value={outcome.maxScore ?? 0}
+                                onChange={function(e) {
+                                  if (!quiz || !quiz.outcomes) return;
+                                  var outcomes = quiz.outcomes.map(function(o, i) {
+                                    return i === oi ? { ...o, maxScore: parseInt(e.target.value) || 0 } : o;
+                                  });
+                                  updateQuiz({ ...quiz, outcomes: outcomes });
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="divider" />
+
+                  <div className="edit-group">
                     <div className="edit-group-label">Overview</div>
                     <div className="stat-row"><span className="stat-label">Total questions</span><span className="stat-value">{quiz?.questions.length || 0}</span></div>
                     <div className="stat-row"><span className="stat-label">Outcomes</span><span className="stat-value">{quiz?.outcomes?.length || 0}</span></div>
-                    <div className="stat-row"><span className="stat-label">Email gate</span><span className="stat-value">On</span></div>
-                    <div className="stat-row"><span className="stat-label">Brand match</span><span className="stat-value">Auto</span></div>
                   </div>
 
                   <div className="divider" />
