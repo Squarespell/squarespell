@@ -460,22 +460,22 @@ export const FLOW_CSS = `
   .s3-title-edit-area { flex: 1; display: flex; flex-direction: column; gap: 0; }
   .s3-title-input {
     font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text);
-    background: transparent; border: 1px solid transparent; border-radius: 8px;
-    padding: 6px 10px; outline: none; width: 100%; font-family: inherit;
-    transition: background 0.15s, border-color 0.15s;
+    background: transparent; border: none; border-radius: 6px;
+    padding: 4px 8px; margin: -4px -8px; outline: none; width: calc(100% + 16px);
+    font-family: inherit; transition: background 0.15s;
   }
-  .s3-title-input:hover { background: var(--bg-2); }
-  .s3-title-input:focus { background: var(--surface); border-color: var(--border-2); }
-  .s3-title-input::placeholder { color: var(--text-dim); font-weight: 500; }
+  .s3-title-input:hover { background: #F2F4F7; }
+  .s3-title-input:focus { background: #F2F4F7; }
+  .s3-title-input::placeholder { color: #D0D5DD; font-weight: 500; }
   .s3-desc-input {
     font-size: 13px; color: var(--text-muted); line-height: 1.5;
-    background: transparent; border: 1px solid transparent; border-radius: 8px;
-    padding: 6px 10px; outline: none; width: 100%; font-family: inherit;
-    resize: none; transition: background 0.15s, border-color 0.15s;
+    background: transparent; border: none; border-radius: 6px;
+    padding: 4px 8px; margin: 0 -8px; outline: none; width: calc(100% + 16px);
+    font-family: inherit; resize: none; transition: background 0.15s;
   }
-  .s3-desc-input:hover { background: var(--bg-2); }
-  .s3-desc-input:focus { background: var(--surface); border-color: var(--border-2); }
-  .s3-desc-input::placeholder { color: var(--text-dim); }
+  .s3-desc-input:hover { background: #F2F4F7; }
+  .s3-desc-input:focus { background: #F2F4F7; }
+  .s3-desc-input::placeholder { color: #D0D5DD; }
   .s3-count {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 13px; color: var(--text-muted);
