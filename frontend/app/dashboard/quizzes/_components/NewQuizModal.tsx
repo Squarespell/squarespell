@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createQuizFromUrl } from "./quizTemplates";
+import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '../../../../lib/quiz/templates';
 
-type Stage = "site" | "loading" | "goal" | "review" | "generating" | "error";
+type Stage = "choose" | "templates" | "site" | "loading" | "goal" | "review" | "generating" | "error";
 
 type Goal = {
   id: string;
@@ -126,7 +127,7 @@ function GoalIcon({ name }: { name: Goal["icon"] }) {
 
 export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const router = useRouter();
-  const [stage, setStage] = useState<Stage>("site");
+  const [stage, setStage] = useState<Stage>("choose");
   const [url, setUrl] = useState("");
   const [context, setContext] = useState("");
   const [topic, setTopic] = useState("");
@@ -138,13 +139,15 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [templateVersion, setTemplateVersion] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [templateFilter, setTemplateFilter] = useState<string>('All');
   const urlRef = useRef<HTMLInputElement>(null);
   const primaryColorRef = useRef<HTMLInputElement>(null);
   const accentColorRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    setStage("site");
+    setStage("choose");
     setUrl("");
     setContext("");
     setTopic("");
@@ -156,7 +159,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setTemplateVersion('');
     setErrorMsg("");
     setSubmitting(false);
-    setTimeout(() => urlRef.current?.focus(), 20);
+    setSelectedTemplate(null);
+    setTemplateFilter('All');
   }, [open]);
 
   // Lock body and html scroll while modal is open
@@ -185,8 +189,61 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
 
   if (!open) return null;
 
-  const stepIndex = stage === "site" || stage === "loading" ? 1 : stage === "goal" ? 2 : 3;
+  const stepIndex = (stage === "choose" || stage === "templates") ? 0 : (stage === "site" || stage === "loading") ? 1 : stage === "goal" ? 2 : 3;
   const isBusy = submitting || stage === "generating";
+
+  // Template creation: save blocks directly to the backend
+  async function handleCreateFromTemplate(templateId: string) {
+    var tpl = QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === templateId; });
+    if (!tpl) return;
+    setSubmitting(true);
+    setErrorMsg("");
+    try {
+      var API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+      var headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (typeof window !== "undefined") {
+        var clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
+        if (clerk?.session) {
+          try {
+            var token = await clerk.session.getToken();
+            if (token) headers["Authorization"] = "Bearer " + token;
+          } catch {}
+        }
+      }
+      // Import blocksToLegacy dynamically to convert blocks to the API format
+      var { blocksToLegacy } = await import('../../../../lib/quiz/blocks');
+      var blocks = tpl.blocks();
+      var legacy = blocksToLegacy(blocks);
+      var res = await fetch(API + "/api/quizzes", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          title: tpl.name + " Quiz",
+          description: tpl.description,
+          questions: legacy.questions,
+          outcomes: legacy.outcomes,
+          leadGate: legacy.leadGate,
+          settings: { template_id: tpl.id },
+        }),
+      });
+      if (!res.ok) {
+        var errBody = await res.text().catch(function() { return ""; });
+        throw new Error("Failed to create quiz (" + res.status + "): " + errBody.slice(0, 200));
+      }
+      var data = await res.json();
+      var quizId = data?.quiz?.id || data?.id;
+      if (quizId) {
+        if (onCreated) onCreated(quizId);
+        router.push("/dashboard/" + quizId);
+      }
+      onClose();
+    } catch (err: unknown) {
+      var message = err instanceof Error ? err.message : "Something went wrong.";
+      setErrorMsg(message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function handleContinueSite() {
     const normalized = normalizeUrl(url);
@@ -336,35 +393,54 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
               </span>
               <span>Squarespell</span>
             </div>
-            <nav className="sq-steps" aria-label="Progress">
-              {[
-                { n: 1, label: "Your site" },
-                { n: 2, label: "Your goal" },
-                { n: 3, label: "Review and generate" },
-              ].map((s) => (
-                <div key={s.n} className={`sq-step ${stepIndex === s.n ? "is-active" : stepIndex > s.n ? "is-done" : ""}`}>
-                  <span className="sq-step-dot">
-                    {stepIndex > s.n ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
-                    ) : (
-                      <span>{s.n}</span>
-                    )}
-                  </span>
-                  <span className="sq-step-label">{s.label}</span>
+            {stepIndex === 0 ? (
+              <>
+                <nav className="sq-steps" aria-label="Progress">
+                  <div className="sq-step is-active">
+                    <span className="sq-step-dot"><span>1</span></span>
+                    <span className="sq-step-label">Choose how to start</span>
+                  </div>
+                </nav>
+                <div className="sq-tip">
+                  <div className="sq-tip-title">Two ways to create</div>
+                  <p>Start from a proven template and customize it, or generate a unique quiz from your website URL.</p>
                 </div>
-              ))}
-            </nav>
-            <div className="sq-tip">
-              <div className="sq-tip-title">Premium quiz engine</div>
-              <p>We pull your brand, audience, and offer from your live site so your first quiz already sounds like you.</p>
-            </div>
+              </>
+            ) : (
+              <>
+                <nav className="sq-steps" aria-label="Progress">
+                  {[
+                    { n: 1, label: "Your site" },
+                    { n: 2, label: "Your goal" },
+                    { n: 3, label: "Review and generate" },
+                  ].map((s) => (
+                    <div key={s.n} className={`sq-step ${stepIndex === s.n ? "is-active" : stepIndex > s.n ? "is-done" : ""}`}>
+                      <span className="sq-step-dot">
+                        {stepIndex > s.n ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                        ) : (
+                          <span>{s.n}</span>
+                        )}
+                      </span>
+                      <span className="sq-step-label">{s.label}</span>
+                    </div>
+                  ))}
+                </nav>
+                <div className="sq-tip">
+                  <div className="sq-tip-title">Premium quiz engine</div>
+                  <p>We pull your brand, audience, and offer from your live site so your first quiz already sounds like you.</p>
+                </div>
+              </>
+            )}
           </aside>
 
           <section className="sq-main">
             <header className="sq-head">
               <div>
-                <div className="sq-eyebrow">Step {stepIndex} of 3</div>
+                <div className="sq-eyebrow">{stepIndex === 0 ? 'New quiz' : 'Step ' + stepIndex + ' of 3'}</div>
                 <h2 className="sq-title">
+                  {stage === "choose" && "How do you want to start?"}
+                  {stage === "templates" && "Pick a template"}
                   {stage === "site" && "Let's build your quiz"}
                   {stage === "loading" && "Reading your site"}
                   {stage === "goal" && "What should this quiz do"}
@@ -379,6 +455,78 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
             </header>
 
             <div className="sq-body">
+              {stage === "choose" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Choose how you want to create your quiz. Use a proven template and customize it, or let AI generate one from your website.</p>
+                  <div className="sq-goals">
+                    <button type="button" className="sq-goal" onClick={() => setStage("templates")}>
+                      <span className="sq-goal-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      </span>
+                      <div className="sq-goal-top">
+                        <span className="sq-goal-label">Start from a template</span>
+                      </div>
+                      <div className="sq-goal-hint">Pick from 8 proven quiz templates designed for Squarespace businesses. Customize questions, outcomes, and branding.</div>
+                    </button>
+                    <button type="button" className="sq-goal" onClick={() => setStage("site")}>
+                      <span className="sq-goal-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                      </span>
+                      <div className="sq-goal-top">
+                        <span className="sq-goal-label">Generate from my website</span>
+                      </div>
+                      <div className="sq-goal-hint">AI reads your Squarespace site and builds a custom quiz matching your brand voice, audience, and offer.</div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {stage === "templates" && (
+                <div className="sq-form">
+                  <p className="sq-lead">Each template is built from proven quiz patterns used by top-converting brands. Pick one and make it yours.</p>
+                  <div className="sq-tpl-filters">
+                    {['All', ...Array.from(new Set(QUIZ_TEMPLATE_CATALOG.map(function(t) { return t.category; })))].map(function(cat) {
+                      return (
+                        <button key={cat} type="button" className={'sq-tpl-filter' + (templateFilter === cat ? ' is-active' : '')} onClick={function() { setTemplateFilter(cat); }}>
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="sq-tpl-grid">
+                    {QUIZ_TEMPLATE_CATALOG.filter(function(t) { return templateFilter === 'All' || t.category === templateFilter; }).map(function(tpl) {
+                      var isSelected = selectedTemplate === tpl.id;
+                      return (
+                        <button key={tpl.id} type="button" className={'sq-tpl-card' + (isSelected ? ' is-selected' : '')} onClick={function() { setSelectedTemplate(isSelected ? null : tpl.id); }}>
+                          <div className="sq-tpl-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d={tpl.iconPath}/></svg>
+                          </div>
+                          <div className="sq-tpl-cat">{tpl.category}</div>
+                          <div className="sq-tpl-name">{tpl.name}</div>
+                          <div className="sq-tpl-desc">{tpl.description}</div>
+                          <div className="sq-tpl-audience">{tpl.audience}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedTemplate && (
+                    <div className="sq-tpl-detail">
+                      {(function() {
+                        var t = QUIZ_TEMPLATE_CATALOG.find(function(x) { return x.id === selectedTemplate; });
+                        if (!t) return null;
+                        return (
+                          <>
+                            <div className="sq-tpl-detail-title">Why this works</div>
+                            <div className="sq-tpl-detail-text">{t.whyItWorks}</div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  {errorMsg && <div className="sq-error">{errorMsg}</div>}
+                </div>
+              )}
+
               {stage === "site" && (
                 <div className="sq-form">
                   <p className="sq-lead">Paste your site and we do the rest. We read your homepage to pick up your tone, audience, and offer. You can edit everything before we generate.</p>
@@ -661,6 +809,12 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 <span style={{ width: `${(stepIndex / 3) * 100}%` }} />
               </div>
               <div className="sq-foot-actions">
+                {stage === "templates" && (
+                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => { setStage("choose"); setSelectedTemplate(null); }}>Back</button>
+                )}
+                {stage === "site" && (
+                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("choose")}>Back</button>
+                )}
                 {stage === "goal" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("site")}>Back</button>
                 )}
@@ -671,6 +825,12 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("review")}>Back</button>
                 )}
 
+                {stage === "templates" && selectedTemplate && (
+                  <button type="button" className="sq-btn sq-btn-primary" onClick={() => handleCreateFromTemplate(selectedTemplate)} disabled={submitting}>
+                    {submitting ? "Creating..." : "Use this template"}
+                    {!submitting && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>}
+                  </button>
+                )}
                 {stage === "site" && (
                   <button type="button" className="sq-btn sq-btn-primary" onClick={handleContinueSite}>
                     Continue
@@ -1136,4 +1296,57 @@ const styles = `
 @media (max-width: 720px) {
   .sq-style-body { grid-template-columns: 1fr; }
 }
+
+/* Template picker styles */
+.sq-tpl-filters {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+}
+.sq-tpl-filter {
+  font: inherit; cursor: pointer;
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid #E4E3E0; background: #FFFFFF;
+  color: #6B6B6B; font-size: 13px; font-weight: 500;
+  transition: all 0.15s ease;
+}
+.sq-tpl-filter:hover { border-color: #0D7377; color: #1A1A1A; }
+.sq-tpl-filter.is-active {
+  background: #0D7377; color: #FFFFFF; border-color: #0D7377; font-weight: 600;
+}
+.sq-tpl-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+@media (max-width: 600px) { .sq-tpl-grid { grid-template-columns: 1fr; } }
+.sq-tpl-card {
+  text-align: left; padding: 18px;
+  background: #FFFFFF; border: 1px solid #E4E3E0;
+  border-radius: 14px; cursor: pointer;
+  font-family: inherit; transition: all 0.15s ease;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sq-tpl-card:hover { border-color: #0D7377; background: #FAFFFE; }
+.sq-tpl-card.is-selected {
+  border-color: #0D7377; background: rgba(13,115,119,0.04);
+  box-shadow: 0 0 0 3px rgba(13,115,119,0.12);
+}
+.sq-tpl-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(13,115,119,0.08); color: #0D7377;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px;
+}
+.sq-tpl-card.is-selected .sq-tpl-icon { background: rgba(13,115,119,0.15); }
+.sq-tpl-cat {
+  font-size: 11px; font-weight: 700; color: #0D7377;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.sq-tpl-name { font-size: 15px; font-weight: 700; color: #1A1A1A; letter-spacing: -0.01em; }
+.sq-tpl-desc { font-size: 13px; color: #6B6B6B; line-height: 1.5; }
+.sq-tpl-audience { font-size: 11.5px; color: #9B9B9B; font-style: italic; margin-top: 2px; }
+.sq-tpl-detail {
+  margin-top: 14px; padding: 14px 16px;
+  background: rgba(13,115,119,0.04); border: 1px solid rgba(13,115,119,0.15);
+  border-radius: 12px;
+}
+.sq-tpl-detail-title { font-size: 12px; font-weight: 700; color: #0D7377; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.sq-tpl-detail-text { font-size: 13.5px; color: #1A1A1A; line-height: 1.55; }
 `;
