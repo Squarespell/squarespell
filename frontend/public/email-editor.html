@@ -1401,6 +1401,7 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
 // STATE
 // ================================================================
 var currentTemplate = 'quiz-result';
+var isExternalTemplate = false; // true when loaded via sq-load-template (Canva/external HTML)
 var mode = 'edit'; // 'edit' | 'preview'
 var activeTextEl = null;
 var originalText = '';
@@ -1772,6 +1773,7 @@ function renderTemplate() {
   updateSectionButtons();
   addInsertPoints();
   addSectionLabels();
+  applyGlobalDesign();
 }
 
 // ================================================================
@@ -2492,7 +2494,38 @@ function applyGlobalColor(type, value) {
   }
 
   pushUndoState();
-  renderTemplate();
+
+  if (isExternalTemplate) {
+    // For external templates (Canva etc.), update colors in-place via DOM
+    var cv = document.getElementById('emailCanvas');
+    if (cv) {
+      if (type === 'primary') {
+        cv.querySelectorAll('.editable-btn').forEach(function(btn) {
+          // Only update buttons that haven't been locally overridden
+          btn.style.backgroundColor = value;
+        });
+      } else if (type === 'background') {
+        var emailBody = cv.querySelector('.email-body');
+        if (emailBody) emailBody.style.backgroundColor = value;
+        cv.querySelectorAll('.email-section').forEach(function(sec) {
+          var inner = sec.querySelector('.section-inner');
+          if (inner) {
+            var bg = inner.style.backgroundColor || '';
+            if (!bg || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') {
+              // Only update sections without explicit background
+            }
+          }
+        });
+      } else if (type === 'text') {
+        cv.querySelectorAll('.editable-text').forEach(function(el) {
+          el.style.color = value;
+        });
+      }
+      applyGlobalDesign();
+    }
+  } else {
+    renderTemplate();
+  }
 }
 
 var COLOR_PALETTES = {
@@ -2672,7 +2705,26 @@ function applyGlobalFont(value) {
   }
 
   closeFontPicker();
-  renderTemplate();
+
+  if (isExternalTemplate) {
+    // For external templates, update font in-place
+    var cv = document.getElementById('emailCanvas');
+    if (cv) {
+      cv.querySelectorAll('.editable-text').forEach(function(el) {
+        el.style.fontFamily = value;
+      });
+      // Also update headings
+      cv.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(el) {
+        el.style.fontFamily = value;
+      });
+      // Update buttons
+      cv.querySelectorAll('.editable-btn').forEach(function(el) {
+        el.style.fontFamily = value;
+      });
+    }
+  } else {
+    renderTemplate();
+  }
 }
 
 var FONT_LIST = [
@@ -2869,14 +2921,17 @@ function applyGlobalDesign() {
   // Apply button style
   if (globalButtonStyle === 'outline') {
     canvas.querySelectorAll('.editable-btn').forEach(function(btn) {
-      var bgColor = btn.style.backgroundColor || globalColors.primary;
+      var bgColor = btn.style.backgroundColor;
+      if (!bgColor || bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') bgColor = globalColors.primary;
+      btn.setAttribute('data-btn-color', bgColor);
       btn.style.backgroundColor = 'transparent';
       btn.style.color = bgColor;
       btn.style.border = '2px solid ' + bgColor;
     });
   } else {
     canvas.querySelectorAll('.editable-btn').forEach(function(btn) {
-      var bgColor = btn.style.backgroundColor || globalColors.primary;
+      var bgColor = btn.getAttribute('data-btn-color') || btn.style.backgroundColor || globalColors.primary;
+      if (!bgColor || bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') bgColor = globalColors.primary;
       btn.style.backgroundColor = bgColor;
       btn.style.color = '#FFFFFF';
       btn.style.border = 'none';
@@ -3026,6 +3081,7 @@ window.addEventListener('message', function(e) {
   if (e.data.type === 'sq-load-template') {
     var canvas = document.getElementById('emailCanvas');
     if (canvas && e.data.html) {
+      isExternalTemplate = true;
       // Extract the body content from full HTML
       var doc = new DOMParser().parseFromString(e.data.html, 'text/html');
       var body = doc.body;
@@ -3495,6 +3551,9 @@ window.addEventListener('message', function(e) {
             addedLogoPlaceholder = true;
           }
         }
+
+        // Apply global design settings to the loaded template
+        applyGlobalDesign();
 
         // Push initial undo state
         undoStack = [canvas.innerHTML];
