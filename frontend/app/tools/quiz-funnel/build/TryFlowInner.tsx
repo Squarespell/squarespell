@@ -1302,7 +1302,7 @@ export function TryFlowInner({
                 <SvgLink /> Copy live link
               </button>
             )}
-            <button className="btn btn-dark" onClick={() => { resetS4(); setStage(4); }} type="button">Preview my quiz</button>
+            <button className="btn btn-dark" onClick={() => { resetS4(); setStage(4); }} type="button">Preview</button>
             <button
               className="btn btn-primary"
               onClick={doPublish}
