@@ -9,8 +9,10 @@
  */
 
 import { ReactNode, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { embedSnippet, publicQuizUrl } from '@/lib/urls';
+import { minimumPlanFor, type PlanFeatures } from '@/lib/plans';
 
 /* ------------------------------------------------------------------ */
 /* Sheet - shared backdrop + centered card                             */
@@ -447,6 +449,160 @@ export function PublishModal({
           }}
         >
           Done
+        </button>
+      </div>
+    </Sheet>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* UpgradeModal - shown when a feature gate is hit                     */
+/* ------------------------------------------------------------------ */
+
+var UPGRADE_COPY: Record<string, { title: string; desc: string; icon: string }> = {
+  removeBranding: {
+    title: 'Remove Squarespell branding',
+    desc: 'Show your own brand on every quiz. Upgrade to remove the "Powered by Squarespell" badge.',
+    icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+  },
+  abTesting: {
+    title: 'Unlock A/B testing',
+    desc: 'Test different quiz versions to find which converts best. See results side-by-side in your analytics dashboard.',
+    icon: 'M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5',
+  },
+  zapier: {
+    title: 'Connect Zapier and webhooks',
+    desc: 'Automatically send leads to your CRM, email tool, or spreadsheet the moment they complete your quiz.',
+    icon: 'M13 2L3 14h9l-1 8 10-12h-9l1-8',
+  },
+  analytics: {
+    title: 'Advanced analytics',
+    desc: 'Get conversion insights, lead scoring, funnel drop-off analysis, and question-level heatmaps.',
+    icon: 'M18 20V10M12 20V4M6 20v-6',
+  },
+  quizLimit: {
+    title: 'Quiz limit reached',
+    desc: 'You have hit the maximum number of quizzes on your current plan. Upgrade to create more.',
+    icon: 'M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
+  },
+  leadLimit: {
+    title: 'Lead limit reached',
+    desc: 'You have reached your monthly lead cap. Upgrade so you never miss another lead.',
+    icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
+  },
+  emailLimit: {
+    title: 'Email limit reached',
+    desc: 'You have sent all your emails for this month. Upgrade for a higher sending limit.',
+    icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6',
+  },
+};
+
+export function UpgradeModal({
+  open,
+  feature,
+  currentPlan,
+  onClose,
+}: {
+  open: boolean;
+  feature: keyof typeof UPGRADE_COPY;
+  currentPlan?: string;
+  onClose: () => void;
+}) {
+  var router = useRouter();
+  if (!open) return null;
+
+  var copy = UPGRADE_COPY[feature] || UPGRADE_COPY.quizLimit;
+  var featureKey = feature as keyof PlanFeatures;
+  var isKnownFeature = ['removeBranding', 'abTesting', 'zapier'].includes(feature);
+  var targetPlan = isKnownFeature ? minimumPlanFor(featureKey) : null;
+  var targetName = targetPlan ? targetPlan.name : 'a higher';
+  var targetPrice = targetPlan ? '$' + targetPlan.monthlyPrice + '/mo' : '';
+
+  return (
+    <Sheet onClose={onClose} labelledBy="upgrade-title" width={460}>
+      <div style={{ padding: '32px 28px 24px', textAlign: 'center' }}>
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 16,
+            background: 'rgba(13,115,119,0.08)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 20,
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d={copy.icon} />
+          </svg>
+        </div>
+
+        <h3
+          id="upgrade-title"
+          style={{
+            margin: '0 0 10px',
+            fontSize: 20,
+            fontWeight: 800,
+            color: C.TEXT,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {copy.title}
+        </h3>
+        <p style={{ margin: '0 0 6px', fontSize: 14, color: C.TEXT_MUTED, lineHeight: 1.6 }}>
+          {copy.desc}
+        </p>
+        {targetPlan && (
+          <p style={{ margin: '0 0 0', fontSize: 13, color: C.ACCENT, fontWeight: 600 }}>
+            Available on {targetName} ({targetPrice}) and above
+          </p>
+        )}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          padding: '16px 24px 22px',
+          borderTop: '1px solid ' + C.BORDER,
+          justifyContent: 'center',
+          background: C.SURFACE,
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            padding: '11px 22px',
+            borderRadius: 8,
+            background: 'transparent',
+            color: C.TEXT,
+            border: '1px solid ' + C.BORDER,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Maybe later
+        </button>
+        <button
+          type="button"
+          onClick={function() { router.push('/pricing'); onClose(); }}
+          style={{
+            padding: '11px 28px',
+            borderRadius: 8,
+            background: C.ACCENT,
+            color: '#FFFFFF',
+            border: 0,
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          View plans
         </button>
       </div>
     </Sheet>
