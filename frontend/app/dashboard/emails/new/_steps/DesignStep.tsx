@@ -269,6 +269,27 @@ export function DesignStep({
     }
   }, [aiDesign]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Re-apply brand when brandKit loads after user already selected a template
+  var prevBrandRef = useRef<BrandKitFromAPI | null>(null);
+  useEffect(function() {
+    // Only act when brand transitions from null to a value
+    if (!aiBrandKit || prevBrandRef.current === aiBrandKit) return;
+    prevBrandRef.current = aiBrandKit;
+    // If user manually selected a template, re-brand their current HTML
+    if (userManuallySelected.current && state.templateId && state.html) {
+      // Find the original raw template to re-apply brand cleanly
+      var rawHtml = state.html;
+      for (var ti = 0; ti < CANVA_TEMPLATES.length; ti++) {
+        if (CANVA_TEMPLATES[ti].id === state.templateId) {
+          rawHtml = CANVA_TEMPLATES[ti].html;
+          break;
+        }
+      }
+      var brandedHtml = applyBrandKit(rawHtml, aiBrandKit);
+      setState({ html: brandedHtml });
+    }
+  }, [aiBrandKit]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Listen for messages from editor iframe
   useEffect(function() {
     function handleMessage(e: MessageEvent) {
