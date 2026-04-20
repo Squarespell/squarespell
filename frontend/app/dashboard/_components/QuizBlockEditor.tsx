@@ -261,98 +261,75 @@ function BlockCard({
         transition: 'all 0.15s ease',
         borderTopWidth: dragOver ? 3 : 1,
         borderTopColor: dragOver ? C.ACCENT : (selected ? C.ACCENT : C.BORDER),
-        padding: '20px 22px',
-        boxShadow: selected ? '0 0 0 3px rgba(13,115,119,0.06)' : 'none',
+        boxShadow: selected ? '0 0 0 3px rgba(13,115,119,0.08), 0 4px 12px rgba(16,24,40,0.08)' : '0 1px 2px rgba(16,24,40,0.04)',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+      {/* Card header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '20px 22px', cursor: 'pointer' }}>
         {/* Drag handle */}
         <div
           draggable
           onDragStart={onDragStart}
-          style={{ cursor: 'grab', padding: '6px 2px', flexShrink: 0 }}
+          style={{ cursor: 'grab', padding: '4px 2px', flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s' }}
+          onMouseEnter={function(e) { e.currentTarget.style.opacity = '1'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.opacity = '0.4'; }}
         >
           <DragHandle />
         </div>
 
         {/* Number/icon badge */}
         <div style={{
-          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-          background: color + '10',
+          width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+          background: selected ? C.ACCENT : (color + '12'),
+          border: '1px solid ' + (selected ? C.ACCENT : color + '30'),
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.15s ease',
         }}>
           {questionNum !== null ? (
-            <span style={{ fontSize: 16, fontWeight: 700, color: color }}>{questionNum}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: selected ? '#FFFFFF' : color }}>Q{questionNum}</span>
           ) : (
-            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color}
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={selected ? '#FFFFFF' : color}
               strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d={QUIZ_PALETTE.find(function(p) { return p.type === block.type; })?.icon || ''} />
             </svg>
           )}
         </div>
 
-        {/* Content */}
+        {/* Content header */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{
-              fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const,
-              letterSpacing: '0.05em', color: C.TEXT_MUTED,
-            }}>
-              {label}
-            </span>
-            {qb && (
-              <span style={{ fontSize: 11, color: C.TEXT_SUBTLE, fontWeight: 500 }}>
-                {qb.options.length} options
-              </span>
-            )}
-          </div>
           {preview && (
             <div style={{
               fontSize: 15, color: C.TEXT, fontWeight: 600, lineHeight: 1.4,
-              fontFamily: C.FONT,
+              fontFamily: C.FONT, marginBottom: 4,
             }}>
               {preview}
             </div>
           )}
-
-          {/* Show answers inline when selected (like classic editor) */}
-          {selected && qb && (
-            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {qb.options.map(function(opt, oi) {
-                return (
-                  <div key={opt.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 12px', borderRadius: 8,
-                    background: '#FFFFFF', border: '1px solid ' + C.BORDER,
-                    fontSize: 13, color: C.TEXT,
-                  }}>
-                    <div style={{
-                      width: 24, height: 24, borderRadius: 6,
-                      background: C.ACCENT, color: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 700, flexShrink: 0,
-                    }}>
-                      {LETTERS[oi]}
-                    </div>
-                    {opt.imageUrl && (
-                      <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
-                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    )}
-                    <span style={{ flex: 1, fontWeight: 500 }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
-                    {opt.score ? (
-                      <span style={{ fontSize: 11, color: C.TEXT_SUBTLE, fontWeight: 600 }}>
-                        {opt.score > 0 ? '+' : ''}{opt.score}
-                      </span>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{
+              fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED,
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              {qb ? (
+                <>
+                  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><circle cx={12} cy={12} r={10}/><circle cx={12} cy={12} r={3}/></svg>
+                  {qb.questionType === 'multiple' ? 'Multi select' : 'Single select'}
+                </>
+              ) : (
+                label
+              )}
+            </span>
+            {qb && (
+              <span style={{ fontSize: 12, color: C.TEXT_SUBTLE }}>
+                {qb.options.length} options
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0, paddingTop: 4 }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}
           onClick={function(e) { e.stopPropagation(); }}
         >
           <button type="button" onClick={onDuplicate} title="Duplicate"
@@ -360,7 +337,7 @@ function BlockCard({
             onMouseEnter={function(e) { e.currentTarget.style.background = '#F2F4F7'; }}
             onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
           >
-            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <rect x={9} y={9} width={13} height={13} rx={2} ry={2} />
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
@@ -370,13 +347,55 @@ function BlockCard({
             onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.06)'; e.currentTarget.style.color = '#ff3b30'; }}
             onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
           >
-            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             </svg>
           </button>
         </div>
       </div>
+
+      {/* Answer options - ALWAYS visible for question blocks (like classic editor) */}
+      {qb && (
+        <div style={{ padding: '0 22px 18px 80px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {qb.options.map(function(opt, oi) {
+            return (
+              <div key={opt.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 14px', borderRadius: 10,
+                background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                fontSize: 14, color: C.TEXT,
+                transition: 'border-color 0.15s',
+              }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: 7,
+                  background: selected ? C.ACCENT : '#E9ECEF',
+                  color: selected ? '#fff' : C.TEXT_MUTED,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700, flexShrink: 0,
+                  transition: 'all 0.15s',
+                }}>
+                  {LETTERS[oi]}
+                </div>
+                {opt.imageUrl && (
+                  <img src={opt.imageUrl} alt="" style={{ width: 30, height: 30, borderRadius: 5, objectFit: 'cover', flexShrink: 0 }}
+                    onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                )}
+                <span style={{ flex: 1, fontWeight: 500, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, flexShrink: 0,
+                  padding: '3px 8px', borderRadius: 6,
+                  background: (opt.score || 0) >= 3 ? 'rgba(13,115,119,0.12)' : 'rgba(0,0,0,0.04)',
+                  color: (opt.score || 0) >= 3 ? C.ACCENT : C.TEXT_MUTED,
+                  border: '1px solid ' + ((opt.score || 0) >= 3 ? 'rgba(13,115,119,0.2)' : 'rgba(0,0,0,0.06)'),
+                }}>
+                  +{opt.score || 0}pts
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
