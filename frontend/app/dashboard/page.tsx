@@ -16,7 +16,7 @@
  * /dashboard/quizzes.
  */
 
-import { useEffect, useMemo, useRef, useState, Suspense, ReactNode } from 'react';
+import { useEffect, useRef, useState, Suspense, ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -103,96 +103,138 @@ function initialsFromLead(lead: Lead): string {
 }
 
 // ============================ CHART ============================
-// Deterministic noise so the chart looks natural even if the backend doesn't
-// yet expose daily buckets. Seeded off the total so values don't flicker.
-function generateSeries(total: number, days: number, seed: number): number[] {
-  if (total <= 0) return new Array(days).fill(0);
-  var raw: number[] = [];
-  var s = seed;
-  for (var i = 0; i < days; i++) {
-    s = (s * 9301 + 49297) % 233280;
-    var rand = s / 233280;
-    var trend = 0.6 + (i / days) * 0.8;
-    raw.push(trend * (0.7 + rand * 0.6));
-  }
-  var sum = raw.reduce(function(a, b) { return a + b; }, 0);
-  return raw.map(function(v) { return (v / sum) * total; });
-}
-
 function HeroChart({
-  views,
-  leads,
-  range,
+  dates,
+  viewSeries,
+  leadSeries,
 }: {
-  views: number;
-  leads: number;
-  range: '7d' | '30d' | '90d';
+  dates: string[];
+  viewSeries: number[];
+  leadSeries: number[];
 }) {
-  var days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-  var viewSeries = useMemo(function() { return generateSeries(views, days, 17 + views); }, [views, days]);
-  var leadSeries = useMemo(function() { return generateSeries(leads, days, 53 + leads); }, [leads, days]);
+  var [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  var days = dates.length;
+
+  if (days === 0) {
+    return (
+      <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.GRAY_400, fontSize: 14, fontFamily: C.FONT }}>
+        No data for this period yet
+      </div>
+    );
+  }
 
   var chartWidth = 960;
   var chartHeight = 200;
-  var barGap = 2;
-  var groupGap = 4;
+  var groupGap = days > 60 ? 1 : days > 14 ? 2 : 4;
+  var barGap = days > 60 ? 1 : 2;
   var groupWidth = (chartWidth - groupGap * days) / days;
   var barWidth = (groupWidth - barGap) / 2;
 
   var allValues = viewSeries.concat(leadSeries);
   var max = Math.max.apply(null, allValues.concat([1]));
 
+  function formatDate(d: string): string {
+    var parts = d.split('-');
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[parseInt(parts[1], 10) - 1] + ' ' + parseInt(parts[2], 10);
+  }
+
   return (
-    <svg viewBox={'0 0 ' + chartWidth + ' ' + (chartHeight + 4)} preserveAspectRatio="none" width="100%" height={chartHeight + 4} style={{ display: 'block' }}>
-      {/* Grid lines */}
-      {[0.25, 0.5, 0.75].map(function(p) {
-        return (
-          <line
-            key={p}
-            x1={0}
-            x2={chartWidth}
-            y1={chartHeight - p * (chartHeight - 16)}
-            y2={chartHeight - p * (chartHeight - 16)}
-            stroke={C.GRAY_200}
-            strokeWidth={0.5}
-          />
-        );
-      })}
-
-      {/* Grouped bars: views (teal) + leads (gray) */}
-      {viewSeries.map(function(viewVal, idx) {
-        var leadVal = leadSeries[idx] || 0;
-        var gx = idx * (groupWidth + groupGap);
-
-        var viewH = Math.max(1, (viewVal / max) * (chartHeight - 16));
-        var leadH = Math.max(0.5, (leadVal / max) * (chartHeight - 16));
-
-        return (
-          <g key={idx}>
-            <rect
-              x={gx}
-              y={chartHeight - viewH}
-              width={barWidth}
-              height={viewH}
-              rx={Math.min(3, barWidth / 2)}
-              fill={C.ACCENT}
-              opacity={0.85}
+    <div style={{ position: 'relative' }}>
+      <svg viewBox={'0 0 ' + chartWidth + ' ' + (chartHeight + 4)} width="100%" height={chartHeight + 4} style={{ display: 'block' }}>
+        {/* Grid lines */}
+        {[0.25, 0.5, 0.75].map(function(p) {
+          return (
+            <line
+              key={p}
+              x1={0}
+              x2={chartWidth}
+              y1={chartHeight - p * (chartHeight - 16)}
+              y2={chartHeight - p * (chartHeight - 16)}
+              stroke={C.GRAY_200}
+              strokeWidth={0.5}
             />
-            {leadVal > 0 && (
+          );
+        })}
+
+        {/* Grouped bars: views (teal) + leads (gray) */}
+        {viewSeries.map(function(viewVal, idx) {
+          var leadVal = leadSeries[idx] || 0;
+          var gx = idx * (groupWidth + groupGap);
+          var viewH = max > 0 ? Math.max(viewVal > 0 ? 2 : 0, (viewVal / max) * (chartHeight - 16)) : 0;
+          var leadH = max > 0 ? Math.max(leadVal > 0 ? 2 : 0, (leadVal / max) * (chartHeight - 16)) : 0;
+          var isHovered = hoveredIdx === idx;
+
+          return (
+            <g key={idx}>
+              {/* Invisible hover target for the full group width */}
               <rect
-                x={gx + barWidth + barGap}
-                y={chartHeight - leadH}
-                width={barWidth}
-                height={leadH}
-                rx={Math.min(3, barWidth / 2)}
-                fill={C.GRAY_400}
-                opacity={0.6}
+                x={gx}
+                y={0}
+                width={groupWidth}
+                height={chartHeight}
+                fill="transparent"
+                onMouseEnter={function() { setHoveredIdx(idx); }}
+                onMouseLeave={function() { setHoveredIdx(null); }}
+                style={{ cursor: 'pointer' }}
               />
-            )}
-          </g>
-        );
-      })}
-    </svg>
+              <rect
+                x={gx}
+                y={chartHeight - viewH}
+                width={barWidth}
+                height={viewH}
+                rx={Math.min(3, barWidth / 2)}
+                fill={C.ACCENT}
+                opacity={isHovered ? 1 : 0.8}
+              />
+              {leadVal > 0 && (
+                <rect
+                  x={gx + barWidth + barGap}
+                  y={chartHeight - leadH}
+                  width={barWidth}
+                  height={leadH}
+                  rx={Math.min(3, barWidth / 2)}
+                  fill={C.GRAY_400}
+                  opacity={isHovered ? 0.8 : 0.5}
+                />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Hover tooltip */}
+      {hoveredIdx !== null && dates[hoveredIdx] && (
+        <div style={{
+          position: 'absolute',
+          top: 8,
+          left: Math.min(
+            hoveredIdx * (groupWidth + groupGap) * (100 / chartWidth),
+            85
+          ) + '%',
+          background: C.GRAY_900,
+          color: '#FFFFFF',
+          borderRadius: 8,
+          padding: '8px 12px',
+          fontSize: 12,
+          fontFamily: C.FONT,
+          pointerEvents: 'none',
+          zIndex: 10,
+          whiteSpace: 'nowrap',
+          boxShadow: C.SHADOW_MD,
+        }}>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>{formatDate(dates[hoveredIdx])}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />
+            Views: {viewSeries[hoveredIdx]}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.GRAY_400, display: 'inline-block' }} />
+            Leads: {leadSeries[hoveredIdx]}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -200,60 +242,27 @@ function HeroChart({
 function OverviewStatCard({
   label,
   value,
-  delta,
-  deltaLabel,
   icon,
 }: {
   label: string;
   value: ReactNode;
-  delta?: string;
-  deltaLabel?: string;
   icon: ReactNode;
 }) {
-  var isUp = delta ? delta.startsWith('+') : false;
-  var isDown = delta ? (delta.startsWith('-') || delta.startsWith('\u2212')) : false;
-  var deltaColor = isDown ? C.ERROR_700 : isUp ? C.SUCCESS_700 : C.GRAY_500;
-
-  // Mini sparkline data
-  var sparkSeed = typeof value === 'string' ? value.length * 31 : 42;
-  var sparkData = useMemo(function() {
-    var pts: number[] = [];
-    var s = sparkSeed;
-    for (var i = 0; i < 12; i++) {
-      s = (s * 9301 + 49297) % 233280;
-      pts.push(s / 233280);
-    }
-    return pts;
-  }, [sparkSeed]);
-
-  var sparkMax = Math.max.apply(null, sparkData);
-  var sparkW = 80;
-  var sparkH = 28;
-  var sparkPoints = sparkData.map(function(v, i) {
-    var x = (i / (sparkData.length - 1)) * sparkW;
-    var y = sparkH - (v / sparkMax) * (sparkH - 6) - 3;
-    return x + ',' + y;
-  }).join(' ');
-
-  var gradientColor = isDown ? C.ERROR_500 : C.SUCCESS_500;
-  var lineColor = isDown ? C.ERROR_500 : C.SUCCESS_500;
-  var gradId = 'sg-' + label.replace(/\s+/g, '-').toLowerCase();
-
   return (
     <div
       style={{
         background: C.SURFACE,
         border: '1px solid ' + C.GRAY_200,
         borderRadius: 12,
-        padding: '20px 20px 16px',
+        padding: '20px 20px 20px',
         overflow: 'hidden',
         minWidth: 0,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ fontSize: 13, fontWeight: 500, color: C.GRAY_500, fontFamily: C.FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_500, fontFamily: C.FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
         <div style={{
-          width: 32, height: 32, borderRadius: 8,
+          width: 36, height: 36, borderRadius: 10,
           background: C.ACCENT_LIGHT,
           border: '1px solid rgba(13,115,119,0.12)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -264,13 +273,12 @@ function OverviewStatCard({
       </div>
       <div
         style={{
-          fontSize: 30,
+          fontSize: 32,
           fontWeight: 700,
           color: C.GRAY_900,
           letterSpacing: '-0.03em',
           lineHeight: 1,
           fontVariantNumeric: 'tabular-nums',
-          marginBottom: 10,
           fontFamily: C.FONT,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -278,59 +286,6 @@ function OverviewStatCard({
         }}
       >
         {value}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, overflow: 'hidden' }}>
-        {delta ? (
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 3,
-              fontSize: 12,
-              fontWeight: 500,
-              color: deltaColor,
-              fontFamily: C.FONT,
-              whiteSpace: 'nowrap',
-              minWidth: 0,
-              flexShrink: 1,
-              overflow: 'hidden',
-            }}
-          >
-            {isUp && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                <polyline points="17 6 23 6 23 12"/>
-              </svg>
-            )}
-            {isDown && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
-                <polyline points="17 18 23 18 23 12"/>
-              </svg>
-            )}
-            <span>{delta}</span>
-            {deltaLabel && <span style={{ color: C.GRAY_500, fontWeight: 400 }}>{deltaLabel}</span>}
-          </div>
-        ) : <div />}
-        <svg width={sparkW} height={sparkH} viewBox={'0 0 ' + sparkW + ' ' + sparkH} style={{ flexShrink: 0, display: 'block' }}>
-          <defs>
-            <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor={gradientColor} stopOpacity="0.15"/>
-              <stop offset="100%" stopColor={gradientColor} stopOpacity="0"/>
-            </linearGradient>
-          </defs>
-          <polygon
-            points={sparkPoints + ' ' + sparkW + ',' + sparkH + ' 0,' + sparkH}
-            fill={'url(#' + gradId + ')'}
-          />
-          <polyline
-            points={sparkPoints}
-            fill="none"
-            stroke={lineColor}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
       </div>
     </div>
   );
@@ -587,6 +542,7 @@ function OverviewInner() {
     lead_rate: 0,
   });
   var [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
+  var [timeseries, setTimeseries] = useState<{ dates: string[]; views: number[]; leads: number[] }>({ dates: [], views: [], leads: [] });
   var [newQuizOpen, setNewQuizOpen] = useState(false);
   var [claimError, setClaimError] = useState<string | null>(null);
   var [checklistDismissed, setChecklistDismissed] = useState(false);
@@ -796,6 +752,45 @@ function OverviewInner() {
     };
   }, [token, status]);
 
+  // Fetch real timeseries data for the bar chart
+  useEffect(function() {
+    if (!token || quizzes.length === 0) return;
+    var cancelled = false;
+
+    (async function() {
+      var allDates: Record<string, { views: number; leads: number }> = {};
+
+      for (var qi = 0; qi < quizzes.length; qi++) {
+        try {
+          var tsRes = await fetch(API + '/api/analytics/' + quizzes[qi].id + '/timeseries?period=' + range, {
+            headers: { Authorization: 'Bearer ' + token },
+          });
+          if (tsRes.ok) {
+            var tsData = await tsRes.json();
+            if (tsData.dates && Array.isArray(tsData.dates)) {
+              for (var di = 0; di < tsData.dates.length; di++) {
+                var dateKey = tsData.dates[di];
+                if (!allDates[dateKey]) allDates[dateKey] = { views: 0, leads: 0 };
+                allDates[dateKey].views += (tsData.views[di] || 0);
+                allDates[dateKey].leads += (tsData.leads[di] || 0);
+              }
+            }
+          }
+        } catch {}
+      }
+
+      var sortedDates = Object.keys(allDates).sort();
+      var viewsArr = sortedDates.map(function(d) { return allDates[d].views; });
+      var leadsArr = sortedDates.map(function(d) { return allDates[d].leads; });
+
+      if (!cancelled) {
+        setTimeseries({ dates: sortedDates, views: viewsArr, leads: leadsArr });
+      }
+    })();
+
+    return function() { cancelled = true; };
+  }, [token, quizzes, range]);
+
   if (authStatus === 'loading' || status === 'loading') {
     return (
       <DashboardShell title="Overview">
@@ -996,10 +991,8 @@ function OverviewInner() {
         <OverviewStatCard
           label="Total views"
           value={formatNumber(analytics.views)}
-          delta="+12%"
-          deltaLabel="vs last month"
           icon={
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -1008,10 +1001,8 @@ function OverviewInner() {
         <OverviewStatCard
           label="Leads captured"
           value={formatNumber(analytics.leads)}
-          delta="+31%"
-          deltaLabel="vs last month"
           icon={
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <line x1="19" y1="8" x2="19" y2="14" />
@@ -1023,7 +1014,7 @@ function OverviewInner() {
           label="Completion rate"
           value={analytics.completion_rate.toFixed(1) + '%'}
           icon={
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
@@ -1032,10 +1023,8 @@ function OverviewInner() {
         <OverviewStatCard
           label="Lead rate"
           value={analytics.lead_rate.toFixed(1) + '%'}
-          delta={analytics.lead_rate > 0 ? '-2%' : undefined}
-          deltaLabel="vs last month"
           icon={
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
           }
@@ -1097,7 +1086,7 @@ function OverviewInner() {
             Leads
           </div>
         </div>
-        <HeroChart views={analytics.views} leads={analytics.leads} range={range} />
+        <HeroChart dates={timeseries.dates} viewSeries={timeseries.views} leadSeries={timeseries.leads} />
       </Card>
 
       {/* Dual panels */}
