@@ -42,7 +42,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
     Promise.all([
       api.getQuiz(params.quizId),
       api.getAnalytics(params.quizId, { exclude_bots: filterBots, since: since }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/${params.quizId}/leads`, { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+      api.getLeads(params.quizId).catch(function() { return []; }),
       api.getFunnel(params.quizId, { exclude_bots: filterBots }),
       api.getQuestionHeatmap(params.quizId).catch(function () { return null; }),
     ]).then(([q, s, l, f, h]) => { setQuiz(q); setStats(s); setLeads(l); setFunnel(f); setHeatmap(h); }).finally(() => setLoading(false));
@@ -60,9 +60,25 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
     }
   }
 
-  async function exportCsv() {
+  function exportCsv() {
     setExporting(true);
-    try { const res=await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/${params.quizId}/leads/export`,{credentials:'include'}); const blob=await res.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${quiz?.title??'leads'}-leads.csv`; a.click(); URL.revokeObjectURL(url); } finally { setExporting(false); }
+    var apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+    var clerk = typeof window !== 'undefined' ? (window as any).Clerk : null;
+    var tokenPromise = clerk && clerk.session ? clerk.session.getToken() : Promise.resolve('');
+    tokenPromise.then(function(token: string) {
+      var headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return fetch(apiUrl + '/api/quizzes/' + params.quizId + '/leads/export', { headers: headers });
+    }).then(function(res: Response) {
+      return res.blob();
+    }).then(function(blob: Blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = (quiz?.title || 'leads') + '-leads.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }).finally(function() { setExporting(false); });
   }
   if (loading) return <div className={styles.loading}>Loading analytics...</div>;
   return (
