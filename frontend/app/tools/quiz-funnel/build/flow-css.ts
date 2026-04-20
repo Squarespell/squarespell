@@ -457,12 +457,14 @@ export const FLOW_CSS = `
   .s3-main-inner { padding: 32px 40px 80px; max-width: 880px; width: 100%; margin: 0 auto; }
   .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .s3-main-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
+  .s3-head-clickable { cursor: pointer; border-radius: 8px; padding: 6px 10px; margin: -6px -10px; transition: background 0.15s; }
+  .s3-head-clickable:hover { background: #F2F4F7; }
   .s3-edit-link {
     display: inline-flex; align-items: center; gap: 5px; margin-top: 4px;
-    font-size: 12px; color: var(--text-muted); cursor: pointer;
+    font-size: 12px; color: var(--text-muted);
     transition: color 0.15s;
   }
-  .s3-edit-link:hover { color: var(--accent); }
+  .s3-head-clickable:hover .s3-edit-link { color: var(--accent); }
   .s3-count {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 13px; color: var(--text-muted);

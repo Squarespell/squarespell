@@ -1338,9 +1338,9 @@ export function TryFlowInner({
           <div className="s3-main">
            <div className="s3-main-inner">
             <div className="s3-main-head">
-              <div>
+              <div className="s3-head-clickable" onClick={function() { setSelectedIdx(-1); }}>
                 <h2>{quiz?.title || 'Your quiz'}</h2>
-                <span className="s3-edit-link" onClick={function() { setSelectedIdx(-1); }}>
+                <span className="s3-edit-link">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                   Edit title &amp; description
                 </span>
@@ -1434,13 +1434,17 @@ export function TryFlowInner({
             <div id="side-content">
               {currentQ ? (
                 <>
-                  <div className="s3-side-head">
-                    <div className="s3-side-label">EDITING QUESTION {selectedIdx + 1}</div>
-                    <button className="s3-side-close" title="Deselect" onClick={deselect} type="button"><SvgClose /></button>
+                  <div className="settings-hero" style={{ position: 'relative' }}>
+                    <button className="s3-side-close" title="Deselect" onClick={deselect} type="button" style={{ position: 'absolute', top: 16, right: 0 }}><SvgClose /></button>
+                    <div className="settings-hero-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div className="settings-hero-text">Question {selectedIdx + 1}</div>
+                    <div className="settings-hero-sub">Edit question text, type, and answers</div>
                   </div>
 
-                  <div className="edit-group">
-                    <div className="edit-group-label">Question</div>
+                  <div className="settings-card">
+                    <label className="settings-card-label">Question text</label>
                     <textarea
                       className="field-textarea"
                       value={currentQ.text}
