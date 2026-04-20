@@ -153,5 +153,30 @@ app.listen(PORT, () => {
         .catch(function() { /* swallow errors */ });
     }, KEEP_ALIVE_MS);
     log.info('Keep-alive enabled', { url: externalUrl + '/health', intervalMs: KEEP_ALIVE_MS });
+
+    // Weekly digest - runs every Monday at ~9 AM UTC via an interval check.
+    // On each tick (every 30 min), check if it's Monday 9:00-9:29 UTC and
+    // if digest hasn't been sent today. If so, trigger the digest endpoint.
+    var DIGEST_CHECK_MS = 30 * 60 * 1000; // 30 minutes
+    var lastDigestDate = '';
+    setInterval(function() {
+      var now = new Date();
+      var day = now.getUTCDay(); // 0=Sun, 1=Mon
+      var hour = now.getUTCHours();
+      var dateStr = now.toISOString().slice(0, 10);
+      if (day === 1 && hour === 9 && lastDigestDate !== dateStr) {
+        lastDigestDate = dateStr;
+        log.info('[Cron] Triggering weekly digest');
+        var cronSecret = process.env.CRON_SECRET || '';
+        fetch(externalUrl + '/cron/weekly-digest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-cron-secret': cronSecret },
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(data) { log.info('[Cron] Weekly digest result', { detail: JSON.stringify(data) }); })
+          .catch(function(err) { log.error('[Cron] Weekly digest trigger failed', { err: String(err) }); });
+      }
+    }, DIGEST_CHECK_MS);
+    log.info('Weekly digest scheduler enabled (Mon 9AM UTC)');
   }
 });
