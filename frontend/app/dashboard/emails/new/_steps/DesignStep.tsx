@@ -91,6 +91,14 @@ export function DesignStep({
 
   useEffect(function() { injectDesignFocusStyles(); }, []);
 
+  // Lock body scroll when editor phase is active (prevents grey bar bleed-through)
+  useEffect(function() {
+    if (phase === 'editor') {
+      document.body.style.overflow = 'hidden';
+      return function() { document.body.style.overflow = ''; };
+    }
+  }, [phase]);
+
   // Categories
   var categories = useMemo(function() {
     var cats = ['all'];
