@@ -720,19 +720,6 @@ export const FLOW_CSS = `
     0%, 100% { opacity: 0.35; transform: scale(0.85); }
     50% { opacity: 1; transform: scale(1); }
   }
-  .s3-shortcut-hint {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    padding: 8px 14px; margin-bottom: 16px;
-    background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px;
-    font-size: 12px; color: var(--text-dim); font-weight: 500;
-  }
-  .s3-shortcut-hint kbd {
-    display: inline-block; padding: 2px 6px;
-    background: var(--surface); border: 1px solid var(--border); border-bottom-width: 2px;
-    border-radius: 4px; font-family: inherit; font-size: 11px; color: var(--text-muted);
-    font-weight: 600;
-  }
-  .s3-shortcut-hint .dot-sep { color: var(--border-2); }
   .qc-actions {
     display: flex; align-items: center; gap: 4px;
     opacity: 0; transition: opacity 0.15s var(--ease);

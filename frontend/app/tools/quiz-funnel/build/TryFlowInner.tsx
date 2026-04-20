@@ -591,46 +591,6 @@ export function TryFlowInner({
   };
   const deselect = () => setSelectedIdx(-1);
 
-  /* ======================== Stage 3 keyboard shortcuts =============== */
-  // Cmd/Ctrl+N new question, Alt+ArrowUp/Down move selected question,
-  // Cmd/Ctrl+D duplicate selected question, Esc to deselect.
-  useEffect(() => {
-    if (stage !== 3) return;
-    const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      const typing = tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable;
-      const mod = e.metaKey || e.ctrlKey;
-      if (!mod && !typing && e.key === 'Escape') {
-        setSelectedIdx(-1);
-        return;
-      }
-      if (mod && e.key.toLowerCase() === 'n') {
-        e.preventDefault();
-        addQuestion();
-        flashToast('New question added');
-        return;
-      }
-      if (mod && e.key.toLowerCase() === 'd' && selectedIdx >= 0) {
-        e.preventDefault();
-        duplicateQuestion(selectedIdx);
-        flashToast('Question duplicated');
-        return;
-      }
-      if (e.altKey && e.key === 'ArrowUp' && selectedIdx > 0) {
-        e.preventDefault();
-        moveQuestion(selectedIdx, -1);
-        return;
-      }
-      if (e.altKey && e.key === 'ArrowDown' && quiz && selectedIdx < quiz.questions.length - 1) {
-        e.preventDefault();
-        moveQuestion(selectedIdx, 1);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage, selectedIdx, quiz]);
 
   /* ======================== STAGE 4 helpers =========================== */
   const [s4LeadGate, setS4LeadGate] = useState(false);
@@ -1331,10 +1291,6 @@ export function TryFlowInner({
               <div className="s3-count">
                 <span>{quiz?.questions.length || 0}</span> questions · {quiz?.outcomes?.length || 0} outcomes
               </div>
-            </div>
-
-            <div className="s3-shortcut-hint">
-              <kbd>⌘N</kbd> new <span className="dot-sep">·</span> <kbd>⌘D</kbd> duplicate <span className="dot-sep">·</span> <kbd>⌥↑</kbd><kbd>⌥↓</kbd> reorder <span className="dot-sep">·</span> <kbd>Esc</kbd> deselect
             </div>
 
             <div id="qc-list">
