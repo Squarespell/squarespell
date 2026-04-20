@@ -592,50 +592,21 @@ export function DesignStep({
                         pointerEvents: 'none',
                       }}
                     />
-                    {/* AI Designed badge */}
-                    <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6 }}>
-                      <div style={{
-                        padding: '5px 12px', borderRadius: 20,
-                        background: 'linear-gradient(135deg, #0D7377 0%, #059669 100%)',
-                        color: '#FFFFFF', fontSize: 11, fontWeight: 700,
-                        display: 'flex', alignItems: 'center', gap: 5,
-                        boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
-                      }}>
-                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                          <path d="M2 17l10 5 10-5" />
-                          <path d="M2 12l10 5 10-5" />
-                        </svg>
-                        AI Recommendation
-                      </div>
-                      {aiDesign.brandApplied && (
-                        <div style={{
-                          padding: '5px 10px', borderRadius: 20,
-                          background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)',
-                          color: C.TEXT, fontSize: 10, fontWeight: 600,
-                          display: 'flex', alignItems: 'center', gap: 4,
-                          border: '1px solid ' + C.BORDER,
-                        }}>
-                          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          Brand applied
-                        </div>
-                      )}
-                      {aiDesign.quizContentApplied && (
-                        <div style={{
-                          padding: '5px 10px', borderRadius: 20,
-                          background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)',
-                          color: C.TEXT, fontSize: 10, fontWeight: 600,
-                          display: 'flex', alignItems: 'center', gap: 4,
-                          border: '1px solid ' + C.BORDER,
-                        }}>
-                          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          Quiz content
-                        </div>
-                      )}
+                    {/* AI Designed badge - single clean pill */}
+                    <div style={{
+                      position: 'absolute', top: 8, left: 8,
+                      padding: '5px 12px', borderRadius: 20,
+                      background: 'linear-gradient(135deg, #0D7377 0%, #059669 100%)',
+                      color: '#FFFFFF', fontSize: 11, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
+                    }}>
+                      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                        <path d="M2 17l10 5 10-5" />
+                        <path d="M2 12l10 5 10-5" />
+                      </svg>
+                      AI Recommendation
                     </div>
                     {/* Selected check */}
                     {state.templateId === '__ai_designed__' && (
@@ -685,10 +656,15 @@ export function DesignStep({
                     </button>
                   </div>
                   {/* Info */}
-                  <div style={{ padding: '12px 16px', height: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{aiDesign.title}</div>
-                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as any}>
-                      {aiDesign.description}
+                  <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{aiDesign.title}</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {aiDesign.brandApplied && (
+                        <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 4 }}>Brand applied</span>
+                      )}
+                      {aiDesign.quizContentApplied && (
+                        <span style={{ fontSize: 10, fontWeight: 600, color: '#0D7377', background: '#F0FDFA', padding: '2px 8px', borderRadius: 4 }}>Quiz content</span>
+                      )}
                     </div>
                   </div>
                 </button>
