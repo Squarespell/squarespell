@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { TopBanner } from './TopBanner';
+import { NotificationBell } from './NotificationBell';
 import { CommandPalette } from './CommandPalette';
 import { DASHBOARD_COLORS } from './dashboardColors';
 
@@ -724,7 +725,10 @@ export function DashboardShell({
               </h1>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{topbarRight}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <NotificationBell />
+            {topbarRight}
+          </div>
         </header>
         )}
 

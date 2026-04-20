@@ -8,6 +8,7 @@ import * as abTesting from '../services/abTesting';
 import { generateQuizReport } from '../services/pdfReport';
 import { generateReportToken, verifyReportToken } from '../services/reportToken';
 import * as teamService from '../services/teamService';
+import { notifyQuizPublished } from '../services/notifications';
 import { makeUniqueSlug, isLegacyRandomSlug } from '../utils/slug';
 
 interface EmailInSequence {
@@ -125,6 +126,10 @@ router.post('/:id/publish', async (req: AuthenticatedRequest, res) => {
   }
   const { data, error } = await supabase.from('quizzes').update(updates).eq('id', req.params.id).eq('user_id', req.dbUserId).select().single();
   if (error) return res.status(500).json({ error: error.message });
+
+  // Fire notification (non-blocking)
+  notifyQuizPublished(req.dbUserId!, data?.title || 'Quiz', req.params.id).catch(function() {});
+
   res.json(data);
 });
 

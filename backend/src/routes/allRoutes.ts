@@ -14,6 +14,7 @@ import { prefillCalendlyLink } from '../services/integrations/calendly';
 import { runCleanup } from '../services/databaseCleanup';
 import { processScheduledCampaigns } from '../services/scheduledSendDispatcher';
 import { getRecommendations } from '../services/recommendations';
+import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, notifyNewLead } from '../services/notifications';
 import * as quizPaymentsService from '../services/quizPayments';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
@@ -516,6 +517,14 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       }
     } catch (e) { log.info('Email notification failed:', { detail: e }); }
   }
+
+  // In-app notification (non-blocking)
+  try {
+    var quizTitleForNotif = '';
+    var { data: qInfoNotif } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
+    quizTitleForNotif = qInfoNotif?.title || 'Your quiz';
+    notifyNewLead(quiz.user_id, email, quizTitleForNotif, quiz.id).catch(function() {});
+  } catch {}
 
   // GDPR gate: skip all outbound emails if consent is required but not given
   const gdprEnabled = (quiz.settings as any)?.gdpr_consent_enabled === true;
@@ -1366,6 +1375,48 @@ userRouter.post('/notifications', async (req: AuthenticatedRequest, res) => {
   const { enabled } = req.body;
   await supabase.from('users').update({ email_notifications: !!enabled }).eq('id', req.dbUserId);
   res.json({ ok: true, enabled: !!enabled });
+});
+
+// ── In-app notifications ────────────────────────────────────────────────────
+
+userRouter.get('/notifications/list', async function(req: AuthenticatedRequest, res) {
+  try {
+    var limit = parseInt(req.query.limit as string) || 30;
+    var unreadOnly = req.query.unread === 'true';
+    var items = await getNotifications(req.dbUserId!, { limit: limit, unreadOnly: unreadOnly });
+    var count = await getUnreadCount(req.dbUserId!);
+    res.json({ notifications: items, unread_count: count });
+  } catch (err: any) {
+    log.error('Failed to list notifications', { err: err.message });
+    res.json({ notifications: [], unread_count: 0 });
+  }
+});
+
+userRouter.get('/notifications/unread-count', async function(req: AuthenticatedRequest, res) {
+  try {
+    var count = await getUnreadCount(req.dbUserId!);
+    res.json({ unread_count: count });
+  } catch {
+    res.json({ unread_count: 0 });
+  }
+});
+
+userRouter.post('/notifications/:id/read', async function(req: AuthenticatedRequest, res) {
+  try {
+    var ok = await markAsRead(req.dbUserId!, req.params.id);
+    res.json({ ok: ok });
+  } catch {
+    res.json({ ok: false });
+  }
+});
+
+userRouter.post('/notifications/read-all', async function(req: AuthenticatedRequest, res) {
+  try {
+    var ok = await markAllAsRead(req.dbUserId!);
+    res.json({ ok: ok });
+  } catch {
+    res.json({ ok: false });
+  }
 });
 
 // ── Brand Kit (user-level) ──────────────────────────────────────────────────
