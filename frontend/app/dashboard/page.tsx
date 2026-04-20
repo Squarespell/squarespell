@@ -167,17 +167,6 @@ function HeroChart({
 
           return (
             <g key={idx}>
-              {/* Invisible hover target for the full group width */}
-              <rect
-                x={gx}
-                y={0}
-                width={groupWidth}
-                height={chartHeight}
-                fill="transparent"
-                onMouseEnter={function() { setHoveredIdx(idx); }}
-                onMouseLeave={function() { setHoveredIdx(null); }}
-                style={{ cursor: 'pointer' }}
-              />
               <rect
                 x={gx}
                 y={chartHeight - viewH}
@@ -186,6 +175,7 @@ function HeroChart({
                 rx={Math.min(3, barWidth / 2)}
                 fill={C.ACCENT}
                 opacity={isHovered ? 1 : 0.8}
+                style={{ pointerEvents: 'none' }}
               />
               {leadVal > 0 && (
                 <rect
@@ -196,8 +186,20 @@ function HeroChart({
                   rx={Math.min(3, barWidth / 2)}
                   fill={C.GRAY_400}
                   opacity={isHovered ? 0.8 : 0.5}
+                  style={{ pointerEvents: 'none' }}
                 />
               )}
+              {/* Invisible hover target on top so it catches all mouse events */}
+              <rect
+                x={gx}
+                y={0}
+                width={groupWidth}
+                height={chartHeight}
+                fill="transparent"
+                onMouseEnter={function() { setHoveredIdx(idx); }}
+                onMouseLeave={function() { setHoveredIdx(null); }}
+                style={{ cursor: 'pointer' }}
+              />
             </g>
           );
         })}
