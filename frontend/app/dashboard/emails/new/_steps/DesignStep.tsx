@@ -883,17 +883,17 @@ export function DesignStep({
         {/* Edit / Preview toggle */}
         <div style={{ display: 'flex', borderRadius: 7, border: '1px solid ' + C.BORDER, overflow: 'hidden', flexShrink: 0 }}>
           <button onClick={function() { handleSetEditorMode('edit'); }} style={{
-            padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
+            padding: '5px 0', minWidth: 64, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
             background: editorMode === 'edit' ? C.ACCENT : '#FFFFFF',
             color: editorMode === 'edit' ? '#FFFFFF' : C.TEXT_MUTED,
-            transition: 'all 0.15s',
+            transition: 'all 0.15s', textAlign: 'center' as any,
           }}>Edit</button>
           <button onClick={function() { handleSetEditorMode('preview'); }} style={{
-            padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
+            padding: '5px 0', minWidth: 64, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
             borderLeft: '1px solid ' + C.BORDER,
             background: editorMode === 'preview' ? C.ACCENT : '#FFFFFF',
             color: editorMode === 'preview' ? '#FFFFFF' : C.TEXT_MUTED,
-            transition: 'all 0.15s',
+            transition: 'all 0.15s', textAlign: 'center' as any,
           }}>Preview</button>
         </div>
 
@@ -930,16 +930,24 @@ export function DesignStep({
 
         {/* Save */}
         <button onClick={handleEditorSave} style={{
-          padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600,
+          padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
           cursor: 'pointer', border: '1px solid ' + C.BORDER, background: '#FFFFFF',
           color: C.TEXT, transition: 'all 0.15s', flexShrink: 0,
+          height: 36, display: 'inline-flex', alignItems: 'center',
         }}>Save</button>
 
         {/* Continue */}
-        <PrimaryButton onClick={onNext} disabled={!state.templateId || !state.subject}>
+        <button onClick={onNext} disabled={!state.templateId || !state.subject} style={{
+          padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+          cursor: (!state.templateId || !state.subject) ? 'default' : 'pointer',
+          border: 'none', flexShrink: 0,
+          background: (!state.templateId || !state.subject) ? 'rgba(13,115,119,0.4)' : C.ACCENT,
+          color: '#FFFFFF', transition: 'all 0.15s',
+          height: 36, display: 'inline-flex', alignItems: 'center', gap: 4,
+        }}>
           Continue
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, verticalAlign: 'middle' }}><polyline points="9 18 15 12 9 6" /></svg>
-        </PrimaryButton>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+        </button>
       </div>
 
       {/* === MAIN AREA: Campaign Sidebar (left) + Editor (right) === */}
@@ -961,8 +969,44 @@ export function DesignStep({
           {/* Sidebar content - scrollable */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
 
+            {/* Inbox Preview Mockup */}
+            <div style={{
+              background: '#F8F9FA', borderRadius: 10, padding: 14, marginBottom: 18,
+              border: '1px solid ' + C.BORDER,
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, textTransform: 'uppercase' as any, letterSpacing: 0.8, marginBottom: 8 }}>
+                Inbox preview
+              </div>
+              <div style={{
+                background: '#FFFFFF', borderRadius: 8, padding: '12px 14px',
+                border: '1px solid ' + C.BORDER, boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 14, background: C.ACCENT,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#FFFFFF', fontSize: 11, fontWeight: 700, flexShrink: 0,
+                  }}>
+                    {(state.fromName || 'B').charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {state.fromName || 'Your Brand'}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED, flexShrink: 0 }}>now</div>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
+                  {state.subject || 'Your subject line appears here'}
+                </div>
+                <div style={{ fontSize: 12, color: C.TEXT_MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {state.preheader || 'Preview text appears after the subject...'}
+                </div>
+              </div>
+            </div>
+
             {/* Subject Line A */}
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: C.TEXT, textTransform: 'uppercase' as any, letterSpacing: 0.5, marginBottom: 6 }}>
                 <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
@@ -979,7 +1023,7 @@ export function DesignStep({
             </div>
 
             {/* Preview Text */}
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: C.TEXT, textTransform: 'uppercase' as any, letterSpacing: 0.5, marginBottom: 6 }}>
                 <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
@@ -993,9 +1037,6 @@ export function DesignStep({
                 className="sq-dinput"
                 style={sidebarInputStyle}
               />
-              <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginTop: 4, lineHeight: 1.4 }}>
-                This text appears after the subject line in most email clients.
-              </div>
             </div>
 
             {/* Divider */}
