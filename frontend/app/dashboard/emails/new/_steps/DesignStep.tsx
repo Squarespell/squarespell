@@ -107,19 +107,20 @@ export function DesignStep({
       var brandKit: BrandKitFromAPI | null = results[0];
       var quizRaw: any = results[1];
 
-      // Fallback: if no saved brand kit, use quiz-level branding (saved at quiz creation)
+      // Fallback 1: if no saved brand kit, use quiz-level branding (saved at quiz creation)
       if (!brandKit && quizRaw && quizRaw.branding) {
         var qb = quizRaw.branding;
-        brandKit = {
-          colors: qb.colors || undefined,
-          font_family: qb.font_family || undefined,
-          site_name: qb.site_name || undefined,
-          favicon_url: qb.favicon_url || undefined,
-          logo_url: qb.logo_url || undefined,
-        };
+        // Only use if branding actually has content (not empty {})
+        if (qb.colors || qb.font_family || qb.site_name) {
+          brandKit = {
+            colors: qb.colors || undefined,
+            font_family: qb.font_family || undefined,
+            site_name: qb.site_name || undefined,
+            favicon_url: qb.favicon_url || undefined,
+            logo_url: qb.logo_url || undefined,
+          };
+        }
       }
-
-      setAiBrandKit(brandKit);
 
       // Map quiz API response to QuizData shape
       var quizData: QuizData | null = null;
@@ -134,6 +135,33 @@ export function DesignStep({
         };
       }
 
+      // If still no brand, try scraping from quiz source URL as last resort
+      var websiteUrl = quizRaw && quizRaw.settings && quizRaw.settings.website_url;
+      if (!brandKit && websiteUrl) {
+        // Show unbranded design immediately while scrape runs
+        setAiBrandKit(null);
+        var unbrandedResult = autoDesignTemplate(null, quizData);
+        setAiDesign(unbrandedResult);
+
+        // Scrape brand in background, then re-apply
+        api.scrapeBrand(websiteUrl).then(function(scraped: any) {
+          if (!scraped || !scraped.colors) return;
+          var scrapedKit: BrandKitFromAPI = {
+            colors: scraped.colors,
+            font_family: scraped.font_family || undefined,
+            site_name: scraped.site_name || undefined,
+            favicon_url: scraped.favicon_url || undefined,
+          };
+          setAiBrandKit(scrapedKit);
+          var brandedResult = autoDesignTemplate(scrapedKit, quizData);
+          setAiDesign(brandedResult);
+          // Also save for future use so this doesn't repeat
+          api.saveBrandKit(scrapedKit).catch(function() {});
+        }).catch(function() {});
+        return;
+      }
+
+      setAiBrandKit(brandKit);
       var result = autoDesignTemplate(brandKit, quizData);
       setAiDesign(result);
     });
