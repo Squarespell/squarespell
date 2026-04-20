@@ -1533,43 +1533,80 @@ cronRouter.post('/weekly-digest', async (req, res) => {
           continue;
         }
 
-        // Build HTML email
-        const html = `
-          <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
-            <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Weekly Summary</h1>
-            <p style="margin:0 0 24px;color:#888;font-size:14px">Here's how your quizzes performed this week</p>
+        // Build actionable insight
+        var completionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
+        var leadRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
+        var insight = '';
+        if (totalViews > 0 && completionRate < 30) {
+          insight = 'Your completion rate is below 30%. Try shortening your quiz to 5-7 questions for better engagement.';
+        } else if (totalLeads > 0 && leadRate < 10) {
+          insight = 'Visitors are completing quizzes but not leaving their email. Consider making the lead form more enticing with a specific outcome preview.';
+        } else if (totalViews < 10) {
+          insight = 'Traffic is low this week. Share your quiz link on social media or add the embed to a high-traffic page on your site.';
+        } else if (completionRate >= 50) {
+          insight = 'Great completion rate! Your quiz is engaging visitors well. Consider adding an email follow-up campaign to convert leads.';
+        } else {
+          insight = 'Solid week. Check your analytics dashboard for question-level drop-off data to find optimization opportunities.';
+        }
 
-            <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-                <div>
-                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">Total Views</p>
-                  <p style="margin:0;font-size:28px;color:#D2FF1D;font-weight:700">${totalViews}</p>
-                </div>
-                <div>
-                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">Completions</p>
-                  <p style="margin:0;font-size:28px;color:#D2FF1D;font-weight:700">${totalCompletions}</p>
-                </div>
-                <div>
-                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">New Leads</p>
-                  <p style="margin:0;font-size:28px;color:#D2FF1D;font-weight:700">${totalLeads}</p>
-                </div>
-                <div>
-                  <p style="margin:0 0 4px;color:#888;font-size:12px;text-transform:uppercase">Top Quiz</p>
-                  <p style="margin:0;font-size:14px;color:#f0f2f5">${topQuiz.title}</p>
-                </div>
-              </div>
-            </div>
-
-            <a href="${APP_URL}/dashboard" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box">View Dashboard</a>
-
-            <p style="margin:20px 0 0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">This is your weekly quiz performance summary from Squarespell</p>
-          </div>
-        `;
+        var html = [
+          '<div style="font-family:\'DM Sans\',system-ui,sans-serif;max-width:520px;margin:0 auto;padding:0;background:#F7F7F5">',
+          '  <div style="padding:36px 32px 28px;background:#FFFFFF;border-radius:0 0 16px 16px">',
+          '    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">',
+          '      <div style="width:32px;height:32px;background:#0D7377;border-radius:10px;display:flex;align-items:center;justify-content:center">',
+          '        <img src="https://app.squarespell.com/logo-icon-white.png" width="14" height="14" alt="" style="display:block" />',
+          '      </div>',
+          '      <span style="font-size:17px;font-weight:700;color:#1A1A1A;letter-spacing:-0.02em">Squarespell</span>',
+          '    </div>',
+          '    <h1 style="font-size:24px;font-weight:800;color:#1A1A1A;letter-spacing:-0.03em;margin:0 0 6px">Your weekly recap</h1>',
+          '    <p style="font-size:14px;color:rgba(26,26,26,0.5);margin:0 0 28px">Here is how your quizzes performed in the last 7 days.</p>',
+          '',
+          '    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F5;border:1px solid #E4E3E0;border-radius:12px;overflow:hidden;margin-bottom:24px">',
+          '      <tr>',
+          '        <td style="padding:18px 20px;border-bottom:1px solid #E4E3E0;width:50%">',
+          '          <div style="font-size:11px;font-weight:700;color:rgba(26,26,26,0.4);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Views</div>',
+          '          <div style="font-size:28px;font-weight:800;color:#1A1A1A;letter-spacing:-0.03em">' + totalViews + '</div>',
+          '        </td>',
+          '        <td style="padding:18px 20px;border-bottom:1px solid #E4E3E0;width:50%">',
+          '          <div style="font-size:11px;font-weight:700;color:rgba(26,26,26,0.4);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Completions</div>',
+          '          <div style="font-size:28px;font-weight:800;color:#1A1A1A;letter-spacing:-0.03em">' + totalCompletions + '</div>',
+          '        </td>',
+          '      </tr>',
+          '      <tr>',
+          '        <td style="padding:18px 20px;width:50%">',
+          '          <div style="font-size:11px;font-weight:700;color:rgba(26,26,26,0.4);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">New leads</div>',
+          '          <div style="font-size:28px;font-weight:800;color:#0D7377;letter-spacing:-0.03em">' + totalLeads + '</div>',
+          '        </td>',
+          '        <td style="padding:18px 20px;width:50%">',
+          '          <div style="font-size:11px;font-weight:700;color:rgba(26,26,26,0.4);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Completion rate</div>',
+          '          <div style="font-size:28px;font-weight:800;color:#1A1A1A;letter-spacing:-0.03em">' + completionRate + '%</div>',
+          '        </td>',
+          '      </tr>',
+          '    </table>',
+          '',
+          '    <div style="background:rgba(13,115,119,0.06);border:1px solid rgba(13,115,119,0.15);border-radius:10px;padding:16px 18px;margin-bottom:24px">',
+          '      <div style="font-size:11px;font-weight:700;color:#0D7377;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Insight</div>',
+          '      <div style="font-size:14px;color:#1A1A1A;line-height:1.55">' + insight + '</div>',
+          '    </div>',
+          '',
+          '    <div style="margin-bottom:24px">',
+          '      <div style="font-size:11px;font-weight:700;color:rgba(26,26,26,0.4);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Top quiz this week</div>',
+          '      <div style="font-size:15px;font-weight:600;color:#1A1A1A">' + topQuiz.title + ' (' + topQuiz.views + ' views)</div>',
+          '    </div>',
+          '',
+          '    <a href="' + APP_URL + '/dashboard" style="display:block;width:100%;background:#0D7377;color:#FFFFFF;padding:14px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;box-sizing:border-box">View your dashboard</a>',
+          '  </div>',
+          '',
+          '  <div style="padding:20px 32px;text-align:center">',
+          '    <p style="font-size:12px;color:rgba(26,26,26,0.35);margin:0;line-height:1.5">Squarespell weekly digest. <a href="' + APP_URL + '/dashboard/billing" style="color:rgba(26,26,26,0.5)">Manage email preferences</a></p>',
+          '  </div>',
+          '</div>',
+        ].join('\n');
 
         await resend.emails.send({
           from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
           to: user.email,
-          subject: `Your weekly quiz summary - ${totalViews} views this week`,
+          subject: totalLeads > 0 ? `${totalLeads} new lead${totalLeads === 1 ? '' : 's'} this week - your Squarespell recap` : `Your weekly Squarespell recap - ${totalViews} views`,
           html,
         });
 
