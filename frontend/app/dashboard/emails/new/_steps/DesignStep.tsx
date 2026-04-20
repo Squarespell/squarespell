@@ -83,7 +83,7 @@ export function DesignStep({
   var [editorReady, setEditorReady] = useState(false);
   var [previewItem, setPreviewItem] = useState<TemplateItem | null>(null);
   var [aiDesign, setAiDesign] = useState<AutoDesignResult | null>(null);
-  var [aiDesignLoading, setAiDesignLoading] = useState(false);
+  var [aiDesignLoading, setAiDesignLoading] = useState(true);
 
   useEffect(function() { injectDesignFocusStyles(); }, []);
 
@@ -251,8 +251,26 @@ export function DesignStep({
     ? { id: '__ai_designed__', title: aiDesign.title, description: aiDesign.description, category: 'ai', isV2: true, html: aiDesign.html, subject: aiDesign.subject, preheader: aiDesign.preheader } as TemplateItem
     : allItems.find(function(t) { return t.id === state.templateId; });
 
+  // Predict which Canva template the AI will pick (same logic as pickBestCanvaTemplate)
+  // so we can filter it from the grid immediately, even before the async fetch completes
+  var predictedAiSourceId = useMemo(function() {
+    if (allItems.length === 0) return '';
+    // Same logic as autoDesign pickBestCanvaTemplate
+    var bestId = allItems[0].id;
+    if (quizCategory) {
+      var cat = quizCategory.toLowerCase();
+      for (var i = 0; i < allItems.length; i++) {
+        if (allItems[i].category.toLowerCase().indexOf(cat) >= 0) {
+          bestId = allItems[i].id;
+          break;
+        }
+      }
+    }
+    return bestId;
+  }, [allItems, quizCategory]);
+
+  var aiSourceId = aiDesign ? aiDesign.sourceCanvaId : predictedAiSourceId;
   // Reorder items: recommended first, then rest; exclude the AI-picked template to avoid duplicate
-  var aiSourceId = aiDesign ? aiDesign.sourceCanvaId : '';
   var orderedItems = useMemo(function() {
     var rec: TemplateItem[] = [];
     var rest: TemplateItem[] = [];
