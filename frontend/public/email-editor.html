@@ -3288,6 +3288,19 @@ window.addEventListener('message', function(e) {
       }
     }
   }
+
+  // Hide the editor's own top bar when embedded (parent provides its own)
+  if (e.data.type === 'sq-hide-topbar') {
+    var topbar = document.querySelector('.topbar');
+    if (topbar) topbar.style.display = 'none';
+  }
+
+  // Remote control: undo/redo/mode/device from parent
+  if (e.data.type === 'sq-undo') { undoAction(); }
+  if (e.data.type === 'sq-redo') { redoAction(); }
+  if (e.data.type === 'sq-set-mode') { setMode(e.data.mode); }
+  if (e.data.type === 'sq-set-device') { setDevice(e.data.device); }
+  if (e.data.type === 'sq-save') { saveTemplate(); }
 });
 
 // Notify parent that editor is ready
