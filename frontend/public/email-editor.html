@@ -3293,6 +3293,8 @@ window.addEventListener('message', function(e) {
   if (e.data.type === 'sq-hide-topbar') {
     var topbar = document.querySelector('.topbar');
     if (topbar) topbar.style.display = 'none';
+    var layout = document.querySelector('.editor-layout');
+    if (layout) layout.style.height = '100vh';
   }
 
   // Remote control: undo/redo/mode/device from parent
