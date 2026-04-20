@@ -466,7 +466,10 @@ export const FLOW_CSS = `
   .s3-count span { color: var(--accent); font-weight: 700; }
   /* Question card list with flow connectors */
   #qc-list { position: relative; }
-  .qc-wrapper { position: relative; }
+  .qc-wrapper { position: relative; transition: transform 0.15s ease; }
+  .qc-wrapper.dragging { opacity: 0.4; }
+  .qc-wrapper.drag-over { transform: translateY(4px); }
+  .qc-wrapper.drag-over .qc { border-top: 2px solid var(--accent); }
   .qc-wrapper:not(:last-child)::after {
     content: ''; position: absolute; left: 37px; bottom: -12px;
     width: 2px; height: 12px; background: var(--border-2);

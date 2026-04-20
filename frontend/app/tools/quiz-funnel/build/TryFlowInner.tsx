@@ -600,6 +600,25 @@ export function TryFlowInner({
   };
   const deselect = () => setSelectedIdx(-1);
 
+  // Drag-to-reorder state
+  var [dragIdx, setDragIdx] = useState<number | null>(null);
+  var [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  var handleDragStart = function(idx: number) { setDragIdx(idx); };
+  var handleDragOver = function(e: React.DragEvent, idx: number) { e.preventDefault(); setDragOverIdx(idx); };
+  var handleDragEnd = function() {
+    if (dragIdx !== null && dragOverIdx !== null && dragIdx !== dragOverIdx && quiz) {
+      var qs = [...quiz.questions];
+      var [moved] = qs.splice(dragIdx, 1);
+      qs.splice(dragOverIdx, 0, moved);
+      updateQuiz({ ...quiz, questions: qs });
+      if (selectedIdx === dragIdx) setSelectedIdx(dragOverIdx);
+      else if (selectedIdx > dragIdx && selectedIdx <= dragOverIdx) setSelectedIdx(selectedIdx - 1);
+      else if (selectedIdx < dragIdx && selectedIdx >= dragOverIdx) setSelectedIdx(selectedIdx + 1);
+    }
+    setDragIdx(null);
+    setDragOverIdx(null);
+  };
+
 
   /* ======================== STAGE 4 helpers =========================== */
   const [s4LeadGate, setS4LeadGate] = useState(false);
@@ -1331,7 +1350,14 @@ export function TryFlowInner({
                 const isFirst = i === 0;
                 const isLast = quiz ? i === quiz.questions.length - 1 : true;
                 return (
-                  <div className="qc-wrapper" key={q.id}>
+                  <div
+                    className={'qc-wrapper' + (dragOverIdx === i && dragIdx !== i ? ' drag-over' : '') + (dragIdx === i ? ' dragging' : '')}
+                    key={q.id}
+                    draggable
+                    onDragStart={function() { handleDragStart(i); }}
+                    onDragOver={function(e) { handleDragOver(e, i); }}
+                    onDragEnd={handleDragEnd}
+                  >
                     <div className={`qc${isSel ? ' selected' : ''}`} onClick={() => setSelectedIdx(i)}>
                       <div className="qc-head">
                         <div className="qc-num">Q{i + 1}</div>
