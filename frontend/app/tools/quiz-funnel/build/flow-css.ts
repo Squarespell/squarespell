@@ -594,6 +594,29 @@ export const FLOW_CSS = `
     color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
   .s3-side-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  /* Settings hero */
+  .settings-hero {
+    text-align: center; padding: 20px 12px 16px;
+  }
+  .settings-hero-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(13,115,119,0.08); color: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+  }
+  .settings-hero-text { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .settings-hero-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* Settings card */
+  .settings-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 20px;
+  }
+  .settings-card-label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
   .edit-group { margin-bottom: 20px; }
   .edit-group-label {
     font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
