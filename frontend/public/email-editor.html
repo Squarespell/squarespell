@@ -3218,6 +3218,59 @@ window.addEventListener('message', function(e) {
     }
   }
 
+  // Sync brand kit from parent campaign flow into editor globals
+  if (e.data.type === 'sq-set-brand') {
+    // Update global colors
+    if (e.data.colors) {
+      if (e.data.colors.primary) globalColors.primary = e.data.colors.primary;
+      if (e.data.colors.background) globalColors.background = e.data.colors.background;
+      if (e.data.colors.text) globalColors.text = e.data.colors.text;
+    }
+    // Update global font
+    if (e.data.font) {
+      globalFont = e.data.font + ', Arial, Helvetica, sans-serif';
+      var fontLabel = document.getElementById('fontPickerLabel');
+      if (fontLabel) fontLabel.textContent = e.data.font;
+    }
+    // Update color swatches in the Edit panel
+    var previewPrimary = document.getElementById('previewPrimary');
+    var hexLabelPrimary = document.getElementById('hexLabelPrimary');
+    if (previewPrimary) previewPrimary.style.backgroundColor = globalColors.primary;
+    if (hexLabelPrimary) hexLabelPrimary.textContent = globalColors.primary;
+    var previewBg = document.getElementById('previewBg');
+    var hexLabelBg = document.getElementById('hexLabelBg');
+    if (previewBg) previewBg.style.backgroundColor = globalColors.background;
+    if (hexLabelBg) hexLabelBg.textContent = globalColors.background;
+    var previewText = document.getElementById('previewText');
+    var hexLabelText = document.getElementById('hexLabelText');
+    if (previewText) previewText.style.backgroundColor = globalColors.text;
+    if (hexLabelText) hexLabelText.textContent = globalColors.text;
+    // Update website URL field
+    if (e.data.siteName) {
+      var websiteInput = document.getElementById('websiteUrlInput');
+      if (websiteInput && websiteInput.value === 'https://yoursite.com') {
+        websiteInput.value = '';
+      }
+    }
+    // Set logo if provided
+    if (e.data.logo) {
+      var canvas = document.getElementById('emailCanvas');
+      if (canvas) {
+        // Replace logo placeholder with actual logo
+        var logoPlaceholder = canvas.querySelector('.logo-placeholder');
+        if (logoPlaceholder) {
+          var logoImg = document.createElement('img');
+          logoImg.src = e.data.logo;
+          logoImg.alt = 'Logo';
+          logoImg.className = 'editable-img';
+          logoImg.style.cssText = 'display:block;max-width:140px;max-height:50px;width:auto;height:auto;cursor:pointer;';
+          logoImg.onclick = function() { openImagePanel(logoImg); };
+          logoPlaceholder.parentElement.replaceChild(logoImg, logoPlaceholder);
+        }
+      }
+    }
+  }
+
   // Hide the template picker section (user already chose in gallery)
   if (e.data.type === 'sq-hide-templates') {
     var tplSection = document.querySelector('.panel-section');

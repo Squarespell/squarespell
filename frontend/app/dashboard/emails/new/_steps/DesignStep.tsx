@@ -287,6 +287,10 @@ export function DesignStep({
   var latestHtmlRef = useRef(state.html);
   latestHtmlRef.current = state.html;
 
+  // Keep a ref to the latest brand kit so the editor-ready effect has it
+  var latestBrandRef = useRef<BrandKitFromAPI | null>(aiBrandKit);
+  latestBrandRef.current = aiBrandKit;
+
   // When editor becomes ready, send the current template HTML once
   var didSendInitial = useRef(false);
   useEffect(function() {
@@ -294,11 +298,23 @@ export function DesignStep({
     if (didSendInitial.current) return;
     if (!editorRef.current || !editorRef.current.contentWindow) return;
     didSendInitial.current = true;
+    var win = editorRef.current.contentWindow;
     // Hide the template picker and topbar in the iframe (parent provides unified bar)
-    editorRef.current.contentWindow.postMessage({ type: 'sq-hide-templates' }, '*');
-    editorRef.current.contentWindow.postMessage({ type: 'sq-hide-topbar' }, '*');
+    win.postMessage({ type: 'sq-hide-templates' }, '*');
+    win.postMessage({ type: 'sq-hide-topbar' }, '*');
+    // Send brand kit to editor so its global colors/font/logo match the brand
+    var bk = latestBrandRef.current;
+    if (bk) {
+      win.postMessage({
+        type: 'sq-set-brand',
+        colors: bk.colors || null,
+        font: bk.font_family || null,
+        logo: bk.logo_url || bk.favicon_url || null,
+        siteName: bk.site_name || null,
+      }, '*');
+    }
     if (latestHtmlRef.current) {
-      editorRef.current.contentWindow.postMessage({
+      win.postMessage({
         type: 'sq-load-template',
         html: latestHtmlRef.current,
       }, '*');
