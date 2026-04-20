@@ -259,7 +259,7 @@ export function TryFlowInner({
 
   // Stage 4 visitor preview (rebuilt: device switcher + scraped brand)
   const [s4Idx, setS4Idx] = useState(0);
-  const [s4Answers, setS4Answers] = useState<Record<number, number>>({});
+  const [s4Answers, setS4Answers] = useState<Record<number, number | number[]>>({});
   const [s4ShowResult, setS4ShowResult] = useState(false);
   const [s4Device, setS4Device] = useState<Device>('desktop');
 
@@ -602,19 +602,34 @@ export function TryFlowInner({
     setS4LeadGate(false);
     setS4Email('');
   };
-  const s4Pick = (oi: number) => {
+  var s4Advance = function() {
     if (!quiz) return;
-    setS4Answers((prev) => ({ ...prev, [s4Idx]: oi }));
     if (s4Idx < quiz.questions.length - 1) {
       setS4Idx(s4Idx + 1);
     } else {
-      // Show lead gate before results
       setS4LeadGate(true);
     }
-    // Scroll only the inner visitor preview to top - never the outer editor page.
     if (typeof document !== 'undefined') {
-      const chrome = document.querySelector('.s4-chrome') as HTMLElement | null;
+      var chrome = document.querySelector('.s4-chrome') as HTMLElement | null;
       if (chrome) chrome.scrollTop = 0;
+    }
+  };
+  var s4Pick = function(oi: number) {
+    if (!quiz) return;
+    var currentQ = quiz.questions[s4Idx];
+    if (currentQ && currentQ.type === 'multiple') {
+      // Multi-select: toggle the option in an array
+      setS4Answers(function(prev) {
+        var existing = prev[s4Idx];
+        var arr = Array.isArray(existing) ? existing.slice() : [];
+        var idx = arr.indexOf(oi);
+        if (idx >= 0) { arr.splice(idx, 1); } else { arr.push(oi); }
+        return { ...prev, [s4Idx]: arr };
+      });
+    } else {
+      // Single-select: pick and auto-advance
+      setS4Answers(function(prev) { return { ...prev, [s4Idx]: oi }; });
+      s4Advance();
     }
   };
   const s4SubmitLead = () => {
@@ -631,11 +646,19 @@ export function TryFlowInner({
 
   const s4Outcome = (() => {
     if (!quiz || !quiz.outcomes || quiz.outcomes.length === 0) return null;
-    let total = 0;
-    Object.entries(s4Answers).forEach(([qi, oi]) => {
-      const q = quiz.questions[Number(qi)];
-      const opt = q?.options?.[Number(oi)];
-      if (opt?.score !== undefined) total += Number(opt.score);
+    var total = 0;
+    Object.entries(s4Answers).forEach(function([qi, answer]) {
+      var q = quiz.questions[Number(qi)];
+      if (!q) return;
+      if (Array.isArray(answer)) {
+        answer.forEach(function(oi) {
+          var opt = q.options?.[oi];
+          if (opt?.score !== undefined) total += Number(opt.score);
+        });
+      } else {
+        var opt = q.options?.[Number(answer)];
+        if (opt?.score !== undefined) total += Number(opt.score);
+      }
     });
     const matched = quiz.outcomes.find((o) => {
       if (o.minScore === undefined || o.maxScore === undefined) return false;
@@ -1729,18 +1752,33 @@ export function TryFlowInner({
                         <div className="s4-quiz-qlabel">Question {String(s4Idx + 1).padStart(2, '0')}</div>
                         <div className="s4-quiz-q">{quiz?.questions[s4Idx]?.text || 'Loading...'}</div>
                         <div className="s4-quiz-opts">
-                          {quiz?.questions[s4Idx]?.options.map((o, oi) => (
-                            <button
-                              key={o.id + oi}
-                              className={`s4-quiz-opt${s4Answers[s4Idx] === oi ? ' picked' : ''}`}
-                              onClick={() => s4Pick(oi)}
-                              type="button"
-                            >
-                              <div className="s4-quiz-opt-letter">{LETTERS[oi]}</div>
-                              <div>{o.text}</div>
-                            </button>
-                          ))}
+                          {quiz?.questions[s4Idx]?.options.map(function(o, oi) {
+                            var ans = s4Answers[s4Idx];
+                            var isPicked = Array.isArray(ans) ? ans.indexOf(oi) >= 0 : ans === oi;
+                            return (
+                              <button
+                                key={o.id + oi}
+                                className={'s4-quiz-opt' + (isPicked ? ' picked' : '')}
+                                onClick={function() { s4Pick(oi); }}
+                                type="button"
+                              >
+                                <div className="s4-quiz-opt-letter">{LETTERS[oi]}</div>
+                                <div>{o.text}</div>
+                              </button>
+                            );
+                          })}
                         </div>
+                        {quiz?.questions[s4Idx]?.type === 'multiple' && (
+                          <button
+                            className="btn btn-primary btn-block"
+                            style={{ marginTop: 12 }}
+                            onClick={function() { s4Advance(); }}
+                            disabled={!Array.isArray(s4Answers[s4Idx]) || (s4Answers[s4Idx] as number[]).length === 0}
+                            type="button"
+                          >
+                            Next
+                          </button>
+                        )}
                         {s4Idx > 0 && (
                           <span className="s4-quiz-back" onClick={s4Back}>{'\u2190'} Previous question</span>
                         )}
