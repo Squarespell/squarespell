@@ -1009,7 +1009,7 @@ function injectDesignFocusStyles() {
   style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }' +
     ' .sq-tpl-eye:hover { border-color: ' + C.ACCENT + ' !important; color: ' + C.ACCENT + ' !important; background: #FFFFFF !important; transform: scale(1.08); }' +
     ' @keyframes spin { to { transform: rotate(360deg); } }' +
-    ' ::-webkit-scrollbar { width: 6px; height: 6px; }' +
+    ' ::-webkit-scrollbar { width: 3px; height: 3px; }' +
     ' ::-webkit-scrollbar-track { background: transparent; }' +
     ' ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }' +
     ' ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }' +
