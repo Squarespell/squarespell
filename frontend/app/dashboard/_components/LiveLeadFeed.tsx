@@ -3,6 +3,7 @@
 /**
  * LiveLeadFeed - polls /api/leads?since=... every 30s and shows new leads
  * with a subtle slide-in animation. Displays the 15 most recent leads.
+ * Untitled UI-inspired styling.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -46,6 +47,20 @@ function timeAgo(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function leadScore(lead: Lead): { label: string; variant: 'hot' | 'warm' | 'cold' } {
+  var age = Date.now() - new Date(lead.created_at).getTime();
+  var hourMs = 3600000;
+  if (age < hourMs * 2) return { label: 'Hot', variant: 'hot' };
+  if (age < hourMs * 24) return { label: 'Warm', variant: 'warm' };
+  return { label: 'Cold', variant: 'cold' };
+}
+
+var scoreStyles: Record<string, { bg: string; fg: string; border: string }> = {
+  hot: { bg: C.SUCCESS_LIGHT, fg: C.SUCCESS_700, border: 'rgba(18,183,106,0.15)' },
+  warm: { bg: C.WARNING_LIGHT, fg: '#B54708', border: 'rgba(247,144,9,0.15)' },
+  cold: { bg: C.GRAY_100, fg: C.GRAY_600, border: C.GRAY_200 },
+};
+
 export function LiveLeadFeed() {
   var { token } = useDashboardAuth();
   var [leads, setLeads] = useState<Lead[]>([]);
@@ -82,18 +97,15 @@ export function LiveLeadFeed() {
           if (!Array.isArray(data) || data.length === 0) return;
           latestTimestampRef.current = data[0].created_at;
 
-          // Track new IDs for animation
           var ids = new Set<string>();
           for (var i = 0; i < data.length; i++) { ids.add(data[i].id); }
           setNewIds(ids);
 
-          // Prepend new leads, keep max visible
           setLeads(function(prev) {
             var merged = data.concat(prev);
             return merged.slice(0, MAX_VISIBLE);
           });
 
-          // Clear "new" highlight after animation
           setTimeout(function() { setNewIds(new Set()); }, 3000);
         })
         .catch(function() {});
@@ -107,12 +119,11 @@ export function LiveLeadFeed() {
       <div style={{
         padding: '32px 20px',
         textAlign: 'center',
-        color: C.TEXT_MUTED,
-        fontSize: 13.5,
-        border: '1px dashed ' + C.HAIRLINE,
-        borderRadius: 12,
+        color: C.GRAY_500,
+        fontSize: 14,
+        fontFamily: C.FONT,
       }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.TEXT_SUBTLE} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10, display: 'block', margin: '0 auto 10px' }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10, display: 'block', margin: '0 auto 10px' }}>
           <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <line x1="19" y1="8" x2="19" y2="14" />
@@ -125,26 +136,28 @@ export function LiveLeadFeed() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.02em' }}>
-            Live lead feed
-          </h3>
+          <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>
+            Recent leads
+          </span>
           <span style={{
             width: 8, height: 8, borderRadius: '50%',
-            background: '#4cd964',
+            background: C.SUCCESS_500,
             display: 'inline-block',
-            boxShadow: '0 0 0 3px rgba(76,217,100,0.15)',
+            boxShadow: '0 0 0 3px rgba(18,183,106,0.15)',
           }} />
         </div>
-        <Link href="/dashboard/leads" style={{ fontSize: 12, color: C.TEXT_MUTED, textDecoration: 'none', fontWeight: 500 }}>
-          View all leads
+        <Link href="/dashboard/leads" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>
+          View all
         </Link>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {leads.map(function(lead) {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {leads.slice(0, 5).map(function(lead) {
           var isNew = newIds.has(lead.id);
+          var score = leadScore(lead);
+          var sc = scoreStyles[score.variant];
           return (
             <div
               key={lead.id}
@@ -152,39 +165,49 @@ export function LiveLeadFeed() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                padding: '11px 12px',
-                borderRadius: 10,
-                background: isNew ? 'rgba(13,115,119,0.04)' : 'transparent',
-                borderLeft: isNew ? '3px solid ' + C.ACCENT : '3px solid transparent',
+                padding: '12px 0',
+                borderTop: '1px solid ' + C.GRAY_100,
+                background: isNew ? 'rgba(13,115,119,0.02)' : 'transparent',
                 transition: 'all 0.5s ease',
               }}
             >
               <div style={{
-                width: 34, height: 34, borderRadius: '50%',
-                background: C.SIDEBAR, border: '1px solid ' + C.BORDER,
+                width: 40, height: 40, borderRadius: '50%',
+                background: C.BRAND_50, color: C.ACCENT,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11.5, fontWeight: 600, color: C.TEXT, flexShrink: 0,
+                fontSize: 13, fontWeight: 600, flexShrink: 0, fontFamily: C.FONT,
               }}>
                 {initialsFrom(lead)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 13, fontWeight: 600, color: C.TEXT,
+                  fontSize: 14, fontWeight: 500, color: C.GRAY_900,
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  fontFamily: C.FONT,
                 }}>
                   {lead.name || lead.email}
                 </div>
                 <div style={{
-                  fontSize: 11.5, color: C.TEXT_MUTED, marginTop: 2,
+                  fontSize: 13, color: C.GRAY_500, marginTop: 1,
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  fontFamily: C.FONT,
                 }}>
-                  {lead.quizzes?.title || 'Quiz'}
-                  {lead.metadata?.device_type ? ' - ' + lead.metadata.device_type : ''}
+                  {lead.name ? lead.email : (lead.quizzes?.title || 'Quiz')}
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: C.TEXT_SUBTLE, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+              <span style={{
+                fontSize: 12, fontWeight: 500,
+                padding: '2px 10px', borderRadius: 16,
+                whiteSpace: 'nowrap',
+                background: sc.bg, color: sc.fg,
+                border: '1px solid ' + sc.border,
+                fontFamily: C.FONT,
+              }}>
+                {score.label}
+              </span>
+              <span style={{ fontSize: 13, color: C.GRAY_400, fontVariantNumeric: 'tabular-nums', flexShrink: 0, minWidth: 50, textAlign: 'right', fontFamily: C.FONT }}>
                 {timeAgo(lead.created_at)}
-              </div>
+              </span>
             </div>
           );
         })}

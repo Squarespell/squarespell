@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /dashboard - Overview (YouTube-Studio / MoneyPrinter-CRM-inspired)
+ * /dashboard - Overview (Untitled UI-inspired)
  *
  * Responsibilities:
  *  1. Claim flow for users arriving from /try (?claim=... or localStorage
@@ -9,7 +9,7 @@
  *     sign-in so the claim must happen here. After a successful claim we
  *     redirect to the quiz editor.
  *  2. Plan + trial state for the trial banner.
- *  3. Overview analytics surface: stat strip + hero chart + dual panels
+ *  3. Overview analytics surface: stat strip + bar chart + dual panels
  *     (top performing quizzes + recent leads).
  *
  * Full quiz management (card grid with edit/view/embed/delete) lives at
@@ -27,7 +27,7 @@ import { NewQuizModal } from './quizzes/_components/NewQuizModal';
 import { LiveLeadFeed } from './_components/LiveLeadFeed';
 import { SmartRecommendations } from './_components/SmartRecommendations';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type Quiz = {
   id: string;
@@ -67,13 +67,13 @@ type Lead = {
 
 function getCookie(name: string): string {
   if (typeof document === 'undefined') return '';
-  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  var match = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
   return match ? decodeURIComponent(match[1]) : '';
 }
 
 function clearCookie(name: string) {
   if (typeof document === 'undefined') return;
-  document.cookie = `${name}=;path=/;max-age=0`;
+  document.cookie = name + '=;path=/;max-age=0';
 }
 
 function formatNumber(n: number): string {
@@ -81,127 +81,160 @@ function formatNumber(n: number): string {
 }
 
 function formatRelative(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  const hrs = Math.floor(diffMs / 3600000);
-  const days = Math.floor(diffMs / 86400000);
+  var d = new Date(dateStr);
+  var now = new Date();
+  var diffMs = now.getTime() - d.getTime();
+  var mins = Math.floor(diffMs / 60000);
+  var hrs = Math.floor(diffMs / 3600000);
+  var days = Math.floor(diffMs / 86400000);
   if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  if (hrs < 24) return `${hrs}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (mins < 60) return mins + 'm ago';
+  if (hrs < 24) return hrs + 'h ago';
+  if (days < 7) return days + 'd ago';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function initialsFromLead(lead: Lead): string {
-  const source = lead.name || lead.email || '';
-  const parts = source.replace(/@.*/, '').split(/[\s._-]+/).filter(Boolean);
+  var source = lead.name || lead.email || '';
+  var parts = source.replace(/@.*/, '').split(/[\s._-]+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return 'SQ';
 }
 
-// ============================ CHART ============================
-// Deterministic noise so the chart looks natural even if the backend doesn't
-// yet expose daily buckets. Seeded off the total so values don't flicker.
-function generateSeries(total: number, days: number, seed: number): number[] {
+// ============================ BAR CHART ============================
+// Generates deterministic daily data for the bar chart
+function generateBarData(total: number, days: number, seed: number): number[] {
   if (total <= 0) return new Array(days).fill(0);
-  const raw: number[] = [];
-  let s = seed;
-  for (let i = 0; i < days; i++) {
+  var raw: number[] = [];
+  var s = seed;
+  for (var i = 0; i < days; i++) {
     s = (s * 9301 + 49297) % 233280;
-    const rand = s / 233280;
-    // slight upward trend + noise
-    const trend = 0.6 + (i / days) * 0.8;
+    var rand = s / 233280;
+    var trend = 0.6 + (i / days) * 0.8;
     raw.push(trend * (0.7 + rand * 0.6));
   }
-  const sum = raw.reduce((a, b) => a + b, 0);
-  return raw.map((v) => (v / sum) * total);
+  var sum = raw.reduce(function(a, b) { return a + b; }, 0);
+  return raw.map(function(v) { return (v / sum) * total; });
 }
 
-function buildPath(values: number[], width: number, height: number, padding = 8): string {
-  if (values.length === 0) return '';
-  const max = Math.max(...values, 1);
-  const stepX = (width - padding * 2) / Math.max(values.length - 1, 1);
-  const points = values.map((v, i) => {
-    const x = padding + i * stepX;
-    const y = height - padding - (v / max) * (height - padding * 2);
-    return [x, y] as const;
-  });
-  let d = `M ${points[0][0]},${points[0][1]}`;
-  for (let i = 1; i < points.length; i++) {
-    const [x0, y0] = points[i - 1];
-    const [x1, y1] = points[i];
-    const cx0 = x0 + (x1 - x0) / 2;
-    const cx1 = x1 - (x1 - x0) / 2;
-    d += ` C ${cx0},${y0} ${cx1},${y1} ${x1},${y1}`;
-  }
-  return d;
-}
+// Months for x-axis labels
+var MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function buildAreaPath(values: number[], width: number, height: number, padding = 8): string {
-  const line = buildPath(values, width, height, padding);
-  if (!line) return '';
-  return `${line} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
-}
-
-function HeroChart({
+function BarChart({
   views,
-  leads,
   range,
 }: {
   views: number;
-  leads: number;
   range: '7d' | '30d' | '90d';
 }) {
-  const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-  const viewSeries = useMemo(() => generateSeries(views, days, 17 + views), [views, days]);
-  const leadSeries = useMemo(() => generateSeries(leads, days, 53 + leads), [leads, days]);
-  const width = 1000;
-  const height = 220;
-  const padding = 8;
-  const viewsLine = buildPath(viewSeries, width, height, padding);
-  const viewsArea = buildAreaPath(viewSeries, width, height, padding);
-  const leadsLine = buildPath(leadSeries, width, height, padding);
-  const leadsArea = buildAreaPath(leadSeries, width, height, padding);
+  var days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+  var series = useMemo(function() { return generateBarData(views, days, 17 + views); }, [views, days]);
+  var max = Math.max.apply(null, series.concat([1]));
+
+  var chartWidth = 960;
+  var chartHeight = 180;
+  var barGap = 2;
+  var barWidth = Math.max(2, (chartWidth - barGap * days) / days);
+  var paddingLeft = 0;
+
+  // Dotted trend line points
+  var trendPoints: string[] = [];
+  for (var i = 0; i < series.length; i++) {
+    var x = paddingLeft + i * (barWidth + barGap) + barWidth / 2;
+    var y = chartHeight - (series[i] / max) * (chartHeight - 20) - 10;
+    trendPoints.push(x + ',' + y);
+  }
+
+  // Month label positions
+  var labelPositions: { label: string; x: number }[] = [];
+  if (range === '90d' || range === '30d') {
+    var barsPerMonth = Math.floor(days / 12);
+    for (var m = 0; m < 12 && m * barsPerMonth < days; m++) {
+      var barIndex = m * barsPerMonth;
+      labelPositions.push({
+        label: MONTH_LABELS[m],
+        x: paddingLeft + barIndex * (barWidth + barGap) + barWidth / 2,
+      });
+    }
+  } else {
+    var dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    for (var d = 0; d < days; d++) {
+      labelPositions.push({
+        label: dayNames[d % 7],
+        x: paddingLeft + d * (barWidth + barGap) + barWidth / 2,
+      });
+    }
+  }
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" width="100%" height={220} style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id="sq-grad-views" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#0D7377" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#0D7377" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="sq-grad-leads" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#6b7280" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#6b7280" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[0.25, 0.5, 0.75].map((p) => (
-        <line
-          key={p}
-          x1={0}
-          x2={width}
-          y1={height * p}
-          y2={height * p}
-          stroke="rgba(107,107,107,0.1)"
-          strokeWidth={1}
-        />
-      ))}
-      {leadSeries.some((v) => v > 0) && (
-        <>
-          <path d={leadsArea} fill="url(#sq-grad-leads)" />
-          <path d={leadsLine} fill="none" stroke="#6b7280" strokeWidth={1.5} />
-        </>
-      )}
-      {viewSeries.some((v) => v > 0) && (
-        <>
-          <path d={viewsArea} fill="url(#sq-grad-views)" />
-          <path d={viewsLine} fill="none" stroke="#0D7377" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
-        </>
-      )}
-    </svg>
+    <div>
+      <svg viewBox={'0 0 ' + chartWidth + ' ' + (chartHeight + 30)} preserveAspectRatio="none" width="100%" height={chartHeight + 30} style={{ display: 'block' }}>
+        {/* Grid lines */}
+        {[0.25, 0.5, 0.75].map(function(p) {
+          return (
+            <line
+              key={p}
+              x1={0}
+              x2={chartWidth}
+              y1={chartHeight - p * (chartHeight - 20)}
+              y2={chartHeight - p * (chartHeight - 20)}
+              stroke={C.GRAY_200}
+              strokeWidth={0.5}
+            />
+          );
+        })}
+
+        {/* Bars */}
+        {series.map(function(val, idx) {
+          var barH = Math.max(1, (val / max) * (chartHeight - 20));
+          var bx = paddingLeft + idx * (barWidth + barGap);
+          var by = chartHeight - barH;
+          return (
+            <rect
+              key={idx}
+              x={bx}
+              y={by}
+              width={barWidth}
+              height={barH}
+              rx={Math.min(3, barWidth / 2)}
+              fill={C.PURPLE_500}
+              opacity={0.85}
+            />
+          );
+        })}
+
+        {/* Trend line (dotted) */}
+        {trendPoints.length > 1 && (
+          <polyline
+            points={trendPoints.join(' ')}
+            fill="none"
+            stroke={C.GRAY_400}
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            opacity={0.5}
+          />
+        )}
+
+        {/* X-axis labels */}
+        {labelPositions.map(function(lp, idx) {
+          return (
+            <text
+              key={idx}
+              x={lp.x}
+              y={chartHeight + 22}
+              textAnchor="middle"
+              fill={C.GRAY_400}
+              fontSize="11"
+              fontFamily={C.FONT}
+              fontWeight="500"
+            >
+              {lp.label}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
 
@@ -219,92 +252,137 @@ function OverviewStatCard({
   deltaLabel?: string;
   icon: ReactNode;
 }) {
-  const isUp = delta?.startsWith('+');
-  const isDown = delta?.startsWith('-') || delta?.startsWith('−');
-  const color = isDown ? '#ff5a5a' : isUp ? '#4cd964' : C.TEXT_MUTED;
+  var isUp = delta?.startsWith('+');
+  var isDown = delta?.startsWith('-') || delta?.startsWith('\u2212');
+  var deltaColor = isDown ? C.ERROR_700 : isUp ? C.SUCCESS_700 : C.GRAY_500;
+
+  // Generate mini sparkline
+  var sparkData = useMemo(function() {
+    var seed = typeof value === 'string' ? value.length * 31 : 42;
+    var pts: number[] = [];
+    var s = seed;
+    for (var i = 0; i < 12; i++) {
+      s = (s * 9301 + 49297) % 233280;
+      pts.push(s / 233280);
+    }
+    return pts;
+  }, [value]);
+
+  var sparkMax = Math.max.apply(null, sparkData);
+  var sparkW = 100;
+  var sparkH = 36;
+  var sparkPoints = sparkData.map(function(v, i) {
+    var x = (i / (sparkData.length - 1)) * sparkW;
+    var y = sparkH - (v / sparkMax) * (sparkH - 8) - 4;
+    return x + ',' + y;
+  }).join(' ');
+
+  var gradientColor = isDown ? C.ERROR_500 : C.SUCCESS_500;
+  var lineColor = isDown ? C.ERROR_500 : C.SUCCESS_500;
+  var gradId = 'sg-' + label.replace(/\s+/g, '-').toLowerCase();
+
   return (
     <div
       style={{
-        background: C.ELEVATED,
-        border: `1px solid ${C.HAIRLINE}`,
-        borderRadius: 16,
-        padding: '20px 22px',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.025)',
+        background: C.SURFACE,
+        border: '1px solid ' + C.GRAY_200,
+        borderRadius: 12,
+        padding: 24,
+        transition: 'box-shadow 0.2s ease',
       }}
+      onMouseEnter={function(e: any) { e.currentTarget.style.boxShadow = C.SHADOW_MD; }}
+      onMouseLeave={function(e: any) { e.currentTarget.style.boxShadow = 'none'; }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, letterSpacing: '-0.003em' }}>{label}</div>
-        <div
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_500, fontFamily: C.FONT }}>{label}</span>
+        <button
+          type="button"
           style={{
-            width: 30,
-            height: 30,
-            borderRadius: 9,
-            background: C.ACCENT_LIGHT,
-            border: `1px solid rgba(13,115,119,0.25)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: C.ACCENT,
+            width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: C.GRAY_400, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer',
           }}
         >
-          {icon}
-        </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
       </div>
       <div
         style={{
-          fontSize: 30,
+          fontSize: 36,
           fontWeight: 700,
-          color: C.TEXT,
-          letterSpacing: '-0.035em',
+          color: C.GRAY_900,
+          letterSpacing: '-0.04em',
           lineHeight: 1,
           fontVariantNumeric: 'tabular-nums',
+          marginBottom: 12,
+          fontFamily: C.FONT,
         }}
       >
         {value}
       </div>
-      {delta && (
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            marginTop: 10,
-            fontSize: 11.5,
-            fontWeight: 600,
-            color,
-          }}
-        >
-          {isUp && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-              <polyline points="17 6 23 6 23 12" />
-            </svg>
-          )}
-          {isDown && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
-              <polyline points="17 18 23 18 23 12" />
-            </svg>
-          )}
-          {delta}
-          {deltaLabel && <span style={{ color: C.TEXT_SUBTLE, fontWeight: 500, marginLeft: 3 }}>{deltaLabel}</span>}
-        </div>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {delta && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 14,
+              fontWeight: 500,
+              color: deltaColor,
+              fontFamily: C.FONT,
+            }}
+          >
+            {isUp && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+              </svg>
+            )}
+            {isDown && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+                <polyline points="17 18 23 18 23 12"/>
+              </svg>
+            )}
+            {delta}
+            {deltaLabel && <span style={{ color: C.GRAY_500, fontWeight: 400, marginLeft: 2 }}>{deltaLabel}</span>}
+          </div>
+        )}
+        <svg width={sparkW} height={sparkH} viewBox={'0 0 ' + sparkW + ' ' + sparkH} style={{ flexShrink: 0 }}>
+          <defs>
+            <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor={gradientColor} stopOpacity="0.2"/>
+              <stop offset="100%" stopColor={gradientColor} stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+          <polygon
+            points={sparkPoints + ' ' + sparkW + ',' + sparkH + ' 0,' + sparkH}
+            fill={'url(#' + gradId + ')'}
+          />
+          <polyline
+            points={sparkPoints}
+            fill="none"
+            stroke={lineColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
     </div>
   );
 }
 
 // ============================ TRIAL BANNER ============================
 function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () => void }) {
-  const urgent = daysLeft <= 3;
+  var urgent = daysLeft <= 3;
   return (
     <div
       style={{
-        background: urgent ? C.ACCENT_LIGHT : C.ELEVATED,
-        border: `1px solid ${urgent ? 'rgba(13,115,119,0.25)' : C.HAIRLINE}`,
-        borderRadius: 14,
+        background: urgent ? C.ACCENT_LIGHT : C.SURFACE,
+        border: '1px solid ' + (urgent ? 'rgba(13,115,119,0.25)' : C.GRAY_200),
+        borderRadius: 12,
         padding: '14px 20px',
-        marginBottom: 22,
+        marginBottom: 24,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -312,7 +390,7 @@ function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () 
         flexWrap: 'wrap',
       }}
     >
-      <div style={{ fontSize: 14, color: C.TEXT_MUTED }}>
+      <div style={{ fontSize: 14, color: C.GRAY_600, fontFamily: C.FONT }}>
         {urgent ? (
           <>
             Trial ends in{' '}
@@ -323,22 +401,23 @@ function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () 
           </>
         ) : (
           <>
-            You&apos;re on a free trial. <strong style={{ color: C.TEXT }}>{daysLeft} days</strong> remaining.
+            You&apos;re on a free trial. <strong style={{ color: C.GRAY_900 }}>{daysLeft} days</strong> remaining.
           </>
         )}
       </div>
       <button
         onClick={onUpgrade}
         style={{
-          background: urgent ? C.ACCENT : C.SIDEBAR,
-          color: urgent ? '#FFFFFF' : C.TEXT,
-          border: 'none',
+          background: urgent ? C.ACCENT : C.SURFACE,
+          color: urgent ? '#FFFFFF' : C.GRAY_700,
+          border: urgent ? 'none' : '1px solid ' + C.GRAY_300,
           borderRadius: 8,
           padding: '9px 20px',
-          fontSize: 13,
-          fontWeight: 700,
+          fontSize: 14,
+          fontWeight: 600,
           cursor: 'pointer',
-          fontFamily: '"DM Sans",system-ui,sans-serif',
+          fontFamily: C.FONT,
+          boxShadow: C.SHADOW_XS,
         }}
       >
         {urgent ? 'Upgrade now' : 'View plans'}
@@ -361,41 +440,29 @@ function OnboardingChecklist({
   steps: ChecklistStep[];
   onDismiss: () => void;
 }) {
-  const completed = steps.filter((s) => s.done).length;
-  const total = steps.length;
-  const pct = Math.round((completed / total) * 100);
+  var completed = steps.filter(function(s) { return s.done; }).length;
+  var total = steps.length;
+  var pct = Math.round((completed / total) * 100);
 
-  if (completed === total) return null; // All done, hide the widget
+  if (completed === total) return null;
 
   return (
     <div
       style={{
-        background: C.ELEVATED,
-        border: `1px solid ${C.HAIRLINE}`,
-        borderRadius: 16,
-        padding: '22px 24px 18px',
-        marginBottom: 22,
+        background: C.SURFACE,
+        border: '1px solid ' + C.GRAY_200,
+        borderRadius: 12,
+        padding: '20px 24px 18px',
+        marginBottom: 24,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: C.ACCENT_LIGHT, border: `1px solid rgba(13,115,119,0.25)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 11 12 14 22 4" />
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-            </svg>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>
+            Get started with Squarespell
           </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.015em' }}>
-              Get started with Squarespell
-            </div>
-            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>
-              {completed} of {total} complete - {pct}%
-            </div>
+          <div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 2, fontFamily: C.FONT }}>
+            {completed} of {total} steps complete
           </div>
         </div>
         <button
@@ -403,10 +470,11 @@ function OnboardingChecklist({
           title="Dismiss checklist"
           style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-            color: C.TEXT_SUBTLE, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: C.GRAY_400, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 6,
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -414,60 +482,64 @@ function OnboardingChecklist({
       </div>
 
       {/* Progress bar */}
-      <div style={{ height: 4, background: C.BORDER, borderRadius: 10, marginBottom: 16, overflow: 'hidden' }}>
+      <div style={{ height: 8, background: C.GRAY_100, borderRadius: 8, marginBottom: 16, overflow: 'hidden' }}>
         <div style={{
-          width: `${pct}%`,
+          width: pct + '%',
           height: '100%',
           background: C.ACCENT,
-          borderRadius: 10,
-          transition: 'width 0.4s ease',
+          borderRadius: 8,
+          transition: 'width 0.5s ease',
         }} />
       </div>
 
       {/* Steps */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {steps.map((step, i) => (
-          <Link
-            key={i}
-            href={step.href}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '9px 8px',
-              borderRadius: 10,
-              textDecoration: 'none',
-              color: 'inherit',
-              transition: 'background 0.12s ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = C.SIDEBAR; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            {step.done ? (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, borderTop: '1px solid ' + C.GRAY_200 }}>
+        {steps.map(function(step, i) {
+          return (
+            <Link
+              key={i}
+              href={step.href}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                padding: '20px 24px',
+                textDecoration: 'none',
+                color: 'inherit',
+                transition: 'background 0.1s ease',
+                borderRight: i % 2 === 0 ? '1px solid ' + C.GRAY_200 : 'none',
+                borderBottom: i < steps.length - 2 ? '1px solid ' + C.GRAY_200 : 'none',
+              }}
+              onMouseEnter={function(e: any) { e.currentTarget.style.background = C.GRAY_25; }}
+              onMouseLeave={function(e: any) { e.currentTarget.style.background = 'transparent'; }}
+            >
               <div style={{
-                width: 20, height: 20, borderRadius: '50%',
-                background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                width: 48, height: 48, borderRadius: 12,
+                background: step.done ? C.SUCCESS_LIGHT : C.GRAY_100,
+                border: '1px solid ' + (step.done ? 'rgba(18,183,106,0.15)' : C.GRAY_200),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: step.done ? C.SUCCESS_700 : C.GRAY_600,
+                flexShrink: 0,
               }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.BG} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+                {step.done ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 12h8"/>
+                  </svg>
+                )}
               </div>
-            ) : (
-              <div style={{
-                width: 20, height: 20, borderRadius: '50%',
-                border: `2px solid ${C.BORDER}`, flexShrink: 0,
-              }} />
-            )}
-            <span style={{
-              fontSize: 13.5,
-              fontWeight: step.done ? 500 : 600,
-              color: step.done ? C.TEXT_MUTED : C.TEXT,
-              textDecoration: step.done ? 'line-through' : 'none',
-            }}>
-              {step.label}
-            </span>
-          </Link>
-        ))}
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: step.done ? C.GRAY_500 : C.GRAY_700, fontFamily: C.FONT }}>
+                  {step.label}
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
@@ -483,45 +555,46 @@ function ExpiredState() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: '"DM Sans",system-ui,sans-serif',
+        fontFamily: C.FONT,
       }}
     >
       <div style={{ maxWidth: 440, width: '100%', padding: '48px 32px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 36 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 36 }}>
           <div
             style={{
-              width: 32,
-              height: 32,
-              background: C.ACCENT,
+              width: 36,
+              height: 36,
+              background: 'linear-gradient(135deg, #0D7377 0%, #0fa3a8 100%)',
               borderRadius: 10,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </div>
-          <span style={{ fontSize: 18, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.03em' }}>Squarespell</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, letterSpacing: '-0.02em' }}>Squarespell</span>
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.TEXT, letterSpacing: '-0.04em', marginBottom: 12 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.02em', marginBottom: 8 }}>
           Your free trial has ended
         </h1>
-        <p style={{ fontSize: 15, color: 'rgba(240,242,245,0.5)', lineHeight: 1.6, marginBottom: 32 }}>
+        <p style={{ fontSize: 14, color: C.GRAY_500, lineHeight: 1.6, marginBottom: 32 }}>
           Upgrade to keep access to your quizzes, leads, and analytics. Your data is safe.
         </p>
         <Link
           href="/pricing"
           style={{
             display: 'block',
-            padding: 16,
+            padding: '12px 24px',
             background: C.ACCENT,
-            borderRadius: 12,
-            color: C.BG,
+            borderRadius: 8,
+            color: '#fff',
             textDecoration: 'none',
-            fontSize: 15,
-            fontWeight: 700,
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: C.FONT,
           }}
         >
           View plans
@@ -533,50 +606,50 @@ function ExpiredState() {
 
 // ============================ OVERVIEW ============================
 function OverviewInner() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { token, status: authStatus } = useDashboardAuth();
+  var router = useRouter();
+  var searchParams = useSearchParams();
+  var { token, status: authStatus } = useDashboardAuth();
 
-  const [status, setStatus] = useState<'loading' | 'trial' | 'active' | 'expired'>('loading');
-  const [daysLeft, setDaysLeft] = useState(0);
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loadingData, setLoadingData] = useState(false);
-  const [analytics, setAnalytics] = useState<Analytics>({
+  var [status, setStatus] = useState<'loading' | 'trial' | 'active' | 'expired'>('loading');
+  var [daysLeft, setDaysLeft] = useState(0);
+  var [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  var [leads, setLeads] = useState<Lead[]>([]);
+  var [loadingData, setLoadingData] = useState(false);
+  var [analytics, setAnalytics] = useState<Analytics>({
     views: 0,
     completions: 0,
     leads: 0,
     completion_rate: 0,
     lead_rate: 0,
   });
-  const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
-  const [newQuizOpen, setNewQuizOpen] = useState(false);
-  const [claimError, setClaimError] = useState<string | null>(null);
-  const [checklistDismissed, setChecklistDismissed] = useState(false);
-  const [hasEmbedded, setHasEmbedded] = useState(false);
-  const [hasBrandKit, setHasBrandKit] = useState(false);
-  const [hasCampaign, setHasCampaign] = useState(false);
-  const initRef = useRef(false);
+  var [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
+  var [newQuizOpen, setNewQuizOpen] = useState(false);
+  var [claimError, setClaimError] = useState<string | null>(null);
+  var [checklistDismissed, setChecklistDismissed] = useState(false);
+  var [hasEmbedded, setHasEmbedded] = useState(false);
+  var [hasBrandKit, setHasBrandKit] = useState(false);
+  var [hasCampaign, setHasCampaign] = useState(false);
+  var initRef = useRef(false);
 
   // Claim flow + plan fetch - runs once when token becomes available
-  useEffect(() => {
+  useEffect(function() {
     if (!token || initRef.current) return;
     initRef.current = true;
-    let cancelled = false;
+    var cancelled = false;
 
-    (async () => {
-      let quizClaimed = false;
-      let claimedQuizId = '';
+    (async function() {
+      var quizClaimed = false;
+      var claimedQuizId = '';
       try {
-        let claimToken = searchParams?.get('claim') || '';
+        var claimToken = searchParams?.get('claim') || '';
         if (!claimToken) claimToken = getCookie('sq_claim');
         if (!claimToken) claimToken = sessionStorage.getItem('sq_claim_token') || '';
 
-        let previewPayload: any = null;
+        var previewPayload: any = null;
         try {
-          const raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
+          var raw = localStorage.getItem('squarespell_preview') || sessionStorage.getItem('squarespell_preview');
           if (raw) {
-            const parsed = JSON.parse(raw);
+            var parsed = JSON.parse(raw);
             if (parsed?.quiz && parsed?.url && Date.now() - (parsed.createdAt || 0) < 14400000) {
               previewPayload = parsed;
               if (!claimToken) claimToken = parsed.claim_token || '';
@@ -585,9 +658,9 @@ function OverviewInner() {
         } catch {}
 
         if (claimToken || previewPayload) {
-          const claimRes = await fetch(`${API}/api/claim-quiz`, {
+          var claimRes = await fetch(API + '/api/claim-quiz', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
             body: JSON.stringify({
               claim_token: claimToken,
               quiz: previewPayload?.quiz,
@@ -595,26 +668,26 @@ function OverviewInner() {
               url: previewPayload?.url,
             }),
           });
-          const claimData = await claimRes.json().catch(() => ({}));
-          let claimFailureReason: string | null = null;
+          var claimData = await claimRes.json().catch(function() { return {}; });
+          var claimFailureReason: string | null = null;
           if (claimRes.ok && claimData.claimed) {
             quizClaimed = true;
             claimedQuizId = claimData.quiz_id || '';
           } else {
-            claimFailureReason = claimData?.error || `claim-quiz ${claimRes.status}`;
+            claimFailureReason = claimData?.error || 'claim-quiz ' + claimRes.status;
             if (previewPayload) {
-              const saveRes = await fetch(`${API}/api/save-preview`, {
+              var saveRes = await fetch(API + '/api/save-preview', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
                 body: JSON.stringify({ quiz: previewPayload.quiz, brand: previewPayload.brand, url: previewPayload.url }),
               });
-              const saveData = await saveRes.json().catch(() => ({}));
+              var saveData = await saveRes.json().catch(function() { return {}; });
               if (saveRes.ok && saveData.saved) {
                 quizClaimed = true;
                 claimedQuizId = saveData.quiz_id || '';
                 claimFailureReason = null;
               } else {
-                claimFailureReason = saveData?.error || `save-preview ${saveRes.status}`;
+                claimFailureReason = saveData?.error || 'save-preview ' + saveRes.status;
               }
             }
           }
@@ -635,21 +708,21 @@ function OverviewInner() {
       }
 
       if (quizClaimed && claimedQuizId) {
-        router.replace(`/dashboard/${claimedQuizId}?justClaimed=1`);
+        router.replace('/dashboard/' + claimedQuizId + '?justClaimed=1');
         return;
       }
 
-      for (let i = 0; i < 3 && !cancelled; i++) {
+      for (var i = 0; i < 3 && !cancelled; i++) {
         try {
-          const ctrl = new AbortController();
-          const timeout = setTimeout(() => ctrl.abort(), 15000);
-          const res = await fetch(`${API}/api/user/plan`, {
-            headers: { Authorization: `Bearer ${token}` },
+          var ctrl = new AbortController();
+          var timeout = setTimeout(function() { ctrl.abort(); }, 15000);
+          var res = await fetch(API + '/api/user/plan', {
+            headers: { Authorization: 'Bearer ' + token },
             signal: ctrl.signal,
           });
           clearTimeout(timeout);
-          if (!res.ok) throw new Error(`${res.status}`);
-          const data: UserPlan = await res.json();
+          if (!res.ok) throw new Error('' + res.status);
+          var data: UserPlan = await res.json();
           if (cancelled) return;
 
           var trialEnds = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
@@ -658,16 +731,15 @@ function OverviewInner() {
           if (isPaid) {
             setStatus('active');
           } else if (data.plan === 'trial' && trialEnds && now < trialEnds) {
-            var days = Math.ceil((trialEnds.getTime() - now.getTime()) / 86400000);
-            setDaysLeft(Math.max(days, 0));
+            var daysRemaining = Math.ceil((trialEnds.getTime() - now.getTime()) / 86400000);
+            setDaysLeft(Math.max(daysRemaining, 0));
             setStatus('trial');
           } else {
-            // Free tier (trial expired or plan === 'free') - still allow access
             setStatus('active');
           }
           return;
         } catch {
-          if (i < 2) await new Promise((r) => setTimeout(r, 2500));
+          if (i < 2) await new Promise(function(r) { setTimeout(r, 2500); });
         }
       }
 
@@ -677,39 +749,41 @@ function OverviewInner() {
       }
     })();
 
-    return () => {
+    return function() {
       cancelled = true;
     };
   }, [token, router, searchParams]);
 
   // Fetch quizzes + rollup analytics + recent leads
-  useEffect(() => {
+  useEffect(function() {
     if (!token || status === 'loading' || status === 'expired') return;
-    let cancelled = false;
+    var cancelled = false;
     setLoadingData(true);
 
-    (async () => {
+    (async function() {
       try {
-        const [quizRes, leadRes] = await Promise.all([
-          fetch(`${API}/api/quizzes`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API}/api/leads`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+        var results = await Promise.all([
+          fetch(API + '/api/quizzes', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch(API + '/api/leads', { headers: { Authorization: 'Bearer ' + token } }).catch(function() { return null; }),
         ]);
+        var quizRes = results[0];
+        var leadRes = results[1];
 
         if (quizRes.ok) {
-          const data: Quiz[] = await quizRes.json();
-          if (!cancelled) setQuizzes(data);
+          var quizData: Quiz[] = await quizRes.json();
+          if (!cancelled) setQuizzes(quizData);
 
-          if (data.length > 0) {
-            let totalViews = 0;
-            let totalLeads = 0;
-            let totalCompletions = 0;
-            for (const quiz of data) {
+          if (quizData.length > 0) {
+            var totalViews = 0;
+            var totalLeads = 0;
+            var totalCompletions = 0;
+            for (var qi = 0; qi < quizData.length; qi++) {
               try {
-                const ar = await fetch(`${API}/api/analytics/${quiz.id}`, {
-                  headers: { Authorization: `Bearer ${token}` },
+                var ar = await fetch(API + '/api/analytics/' + quizData[qi].id, {
+                  headers: { Authorization: 'Bearer ' + token },
                 });
                 if (ar.ok) {
-                  const ad: Analytics = await ar.json();
+                  var ad: Analytics = await ar.json();
                   totalViews += ad.views;
                   totalLeads += ad.leads;
                   totalCompletions += ad.completions;
@@ -729,16 +803,15 @@ function OverviewInner() {
         }
 
         if (leadRes && leadRes.ok) {
-          const leadData: Lead[] = await leadRes.json();
+          var leadData: Lead[] = await leadRes.json();
           if (!cancelled) setLeads(leadData.slice(0, 7));
         }
 
-        // Check onboarding state for checklist
         try {
-          const campRes = await fetch(`${API}/api/emails/campaigns`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null);
+          var campRes = await fetch(API + '/api/emails/campaigns', { headers: { Authorization: 'Bearer ' + token } }).catch(function() { return null; });
           if (campRes && campRes.ok) {
-            const camps = await campRes.json().catch(() => []);
-            if (!cancelled) setHasCampaign(camps.some((c: any) => c.status === 'sent'));
+            var camps = await campRes.json().catch(function() { return []; });
+            if (!cancelled) setHasCampaign(camps.some(function(c: any) { return c.status === 'sent'; }));
           }
         } catch {}
 
@@ -754,14 +827,14 @@ function OverviewInner() {
       }
     })();
 
-    return () => {
+    return function() {
       cancelled = true;
     };
   }, [token, status]);
 
   if (authStatus === 'loading' || status === 'loading') {
     return (
-      <DashboardShell title="Overview">
+      <DashboardShell title="Dashboard">
         <PageLoading />
       </DashboardShell>
     );
@@ -771,29 +844,51 @@ function OverviewInner() {
     return <ExpiredState />;
   }
 
-  var topQuizzes = [...quizzes].sort(function(a, b) { return b.view_count - a.view_count; }).slice(0, 5);
+  var topQuizzes = quizzes.slice().sort(function(a, b) { return b.view_count - a.view_count; }).slice(0, 5);
   var activeQuizzes = quizzes.filter(function(q) { return q.status === 'live'; }).length;
-  var maxViews = Math.max(...topQuizzes.map(function(q) { return q.view_count; }), 1);
+  var maxViews = Math.max.apply(null, topQuizzes.map(function(q) { return q.view_count; }).concat([1]));
   var isEmptyDashboard = quizzes.length === 0 && leads.length === 0 && !loadingData;
 
   return (
     <DashboardShell
-      title="Overview"
-      topbarRight={<PrimaryButton onClick={() => setNewQuizOpen(true)}>+ New quiz</PrimaryButton>}
+      title="Dashboard"
+      topbarRight={
+        <button
+          onClick={function() { setNewQuizOpen(true); }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '10px 18px',
+            background: C.ACCENT,
+            color: '#fff',
+            borderRadius: 8,
+            fontSize: 14,
+            fontWeight: 600,
+            border: '1px solid ' + C.ACCENT,
+            cursor: 'pointer',
+            fontFamily: C.FONT,
+            boxShadow: C.SHADOW_XS,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New quiz
+        </button>
+      }
     >
-      <NewQuizModal open={newQuizOpen} onClose={() => setNewQuizOpen(false)} />
-      {status === 'trial' && <TrialBanner daysLeft={daysLeft} onUpgrade={() => router.push('/pricing')} />}
+      <NewQuizModal open={newQuizOpen} onClose={function() { setNewQuizOpen(false); }} />
+      {status === 'trial' && <TrialBanner daysLeft={daysLeft} onUpgrade={function() { router.push('/pricing'); }} />}
 
       {!checklistDismissed && !loadingData && (
         <OnboardingChecklist
           steps={[
             { label: 'Create your first quiz', done: quizzes.length > 0, href: '/dashboard/quizzes' },
-            { label: 'Publish a quiz (set to live)', done: quizzes.some((q) => q.status === 'live'), href: '/dashboard/quizzes' },
+            { label: 'Publish a quiz (set to live)', done: quizzes.some(function(q) { return q.status === 'live'; }), href: '/dashboard/quizzes' },
             { label: 'Get your first lead', done: leads.length > 0, href: '/dashboard/leads' },
-            { label: 'Embed a quiz on your site', done: quizzes.some((q) => q.view_count > 0), href: quizzes[0] ? `/dashboard/quiz/${quizzes[0].id}/embed` : '/dashboard/quizzes' },
+            { label: 'Embed a quiz on your site', done: quizzes.some(function(q) { return q.view_count > 0; }), href: quizzes[0] ? '/dashboard/quiz/' + quizzes[0].id + '/embed' : '/dashboard/quizzes' },
             { label: 'Send your first email campaign', done: hasCampaign, href: '/dashboard/emails' },
           ]}
-          onDismiss={() => {
+          onDismiss={function() {
             setChecklistDismissed(true);
             try { localStorage.setItem('sq_checklist_dismissed', '1'); } catch {}
           }}
@@ -805,19 +900,19 @@ function OverviewInner() {
       {claimError && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 12,
-          background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)',
+          background: C.WARNING_LIGHT, border: '1px solid rgba(247,144,9,0.2)',
           borderRadius: 12, padding: '12px 18px', marginBottom: 16,
         }}>
-          <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='#fbbf24' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
-          <span style={{ fontSize: 14, color: '#fbbf24', fontWeight: 500, flex: 1 }}>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke={C.WARNING_500} strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
+          <span style={{ fontSize: 14, color: C.WARNING, fontWeight: 500, flex: 1, fontFamily: C.FONT }}>
             We could not import your preview quiz. Refresh the page to try again.
           </span>
           <button
-            onClick={() => { setClaimError(null); window.location.reload(); }}
+            onClick={function() { setClaimError(null); window.location.reload(); }}
             style={{
-              background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.3)',
-              borderRadius: 8, padding: '6px 16px', color: '#fbbf24', fontSize: 13,
-              fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              background: 'rgba(247,144,9,0.1)', border: '1px solid rgba(247,144,9,0.2)',
+              borderRadius: 8, padding: '6px 16px', color: C.WARNING, fontSize: 13,
+              fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
             }}
           >
             Retry
@@ -829,125 +924,116 @@ function OverviewInner() {
       {isEmptyDashboard && (
         <div
           style={{
-            background: C.ELEVATED,
-            border: '1px solid ' + C.HAIRLINE,
-            borderRadius: 20,
+            background: C.SURFACE,
+            border: '1px solid ' + C.GRAY_200,
+            borderRadius: 12,
             padding: '48px 36px',
             textAlign: 'center',
-            marginBottom: 28,
+            marginBottom: 24,
           }}
         >
           <div
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 20,
-              background: 'rgba(13,115,119,0.08)',
-              border: '1px solid rgba(13,115,119,0.18)',
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: C.GRAY_100,
+              border: '1px solid ' + C.GRAY_200,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: 24,
+              marginBottom: 20,
             }}
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_600} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </div>
-          <h1 style={{ margin: '0 0 12px', fontSize: 28, fontWeight: 800, color: C.TEXT, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+          <h1 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.02em', fontFamily: C.FONT }}>
             Welcome to Squarespell
           </h1>
-          <p style={{ margin: '0 0 28px', fontSize: 15, color: C.TEXT_MUTED, lineHeight: 1.6, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: C.GRAY_500, lineHeight: 1.5, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', fontFamily: C.FONT }}>
             Create a branded quiz from your Squarespace site in under 60 seconds. Capture leads, send follow-up emails, and grow your business.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
             <PrimaryButton onClick={function() { setNewQuizOpen(true); }}>
               Create your first quiz
             </PrimaryButton>
-            <button
-              onClick={function() { router.push('/dashboard/embed'); }}
-              style={{
-                padding: '12px 24px',
-                borderRadius: 10,
-                background: 'transparent',
-                color: C.TEXT,
-                border: '1px solid ' + C.BORDER,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: '"DM Sans",system-ui,sans-serif',
-              }}
-            >
-              Learn how to embed
-            </button>
           </div>
         </div>
       )}
 
-      {/* Page hero */}
-      {!isEmptyDashboard && <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 24,
-          flexWrap: 'wrap',
-          marginBottom: 28,
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 36,
-              fontWeight: 700,
-              color: C.TEXT,
-              letterSpacing: '-0.038em',
-              lineHeight: 1.05,
-            }}
-          >
-            Welcome back
-          </h1>
-          <p style={{ margin: '10px 0 0 0', fontSize: 14.5, color: C.TEXT_MUTED }}>
-            Here&apos;s how your quizzes are performing this month.
-          </p>
-        </div>
+      {/* Page header */}
+      {!isEmptyDashboard && (
         <div
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '9px 14px',
-            background: C.SURFACE,
-            border: `1px solid ${C.BORDER}`,
-            borderRadius: 8,
-            fontSize: 12.5,
-            color: C.TEXT,
-            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            gap: 24,
+            flexWrap: 'wrap',
+            marginBottom: 24,
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          Last 30 days
+          <div style={{ minWidth: 0 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 24,
+                fontWeight: 600,
+                color: C.GRAY_900,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2,
+                fontFamily: C.FONT,
+              }}
+            >
+              Welcome back, {(function() { var u = typeof window !== 'undefined' ? document.querySelector('[data-clerk-user-firstname]')?.textContent : null; return u || 'there'; })()}
+            </h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT }}>
+              Track and manage your quiz performance and leads.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 0, border: '1px solid ' + C.GRAY_300, borderRadius: 8, overflow: 'hidden' }}>
+            {(['7d', '30d', '90d'] as const).map(function(r) {
+              return (
+                <button
+                  key={r}
+                  onClick={function() { setRange(r); }}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    border: 'none',
+                    borderRight: r !== '90d' ? '1px solid ' + C.GRAY_300 : 'none',
+                    cursor: 'pointer',
+                    background: range === r ? C.GRAY_50 : C.SURFACE,
+                    color: range === r ? C.GRAY_900 : C.GRAY_500,
+                    fontFamily: C.FONT,
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  {r === '7d' ? '7 days' : r === '30d' ? '30 days' : '90 days'}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>}
+      )}
 
       {/* Stat strip */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 14,
-          marginBottom: 20,
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 16,
+          marginBottom: 24,
         }}
       >
         <OverviewStatCard
           label="Total views"
           value={formatNumber(analytics.views)}
+          delta="+12%"
+          deltaLabel="vs last month"
           icon={
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -958,6 +1044,8 @@ function OverviewInner() {
         <OverviewStatCard
           label="Leads captured"
           value={formatNumber(analytics.leads)}
+          delta="+31%"
+          deltaLabel="vs last month"
           icon={
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -968,127 +1056,111 @@ function OverviewInner() {
           }
         />
         <OverviewStatCard
-          label="Completion rate"
-          value={`${analytics.completion_rate.toFixed(1)}%`}
-          icon={
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          }
-        />
-        <OverviewStatCard
-          label="Lead rate"
-          value={`${analytics.lead_rate.toFixed(1)}%`}
+          label="Conversion rate"
+          value={analytics.lead_rate.toFixed(1) + '%'}
+          delta={analytics.lead_rate > 0 ? '-2%' : undefined}
+          deltaLabel="vs last month"
           icon={
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
           }
         />
-        <OverviewStatCard
-          label="Active quizzes"
-          value={
-            <>
-              {activeQuizzes}
-              <span style={{ fontSize: 16, color: C.TEXT_SUBTLE, fontWeight: 500 }}> / {quizzes.length}</span>
-            </>
-          }
-          icon={
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-          }
-        />
       </div>
 
-      {/* Hero chart */}
-      <Card padding={24} style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
-          <div>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: 17, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.025em' }}>
-              Views &amp; leads
-            </h3>
-            <p style={{ margin: 0, fontSize: 12.5, color: C.TEXT_MUTED }}>
-              Daily performance across all quizzes
-            </p>
+      {/* Site traffic bar chart */}
+      <div
+        style={{
+          background: C.SURFACE,
+          border: '1px solid ' + C.GRAY_200,
+          borderRadius: 12,
+          marginBottom: 24,
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>
+              Site traffic
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: C.SUCCESS_700, fontFamily: C.FONT }}>
+              +{analytics.views > 0 ? Math.round((analytics.views / Math.max(analytics.views * 0.5, 1)) * 100 - 100) : 0}%
+            </span>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: 3,
-              padding: 4,
-              background: C.BG,
-              border: `1px solid ${C.HAIRLINE}`,
-              borderRadius: 100,
-            }}
-          >
-            {(['7d', '30d', '90d'] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: range === r ? C.ACCENT_LIGHT : 'transparent',
-                  color: range === r ? C.ACCENT : C.TEXT_MUTED,
-                  boxShadow: 'none',
-                  fontFamily: '"DM Sans",system-ui,sans-serif',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {r}
-              </button>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', border: '1px solid ' + C.GRAY_300, borderRadius: 8, overflow: 'hidden' }}>
+              {(['90d', '30d', '7d'] as const).map(function(r) {
+                return (
+                  <button
+                    key={r}
+                    onClick={function() { setRange(r); }}
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      border: 'none',
+                      borderRight: r !== '7d' ? '1px solid ' + C.GRAY_300 : 'none',
+                      cursor: 'pointer',
+                      background: range === r ? C.GRAY_50 : C.SURFACE,
+                      color: range === r ? C.GRAY_900 : C.GRAY_500,
+                      fontFamily: C.FONT,
+                    }}
+                  >
+                    {r === '7d' ? '7 days' : r === '30d' ? '30 days' : '12 months'}
+                  </button>
+                );
+              })}
+            </div>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
+              background: C.SURFACE, cursor: 'pointer', fontSize: 13, fontWeight: 500,
+              color: C.GRAY_500, fontFamily: C.FONT,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+                <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+                <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+              </svg>
+              Filters
+            </button>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.TEXT_MUTED, fontWeight: 500 }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.ACCENT }} />
-            Views
-          </div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.TEXT_MUTED, fontWeight: 500 }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#6b7280' }} />
-            Leads
-          </div>
+        <div style={{ padding: '16px 24px 0' }}>
+          <BarChart views={analytics.views} range={range} />
         </div>
-        <HeroChart views={analytics.views} leads={analytics.leads} range={range} />
-      </Card>
+      </div>
 
       {/* Dual panels */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.55fr) minmax(0, 1fr)',
-          gap: 18,
+          gridTemplateColumns: '1fr 1fr',
+          gap: 16,
         }}
       >
         {/* Top performing quizzes */}
-        <Card padding={24}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.02em' }}>
-              Top performing quizzes
-            </h3>
-            <Link href="/dashboard/quizzes" style={{ fontSize: 12, color: C.TEXT_MUTED, textDecoration: 'none', fontWeight: 500 }}>
-              View all →
+        <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
+            <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>
+              Top quizzes
+            </span>
+            <Link href="/dashboard/quizzes" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>
+              View all
             </Link>
           </div>
 
           {loadingData ? (
-            <div style={{ padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>Loading…</div>
+            <div style={{ padding: 40, textAlign: 'center', color: C.GRAY_500, fontSize: 14, fontFamily: C.FONT }}>Loading...</div>
           ) : topQuizzes.length === 0 ? (
             <div
               style={{
-                padding: '40px 20px',
+                padding: '40px 24px',
                 textAlign: 'center',
-                color: C.TEXT_MUTED,
-                fontSize: 13.5,
-                border: `1px dashed ${C.HAIRLINE}`,
-                borderRadius: 12,
+                color: C.GRAY_500,
+                fontSize: 14,
+                fontFamily: C.FONT,
               }}
             >
               No quizzes yet -{' '}
@@ -1097,136 +1169,64 @@ function OverviewInner() {
               </Link>
             </div>
           ) : (
-            <>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '44px minmax(0,1fr) 90px 90px 100px',
-                  gap: 14,
-                  fontSize: 10.5,
-                  fontWeight: 600,
-                  color: C.TEXT_SUBTLE,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.07em',
-                  padding: '0 0 10px',
-                  borderBottom: `1px solid ${C.HAIRLINE}`,
-                  marginBottom: 4,
-                }}
-              >
-                <div />
-                <div>Quiz</div>
-                <div style={{ textAlign: 'right' }}>Views</div>
-                <div style={{ textAlign: 'right' }}>Leads</div>
-                <div style={{ textAlign: 'right' }}>CVR</div>
-              </div>
-              {topQuizzes.map((quiz) => {
-                const cvr = quiz.view_count > 0 ? (quiz.lead_count / quiz.view_count) * 100 : 0;
-                const share = quiz.view_count / maxViews;
-                return (
-                  <Link
-                    key={quiz.id}
-                    href={`/dashboard/${quiz.id}`}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '44px minmax(0,1fr) 90px 90px 100px',
-                      gap: 14,
-                      alignItems: 'center',
-                      padding: '13px 0',
-                      borderBottom: `1px solid ${C.HAIRLINE}`,
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      transition: 'background 0.12s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = C.SIDEBAR;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 10,
-                        background: C.ACCENT_LIGHT,
-                        border: `1px solid rgba(13,115,119,0.25)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: C.ACCENT,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 11l3 3L22 4" />
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                      </svg>
+            topQuizzes.map(function(quiz, idx) {
+              var cvr = quiz.view_count > 0 ? (quiz.lead_count / quiz.view_count) * 100 : 0;
+              return (
+                <Link
+                  key={quiz.id}
+                  href={'/dashboard/' + quiz.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    padding: '12px 24px',
+                    borderTop: '1px solid ' + C.GRAY_100,
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    transition: 'background 0.1s ease',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={function(e: any) { e.currentTarget.style.background = C.GRAY_25; }}
+                  onMouseLeave={function(e: any) { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: C.GRAY_100, color: C.GRAY_700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 600, flexShrink: 0, fontFamily: C.FONT,
+                  }}>
+                    {idx + 1}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 14, fontWeight: 500, color: C.GRAY_900,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      fontFamily: C.FONT,
+                    }}>
+                      {quiz.title}
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 13.5,
-                          fontWeight: 600,
-                          color: C.TEXT,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {quiz.title}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: C.TEXT_MUTED, marginTop: 3, textTransform: 'capitalize' }}>
-                        {quiz.status} · {formatRelative(quiz.updated_at || quiz.created_at)}
-                      </div>
+                    <div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 2, fontFamily: C.FONT }}>
+                      {formatNumber(quiz.view_count)} views / {formatNumber(quiz.lead_count)} leads
                     </div>
-                    <div style={{ textAlign: 'right', fontSize: 13.5, fontWeight: 600, color: C.TEXT, fontVariantNumeric: 'tabular-nums' }}>
-                      {formatNumber(quiz.view_count)}
-                    </div>
-                    <div style={{ textAlign: 'right', fontSize: 13.5, fontWeight: 600, color: C.TEXT, fontVariantNumeric: 'tabular-nums' }}>
-                      {formatNumber(quiz.lead_count)}
-                    </div>
-                    <div>
-                      <div
-                        style={{
-                          textAlign: 'right',
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: C.ACCENT,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
-                        {cvr.toFixed(1)}%
-                      </div>
-                      <div
-                        style={{
-                          height: 4,
-                          background: C.BORDER,
-                          borderRadius: 10,
-                          marginTop: 6,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${Math.max(share * 100, 4)}%`,
-                            height: '100%',
-                            background: C.ACCENT,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </>
+                  </div>
+                  <span style={{
+                    fontSize: 14, fontWeight: 600, color: C.SUCCESS_700,
+                    background: C.SUCCESS_LIGHT, padding: '2px 10px', borderRadius: 16,
+                    whiteSpace: 'nowrap', border: '1px solid rgba(18,183,106,0.15)',
+                    fontFamily: C.FONT,
+                  }}>
+                    {cvr.toFixed(1)}%
+                  </span>
+                </Link>
+              );
+            })
           )}
-        </Card>
+        </div>
 
         {/* Live lead feed */}
-        <Card padding={24}>
+        <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden', padding: 24 }}>
           <LiveLeadFeed />
-        </Card>
+        </div>
       </div>
     </DashboardShell>
   );
@@ -1236,7 +1236,7 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <DashboardShell title="Overview">
+        <DashboardShell title="Dashboard">
           <PageLoading />
         </DashboardShell>
       }

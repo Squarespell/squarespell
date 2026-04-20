@@ -3,6 +3,7 @@
 /**
  * SmartRecommendations - fetches personalized tips from /api/user/recommendations
  * and displays them as actionable cards on the dashboard.
+ * Untitled UI-inspired styling.
  */
 
 import { useEffect, useState } from 'react';
@@ -52,24 +53,24 @@ export function SmartRecommendations() {
   if (visible.length === 0) return null;
 
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div style={{ marginBottom: 24 }}>
       <button
         type="button"
         onClick={function() { setExpanded(function(v) { return !v; }); }}
         style={{
           display: 'flex', alignItems: 'center', gap: 8, marginBottom: expanded ? 12 : 0,
           background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
-          fontFamily: '"DM Sans",system-ui,sans-serif',
+          fontFamily: C.FONT,
         }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
-        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.01em' }}>
+        <span style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>
           Recommended for you
-        </h3>
-        <span style={{ fontSize: 11, color: C.TEXT_MUTED, fontWeight: 500 }}>({visible.length})</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+        </span>
+        <span style={{ fontSize: 12, color: C.GRAY_500, fontWeight: 500, fontFamily: C.FONT }}>({visible.length})</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
@@ -81,10 +82,10 @@ export function SmartRecommendations() {
             <div
               key={rec.type}
               style={{
-                background: C.ELEVATED,
-                border: '1px solid ' + C.HAIRLINE,
-                borderRadius: 14,
-                padding: '16px 18px',
+                background: C.SURFACE,
+                border: '1px solid ' + C.GRAY_200,
+                borderRadius: 12,
+                padding: '16px 20px',
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: 14,
@@ -92,7 +93,7 @@ export function SmartRecommendations() {
             >
               <div style={{
                 width: 36, height: 36, borderRadius: 10,
-                background: 'rgba(13,115,119,0.06)',
+                background: C.ACCENT_LIGHT,
                 border: '1px solid rgba(13,115,119,0.15)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
@@ -103,10 +104,10 @@ export function SmartRecommendations() {
               </div>
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, marginBottom: 3, letterSpacing: '-0.01em' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900, marginBottom: 4, fontFamily: C.FONT }}>
                   {rec.title}
                 </div>
-                <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5, marginBottom: 10 }}>
+                <div style={{ fontSize: 13, color: C.GRAY_500, lineHeight: 1.5, marginBottom: 12, fontFamily: C.FONT }}>
                   {rec.body}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -116,13 +117,15 @@ export function SmartRecommendations() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '7px 16px',
+                      padding: '8px 16px',
                       borderRadius: 8,
                       background: C.ACCENT,
                       color: '#FFFFFF',
-                      fontSize: 12.5,
-                      fontWeight: 700,
+                      fontSize: 13,
+                      fontWeight: 600,
                       textDecoration: 'none',
+                      fontFamily: C.FONT,
+                      boxShadow: C.SHADOW_XS,
                     }}
                   >
                     {rec.actionLabel}
@@ -133,7 +136,7 @@ export function SmartRecommendations() {
                     }}
                     style={{
                       background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: 12, color: C.TEXT_SUBTLE, fontFamily: 'inherit',
+                      fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT,
                       padding: '4px 8px',
                     }}
                   >
