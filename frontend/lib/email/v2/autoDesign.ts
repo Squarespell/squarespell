@@ -177,75 +177,164 @@ function pickBestCanvaTemplate(quiz: QuizData | null): CanvaTemplate {
 }
 
 // ---------------------------------------------------------------------------
-// Core: Apply brand colors and fonts to Canva HTML
+// Core: Apply brand colors, fonts, logo, and site name to Canva HTML
 // ---------------------------------------------------------------------------
+
+// Known placeholder brand names across all 15 Canva templates
+var PLACEHOLDER_BRANDS = [
+  'GLOBAL SOLUTIONS', 'Global Solutions',
+  'Stone &amp; Thread Rugs', 'Stone & Thread Rugs',
+  'Company Newsletter', 'THE SIDE HUSTLE', 'The Side Hustle',
+  'PETWATCH', 'Petwatch', 'PetWatch',
+  'Unlocking Success',
+  'YourBrand', 'Your Brand',
+  '[Brand Name]', '[Company Name]',
+];
+
+// Helper: parse hex color to RGB
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  var clean = hex.replace('#', '');
+  if (clean.length === 3) clean = clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
+  if (clean.length < 6) return null;
+  return {
+    r: parseInt(clean.substring(0, 2), 16),
+    g: parseInt(clean.substring(2, 4), 16),
+    b: parseInt(clean.substring(4, 6), 16),
+  };
+}
+
+// Helper: calculate brightness (0-255)
+function brightness(hex: string): number {
+  var rgb = hexToRgb(hex);
+  if (!rgb) return 128;
+  return (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+}
+
+// Helper: lighten a hex color for backgrounds
+function lightenColor(hex: string, amount: number): string {
+  var rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  var r = Math.min(255, Math.round(rgb.r + (255 - rgb.r) * amount));
+  var g = Math.min(255, Math.round(rgb.g + (255 - rgb.g) * amount));
+  var b = Math.min(255, Math.round(rgb.b + (255 - rgb.b) * amount));
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
 
 function applyBrandToHtml(html: string, brandKit: BrandKitFromAPI): string {
   var result = html;
+  var primary = (brandKit.colors && brandKit.colors.primary) || '';
+  var accent = (brandKit.colors && brandKit.colors.accent) || primary;
+  var bgColor = (brandKit.colors && brandKit.colors.background) || '';
+  var textColor = (brandKit.colors && brandKit.colors.text) || '';
+  var siteName = brandKit.site_name || '';
 
-  // Replace logo if brand has one
-  if (brandKit.logo_url) {
-    result = result.replace(
-      /(<img[^>]*alt=["']?Logo["']?[^>]*src=["'])([^"']+)(["'])/gi,
-      '$1' + brandKit.logo_url + '$3'
-    );
+  // ── 1. SITE NAME: Replace ALL placeholder brand names ──
+  if (siteName) {
+    for (var pbi = 0; pbi < PLACEHOLDER_BRANDS.length; pbi++) {
+      // Use split+join for global replace without regex special chars issues
+      result = result.split(PLACEHOLDER_BRANDS[pbi]).join(siteName);
+    }
   }
 
-  var primary = brandKit.colors && brandKit.colors.primary;
-  var secondary = brandKit.colors && brandKit.colors.secondary;
-  var accent = brandKit.colors && brandKit.colors.accent;
-  var bgColor = brandKit.colors && brandKit.colors.background;
-  var textColor = brandKit.colors && brandKit.colors.text;
-
-  // Apply primary color to CTA buttons
-  if (primary) {
-    // Replace background-color on buttons/links that look like CTAs
-    result = result.replace(
-      /(background-color:\s*)(#[0-9a-fA-F]{3,8}|rgb[^)]*\))(;[^"]*class="[^"]*(?:btn|cta|button))/gi,
-      '$1' + primary + '$3'
-    );
-    // Replace inline background on td elements that are dark/colored (CTA sections)
-    result = result.replace(
-      /(background-color:\s*#)((?:3[0-9a-f]|4[0-9a-f]|2[0-9a-f]|1[0-9a-f]|0[0-9a-f])[0-9a-f]{4})/gi,
-      function(match, prefix, hex) {
-        // Only replace dark backgrounds (likely accent sections)
-        var r = parseInt(hex.substring(0, 2), 16);
-        var g = parseInt(hex.substring(2, 4), 16);
-        var b = parseInt(hex.substring(4, 6), 16);
-        var brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        if (brightness < 80) {
-          return 'background-color:' + primary;
+  // ── 2. LOGO: Inject into first image area or replace first small image ──
+  if (brandKit.logo_url || brandKit.favicon_url) {
+    var logoSrc = brandKit.logo_url || brandKit.favicon_url || '';
+    // Strategy A: Replace any img with alt containing "logo"
+    var logoAltPattern = /(<img[^>]*alt=["'][^"']*[Ll]ogo[^"']*["'][^>]*src=["'])([^"']+)(["'])/g;
+    if (logoAltPattern.test(result)) {
+      result = result.replace(logoAltPattern, '$1' + logoSrc + '$3');
+    } else {
+      // Strategy B: Add logo image before the first heading/text content
+      // Find the first <td> that contains centered text (typically the brand name area)
+      var firstHeadingMatch = result.match(/(<td[^>]*text-align:\s*center[^>]*>)(\s*(?:<[^>]*>)*\s*)([A-Z])/);
+      if (firstHeadingMatch && firstHeadingMatch.index !== undefined) {
+        var logoHtml = '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;margin-bottom:12px"><tbody><tr><td align="center"><img src="' + logoSrc + '" alt="Logo" style="display:block;max-width:140px;max-height:50px;width:auto;height:auto" /></td></tr></tbody></table>';
+        var insertPos = firstHeadingMatch.index;
+        // Insert logo table before the first heading td
+        var tdOpen = result.lastIndexOf('<tr>', insertPos);
+        if (tdOpen >= 0) {
+          var logoRow = '<tr><td style="padding:16px 20px 0;text-align:center">' + logoHtml + '</td></tr>';
+          result = result.substring(0, tdOpen) + logoRow + result.substring(tdOpen);
         }
+      }
+    }
+  }
+
+  // ── 3. COLORS: Apply primary to dark/accent backgrounds ──
+  if (primary) {
+    // Replace background-color in inline styles on elements with dark backgrounds
+    result = result.replace(
+      /background-color:\s*(#[0-9a-fA-F]{3,8})/g,
+      function(match, existingColor) {
+        var b = brightness(existingColor);
+        // Dark backgrounds (accent sections, CTA areas) -> primary color
+        if (b < 60) return 'background-color:' + primary;
+        // Medium-dark backgrounds -> slightly lighter primary
+        if (b < 100) return 'background-color:' + primary;
+        return match;
+      }
+    );
+    // Also handle bgcolor attribute on tables
+    result = result.replace(
+      /bgcolor="(#[0-9a-fA-F]{3,8})"/g,
+      function(match, existingColor) {
+        var b = brightness(existingColor);
+        if (b < 60) return 'bgcolor="' + primary + '"';
         return match;
       }
     );
   }
 
-  // Apply brand font
+  // ── 4. COLORS: Apply light brand tint to main email background ──
+  if (primary) {
+    // The main email container usually has a medium-light background
+    // (e.g. #e8e8e0, #f0f1f5) - tint it with a very light version of primary
+    var lightTint = lightenColor(primary, 0.92);
+    result = result.replace(
+      /(max-width:600px[^>]*background-color:)(#[0-9a-fA-F]{3,8})/,
+      '$1' + lightTint
+    );
+  }
+
+  // ── 5. FONTS: Replace all font-family declarations ──
   if (brandKit.font_family) {
-    var fontStack = brandKit.font_family + ', Arial, Helvetica, sans-serif';
-    // Replace font-family declarations in style attributes
+    var fontStack = '"' + brandKit.font_family + '", Arial, Helvetica, sans-serif';
+    // Replace quoted font families: "Times New Roman", Times, serif
+    result = result.replace(
+      /font-family:\s*&quot;[^&]*&quot;\s*,\s*[^;"]+/g,
+      'font-family:' + fontStack
+    );
+    // Replace font-family: "Font", fallback
     result = result.replace(
       /font-family:\s*"[^"]+"\s*,\s*[^;"]+/g,
       'font-family:' + fontStack
     );
+    // Replace unquoted font families: Arial, Helvetica, sans-serif
     result = result.replace(
-      /font-family:\s*'[^']+'\s*,\s*[^;']+/g,
+      /font-family:\s*(?:Arial|Helvetica|Trebuchet MS|Georgia|Verdana)\s*,\s*[^;"]+/gi,
       'font-family:' + fontStack
     );
   }
 
-  // Replace site name placeholders
-  if (brandKit.site_name) {
-    // Replace common brand name patterns in template text
-    result = result.replace(/Stone &amp; Thread Rugs/g, brandKit.site_name);
-    result = result.replace(/Stone & Thread Rugs/g, brandKit.site_name);
-    result = result.replace(/YourBrand/g, brandKit.site_name);
-    result = result.replace(/\[Brand Name\]/g, brandKit.site_name);
-    result = result.replace(/\[Company Name\]/g, brandKit.site_name);
+  // ── 6. TEXT COLOR: Apply brand text color to main content ──
+  if (textColor) {
+    // Replace text colors on content td elements (not on light-on-dark sections)
+    result = result.replace(
+      /(<td[^>]*style="[^"]*)(color:\s*#(?:121212|000000|1[aA]1[aA]1[aA]|333333|222222))/g,
+      '$1color:' + textColor
+    );
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Exported: Apply brand to any template HTML (used by all selection paths)
+// ---------------------------------------------------------------------------
+
+export function applyBrandKit(html: string, brandKit: BrandKitFromAPI | null): string {
+  if (!brandKit) return html;
+  return applyBrandToHtml(html, brandKit);
 }
 
 // ---------------------------------------------------------------------------

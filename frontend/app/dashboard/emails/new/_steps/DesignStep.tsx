@@ -9,7 +9,7 @@ import { renderBlocks } from '../../../../../lib/email/renderBlocks';
 import { V2_TEMPLATES } from '../../../../../lib/email/v2/templates';
 import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/renderer';
 import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
-import { autoDesignTemplate, buildDesignFromLlm } from '../../../../../lib/email/v2/autoDesign';
+import { autoDesignTemplate, buildDesignFromLlm, applyBrandKit } from '../../../../../lib/email/v2/autoDesign';
 import type { AutoDesignResult, BrandKitFromAPI, QuizData, LlmDesignContent } from '../../../../../lib/email/v2/autoDesign';
 import { CANVA_TEMPLATES, CANVA_CATEGORIES } from '../../../../../lib/email/canvaTemplates';
 import { api } from '../../../../../lib/api';
@@ -264,16 +264,17 @@ export function DesignStep({
     }
   }, [editorReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Select template from gallery
+  // Select template from gallery (applies brand kit if available)
   var handleSelectTemplate = useCallback(function(item: TemplateItem) {
     userManuallySelected.current = true;
+    var brandedHtml = applyBrandKit(item.html, aiBrandKit);
     setState({
       templateId: item.id,
       subject: item.subject,
       preheader: item.preheader,
-      html: item.html,
+      html: brandedHtml,
     });
-  }, [setState]);
+  }, [setState, aiBrandKit]);
 
   // Stable cache-bust value: only changes when entering editor phase
   var [editorCacheBust, setEditorCacheBust] = useState(Date.now);
