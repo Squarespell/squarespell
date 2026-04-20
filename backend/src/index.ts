@@ -138,4 +138,20 @@ if (process.env.SENTRY_DSN) {
   Sentry.setupExpressErrorHandler(app);
 }
 
-app.listen(PORT, () => log.info('Backend running', { port: Number(PORT) }));
+app.listen(PORT, () => {
+  log.info('Backend running', { port: Number(PORT) });
+
+  // Keep-alive self-ping to prevent Render cold starts.
+  // Pings /health every 5 minutes. Only runs when RENDER_EXTERNAL_URL is set
+  // (i.e. on Render, not local dev).
+  var externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.API_BASE_URL;
+  if (externalUrl) {
+    var KEEP_ALIVE_MS = 5 * 60 * 1000; // 5 minutes
+    setInterval(function() {
+      fetch(externalUrl + '/health')
+        .then(function() { /* healthy */ })
+        .catch(function() { /* swallow errors */ });
+    }, KEEP_ALIVE_MS);
+    log.info('Keep-alive enabled', { url: externalUrl + '/health', intervalMs: KEEP_ALIVE_MS });
+  }
+});
