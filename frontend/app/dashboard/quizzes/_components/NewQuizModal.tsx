@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createQuizFromUrl } from "./quizTemplates";
 import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '../../../../lib/quiz/templates';
 
-type Stage = "choose" | "templates" | "site" | "loading" | "goal" | "review" | "generating" | "error";
+type Stage = "choose" | "templates" | "site" | "loading" | "pick" | "generating" | "error";
 
 type Goal = {
   id: string;
@@ -54,6 +54,32 @@ function normalizeUrl(raw: string): string {
   return `https://${trimmed}`;
 }
 
+
+/**
+ * Match scraped business type to the 2 best templates from the catalog.
+ * Uses keyword overlap between businessType/tags and template tags/category.
+ */
+function matchTemplatesToBusiness(businessType: string): QuizTemplateData[] {
+  var keywords = (businessType || '').toLowerCase().split(/[\s,;\/&]+/).filter(function(w) { return w.length > 2; });
+  var scored = QUIZ_TEMPLATE_CATALOG.map(function(tpl) {
+    var haystack = (tpl.tags.join(' ') + ' ' + tpl.category + ' ' + tpl.audience + ' ' + tpl.name).toLowerCase();
+    var score = 0;
+    keywords.forEach(function(kw) {
+      if (haystack.indexOf(kw) !== -1) score += 1;
+    });
+    // Boost exact category matches
+    if (haystack.indexOf(businessType.toLowerCase().trim()) !== -1) score += 2;
+    return { tpl: tpl, score: score };
+  });
+  scored.sort(function(a, b) { return b.score - a.score; });
+  // Return top 2; if no matches default to first 2
+  var results = scored.slice(0, 2).map(function(s) { return s.tpl; });
+  // Avoid duplicates — if both scored 0, just pick different categories
+  if (results.length < 2) {
+    results = QUIZ_TEMPLATE_CATALOG.slice(0, 2);
+  }
+  return results;
+}
 
 function GoalIcon({ name }: { name: Goal["icon"] }) {
   const common = {
@@ -141,6 +167,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [templateFilter, setTemplateFilter] = useState<string>('All');
+  const [pickChoice, setPickChoice] = useState<'ai' | string>('ai'); // 'ai' or template id
+  const [matchedTemplates, setMatchedTemplates] = useState<QuizTemplateData[]>([]);
   const urlRef = useRef<HTMLInputElement>(null);
   const primaryColorRef = useRef<HTMLInputElement>(null);
   const accentColorRef = useRef<HTMLInputElement>(null);
@@ -161,6 +189,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setSubmitting(false);
     setSelectedTemplate(null);
     setTemplateFilter('All');
+    setPickChoice('ai');
+    setMatchedTemplates([]);
   }, [open]);
 
   // Lock body and html scroll while modal is open
@@ -189,7 +219,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
 
   if (!open) return null;
 
-  const stepIndex = (stage === "choose" || stage === "templates") ? 0 : (stage === "site" || stage === "loading") ? 1 : stage === "goal" ? 2 : 3;
+  const stepIndex = (stage === "choose" || stage === "templates") ? 0 : (stage === "site" || stage === "loading") ? 1 : (stage === "pick") ? 2 : 3;
   const isBusy = submitting || stage === "generating";
 
   // Template creation: save blocks directly to the backend
@@ -291,6 +321,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
           accentColor: isHex(colors.accent) ? colors.accent : undefined,
         };
         setBrand(next);
+        setMatchedTemplates(matchTemplatesToBusiness(next.businessType || ''));
         setIsSquarespace(true);
         if (data.template_version) setTemplateVersion(data.template_version);
         const flags = new Set<keyof BrandScrape>();
@@ -313,18 +344,21 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
         setBrand({});
         setDetected(new Set());
         setQuizIdeas([]);
+        setMatchedTemplates(matchTemplatesToBusiness(''));
       } else {
         setBrand({});
         setDetected(new Set());
         setQuizIdeas([]);
+        setMatchedTemplates(matchTemplatesToBusiness(''));
       }
     } catch {
       setBrand({});
       setDetected(new Set());
       setQuizIdeas([]);
+      setMatchedTemplates(matchTemplatesToBusiness(''));
     }
     clearTimeout(timer);
-    setStage("goal");
+    setStage("pick");
   }
 
   async function handleGenerate() {
@@ -411,8 +445,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 <nav className="sq-steps" aria-label="Progress">
                   {[
                     { n: 1, label: "Your site" },
-                    { n: 2, label: "Your goal" },
-                    { n: 3, label: "Review and generate" },
+                    { n: 2, label: "Choose your quiz" },
+                    { n: 3, label: "Generate" },
                   ].map((s) => (
                     <div key={s.n} className={`sq-step ${stepIndex === s.n ? "is-active" : stepIndex > s.n ? "is-done" : ""}`}>
                       <span className="sq-step-dot">
@@ -443,8 +477,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                   {stage === "templates" && "Pick a template"}
                   {stage === "site" && "Let's build your quiz"}
                   {stage === "loading" && "Reading your site"}
-                  {stage === "goal" && "What should this quiz do"}
-                  {stage === "review" && "Review and generate"}
+                  {stage === "pick" && "Choose your quiz"}
                   {stage === "generating" && "Generating your quiz"}
                   {stage === "error" && "We hit a snag"}
                 </h2>
@@ -575,209 +608,96 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 </div>
               )}
 
-              {stage === "goal" && (
+              {stage === "pick" && (
                 <div className="sq-form">
-                  <p className="sq-lead">Pick the goal that matches how you want to use this quiz.</p>
+                  <p className="sq-lead">We analyzed your site and built 3 quiz options. Each one is styled with your brand. Pick one to generate.</p>
                   {isSquarespace && (
                     <div className="sq-sqsp-badge">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
                       <span>Squarespace{templateVersion ? " " + templateVersion : ""} detected</span>
                     </div>
                   )}
-                  {quizIdeas.length > 0 && (
-                    <div className="sq-ideas">
-                      <div className="sq-ideas-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="4"/></svg>
-                        <span>Quiz ideas tailored to your site</span>
+                  <div className="sq-pick-grid">
+                    {/* Card 1: AI Custom */}
+                    <button type="button" className={'sq-pick-card' + (pickChoice === 'ai' ? ' is-selected' : '')} onClick={function() { setPickChoice('ai'); }}>
+                      <div className="sq-pick-badge sq-pick-badge-ai">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        AI Custom
                       </div>
-                      <div className="sq-ideas-chips">
-                        {quizIdeas.map((idea) => (
-                          <button
-                            key={idea}
-                            type="button"
-                            className={`sq-idea ${topic === idea ? "is-selected" : ""}`}
-                            onClick={() => setTopic(topic === idea ? "" : idea)}
-                          >
-                            {idea}
-                          </button>
-                        ))}
-                      </div>
-                      <input
-                        type="text"
-                        className="sq-input sq-ideas-input"
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                        placeholder="Pick an idea above or write your own"
-                      />
-                    </div>
-                  )}
-                  <div className="sq-goals">
-                    {GOALS.map((g) => (
-                      <button
-                        key={g.id}
-                        type="button"
-                        className={`sq-goal ${goalId === g.id ? "is-selected" : ""}`}
-                        onClick={() => setGoalId(g.id)}
-                      >
-                        <span className="sq-goal-icon" aria-hidden="true"><GoalIcon name={g.icon} /></span>
-                        <div className="sq-goal-top">
-                          <span className="sq-goal-label">{g.label}</span>
-                          <span className="sq-goal-check" aria-hidden="true">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
-                          </span>
+                      <div className="sq-pick-phone">
+                        <div className="sq-pick-notch" />
+                        <div className="sq-pick-screen">
+                          <div className="sq-pick-pbar"><span style={{ width: '40%', background: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY }} /></div>
+                          <div className="sq-pick-qtext">{quizIdeas.length > 0 ? quizIdeas[0] : (brand.businessType ? 'Find your perfect ' + brand.businessType + ' match' : 'Which option is right for you?')}</div>
+                          <div className="sq-pick-opts">
+                            <div className="sq-pick-opt is-active" style={{ borderColor: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY }}>
+                              <span className="sq-pick-radio" style={{ background: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY }} />
+                              <span>Option A</span>
+                            </div>
+                            <div className="sq-pick-opt">
+                              <span className="sq-pick-radio" />
+                              <span>Option B</span>
+                            </div>
+                            <div className="sq-pick-opt">
+                              <span className="sq-pick-radio" />
+                              <span>Option C</span>
+                            </div>
+                          </div>
+                          <div className="sq-pick-cta" style={{ background: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY }}>Next</div>
                         </div>
-                        <div className="sq-goal-hint">{g.hint}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      </div>
+                      <div className="sq-pick-info">
+                        <div className="sq-pick-name">Custom AI Quiz</div>
+                        <div className="sq-pick-desc">Built from scratch using your site content, brand voice, and audience.</div>
+                      </div>
+                      <div className="sq-pick-check" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                      </div>
+                    </button>
 
-              {stage === "review" && (
-                <div className="sq-form">
-                  <p className="sq-lead">Here is what we picked up. Edit anything that looks off.</p>
-                  <div className="sq-review">
-                    <div className="sq-review-row"><span>Site</span><strong>{normalizeUrl(url) || "-"}</strong></div>
-                    <div className="sq-review-row"><span>Goal</span><strong>{currentGoal.label}</strong></div>
-                  </div>
-                  <div className="sq-brand-grid">
-                    <label className="sq-brand-field">
-                      <span className="sq-brand-label">Business type{detected.has("businessType") ? <em className="sq-brand-hint">detected</em> : null}</span>
-                      <input
-                        type="text"
-                        className="sq-brand-input"
-                        placeholder="e.g. ecommerce, online course, agency"
-                        value={brand.businessType || ""}
-                        onChange={(e) => { setBrand((b) => ({ ...b, businessType: e.target.value })); setDetected((d) => { if (!d.has("businessType")) return d; const n = new Set(d); n.delete("businessType"); return n; }); }}
-                      />
-                    </label>
-                    <label className="sq-brand-field">
-                      <span className="sq-brand-label">Audience{detected.has("audience") ? <em className="sq-brand-hint">detected</em> : null}</span>
-                      <input
-                        type="text"
-                        className="sq-brand-input"
-                        placeholder="e.g. small business owners on Squarespace"
-                        value={brand.audience || ""}
-                        onChange={(e) => { setBrand((b) => ({ ...b, audience: e.target.value })); setDetected((d) => { if (!d.has("audience")) return d; const n = new Set(d); n.delete("audience"); return n; }); }}
-                      />
-                    </label>
-                    <label className="sq-brand-field">
-                      <span className="sq-brand-label">Tone{detected.has("tone") ? <em className="sq-brand-hint">detected</em> : null}</span>
-                      <input
-                        type="text"
-                        className="sq-brand-input"
-                        placeholder="e.g. friendly, confident, minimal"
-                        value={brand.tone || ""}
-                        onChange={(e) => { setBrand((b) => ({ ...b, tone: e.target.value })); setDetected((d) => { if (!d.has("tone")) return d; const n = new Set(d); n.delete("tone"); return n; }); }}
-                      />
-                    </label>
-                    <label className="sq-brand-field">
-                      <span className="sq-brand-label">Key offer{detected.has("offer") ? <em className="sq-brand-hint">detected</em> : null}</span>
-                      <input
-                        type="text"
-                        className="sq-brand-input"
-                        placeholder="e.g. Squarespace plugins for service businesses"
-                        value={brand.offer || ""}
-                        onChange={(e) => { setBrand((b) => ({ ...b, offer: e.target.value })); setDetected((d) => { if (!d.has("offer")) return d; const n = new Set(d); n.delete("offer"); return n; }); }}
-                      />
-                    </label>
-                  </div>
-                  <div className="sq-style-pack">
-                    <div className="sq-style-head">
-                      <span className="sq-brand-label">Brand colors{(detected.has("primaryColor") || detected.has("accentColor")) ? <em className="sq-brand-hint">detected</em> : null}</span>
-                      <span className="sq-style-sub">Used for buttons, progress bar, and accents.</span>
-                    </div>
-                    <div className="sq-style-body">
-                      <div className="sq-swatches">
-                        <div className="sq-swatch" onClick={() => primaryColorRef.current?.click()}>
-                          <span className="sq-swatch-role">Primary</span>
-                          <span className="sq-swatch-wrap">
-                            <label className="sq-swatch-picker">
-                              <input
-                                ref={primaryColorRef}
-                                type="color"
-                                className="sq-swatch-input"
-                                value={isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY}
-                                onChange={(e) => { setBrand((b) => ({ ...b, primaryColor: e.target.value })); setDetected((d) => { if (!d.has("primaryColor")) return d; const n = new Set(d); n.delete("primaryColor"); return n; }); }}
-                              />
-                            </label>
-                            <input
-                              type="text"
-                              className="sq-swatch-text"
-                              value={(isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY).toUpperCase()}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) => {
-                                var v = e.target.value;
-                                if (!v.startsWith('#')) v = '#' + v;
-                                setBrand((b) => ({ ...b, primaryColor: v }));
-                                setDetected((d) => { if (!d.has("primaryColor")) return d; const n = new Set(d); n.delete("primaryColor"); return n; });
-                              }}
-                              placeholder="#000000"
-                              maxLength={7}
-                              spellCheck={false}
-                            />
-                          </span>
-                        </div>
-                        <div className="sq-swatch" onClick={() => accentColorRef.current?.click()}>
-                          <span className="sq-swatch-role">Accent</span>
-                          <span className="sq-swatch-wrap">
-                            <label className="sq-swatch-picker">
-                              <input
-                                ref={accentColorRef}
-                                type="color"
-                                className="sq-swatch-input"
-                                value={isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT}
-                                onChange={(e) => { setBrand((b) => ({ ...b, accentColor: e.target.value })); setDetected((d) => { if (!d.has("accentColor")) return d; const n = new Set(d); n.delete("accentColor"); return n; }); }}
-                              />
-                            </label>
-                            <input
-                              type="text"
-                              className="sq-swatch-text"
-                              value={(isHex(brand.accentColor) ? (brand.accentColor as string) : DEFAULT_ACCENT).toUpperCase()}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) => {
-                                var v = e.target.value;
-                                if (!v.startsWith('#')) v = '#' + v;
-                                setBrand((b) => ({ ...b, accentColor: v }));
-                                setDetected((d) => { if (!d.has("accentColor")) return d; const n = new Set(d); n.delete("accentColor"); return n; });
-                              }}
-                              placeholder="#000000"
-                              maxLength={7}
-                              spellCheck={false}
-                            />
-                          </span>
-                        </div>
-                      </div>
-                      <div className="sq-preview" aria-label="Preview">
-                        <div className="sq-preview-chrome">
-                          <span className="sq-preview-dot" />
-                          <span className="sq-preview-dot" />
-                          <span className="sq-preview-dot" />
-                          <span className="sq-preview-url">Your quiz</span>
-                        </div>
-                        <div className="sq-preview-body">
-                          <div className="sq-preview-progress">
-                            <span style={{ width: "60%", background: `linear-gradient(90deg, ${isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY} 0%, ${isHex(brand.accentColor) ? brand.accentColor : DEFAULT_ACCENT} 100%)` }} />
+                    {/* Card 2 & 3: Matched templates */}
+                    {matchedTemplates.map(function(tpl) {
+                      var q1 = tpl.blocks().find(function(b: any) { return b.type === 'question'; }) as any;
+                      var opts = (q1 && q1.options) || [];
+                      return (
+                        <button key={tpl.id} type="button" className={'sq-pick-card' + (pickChoice === tpl.id ? ' is-selected' : '')} onClick={function() { setPickChoice(tpl.id); }}>
+                          <div className="sq-pick-badge sq-pick-badge-tpl">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            Template
                           </div>
-                          <div className="sq-preview-q">Which option sounds most like you?</div>
-                          <div
-                            className="sq-preview-opt is-selected"
-                            style={{ borderColor: isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY, boxShadow: `0 0 0 3px ${isHex(brand.primaryColor) ? (brand.primaryColor as string) + "33" : "rgba(13,115,119,0.18)"}` }}
-                          >
-                            <span>The first one</span>
-                            <span className="sq-preview-check" style={{ background: isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY, color: "#FFFFFF" }} aria-hidden="true">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
-                            </span>
+                          <div className="sq-pick-phone">
+                            <div className="sq-pick-notch" />
+                            <div className="sq-pick-screen">
+                              <div className="sq-pick-pbar"><span style={{ width: '25%', background: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY }} /></div>
+                              <div className="sq-pick-qtext">{q1 ? q1.text : tpl.name}</div>
+                              <div className="sq-pick-opts">
+                                {opts.slice(0, 3).map(function(opt: any, i: number) {
+                                  return (
+                                    <div key={opt.id || i} className={'sq-pick-opt' + (i === 0 ? ' is-active' : '')} style={i === 0 ? { borderColor: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY } : {}}>
+                                      <span className="sq-pick-radio" style={i === 0 ? { background: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY } : {}} />
+                                      <span>{opt.text}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="sq-pick-cta" style={{ background: isHex(brand.primaryColor) ? brand.primaryColor : DEFAULT_PRIMARY }}>Next</div>
+                            </div>
                           </div>
-                          <div className="sq-preview-opt"><span>The second one</span></div>
-                          <button type="button" className="sq-preview-cta" disabled style={{ background: isHex(brand.primaryColor) ? (brand.primaryColor as string) : DEFAULT_PRIMARY, color: "#FFFFFF" }}>Next</button>
-                        </div>
-                      </div>
-                    </div>
+                          <div className="sq-pick-info">
+                            <div className="sq-pick-name">{tpl.name}</div>
+                            <div className="sq-pick-desc">{tpl.description.length > 80 ? tpl.description.slice(0, 80) + '...' : tpl.description}</div>
+                          </div>
+                          <div className="sq-pick-check" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                   {errorMsg && <div className="sq-error">{errorMsg}</div>}
                 </div>
               )}
+
 
               {stage === "generating" && (
                 <div className="sq-form">
@@ -815,14 +735,11 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 {stage === "site" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("choose")}>Back</button>
                 )}
-                {stage === "goal" && (
+                {stage === "pick" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("site")}>Back</button>
                 )}
-                {stage === "review" && (
-                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("goal")}>Back</button>
-                )}
                 {stage === "error" && (
-                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("review")}>Back</button>
+                  <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("pick")}>Back</button>
                 )}
 
                 {stage === "templates" && selectedTemplate && (
@@ -842,15 +759,9 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                     Reading site...
                   </button>
                 )}
-                {stage === "goal" && (
-                  <button type="button" className="sq-btn sq-btn-primary" onClick={() => setStage("review")}>
-                    Review
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-                  </button>
-                )}
-                {stage === "review" && (
-                  <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={isBusy}>
-                    {submitting ? "Generating..." : "Generate quiz"}
+                {stage === "pick" && (
+                  <button type="button" className="sq-btn sq-btn-primary" onClick={function() { if (pickChoice === 'ai') { handleGenerate(); } else { handleCreateFromTemplate(pickChoice); } }} disabled={isBusy}>
+                    {submitting ? "Generating..." : "Generate this quiz"}
                   </button>
                 )}
                 {stage === "error" && (
@@ -1349,4 +1260,191 @@ const styles = `
 }
 .sq-tpl-detail-title { font-size: 12px; font-weight: 700; color: #0D7377; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
 .sq-tpl-detail-text { font-size: 13.5px; color: #1A1A1A; line-height: 1.55; }
+
+/* ---- Pick stage: 3 visual quiz option cards (ConvertFlow style) ---- */
+.sq-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .sq-pick-grid { grid-template-columns: 1fr; }
+}
+.sq-pick-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 2px solid #E4E3E0;
+  border-radius: 16px;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.18s ease;
+  overflow: hidden;
+}
+.sq-pick-card:hover {
+  border-color: #0D7377;
+  box-shadow: 0 4px 20px rgba(13,115,119,0.10);
+  transform: translateY(-2px);
+}
+.sq-pick-card.is-selected {
+  border-color: #0D7377;
+  box-shadow: 0 0 0 3px rgba(13,115,119,0.18), 0 4px 20px rgba(13,115,119,0.10);
+}
+.sq-pick-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sq-pick-badge-ai {
+  background: linear-gradient(135deg, #0D7377, #0B6165);
+  color: #FFFFFF;
+}
+.sq-pick-badge-tpl {
+  background: #F0EFED;
+  color: #6B6B6B;
+  border: 1px solid #E4E3E0;
+}
+.sq-pick-card.is-selected .sq-pick-badge-tpl {
+  background: #E8F4F4;
+  color: #0D7377;
+  border-color: rgba(13,115,119,0.25);
+}
+
+/* Phone mockup inside each card */
+.sq-pick-phone {
+  position: relative;
+  margin: 36px 14px 0 14px;
+  background: #F7F7F5;
+  border: 1px solid #E4E3E0;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  aspect-ratio: auto;
+}
+.sq-pick-notch {
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  background: #E4E3E0;
+  margin: 8px auto 6px;
+}
+.sq-pick-screen {
+  padding: 6px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sq-pick-pbar {
+  height: 3px;
+  background: #EEEDE9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.sq-pick-pbar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+.sq-pick-qtext {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1A1A1A;
+  line-height: 1.3;
+  min-height: 28px;
+}
+.sq-pick-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sq-pick-opt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  background: #FFFFFF;
+  border: 1.5px solid #E4E3E0;
+  border-radius: 8px;
+  font-size: 10px;
+  color: #6B6B6B;
+  transition: border-color 0.12s;
+}
+.sq-pick-opt.is-active {
+  color: #1A1A1A;
+  font-weight: 600;
+}
+.sq-pick-radio {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid #E4E3E0;
+  flex-shrink: 0;
+}
+.sq-pick-opt.is-active .sq-pick-radio {
+  border: none;
+}
+.sq-pick-cta {
+  margin-top: 4px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.85;
+}
+
+/* Info area below phone */
+.sq-pick-info {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.sq-pick-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1A1A;
+  letter-spacing: -0.01em;
+}
+.sq-pick-desc {
+  font-size: 12px;
+  color: #6B6B6B;
+  line-height: 1.45;
+}
+
+/* Selection checkmark */
+.sq-pick-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #EEEDE9;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #E4E3E0;
+  transition: all 0.15s ease;
+}
+.sq-pick-card.is-selected .sq-pick-check {
+  background: #0D7377;
+  color: #FFFFFF;
+  border-color: #0D7377;
+}
 `;
