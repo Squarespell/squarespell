@@ -879,22 +879,6 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
 <div class="editor-layout">
   <!-- LEFT PANEL -->
   <div class="left-panel" id="leftPanel">
-    <!-- Template Switcher -->
-    <div class="panel-section">
-      <div class="panel-label">Templates</div>
-      <div class="template-card active" data-tpl="quiz-result" onclick="switchTemplate('quiz-result')">
-        <div class="template-card-title">Quiz Result</div>
-        <div class="template-card-desc">Score, result category, recommendations</div>
-      </div>
-      <div class="template-card" data-tpl="lead-nurture" onclick="switchTemplate('lead-nurture')">
-        <div class="template-card-title">Lead Nurture</div>
-        <div class="template-card-desc">Follow-up with personalized content</div>
-      </div>
-      <div class="template-card" data-tpl="promo-offer" onclick="switchTemplate('promo-offer')">
-        <div class="template-card-title">Promotional Offer</div>
-        <div class="template-card-desc">Discount with countdown timer</div>
-      </div>
-    </div>
 
     <!-- Global Colors (compact rows + popover) -->
     <div class="panel-section">
@@ -1400,8 +1384,8 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
 // ================================================================
 // STATE
 // ================================================================
-var currentTemplate = 'quiz-result';
-var isExternalTemplate = false; // true when loaded via sq-load-template (Canva/external HTML)
+var currentTemplate = '';
+var isExternalTemplate = true; // All templates are now loaded externally via sq-load-template
 var mode = 'edit'; // 'edit' | 'preview'
 var activeTextEl = null;
 var originalText = '';
@@ -1431,344 +1415,16 @@ function sectionToolbarHtml() {
 function uid() { return 's' + (++sectionIdCounter) + '_' + Math.random().toString(36).substr(2, 6); }
 
 // ================================================================
-// TASK 3.8 - TEMPLATE 1: QUIZ RESULT
-// ================================================================
-function tplQuizResult() {
-  return '<div class="email-body" style="background:#F7F7F5;font-family:' + globalFont + ';">' +
-  '<!-- Preheader --><div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F7F7F5;">Your quiz results are ready, Jordan. See your score and personalized recommendations inside.</div>' +
-  '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F5;"><tr><td align="center" style="padding:24px 16px;">' +
-  '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:8px;overflow:hidden;">' +
-
-  // Header
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:20px 32px;display:flex;align-items:center;justify-content:space-between;">' +
-  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo</div>' +
-  '<a href="#" class="editable-text" style="font-size:12px;color:#6B7280;text-decoration:none;">View in browser</a>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Hero
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="position:relative;">' +
-  '<img class="editable-img" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=300&fit=crop" alt="Success and achievement" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
-  '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.6));">' +
-  '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Your Results Are In, {{first_name}}</h1>' +
-  '</div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Score Section
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:40px 32px;text-align:center;">' +
-  '<div class="score-circle" style="background:' + globalColors.primary + ';">' +
-  '<div class="score-number" style="color:#FFFFFF;">82</div>' +
-  '<div class="score-label" style="color:rgba(255,255,255,0.8);">Score</div>' +
-  '</div>' +
-  '<h2 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:16px;">Your Quiz Score</h2>' +
-  '<p class="editable-text" style="font-size:14px;color:#6B7280;margin-top:4px;">Top 15% of all respondents</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Result Category
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:24px 32px;">' +
-  '<div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:' + globalColors.primary + ';font-weight:600;" class="editable-text">YOUR RESULT</div>' +
-  '<h2 class="editable-text" style="font-size:28px;font-weight:700;color:' + globalColors.text + ';margin-top:8px;">You\'re a Growth-Stage Founder</h2>' +
-  '<p class="editable-text" style="font-size:15px;color:#4B5563;line-height:1.6;margin-top:12px;">Your answers reveal that you have already achieved product-market fit and are now focused on scaling your operations. You understand your core customer deeply but need systems to reach them at scale. The recommendations below are tailored specifically for founders at your stage of growth.</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Recommendation Card
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:0 32px 32px;">' +
-  '<div style="border:1px solid #E4E3E0;border-radius:12px;overflow:hidden;">' +
-  '<img class="editable-img" src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=200&fit=crop" alt="Recommended product" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
-  '<div style="padding:20px;">' +
-  '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:' + globalColors.primary + ';font-weight:600;" class="editable-text">Recommended for You</div>' +
-  '<h3 class="editable-text" style="font-size:18px;font-weight:600;color:' + globalColors.text + ';margin-top:6px;">Growth Accelerator Program</h3>' +
-  '<p class="editable-text" style="font-size:14px;color:#6B7280;line-height:1.5;margin-top:8px;">A 12-week hands-on program designed for founders who have found product-market fit and are ready to build the systems that scale. Includes weekly coaching calls, templates, and a private community.</p>' +
-  '<a href="#" class="editable-btn" style="display:inline-block;margin-top:16px;padding:12px 28px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Learn More</a>' +
-  '</div></div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Testimonial
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:24px 32px;background:#F7F7F5;">' +
-  '<div style="display:flex;gap:16px;align-items:flex-start;">' +
-  '<img class="editable-img" src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=80&h=80&fit=crop" alt="Priya Sharma" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;" onclick="openImagePanel(this)">' +
-  '<div>' +
-  '<p class="editable-text" style="font-size:15px;color:#4B5563;line-height:1.6;font-style:italic;">"The quiz pinpointed exactly where I was in my business journey. The Growth Accelerator program completely changed how I approach scaling - I went from 5 to 25 clients in three months."</p>' +
-  '<div class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';margin-top:8px;">Priya Sharma</div>' +
-  '<div class="editable-text" style="font-size:12px;color:#6B7280;">Founder, Elevate Consulting</div>' +
-  '<div class="stars" style="margin-top:4px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>' +
-  '</div></div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Retake Button
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
-  '<a href="#" class="editable-btn" style="display:inline-block;padding:12px 32px;border:2px solid ' + globalColors.primary + ';color:' + globalColors.primary + ';text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;background:transparent;" onclick="event.preventDefault();openBtnPanel(this)">Retake the Quiz</a>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Footer
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:24px 32px;text-align:center;border-top:1px solid #E4E3E0;">' +
-  '<div class="social-row" style="margin-bottom:16px;">' +
-  '<a href="#" class="social-icon" title="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>' +
-  '<a href="#" class="social-icon" title="Twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>' +
-  '<a href="#" class="social-icon" title="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>' +
-  '</div>' +
-  '<p class="editable-text" style="font-size:12px;color:#9CA3AF;line-height:1.5;">You received this email because you completed a quiz on our site.</p>' +
-  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
-  '<span style="font-size:12px;color:#9CA3AF;"> | </span>' +
-  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Email preferences</a>' +
-  '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:12px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
-  '<p style="font-size:10px;color:#BFBFBF;margin-top:6px;">Copyright 2026 Squarespell. All rights reserved.</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  '</table></td></tr></table></div>';
-}
-
-// ================================================================
-// TASK 3.9 - TEMPLATE 2: LEAD NURTURE
-// ================================================================
-function tplLeadNurture() {
-  return '<div class="email-body" style="background:#F7F7F5;font-family:' + globalFont + ';">' +
-  '<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F7F7F5;">We have something for you, Jordan. Based on your quiz results, here is your next step.</div>' +
-  '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F5;"><tr><td align="center" style="padding:24px 16px;">' +
-  '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:8px;overflow:hidden;">' +
-
-  // Header
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:20px 32px;">' +
-  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo</div>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Hero
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="position:relative;">' +
-  '<img class="editable-img" src="https://images.unsplash.com/photo-1553484771-047a44eee27b?w=600&h=300&fit=crop" alt="Business growth" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
-  '<div style="position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(transparent,rgba(0,0,0,0.65));">' +
-  '<h1 class="editable-text" style="color:#FFFFFF;font-size:28px;font-weight:700;margin:0;">Ready to Take the Next Step?</h1>' +
-  '</div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Intro
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:32px;">' +
-  '<p class="editable-text" style="font-size:16px;color:' + globalColors.text + ';line-height:1.7;">Hi {{first_name}}, based on your quiz results, we put together a personalized action plan just for you. Most people in your position share a common challenge: they know what they want to build but struggle to figure out where to begin. The strategies below are specifically designed for people at your stage, and they have worked for hundreds of founders just like you.</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Two-column features
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:0 32px 32px;">' +
-  '<div class="two-col">' +
-  '<div style="flex:1;">' +
-  '<img class="editable-img" src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=280&h=180&fit=crop" alt="Strategy" style="width:100%;border-radius:8px;display:block;height:auto;" onclick="openImagePanel(this)">' +
-  '<h3 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:12px;">Find Your Focus Channel</h3>' +
-  '<p class="editable-text" style="font-size:13px;color:#6B7280;line-height:1.5;margin-top:6px;">Stop spreading yourself thin across every platform. Pick the one where your ideal clients already spend their time and go deep.</p>' +
-  '</div>' +
-  '<div style="flex:1;">' +
-  '<img class="editable-img" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=280&h=180&fit=crop" alt="Results" style="width:100%;border-radius:8px;display:block;height:auto;" onclick="openImagePanel(this)">' +
-  '<h3 class="editable-text" style="font-size:16px;font-weight:600;color:' + globalColors.text + ';margin-top:12px;">Track What Matters</h3>' +
-  '<p class="editable-text" style="font-size:13px;color:#6B7280;line-height:1.5;margin-top:6px;">Set up three core metrics that map directly to revenue. When you know your numbers, every decision becomes clearer and faster.</p>' +
-  '</div>' +
-  '</div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // 3-col value prop
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:24px 32px;background:#F7F7F5;">' +
-  '<div class="three-col">' +
-  '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Proven Framework</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">Tested by 500+ founders across 40 industries</p></div>' +
-  '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Quick Results</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">See measurable progress within your first week</p></div>' +
-  '<div><div class="three-col-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><h4 class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">Expert Support</h4><p class="editable-text" style="font-size:12px;color:#6B7280;margin-top:4px;">One-on-one coaching available when you need it</p></div>' +
-  '</div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // CTA
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:24px 32px;text-align:center;">' +
-  '<a href="#" class="editable-btn" style="display:inline-block;padding:14px 36px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;" onclick="event.preventDefault();openBtnPanel(this)">Book Your Free Strategy Call</a>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // PS
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:0 32px 24px;">' +
-  '<p class="editable-text" style="font-size:14px;color:#6B7280;font-style:italic;line-height:1.6;">P.S. This offer expires in 48 hours. We keep our coaching groups intentionally small to give every member real attention, so spots fill up fast. Don\'t wait on this one.</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Footer
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:24px 32px;text-align:center;border-top:1px solid #E4E3E0;">' +
-  '<div class="social-row" style="margin-bottom:12px;">' +
-  '<a href="#" class="social-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>' +
-  '<a href="#" class="social-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>' +
-  '<a href="#" class="social-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>' +
-  '</div>' +
-  '<p class="editable-text" style="font-size:12px;color:#9CA3AF;">You received this because you took our quiz.</p>' +
-  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
-  '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  '</table></td></tr></table></div>';
-}
-
-// ================================================================
-// TASK 3.10 - TEMPLATE 3: PROMOTIONAL OFFER
-// ================================================================
-function tplPromoOffer() {
-  return '<div class="email-body" style="background:#F7F7F5;font-family:' + globalFont + ';">' +
-  '<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F7F7F5;">Your exclusive offer expires soon. Based on your quiz score, you qualify for a special discount.</div>' +
-  '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F5;"><tr><td align="center" style="padding:0;">' +
-
-  // Top banner
-  '<table width="100%" cellpadding="0" cellspacing="0"><tr><td class="email-section" data-sid="' + uid() + '" style="background:' + globalColors.primary + ';text-align:center;padding:10px 16px;">' +
-  '<span class="editable-text" style="color:#FFFFFF;font-size:13px;font-weight:600;letter-spacing:1px;">LIMITED TIME OFFER - 48 HOURS ONLY</span>' +
-  sectionToolbarHtml() +
-  '</td></tr></table>' +
-
-  '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:' + globalColors.background + ';border-radius:0 0 8px 8px;overflow:hidden;margin-top:0;">' +
-
-  // Header
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:20px 32px;">' +
-  '<div class="editable-logo logo-placeholder" onclick="openLogoPanel(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo</div>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Hero
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="position:relative;">' +
-  '<img class="editable-img" src="https://images.unsplash.com/photo-1607082349566-187342175e2f?w=600&h=300&fit=crop" alt="Special offer" style="width:100%;display:block;height:auto;" onclick="openImagePanel(this)">' +
-  '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;">' +
-  '<h1 class="editable-text" style="color:#FFFFFF;font-size:32px;font-weight:800;text-align:center;margin:0;">You Unlocked a Special Offer</h1>' +
-  '</div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Score badge
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:32px;text-align:center;">' +
-  '<div class="tier-badge" style="background:#F59E0B;color:#FFFFFF;">Gold Tier</div>' +
-  '<p class="editable-text" style="font-size:15px;color:#4B5563;margin-top:12px;">Based on your quiz score, you qualify for our best discount:</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Offer box
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:0 32px 24px;">' +
-  '<div class="offer-box">' +
-  '<div class="price-old editable-text">$297</div>' +
-  '<div class="price-new editable-text" style="color:' + globalColors.primary + ';margin-top:4px;">$97</div>' +
-  '<div class="savings-badge editable-text" style="background:#ECFDF5;color:#059669;margin-top:8px;">Save $200 Today</div>' +
-  '<ul class="offer-list">' +
-  '<li class="editable-text">Complete Growth Accelerator Program (12 weeks)</li>' +
-  '<li class="editable-text">Weekly one-on-one coaching calls with a mentor</li>' +
-  '<li class="editable-text">Private community access with 500+ founders</li>' +
-  '<li class="editable-text">Lifetime access to templates and playbooks library</li>' +
-  '<li class="editable-text">Priority support via email and live chat</li>' +
-  '</ul></div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Countdown
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:16px 32px;text-align:center;">' +
-  '<p class="editable-text" style="font-size:13px;color:#6B7280;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Offer expires in</p>' +
-  '<div class="countdown-row">' +
-  '<div class="countdown-box"><div class="countdown-num">01</div><div class="countdown-lbl">Days</div></div>' +
-  '<div class="countdown-box"><div class="countdown-num">23</div><div class="countdown-lbl">Hours</div></div>' +
-  '<div class="countdown-box"><div class="countdown-num">47</div><div class="countdown-lbl">Mins</div></div>' +
-  '<div class="countdown-box"><div class="countdown-num">12</div><div class="countdown-lbl">Secs</div></div>' +
-  '</div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // CTA
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:16px 32px;text-align:center;">' +
-  '<a href="#" class="editable-btn" style="display:inline-block;padding:16px 48px;background:' + globalColors.primary + ';color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:18px;font-weight:700;" onclick="event.preventDefault();openBtnPanel(this)">Claim Your Discount Now &#8594;</a>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Guarantee
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:16px 32px;">' +
-  '<div class="guarantee-strip" style="background:#F7F7F5;border-radius:8px;">' +
-  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + globalColors.primary + '" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
-  '<span class="editable-text" style="font-size:14px;font-weight:600;color:' + globalColors.text + ';">30-Day Money Back Guarantee</span>' +
-  '</div></div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Secondary CTA
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:8px 32px 24px;text-align:center;">' +
-  '<a href="#" class="editable-text" style="font-size:14px;color:#6B7280;text-decoration:underline;">Not ready? Remind me tomorrow</a>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  // Footer
-  '<tr><td class="email-section" data-sid="' + uid() + '">' +
-  '<div class="section-inner" style="padding:20px 32px;text-align:center;border-top:1px solid #E4E3E0;">' +
-  '<p class="editable-text" style="font-size:12px;color:#9CA3AF;">You received this because you took our quiz and scored in the Gold tier.</p>' +
-  '<a href="#" class="editable-text" style="font-size:12px;color:#9CA3AF;">Unsubscribe</a>' +
-  '<p class="editable-text" style="font-size:11px;color:#9CA3AF;margin-top:8px;">Squarespell Inc. 651 N Broad St, Suite 201, Middletown, DE 19709</p>' +
-  '</div>' +
-  sectionToolbarHtml() +
-  '</td></tr>' +
-
-  '</table></td></tr></table></div>';
-}
-
-// ================================================================
-// TEMPLATE SWITCHER
-// ================================================================
-var templateNames = { 'quiz-result': 'Quiz Result Email', 'lead-nurture': 'Lead Nurture Email', 'promo-offer': 'Promotional Offer Email' };
-
-function switchTemplate(id) {
-  currentTemplate = id;
-  document.querySelectorAll('.template-card').forEach(function(c) {
-    c.classList.toggle('active', c.getAttribute('data-tpl') === id);
-  });
-  document.getElementById('topbarTitle').textContent = templateNames[id];
-  renderTemplate();
-  closeAllPanels();
-}
+// TEMPLATES (loaded externally via sq-load-template postMessage)
+// Old V2 built-in templates removed -- all templates come from
+// Templates are loaded externally via sq-load-template postMessage.
+// No built-in templates -- editor waits for parent to send HTML.
 
 function renderTemplate() {
-  sectionIdCounter = 0;
+  // No-op: templates are loaded via postMessage, not built-in.
+  // This function is kept for backward compatibility with applyGlobalColor fallback.
   var canvas = document.getElementById('emailCanvas');
-  if (currentTemplate === 'quiz-result') canvas.innerHTML = tplQuizResult();
-  else if (currentTemplate === 'lead-nurture') canvas.innerHTML = tplLeadNurture();
-  else canvas.innerHTML = tplPromoOffer();
+  if (!canvas || !canvas.innerHTML.trim()) return;
   bindEditableText();
   updateSectionButtons();
   addInsertPoints();
@@ -2959,7 +2615,6 @@ function applyGlobalDesign() {
   });
 
   pushUndoState();
-  renderTemplate();
 }
 
 // Close font picker when clicking outside
@@ -3038,7 +2693,7 @@ function exportHTML() {
     '{{expiry_date}}': '48 hours'
   };
 
-  var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + templateNames[currentTemplate] + '</title>\n</head>\n<body style="margin:0;padding:0;">\n' + clone.innerHTML + '\n</body>\n</html>';
+  var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>Email Template</title>\n</head>\n<body style="margin:0;padding:0;">\n' + clone.innerHTML + '\n</body>\n</html>';
 
   Object.keys(sampleData).forEach(function(tag) {
     html = html.split(tag).join(sampleData[tag]);
@@ -3066,7 +2721,7 @@ function downloadExport() {
   var blob = new Blob([code], { type: 'text/html' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = currentTemplate + '.html';
+  a.download = 'email-template.html';
   a.click();
   URL.revokeObjectURL(a.href);
 }
