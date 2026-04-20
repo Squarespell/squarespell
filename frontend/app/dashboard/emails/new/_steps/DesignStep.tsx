@@ -697,7 +697,7 @@ export function DesignStep({
   // Layout: Top bar | Editor (left) + Campaign sidebar (right)
   // ==============================
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#F0F0EC', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#FFFFFF', display: 'flex', flexDirection: 'column' }}>
       {/* === SLIM TOP BAR: Navigation + Editor controls === */}
       <div style={{
         padding: '0 12px 0 16px', height: 48, borderBottom: '1px solid ' + C.BORDER,
