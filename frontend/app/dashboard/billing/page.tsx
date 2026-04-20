@@ -124,31 +124,35 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 export default function BillingPage() {
   const router = useRouter();
   const { token, status: authStatus } = useDashboardAuth();
-  const [plan, setPlan] = useState<UserPlan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [yearly, setYearly] = useState(false);
+  var [plan, setPlan] = useState<UserPlan | null>(null);
+  var [loading, setLoading] = useState(true);
+  var [yearly, setYearly] = useState(false);
+  var [error, setError] = useState(false);
 
-  useEffect(() => {
+  function fetchPlan() {
     if (!token) return;
-    let cancelled = false;
     setLoading(true);
-    (async () => {
-      try {
-        const res = await fetch(`${API}/api/user/plan`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to load plan');
-        const data = await res.json();
-        if (!cancelled) setPlan(data);
-      } catch (e) {
+    setError(false);
+    fetch(API + '/api/user/plan', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(r) {
+        if (!r.ok) throw new Error('Failed to load plan');
+        return r.json();
+      })
+      .then(function(data) {
+        setPlan(data);
+        setLoading(false);
+      })
+      .catch(function(e) {
         console.error(e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+        setError(true);
+        setLoading(false);
+      });
+  }
+
+  useEffect(function() {
+    fetchPlan();
   }, [token]);
 
   const trialDaysLeft = useMemo(() => {
@@ -184,10 +188,33 @@ export default function BillingPage() {
       });
   };
 
-  if (authStatus === 'loading' || loading || !plan) {
+  if (authStatus === 'loading' || loading) {
     return (
       <DashboardShell title="Billing & plan">
         <PageLoading />
+      </DashboardShell>
+    );
+  }
+
+  if (error || !plan) {
+    return (
+      <DashboardShell title="Billing & plan">
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED}
+            strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+            style={{ margin: '0 auto 14px', display: 'block' }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>
+            Could not load billing info
+          </div>
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 18 }}>
+            The server may be starting up. Please try again.
+          </div>
+          <PrimaryButton onClick={function() { fetchPlan(); }}>Retry</PrimaryButton>
+        </div>
       </DashboardShell>
     );
   }
