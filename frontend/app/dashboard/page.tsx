@@ -119,35 +119,6 @@ function generateSeries(total: number, days: number, seed: number): number[] {
   return raw.map(function(v) { return (v / sum) * total; });
 }
 
-function buildPath(values: number[], width: number, height: number, padding: number): string {
-  if (values.length === 0) return '';
-  var max = Math.max.apply(null, values.concat([1]));
-  var stepX = (width - padding * 2) / Math.max(values.length - 1, 1);
-  var points: [number, number][] = [];
-  for (var i = 0; i < values.length; i++) {
-    var x = padding + i * stepX;
-    var y = height - padding - (values[i] / max) * (height - padding * 2);
-    points.push([x, y]);
-  }
-  var d = 'M ' + points[0][0] + ',' + points[0][1];
-  for (var j = 1; j < points.length; j++) {
-    var x0 = points[j - 1][0];
-    var y0 = points[j - 1][1];
-    var x1 = points[j][0];
-    var y1 = points[j][1];
-    var cx0 = x0 + (x1 - x0) / 2;
-    var cx1 = x1 - (x1 - x0) / 2;
-    d += ' C ' + cx0 + ',' + y0 + ' ' + cx1 + ',' + y1 + ' ' + x1 + ',' + y1;
-  }
-  return d;
-}
-
-function buildAreaPath(values: number[], width: number, height: number, padding: number): string {
-  var line = buildPath(values, width, height, padding);
-  if (!line) return '';
-  return line + ' L ' + (width - padding) + ',' + (height - padding) + ' L ' + padding + ',' + (height - padding) + ' Z';
-}
-
 function HeroChart({
   views,
   leads,
@@ -160,51 +131,67 @@ function HeroChart({
   var days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
   var viewSeries = useMemo(function() { return generateSeries(views, days, 17 + views); }, [views, days]);
   var leadSeries = useMemo(function() { return generateSeries(leads, days, 53 + leads); }, [leads, days]);
-  var width = 1000;
-  var height = 220;
-  var padding = 8;
-  var viewsLine = buildPath(viewSeries, width, height, padding);
-  var viewsArea = buildAreaPath(viewSeries, width, height, padding);
-  var leadsLine = buildPath(leadSeries, width, height, padding);
-  var leadsArea = buildAreaPath(leadSeries, width, height, padding);
+
+  var chartWidth = 960;
+  var chartHeight = 200;
+  var barGap = 2;
+  var groupGap = 4;
+  var groupWidth = (chartWidth - groupGap * days) / days;
+  var barWidth = (groupWidth - barGap) / 2;
+
+  var allValues = viewSeries.concat(leadSeries);
+  var max = Math.max.apply(null, allValues.concat([1]));
 
   return (
-    <svg viewBox={'0 0 ' + width + ' ' + height} preserveAspectRatio="none" width="100%" height={220} style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id="sq-grad-views" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={C.ACCENT} stopOpacity="0.35" />
-          <stop offset="100%" stopColor={C.ACCENT} stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="sq-grad-leads" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={C.GRAY_500} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={C.GRAY_500} stopOpacity="0" />
-        </linearGradient>
-      </defs>
+    <svg viewBox={'0 0 ' + chartWidth + ' ' + (chartHeight + 4)} preserveAspectRatio="none" width="100%" height={chartHeight + 4} style={{ display: 'block' }}>
+      {/* Grid lines */}
       {[0.25, 0.5, 0.75].map(function(p) {
         return (
           <line
             key={p}
             x1={0}
-            x2={width}
-            y1={height * p}
-            y2={height * p}
+            x2={chartWidth}
+            y1={chartHeight - p * (chartHeight - 16)}
+            y2={chartHeight - p * (chartHeight - 16)}
             stroke={C.GRAY_200}
             strokeWidth={0.5}
           />
         );
       })}
-      {leadSeries.some(function(v) { return v > 0; }) && (
-        <>
-          <path d={leadsArea} fill="url(#sq-grad-leads)" />
-          <path d={leadsLine} fill="none" stroke={C.GRAY_500} strokeWidth={1.5} />
-        </>
-      )}
-      {viewSeries.some(function(v) { return v > 0; }) && (
-        <>
-          <path d={viewsArea} fill="url(#sq-grad-views)" />
-          <path d={viewsLine} fill="none" stroke={C.ACCENT} strokeWidth={2} />
-        </>
-      )}
+
+      {/* Grouped bars: views (teal) + leads (gray) */}
+      {viewSeries.map(function(viewVal, idx) {
+        var leadVal = leadSeries[idx] || 0;
+        var gx = idx * (groupWidth + groupGap);
+
+        var viewH = Math.max(1, (viewVal / max) * (chartHeight - 16));
+        var leadH = Math.max(0.5, (leadVal / max) * (chartHeight - 16));
+
+        return (
+          <g key={idx}>
+            <rect
+              x={gx}
+              y={chartHeight - viewH}
+              width={barWidth}
+              height={viewH}
+              rx={Math.min(3, barWidth / 2)}
+              fill={C.ACCENT}
+              opacity={0.85}
+            />
+            {leadVal > 0 && (
+              <rect
+                x={gx + barWidth + barGap}
+                y={chartHeight - leadH}
+                width={barWidth}
+                height={leadH}
+                rx={Math.min(3, barWidth / 2)}
+                fill={C.GRAY_400}
+                opacity={0.6}
+              />
+            )}
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -223,28 +210,28 @@ function OverviewStatCard({
   deltaLabel?: string;
   icon: ReactNode;
 }) {
-  var isUp = delta?.startsWith('+');
-  var isDown = delta?.startsWith('-') || delta?.startsWith('\u2212');
+  var isUp = delta ? delta.startsWith('+') : false;
+  var isDown = delta ? (delta.startsWith('-') || delta.startsWith('\u2212')) : false;
   var deltaColor = isDown ? C.ERROR_700 : isUp ? C.SUCCESS_700 : C.GRAY_500;
 
-  // Generate mini sparkline
+  // Mini sparkline data
+  var sparkSeed = typeof value === 'string' ? value.length * 31 : 42;
   var sparkData = useMemo(function() {
-    var seed = typeof value === 'string' ? value.length * 31 : 42;
     var pts: number[] = [];
-    var s = seed;
+    var s = sparkSeed;
     for (var i = 0; i < 12; i++) {
       s = (s * 9301 + 49297) % 233280;
       pts.push(s / 233280);
     }
     return pts;
-  }, [value]);
+  }, [sparkSeed]);
 
   var sparkMax = Math.max.apply(null, sparkData);
-  var sparkW = 100;
-  var sparkH = 36;
+  var sparkW = 80;
+  var sparkH = 28;
   var sparkPoints = sparkData.map(function(v, i) {
     var x = (i / (sparkData.length - 1)) * sparkW;
-    var y = sparkH - (v / sparkMax) * (sparkH - 8) - 4;
+    var y = sparkH - (v / sparkMax) * (sparkH - 6) - 3;
     return x + ',' + y;
   }).join(' ');
 
@@ -258,71 +245,77 @@ function OverviewStatCard({
         background: C.SURFACE,
         border: '1px solid ' + C.GRAY_200,
         borderRadius: 12,
-        padding: 24,
-        transition: 'box-shadow 0.2s ease',
+        padding: '20px 20px 16px',
+        overflow: 'hidden',
+        minWidth: 0,
       }}
-      onMouseEnter={function(e: any) { e.currentTarget.style.boxShadow = C.SHADOW_MD; }}
-      onMouseLeave={function(e: any) { e.currentTarget.style.boxShadow = 'none'; }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_500, fontFamily: C.FONT }}>{label}</span>
-        <button
-          type="button"
-          style={{
-            width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: C.GRAY_400, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: C.GRAY_500, fontFamily: C.FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: C.ACCENT_LIGHT,
+          border: '1px solid rgba(13,115,119,0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: C.ACCENT, flexShrink: 0,
+        }}>
+          {icon}
+        </div>
       </div>
       <div
         style={{
-          fontSize: 36,
+          fontSize: 30,
           fontWeight: 700,
           color: C.GRAY_900,
-          letterSpacing: '-0.04em',
+          letterSpacing: '-0.03em',
           lineHeight: 1,
           fontVariantNumeric: 'tabular-nums',
-          marginBottom: 12,
+          marginBottom: 10,
           fontFamily: C.FONT,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         {value}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {delta && (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, overflow: 'hidden' }}>
+        {delta ? (
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 4,
-              fontSize: 14,
+              gap: 3,
+              fontSize: 12,
               fontWeight: 500,
               color: deltaColor,
               fontFamily: C.FONT,
+              whiteSpace: 'nowrap',
+              minWidth: 0,
+              flexShrink: 1,
+              overflow: 'hidden',
             }}
           >
             {isUp && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
                 <polyline points="17 6 23 6 23 12"/>
               </svg>
             )}
             {isDown && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
                 <polyline points="17 18 23 18 23 12"/>
               </svg>
             )}
-            {delta}
-            {deltaLabel && <span style={{ color: C.GRAY_500, fontWeight: 400, marginLeft: 2 }}>{deltaLabel}</span>}
+            <span>{delta}</span>
+            {deltaLabel && <span style={{ color: C.GRAY_500, fontWeight: 400 }}>{deltaLabel}</span>}
           </div>
-        )}
-        <svg width={sparkW} height={sparkH} viewBox={'0 0 ' + sparkW + ' ' + sparkH} style={{ flexShrink: 0 }}>
+        ) : <div />}
+        <svg width={sparkW} height={sparkH} viewBox={'0 0 ' + sparkW + ' ' + sparkH} style={{ flexShrink: 0, display: 'block' }}>
           <defs>
             <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor={gradientColor} stopOpacity="0.2"/>
+              <stop offset="0%" stopColor={gradientColor} stopOpacity="0.15"/>
               <stop offset="100%" stopColor={gradientColor} stopOpacity="0"/>
             </linearGradient>
           </defs>
@@ -334,7 +327,7 @@ function OverviewStatCard({
             points={sparkPoints}
             fill="none"
             stroke={lineColor}
-            strokeWidth="2"
+            strokeWidth="1.5"
             strokeLinecap="round"
           />
         </svg>
