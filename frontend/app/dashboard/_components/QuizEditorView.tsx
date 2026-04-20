@@ -318,8 +318,9 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     return () => { cancelled = true; };
   }, [getToken]);
 
-  // Plan gate: only paid plans get block editor
-  var canUseBlocks = ['starter', 'pro', 'agency'].indexOf(userPlan) >= 0;
+  // Plan gate: temporarily unlocked for all plans during development
+  // TODO: Re-enable paid gate before launch: var canUseBlocks = ['starter', 'pro', 'agency'].indexOf(userPlan) >= 0;
+  var canUseBlocks = true;
   var [showBlockGate, setShowBlockGate] = useState(false);
 
   // Block editor mode toggle
@@ -410,41 +411,49 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
       </div>
       {showBlockGate && !canUseBlocks && (
         <div style={{
-          position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-          marginTop: 8, padding: '14px 18px', background: C.SURFACE,
-          border: '1px solid ' + C.GRAY_200, borderRadius: 12,
-          boxShadow: '0 4px 16px rgba(16,24,40,0.1)', zIndex: 30,
-          minWidth: 260, textAlign: 'center',
+          position: 'absolute', top: '100%', right: 0,
+          marginTop: 12, padding: '28px 24px', background: C.SURFACE,
+          border: '1px solid ' + C.GRAY_200, borderRadius: 16,
+          boxShadow: '0 8px 30px rgba(16,24,40,0.12), 0 2px 8px rgba(16,24,40,0.06)', zIndex: 30,
+          width: 340, textAlign: 'center',
         }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 6 }}>
-            Block editor is a paid feature
+          <div style={{
+            width: 48, height: 48, borderRadius: 12,
+            background: 'rgba(13,115,119,0.08)', color: C.ACCENT,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 14px',
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           </div>
-          <div style={{ fontSize: 12, color: C.GRAY_500, marginBottom: 12, lineHeight: 1.5 }}>
-            Upgrade to Starter or above for drag-and-drop blocks, content blocks, logic branching, and more.
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900, marginBottom: 6, letterSpacing: '-0.01em' }}>
+            Unlock the Block Editor
           </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 20, lineHeight: 1.6 }}>
+            Build quizzes visually with drag-and-drop blocks, rich content, logic branching, and a live preview — all without code.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+            <Link
+              href="/dashboard/billing"
+              style={{
+                padding: '11px 20px', fontSize: 14, fontWeight: 700, borderRadius: 10,
+                border: 'none', background: C.ACCENT, color: '#FFFFFF',
+                cursor: 'pointer', fontFamily: C.FONT, textDecoration: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              Upgrade to Starter
+            </Link>
             <button
               type="button"
               onClick={function() { setShowBlockGate(false); }}
               style={{
-                padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8,
-                border: '1px solid ' + C.GRAY_200, background: 'transparent',
+                padding: '9px 14px', fontSize: 13, fontWeight: 500, borderRadius: 10,
+                border: 'none', background: 'transparent',
                 color: C.GRAY_500, cursor: 'pointer', fontFamily: C.FONT,
               }}
             >
               Maybe later
             </button>
-            <Link
-              href="/dashboard/billing"
-              style={{
-                padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8,
-                border: 'none', background: C.ACCENT, color: '#FFFFFF',
-                cursor: 'pointer', fontFamily: C.FONT, textDecoration: 'none',
-                display: 'inline-flex', alignItems: 'center',
-              }}
-            >
-              Upgrade plan
-            </Link>
           </div>
         </div>
       )}
