@@ -12,7 +12,7 @@
  * (which would cause double-scroll inside the shell main column).
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from "@clerk/nextjs";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,8 @@ import { api } from '@/lib/api';
 import { TryFlowInner } from '@/app/tools/quiz-funnel/build/TryFlowInner';
 import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 import { PublishModal } from "./Modals";
+import { QuizBlockEditor } from './QuizBlockEditor';
+import { QuizBlock, legacyToBlocks, blocksToLegacy } from '@/lib/quiz/blocks';
 
 interface DbQuiz {
   id: string;
@@ -316,14 +318,133 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     return () => { cancelled = true; };
   }, [getToken]);
 
-  if (state === 'loading') return <EditorLoading label="Loading editor…" />;
+  // Block editor mode toggle
+  var [editorMode, setEditorMode] = useState<'classic' | 'blocks'>('classic');
+  var [initialBlocksReady, setInitialBlocksReady] = useState(false);
+  var [editorBlocks, setEditorBlocks] = useState<QuizBlock[]>([]);
+  var saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Initialize blocks from quiz data when switching to block editor
+  useEffect(function() {
+    if (quiz && editorMode === 'blocks' && !initialBlocksReady) {
+      var converted = legacyToBlocks({
+        questions: quiz.questions,
+        outcomes: quiz.outcomes,
+        leadGate: quiz.leadGate,
+      });
+      setEditorBlocks(converted);
+      setInitialBlocksReady(true);
+    }
+  }, [quiz, editorMode, initialBlocksReady]);
+
+  // Auto-save block changes with debounce
+  var handleBlocksChange = useCallback(function(blocks: QuizBlock[]) {
+    setEditorBlocks(blocks);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(function() {
+      if (!resolvedId) return;
+      var legacy = blocksToLegacy(blocks);
+      api.updateQuiz(resolvedId, {
+        questions: legacy.questions,
+        outcomes: legacy.outcomes,
+        leadGate: legacy.leadGate,
+      }).catch(function(err: any) {
+        console.error('[block-editor] Auto-save failed:', err);
+      });
+    }, 800);
+  }, [resolvedId]);
+
+  if (state === 'loading') return <EditorLoading label="Loading editor..." />;
   if (state === 'error') return <EditorError message={errorMsg} />;
   if (state === 'empty') return <EditorEmpty />;
-  if (!quiz) return <EditorLoading label="Loading editor…" />;
+  if (!quiz) return <EditorLoading label="Loading editor..." />;
+
+  // Editor mode toggle button
+  var modeToggle = (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 4,
+      padding: 3, background: C.BG, border: '1px solid ' + C.HAIRLINE,
+      borderRadius: 8,
+    }}>
+      <button
+        type="button"
+        onClick={function() { setEditorMode('classic'); }}
+        style={{
+          padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+          border: 'none', cursor: 'pointer',
+          background: editorMode === 'classic' ? C.ACCENT_LIGHT : 'transparent',
+          color: editorMode === 'classic' ? C.ACCENT : C.TEXT_MUTED,
+          fontFamily: '"DM Sans",system-ui,sans-serif',
+        }}
+      >
+        Classic
+      </button>
+      <button
+        type="button"
+        onClick={function() { setEditorMode('blocks'); setInitialBlocksReady(false); }}
+        style={{
+          padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+          border: 'none', cursor: 'pointer',
+          background: editorMode === 'blocks' ? C.ACCENT_LIGHT : 'transparent',
+          color: editorMode === 'blocks' ? C.ACCENT : C.TEXT_MUTED,
+          fontFamily: '"DM Sans",system-ui,sans-serif',
+        }}
+      >
+        Block editor
+      </button>
+    </div>
+  );
+
+  if (editorMode === 'blocks') {
+    return (
+      <DashboardShell
+        title={'Editing: ' + (quiz.title || 'Quiz')}
+        topbarRight={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {modeToggle}
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={publishing}
+              style={{
+                padding: '8px 20px', borderRadius: 8,
+                background: C.ACCENT, color: '#FFFFFF', border: 'none',
+                fontSize: 13, fontWeight: 700, cursor: publishing ? 'wait' : 'pointer',
+                fontFamily: '"DM Sans",system-ui,sans-serif',
+                opacity: publishing ? 0.7 : 1,
+              }}
+            >
+              {publishing ? 'Publishing...' : 'Publish'}
+            </button>
+          </div>
+        }
+        contentPadding="0"
+      >
+        <QuizBlockEditor
+          blocks={editorBlocks}
+          onChange={handleBlocksChange}
+        />
+        {publishError && (
+          <div style={{position:"fixed",top:16,right:16,zIndex:60,background:"#fee",color:"#900",padding:"10px 14px",borderRadius:8,fontSize:13,boxShadow:"0 6px 18px rgba(0,0,0,0.18)"}}>{publishError}</div>
+        )}
+        <PublishModal
+          open={publishModalOpen}
+          quizTitle={(quiz as any)?.title || "Quiz"}
+          slug={publishedSlug}
+          onClose={function() { setPublishModalOpen(false); }}
+        />
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell hideTopbar contentPadding="0">
       <style dangerouslySetInnerHTML={{ __html: SHELL_OVERRIDES }} />
+      <div style={{
+        position: 'fixed', top: 12, right: 16, zIndex: 25,
+      }}>
+        {modeToggle}
+      </div>
       <div className="dash-editor-shell" style={{ minHeight: 'calc(100vh - 0px)' }}>
         <TryFlowInner
           mode="authed"
