@@ -26,6 +26,7 @@ import { Card, PageLoading, PrimaryButton } from './_components/PageShell';
 import { NewQuizModal } from './quizzes/_components/NewQuizModal';
 import { LiveLeadFeed } from './_components/LiveLeadFeed';
 import { SmartRecommendations } from './_components/SmartRecommendations';
+import { QUIZ_TEMPLATE_CATALOG } from '../../lib/quiz/templates';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -920,6 +921,64 @@ function OverviewInner() {
             <PrimaryButton onClick={function() { setNewQuizOpen(true); }}>
               Create your first quiz
             </PrimaryButton>
+          </div>
+        </div>
+      )}
+
+      {/* Quick-start templates */}
+      {isEmptyDashboard && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: C.GRAY_700, fontFamily: C.FONT }}>
+              Or start from a template
+            </h3>
+            <button
+              onClick={function() { setNewQuizOpen(true); }}
+              style={{ background: 'none', border: 'none', color: C.ACCENT, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}
+            >
+              Browse all
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+            {QUIZ_TEMPLATE_CATALOG.slice(0, 4).map(function(tpl) {
+              return (
+                <div
+                  key={tpl.id}
+                  onClick={function() { setNewQuizOpen(true); }}
+                  style={{
+                    background: C.SURFACE,
+                    border: '1px solid ' + C.GRAY_200,
+                    borderRadius: 12,
+                    padding: '16px',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s ease',
+                  }}
+                  onMouseEnter={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; }}
+                  onMouseLeave={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.GRAY_200; }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: 8,
+                      background: C.ACCENT + '10',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                        <path d={tpl.iconPath} />
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: C.ACCENT, background: C.ACCENT + '0D', padding: '2px 6px', borderRadius: 4 }}>
+                      {tpl.category}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>
+                    {tpl.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.GRAY_500, lineHeight: 1.4, fontFamily: C.FONT }}>
+                    {tpl.audience}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

@@ -34,9 +34,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { QUIZ_BUILDER_PATH } from '@/lib/urls';
+import { QUIZ_TEMPLATE_CATALOG } from '@/lib/quiz/templates';
 
 const TRY_URL = QUIZ_BUILDER_PATH;
 const SIGN_IN_URL = '/sign-in';
+const TEMPLATE_SHOWCASE_COUNT = 6; // Show top 6 on landing page
 
 /** Normalize a user-typed URL (tolerates "acme.com", "www.acme.com", etc.). */
 function normalizeUrl(raw: string): string {
@@ -178,6 +180,7 @@ export default function LandingPage() {
             <a href="#features">Features</a>
             <a href="#metrics">Results</a>
             <a href="#pricing">Pricing</a>
+            <a href="#templates">Templates</a>
             <a href="#faq">FAQ</a>
           </nav>
           <div className="ssp-nav-cta">
@@ -585,6 +588,46 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ---------- TEMPLATES ---------- */}
+      <section id="templates" className="ssp-section">
+        <div className="ssp-section-header">
+          <div className="ssp-eyebrow">Templates</div>
+          <h2 className="ssp-h2">Start with a proven template</h2>
+          <p className="ssp-section-sub">
+            Every template is designed for real Squarespace businesses. Pick one, take it for a test drive, then customize it in minutes.
+          </p>
+        </div>
+        <div className="ssp-tpl-grid">
+          {QUIZ_TEMPLATE_CATALOG.slice(0, TEMPLATE_SHOWCASE_COUNT).map((tpl) => (
+            <Link
+              key={tpl.id}
+              href={'/templates/' + tpl.id + '/preview'}
+              className="ssp-tpl-card"
+            >
+              <div className="ssp-tpl-top">
+                <div className="ssp-tpl-icon-wrap">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={tpl.iconPath} />
+                  </svg>
+                </div>
+                <span className="ssp-tpl-cat">{tpl.category}</span>
+              </div>
+              <h3 className="ssp-tpl-name">{tpl.name}</h3>
+              <p className="ssp-tpl-desc">{tpl.description}</p>
+              <span className="ssp-tpl-try">
+                Try this quiz
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              </span>
+            </Link>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
+          <Link href="/templates" className="ssp-btn ssp-btn-outline">
+            Browse all {QUIZ_TEMPLATE_CATALOG.length} templates
+          </Link>
+        </div>
+      </section>
+
       {/* ---------- FAQ ---------- */}
       <section id="faq" className="ssp-section">
         <div className="ssp-section-header">
@@ -775,6 +818,13 @@ const CSS = `
 .ssp-btn-ghost:hover {
   background: rgba(0,0,0,0.04);
   border-color: rgba(0,0,0,0.12);
+}
+.ssp-btn-outline {
+  background: transparent; color: var(--accent);
+  border-color: var(--accent);
+}
+.ssp-btn-outline:hover {
+  background: rgba(13,115,119,0.06);
 }
 
 /* ----- hero ----- */
@@ -1701,5 +1751,58 @@ const CSS = `
 @media (max-width: 820px) {
   .ssp-footer-inner { grid-template-columns: 1fr; gap: 40px; }
   .ssp-footer-cols { grid-template-columns: repeat(2, 1fr); gap: 30px; }
+}
+
+/* ----- template showcase ----- */
+.ssp-tpl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.ssp-tpl-card {
+  display: flex; flex-direction: column;
+  background: #fff; border-radius: 16px; padding: 24px;
+  border: 1px solid #E4E3E0;
+  text-decoration: none; color: inherit;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.ssp-tpl-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  transform: translateY(-2px);
+}
+.ssp-tpl-top {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.ssp-tpl-icon-wrap {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: rgba(13,115,119,0.08);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+}
+.ssp-tpl-cat {
+  font-size: 11px; font-weight: 600;
+  color: var(--accent); background: rgba(13,115,119,0.06);
+  padding: 3px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.ssp-tpl-name {
+  font-size: 16px; font-weight: 700; margin: 0 0 6px;
+  color: var(--fg);
+}
+.ssp-tpl-desc {
+  font-size: 13px; color: var(--muted); line-height: 1.5;
+  margin: 0 0 14px; flex: 1;
+}
+.ssp-tpl-try {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+@media (max-width: 820px) {
+  .ssp-tpl-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 540px) {
+  .ssp-tpl-grid { grid-template-columns: 1fr; }
 }
 `;

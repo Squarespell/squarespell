@@ -794,6 +794,728 @@ function knowledgeQuizBlocks(): QuizBlock[] {
 /*  Template catalog                                                   */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  9. PHOTOGRAPHY SESSION MATCHER — Photographers                      */
+/* ------------------------------------------------------------------ */
+
+function photographySessionBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'What is the occasion for your photos?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Wedding or engagement', score: 4 },
+        { id: uid(), text: 'Family or newborn', score: 3 },
+        { id: uid(), text: 'Personal branding or headshots', score: 2 },
+        { id: uid(), text: 'Event or milestone celebration', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What style of photography do you prefer?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Light and airy with soft tones', score: 4 },
+        { id: uid(), text: 'Bold and moody with deep contrast', score: 3 },
+        { id: uid(), text: 'Natural and candid — as it happens', score: 2 },
+        { id: uid(), text: 'Clean and classic — timeless poses', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Do you prefer indoor or outdoor settings?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Outdoor — golden hour, nature', score: 4 },
+        { id: uid(), text: 'Studio — controlled lighting', score: 3 },
+        { id: uid(), text: 'Urban — city streets, architecture', score: 2 },
+        { id: uid(), text: 'Home or lifestyle setting', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How many people will be in the session?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Just me', score: 1 },
+        { id: uid(), text: 'Me and a partner', score: 2 },
+        { id: uid(), text: 'Small group (3-6 people)', score: 3 },
+        { id: uid(), text: 'Large group (7+)', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is most important to you about the final images?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Gallery-worthy prints for my wall', score: 4 },
+        { id: uid(), text: 'Social media-ready content', score: 2 },
+        { id: uid(), text: 'Authentic memories to look back on', score: 3 },
+        { id: uid(), text: 'Professional images for my business', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your session recommendation is ready',
+      subtext: 'Enter your email to see which session package is perfect for you, plus get our preparation guide for your best photos ever.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your name' },
+      ],
+      buttonLabel: 'See my recommendation',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Signature Collection',
+      description: 'You want a premium, full-experience session with artistic direction, multiple locations, and gallery-quality images. This package includes a pre-session consultation, 2-3 hour shoot, professional styling guidance, and 40+ edited images delivered in an online gallery.',
+      ctaText: 'Book the Signature Collection', ctaUrl: '/sessions/signature',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'Just found my perfect photo session package!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Classic Session',
+      description: 'You are looking for a focused, beautifully shot session that captures exactly what matters. This package includes a 60-90 minute shoot at one location, wardrobe guidance, and 20-25 edited images. Perfect for couples, families, and personal milestones.',
+      ctaText: 'Book the Classic Session', ctaUrl: '/sessions/classic',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'Found the perfect photo session for me!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Mini Session',
+      description: 'You need great images without a big time commitment. This package is a 30-minute focused shoot at one location with 10-15 edited images. Ideal for headshots, social media content, or a quick family update.',
+      ctaText: 'Book a Mini Session', ctaUrl: '/sessions/mini',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'Booked my photo session!',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  10. WEDDING STYLE FINDER — Wedding vendors                          */
+/* ------------------------------------------------------------------ */
+
+function weddingStyleBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'How would you describe your dream wedding vibe?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Romantic and timeless — think candlelight and florals', score: 4 },
+        { id: uid(), text: 'Modern and minimal — clean lines, neutral palette', score: 3 },
+        { id: uid(), text: 'Bohemian and relaxed — outdoor, free-spirited', score: 2 },
+        { id: uid(), text: 'Bold and dramatic — statement pieces, rich colors', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What season feels most like you?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Spring — soft blooms, pastels', score: 4 },
+        { id: uid(), text: 'Summer — warm sun, vibrant greens', score: 3 },
+        { id: uid(), text: 'Autumn — golden tones, harvest textures', score: 2 },
+        { id: uid(), text: 'Winter — moody elegance, deep hues', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What kind of venue are you drawn to?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'A barn or vineyard with rustic charm', score: 2 },
+        { id: uid(), text: 'A sleek hotel or gallery space', score: 3 },
+        { id: uid(), text: 'A garden, beach, or open-air setting', score: 1 },
+        { id: uid(), text: 'A historic estate or ballroom', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Pick the color palette that speaks to you.',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Blush, ivory, and gold', score: 4 },
+        { id: uid(), text: 'White, sage, and eucalyptus', score: 3 },
+        { id: uid(), text: 'Terracotta, burnt orange, and cream', score: 2 },
+        { id: uid(), text: 'Black, burgundy, and emerald', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What matters most to you on the big day?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Every detail is styled and intentional', score: 4 },
+        { id: uid(), text: 'It feels relaxed and genuinely us', score: 2 },
+        { id: uid(), text: 'Our guests have an unforgettable experience', score: 3 },
+        { id: uid(), text: 'The photos capture something real', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your wedding style is ready to reveal',
+      subtext: 'Enter your email to see your personalized wedding style profile, complete with a mood board and vendor recommendations.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your name' },
+      ],
+      buttonLabel: 'Reveal my wedding style',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Classic Romance',
+      description: 'Your wedding style is timeless elegance with a romantic heart. Think cascading floral arrangements, soft candlelight, calligraphy details, and a neutral palette lifted by gold accents. Every element feels curated yet effortless. You value tradition but want it to feel fresh.',
+      ctaText: 'See Classic Romance Inspiration', ctaUrl: '/styles/classic-romance',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'My wedding style is Classic Romance! Take the quiz to find yours.',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Modern Organic',
+      description: 'Your style blends clean modern design with natural textures and tones. Think long farm tables, sculptural floral installations, linen napkins, and a muted earthy palette. You want a celebration that feels designed but never overdone — sophistication meets nature.',
+      ctaText: 'See Modern Organic Inspiration', ctaUrl: '/styles/modern-organic',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'I got Modern Organic! What is your wedding style?',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Free Spirit',
+      description: 'Your wedding is all about feeling, not formulas. Think outdoor ceremonies, wildflower bouquets, mismatched vintage furniture, and barefoot dancing under string lights. You want your guests to feel the love in every unscripted moment.',
+      ctaText: 'See Free Spirit Inspiration', ctaUrl: '/styles/free-spirit',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'My wedding style is Free Spirit! Find yours with this quiz.',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  11. HAIR TREATMENT FINDER — Hair stylists / salons                  */
+/* ------------------------------------------------------------------ */
+
+function hairTreatmentBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'What is your hair type?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Straight — flat, sometimes oily at roots', score: 1 },
+        { id: uid(), text: 'Wavy — loose S-shaped waves', score: 2 },
+        { id: uid(), text: 'Curly — defined spirals or ringlets', score: 3 },
+        { id: uid(), text: 'Coily — tight coils or zig-zag pattern', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is your biggest hair concern right now?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Damage and breakage from heat or color', score: 4 },
+        { id: uid(), text: 'Frizz and lack of definition', score: 3 },
+        { id: uid(), text: 'Thinning or hair loss', score: 2 },
+        { id: uid(), text: 'Dullness and lack of shine', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How much time do you spend styling your hair daily?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Under 5 minutes — wash and go', score: 1 },
+        { id: uid(), text: '5-15 minutes — quick routine', score: 2 },
+        { id: uid(), text: '15-30 minutes — I enjoy the process', score: 3 },
+        { id: uid(), text: '30+ minutes — I go all out', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Have you had any chemical treatments in the past 6 months?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'No treatments at all', score: 1 },
+        { id: uid(), text: 'Just color or highlights', score: 2 },
+        { id: uid(), text: 'Keratin, relaxer, or perm', score: 3 },
+        { id: uid(), text: 'Multiple treatments (color + straightening)', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is your goal after your next salon visit?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Repair and restore my hair health', score: 4 },
+        { id: uid(), text: 'A fresh new color or style', score: 3 },
+        { id: uid(), text: 'More volume and body', score: 2 },
+        { id: uid(), text: 'Low-maintenance effortless hair', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your personalized treatment plan is ready',
+      subtext: 'Get your hair treatment recommendation plus a first-visit discount and aftercare tips.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your name' },
+      ],
+      buttonLabel: 'See my treatment plan',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Deep Repair Treatment',
+      description: 'Your hair needs serious TLC. We recommend starting with a bond-repair treatment like Olaplex or K18 to rebuild internal structure, followed by a moisture-rich deep conditioning mask. This will restore elasticity, reduce breakage, and bring back healthy shine before any color or styling services.',
+      ctaText: 'Book a Repair Consultation', ctaUrl: '/services/deep-repair',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'Found my perfect hair treatment!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Hydration and Definition Service',
+      description: 'Your hair is in decent shape but craving moisture and definition. A professional hydrating treatment combined with a precision cut to remove split ends will transform your texture. We will also recommend a simple 3-product home routine to maintain your results between visits.',
+      ctaText: 'Book a Hydration Session', ctaUrl: '/services/hydration',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'Just got matched with my ideal hair treatment!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Refresh and Enhance',
+      description: 'Your hair is healthy and just needs a refresh. A gloss treatment will amplify shine and vibrancy, and a style consultation will help you make the most of your natural texture with minimal effort. Perfect for maintaining great hair without overprocessing.',
+      ctaText: 'Book a Refresh Appointment', ctaUrl: '/services/refresh',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'Found out exactly what my hair needs!',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  12. COACHING READINESS — Coaches & course creators                  */
+/* ------------------------------------------------------------------ */
+
+function coachingReadinessBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'Where is your business right now?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Pre-launch — still figuring out my offer', score: 1 },
+        { id: uid(), text: 'Early stage — some clients but no consistency', score: 2 },
+        { id: uid(), text: 'Growing — booked out but hitting a ceiling', score: 3 },
+        { id: uid(), text: 'Established — want to scale beyond 1-on-1', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is the biggest thing holding you back?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'I do not have a clear niche or offer', score: 1 },
+        { id: uid(), text: 'I cannot get consistent clients or leads', score: 2 },
+        { id: uid(), text: 'I am trading all my time for money', score: 3 },
+        { id: uid(), text: 'I need systems and a team to grow', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How are you currently getting clients?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Word of mouth only', score: 1 },
+        { id: uid(), text: 'Social media — posting and hoping', score: 2 },
+        { id: uid(), text: 'Some email marketing and referrals', score: 3 },
+        { id: uid(), text: 'A funnel or system that runs on its own', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Do you have an email list?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'No list yet', score: 1 },
+        { id: uid(), text: 'Under 500 subscribers', score: 2 },
+        { id: uid(), text: '500-2,000 subscribers', score: 3 },
+        { id: uid(), text: '2,000+ engaged subscribers', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What would make the biggest difference for you right now?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Clarity — knowing exactly what to offer and to whom', score: 1 },
+        { id: uid(), text: 'Visibility — getting in front of my ideal clients', score: 2 },
+        { id: uid(), text: 'Leverage — packaging my expertise into scalable offers', score: 3 },
+        { id: uid(), text: 'Operations — automating so I can focus on delivery', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your growth roadmap is ready',
+      subtext: 'Get a personalized action plan based on your current stage, plus a free resource to help you take the next step.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your name' },
+      ],
+      buttonLabel: 'Get my roadmap',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Ready to Scale',
+      description: 'You have built a solid foundation and are ready to multiply your impact. Your next move is creating leveraged offers — group programs, courses, or memberships — supported by automated funnels and a small team. You do not need more hustle, you need better systems.',
+      ctaText: 'Explore Scaling Strategies', ctaUrl: '/programs/scale',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'Turns out I am ready to scale! Take the quiz to find your stage.',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Building Momentum',
+      description: 'You are past the starting line and gaining traction. Your priority is building a repeatable client acquisition system — a lead magnet, nurture sequence, and clear offer suite. Once this engine runs, you can focus on refining and expanding without burning out.',
+      ctaText: 'Download the Momentum Playbook', ctaUrl: '/programs/momentum',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'Just discovered my business growth stage!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Foundation First',
+      description: 'You are in the most exciting stage — everything is ahead of you. Right now, clarity is your superpower. Nail your niche, define one signature offer, and get your first 10 paying clients. Do not overthink funnels and systems yet — focus on conversations and delivery.',
+      ctaText: 'Get the Foundation Guide', ctaUrl: '/programs/foundation',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'Starting my coaching journey — just got my personalized roadmap!',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  13. MEAL BUILDER — Restaurants & cafes                              */
+/* ------------------------------------------------------------------ */
+
+function mealBuilderBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'Do you have any dietary preferences?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'No restrictions — I eat everything', score: 1 },
+        { id: uid(), text: 'Vegetarian or plant-forward', score: 2 },
+        { id: uid(), text: 'Gluten-free', score: 3 },
+        { id: uid(), text: 'Vegan', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What kind of flavors do you gravitate toward?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Rich and savory — umami, roasted, caramelized', score: 4 },
+        { id: uid(), text: 'Fresh and bright — citrus, herbs, acidity', score: 3 },
+        { id: uid(), text: 'Warm and spiced — chili, cumin, ginger', score: 2 },
+        { id: uid(), text: 'Simple and clean — quality ingredients, minimal fuss', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How hungry are you right now?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Just a little something', score: 1 },
+        { id: uid(), text: 'A solid meal', score: 2 },
+        { id: uid(), text: 'I could eat two entrees', score: 3 },
+        { id: uid(), text: 'Feed me everything — full tasting experience', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is the occasion?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Casual weeknight dinner', score: 1 },
+        { id: uid(), text: 'Date night', score: 3 },
+        { id: uid(), text: 'Celebration or special occasion', score: 4 },
+        { id: uid(), text: 'Lunch break — need something quick', score: 2 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How adventurous are you feeling today?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Stick to the classics', score: 1 },
+        { id: uid(), text: 'A familiar dish with a twist', score: 2 },
+        { id: uid(), text: 'Something I have never tried before', score: 3 },
+        { id: uid(), text: 'Surprise me — chef knows best', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your menu picks are ready',
+      subtext: 'Enter your email to save your personalized recommendations and get a first-visit perk.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+      ],
+      buttonLabel: 'See my recommendations',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Full Experience',
+      description: 'Go big tonight. We recommend starting with a shareable appetizer, then our most talked-about entree, and finishing with the dessert that keeps people coming back. Add a cocktail pairing for the complete experience. You came here to enjoy yourself — let us make it memorable.',
+      ctaText: 'View Full Experience Menu', ctaUrl: '/menu/experience',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'This restaurant quiz just nailed my perfect meal!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Perfect Plate',
+      description: 'You know what you like and we have just the dish. A well-balanced entree that hits all the right notes, with an optional side or starter to round it out. Simple, satisfying, and exactly what you came for. Check out our seasonal feature — it was made for you.',
+      ctaText: 'See Today\'s Specials', ctaUrl: '/menu/specials',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'Found my perfect meal with this quiz!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Light and Easy',
+      description: 'Something fresh, fast, and flavorful. We recommend one of our lighter plates — a seasonal salad, grain bowl, or one of our house soups. Quick without cutting corners. Perfect for a midday reset or when you want to keep things simple but still eat well.',
+      ctaText: 'Browse Light Bites', ctaUrl: '/menu/light',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'Just found my go-to order!',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  14. STRESS PROFILE — Yoga / meditation / therapists                 */
+/* ------------------------------------------------------------------ */
+
+function stressProfileBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'Where do you feel stress most in your body?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Neck and shoulders — constant tension', score: 4 },
+        { id: uid(), text: 'Stomach and gut — digestive issues or nausea', score: 3 },
+        { id: uid(), text: 'Chest — tightness, shallow breathing', score: 2 },
+        { id: uid(), text: 'Head — tension headaches, racing thoughts', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How would you describe your sleep?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'I fall asleep fine but wake up exhausted', score: 1 },
+        { id: uid(), text: 'My mind races when I try to sleep', score: 2 },
+        { id: uid(), text: 'I sleep okay but never feel rested', score: 3 },
+        { id: uid(), text: 'I sleep well most nights', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'When you are overwhelmed, what do you usually do?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Push through — I will rest later', score: 1 },
+        { id: uid(), text: 'Scroll my phone or distract myself', score: 2 },
+        { id: uid(), text: 'Vent to a friend or family member', score: 3 },
+        { id: uid(), text: 'Take a walk, breathe, or do something physical', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Have you tried any mindfulness practices before?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Never — totally new to this', score: 1 },
+        { id: uid(), text: 'Tried a few apps but nothing stuck', score: 2 },
+        { id: uid(), text: 'I practice occasionally when I remember', score: 3 },
+        { id: uid(), text: 'I have a regular practice', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How much time could you realistically give to self-care each day?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: '5 minutes — I am being honest', score: 1 },
+        { id: uid(), text: '10-15 minutes', score: 2 },
+        { id: uid(), text: '20-30 minutes', score: 3 },
+        { id: uid(), text: '30+ minutes — I will make time', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your stress profile is ready',
+      subtext: 'Get your personalized results plus a free guided practice designed for your specific stress pattern.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your name' },
+      ],
+      buttonLabel: 'See my stress profile',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Grounded Practice',
+      description: 'You already have good self-awareness and are ready for a deeper practice. We recommend a structured program that combines breathwork, restorative yoga, and guided meditation. Your stress pattern responds best to consistency — a 20-minute daily practice will be transformative within weeks.',
+      ctaText: 'Start the Grounded Program', ctaUrl: '/programs/grounded',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'My stress profile says I need the Grounded Practice! Find yours:',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Release Practice',
+      description: 'Your body is carrying more stress than your mind realizes. You need movement-based release — gentle yoga flows, body scanning, and progressive relaxation. Start with our beginner-friendly classes that focus on physical tension release. Even 10 minutes will help you notice a shift.',
+      ctaText: 'Try a Release Class', ctaUrl: '/programs/release',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'Discovered my stress profile — turns out I need more body-based practice!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Micro Practice',
+      description: 'You are in survival mode and need practices that meet you where you are. Forget long sessions — we recommend 5-minute micro-practices you can do anywhere: desk breathing, a two-minute body scan before bed, or a walking meditation on your lunch break. Small shifts lead to big change.',
+      ctaText: 'Get 5-Minute Practices', ctaUrl: '/programs/micro',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'Just found out my stress type — this quiz was eye-opening!',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  15. DESIGN STYLE FINDER — Interior designers                        */
+/* ------------------------------------------------------------------ */
+
+function interiorStyleBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'Which room are you most excited to transform?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Living room — the heart of my home', score: 3 },
+        { id: uid(), text: 'Bedroom — my personal sanctuary', score: 2 },
+        { id: uid(), text: 'Kitchen — where life happens', score: 4 },
+        { id: uid(), text: 'Home office — my productive space', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How do you want your space to feel?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Warm and inviting — layered textures, earthy tones', score: 3 },
+        { id: uid(), text: 'Calm and minimal — clean lines, breathing room', score: 4 },
+        { id: uid(), text: 'Bold and collected — statement pieces, personality', score: 2 },
+        { id: uid(), text: 'Bright and playful — color, pattern, energy', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How do you feel about clutter?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'I love a clean, minimal look', score: 4 },
+        { id: uid(), text: 'Some things on display, mostly tidy', score: 3 },
+        { id: uid(), text: 'I like my collections visible', score: 2 },
+        { id: uid(), text: 'Maximalist — more is more', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is your timeline for this project?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'I am just gathering inspiration', score: 1 },
+        { id: uid(), text: 'Planning to start in the next 3 months', score: 2 },
+        { id: uid(), text: 'Ready to start within a month', score: 3 },
+        { id: uid(), text: 'I need help right now', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is your approximate budget for the space?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Under $2,000 — refreshing what I have', score: 1 },
+        { id: uid(), text: '$2,000-$5,000 — key pieces and updates', score: 2 },
+        { id: uid(), text: '$5,000-$15,000 — full room transformation', score: 3 },
+        { id: uid(), text: '$15,000+ — complete design overhaul', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your design style profile is ready',
+      subtext: 'See your personalized style direction with a curated mood board and product recommendations.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your name' },
+      ],
+      buttonLabel: 'See my style profile',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Scandinavian Modern',
+      description: 'Your style is all about intentional simplicity. Clean lines, natural materials, and a neutral palette with strategic warmth. Think light wood, white walls, linen textures, and a few carefully chosen statement pieces. Every item in the room earns its place. We recommend starting with a consultation to build your design plan.',
+      ctaText: 'Book a Design Consultation', ctaUrl: '/services/consultation',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'My design style is Scandinavian Modern! Find yours:',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Warm Contemporary',
+      description: 'You love modern design but want it to feel lived-in and welcoming. Think textured neutrals, organic shapes, mixed metals, and cozy layers. Your space should look curated but never cold. Our room refresh package is perfect for you — we work with what you have and add key pieces to complete the look.',
+      ctaText: 'Explore Room Refresh', ctaUrl: '/services/room-refresh',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'I am a Warm Contemporary! What is your interior style?',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Eclectic Collector',
+      description: 'Your home tells a story — and you want every chapter visible. You mix eras, origins, and styles fearlessly. Vintage finds next to modern art, bold wallpaper behind a mid-century credenza. The key is editing: our styling session helps you curate your collection so it feels intentional, not chaotic.',
+      ctaText: 'Book a Styling Session', ctaUrl: '/services/styling',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'My design style is Eclectic Collector! Take the quiz:',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  16. SIGNATURE SCENT — Candle / artisan / handmade shops             */
+/* ------------------------------------------------------------------ */
+
+function signatureScentBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'What season makes you feel most like yourself?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Autumn — cozy nights, warm spices', score: 4 },
+        { id: uid(), text: 'Spring — fresh rain, blooming gardens', score: 3 },
+        { id: uid(), text: 'Summer — salty air, sun-warmed skin', score: 2 },
+        { id: uid(), text: 'Winter — crisp air, fireside evenings', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What kind of mood do you want to create?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Relaxing — wind-down, self-care, calm', score: 3 },
+        { id: uid(), text: 'Energizing — fresh, uplifting, motivated', score: 2 },
+        { id: uid(), text: 'Romantic — warm, intimate, soft', score: 4 },
+        { id: uid(), text: 'Grounding — earthy, centered, focused', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How strong do you like your scents?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Very subtle — barely there', score: 1 },
+        { id: uid(), text: 'Soft — noticeable but not overpowering', score: 2 },
+        { id: uid(), text: 'Medium — fills the room nicely', score: 3 },
+        { id: uid(), text: 'Strong — I want to walk into a wall of scent', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Which scent family draws you in?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Floral — rose, jasmine, lavender', score: 3 },
+        { id: uid(), text: 'Woody — cedar, sandalwood, pine', score: 4 },
+        { id: uid(), text: 'Citrus — bergamot, lemon, grapefruit', score: 2 },
+        { id: uid(), text: 'Gourmand — vanilla, cinnamon, caramel', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Where will you burn this candle most?',
+      questionStyle: 'buttons', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Bedroom — end-of-day ritual', score: 4 },
+        { id: uid(), text: 'Living room — everyday ambiance', score: 3 },
+        { id: uid(), text: 'Bathroom — spa vibes', score: 2 },
+        { id: uid(), text: 'Office — focus and calm', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your signature scent is ready',
+      subtext: 'Enter your email to discover your perfect match and get 10% off your first order.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+      ],
+      buttonLabel: 'Reveal my scent',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Fireside Evening',
+      description: 'Your signature scent is warm, rich, and enveloping. Think amber and sandalwood with hints of cinnamon and vanilla. This candle transforms any room into a cozy retreat. It is our best-seller for a reason — once you light it, you will understand.',
+      ctaText: 'Shop Fireside Evening', ctaUrl: '/shop/fireside-evening',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'My signature candle scent is Fireside Evening! Find yours:',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Garden After Rain',
+      description: 'Your signature scent is fresh, green, and alive. Notes of eucalyptus, white tea, and dewy petals. It is the candle equivalent of opening a window on a perfect spring morning. Clean without being clinical, natural without being earthy.',
+      ctaText: 'Shop Garden After Rain', ctaUrl: '/shop/garden-after-rain',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'Took a scent quiz and got Garden After Rain!',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'Citrus and Sun',
+      description: 'Your signature scent is bright, uplifting, and effortlessly fresh. Bergamot and lemon zest meet light jasmine and a whisper of sea salt. This candle is sunshine in a jar — energizing during the day, refreshing in the evening.',
+      ctaText: 'Shop Citrus and Sun', ctaUrl: '/shop/citrus-and-sun',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'My candle match is Citrus and Sun!',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  Template catalog                                                   */
+/* ------------------------------------------------------------------ */
+
 export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
   {
     id: 'product_recommendation',
@@ -882,6 +1604,94 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     iconPath: 'M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z',
     tags: ['education', 'knowledge', 'trivia', 'course', 'authority'],
     blocks: knowledgeQuizBlocks,
+  },
+  {
+    id: 'photography_session',
+    category: 'Creative Services',
+    name: 'Photography Session Matcher',
+    description: 'Help potential clients find the right session type and package based on their occasion, style preferences, and group size.',
+    audience: 'Photographers, portrait studios, wedding photographers',
+    whyItWorks: 'Photographers lose leads who feel overwhelmed by pricing pages. This quiz pre-qualifies and matches clients to the right package, cutting booking friction in half.',
+    iconPath: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2zM12 17a5 5 0 100-10 5 5 0 000 10z',
+    tags: ['photography', 'booking', 'creative', 'sessions', 'portraits'],
+    blocks: photographySessionBlocks,
+  },
+  {
+    id: 'wedding_style',
+    category: 'Wedding',
+    name: 'Wedding Style Finder',
+    description: 'Reveal a couple\'s wedding aesthetic based on their preferences for venues, colors, and vibes. The most shareable quiz for wedding vendors.',
+    audience: 'Wedding planners, florists, venues, wedding photographers',
+    whyItWorks: 'Engaged couples share style quizzes with their wedding party. Average quiz generates 3-5 referral visits per completion — organic growth built into the format.',
+    iconPath: 'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z',
+    tags: ['wedding', 'style', 'planning', 'bridal', 'events'],
+    blocks: weddingStyleBlocks,
+  },
+  {
+    id: 'hair_treatment',
+    category: 'Beauty & Wellness',
+    name: 'Hair Treatment Finder',
+    description: 'Match clients to the right hair service based on their hair type, concerns, and goals. Drives salon bookings by removing decision paralysis.',
+    audience: 'Hair stylists, salons, hair care brands',
+    whyItWorks: 'Salon clients often book the wrong service or delay booking because they are not sure what they need. This quiz eliminates that friction and builds trust before the first visit.',
+    iconPath: 'M20 7h-7.18C11.7 5.21 10 4 8 4a4 4 0 00-4 4c0 2.22 1.21 4.16 3 5.19V20h10v-4h3a2 2 0 002-2V9a2 2 0 00-2-2z',
+    tags: ['hair', 'salon', 'beauty', 'treatment', 'styling'],
+    blocks: hairTreatmentBlocks,
+  },
+  {
+    id: 'coaching_readiness',
+    category: 'Lead Generation',
+    name: 'Coaching Readiness Quiz',
+    description: 'Assess where a potential client is in their business journey and match them to the right coaching program or service tier.',
+    audience: 'Business coaches, life coaches, course creators, consultants',
+    whyItWorks: 'The readiness format pre-qualifies leads by stage. Coaches report 2-3x higher conversion from quiz leads vs. cold leads because prospects self-identify their gap.',
+    iconPath: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
+    tags: ['coaching', 'readiness', 'assessment', 'courses', 'consulting'],
+    blocks: coachingReadinessBlocks,
+  },
+  {
+    id: 'meal_builder',
+    category: 'Food & Drink',
+    name: 'Build Your Perfect Meal',
+    description: 'Guide diners to the right menu items based on dietary needs, flavor preferences, and occasion. Fun, fast, and drives upsells.',
+    audience: 'Restaurants, cafes, catering businesses, meal prep services',
+    whyItWorks: 'Interactive menus increase average order value by 15-20%. Diners who feel guided spend more and leave more satisfied. Plus, the email capture enables repeat-visit marketing.',
+    iconPath: 'M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3',
+    tags: ['restaurant', 'food', 'menu', 'dining', 'cafe'],
+    blocks: mealBuilderBlocks,
+  },
+  {
+    id: 'stress_profile',
+    category: 'Health & Fitness',
+    name: 'Stress Profile Assessment',
+    description: 'Help people understand their stress patterns and match them to the right practice or program. Builds deep trust before the first session.',
+    audience: 'Yoga studios, meditation teachers, therapists, wellness centers',
+    whyItWorks: 'People searching for stress relief are high-intent but unsure where to start. This quiz meets them with empathy and gives a clear next step — conversion rates of 40-50%.',
+    iconPath: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2',
+    tags: ['wellness', 'yoga', 'meditation', 'stress', 'therapy', 'mindfulness'],
+    blocks: stressProfileBlocks,
+  },
+  {
+    id: 'interior_style',
+    category: 'Lifestyle',
+    name: 'Interior Design Style Quiz',
+    description: 'Reveal a visitor\'s design style and connect them with the right service tier. The highest-converting quiz format for interior designers.',
+    audience: 'Interior designers, home decor brands, furniture stores',
+    whyItWorks: 'Design style quizzes are one of the most shared quiz types on Pinterest and Instagram. They drive organic traffic and pre-qualify leads by budget and timeline.',
+    iconPath: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 22V12h6v10',
+    tags: ['interior', 'design', 'home', 'decor', 'style', 'furniture'],
+    blocks: interiorStyleBlocks,
+  },
+  {
+    id: 'signature_scent',
+    category: 'Ecommerce',
+    name: 'Find Your Signature Scent',
+    description: 'Match shoppers to their perfect candle, fragrance, or scented product based on mood, season, and preferences.',
+    audience: 'Candle makers, fragrance brands, artisan shops, bath and body',
+    whyItWorks: 'Scent is subjective and hard to shop for online. This quiz removes guesswork and creates a personal connection to the product — resulting in fewer returns and higher satisfaction.',
+    iconPath: 'M9 18V5l12-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM21 16a3 3 0 11-6 0 3 3 0 016 0z',
+    tags: ['candle', 'scent', 'fragrance', 'artisan', 'handmade', 'ecommerce'],
+    blocks: signatureScentBlocks,
   },
 ];
 
