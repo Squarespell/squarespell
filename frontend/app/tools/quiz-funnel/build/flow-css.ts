@@ -8,30 +8,30 @@
  */
 export const FLOW_CSS = `
   :root {
-    --bg: #F7F7F5;
-    --bg-2: #F5F5F3;
+    --bg: #FFFFFF;
+    --bg-2: #F9FAFB;
     --surface: #FFFFFF;
-    --surface-2: #F5F5F3;
-    --surface-3: #EEEBE6;
-    --border: #E4E3E0;
-    --border-2: #D9D6D0;
-    --border-3: #C9C4BD;
-    --text: #1A1A1A;
-    --text-muted: #6B6B6B;
-    --text-dim: #9A9A9A;
+    --surface-2: #F9FAFB;
+    --surface-3: #F2F4F7;
+    --border: #EAECF0;
+    --border-2: #D0D5DD;
+    --border-3: #98A2B3;
+    --text: #101828;
+    --text-muted: #475467;
+    --text-dim: #98A2B3;
     --accent: #0D7377;
-    --accent-dim: rgba(13,115,119,0.12);
-    --danger: #ff6b6b;
-    --success: #34d399;
+    --accent-dim: rgba(13,115,119,0.08);
+    --danger: #F04438;
+    --success: #12B76A;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
-    --radius: 14px;
-    --radius-lg: 20px;
+    --radius: 12px;
+    --radius-lg: 16px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
   }
@@ -77,23 +77,23 @@ export const FLOW_CSS = `
 
   /* ---- Buttons ---- */
   .btn {
-    border-radius: 100px;
-    padding: 11px 22px;
-    font-size: 14px;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
     font-weight: 600;
-    transition: all 0.25s var(--ease);
+    transition: all 0.15s var(--ease);
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     white-space: nowrap;
   }
-  .btn-primary { background: var(--accent); color: #FFFFFF; }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(13,115,119,0.25); }
-  .btn-primary:disabled { background: var(--surface-2); color: var(--text-dim); cursor: not-allowed; box-shadow: none; transform: none; }
-  .btn-ghost { color: var(--text-muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); border-color: var(--border-2); }
-  .btn-dark { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-  .btn-dark:hover { border-color: var(--border-2); background: var(--surface-2); }
+  .btn-primary { background: var(--accent); color: #FFFFFF; box-shadow: 0 1px 2px rgba(16,24,40,0.05); }
+  .btn-primary:hover { background: #0B6165; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ghost { color: var(--text-muted); border: 1px solid var(--border); background: var(--surface); box-shadow: 0 1px 2px rgba(16,24,40,0.05); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-2); background: var(--bg-2); }
+  .btn-dark { background: var(--surface); color: var(--text); border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(16,24,40,0.05); }
+  .btn-dark:hover { border-color: var(--border-2); background: var(--bg-2); }
   .btn-block { width: 100%; justify-content: center; padding: 14px 22px; }
   .btn-lg { padding: 15px 32px; font-size: 15px; }
 
@@ -419,9 +419,10 @@ export const FLOW_CSS = `
   /* ============ STAGE 3: Editor ============ */
   .s3-top {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 28px; border-bottom: 1px solid var(--border); gap: 24px;
+    padding: 14px 24px; border-bottom: 1px solid var(--border); gap: 16px;
+    background: var(--surface);
   }
-  .s3-top-left { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1; }
+  .s3-top-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
   .icon-btn {
     width: 38px; height: 38px; border-radius: 10px;
     background: var(--surface); border: 1px solid var(--border);
@@ -432,14 +433,14 @@ export const FLOW_CSS = `
   .icon-btn:hover { color: var(--text); border-color: var(--border-2); background: var(--surface-2); }
   .icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .s3-title-wrap { display: flex; flex-direction: column; min-width: 0; }
-  .s3-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
-  .s3-title-meta { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .s3-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; color: var(--text); }
+  .s3-title-meta { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
   .live-pill {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 3px 10px;
-    background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3);
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px;
+    background: rgba(18,183,106,0.08); border: 1px solid rgba(18,183,106,0.2);
     border-radius: 100px; color: var(--success);
-    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
   }
   .live-pill::before {
     content: ''; width: 6px; height: 6px; border-radius: 50%;
@@ -449,13 +450,13 @@ export const FLOW_CSS = `
     0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
     50% { box-shadow: 0 0 0 5px rgba(52,211,153,0); }
   }
-  .s3-saved { font-size: 12px; color: var(--text-dim); }
-  .s3-top-right { display: flex; gap: 10px; flex-shrink: 0; align-items: center; }
+  .s3-saved { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+  .s3-top-right { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
   .s3-body { display: grid; grid-template-columns: 1fr 380px; height: calc(100vh - 90px); overflow: hidden; }
   .s3-main { overflow-y: auto; overflow-x: hidden; height: 100%; width: 100%; }
   .s3-main-inner { padding: 32px 40px 80px; max-width: 880px; width: 100%; margin: 0 auto; }
-  .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-  .s3-main-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+  .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .s3-main-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
   .s3-count {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 13px; color: var(--text-muted);
@@ -478,13 +479,12 @@ export const FLOW_CSS = `
   }
   .qc {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); margin-bottom: 24px;
-    transition: all 0.25s var(--ease); overflow: hidden;
-    border-left: 3px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 16px;
+    transition: all 0.2s var(--ease); overflow: hidden;
     animation: qcEnter 0.4s ease both;
   }
-  .qc:hover { border-color: var(--border-2); border-left-color: rgba(13,115,119,0.3); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-  .qc.selected { border-color: var(--accent); border-left-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,115,119,0.08), 0 8px 32px rgba(0,0,0,0.2); }
+  .qc:hover { border-color: var(--border-2); box-shadow: 0 1px 3px rgba(16,24,40,0.1), 0 1px 2px rgba(16,24,40,0.06); }
+  .qc.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,115,119,0.08), 0 4px 12px rgba(16,24,40,0.08); }
   @keyframes qcEnter {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
@@ -527,9 +527,9 @@ export const FLOW_CSS = `
   .qc.selected .qc-body { animation: fadeUp 0.25s ease; }
   .qc-opt-row {
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 14px;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 10px; font-size: 13px; margin-bottom: 8px;
+    padding: 9px 12px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13px; margin-bottom: 6px;
     transition: all 0.15s var(--ease);
   }
   .qc-opt-row:hover { border-color: var(--border-2); background: rgba(0,0,0,0.02); }
@@ -573,21 +573,21 @@ export const FLOW_CSS = `
   .add-q-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   .s3-side {
     background: var(--bg-2); border-left: 1px solid var(--border);
-    padding: 24px 20px 60px;
+    padding: 24px 24px 60px;
     height: 100%; overflow-y: auto; overflow-x: hidden;
     min-width: 0;
   }
-  .s3-side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-  .s3-side-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
+  .s3-side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .s3-side-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
   .s3-side-close {
     width: 28px; height: 28px; border-radius: 8px;
     background: var(--surface); border: 1px solid var(--border);
     color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
   .s3-side-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
-  .edit-group { margin-bottom: 24px; }
+  .edit-group { margin-bottom: 20px; }
   .edit-group-label {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
     text-transform: uppercase; color: var(--text-dim);
     margin-bottom: 10px;
     display: flex; align-items: center; justify-content: space-between;
@@ -595,11 +595,28 @@ export const FLOW_CSS = `
   .field-input, .field-textarea {
     width: 100%; background: var(--surface);
     border: 1px solid var(--border); color: var(--text);
-    font-size: 14px; border-radius: 10px; padding: 12px 14px;
+    font-size: 14px; border-radius: 8px; padding: 10px 14px;
     outline: none; transition: border-color 0.2s var(--ease); resize: none;
   }
-  .field-input:focus, .field-textarea:focus { border-color: var(--accent); }
-  .field-textarea { min-height: 76px; line-height: 1.4; }
+  .field-input:focus, .field-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,115,119,0.1); }
+  .field-textarea { min-height: 76px; line-height: 1.5; }
+  .type-toggle-row {
+    display: flex; gap: 6px;
+  }
+  .type-toggle-btn {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 12px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s var(--ease);
+    font-family: inherit;
+  }
+  .type-toggle-btn:hover { border-color: var(--border-2); color: var(--text); }
+  .type-toggle-btn.active {
+    border-color: var(--accent); background: rgba(13,115,119,0.06);
+    color: var(--accent); font-weight: 600;
+  }
+  .type-toggle-btn svg { flex-shrink: 0; }
   .answer-block { margin-bottom: 12px; }
   .answer-row { display: flex; align-items: center; gap: 6px; }
   .answer-branch-row {
@@ -621,8 +638,9 @@ export const FLOW_CSS = `
     flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border);
     color: var(--text); font-size: 13px;
     border-radius: 8px; padding: 9px 12px; outline: none;
+    text-overflow: ellipsis;
   }
-  .answer-input:focus { border-color: var(--accent); }
+  .answer-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,115,119,0.1); }
   .answer-del {
     width: 30px; height: 30px; border-radius: 8px;
     background: var(--surface); border: 1px solid var(--border);
@@ -704,14 +722,14 @@ export const FLOW_CSS = `
   }
   .s3-shortcut-hint {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    padding: 10px 14px; margin-bottom: 14px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    font-size: 12px; color: var(--text-dim);
+    padding: 8px 14px; margin-bottom: 16px;
+    background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12px; color: var(--text-dim); font-weight: 500;
   }
   .s3-shortcut-hint kbd {
-    display: inline-block; padding: 2px 7px;
-    background: var(--bg); border: 1px solid var(--border-2); border-bottom-width: 2px;
-    border-radius: 5px; font-family: inherit; font-size: 11px; color: var(--text-muted);
+    display: inline-block; padding: 2px 6px;
+    background: var(--surface); border: 1px solid var(--border); border-bottom-width: 2px;
+    border-radius: 4px; font-family: inherit; font-size: 11px; color: var(--text-muted);
     font-weight: 600;
   }
   .s3-shortcut-hint .dot-sep { color: var(--border-2); }

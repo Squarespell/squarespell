@@ -459,6 +459,11 @@ export function TryFlowInner({
     const qs = quiz.questions.map((q, i) => i === qi ? { ...q, text } : q);
     updateQuiz({ ...quiz, questions: qs });
   };
+  var updateQuestionType = function(qi: number, type: string) {
+    if (!quiz) return;
+    var qs = quiz.questions.map(function(q, i) { return i === qi ? { ...q, type: type } : q; });
+    updateQuiz({ ...quiz, questions: qs });
+  };
   const updateOptionText = (qi: number, oi: number, text: string) => {
     if (!quiz) return;
     const qs = quiz.questions.map((q, i) => {
@@ -1421,6 +1426,28 @@ export function TryFlowInner({
                       value={currentQ.text}
                       onChange={(e) => updateQuestionText(selectedIdx, e.target.value)}
                     />
+                  </div>
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">Type</div>
+                    <div className="type-toggle-row">
+                      <button
+                        type="button"
+                        className={'type-toggle-btn' + (currentQ.type !== 'multiple' ? ' active' : '')}
+                        onClick={function() { updateQuestionType(selectedIdx, 'single'); }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                        Single select
+                      </button>
+                      <button
+                        type="button"
+                        className={'type-toggle-btn' + (currentQ.type === 'multiple' ? ' active' : '')}
+                        onClick={function() { updateQuestionType(selectedIdx, 'multiple'); }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 12l2 2 4-4"/></svg>
+                        Multi select
+                      </button>
+                    </div>
                   </div>
 
                   <div className="edit-group">

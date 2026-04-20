@@ -370,7 +370,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
         type="button"
         onClick={function() { setEditorMode('classic'); }}
         style={{
-          padding: '5px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+          padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
           border: 'none', cursor: 'pointer',
           background: editorMode === 'classic' ? C.SURFACE : 'transparent',
           color: editorMode === 'classic' ? C.GRAY_900 : C.GRAY_500,
@@ -384,7 +384,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
         type="button"
         onClick={function() { setEditorMode('blocks'); setInitialBlocksReady(false); }}
         style={{
-          padding: '5px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+          padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
           border: 'none', cursor: 'pointer',
           background: editorMode === 'blocks' ? C.SURFACE : 'transparent',
           color: editorMode === 'blocks' ? C.GRAY_900 : C.GRAY_500,
