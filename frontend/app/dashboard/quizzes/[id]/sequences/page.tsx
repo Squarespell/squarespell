@@ -1,9 +1,13 @@
 'use client';
 import { EmptyState, PrimaryButton } from '@/app/dashboard/_components/PageShell';
+import { DashboardShell, DASHBOARD_COLORS as C } from '@/app/dashboard/_components/DashboardShell';
+import { useDashboardAuth } from '@/app/dashboard/_components/useDashboardAuth';
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Plus, Trash2, Edit2, ChevronDown } from 'lucide-react';
+
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 interface Email {
   delay_days: number;
@@ -37,9 +41,10 @@ interface Outcome {
 }
 
 export default function SequencesPage() {
-  const params = useParams();
-  const router = useRouter();
-  const quizId = params.id as string;
+  var params = useParams();
+  var router = useRouter();
+  var quizId = params.id as string;
+  var { token } = useDashboardAuth();
 
   const [sequences, setSequences] = useState<EmailSequence[]>([]);
   const [quiz, setQuiz] = useState<any>(null);
@@ -63,25 +68,26 @@ export default function SequencesPage() {
   });
 
   // Fetch quiz and sequences
-  useEffect(() => {
-    fetchQuizAndSequences();
-  }, [quizId]);
+  useEffect(function() {
+    if (token) fetchQuizAndSequences();
+  }, [quizId, token]);
 
-  const fetchQuizAndSequences = async () => {
+  var fetchQuizAndSequences = async function() {
     try {
       setLoading(true);
       setError(null);
+      var headers: Record<string, string> = { Authorization: 'Bearer ' + token };
 
       // Fetch quiz
-      const quizRes = await fetch(`/api/quizzes/${quizId}`);
+      var quizRes = await fetch(API + '/api/quizzes/' + quizId, { headers: headers });
       if (!quizRes.ok) throw new Error('Failed to fetch quiz');
-      const quizData = await quizRes.json();
+      var quizData = await quizRes.json();
       setQuiz(quizData);
 
       // Fetch sequences
-      const seqRes = await fetch(`/api/quizzes/${quizId}/sequences`);
+      var seqRes = await fetch(API + '/api/quizzes/' + quizId + '/sequences', { headers: headers });
       if (!seqRes.ok) throw new Error('Failed to fetch sequences');
-      const seqData = await seqRes.json();
+      var seqData = await seqRes.json();
       setSequences(seqData || []);
     } catch (err: any) {
       setError(err.message);
@@ -163,12 +169,14 @@ export default function SequencesPage() {
 
     try {
       setError(null);
-      const method = editingId ? 'PUT' : 'POST';
-      const endpoint = editingId ? `/api/quizzes/${quizId}/sequences/${editingId}` : `/api/quizzes/${quizId}/sequences`;
+      var method = editingId ? 'PUT' : 'POST';
+      var endpoint = editingId
+        ? API + '/api/quizzes/' + quizId + '/sequences/' + editingId
+        : API + '/api/quizzes/' + quizId + '/sequences';
 
-      const res = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
+      var res = await fetch(endpoint, {
+        method: method,
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify(formData),
       });
 
@@ -209,7 +217,10 @@ export default function SequencesPage() {
     if (!confirm('Are you sure you want to delete this sequence?')) return;
 
     try {
-      const res = await fetch(`/api/quizzes/${quizId}/sequences/${seqId}`, { method: 'DELETE' });
+      var res = await fetch(API + '/api/quizzes/' + quizId + '/sequences/' + seqId, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + token },
+      });
       if (!res.ok) throw new Error('Failed to delete');
       await fetchQuizAndSequences();
     } catch (err: any) {
@@ -247,32 +258,42 @@ export default function SequencesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
-      </div>
+      <DashboardShell title="Email Sequences">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 80 }}>
+          <div style={{ width: 28, height: 28, border: '3px solid ' + C.BORDER, borderTopColor: C.ACCENT, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-6">
-      <div className="max-w-6xl mx-auto">
+    <DashboardShell title="Email Sequences">
+      <div style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
           <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-slate-800 rounded-lg transition"
+            onClick={function() { router.back(); }}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: C.ELEVATED, border: '1px solid ' + C.BORDER,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
           >
-            <ArrowLeft className="w-5 h-5 text-slate-400" />
+            <ArrowLeft size={16} color={C.TEXT_MUTED} />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-white">{quiz?.title}</h1>
-            <p className="text-slate-400 mt-1">Email Sequences</p>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.TEXT }}>{quiz?.title || 'Quiz'}</h1>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: C.TEXT_MUTED }}>Email Sequences</p>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-950 border border-red-800 rounded-lg p-4 mb-6">
-            <p className="text-red-200">{error}</p>
+          <div style={{
+            background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.2)',
+            borderRadius: 10, padding: '12px 16px', marginBottom: 18,
+            fontSize: 13, color: '#cc3333',
+          }}>
+            {error}
           </div>
         )}
 
@@ -587,6 +608,6 @@ export default function SequencesPage() {
           )}
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
