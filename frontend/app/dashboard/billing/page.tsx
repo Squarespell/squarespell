@@ -25,11 +25,12 @@ import {
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type UserPlan = {
-  plan: 'free' | 'trial' | 'starter' | 'pro' | 'agency';
+  plan: 'free' | 'trial' | 'starter' | 'growth' | 'pro' | 'agency';
   quiz_count: number;
-  limits: { quizzes: number; leads: number };
+  limits: { quizzes: number; leads: number; emails: number };
   trial_ends_at: string | null;
   email: string;
+  features?: { removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string };
 };
 
 const PLAN_CATALOG: Array<{
@@ -41,28 +42,28 @@ const PLAN_CATALOG: Array<{
   features: string[];
 }> = [
   {
-    id: 'starter',
-    name: 'Starter',
-    monthlyPrice: 19,
-    yearlyPrice: 180,
-    tagline: 'Perfect for a single Squarespace site',
-    features: ['5 quizzes', '500 leads / month', 'All integrations', 'Email support'],
+    id: 'growth',
+    name: 'Growth',
+    monthlyPrice: 29,
+    yearlyPrice: 276,
+    tagline: 'For coaches and consultants scaling their leads',
+    features: ['10 quizzes', '2,500 leads / month', '2,500 emails / month', 'Remove branding', 'Zapier integration'],
   },
   {
     id: 'pro',
     name: 'Pro',
-    monthlyPrice: 39,
-    yearlyPrice: 372,
-    tagline: 'For serious lead generation',
-    features: ['20 quizzes', '5,000 leads / month', 'Priority support', 'Remove "Powered by" badge'],
+    monthlyPrice: 79,
+    yearlyPrice: 756,
+    tagline: 'For serious lead generation at scale',
+    features: ['50 quizzes', '10,000 leads / month', '10,000 emails / month', 'A/B testing', 'Advanced analytics'],
   },
   {
     id: 'agency',
     name: 'Agency',
-    monthlyPrice: 79,
-    yearlyPrice: 756,
+    monthlyPrice: 199,
+    yearlyPrice: 1908,
     tagline: 'White-label for client work',
-    features: ['Unlimited quizzes', 'Unlimited leads', 'Client sub-accounts', 'Dedicated support'],
+    features: ['Unlimited quizzes', 'Unlimited leads', '25,000 emails / month', 'Multi-site management', 'Dedicated support'],
   },
 ];
 
@@ -157,7 +158,7 @@ export default function BillingPage() {
   }, [plan]);
 
   const isTrial = plan?.plan === 'trial' || plan?.plan === 'free';
-  const isPaid = plan && !isTrial;
+  const isPaid = plan && !isTrial && plan.plan !== 'starter';
 
   const openPortal = () => {
     if (!token) return;
@@ -255,7 +256,8 @@ export default function BillingPage() {
 
           <div style={{ display: 'grid', gap: 18 }}>
             <UsageBar label="Quizzes" used={plan.quiz_count} limit={plan.limits.quizzes} />
-            <UsageBar label="Leads (lifetime)" used={0} limit={plan.limits.leads} />
+            <UsageBar label="Leads (monthly)" used={0} limit={plan.limits.leads} />
+            <UsageBar label="Emails (monthly)" used={0} limit={plan.limits.emails || 50} />
           </div>
         </Card>
 
@@ -369,7 +371,7 @@ export default function BillingPage() {
                           gap: 8,
                         }}
                       >
-                        <span style={{ color: C.ACCENT, fontWeight: 700, flexShrink: 0 }}>✓</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
                         {f}
                       </li>
                     ))}

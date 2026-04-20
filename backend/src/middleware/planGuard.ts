@@ -10,16 +10,17 @@ const supabase = createClient(
 
 const TRIAL_DAYS = 7;
 
-export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number }> = {
-  free:    { quizzes: 999,      leads: 999999 },
-  trial:   { quizzes: 999,      leads: 999999 },
-  starter: { quizzes: 5,        leads: 500 },
-  pro:     { quizzes: 20,       leads: 5000 },
-  agency:  { quizzes: Infinity, leads: Infinity },
+export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number; emails: number; removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string }> = {
+  free:    { quizzes: 1,        leads: 100,      emails: 50,    removeBranding: false, abTesting: false, zapier: false, analytics: 'basic' },
+  trial:   { quizzes: 3,        leads: 500,      emails: 200,   removeBranding: false, abTesting: false, zapier: false, analytics: 'basic' },
+  starter: { quizzes: 5,        leads: 500,      emails: 500,   removeBranding: false, abTesting: false, zapier: false, analytics: 'basic' },
+  growth:  { quizzes: 10,       leads: 2500,     emails: 2500,  removeBranding: true,  abTesting: false, zapier: true,  analytics: 'standard' },
+  pro:     { quizzes: 50,       leads: 10000,    emails: 10000, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced' },
+  agency:  { quizzes: Infinity, leads: Infinity, emails: 25000, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced' },
 };
 
 export function getPlanLimits(plan: string) {
-  return PLAN_LIMITS[plan] ?? PLAN_LIMITS['starter'];
+  return PLAN_LIMITS[plan] ?? PLAN_LIMITS['free'];
 }
 
 function isTrialActive(createdAt: string): boolean {

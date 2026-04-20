@@ -70,7 +70,7 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
     }
 
     const plan = user.plan ?? 'free';
-    const canRemoveBranding = ['pro', 'agency'].includes(plan);
+    const canRemoveBranding = ['growth', 'pro', 'agency'].includes(plan);
 
     // Build updates
     const allowed = ['title', 'questions', 'outcomes', 'branding', 'settings', 'mode'];

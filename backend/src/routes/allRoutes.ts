@@ -1337,11 +1337,14 @@ userRouter.use(requireAuth, attachUser);
 userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications').eq('id', req.dbUserId).single();
   if (!user) return res.status(404).json({ error: 'Not found' });
-  const plan = user.plan || 'trial';
-  const trialEndsAt = (plan === 'free' || plan === 'trial') && user.created_at
+  var plan = user.plan || 'free';
+  // Map legacy 'starter' to 'free' for users who never paid
+  if (plan === 'starter' && !user.plan) plan = 'free';
+  var trialEndsAt = (plan === 'free' || plan === 'trial') && user.created_at
     ? new Date(new Date(user.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
     : null;
-  res.json({ plan, quiz_count: user.quiz_count, limits: getPlanLimits(plan), trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false });
+  var limits = getPlanLimits(plan);
+  res.json({ plan: plan, quiz_count: user.quiz_count, limits: limits, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics } });
 });
 userRouter.post('/notifications', async (req: AuthenticatedRequest, res) => {
   const { enabled } = req.body;
@@ -1388,7 +1391,7 @@ userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const PRICE_IDS: Record<string,Record<string,string>> = { starter: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
+const PRICE_IDS: Record<string,Record<string,string>> = { growth: { monthly: process.env.STRIPE_GROWTH_PRICE_ID!, yearly: process.env.STRIPE_GROWTH_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
 
 export const stripeRouter = Router();
 stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {

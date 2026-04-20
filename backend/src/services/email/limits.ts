@@ -1,2 +1,2 @@
-export const EMAIL_LIMITS: Record<string, number> = { starter: 500, pro: 5000, agency: 25000 };
-export function limitFor(plan?: string) { return EMAIL_LIMITS[plan || 'starter'] ?? 500; }
+export const EMAIL_LIMITS: Record<string, number> = { free: 50, trial: 200, starter: 500, growth: 2500, pro: 10000, agency: 25000 };
+export function limitFor(plan?: string) { return EMAIL_LIMITS[plan || 'free'] ?? 50; }
