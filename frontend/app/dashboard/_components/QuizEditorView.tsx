@@ -362,19 +362,20 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   // Editor mode toggle button
   var modeToggle = (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 4,
-      padding: 3, background: C.BG, border: '1px solid ' + C.HAIRLINE,
+      display: 'flex', alignItems: 'center', gap: 2,
+      padding: 3, background: C.GRAY_100, border: '1px solid ' + C.GRAY_200,
       borderRadius: 8,
     }}>
       <button
         type="button"
         onClick={function() { setEditorMode('classic'); }}
         style={{
-          padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+          padding: '5px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6,
           border: 'none', cursor: 'pointer',
-          background: editorMode === 'classic' ? C.ACCENT_LIGHT : 'transparent',
-          color: editorMode === 'classic' ? C.ACCENT : C.TEXT_MUTED,
-          fontFamily: '"DM Sans",system-ui,sans-serif',
+          background: editorMode === 'classic' ? C.SURFACE : 'transparent',
+          color: editorMode === 'classic' ? C.GRAY_900 : C.GRAY_500,
+          fontFamily: C.FONT,
+          boxShadow: editorMode === 'classic' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
         }}
       >
         Classic
@@ -383,11 +384,12 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
         type="button"
         onClick={function() { setEditorMode('blocks'); setInitialBlocksReady(false); }}
         style={{
-          padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+          padding: '5px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6,
           border: 'none', cursor: 'pointer',
-          background: editorMode === 'blocks' ? C.ACCENT_LIGHT : 'transparent',
-          color: editorMode === 'blocks' ? C.ACCENT : C.TEXT_MUTED,
-          fontFamily: '"DM Sans",system-ui,sans-serif',
+          background: editorMode === 'blocks' ? C.SURFACE : 'transparent',
+          color: editorMode === 'blocks' ? C.GRAY_900 : C.GRAY_500,
+          fontFamily: C.FONT,
+          boxShadow: editorMode === 'blocks' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
         }}
       >
         Block editor
@@ -410,7 +412,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
                 padding: '8px 20px', borderRadius: 8,
                 background: C.ACCENT, color: '#FFFFFF', border: 'none',
                 fontSize: 13, fontWeight: 700, cursor: publishing ? 'wait' : 'pointer',
-                fontFamily: '"DM Sans",system-ui,sans-serif',
+                fontFamily: C.FONT,
                 opacity: publishing ? 0.7 : 1,
               }}
             >
@@ -437,14 +439,15 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     );
   }
 
+  // Inject mode toggle into s3-top-right via CSS + portal-style approach
+  var modeToggleOverride = `
+    ${SHELL_OVERRIDES}
+    .dash-editor-shell .s3-top-right { gap: 8px; }
+  `;
+
   return (
     <DashboardShell hideTopbar contentPadding="0">
-      <style dangerouslySetInnerHTML={{ __html: SHELL_OVERRIDES }} />
-      <div style={{
-        position: 'fixed', top: 12, right: 16, zIndex: 25,
-      }}>
-        {modeToggle}
-      </div>
+      <style dangerouslySetInnerHTML={{ __html: modeToggleOverride }} />
       <div className="dash-editor-shell" style={{ minHeight: 'calc(100vh - 0px)' }}>
         <TryFlowInner
           mode="authed"
@@ -455,6 +458,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
           initialStage={3}
           onPublish={handlePublish}
           plan={userPlan}
+          extraTopbarRight={modeToggle}
         />
       </div>
       {publishError && (

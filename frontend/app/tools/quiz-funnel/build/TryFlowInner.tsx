@@ -153,6 +153,8 @@ export interface TryFlowInnerProps {
   onPublish?: () => Promise<boolean>;
   /** User's current plan - used to gate paid-only features like branding removal. */
   plan?: 'trial' | 'starter' | 'pro' | 'agency' | 'free';
+  /** Extra ReactNode to render at the start of .s3-top-right (e.g. mode toggle). */
+  extraTopbarRight?: React.ReactNode;
 }
 
 export function TryFlowInner({
@@ -164,6 +166,7 @@ export function TryFlowInner({
   initialStage,
   onPublish,
   plan = 'trial',
+  extraTopbarRight,
 }: TryFlowInnerProps = {}) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -1289,6 +1292,7 @@ export function TryFlowInner({
             </div>
           </div>
           <div className="s3-top-right">
+            {extraTopbarRight}
             {mode === 'authed' && (
               <button
                 className="btn btn-ghost"
