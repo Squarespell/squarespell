@@ -245,22 +245,25 @@ export default function BrandKitPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [scraping, setScraping] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  var [dirty, setDirty] = useState(false);
+  var [loadError, setLoadError] = useState(false);
 
-  const loadKit = useCallback(async () => {
+  var loadKit = useCallback(function() {
     if (!token) return;
     setLoading(true);
-    try {
-      const data = await api.getBrandKit();
-      setKit(data || {});
-    } catch {
-      setKit({});
-    } finally {
-      setLoading(false);
-    }
+    setLoadError(false);
+    api.getBrandKit()
+      .then(function(data: any) {
+        setKit(data || {});
+        setLoading(false);
+      })
+      .catch(function() {
+        setLoadError(true);
+        setLoading(false);
+      });
   }, [token]);
 
-  useEffect(() => { loadKit(); }, [loadKit]);
+  useEffect(function() { loadKit(); }, [loadKit]);
 
   async function save() {
     if (!kit) return;
@@ -314,7 +317,30 @@ export default function BrandKitPage() {
     );
   }
 
-  const hasKit = kit && (kit.site_name || kit.font_family || (kit.colors && Object.values(kit.colors).some(Boolean)));
+  if (loadError) {
+    return (
+      <DashboardShell title="Brand kit">
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED}
+            strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+            style={{ margin: '0 auto 14px', display: 'block' }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>
+            Could not load brand kit
+          </div>
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 18 }}>
+            The server may be starting up. Please try again.
+          </div>
+          <PrimaryButton onClick={function() { loadKit(); }}>Retry</PrimaryButton>
+        </div>
+      </DashboardShell>
+    );
+  }
+
+  var hasKit = kit && (kit.site_name || kit.font_family || (kit.colors && Object.values(kit.colors).some(Boolean)));
 
   return (
     <DashboardShell title="Brand kit">

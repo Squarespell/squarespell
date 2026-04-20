@@ -54,51 +54,49 @@ function pct(n: number): string {
 }
 
 export default function AnalyticsPage() {
-  const { token, status: authStatus } = useDashboardAuth();
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
+  var { token, status: authStatus } = useDashboardAuth();
+  var [rows, setRows] = useState<Row[]>([]);
+  var [loading, setLoading] = useState(true);
+  var [error, setError] = useState(false);
 
-  useEffect(() => {
+  function fetchData() {
     if (!token) return;
-    let cancelled = false;
     setLoading(true);
+    setError(false);
 
-    (async () => {
-      try {
-        const res = await fetch(`${API}/api/quizzes`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    fetch(API + '/api/quizzes', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(res) {
         if (!res.ok) throw new Error('Failed to load quizzes');
-        const quizzes: Quiz[] = await res.json();
-        if (cancelled) return;
-
-        const results: Row[] = await Promise.all(
-          quizzes.map(async (q) => {
-            try {
-              const ar = await fetch(`${API}/api/analytics/${q.id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              if (ar.ok) {
-                const analytics: Analytics = await ar.json();
-                return { ...q, analytics };
-              }
-            } catch {}
-            return { ...q, analytics: null };
+        return res.json();
+      })
+      .then(function(quizzes: Quiz[]) {
+        return Promise.all(
+          quizzes.map(function(q) {
+            return fetch(API + '/api/analytics/' + q.id, {
+              headers: { Authorization: 'Bearer ' + token },
+            })
+              .then(function(ar) {
+                if (ar.ok) return ar.json().then(function(analytics: Analytics) { return { ...q, analytics: analytics }; });
+                return { ...q, analytics: null };
+              })
+              .catch(function() { return { ...q, analytics: null }; });
           }),
         );
-
-        if (!cancelled) setRows(results);
-      } catch (e) {
+      })
+      .then(function(results: Row[]) {
+        setRows(results);
+        setLoading(false);
+      })
+      .catch(function(e) {
         console.error(e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+        setError(true);
+        setLoading(false);
+      });
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+  useEffect(function() { fetchData(); }, [token]);
 
   const totals = useMemo(() => {
     let views = 0;
@@ -119,10 +117,33 @@ export default function AnalyticsPage() {
     };
   }, [rows]);
 
-  if (authStatus === 'loading') {
+  if (authStatus === 'loading' || loading) {
     return (
       <DashboardShell title="Analytics">
         <PageLoading />
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell title="Analytics">
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED}
+            strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+            style={{ margin: '0 auto 14px', display: 'block' }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>
+            Could not load analytics
+          </div>
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 18 }}>
+            The server may be starting up. Please try again.
+          </div>
+          <PrimaryButton onClick={function() { fetchData(); }}>Retry</PrimaryButton>
+        </div>
       </DashboardShell>
     );
   }
@@ -153,9 +174,7 @@ export default function AnalyticsPage() {
         }
       />
 
-      {loading ? (
-        <PageLoading />
-      ) : rows.length === 0 ? (
+      {rows.length === 0 ? (
         <EmptyState
           icon={
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

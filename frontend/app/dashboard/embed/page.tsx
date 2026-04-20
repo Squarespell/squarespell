@@ -270,39 +270,62 @@ function InstallGuide() {
 }
 
 export default function EmbedPage() {
-  const { token, status: authStatus } = useDashboardAuth();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
+  var { token, status: authStatus } = useDashboardAuth();
+  var [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  var [loading, setLoading] = useState(true);
+  var [error, setError] = useState(false);
 
-  useEffect(() => {
+  function fetchQuizzes() {
     if (!token) return;
-    let cancelled = false;
     setLoading(true);
-
-    (async () => {
-      try {
-        const res = await fetch(`${API}/api/quizzes`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    setError(false);
+    fetch(API + '/api/quizzes', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(res) {
         if (!res.ok) throw new Error('Failed to load quizzes');
-        const data: Quiz[] = await res.json();
-        if (!cancelled) setQuizzes(data);
-      } catch (e) {
+        return res.json();
+      })
+      .then(function(data: Quiz[]) {
+        setQuizzes(data);
+        setLoading(false);
+      })
+      .catch(function(e) {
         console.error(e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+        setError(true);
+        setLoading(false);
+      });
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+  useEffect(function() { fetchQuizzes(); }, [token]);
 
-  if (authStatus === 'loading') {
+  if (authStatus === 'loading' || loading) {
     return (
       <DashboardShell title="Embed & install">
         <PageLoading />
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell title="Embed & install">
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED}
+            strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+            style={{ margin: '0 auto 14px', display: 'block' }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>
+            Could not load quizzes
+          </div>
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 18 }}>
+            The server may be starting up. Please try again.
+          </div>
+          <PrimaryButton onClick={function() { fetchQuizzes(); }}>Retry</PrimaryButton>
+        </div>
       </DashboardShell>
     );
   }
@@ -314,9 +337,7 @@ export default function EmbedPage() {
         subtitle="Grab your embed code and install it on Squarespace"
       />
 
-      {loading ? (
-        <PageLoading />
-      ) : quizzes.length === 0 ? (
+      {quizzes.length === 0 ? (
         <EmptyState
           icon={
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
