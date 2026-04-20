@@ -457,24 +457,24 @@ export const FLOW_CSS = `
   .s3-main-inner { padding: 32px 40px 80px; max-width: 880px; width: 100%; margin: 0 auto; }
   .s3-main-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
   .s3-main-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
-  .s3-title-edit-area { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .s3-title-edit-area { flex: 1; display: flex; flex-direction: column; gap: 0; }
   .s3-title-input {
-    font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--text);
-    background: transparent; border: none; border-bottom: 1.5px solid transparent;
-    padding: 4px 0; outline: none; width: 100%; font-family: inherit;
-    transition: border-color 0.2s;
+    font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text);
+    background: transparent; border: 1px solid transparent; border-radius: 8px;
+    padding: 6px 10px; outline: none; width: 100%; font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
   }
-  .s3-title-input:hover { border-bottom-color: var(--border-2); }
-  .s3-title-input:focus { border-bottom-color: var(--accent); }
+  .s3-title-input:hover { background: var(--bg-2); }
+  .s3-title-input:focus { background: var(--surface); border-color: var(--border-2); }
   .s3-title-input::placeholder { color: var(--text-dim); font-weight: 500; }
   .s3-desc-input {
-    font-size: 13.5px; color: var(--text-muted); line-height: 1.5;
-    background: transparent; border: none; border-bottom: 1.5px solid transparent;
-    padding: 4px 0; outline: none; width: 100%; font-family: inherit;
-    resize: none; transition: border-color 0.2s;
+    font-size: 13px; color: var(--text-muted); line-height: 1.5;
+    background: transparent; border: 1px solid transparent; border-radius: 8px;
+    padding: 6px 10px; outline: none; width: 100%; font-family: inherit;
+    resize: none; transition: background 0.15s, border-color 0.15s;
   }
-  .s3-desc-input:hover { border-bottom-color: var(--border-2); }
-  .s3-desc-input:focus { border-bottom-color: var(--accent); }
+  .s3-desc-input:hover { background: var(--bg-2); }
+  .s3-desc-input:focus { background: var(--surface); border-color: var(--border-2); }
   .s3-desc-input::placeholder { color: var(--text-dim); }
   .s3-count {
     display: inline-flex; align-items: center; gap: 6px;
