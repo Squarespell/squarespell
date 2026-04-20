@@ -215,6 +215,8 @@ function AddBlockInserter({
 /*  Block card (canvas row)                                           */
 /* ------------------------------------------------------------------ */
 
+var LETTERS = 'ABCDEFGHIJKLMNOP';
+
 function BlockCard({
   block,
   index,
@@ -259,7 +261,7 @@ function BlockCard({
         transition: 'all 0.15s ease',
         borderTopWidth: dragOver ? 3 : 1,
         borderTopColor: dragOver ? C.ACCENT : (selected ? C.ACCENT : C.BORDER),
-        padding: qb ? '20px 22px' : '16px 22px',
+        padding: '20px 22px',
         boxShadow: selected ? '0 0 0 3px rgba(13,115,119,0.06)' : 'none',
       }}
     >
@@ -299,9 +301,7 @@ function BlockCard({
               {label}
             </span>
             {qb && (
-              <span style={{
-                fontSize: 11, color: C.TEXT_SUBTLE, fontWeight: 500,
-              }}>
+              <span style={{ fontSize: 11, color: C.TEXT_SUBTLE, fontWeight: 500 }}>
                 {qb.options.length} options
               </span>
             )}
@@ -314,29 +314,39 @@ function BlockCard({
               {preview}
             </div>
           )}
-          {/* Feature badges for question blocks */}
-          {qb && (
-            <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' as const }}>
-              {qb.mediaUrl && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB' }}>
-                  {qb.mediaType === 'video' ? 'Video' : 'Image'}
-                </span>
-              )}
-              {qb.questionStyle === 'imageChoice' && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#F0FDF4', color: '#16A34A' }}>
-                  Image choice
-                </span>
-              )}
-              {qb.branchRules && qb.branchRules.length > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED' }}>
-                  Branching
-                </span>
-              )}
-              {qb.timeLimit ? (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#FEF2F2', color: '#EF4444' }}>
-                  {qb.timeLimit}s timer
-                </span>
-              ) : null}
+
+          {/* Show answers inline when selected (like classic editor) */}
+          {selected && qb && (
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {qb.options.map(function(opt, oi) {
+                return (
+                  <div key={opt.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '8px 12px', borderRadius: 8,
+                    background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                    fontSize: 13, color: C.TEXT,
+                  }}>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: 6,
+                      background: C.ACCENT, color: '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {LETTERS[oi]}
+                    </div>
+                    {opt.imageUrl && (
+                      <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    )}
+                    <span style={{ flex: 1, fontWeight: 500 }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+                    {opt.score ? (
+                      <span style={{ fontSize: 11, color: C.TEXT_SUBTLE, fontWeight: 600 }}>
+                        {opt.score > 0 ? '+' : ''}{opt.score}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -409,6 +419,48 @@ var selectStyle: React.CSSProperties = {
   outline: 'none', cursor: 'pointer',
 };
 
+/* Collapsible section for sidebar */
+function SidebarSection({
+  title,
+  icon,
+  defaultOpen,
+  children,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  var [open, setOpen] = useState(defaultOpen !== false);
+  return (
+    <div style={{ borderBottom: '1px solid ' + C.BORDER }}>
+      <button
+        type="button"
+        onClick={function() { setOpen(!open); }}
+        style={{
+          width: '100%', padding: '14px 22px',
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 8,
+          fontFamily: C.FONT + ',system-ui,sans-serif',
+        }}
+      >
+        {icon}
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, flex: 1, textAlign: 'left' }}>{title}</span>
+        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED}
+          strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s ease' }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div style={{ padding: '0 22px 18px' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BlockInspector({
   block,
   allBlocks,
@@ -424,302 +476,115 @@ function BlockInspector({
     onChange(Object.assign({}, block, { [key]: value }));
   }
 
-  // Question inspector
+  // Question inspector — clean collapsible sections
   if (block.type === 'question') {
     var qb = block as QuestionBlock;
-    var questionNum = allBlocks.filter(function(b) { return b.type === 'question'; }).findIndex(function(b) { return b.id === block.id; }) + 1;
     var allQuestions = allBlocks.filter(function(b) { return b.type === 'question'; }) as QuestionBlock[];
     return (
       <div>
-        {/* Hero header */}
-        <div style={{
-          marginBottom: 20, padding: '16px', borderRadius: 12,
-          background: C.ACCENT_LIGHT, border: '1px solid ' + C.ACCENT + '20',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 10,
-            background: C.ACCENT + '20', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 8px',
-          }}>
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT}
-              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <circle cx={12} cy={12} r={10} /><path d="M12 16v-4M12 8h.01" />
-            </svg>
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
-            Question {questionNum}
-          </div>
-          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
-            Edit question text, type, and answers
-          </div>
-        </div>
-
-        {/* Question text card */}
-        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
-          <label style={{
-            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
-            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6,
-          }}>
-            Question text
-          </label>
+        {/* Section 1: Question text (always open) */}
+        <SidebarSection title="Question" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={12} cy={12} r={10} /><path d="M12 16v-4M12 8h.01" /></svg>}
+        >
           <textarea
             value={qb.text}
             onChange={function(e) { updateField('text', e.target.value); }}
-            style={Object.assign({}, inputStyle, { minHeight: 72, resize: 'vertical' as const })}
+            style={Object.assign({}, inputStyle, { minHeight: 72, resize: 'vertical' as const, marginBottom: 10 })}
+            placeholder="Your question here..."
           />
-        </div>
-
-        {/* Subtitle */}
-        <InspectorField label="Subtitle (optional)">
           <input
             value={qb.subtitle || ''}
             onChange={function(e) { updateField('subtitle', e.target.value); }}
-            style={inputStyle}
-            placeholder="Additional context..."
+            style={Object.assign({}, inputStyle, { fontSize: 13 })}
+            placeholder="Subtitle (optional)"
           />
-        </InspectorField>
+        </SidebarSection>
 
-        {/* Media attachment */}
-        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
-          <label style={{
-            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
-            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
-          }}>
-            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-1px', marginRight: 4 }}>
-              <path d="M23 7l-7 5 7 5V7zM14 5H3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2z" />
-            </svg>
-            Media (optional)
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
-            {(['image', 'video'] as const).map(function(mt) {
-              var isActive = qb.mediaType === mt;
-              return (
-                <button
-                  key={mt}
-                  type="button"
-                  onClick={function() { updateField('mediaType', isActive ? undefined : mt); }}
-                  style={{
-                    padding: '6px 10px', borderRadius: 6,
-                    background: isActive ? C.ACCENT : 'transparent',
-                    border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
-                    color: isActive ? '#FFFFFF' : C.TEXT_MUTED,
-                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                    fontFamily: 'Inter,system-ui,sans-serif',
-                  }}
-                >
-                  {mt === 'image' ? 'Image' : 'Video'}
-                </button>
-              );
-            })}
+        {/* Section 2: Answers */}
+        <SidebarSection title={'Answers (' + qb.options.length + ')'} defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /></svg>}
+        >
+          {/* Type + style in a compact row */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <select
+              value={qb.questionType || 'single'}
+              onChange={function(e) { updateField('questionType', e.target.value); }}
+              style={Object.assign({}, selectStyle, { flex: 1, padding: '8px 10px', fontSize: 12 })}
+            >
+              <option value="single">Single select</option>
+              <option value="multiple">Multi select</option>
+            </select>
+            <select
+              value={qb.questionStyle}
+              onChange={function(e) { updateField('questionStyle', e.target.value); }}
+              style={Object.assign({}, selectStyle, { flex: 1, padding: '8px 10px', fontSize: 12 })}
+            >
+              <option value="buttons">Buttons</option>
+              <option value="cards">Cards</option>
+              <option value="dropdown">Dropdown</option>
+              <option value="imageChoice">Image choice</option>
+            </select>
           </div>
-          {qb.mediaType && (
-            <input
-              value={qb.mediaUrl || ''}
-              onChange={function(e) { updateField('mediaUrl', e.target.value); }}
-              style={Object.assign({}, inputStyle, { fontSize: 12 })}
-              placeholder={qb.mediaType === 'video' ? 'YouTube or Vimeo URL...' : 'Image URL...'}
-            />
-          )}
-          {qb.mediaUrl && qb.mediaType === 'image' && (
-            <div style={{ marginTop: 8, borderRadius: 6, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
-              <img src={qb.mediaUrl} alt="Preview" style={{ width: '100%', display: 'block' }}
-                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            </div>
-          )}
-        </div>
 
-        {/* Type toggle */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{
-            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
-            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
-          }}>
-            Type
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {['single', 'multiple'].map(function(type) {
-              var isActive = qb.questionType === type;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={function() { updateField('questionType', type); }}
-                  style={{
-                    padding: '8px 12px', borderRadius: 8,
-                    background: isActive ? C.ACCENT : C.SIDEBAR,
-                    border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
-                    color: isActive ? '#FFFFFF' : C.TEXT_MUTED,
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    fontFamily: 'Inter,system-ui,sans-serif',
-                    transition: 'all 0.12s ease',
-                  }}
-                >
-                  {type === 'single' ? 'Single select' : 'Multi-select'}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Answer style */}
-        <InspectorField label="Answer style">
-          <select
-            value={qb.questionStyle}
-            onChange={function(e) { updateField('questionStyle', e.target.value); }}
-            style={selectStyle}
-          >
-            <option value="buttons">Buttons</option>
-            <option value="cards">Cards</option>
-            <option value="dropdown">Dropdown</option>
-            <option value="imageChoice">Image choice</option>
-          </select>
-        </InspectorField>
-
-        {/* Timer */}
-        <InspectorField label="Time limit (seconds, 0 = no limit)">
-          <input
-            type="number"
-            value={qb.timeLimit || 0}
-            onChange={function(e) { updateField('timeLimit', parseInt(e.target.value) || 0); }}
-            style={inputStyle}
-            min={0}
-            placeholder="0"
-          />
-        </InspectorField>
-
-        {/* Options section */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{
-            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
-            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
-          }}>
-            Answers
-          </label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Answer list */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {qb.options.map(function(opt, oi) {
               return (
                 <div key={opt.id} style={{
-                  padding: '10px', background: C.SIDEBAR, borderRadius: 10,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px', background: C.SIDEBAR, borderRadius: 8,
                   border: '1px solid ' + C.BORDER,
                 }}>
-                  {/* Row 1: badge + text + score + delete */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 6,
-                      background: C.ACCENT, color: '#FFFFFF',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 700, flexShrink: 0,
-                    }}>
-                      {String.fromCharCode(65 + oi)}
-                    </div>
-                    <input
-                      value={opt.text}
-                      onChange={function(e) {
-                        var newOpts = qb.options.slice();
-                        newOpts[oi] = Object.assign({}, opt, { text: e.target.value });
-                        updateField('options', newOpts);
-                      }}
-                      style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
-                      placeholder={'Option ' + String.fromCharCode(65 + oi)}
-                    />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                      <span style={{ fontSize: 10, color: C.TEXT_SUBTLE }}>pts</span>
-                      <input
-                        type="number"
-                        value={opt.score || 0}
-                        onChange={function(e) {
-                          var newOpts = qb.options.slice();
-                          newOpts[oi] = Object.assign({}, opt, { score: parseInt(e.target.value) || 0 });
-                          updateField('options', newOpts);
-                        }}
-                        style={Object.assign({}, inputStyle, { width: 46, padding: '6px 4px', fontSize: 12, textAlign: 'center' as const })}
-                        title="Score points"
-                      />
-                    </div>
-                    {qb.options.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={function() {
-                          var newOpts = qb.options.filter(function(_, idx) { return idx !== oi; });
-                          updateField('options', newOpts);
-                        }}
-                        style={{
-                          width: 26, height: 26, borderRadius: 6, flexShrink: 0,
-                          background: 'transparent', border: 'none',
-                          color: C.TEXT_SUBTLE, cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                        onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.08)'; e.currentTarget.style.color = '#ff3b30'; }}
-                        onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
-                      >
-                        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                          <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
-                        </svg>
-                      </button>
-                    )}
+                  <div style={{
+                    width: 26, height: 26, borderRadius: 6,
+                    background: C.ACCENT, color: '#FFFFFF',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700, flexShrink: 0,
+                  }}>
+                    {String.fromCharCode(65 + oi)}
                   </div>
-
-                  {/* Row 2: Image URL (for imageChoice style) */}
-                  {qb.questionStyle === 'imageChoice' && (
-                    <div style={{ marginBottom: 4 }}>
-                      <input
-                        value={opt.imageUrl || ''}
-                        onChange={function(e) {
-                          var newOpts = qb.options.slice();
-                          newOpts[oi] = Object.assign({}, opt, { imageUrl: e.target.value });
-                          updateField('options', newOpts);
-                        }}
-                        style={Object.assign({}, inputStyle, { padding: '5px 8px', fontSize: 11 })}
-                        placeholder="Image URL for this option..."
-                      />
-                      {opt.imageUrl && (
-                        <div style={{ marginTop: 4, borderRadius: 6, overflow: 'hidden', height: 48, background: '#f3f4f6' }}>
-                          <img src={opt.imageUrl} alt={opt.text} style={{ height: '100%', objectFit: 'cover', display: 'block' }}
-                            onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Row 3: Explanation */}
                   <input
-                    value={opt.explanation || ''}
+                    value={opt.text}
                     onChange={function(e) {
                       var newOpts = qb.options.slice();
-                      newOpts[oi] = Object.assign({}, opt, { explanation: e.target.value });
+                      newOpts[oi] = Object.assign({}, opt, { text: e.target.value });
                       updateField('options', newOpts);
                     }}
-                    style={Object.assign({}, inputStyle, { padding: '5px 8px', fontSize: 11, fontStyle: 'italic' as const })}
-                    placeholder="Explanation shown after answer (optional)"
+                    style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 13 })}
+                    placeholder={'Option ' + String.fromCharCode(65 + oi)}
                   />
-
-                  {/* Row 4: Branch target */}
-                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_SUBTLE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 3h5v5M4 20L21 3" />
-                    </svg>
-                    <select
-                      value={(qb.branchRules || []).find(function(r) { return r.if_answer === opt.id; })?.goto || ''}
-                      onChange={function(e) {
-                        var rules = (qb.branchRules || []).filter(function(r) { return r.if_answer !== opt.id; });
-                        if (e.target.value) {
-                          rules.push({ if_answer: opt.id, goto: e.target.value });
-                        }
-                        updateField('branchRules', rules.length > 0 ? rules : undefined);
+                  <input
+                    type="number"
+                    value={opt.score || 0}
+                    onChange={function(e) {
+                      var newOpts = qb.options.slice();
+                      newOpts[oi] = Object.assign({}, opt, { score: parseInt(e.target.value) || 0 });
+                      updateField('options', newOpts);
+                    }}
+                    style={Object.assign({}, inputStyle, { width: 44, padding: '6px 4px', fontSize: 12, textAlign: 'center' as const })}
+                    title="Score"
+                  />
+                  {qb.options.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={function() {
+                        var newOpts = qb.options.filter(function(_, idx) { return idx !== oi; });
+                        updateField('options', newOpts);
                       }}
-                      style={Object.assign({}, selectStyle, { padding: '4px 6px', fontSize: 11, flex: 1 })}
+                      style={{
+                        width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+                        background: 'transparent', border: 'none',
+                        color: C.TEXT_SUBTLE, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                      onMouseEnter={function(e) { e.currentTarget.style.color = '#ff3b30'; }}
+                      onMouseLeave={function(e) { e.currentTarget.style.color = C.TEXT_SUBTLE; }}
                     >
-                      <option value="">Next question (default)</option>
-                      {allBlocks.filter(function(b) { return b.id !== block.id && (b.type === 'question' || b.type === 'outcome' || b.type === 'leadGate'); }).map(function(b) {
-                        var bLabel = b.type === 'question'
-                          ? 'Q' + (allQuestions.findIndex(function(q) { return q.id === b.id; }) + 1) + ': ' + (b as QuestionBlock).text.slice(0, 25)
-                          : blockLabel(b) + ': ' + blockPreview(b).slice(0, 25);
-                        return <option key={b.id} value={b.id}>{bLabel}</option>;
-                      })}
-                    </select>
-                  </div>
+                      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                        <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -732,7 +597,7 @@ function BlockInspector({
                   updateField('options', newOpts);
                 }}
                 style={{
-                  padding: '8px 12px', borderRadius: 8,
+                  padding: '8px', borderRadius: 8,
                   background: 'transparent', border: '1px dashed ' + C.BORDER,
                   color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
                   cursor: 'pointer', fontFamily: 'Inter,system-ui,sans-serif',
@@ -742,7 +607,149 @@ function BlockInspector({
               </button>
             )}
           </div>
-        </div>
+        </SidebarSection>
+
+        {/* Section 3: Media — collapsed by default */}
+        <SidebarSection title="Media" defaultOpen={!!qb.mediaUrl}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
+            {(['image', 'video'] as const).map(function(mt) {
+              var isActive = qb.mediaType === mt;
+              return (
+                <button
+                  key={mt}
+                  type="button"
+                  onClick={function() { updateField('mediaType', isActive ? undefined : mt); }}
+                  style={{
+                    padding: '8px 12px', borderRadius: 8,
+                    background: isActive ? C.ACCENT : C.SIDEBAR,
+                    border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
+                    color: isActive ? '#FFFFFF' : C.TEXT_MUTED,
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'Inter,system-ui,sans-serif',
+                  }}
+                >
+                  {mt === 'image' ? 'Add image' : 'Add video'}
+                </button>
+              );
+            })}
+          </div>
+          {qb.mediaType && (
+            <input
+              value={qb.mediaUrl || ''}
+              onChange={function(e) { updateField('mediaUrl', e.target.value); }}
+              style={inputStyle}
+              placeholder={qb.mediaType === 'video' ? 'YouTube or Vimeo URL...' : 'Paste image URL...'}
+            />
+          )}
+          {qb.mediaUrl && qb.mediaType === 'image' && (
+            <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
+              <img src={qb.mediaUrl} alt="Preview" style={{ width: '100%', display: 'block', maxHeight: 120, objectFit: 'cover' }}
+                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+          )}
+
+          {/* Image choice URLs per option */}
+          {qb.questionStyle === 'imageChoice' && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 8 }}>Answer images</div>
+              {qb.options.map(function(opt, oi) {
+                return (
+                  <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, width: 16, textAlign: 'center' }}>{String.fromCharCode(65 + oi)}</span>
+                    <input
+                      value={opt.imageUrl || ''}
+                      onChange={function(e) {
+                        var newOpts = qb.options.slice();
+                        newOpts[oi] = Object.assign({}, opt, { imageUrl: e.target.value });
+                        updateField('options', newOpts);
+                      }}
+                      style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
+                      placeholder="Image URL..."
+                    />
+                    {opt.imageUrl && (
+                      <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </SidebarSection>
+
+        {/* Section 4: Branching — collapsed by default */}
+        <SidebarSection title="Branching" defaultOpen={!!(qb.branchRules && qb.branchRules.length > 0)}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>}
+        >
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.5 }}>
+            Send users to different questions based on their answer.
+          </div>
+          {qb.options.map(function(opt, oi) {
+            return (
+              <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: C.ACCENT, width: 20 }}>{String.fromCharCode(65 + oi)}</span>
+                <select
+                  value={(qb.branchRules || []).find(function(r) { return r.if_answer === opt.id; })?.goto || ''}
+                  onChange={function(e) {
+                    var rules = (qb.branchRules || []).filter(function(r) { return r.if_answer !== opt.id; });
+                    if (e.target.value) {
+                      rules.push({ if_answer: opt.id, goto: e.target.value });
+                    }
+                    updateField('branchRules', rules.length > 0 ? rules : undefined);
+                  }}
+                  style={Object.assign({}, selectStyle, { flex: 1, padding: '6px 10px', fontSize: 12 })}
+                >
+                  <option value="">Next question</option>
+                  {allBlocks.filter(function(b) { return b.id !== block.id && (b.type === 'question' || b.type === 'outcome' || b.type === 'leadGate'); }).map(function(b) {
+                    var bLabel = b.type === 'question'
+                      ? 'Q' + (allQuestions.findIndex(function(q) { return q.id === b.id; }) + 1) + ': ' + (b as QuestionBlock).text.slice(0, 25)
+                      : blockLabel(b) + ': ' + blockPreview(b).slice(0, 25);
+                    return <option key={b.id} value={b.id}>{bLabel}</option>;
+                  })}
+                </select>
+              </div>
+            );
+          })}
+        </SidebarSection>
+
+        {/* Section 5: Advanced — collapsed */}
+        <SidebarSection title="Advanced" defaultOpen={false}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={12} cy={12} r={3} /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>}
+        >
+          {/* Timer */}
+          <InspectorField label="Time limit (seconds)">
+            <input
+              type="number"
+              value={qb.timeLimit || 0}
+              onChange={function(e) { updateField('timeLimit', parseInt(e.target.value) || 0); }}
+              style={inputStyle}
+              min={0}
+              placeholder="0 = no limit"
+            />
+          </InspectorField>
+
+          {/* Explanations per answer */}
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 8 }}>Answer explanations</div>
+          {qb.options.map(function(opt, oi) {
+            return (
+              <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, width: 16, textAlign: 'center' }}>{String.fromCharCode(65 + oi)}</span>
+                <input
+                  value={opt.explanation || ''}
+                  onChange={function(e) {
+                    var newOpts = qb.options.slice();
+                    newOpts[oi] = Object.assign({}, opt, { explanation: e.target.value });
+                    updateField('options', newOpts);
+                  }}
+                  style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
+                  placeholder="Explanation after answer..."
+                />
+              </div>
+            );
+          })}
+        </SidebarSection>
       </div>
     );
   }
@@ -752,23 +759,29 @@ function BlockInspector({
     var hb = block as HeadingBlock;
     return (
       <div>
-        <InspectorField label="Text">
-          <input value={hb.text} onChange={function(e) { updateField('text', e.target.value); }} style={inputStyle} />
-        </InspectorField>
-        <InspectorField label="Level">
-          <select value={hb.level} onChange={function(e) { updateField('level', parseInt(e.target.value)); }} style={selectStyle}>
-            <option value={1}>H1 - Large</option>
-            <option value={2}>H2 - Medium</option>
-            <option value={3}>H3 - Small</option>
-          </select>
-        </InspectorField>
-        <InspectorField label="Alignment">
-          <select value={hb.align || 'left'} onChange={function(e) { updateField('align', e.target.value); }} style={selectStyle}>
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-          </select>
-        </InspectorField>
+        <SidebarSection title="Heading" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2}><path d="M6 4v16M18 4v16M6 12h12" /></svg>}
+        >
+          <InspectorField label="Text">
+            <input value={hb.text} onChange={function(e) { updateField('text', e.target.value); }} style={inputStyle} />
+          </InspectorField>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <InspectorField label="Size">
+              <select value={hb.level} onChange={function(e) { updateField('level', parseInt(e.target.value)); }} style={selectStyle}>
+                <option value={1}>Large</option>
+                <option value={2}>Medium</option>
+                <option value={3}>Small</option>
+              </select>
+            </InspectorField>
+            <InspectorField label="Align">
+              <select value={hb.align || 'left'} onChange={function(e) { updateField('align', e.target.value); }} style={selectStyle}>
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </InspectorField>
+          </div>
+        </SidebarSection>
       </div>
     );
   }
@@ -778,20 +791,24 @@ function BlockInspector({
     var tb = block as TextBlock;
     return (
       <div>
-        <InspectorField label="Content">
-          <textarea
-            value={tb.content}
-            onChange={function(e) { updateField('content', e.target.value); }}
-            style={Object.assign({}, inputStyle, { minHeight: 100, resize: 'vertical' as const })}
-          />
-        </InspectorField>
-        <InspectorField label="Alignment">
-          <select value={tb.align || 'left'} onChange={function(e) { updateField('align', e.target.value); }} style={selectStyle}>
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-          </select>
-        </InspectorField>
+        <SidebarSection title="Text" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2}><path d="M4 6h16M4 10h16M4 14h10" /></svg>}
+        >
+          <InspectorField label="Content">
+            <textarea
+              value={tb.content}
+              onChange={function(e) { updateField('content', e.target.value); }}
+              style={Object.assign({}, inputStyle, { minHeight: 100, resize: 'vertical' as const })}
+            />
+          </InspectorField>
+          <InspectorField label="Alignment">
+            <select value={tb.align || 'left'} onChange={function(e) { updateField('align', e.target.value); }} style={selectStyle}>
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </InspectorField>
+        </SidebarSection>
       </div>
     );
   }
@@ -801,51 +818,35 @@ function BlockInspector({
     var ib = block as ImageBlock;
     return (
       <div>
-        <InspectorField label="Image URL">
-          <input value={ib.url} onChange={function(e) { updateField('url', e.target.value); }} style={inputStyle} placeholder="https://..." />
-        </InspectorField>
-        <InspectorField label="Alt text">
-          <input value={ib.alt} onChange={function(e) { updateField('alt', e.target.value); }} style={inputStyle} />
-        </InspectorField>
-        <InspectorField label="Max width (px)">
-          <input type="number" value={ib.width || 560} onChange={function(e) { updateField('width', parseInt(e.target.value) || 560); }} style={inputStyle} />
-        </InspectorField>
+        <SidebarSection title="Image" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>}
+        >
+          <InspectorField label="Image URL">
+            <input value={ib.url} onChange={function(e) { updateField('url', e.target.value); }} style={inputStyle} placeholder="Paste image URL..." />
+          </InspectorField>
+          {ib.url && (
+            <div style={{ marginBottom: 14, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
+              <img src={ib.url} alt={ib.alt} style={{ width: '100%', display: 'block', maxHeight: 140, objectFit: 'cover' }}
+                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+          )}
+          <InspectorField label="Alt text">
+            <input value={ib.alt} onChange={function(e) { updateField('alt', e.target.value); }} style={inputStyle} />
+          </InspectorField>
+        </SidebarSection>
       </div>
     );
   }
 
-  // Outcome inspector
+  // Outcome inspector — clean sections
   if (block.type === 'outcome') {
     var ob = block as OutcomeBlock;
     return (
       <div>
-        {/* Hero header */}
-        <div style={{
-          marginBottom: 20, padding: '16px', borderRadius: 12,
-          background: '#F0FDF4', border: '1px solid #BBF7D0',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 10,
-            background: '#ECFDF3', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 8px',
-          }}>
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#16A34A"
-              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
-            Outcome
-          </div>
-          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
-            Configure result display
-          </div>
-        </div>
-
-        {/* Title and description card */}
-        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+        {/* Section: Content */}
+        <SidebarSection title="Result content" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+        >
           <InspectorField label="Title">
             <input value={ob.title} onChange={function(e) { updateField('title', e.target.value); }} style={inputStyle} />
           </InspectorField>
@@ -856,7 +857,25 @@ function BlockInspector({
               style={Object.assign({}, inputStyle, { minHeight: 80, resize: 'vertical' as const })}
             />
           </InspectorField>
-        </div>
+        </SidebarSection>
+
+        {/* Section: Image */}
+        <SidebarSection title="Result image" defaultOpen={!!ob.imageUrl}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>}
+        >
+          <input
+            value={ob.imageUrl || ''}
+            onChange={function(e) { updateField('imageUrl', e.target.value); }}
+            style={inputStyle}
+            placeholder="Paste image URL..."
+          />
+          {ob.imageUrl && (
+            <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
+              <img src={ob.imageUrl} alt={ob.title} style={{ width: '100%', display: 'block', maxHeight: 120, objectFit: 'cover' }}
+                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+          )}
+        </SidebarSection>
 
         {/* Hero image */}
         <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
@@ -883,103 +902,89 @@ function BlockInspector({
           )}
         </div>
 
-        <InspectorField label="CTA text">
-          <input value={ob.ctaText || ''} onChange={function(e) { updateField('ctaText', e.target.value); }} style={inputStyle} placeholder="Learn more" />
-        </InspectorField>
-        <InspectorField label="CTA URL">
-          <input value={ob.ctaUrl || ''} onChange={function(e) { updateField('ctaUrl', e.target.value); }} style={inputStyle} placeholder="https://..." />
-        </InspectorField>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <InspectorField label="Min score">
-            <input type="number" value={ob.minScore ?? ''} onChange={function(e) { updateField('minScore', e.target.value === '' ? undefined : parseInt(e.target.value)); }} style={inputStyle} />
-          </InspectorField>
-          <InspectorField label="Max score">
-            <input type="number" value={ob.maxScore ?? ''} onChange={function(e) { updateField('maxScore', e.target.value === '' ? undefined : parseInt(e.target.value)); }} style={inputStyle} />
-          </InspectorField>
-        </div>
+        {/* Section: CTA & scoring */}
+        <SidebarSection title="Action & scoring" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1={10} y1={14} x2={21} y2={3} /></svg>}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+            <InspectorField label="CTA text">
+              <input value={ob.ctaText || ''} onChange={function(e) { updateField('ctaText', e.target.value); }} style={inputStyle} placeholder="Learn more" />
+            </InspectorField>
+            <InspectorField label="CTA URL">
+              <input value={ob.ctaUrl || ''} onChange={function(e) { updateField('ctaUrl', e.target.value); }} style={inputStyle} placeholder="https://..." />
+            </InspectorField>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <InspectorField label="Min score">
+              <input type="number" value={ob.minScore ?? ''} onChange={function(e) { updateField('minScore', e.target.value === '' ? undefined : parseInt(e.target.value)); }} style={inputStyle} />
+            </InspectorField>
+            <InspectorField label="Max score">
+              <input type="number" value={ob.maxScore ?? ''} onChange={function(e) { updateField('maxScore', e.target.value === '' ? undefined : parseInt(e.target.value)); }} style={inputStyle} />
+            </InspectorField>
+          </div>
+        </SidebarSection>
 
-        {/* Social sharing */}
-        <div style={{ marginTop: 8, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+        {/* Section: Social sharing */}
+        <SidebarSection title="Social sharing" defaultOpen={ob.shareEnabled || false}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={18} cy={5} r={3} /><circle cx={6} cy={12} r={3} /><circle cx={18} cy={19} r={3} /><line x1={8.59} y1={13.51} x2={15.42} y2={17.49} /><line x1={15.41} y1={6.51} x2={8.59} y2={10.49} /></svg>}
+        >
           <label style={{
             display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-            fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED,
+            fontSize: 13, fontWeight: 500, color: C.TEXT, marginBottom: 10,
           }}>
             <input
               type="checkbox"
               checked={ob.shareEnabled || false}
               onChange={function(e) { updateField('shareEnabled', e.target.checked); }}
-              style={{ accentColor: C.ACCENT }}
+              style={{ accentColor: C.ACCENT, width: 16, height: 16 }}
             />
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <circle cx={18} cy={5} r={3} /><circle cx={6} cy={12} r={3} /><circle cx={18} cy={19} r={3} />
-              <line x1={8.59} y1={13.51} x2={15.42} y2={17.49} /><line x1={15.41} y1={6.51} x2={8.59} y2={10.49} />
-            </svg>
-            Enable social sharing
+            Show share buttons on result
           </label>
           {ob.shareEnabled && (
-            <div style={{ marginTop: 8 }}>
+            <div>
               <input
                 value={ob.shareText || ''}
                 onChange={function(e) { updateField('shareText', e.target.value); }}
-                style={Object.assign({}, inputStyle, { fontSize: 12 })}
+                style={inputStyle}
                 placeholder="I got [result]! Take the quiz..."
               />
-              <div style={{ marginTop: 6, fontSize: 10, color: C.TEXT_SUBTLE }}>
-                Share text template. Buttons for Twitter, Facebook, LinkedIn will show on result.
+              <div style={{ marginTop: 6, fontSize: 11, color: C.TEXT_SUBTLE }}>
+                Adds Twitter, Facebook, and LinkedIn share buttons.
               </div>
             </div>
           )}
-        </div>
+        </SidebarSection>
       </div>
     );
   }
 
-  // Lead gate inspector
+  // Lead gate inspector — clean sections
   if (block.type === 'leadGate') {
     var lgb = block as LeadGateBlock;
     return (
       <div>
-        {/* Hero header */}
-        <div style={{
-          marginBottom: 20, padding: '16px', borderRadius: 12,
-          background: '#FEF3F2', border: '1px solid #FEE4E2',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 10,
-            background: '#FEE4E2', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 8px',
-          }}>
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#B42318"
-              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <rect x={2} y={4} width={20} height={16} rx={2} /><path d="M22 4L12 13 2 4" />
-            </svg>
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
-            Lead Gate
-          </div>
-          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
-            Capture leads before showing results
-          </div>
-        </div>
-
-        <InspectorField label="Headline">
-          <input value={lgb.headline} onChange={function(e) { updateField('headline', e.target.value); }} style={inputStyle} />
-        </InspectorField>
-        <InspectorField label="Subtext">
-          <input value={lgb.subtext || ''} onChange={function(e) { updateField('subtext', e.target.value); }} style={inputStyle} />
-        </InspectorField>
-        <InspectorField label="Button label">
-          <input value={lgb.buttonLabel} onChange={function(e) { updateField('buttonLabel', e.target.value); }} style={inputStyle} />
-        </InspectorField>
-        <InspectorField label="Placement">
-          <select value={lgb.placement} onChange={function(e) { updateField('placement', e.target.value); }} style={selectStyle}>
-            <option value="before_results">Before results</option>
-            <option value="after_question">After specific question</option>
-          </select>
-        </InspectorField>
-        <InspectorField label="Fields">
+        <SidebarSection title="Content" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={2} y={4} width={20} height={16} rx={2} /><path d="M22 4L12 13 2 4" /></svg>}
+        >
+          <InspectorField label="Headline">
+            <input value={lgb.headline} onChange={function(e) { updateField('headline', e.target.value); }} style={inputStyle} />
+          </InspectorField>
+          <InspectorField label="Subtext">
+            <input value={lgb.subtext || ''} onChange={function(e) { updateField('subtext', e.target.value); }} style={inputStyle} />
+          </InspectorField>
+          <InspectorField label="Button label">
+            <input value={lgb.buttonLabel} onChange={function(e) { updateField('buttonLabel', e.target.value); }} style={inputStyle} />
+          </InspectorField>
+          <InspectorField label="Placement">
+            <select value={lgb.placement} onChange={function(e) { updateField('placement', e.target.value); }} style={selectStyle}>
+              <option value="before_results">Before results</option>
+              <option value="after_question">After specific question</option>
+            </select>
+          </InspectorField>
+        </SidebarSection>
+        <SidebarSection title={'Form fields (' + lgb.fields.length + ')'} defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><path d="M3 9h18M9 21V9" /></svg>}
+        >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {lgb.fields.map(function(field, fi) {
               return (
@@ -991,7 +996,7 @@ function BlockInspector({
                       newFields[fi] = Object.assign({}, field, { type: e.target.value, label: e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1) });
                       updateField('fields', newFields);
                     }}
-                    style={Object.assign({}, selectStyle, { width: 100 })}
+                    style={Object.assign({}, selectStyle, { width: 100, padding: '8px 10px', fontSize: 12 })}
                   >
                     <option value="email">Email</option>
                     <option value="name">Name</option>
@@ -1006,7 +1011,7 @@ function BlockInspector({
                       newFields[fi] = Object.assign({}, field, { label: e.target.value });
                       updateField('fields', newFields);
                     }}
-                    style={Object.assign({}, inputStyle, { flex: 1 })}
+                    style={Object.assign({}, inputStyle, { flex: 1, fontSize: 13 })}
                   />
                   <label style={{ fontSize: 11, color: C.TEXT_MUTED, display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                     <input
@@ -1017,6 +1022,7 @@ function BlockInspector({
                         newFields[fi] = Object.assign({}, field, { required: e.target.checked });
                         updateField('fields', newFields);
                       }}
+                      style={{ accentColor: C.ACCENT }}
                     />
                     Req
                   </label>
@@ -1032,7 +1038,7 @@ function BlockInspector({
                   updateField('fields', newFields);
                 }}
                 style={{
-                  padding: '8px 12px', borderRadius: 8,
+                  padding: '8px', borderRadius: 8,
                   background: 'transparent', border: '1px dashed ' + C.BORDER,
                   color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
                   cursor: 'pointer', fontFamily: 'Inter,system-ui,sans-serif',
@@ -1042,7 +1048,7 @@ function BlockInspector({
               </button>
             )}
           </div>
-        </InspectorField>
+        </SidebarSection>
       </div>
     );
   }
@@ -1814,15 +1820,13 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
               </button>
             </div>
 
-            {/* Inspector content */}
-            <div style={{ padding: '22px 22px' }}>
-              <BlockInspector
-                block={selectedBlock}
-                allBlocks={blocks}
-                onChange={updateBlock}
-                onDeselect={function() { setSelectedId(null); }}
-              />
-            </div>
+            {/* Inspector content — sections handle own padding */}
+            <BlockInspector
+              block={selectedBlock}
+              allBlocks={blocks}
+              onChange={updateBlock}
+              onDeselect={function() { setSelectedId(null); }}
+            />
           </>
         ) : (
           /* Default sidebar — quiz overview when nothing selected */
