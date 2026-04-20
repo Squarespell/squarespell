@@ -25,6 +25,7 @@ import { useDashboardAuth } from './_components/useDashboardAuth';
 import { Card, PageLoading, PrimaryButton } from './_components/PageShell';
 import { NewQuizModal } from './quizzes/_components/NewQuizModal';
 import { LiveLeadFeed } from './_components/LiveLeadFeed';
+import { SmartRecommendations } from './_components/SmartRecommendations';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -798,6 +799,8 @@ function OverviewInner() {
           }}
         />
       )}
+
+      <SmartRecommendations />
 
       {claimError && (
         <div style={{

@@ -13,6 +13,7 @@ import { prefillAcuityLink } from '../services/integrations/acuity';
 import { prefillCalendlyLink } from '../services/integrations/calendly';
 import { runCleanup } from '../services/databaseCleanup';
 import { processScheduledCampaigns } from '../services/scheduledSendDispatcher';
+import { getRecommendations } from '../services/recommendations';
 import * as quizPaymentsService from '../services/quizPayments';
 import { supabase } from '../db/supabaseClient';
 import Stripe from 'stripe';
@@ -1351,6 +1352,15 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
     : null;
   var limits = getPlanLimits(plan);
   res.json({ plan: plan, quiz_count: user.quiz_count, limits: limits, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics } });
+});
+userRouter.get('/recommendations', async function(req: AuthenticatedRequest, res) {
+  try {
+    var recs = await getRecommendations(req.dbUserId!);
+    res.json(recs);
+  } catch (err: any) {
+    log.error('Failed to get recommendations', { err: err.message });
+    res.json([]);
+  }
 });
 userRouter.post('/notifications', async (req: AuthenticatedRequest, res) => {
   const { enabled } = req.body;
