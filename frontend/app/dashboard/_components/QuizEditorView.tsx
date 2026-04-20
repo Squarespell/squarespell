@@ -318,6 +318,10 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     return () => { cancelled = true; };
   }, [getToken]);
 
+  // Plan gate: only paid plans get block editor
+  var canUseBlocks = ['starter', 'pro', 'agency'].indexOf(userPlan) >= 0;
+  var [showBlockGate, setShowBlockGate] = useState(false);
+
   // Block editor mode toggle
   var [editorMode, setEditorMode] = useState<'classic' | 'blocks'>('classic');
   var [initialBlocksReady, setInitialBlocksReady] = useState(false);
@@ -358,10 +362,6 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   if (state === 'error') return <EditorError message={errorMsg} />;
   if (state === 'empty') return <EditorEmpty />;
   if (!quiz) return <EditorLoading label="Loading editor..." />;
-
-  // Plan gate: only paid plans get block editor
-  var canUseBlocks = ['starter', 'pro', 'agency'].indexOf(userPlan) >= 0;
-  var [showBlockGate, setShowBlockGate] = useState(false);
 
   // Editor mode toggle button
   var modeToggle = (
