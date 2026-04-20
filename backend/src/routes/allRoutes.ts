@@ -662,13 +662,19 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
 // unified inbox.
 leadsRouter.get('/leads', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
-    const limit = Math.min(parseInt((req.query.limit as string) || '200', 10) || 200, 1000);
-    const { data, error } = await supabase
+    var limit = Math.min(parseInt((req.query.limit as string) || '200', 10) || 200, 1000);
+    var query = supabase
       .from('leads')
-      .select('id, name, email, answers, outcome_id, created_at, quiz_id, quizzes(id, title, slug)')
+      .select('id, name, email, answers, outcome_id, created_at, quiz_id, metadata, quizzes(id, title, slug)')
       .eq('user_id', req.dbUserId)
       .order('created_at', { ascending: false })
       .limit(limit);
+    // Optional: only return leads newer than a given timestamp (for polling)
+    var since = req.query.since as string;
+    if (since) {
+      query = query.gt('created_at', since);
+    }
+    var { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
     res.json(data ?? []);
   } catch (err: any) {

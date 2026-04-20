@@ -24,6 +24,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from './_components/DashboardSh
 import { useDashboardAuth } from './_components/useDashboardAuth';
 import { Card, PageLoading, PrimaryButton } from './_components/PageShell';
 import { NewQuizModal } from './quizzes/_components/NewQuizModal';
+import { LiveLeadFeed } from './_components/LiveLeadFeed';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -1219,94 +1220,9 @@ function OverviewInner() {
           )}
         </Card>
 
-        {/* Recent leads */}
+        {/* Live lead feed */}
         <Card padding={24}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.02em' }}>
-              Recent leads
-            </h3>
-            <Link href="/dashboard/leads" style={{ fontSize: 12, color: C.TEXT_MUTED, textDecoration: 'none', fontWeight: 500 }}>
-              View all →
-            </Link>
-          </div>
-
-          {loadingData ? (
-            <div style={{ padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>Loading…</div>
-          ) : leads.length === 0 ? (
-            <div
-              style={{
-                padding: '40px 20px',
-                textAlign: 'center',
-                color: C.TEXT_MUTED,
-                fontSize: 13.5,
-                border: `1px dashed ${C.HAIRLINE}`,
-                borderRadius: 12,
-              }}
-            >
-              No leads yet. They will show up here as soon as visitors complete a quiz.
-            </div>
-          ) : (
-            leads.map((lead, idx) => (
-              <div
-                key={lead.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '12px 0',
-                  borderTop: idx === 0 ? 'none' : `1px solid ${C.HAIRLINE}`,
-                }}
-              >
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    background: C.SIDEBAR,
-                    border: `1px solid ${C.BORDER}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 11.5,
-                    fontWeight: 600,
-                    color: C.TEXT,
-                    flexShrink: 0,
-                  }}
-                >
-                  {initialsFromLead(lead)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: C.TEXT,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {lead.name || lead.email}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11.5,
-                      color: C.TEXT_MUTED,
-                      marginTop: 2,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {lead.quizzes?.title || 'Quiz'} · {lead.email}
-                  </div>
-                </div>
-                <div style={{ fontSize: 11, color: C.TEXT_SUBTLE, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                  {formatRelative(lead.created_at)}
-                </div>
-              </div>
-            ))
-          )}
+          <LiveLeadFeed />
         </Card>
       </div>
     </DashboardShell>
