@@ -39,7 +39,7 @@ type Quiz = {
 };
 
 type UserPlan = {
-  plan: 'trial' | 'starter' | 'pro' | 'agency';
+  plan: 'free' | 'trial' | 'starter' | 'growth' | 'pro' | 'agency';
   quiz_count: number;
   limits: Record<string, number>;
   trial_ends_at: string | null;
@@ -650,14 +650,18 @@ function OverviewInner() {
           const data: UserPlan = await res.json();
           if (cancelled) return;
 
-          const trialEnds = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
-          const now = new Date();
-          if (data.plan !== 'trial') setStatus('active');
-          else if (trialEnds && now > trialEnds) setStatus('expired');
-          else {
-            const days = trialEnds ? Math.ceil((trialEnds.getTime() - now.getTime()) / 86400000) : 7;
+          var trialEnds = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
+          var now = new Date();
+          var isPaid = ['growth', 'pro', 'agency'].includes(data.plan);
+          if (isPaid) {
+            setStatus('active');
+          } else if (data.plan === 'trial' && trialEnds && now < trialEnds) {
+            var days = Math.ceil((trialEnds.getTime() - now.getTime()) / 86400000);
             setDaysLeft(Math.max(days, 0));
             setStatus('trial');
+          } else {
+            // Free tier (trial expired or plan === 'free') - still allow access
+            setStatus('active');
           }
           return;
         } catch {
@@ -765,9 +769,10 @@ function OverviewInner() {
     return <ExpiredState />;
   }
 
-  const topQuizzes = [...quizzes].sort((a, b) => b.view_count - a.view_count).slice(0, 5);
-  const activeQuizzes = quizzes.filter((q) => q.status === 'live').length;
-  const maxViews = Math.max(...topQuizzes.map((q) => q.view_count), 1);
+  var topQuizzes = [...quizzes].sort(function(a, b) { return b.view_count - a.view_count; }).slice(0, 5);
+  var activeQuizzes = quizzes.filter(function(q) { return q.status === 'live'; }).length;
+  var maxViews = Math.max(...topQuizzes.map(function(q) { return q.view_count; }), 1);
+  var isEmptyDashboard = quizzes.length === 0 && leads.length === 0 && !loadingData;
 
   return (
     <DashboardShell
@@ -816,8 +821,67 @@ function OverviewInner() {
         </div>
       )}
 
+      {/* First-run hero for empty dashboards */}
+      {isEmptyDashboard && (
+        <div
+          style={{
+            background: C.ELEVATED,
+            border: '1px solid ' + C.HAIRLINE,
+            borderRadius: 20,
+            padding: '48px 36px',
+            textAlign: 'center',
+            marginBottom: 28,
+          }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              background: 'rgba(13,115,119,0.08)',
+              border: '1px solid rgba(13,115,119,0.18)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 24,
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          </div>
+          <h1 style={{ margin: '0 0 12px', fontSize: 28, fontWeight: 800, color: C.TEXT, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+            Welcome to Squarespell
+          </h1>
+          <p style={{ margin: '0 0 28px', fontSize: 15, color: C.TEXT_MUTED, lineHeight: 1.6, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+            Create a branded quiz from your Squarespace site in under 60 seconds. Capture leads, send follow-up emails, and grow your business.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <PrimaryButton onClick={function() { setNewQuizOpen(true); }}>
+              Create your first quiz
+            </PrimaryButton>
+            <button
+              onClick={function() { router.push('/dashboard/embed'); }}
+              style={{
+                padding: '12px 24px',
+                borderRadius: 10,
+                background: 'transparent',
+                color: C.TEXT,
+                border: '1px solid ' + C.BORDER,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: '"DM Sans",system-ui,sans-serif',
+              }}
+            >
+              Learn how to embed
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Page hero */}
-      <div
+      {!isEmptyDashboard && <div
         style={{
           display: 'flex',
           alignItems: 'flex-end',
@@ -866,7 +930,7 @@ function OverviewInner() {
           </svg>
           Last 30 days
         </div>
-      </div>
+      </div>}
 
       {/* Stat strip */}
       <div
