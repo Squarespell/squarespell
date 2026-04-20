@@ -76,36 +76,38 @@ function downloadCsv(leads: Lead[]) {
 }
 
 export default function LeadsPage() {
-  const router = useRouter();
-  const { token, status: authStatus } = useDashboardAuth();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [quizFilter, setQuizFilter] = useState<string>('all');
-  const [scoreFilter, setScoreFilter] = useState<string>('all');
-  const [query, setQuery] = useState('');
+  var router = useRouter();
+  var { token, status: authStatus } = useDashboardAuth();
+  var [leads, setLeads] = useState<Lead[]>([]);
+  var [loading, setLoading] = useState(true);
+  var [error, setError] = useState(false);
+  var [quizFilter, setQuizFilter] = useState<string>('all');
+  var [scoreFilter, setScoreFilter] = useState<string>('all');
+  var [query, setQuery] = useState('');
 
-  useEffect(() => {
+  function fetchLeads() {
     if (!token) return;
-    let cancelled = false;
     setLoading(true);
-    (async () => {
-      try {
-        const res = await fetch(`${API}/api/leads?limit=500`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    setError(false);
+    fetch(API + '/api/leads?limit=500', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(res) {
         if (!res.ok) throw new Error('Failed to load leads');
-        const data = await res.json();
-        if (!cancelled) setLeads(Array.isArray(data) ? data : []);
-      } catch (e) {
+        return res.json();
+      })
+      .then(function(data) {
+        setLeads(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(function(e) {
         console.error(e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+        setError(true);
+        setLoading(false);
+      });
+  }
+
+  useEffect(function() { fetchLeads(); }, [token]);
 
   const quizzes = useMemo(() => {
     const map = new Map<string, string>();
@@ -136,10 +138,33 @@ export default function LeadsPage() {
     });
   }, [leads, quizFilter, scoreFilter, query]);
 
-  if (authStatus === 'loading') {
+  if (authStatus === 'loading' || loading) {
     return (
       <DashboardShell title="Leads">
         <PageLoading />
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell title="Leads">
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED}
+            strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+            style={{ margin: '0 auto 14px', display: 'block' }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>
+            Could not load leads
+          </div>
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 18 }}>
+            The server may be starting up. Please try again.
+          </div>
+          <PrimaryButton onClick={function() { fetchLeads(); }}>Retry</PrimaryButton>
+        </div>
       </DashboardShell>
     );
   }

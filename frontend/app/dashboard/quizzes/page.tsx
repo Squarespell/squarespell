@@ -23,7 +23,7 @@ import {
 import { ConfirmDialog, PublishModal } from '../_components/Modals';
 import { NewQuizModal } from './_components/NewQuizModal';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-backend.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type Quiz = {
   id: string;
@@ -56,81 +56,108 @@ function formatDate(dateStr: string): string {
 }
 
 export default function QuizzesPage() {
-  const { token, status: authStatus } = useDashboardAuth();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [publishQuiz, setPublishQuiz] = useState<Quiz | null>(null);
-  const [deleteQuiz, setDeleteQuiz] = useState<Quiz | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
-  const [newQuizOpen, setNewQuizOpen] = useState(false);
+  var { token, status: authStatus } = useDashboardAuth();
+  var [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  var [loading, setLoading] = useState(true);
+  var [error, setError] = useState(false);
+  var [publishQuiz, setPublishQuiz] = useState<Quiz | null>(null);
+  var [deleteQuiz, setDeleteQuiz] = useState<Quiz | null>(null);
+  var [deleting, setDeleting] = useState(false);
+  var [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  var [newQuizOpen, setNewQuizOpen] = useState(false);
 
-  const confirmDelete = async () => {
+  function confirmDelete() {
     if (!token || !deleteQuiz) return;
     setDeleting(true);
-    try {
-      const res = await fetch(`${API}/api/quizzes/${deleteQuiz.id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+    fetch(API + '/api/quizzes/' + deleteQuiz.id, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(res) {
+        if (res.ok) {
+          setQuizzes(function(prev) { return prev.filter(function(q) { return q.id !== deleteQuiz.id; }); });
+        }
+      })
+      .catch(function(e) {
+        console.error('Delete failed:', e);
+      })
+      .finally(function() {
+        setDeleting(false);
+        setDeleteQuiz(null);
       });
-      if (res.ok) {
-        setQuizzes((prev) => prev.filter((q) => q.id !== deleteQuiz.id));
-      }
-    } catch (e) {
-      console.error('Delete failed:', e);
-    } finally {
-      setDeleting(false);
-      setDeleteQuiz(null);
-    }
-  };
+  }
 
-  const handleDuplicate = async (quiz: Quiz) => {
+  function handleDuplicate(quiz: Quiz) {
     if (!token || duplicatingId) return;
     setDuplicatingId(quiz.id);
-    try {
-      const res = await fetch(`${API}/api/quizzes/${quiz.id}/duplicate`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+    fetch(API + '/api/quizzes/' + quiz.id + '/duplicate', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().catch(function() { return {}; }).then(function(body: any) { throw new Error(body?.error || 'Duplicate failed'); });
+        return res.json();
+      })
+      .then(function(created: Quiz) {
+        setQuizzes(function(prev) { return [created, ...prev]; });
+      })
+      .catch(function(e) {
+        console.error('Duplicate failed:', e);
+      })
+      .finally(function() {
+        setDuplicatingId(null);
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || 'Duplicate failed');
-      }
-      const created: Quiz = await res.json();
-      // Inject the new draft at the top of the list
-      setQuizzes((prev) => [created, ...prev]);
-    } catch (e) {
-      console.error('Duplicate failed:', e);
-    } finally {
-      setDuplicatingId(null);
-    }
-  };
+  }
 
-  useEffect(() => {
+  function fetchQuizzes() {
     if (!token) return;
-    let cancelled = false;
     setLoading(true);
-    (async () => {
-      try {
-        const res = await fetch(`${API}/api/quizzes`, { headers: { Authorization: `Bearer ${token}` } });
+    setError(false);
+    fetch(API + '/api/quizzes', { headers: { Authorization: 'Bearer ' + token } })
+      .then(function(res) {
         if (!res.ok) throw new Error('Failed to fetch quizzes');
-        const data: Quiz[] = await res.json();
-        if (!cancelled) setQuizzes(data);
-      } catch (e) {
+        return res.json();
+      })
+      .then(function(data: Quiz[]) {
+        setQuizzes(data);
+        setLoading(false);
+      })
+      .catch(function(e) {
         console.error('Error fetching quizzes:', e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+        setError(true);
+        setLoading(false);
+      });
+  }
 
-  if (authStatus === 'loading') {
+  useEffect(function() { fetchQuizzes(); }, [token]);
+
+  if (authStatus === 'loading' || loading) {
     return (
       <DashboardShell title="Quizzes">
         <PageLoading />
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell title="Quizzes">
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED}
+            strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+            style={{ margin: '0 auto 14px', display: 'block' }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>
+            Could not load quizzes
+          </div>
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 18 }}>
+            The server may be starting up. Please try again.
+          </div>
+          <PrimaryButton onClick={function() { fetchQuizzes(); }}>Retry</PrimaryButton>
+        </div>
       </DashboardShell>
     );
   }
@@ -160,9 +187,7 @@ export default function QuizzesPage() {
 
       <PageHeader title="All quizzes" subtitle="Create, edit, and publish your AI-powered quiz funnels." />
 
-      {loading ? (
-        <PageLoading />
-      ) : quizzes.length === 0 ? (
+      {quizzes.length === 0 ? (
         <EmptyState
           icon={
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
