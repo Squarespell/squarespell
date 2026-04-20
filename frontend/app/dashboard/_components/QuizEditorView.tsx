@@ -7,9 +7,9 @@
  * quiz or empty state) render through this component so the editor always
  * sits next to the dashboard sidebar.
  *
- * It fetches the quiz by id, mounts TryFlowInner in authed mode at Stage 3,
- * and injects a small CSS override so the Stage 3 body doesn't force 100vh
- * (which would cause double-scroll inside the shell main column).
+ * Renders QuizBlockEditor as the single editor experience. Legacy quizzes
+ * are converted to blocks via legacyToBlocks() on load, and saved back via
+ * blocksToLegacy() for API compatibility.
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -17,7 +17,6 @@ import { useAuth } from "@clerk/nextjs";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { TryFlowInner } from '@/app/tools/quiz-funnel/build/TryFlowInner';
 import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 import { PublishModal } from "./Modals";
 import { QuizBlockEditor } from './QuizBlockEditor';
@@ -42,41 +41,6 @@ interface DbQuiz {
   source_url?: string;
 }
 
-function normalizeQuiz(raw: DbQuiz) {
-  return {
-    title: raw.title || 'Your quiz',
-    description: raw.description || '',
-    questions: raw.questions || [],
-    outcomes: raw.outcomes || [],
-    leadGate: raw.leadGate,
-    settings: raw.settings,
-  };
-}
-
-function brandFromQuiz(raw: DbQuiz) {
-  if (!raw.branding) return null;
-  return {
-    detected: !!raw.branding.auto_detected,
-    colors: raw.branding.colors || {},
-    font_family: raw.branding.font_family,
-    site_name: raw.branding.site_name,
-    favicon_url: raw.branding.favicon_url,
-  };
-}
-
-/**
- * When TryFlowInner is rendered inside the DashboardShell (which already
- * owns the outer page background and a sticky header), we need to:
- *   1. Stop .stage from claiming 100vh (double scroll otherwise)
- *   2. Make the s3-top of the editor stick to the top of the main column
- *      rather than behind the shell topbar - we hide the shell topbar in
- *      this page via hideTopbar.
- */
-const SHELL_OVERRIDES = `
-  .dash-editor-shell .stage { min-height: auto; }
-  .dash-editor-shell .stage.active { min-height: calc(100vh - 0px); }
-  .dash-editor-shell .s3-top { position: sticky; top: 0; z-index: 15; }
-`;
 
 function EditorLoading({ label }: { label: string }) {
   return (
@@ -318,20 +282,14 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     return () => { cancelled = true; };
   }, [getToken]);
 
-  // Plan gate: temporarily unlocked for all plans during development
-  // TODO: Re-enable paid gate before launch: var canUseBlocks = ['starter', 'pro', 'agency'].indexOf(userPlan) >= 0;
-  var canUseBlocks = true;
-  var [showBlockGate, setShowBlockGate] = useState(false);
-
-  // Block editor mode toggle
-  var [editorMode, setEditorMode] = useState<'classic' | 'blocks'>('classic');
+  // Block editor state
   var [initialBlocksReady, setInitialBlocksReady] = useState(false);
   var [editorBlocks, setEditorBlocks] = useState<QuizBlock[]>([]);
   var saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize blocks from quiz data when switching to block editor
+  // Initialize blocks from quiz data
   useEffect(function() {
-    if (quiz && editorMode === 'blocks' && !initialBlocksReady) {
+    if (quiz && !initialBlocksReady) {
       var converted = legacyToBlocks({
         questions: quiz.questions,
         outcomes: quiz.outcomes,
@@ -340,7 +298,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
       setEditorBlocks(converted);
       setInitialBlocksReady(true);
     }
-  }, [quiz, editorMode, initialBlocksReady]);
+  }, [quiz, initialBlocksReady]);
 
   // Auto-save block changes with debounce
   var handleBlocksChange = useCallback(function(blocks: QuizBlock[]) {
@@ -364,166 +322,33 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   if (state === 'empty') return <EditorEmpty />;
   if (!quiz) return <EditorLoading label="Loading editor..." />;
 
-  // Editor mode toggle button
-  var modeToggle = (
-    <div style={{ position: 'relative' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 2,
-        padding: 3, background: C.GRAY_100, border: '1px solid ' + C.GRAY_200,
-        borderRadius: 8,
-      }}>
-        <button
-          type="button"
-          onClick={function() { setEditorMode('classic'); setShowBlockGate(false); }}
-          style={{
-            padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
-            border: 'none', cursor: 'pointer',
-            background: editorMode === 'classic' ? C.SURFACE : 'transparent',
-            color: editorMode === 'classic' ? C.GRAY_900 : C.GRAY_500,
-            fontFamily: C.FONT,
-            boxShadow: editorMode === 'classic' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
-          }}
-        >
-          Classic
-        </button>
-        <button
-          type="button"
-          onClick={function() {
-            if (canUseBlocks) {
-              setEditorMode('blocks');
-              setInitialBlocksReady(false);
-              setShowBlockGate(false);
-            } else {
-              setShowBlockGate(true);
-            }
-          }}
-          style={{
-            padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
-            border: 'none', cursor: 'pointer',
-            background: editorMode === 'blocks' ? C.SURFACE : 'transparent',
-            color: editorMode === 'blocks' ? C.GRAY_900 : C.GRAY_500,
-            fontFamily: C.FONT,
-            boxShadow: editorMode === 'blocks' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
-          }}
-        >
-          Block editor
-        </button>
-      </div>
-      {showBlockGate && !canUseBlocks && (
-        <div style={{
-          position: 'absolute', top: '100%', right: 0,
-          marginTop: 12, padding: '28px 24px', background: C.SURFACE,
-          border: '1px solid ' + C.GRAY_200, borderRadius: 16,
-          boxShadow: '0 8px 30px rgba(16,24,40,0.12), 0 2px 8px rgba(16,24,40,0.06)', zIndex: 30,
-          width: 340, textAlign: 'center',
-        }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 12,
-            background: 'rgba(13,115,119,0.08)', color: C.ACCENT,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 14px',
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900, marginBottom: 6, letterSpacing: '-0.01em' }}>
-            Unlock the Block Editor
-          </div>
-          <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 20, lineHeight: 1.6 }}>
-            Build quizzes visually with drag-and-drop blocks, rich content, logic branching, and a live preview — all without code.
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-            <Link
-              href="/dashboard/billing"
-              style={{
-                padding: '11px 20px', fontSize: 14, fontWeight: 700, borderRadius: 10,
-                border: 'none', background: C.ACCENT, color: '#FFFFFF',
-                cursor: 'pointer', fontFamily: C.FONT, textDecoration: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              Upgrade to Starter
-            </Link>
-            <button
-              type="button"
-              onClick={function() { setShowBlockGate(false); }}
-              style={{
-                padding: '9px 14px', fontSize: 13, fontWeight: 500, borderRadius: 10,
-                border: 'none', background: 'transparent',
-                color: C.GRAY_500, cursor: 'pointer', fontFamily: C.FONT,
-              }}
-            >
-              Maybe later
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  if (editorMode === 'blocks') {
-    return (
-      <DashboardShell
-        title={'Editing: ' + (quiz.title || 'Quiz')}
-        topbarRight={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {modeToggle}
-            <button
-              type="button"
-              onClick={handlePublish}
-              disabled={publishing}
-              style={{
-                padding: '8px 20px', borderRadius: 8,
-                background: C.ACCENT, color: '#FFFFFF', border: 'none',
-                fontSize: 13, fontWeight: 700, cursor: publishing ? 'wait' : 'pointer',
-                fontFamily: C.FONT,
-                opacity: publishing ? 0.7 : 1,
-              }}
-            >
-              {publishing ? 'Publishing...' : 'Publish'}
-            </button>
-          </div>
-        }
-        contentPadding="0"
-      >
-        <QuizBlockEditor
-          blocks={editorBlocks}
-          onChange={handleBlocksChange}
-        />
-        {publishError && (
-          <div style={{position:"fixed",top:16,right:16,zIndex:60,background:"#fee",color:"#900",padding:"10px 14px",borderRadius:8,fontSize:13,boxShadow:"0 6px 18px rgba(0,0,0,0.18)"}}>{publishError}</div>
-        )}
-        <PublishModal
-          open={publishModalOpen}
-          quizTitle={(quiz as any)?.title || "Quiz"}
-          slug={publishedSlug}
-          onClose={function() { setPublishModalOpen(false); }}
-        />
-      </DashboardShell>
-    );
-  }
-
-  // Inject mode toggle into s3-top-right via CSS + portal-style approach
-  var modeToggleOverride = `
-    ${SHELL_OVERRIDES}
-    .dash-editor-shell .s3-top-right { gap: 8px; }
-  `;
-
   return (
-    <DashboardShell hideTopbar contentPadding="0">
-      <style dangerouslySetInnerHTML={{ __html: modeToggleOverride }} />
-      <div className="dash-editor-shell" style={{ minHeight: 'calc(100vh - 0px)' }}>
-        <TryFlowInner
-          mode="authed"
-          authedQuizId={resolvedId}
-          initialQuiz={normalizeQuiz(quiz)}
-          initialBrand={brandFromQuiz(quiz)}
-          initialUrl={quiz.branding?.site_url || quiz.source_url || ''}
-          initialStage={3}
-          onPublish={handlePublish}
-          plan={userPlan}
-          extraTopbarRight={modeToggle}
-        />
-      </div>
+    <DashboardShell
+      title={'Editing: ' + (quiz.title || 'Quiz')}
+      topbarRight={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            onClick={handlePublish}
+            disabled={publishing}
+            style={{
+              padding: '8px 20px', borderRadius: 8,
+              background: C.ACCENT, color: '#FFFFFF', border: 'none',
+              fontSize: 13, fontWeight: 700, cursor: publishing ? 'wait' : 'pointer',
+              fontFamily: C.FONT,
+              opacity: publishing ? 0.7 : 1,
+            }}
+          >
+            {publishing ? 'Publishing...' : 'Publish'}
+          </button>
+        </div>
+      }
+      contentPadding="0"
+    >
+      <QuizBlockEditor
+        blocks={editorBlocks}
+        onChange={handleBlocksChange}
+      />
       {publishError && (
         <div style={{position:"fixed",top:16,right:16,zIndex:60,background:"#fee",color:"#900",padding:"10px 14px",borderRadius:8,fontSize:13,boxShadow:"0 6px 18px rgba(0,0,0,0.18)"}}>{publishError}</div>
       )}
@@ -531,7 +356,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
         open={publishModalOpen}
         quizTitle={(quiz as any)?.title || "Quiz"}
         slug={publishedSlug}
-        onClose={() => setPublishModalOpen(false)}
+        onClose={function() { setPublishModalOpen(false); }}
       />
     </DashboardShell>
   );
