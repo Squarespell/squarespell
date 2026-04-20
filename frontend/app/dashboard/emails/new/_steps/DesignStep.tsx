@@ -83,7 +83,7 @@ export function DesignStep({
   var [previewItem, setPreviewItem] = useState<TemplateItem | null>(null);
   var [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
   var [editorDevice, setEditorDevice] = useState<'desktop' | 'mobile'>('desktop');
-  var [showPreheader, setShowPreheader] = useState(false);
+
   // Compute AI design instantly (synchronous) - no loading, no glitch
   var aiDesign = useMemo(function() {
     return autoDesignTemplate(null, null);
@@ -693,14 +693,14 @@ export function DesignStep({
   }
 
   // ==============================
-  // PHASE 2: Full-screen immersive editor
-  // Single unified top bar: Back | Subject (hero) | A/B | Controls | Continue
+  // PHASE 2: Full-screen editor with campaign sidebar
+  // Layout: Top bar | Editor (left) + Campaign sidebar (right)
   // ==============================
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#F0F0EC', display: 'flex', flexDirection: 'column' }}>
-      {/* === TOP BAR: Subject + Controls === */}
+      {/* === SLIM TOP BAR: Navigation + Editor controls === */}
       <div style={{
-        padding: '0 12px 0 16px', height: 52, borderBottom: '1px solid ' + C.BORDER,
+        padding: '0 12px 0 16px', height: 48, borderBottom: '1px solid ' + C.BORDER,
         display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
         background: '#FFFFFF',
       }}>
@@ -710,70 +710,25 @@ export function DesignStep({
           title="Back to templates"
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 34, height: 34, borderRadius: 8, border: '1px solid ' + C.BORDER,
+            width: 32, height: 32, borderRadius: 8, border: '1px solid ' + C.BORDER,
             background: 'transparent', cursor: 'pointer', color: C.TEXT, flexShrink: 0,
           }}
         >
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
         </button>
 
-        <div style={{ width: 1, height: 24, background: C.BORDER, flexShrink: 0 }} />
-
-        {/* Subject line - hero */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
-          </svg>
-          <input
-            value={state.subject}
-            onChange={function(e) { setState({ subject: e.target.value }); }}
-            placeholder="Subject line..."
-            className="sq-dinput"
-            style={{
-              flex: 1, padding: '7px 10px', background: 'transparent',
-              border: '1px solid transparent', borderRadius: 6, color: C.TEXT,
-              fontSize: 14, fontWeight: 500, boxSizing: 'border-box' as any,
-              transition: 'border-color 0.15s, background 0.15s',
-            }}
-            onFocus={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = C.ELEVATED; }}
-            onBlur={function(e) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent'; }}
-          />
-        </div>
-
-        {/* === A/B TEST - Prominent feature button === */}
-        <button
-          onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
-          title="Split test your subject line - automatically send the winner"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px',
-            background: state.abEnabled
-              ? 'linear-gradient(135deg, #0D7377 0%, #059669 100%)'
-              : 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%)',
-            border: state.abEnabled ? 'none' : '1.5px solid #0D7377',
-            borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700,
-            color: state.abEnabled ? '#FFFFFF' : '#0D7377',
-            whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.2s',
-            boxShadow: state.abEnabled ? '0 2px 8px rgba(13,115,119,0.3)' : '0 1px 3px rgba(13,115,119,0.12)',
-          }}
-        >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M16 3h5v5" /><path d="M8 3H3v5" /><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" /><path d="m15 9 6-6" />
-          </svg>
-          A/B Test
-        </button>
-
-        <div style={{ width: 1, height: 24, background: C.BORDER, flexShrink: 0 }} />
+        <div style={{ width: 1, height: 20, background: C.BORDER, flexShrink: 0 }} />
 
         {/* Edit / Preview toggle */}
-        <div style={{ display: 'flex', borderRadius: 8, border: '1px solid ' + C.BORDER, overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ display: 'flex', borderRadius: 7, border: '1px solid ' + C.BORDER, overflow: 'hidden', flexShrink: 0 }}>
           <button onClick={function() { handleSetEditorMode('edit'); }} style={{
-            padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
+            padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
             background: editorMode === 'edit' ? C.ACCENT : '#FFFFFF',
             color: editorMode === 'edit' ? '#FFFFFF' : C.TEXT_MUTED,
             transition: 'all 0.15s',
           }}>Edit</button>
           <button onClick={function() { handleSetEditorMode('preview'); }} style={{
-            padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
+            padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
             borderLeft: '1px solid ' + C.BORDER,
             background: editorMode === 'preview' ? C.ACCENT : '#FFFFFF',
             color: editorMode === 'preview' ? '#FFFFFF' : C.TEXT_MUTED,
@@ -809,11 +764,12 @@ export function DesignStep({
           </button>
         </div>
 
-        <div style={{ width: 1, height: 24, background: C.BORDER, flexShrink: 0 }} />
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
 
         {/* Save */}
         <button onClick={handleEditorSave} style={{
-          padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+          padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600,
           cursor: 'pointer', border: '1px solid ' + C.BORDER, background: '#FFFFFF',
           color: C.TEXT, transition: 'all 0.15s', flexShrink: 0,
         }}>Save</button>
@@ -825,78 +781,202 @@ export function DesignStep({
         </PrimaryButton>
       </div>
 
-      {/* === PREHEADER + A/B ROW (compact second bar, always visible) === */}
-      <div style={{
-        padding: '6px 16px', borderBottom: '1px solid ' + C.BORDER,
-        background: '#FAFAF8', display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0,
-      }}>
-        {/* Preheader - always visible */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-          </svg>
-          <input value={state.preheader || ''} onChange={function(e) { setState({ preheader: e.target.value }); }}
-            placeholder="Preview text (shown after subject in inbox)..." className="sq-dinput"
-            style={{
-              flex: 1, padding: '6px 10px', background: 'transparent',
-              border: '1px solid transparent', borderRadius: 6, color: C.TEXT,
-              fontSize: 13, boxSizing: 'border-box' as any,
-              transition: 'border-color 0.15s, background 0.15s',
-            }}
-            onFocus={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = '#FFFFFF'; }}
-            onBlur={function(e) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent'; }}
-          />
-        </div>
+      {/* === MAIN AREA: Editor (left) + Campaign Sidebar (right) === */}
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        {/* Editor iframe */}
+        <iframe
+          ref={editorRef}
+          title="Email editor"
+          src={'/email-editor.html?v=' + editorCacheBust}
+          style={{ flex: 1, border: 'none', minWidth: 0 }}
+        />
 
-        {/* A/B variant B inline (only when enabled) */}
-        {state.abEnabled && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0,
-            paddingLeft: 10, borderLeft: '1px solid ' + C.BORDER,
+        {/* === CAMPAIGN SIDEBAR - Always visible === */}
+        <div style={{
+          width: 320, flexShrink: 0, background: '#FFFFFF', borderLeft: '1px solid ' + C.BORDER,
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          {/* Sidebar header */}
+          <div style={{
+            padding: '16px 20px 12px', borderBottom: '1px solid ' + C.BORDER,
           }}>
-            <div style={{
-              padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
-              background: 'linear-gradient(135deg, #0D7377, #059669)', color: '#FFFFFF', flexShrink: 0,
-            }}>B</div>
-            <input value={state.subjectB || ''} onChange={function(e) { setState({ subjectB: e.target.value }); }}
-              placeholder="Alternative subject line..." className="sq-dinput"
-              style={{
-                flex: 1, padding: '6px 10px', background: 'transparent',
-                border: '1px solid transparent', borderRadius: 6, color: C.TEXT,
-                fontSize: 13, boxSizing: 'border-box' as any,
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
-              onFocus={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = '#FFFFFF'; }}
-              onBlur={function(e) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent'; }}
-            />
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-              <input type="number" min={10} max={50} value={state.abTestPercent || 20}
-                onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
-                style={{ width: 40, padding: '4px 3px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 5, color: C.TEXT, fontSize: 11, textAlign: 'center' as any, boxSizing: 'border-box' }} />
-              <span style={{ color: C.TEXT_SUBTLE, fontSize: 10 }}>%</span>
-              <input type="number" min={1} max={48} value={state.abWaitHours || 4}
-                onChange={function(e) { setState({ abWaitHours: Math.min(48, Math.max(1, Number(e.target.value))) }); }}
-                style={{ width: 40, padding: '4px 3px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 5, color: C.TEXT, fontSize: 11, textAlign: 'center' as any, boxSizing: 'border-box' }} />
-              <span style={{ color: C.TEXT_SUBTLE, fontSize: 10 }}>h</span>
-              <button onClick={function() { setState({ abEnabled: false }); }} title="Remove A/B test"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: C.TEXT_MUTED }}>
-                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT }}>Campaign Settings</div>
+            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Subject, preview text & split testing</div>
           </div>
-        )}
-      </div>
 
-      {/* Editor iframe - fills all remaining space */}
-      <iframe
-        ref={editorRef}
-        title="Email editor"
-        src={'/email-editor.html?v=' + editorCacheBust}
-        style={{
-          flex: 1, border: 'none', width: '100%', minHeight: 0,
-        }}
-      />
+          {/* Sidebar content - scrollable */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+
+            {/* Subject Line A */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: C.TEXT, textTransform: 'uppercase' as any, letterSpacing: 0.5, marginBottom: 6 }}>
+                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
+                </svg>
+                Subject Line {state.abEnabled ? '(A)' : ''}
+              </label>
+              <input
+                value={state.subject}
+                onChange={function(e) { setState({ subject: e.target.value }); }}
+                placeholder="What will they see in their inbox?"
+                className="sq-dinput"
+                style={sidebarInputStyle}
+              />
+            </div>
+
+            {/* Preview Text */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: C.TEXT, textTransform: 'uppercase' as any, letterSpacing: 0.5, marginBottom: 6 }}>
+                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                </svg>
+                Preview Text
+              </label>
+              <input
+                value={state.preheader || ''}
+                onChange={function(e) { setState({ preheader: e.target.value }); }}
+                placeholder="Shown after subject in inbox..."
+                className="sq-dinput"
+                style={sidebarInputStyle}
+              />
+              <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginTop: 4, lineHeight: 1.4 }}>
+                This text appears after the subject line in most email clients.
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: C.BORDER, marginBottom: 20 }} />
+
+            {/* === A/B SPLIT TEST SECTION === */}
+            <div style={{
+              background: state.abEnabled
+                ? 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%)'
+                : '#FAFAF8',
+              border: '1.5px solid ' + (state.abEnabled ? '#0D7377' : C.BORDER),
+              borderRadius: 12, padding: 16, marginBottom: 20,
+              transition: 'all 0.2s',
+            }}>
+              {/* A/B Header with toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: state.abEnabled ? 16 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: state.abEnabled ? 'linear-gradient(135deg, #0D7377, #059669)' : C.ELEVATED,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}>
+                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={state.abEnabled ? '#FFFFFF' : C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 3h5v5" /><path d="M8 3H3v5" /><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" /><path d="m15 9 6-6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>A/B Split Test</div>
+                    <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Test two subject lines</div>
+                  </div>
+                </div>
+                {/* Toggle switch */}
+                <button
+                  onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
+                  style={{
+                    width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                    background: state.abEnabled ? '#0D7377' : '#D1D5DB',
+                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                  }}
+                >
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 9, background: '#FFFFFF',
+                    position: 'absolute', top: 3,
+                    left: state.abEnabled ? 23 : 3,
+                    transition: 'left 0.2s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </button>
+              </div>
+
+              {/* A/B Content - shown when enabled */}
+              {state.abEnabled && (
+                <div>
+                  {/* Subject B */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#0D7377', marginBottom: 6 }}>
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 4,
+                        background: 'linear-gradient(135deg, #0D7377, #059669)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10, fontWeight: 800, color: '#FFFFFF',
+                      }}>B</div>
+                      SUBJECT LINE B
+                    </label>
+                    <input
+                      value={state.subjectB || ''}
+                      onChange={function(e) { setState({ subjectB: e.target.value }); }}
+                      placeholder="Try a different angle..."
+                      className="sq-dinput"
+                      style={sidebarInputStyle}
+                    />
+                  </div>
+
+                  {/* Split visualization */}
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Test Split</div>
+                    <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', height: 8, background: '#E5E7EB' }}>
+                      <div style={{ width: (state.abTestPercent || 20) + '%', background: '#0D7377', transition: 'width 0.3s' }} />
+                      <div style={{ width: (state.abTestPercent || 20) + '%', background: '#059669', transition: 'width 0.3s' }} />
+                      <div style={{ flex: 1, background: '#D1D5DB' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                      <span style={{ fontSize: 10, color: '#0D7377', fontWeight: 600 }}>{state.abTestPercent || 20}% A</span>
+                      <span style={{ fontSize: 10, color: '#059669', fontWeight: 600 }}>{state.abTestPercent || 20}% B</span>
+                      <span style={{ fontSize: 10, color: C.TEXT_MUTED, fontWeight: 600 }}>{100 - ((state.abTestPercent || 20) * 2)}% Winner</span>
+                    </div>
+                  </div>
+
+                  {/* Settings */}
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Test size</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input type="number" min={10} max={50} value={state.abTestPercent || 20}
+                          onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
+                          style={{ width: '100%', padding: '6px 8px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
+                        <span style={{ color: C.TEXT_MUTED, fontSize: 12, flexShrink: 0 }}>%</span>
+                      </div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Wait time</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input type="number" min={1} max={48} value={state.abWaitHours || 4}
+                          onChange={function(e) { setState({ abWaitHours: Math.min(48, Math.max(1, Number(e.target.value))) }); }}
+                          style={{ width: '100%', padding: '6px 8px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
+                        <span style={{ color: C.TEXT_MUTED, fontSize: 12, flexShrink: 0 }}>hrs</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* How it works */}
+                  <div style={{
+                    marginTop: 14, padding: '10px 12px', background: 'rgba(255,255,255,0.7)',
+                    borderRadius: 8, border: '1px solid rgba(13,115,119,0.15)',
+                  }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#0D7377', marginBottom: 4 }}>How it works</div>
+                    <div style={{ fontSize: 11, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
+                      {state.abTestPercent || 20}% of your audience gets Subject A, {state.abTestPercent || 20}% gets Subject B. After {state.abWaitHours || 4} hours, the winning subject (by open rate) is sent to the remaining {100 - ((state.abTestPercent || 20) * 2)}%.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* When disabled - show benefit */}
+              {!state.abEnabled && (
+                <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginTop: 8, lineHeight: 1.5 }}>
+                  Enable to test two subject lines. The winner gets sent to the rest of your audience automatically.
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -940,4 +1020,10 @@ var iconBtnStyle: React.CSSProperties = {
   width: 32, height: 32, borderRadius: 6, border: 'none',
   background: 'transparent', cursor: 'pointer', color: C.TEXT_MUTED,
   transition: 'all 0.12s',
+};
+
+var sidebarInputStyle: React.CSSProperties = {
+  width: '100%', padding: '9px 12px', background: C.ELEVATED,
+  border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13,
+  boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
 };
