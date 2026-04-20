@@ -455,27 +455,12 @@ export const FLOW_CSS = `
   .s3-body { display: grid; grid-template-columns: 1fr 380px; height: calc(100vh - 90px); overflow: hidden; }
   .s3-main { overflow-y: auto; overflow-x: hidden; height: 100%; width: 100%; }
   .s3-main-inner { padding: 32px 40px 80px; max-width: 880px; width: 100%; margin: 0 auto; }
-  .s3-main-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+  .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .s3-main-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
-  .s3-title-edit-area { flex: 1; display: flex; flex-direction: column; gap: 0; }
-  .s3-title-input {
-    font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text);
-    background: transparent; border: none; border-radius: 6px;
-    padding: 4px 8px; margin: -4px -8px; outline: none; width: calc(100% + 16px);
-    font-family: inherit; transition: background 0.15s;
-  }
-  .s3-title-input:hover { background: #F2F4F7; }
-  .s3-title-input:focus { background: #F2F4F7; }
-  .s3-title-input::placeholder { color: #D0D5DD; font-weight: 500; }
-  .s3-desc-input {
-    font-size: 13px; color: var(--text-muted); line-height: 1.5;
-    background: transparent; border: none; border-radius: 6px;
-    padding: 4px 8px; margin: 0 -8px; outline: none; width: calc(100% + 16px);
-    font-family: inherit; resize: none; transition: background 0.15s;
-  }
-  .s3-desc-input:hover { background: #F2F4F7; }
-  .s3-desc-input:focus { background: #F2F4F7; }
-  .s3-desc-input::placeholder { color: #D0D5DD; }
+  .s3-main-title { display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; transition: background 0.15s; }
+  .s3-main-title:hover { background: #F2F4F7; }
+  .s3-main-title-edit { opacity: 0; color: var(--text-muted); transition: opacity 0.15s; flex-shrink: 0; }
+  .s3-main-title:hover .s3-main-title-edit { opacity: 1; }
   .s3-count {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 13px; color: var(--text-muted);
