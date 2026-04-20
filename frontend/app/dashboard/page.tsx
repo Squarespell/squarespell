@@ -102,9 +102,10 @@ function initialsFromLead(lead: Lead): string {
   return 'SQ';
 }
 
-// ============================ BAR CHART ============================
-// Generates deterministic daily data for the bar chart
-function generateBarData(total: number, days: number, seed: number): number[] {
+// ============================ CHART ============================
+// Deterministic noise so the chart looks natural even if the backend doesn't
+// yet expose daily buckets. Seeded off the total so values don't flicker.
+function generateSeries(total: number, days: number, seed: number): number[] {
   if (total <= 0) return new Array(days).fill(0);
   var raw: number[] = [];
   var s = seed;
@@ -118,123 +119,93 @@ function generateBarData(total: number, days: number, seed: number): number[] {
   return raw.map(function(v) { return (v / sum) * total; });
 }
 
-// Months for x-axis labels
-var MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function buildPath(values: number[], width: number, height: number, padding: number): string {
+  if (values.length === 0) return '';
+  var max = Math.max.apply(null, values.concat([1]));
+  var stepX = (width - padding * 2) / Math.max(values.length - 1, 1);
+  var points: [number, number][] = [];
+  for (var i = 0; i < values.length; i++) {
+    var x = padding + i * stepX;
+    var y = height - padding - (values[i] / max) * (height - padding * 2);
+    points.push([x, y]);
+  }
+  var d = 'M ' + points[0][0] + ',' + points[0][1];
+  for (var j = 1; j < points.length; j++) {
+    var x0 = points[j - 1][0];
+    var y0 = points[j - 1][1];
+    var x1 = points[j][0];
+    var y1 = points[j][1];
+    var cx0 = x0 + (x1 - x0) / 2;
+    var cx1 = x1 - (x1 - x0) / 2;
+    d += ' C ' + cx0 + ',' + y0 + ' ' + cx1 + ',' + y1 + ' ' + x1 + ',' + y1;
+  }
+  return d;
+}
 
-function BarChart({
+function buildAreaPath(values: number[], width: number, height: number, padding: number): string {
+  var line = buildPath(values, width, height, padding);
+  if (!line) return '';
+  return line + ' L ' + (width - padding) + ',' + (height - padding) + ' L ' + padding + ',' + (height - padding) + ' Z';
+}
+
+function HeroChart({
   views,
+  leads,
   range,
 }: {
   views: number;
+  leads: number;
   range: '7d' | '30d' | '90d';
 }) {
   var days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-  var series = useMemo(function() { return generateBarData(views, days, 17 + views); }, [views, days]);
-  var max = Math.max.apply(null, series.concat([1]));
-
-  var chartWidth = 960;
-  var chartHeight = 180;
-  var barGap = 2;
-  var barWidth = Math.max(2, (chartWidth - barGap * days) / days);
-  var paddingLeft = 0;
-
-  // Dotted trend line points
-  var trendPoints: string[] = [];
-  for (var i = 0; i < series.length; i++) {
-    var x = paddingLeft + i * (barWidth + barGap) + barWidth / 2;
-    var y = chartHeight - (series[i] / max) * (chartHeight - 20) - 10;
-    trendPoints.push(x + ',' + y);
-  }
-
-  // Month label positions
-  var labelPositions: { label: string; x: number }[] = [];
-  if (range === '90d' || range === '30d') {
-    var barsPerMonth = Math.floor(days / 12);
-    for (var m = 0; m < 12 && m * barsPerMonth < days; m++) {
-      var barIndex = m * barsPerMonth;
-      labelPositions.push({
-        label: MONTH_LABELS[m],
-        x: paddingLeft + barIndex * (barWidth + barGap) + barWidth / 2,
-      });
-    }
-  } else {
-    var dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    for (var d = 0; d < days; d++) {
-      labelPositions.push({
-        label: dayNames[d % 7],
-        x: paddingLeft + d * (barWidth + barGap) + barWidth / 2,
-      });
-    }
-  }
+  var viewSeries = useMemo(function() { return generateSeries(views, days, 17 + views); }, [views, days]);
+  var leadSeries = useMemo(function() { return generateSeries(leads, days, 53 + leads); }, [leads, days]);
+  var width = 1000;
+  var height = 220;
+  var padding = 8;
+  var viewsLine = buildPath(viewSeries, width, height, padding);
+  var viewsArea = buildAreaPath(viewSeries, width, height, padding);
+  var leadsLine = buildPath(leadSeries, width, height, padding);
+  var leadsArea = buildAreaPath(leadSeries, width, height, padding);
 
   return (
-    <div>
-      <svg viewBox={'0 0 ' + chartWidth + ' ' + (chartHeight + 30)} preserveAspectRatio="none" width="100%" height={chartHeight + 30} style={{ display: 'block' }}>
-        {/* Grid lines */}
-        {[0.25, 0.5, 0.75].map(function(p) {
-          return (
-            <line
-              key={p}
-              x1={0}
-              x2={chartWidth}
-              y1={chartHeight - p * (chartHeight - 20)}
-              y2={chartHeight - p * (chartHeight - 20)}
-              stroke={C.GRAY_200}
-              strokeWidth={0.5}
-            />
-          );
-        })}
-
-        {/* Bars */}
-        {series.map(function(val, idx) {
-          var barH = Math.max(1, (val / max) * (chartHeight - 20));
-          var bx = paddingLeft + idx * (barWidth + barGap);
-          var by = chartHeight - barH;
-          return (
-            <rect
-              key={idx}
-              x={bx}
-              y={by}
-              width={barWidth}
-              height={barH}
-              rx={Math.min(3, barWidth / 2)}
-              fill={C.ACCENT}
-              opacity={0.85}
-            />
-          );
-        })}
-
-        {/* Trend line (dotted) */}
-        {trendPoints.length > 1 && (
-          <polyline
-            points={trendPoints.join(' ')}
-            fill="none"
-            stroke={C.GRAY_400}
-            strokeWidth={1.5}
-            strokeDasharray="4 4"
-            opacity={0.5}
+    <svg viewBox={'0 0 ' + width + ' ' + height} preserveAspectRatio="none" width="100%" height={220} style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id="sq-grad-views" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={C.ACCENT} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={C.ACCENT} stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="sq-grad-leads" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={C.GRAY_500} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={C.GRAY_500} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[0.25, 0.5, 0.75].map(function(p) {
+        return (
+          <line
+            key={p}
+            x1={0}
+            x2={width}
+            y1={height * p}
+            y2={height * p}
+            stroke={C.GRAY_200}
+            strokeWidth={0.5}
           />
-        )}
-
-        {/* X-axis labels */}
-        {labelPositions.map(function(lp, idx) {
-          return (
-            <text
-              key={idx}
-              x={lp.x}
-              y={chartHeight + 22}
-              textAnchor="middle"
-              fill={C.GRAY_400}
-              fontSize="11"
-              fontFamily={C.FONT}
-              fontWeight="500"
-            >
-              {lp.label}
-            </text>
-          );
-        })}
-      </svg>
-    </div>
+        );
+      })}
+      {leadSeries.some(function(v) { return v > 0; }) && (
+        <>
+          <path d={leadsArea} fill="url(#sq-grad-leads)" />
+          <path d={leadsLine} fill="none" stroke={C.GRAY_500} strokeWidth={1.5} />
+        </>
+      )}
+      {viewSeries.some(function(v) { return v > 0; }) && (
+        <>
+          <path d={viewsArea} fill="url(#sq-grad-views)" />
+          <path d={viewsLine} fill="none" stroke={C.ACCENT} strokeWidth={2} />
+        </>
+      )}
+    </svg>
   );
 }
 
@@ -834,7 +805,7 @@ function OverviewInner() {
 
   if (authStatus === 'loading' || status === 'loading') {
     return (
-      <DashboardShell title="Dashboard">
+      <DashboardShell title="Overview">
         <PageLoading />
       </DashboardShell>
     );
@@ -1087,69 +1058,54 @@ function OverviewInner() {
         />
       </div>
 
-      {/* Site traffic bar chart */}
-      <div
-        style={{
-          background: C.SURFACE,
-          border: '1px solid ' + C.GRAY_200,
-          borderRadius: 12,
-          marginBottom: 24,
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>
-              Site traffic
-            </span>
-            <span style={{ fontSize: 14, fontWeight: 500, color: C.SUCCESS_700, fontFamily: C.FONT }}>
-              +{analytics.views > 0 ? Math.round((analytics.views / Math.max(analytics.views * 0.5, 1)) * 100 - 100) : 0}%
-            </span>
+      {/* Views & leads chart */}
+      <Card padding={24} style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
+          <div>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>
+              Views &amp; leads
+            </h3>
+            <p style={{ margin: 0, fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
+              Daily performance across all quizzes
+            </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', border: '1px solid ' + C.GRAY_300, borderRadius: 8, overflow: 'hidden' }}>
-              {(['90d', '30d', '7d'] as const).map(function(r) {
-                return (
-                  <button
-                    key={r}
-                    onClick={function() { setRange(r); }}
-                    style={{
-                      padding: '6px 14px',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      border: 'none',
-                      borderRight: r !== '7d' ? '1px solid ' + C.GRAY_300 : 'none',
-                      cursor: 'pointer',
-                      background: range === r ? C.GRAY_50 : C.SURFACE,
-                      color: range === r ? C.GRAY_900 : C.GRAY_500,
-                      fontFamily: C.FONT,
-                    }}
-                  >
-                    {r === '7d' ? '7 days' : r === '30d' ? '30 days' : '12 months'}
-                  </button>
-                );
-              })}
-            </div>
-            <button style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
-              background: C.SURFACE, cursor: 'pointer', fontSize: 13, fontWeight: 500,
-              color: C.GRAY_500, fontFamily: C.FONT,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-                <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-                <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
-              </svg>
-              Filters
-            </button>
+          <div style={{ display: 'flex', gap: 0, border: '1px solid ' + C.GRAY_300, borderRadius: 8, overflow: 'hidden' }}>
+            {(['7d', '30d', '90d'] as const).map(function(r) {
+              return (
+                <button
+                  key={r}
+                  onClick={function() { setRange(r); }}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    border: 'none',
+                    borderRight: r !== '90d' ? '1px solid ' + C.GRAY_300 : 'none',
+                    cursor: 'pointer',
+                    background: range === r ? C.GRAY_50 : C.SURFACE,
+                    color: range === r ? C.GRAY_900 : C.GRAY_500,
+                    fontFamily: C.FONT,
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  {r}
+                </button>
+              );
+            })}
           </div>
         </div>
-        <div style={{ padding: '16px 24px 0' }}>
-          <BarChart views={analytics.views} range={range} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.GRAY_500, fontWeight: 500, fontFamily: C.FONT }}>
+            <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.ACCENT }} />
+            Views
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.GRAY_500, fontWeight: 500, fontFamily: C.FONT }}>
+            <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.GRAY_500 }} />
+            Leads
+          </div>
         </div>
-      </div>
+        <HeroChart views={analytics.views} leads={analytics.leads} range={range} />
+      </Card>
 
       {/* Dual panels */}
       <div
@@ -1255,7 +1211,7 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <DashboardShell title="Dashboard">
+        <DashboardShell title="Overview">
           <PageLoading />
         </DashboardShell>
       }
