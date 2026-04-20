@@ -224,6 +224,7 @@ function BlockCard({
   onSelect,
   onDelete,
   onDuplicate,
+  onChange,
   onDragStart,
   onDragOver,
   onDrop,
@@ -235,6 +236,7 @@ function BlockCard({
   onSelect: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onChange: (updated: QuizBlock) => void;
   onDragStart: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
@@ -245,6 +247,27 @@ function BlockCard({
   var color = blockColor(block.type);
   var questionNum = block.type === 'question' ? index : null;
   var qb = block.type === 'question' ? (block as QuestionBlock) : null;
+
+  function updateQuestionText(text: string) {
+    if (!qb) return;
+    onChange({ ...qb, text: text } as QuizBlock);
+  }
+
+  function updateOptionText(optIdx: number, text: string) {
+    if (!qb) return;
+    var newOpts = qb.options.map(function(o, i) {
+      return i === optIdx ? { ...o, text: text } : o;
+    });
+    onChange({ ...qb, options: newOpts } as QuizBlock);
+  }
+
+  function updateOptionScore(optIdx: number, score: number) {
+    if (!qb) return;
+    var newOpts = qb.options.map(function(o, i) {
+      return i === optIdx ? { ...o, score: score } : o;
+    });
+    onChange({ ...qb, options: newOpts } as QuizBlock);
+  }
 
   return (
     <div
@@ -266,28 +289,28 @@ function BlockCard({
       }}
     >
       {/* Card header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '20px 22px', cursor: 'pointer' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '18px 20px 12px', cursor: 'pointer' }}>
         {/* Drag handle */}
         <div
           draggable
           onDragStart={onDragStart}
-          style={{ cursor: 'grab', padding: '4px 2px', flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s' }}
+          style={{ cursor: 'grab', padding: '4px 2px', flexShrink: 0, opacity: 0.35, transition: 'opacity 0.15s' }}
           onMouseEnter={function(e) { e.currentTarget.style.opacity = '1'; }}
-          onMouseLeave={function(e) { e.currentTarget.style.opacity = '0.4'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.opacity = '0.35'; }}
         >
           <DragHandle />
         </div>
 
         {/* Number/icon badge */}
         <div style={{
-          width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
           background: selected ? C.ACCENT : (color + '12'),
           border: '1px solid ' + (selected ? C.ACCENT : color + '30'),
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'all 0.15s ease',
         }}>
           {questionNum !== null ? (
-            <span style={{ fontSize: 14, fontWeight: 700, color: selected ? '#FFFFFF' : color }}>Q{questionNum}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: selected ? '#FFFFFF' : color }}>Q{questionNum}</span>
           ) : (
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={selected ? '#FFFFFF' : color}
               strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -298,14 +321,32 @@ function BlockCard({
 
         {/* Content header */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {preview && (
+          {/* Editable question text or static preview */}
+          {selected && qb ? (
+            <textarea
+              value={qb.text}
+              onChange={function(e) { updateQuestionText(e.target.value); }}
+              onClick={function(e) { e.stopPropagation(); }}
+              rows={2}
+              placeholder="Type your question..."
+              style={{
+                width: '100%', fontSize: 15, fontWeight: 600, color: C.TEXT,
+                fontFamily: C.FONT + ',system-ui,sans-serif',
+                lineHeight: 1.4, border: '1px solid ' + C.BORDER, borderRadius: 8,
+                padding: '8px 10px', background: '#FFFFFF', resize: 'vertical',
+                outline: 'none', marginBottom: 4,
+              }}
+              onFocus={function(e) { (e.target as HTMLTextAreaElement).style.borderColor = C.ACCENT; (e.target as HTMLTextAreaElement).style.boxShadow = '0 0 0 2px rgba(13,115,119,0.1)'; }}
+              onBlur={function(e) { (e.target as HTMLTextAreaElement).style.borderColor = C.BORDER; (e.target as HTMLTextAreaElement).style.boxShadow = 'none'; }}
+            />
+          ) : preview ? (
             <div style={{
               fontSize: 15, color: C.TEXT, fontWeight: 600, lineHeight: 1.4,
               fontFamily: C.FONT, marginBottom: 4,
             }}>
               {preview}
             </div>
-          )}
+          ) : null}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{
               fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED,
@@ -333,21 +374,21 @@ function BlockCard({
           onClick={function(e) { e.stopPropagation(); }}
         >
           <button type="button" onClick={onDuplicate} title="Duplicate"
-            style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', color: C.TEXT_SUBTLE, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 28, height: 28, borderRadius: 7, background: 'transparent', border: 'none', color: C.TEXT_SUBTLE, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={function(e) { e.currentTarget.style.background = '#F2F4F7'; }}
             onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
           >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <rect x={9} y={9} width={13} height={13} rx={2} ry={2} />
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
           </button>
           <button type="button" onClick={onDelete} title="Delete"
-            style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', color: C.TEXT_SUBTLE, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 28, height: 28, borderRadius: 7, background: 'transparent', border: 'none', color: C.TEXT_SUBTLE, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.06)'; e.currentTarget.style.color = '#ff3b30'; }}
             onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
           >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             </svg>
@@ -355,20 +396,21 @@ function BlockCard({
         </div>
       </div>
 
-      {/* Answer options - ALWAYS visible for question blocks (like classic editor) */}
+      {/* Answer options - ALWAYS visible and inline-editable for question blocks */}
       {qb && (
-        <div style={{ padding: '0 22px 18px 80px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {qb.options.map(function(opt, oi) {
             return (
               <div key={opt.id} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 14px', borderRadius: 10,
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: selected ? '4px 4px 4px 10px' : '8px 12px',
+                borderRadius: 8,
                 background: '#FFFFFF', border: '1px solid ' + C.BORDER,
                 fontSize: 14, color: C.TEXT,
                 transition: 'border-color 0.15s',
               }}>
                 <div style={{
-                  width: 26, height: 26, borderRadius: 7,
+                  width: 24, height: 24, borderRadius: 6,
                   background: selected ? C.ACCENT : '#E9ECEF',
                   color: selected ? '#fff' : C.TEXT_MUTED,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -378,19 +420,57 @@ function BlockCard({
                   {LETTERS[oi]}
                 </div>
                 {opt.imageUrl && (
-                  <img src={opt.imageUrl} alt="" style={{ width: 30, height: 30, borderRadius: 5, objectFit: 'cover', flexShrink: 0 }}
+                  <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
                     onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 )}
-                <span style={{ flex: 1, fontWeight: 500, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
-                <span style={{
-                  fontSize: 11, fontWeight: 600, flexShrink: 0,
-                  padding: '3px 8px', borderRadius: 6,
-                  background: (opt.score || 0) >= 3 ? 'rgba(13,115,119,0.12)' : 'rgba(0,0,0,0.04)',
-                  color: (opt.score || 0) >= 3 ? C.ACCENT : C.TEXT_MUTED,
-                  border: '1px solid ' + ((opt.score || 0) >= 3 ? 'rgba(13,115,119,0.2)' : 'rgba(0,0,0,0.06)'),
-                }}>
-                  +{opt.score || 0}pts
-                </span>
+                {selected ? (
+                  <input
+                    value={opt.text}
+                    onChange={function(e) { updateOptionText(oi, e.target.value); }}
+                    onClick={function(e) { e.stopPropagation(); }}
+                    placeholder={'Option ' + LETTERS[oi]}
+                    style={{
+                      flex: 1, fontSize: 14, fontWeight: 500, color: C.TEXT,
+                      fontFamily: C.FONT + ',system-ui,sans-serif',
+                      border: '1px solid ' + C.BORDER, borderRadius: 6,
+                      padding: '6px 10px', background: '#FAFAFA', outline: 'none',
+                    }}
+                    onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.background = '#FFF'; }}
+                    onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = '#FAFAFA'; }}
+                  />
+                ) : (
+                  <span style={{ flex: 1, fontWeight: 500, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+                )}
+                {selected ? (
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={opt.score || 0}
+                    onChange={function(e) { updateOptionScore(oi, parseInt(e.target.value) || 0); }}
+                    onClick={function(e) { e.stopPropagation(); }}
+                    title="Score points"
+                    style={{
+                      width: 52, fontSize: 13, fontWeight: 600, color: C.ACCENT,
+                      fontFamily: C.FONT + ',system-ui,sans-serif',
+                      border: '1px solid ' + C.BORDER, borderRadius: 6,
+                      padding: '6px 6px', background: '#FAFAFA', outline: 'none',
+                      textAlign: 'center',
+                    }}
+                    onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                    onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
+                  />
+                ) : (
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, flexShrink: 0,
+                    padding: '3px 8px', borderRadius: 6,
+                    background: (opt.score || 0) >= 3 ? 'rgba(13,115,119,0.12)' : 'rgba(0,0,0,0.04)',
+                    color: (opt.score || 0) >= 3 ? C.ACCENT : C.TEXT_MUTED,
+                    border: '1px solid ' + ((opt.score || 0) >= 3 ? 'rgba(13,115,119,0.2)' : 'rgba(0,0,0,0.06)'),
+                  }}>
+                    +{opt.score || 0}pts
+                  </span>
+                )}
               </div>
             );
           })}
@@ -1743,6 +1823,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
                   onSelect={function() { setSelectedId(block.id); }}
                   onDelete={function() { deleteBlock(block.id); }}
                   onDuplicate={function() { duplicateBlock(block.id); }}
+                  onChange={updateBlock}
                   onDragStart={handleDragStart(block.id)}
                   onDragOver={handleDragOver(block.id)}
                   onDrop={handleDrop(block.id)}
