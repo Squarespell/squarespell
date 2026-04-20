@@ -105,8 +105,21 @@ export function DesignStep({
 
     Promise.all([brandPromise, quizPromise]).then(function(results: any[]) {
       var brandKit: BrandKitFromAPI | null = results[0];
-      setAiBrandKit(brandKit);
       var quizRaw: any = results[1];
+
+      // Fallback: if no saved brand kit, use quiz-level branding (saved at quiz creation)
+      if (!brandKit && quizRaw && quizRaw.branding) {
+        var qb = quizRaw.branding;
+        brandKit = {
+          colors: qb.colors || undefined,
+          font_family: qb.font_family || undefined,
+          site_name: qb.site_name || undefined,
+          favicon_url: qb.favicon_url || undefined,
+          logo_url: qb.logo_url || undefined,
+        };
+      }
+
+      setAiBrandKit(brandKit);
 
       // Map quiz API response to QuizData shape
       var quizData: QuizData | null = null;
