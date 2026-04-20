@@ -919,7 +919,150 @@ Return this JSON:
   }
 }
 
-export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas, generateEmailContent };
+// ---------------------------------------------------------------------------
+// AI Email Design: Picks template + generates content based on quiz + user prompt
+// ---------------------------------------------------------------------------
+
+interface TemplateOption {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+}
+
+interface AiDesignInput {
+  userPrompt?: string;
+  quizTitle?: string;
+  quizCategory?: string;
+  outcomes?: Array<{ name: string; description?: string }>;
+  questions?: Array<{ text: string }>;
+  brandName?: string;
+  brandColors?: Record<string, string>;
+  templates: TemplateOption[];
+}
+
+interface AiDesignOutput {
+  templateId: string;
+  subject: string;
+  preheader: string;
+  heroHeading: string;
+  heroSubheading: string;
+  bodyParagraph: string;
+  ctaText: string;
+  sectionHeading: string;
+  sectionBody: string;
+  reasoning: string;
+}
+
+async function generateAiEmailDesign(input: AiDesignInput): Promise<AiDesignOutput> {
+  const templateList = input.templates.map((t) =>
+    `- ID: "${t.id}" | Name: "${t.name}" | Category: ${t.category} | Style: ${t.description}`
+  ).join('\n');
+
+  const outcomesText = input.outcomes && input.outcomes.length > 0
+    ? input.outcomes.slice(0, 5).map((o) => `"${o.name}"${o.description ? ': ' + o.description : ''}`).join(', ')
+    : 'None provided';
+
+  const questionsText = input.questions && input.questions.length > 0
+    ? input.questions.slice(0, 5).map((q) => `"${q.text}"`).join(', ')
+    : 'None provided';
+
+  const systemPrompt = `You are an expert email marketing designer for a quiz-based lead generation platform. Users create quizzes for their website visitors, and you design the follow-up email that recipients get after completing the quiz.
+
+YOUR JOB:
+1. Pick the BEST template from the available options based on the quiz type, brand, and user's intent.
+2. Generate personalized email content that matches the quiz context.
+
+RULES:
+- Use these merge tags naturally: {{first_name}} (recipient name), {{outcome_name}} (their quiz result), {{quiz_name}} (quiz title), {{brand_name}} (business name).
+- Hero heading should be attention-grabbing and reference their quiz result.
+- Body paragraph should be 2-3 sentences, warm and helpful.
+- CTA text should be 2-4 words, action-oriented.
+- Subject line: 5-12 words, curiosity-driven, include {{first_name}} if natural.
+- Preheader: 8-15 words that complement the subject.
+- Do NOT use em dashes. Use commas, periods, or " - " instead.
+- Keep tone professional but warm.
+- Return ONLY valid JSON. No markdown, no backticks.`;
+
+  const userPrompt = `CONTEXT:
+Brand: ${input.brandName || 'Unknown brand'}
+Brand Colors: ${input.brandColors ? JSON.stringify(input.brandColors) : 'Not specified'}
+Quiz Title: "${input.quizTitle || 'Untitled quiz'}"
+Quiz Category: ${input.quizCategory || 'General'}
+Quiz Outcomes: ${outcomesText}
+Sample Questions: ${questionsText}
+${input.userPrompt ? `\nUSER'S REQUEST: "${input.userPrompt}"` : ''}
+
+AVAILABLE TEMPLATES:
+${templateList}
+
+Pick the best template and generate email content. Return this exact JSON structure:
+{
+  "templateId": "the-template-id-you-chose",
+  "subject": "Subject line here",
+  "preheader": "Preview text here",
+  "heroHeading": "Main heading for the email",
+  "heroSubheading": "Supporting text under the heading",
+  "bodyParagraph": "Main body paragraph, 2-3 sentences",
+  "ctaText": "Button text",
+  "sectionHeading": "Secondary section heading",
+  "sectionBody": "Secondary section content, 1-2 sentences",
+  "reasoning": "One sentence explaining why you chose this template"
+}`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const raw = message.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+    const parsed = JSON.parse(extractJSON(raw));
+
+    // Validate templateId is one of the available options
+    const validIds = input.templates.map((t) => t.id);
+    if (!validIds.includes(parsed.templateId)) {
+      parsed.templateId = input.templates[0]?.id || '';
+    }
+
+    return {
+      templateId: String(parsed.templateId || ''),
+      subject: String(parsed.subject || '').slice(0, 200),
+      preheader: String(parsed.preheader || '').slice(0, 300),
+      heroHeading: String(parsed.heroHeading || '').slice(0, 200),
+      heroSubheading: String(parsed.heroSubheading || '').slice(0, 300),
+      bodyParagraph: String(parsed.bodyParagraph || '').slice(0, 1000),
+      ctaText: String(parsed.ctaText || 'View Results').slice(0, 50),
+      sectionHeading: String(parsed.sectionHeading || '').slice(0, 200),
+      sectionBody: String(parsed.sectionBody || '').slice(0, 500),
+      reasoning: String(parsed.reasoning || '').slice(0, 300),
+    };
+  } catch (err: any) {
+    log.error('[generateAiEmailDesign] AI generation failed:', { err: err.message });
+    // Fallback: pick first template matching category, generate basic content
+    const catMatch = input.templates.find((t) =>
+      t.category.toLowerCase() === (input.quizCategory || '').toLowerCase()
+    );
+    const fallbackTemplate = catMatch || input.templates[0];
+    return {
+      templateId: fallbackTemplate?.id || '',
+      subject: `{{first_name}}, your ${input.quizTitle || 'quiz'} results are ready`,
+      preheader: `See your personalized result and next steps.`,
+      heroHeading: `{{first_name}}, your results are in`,
+      heroSubheading: `We analyzed your answers and have personalized insights ready for you.`,
+      bodyParagraph: `Based on your responses to ${input.quizTitle || 'the quiz'}, we have prepared personalized recommendations. Your result: {{outcome_name}}.`,
+      ctaText: 'View My Results',
+      sectionHeading: 'What happens next?',
+      sectionBody: 'Explore your personalized recommendations and discover your next steps.',
+      reasoning: 'Fallback selection due to AI unavailability.',
+    };
+  }
+}
+
+export { processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas, generateEmailContent, generateAiEmailDesign };
+export type { AiDesignInput, AiDesignOutput, TemplateOption };
 export const generateQuizWithClaude = callClaude;
 export const generateQuiz = callClaude;
 export const generateQuizContent = callClaude;

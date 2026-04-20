@@ -487,3 +487,69 @@ export function autoDesignTemplate(
     sourceCanvaId: template.id,
   };
 }
+
+// ---------------------------------------------------------------------------
+// LLM-Powered: Build AutoDesignResult from AI-generated content
+// ---------------------------------------------------------------------------
+
+export interface LlmDesignContent {
+  templateId: string;
+  subject: string;
+  preheader: string;
+  heroHeading: string;
+  heroSubheading: string;
+  bodyParagraph: string;
+  ctaText: string;
+  sectionHeading: string;
+  sectionBody: string;
+  reasoning: string;
+}
+
+export function buildDesignFromLlm(
+  llmContent: LlmDesignContent,
+  brandKit: BrandKitFromAPI | null,
+): AutoDesignResult {
+  // Find the template the LLM picked
+  var template = CANVA_TEMPLATES[0];
+  for (var i = 0; i < CANVA_TEMPLATES.length; i++) {
+    if (CANVA_TEMPLATES[i].id === llmContent.templateId) {
+      template = CANVA_TEMPLATES[i];
+      break;
+    }
+  }
+
+  // Start with template HTML
+  var html = template.html;
+
+  // Apply brand kit (logo, colors, fonts, site name)
+  if (brandKit) {
+    html = applyBrandToHtml(html, brandKit);
+  }
+
+  // Inject LLM-generated content
+  var content: GeneratedContent = {
+    heroHeading: llmContent.heroHeading,
+    heroSubheading: llmContent.heroSubheading,
+    bodyParagraph: llmContent.bodyParagraph,
+    ctaText: llmContent.ctaText,
+    ctaUrl: '{{cta_url}}',
+    sectionHeading: llmContent.sectionHeading,
+    sectionBody: llmContent.sectionBody,
+    footerTagline: (brandKit && brandKit.site_name) ? brandKit.site_name : '',
+  };
+  html = injectContentIntoHtml(html, content);
+
+  var brandName = (brandKit && brandKit.site_name) ? brandKit.site_name : '';
+
+  return {
+    templateId: '__ai_designed__',
+    title: 'AI Recommendation' + (brandName ? ' for ' + brandName : ''),
+    description: llmContent.reasoning || 'AI-designed email based on your quiz and preferences.',
+    html: html,
+    subject: llmContent.subject,
+    preheader: llmContent.preheader,
+    brandApplied: !!brandKit,
+    quizContentApplied: true,
+    sourceCanvaId: template.id,
+  };
+}

@@ -132,3 +132,27 @@ export type CampaignStats = {
 export async function getCampaignStats(id: string): Promise<CampaignStats> {
   return req(`/api/emails/campaigns/${id}/stats`);
 }
+
+// AI-powered email design: LLM picks template + generates content
+export interface AiDesignRequest {
+  userPrompt?: string;
+  quizId?: string;
+  templates: Array<{ id: string; name: string; category: string; description: string }>;
+}
+
+export interface AiDesignResponse {
+  templateId: string;
+  subject: string;
+  preheader: string;
+  heroHeading: string;
+  heroSubheading: string;
+  bodyParagraph: string;
+  ctaText: string;
+  sectionHeading: string;
+  sectionBody: string;
+  reasoning: string;
+}
+
+export async function aiDesignCampaign(data: AiDesignRequest): Promise<AiDesignResponse> {
+  return req('/api/emails/ai-design', { method: 'POST', body: JSON.stringify(data) });
+}

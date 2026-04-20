@@ -638,4 +638,63 @@ r.get('/unsplash/search', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// AI-powered email design: picks template + generates content via LLM
+// ---------------------------------------------------------------------------
+
+import { generateAiEmailDesign } from '../services/claudeService';
+import type { AiDesignInput, TemplateOption } from '../services/claudeService';
+
+r.post('/ai-design', async (req, res) => {
+  try {
+    const { userPrompt, quizId, templates } = req.body;
+    const tenantId = req.dbUserId;
+
+    // Fetch quiz data if quizId provided
+    let quizTitle = '';
+    let quizCategory = '';
+    let outcomes: Array<{ name: string; description?: string }> = [];
+    let questions: Array<{ text: string }> = [];
+
+    if (quizId) {
+      const { data: quiz } = await supabase.from('quizzes')
+        .select('title, category, questions, outcomes')
+        .eq('id', quizId).eq('user_id', tenantId).single();
+      if (quiz) {
+        quizTitle = quiz.title || '';
+        quizCategory = quiz.category || '';
+        outcomes = (quiz.outcomes || []).map((o: any) => ({
+          name: o.title || o.name || '',
+          description: o.description || '',
+        }));
+        questions = (quiz.questions || []).map((q: any) => ({
+          text: q.question || q.text || '',
+        }));
+      }
+    }
+
+    // Fetch brand kit
+    const { data: user } = await supabase.from('users')
+      .select('brand_kit').eq('id', tenantId).single();
+    const brandKit = user?.brand_kit || {};
+
+    const input: AiDesignInput = {
+      userPrompt: userPrompt || undefined,
+      quizTitle,
+      quizCategory,
+      outcomes,
+      questions,
+      brandName: brandKit.site_name || '',
+      brandColors: brandKit.colors || undefined,
+      templates: (templates || []) as TemplateOption[],
+    };
+
+    const result = await generateAiEmailDesign(input);
+    res.json(result);
+  } catch (err: any) {
+    log.error('[ai-design] Failed:', { err: err.message });
+    res.status(500).json({ error: err.message || 'AI design generation failed' });
+  }
+});
+
 export default r;

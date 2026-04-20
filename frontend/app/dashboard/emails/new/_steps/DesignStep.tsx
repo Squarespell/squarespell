@@ -9,10 +9,11 @@ import { renderBlocks } from '../../../../../lib/email/renderBlocks';
 import { V2_TEMPLATES } from '../../../../../lib/email/v2/templates';
 import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/renderer';
 import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
-import { autoDesignTemplate } from '../../../../../lib/email/v2/autoDesign';
-import type { AutoDesignResult, BrandKitFromAPI, QuizData } from '../../../../../lib/email/v2/autoDesign';
+import { autoDesignTemplate, buildDesignFromLlm } from '../../../../../lib/email/v2/autoDesign';
+import type { AutoDesignResult, BrandKitFromAPI, QuizData, LlmDesignContent } from '../../../../../lib/email/v2/autoDesign';
 import { CANVA_TEMPLATES, CANVA_CATEGORIES } from '../../../../../lib/email/canvaTemplates';
 import { api } from '../../../../../lib/api';
+import { aiDesignCampaign } from '../../../../../lib/emails';
 
 export type DesignState = {
   templateId: string;
@@ -104,6 +105,7 @@ export function DesignStep({
 
     Promise.all([brandPromise, quizPromise]).then(function(results: any[]) {
       var brandKit: BrandKitFromAPI | null = results[0];
+      setAiBrandKit(brandKit);
       var quizRaw: any = results[1];
 
       // Map quiz API response to QuizData shape
@@ -123,6 +125,43 @@ export function DesignStep({
       setAiDesign(result);
     });
   }, [quizId]);
+
+  // AI prompt: let user describe what they want
+  var [aiPrompt, setAiPrompt] = useState('');
+  var [aiGenerating, setAiGenerating] = useState(false);
+  var [aiBrandKit, setAiBrandKit] = useState<BrandKitFromAPI | null>(null);
+
+  // Generate AI design from user prompt
+  var handleAiGenerate = useCallback(function() {
+    if (aiGenerating) return;
+    setAiGenerating(true);
+
+    var templateMeta = CANVA_TEMPLATES.map(function(t) {
+      return { id: t.id, name: t.name, category: t.category, description: t.description };
+    });
+
+    aiDesignCampaign({
+      userPrompt: aiPrompt || undefined,
+      quizId: quizId || undefined,
+      templates: templateMeta,
+    }).then(function(result) {
+      // Build full design from LLM response
+      var design = buildDesignFromLlm(result as LlmDesignContent, aiBrandKit);
+      setAiDesign(design);
+      // Auto-select if user hasn't manually picked
+      if (!userManuallySelected.current) {
+        setState({
+          templateId: design.templateId,
+          subject: design.subject,
+          preheader: design.preheader,
+          html: design.html,
+        });
+      }
+      setAiGenerating(false);
+    }).catch(function() {
+      setAiGenerating(false);
+    });
+  }, [aiPrompt, quizId, aiBrandKit, aiGenerating, setState]);
 
   useEffect(function() { injectDesignFocusStyles(); }, []);
 
@@ -354,6 +393,81 @@ export function DesignStep({
                 );
               })}
             </div>
+          </div>
+
+          {/* AI Prompt Section */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 50%, #F7F7F5 100%)',
+            border: '1.5px solid rgba(13,115,119,0.2)',
+            borderRadius: 14, padding: '18px 20px', marginBottom: 20,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: 'linear-gradient(135deg, #0D7377, #059669)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>AI Email Designer</div>
+                <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>Describe what you want and AI will pick the perfect template and write the content</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
+                <textarea
+                  value={aiPrompt}
+                  onChange={function(e) { setAiPrompt(e.target.value); }}
+                  placeholder="e.g. &quot;A warm welcome email for my skincare quiz that feels luxurious and inviting&quot; or &quot;Professional results email for my fitness assessment with a strong CTA&quot;"
+                  className="sq-dinput"
+                  rows={2}
+                  style={{
+                    width: '100%', padding: '10px 14px', background: '#FFFFFF',
+                    border: '1px solid ' + C.BORDER, borderRadius: 10, color: C.TEXT, fontSize: 13,
+                    resize: 'none' as any, lineHeight: 1.5, boxSizing: 'border-box' as any,
+                    transition: 'border-color 0.15s, box-shadow 0.15s',
+                  }}
+                />
+              </div>
+              <button
+                onClick={handleAiGenerate}
+                disabled={aiGenerating}
+                style={{
+                  padding: '10px 20px', borderRadius: 10, border: 'none', cursor: aiGenerating ? 'wait' : 'pointer',
+                  background: aiGenerating
+                    ? 'linear-gradient(135deg, #9CA3AF, #6B7280)'
+                    : 'linear-gradient(135deg, #0D7377, #059669)',
+                  color: '#FFFFFF', fontSize: 13, fontWeight: 700, flexShrink: 0,
+                  display: 'flex', alignItems: 'center', gap: 6, height: 40,
+                  transition: 'all 0.2s', opacity: aiGenerating ? 0.8 : 1,
+                  boxShadow: aiGenerating ? 'none' : '0 2px 8px rgba(13,115,119,0.3)',
+                }}
+              >
+                {aiGenerating ? (
+                  <>
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                    </svg>
+                    Generate
+                  </>
+                )}
+              </button>
+            </div>
+            {!aiPrompt && (
+              <div style={{ marginTop: 8, fontSize: 11, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
+                Leave empty to auto-generate based on your quiz type and brand. Or describe your vision for a tailored result.
+              </div>
+            )}
           </div>
 
           {/* Template grid - 3 columns */}
