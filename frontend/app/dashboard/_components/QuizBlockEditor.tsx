@@ -314,6 +314,31 @@ function BlockCard({
               {preview}
             </div>
           )}
+          {/* Feature badges for question blocks */}
+          {qb && (
+            <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' as const }}>
+              {qb.mediaUrl && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB' }}>
+                  {qb.mediaType === 'video' ? 'Video' : 'Image'}
+                </span>
+              )}
+              {qb.questionStyle === 'imageChoice' && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#F0FDF4', color: '#16A34A' }}>
+                  Image choice
+                </span>
+              )}
+              {qb.branchRules && qb.branchRules.length > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED' }}>
+                  Branching
+                </span>
+              )}
+              {qb.timeLimit ? (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: '#FEF2F2', color: '#EF4444' }}>
+                  {qb.timeLimit}s timer
+                </span>
+              ) : null}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -403,6 +428,7 @@ function BlockInspector({
   if (block.type === 'question') {
     var qb = block as QuestionBlock;
     var questionNum = allBlocks.filter(function(b) { return b.type === 'question'; }).findIndex(function(b) { return b.id === block.id; }) + 1;
+    var allQuestions = allBlocks.filter(function(b) { return b.type === 'question'; }) as QuestionBlock[];
     return (
       <div>
         {/* Hero header */}
@@ -455,6 +481,55 @@ function BlockInspector({
           />
         </InspectorField>
 
+        {/* Media attachment */}
+        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+          <label style={{
+            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
+          }}>
+            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-1px', marginRight: 4 }}>
+              <path d="M23 7l-7 5 7 5V7zM14 5H3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2z" />
+            </svg>
+            Media (optional)
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
+            {(['image', 'video'] as const).map(function(mt) {
+              var isActive = qb.mediaType === mt;
+              return (
+                <button
+                  key={mt}
+                  type="button"
+                  onClick={function() { updateField('mediaType', isActive ? undefined : mt); }}
+                  style={{
+                    padding: '6px 10px', borderRadius: 6,
+                    background: isActive ? C.ACCENT : 'transparent',
+                    border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
+                    color: isActive ? '#FFFFFF' : C.TEXT_MUTED,
+                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'Inter,system-ui,sans-serif',
+                  }}
+                >
+                  {mt === 'image' ? 'Image' : 'Video'}
+                </button>
+              );
+            })}
+          </div>
+          {qb.mediaType && (
+            <input
+              value={qb.mediaUrl || ''}
+              onChange={function(e) { updateField('mediaUrl', e.target.value); }}
+              style={Object.assign({}, inputStyle, { fontSize: 12 })}
+              placeholder={qb.mediaType === 'video' ? 'YouTube or Vimeo URL...' : 'Image URL...'}
+            />
+          )}
+          {qb.mediaUrl && qb.mediaType === 'image' && (
+            <div style={{ marginTop: 8, borderRadius: 6, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
+              <img src={qb.mediaUrl} alt="Preview" style={{ width: '100%', display: 'block' }}
+                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+          )}
+        </div>
+
         {/* Type toggle */}
         <div style={{ marginBottom: 16 }}>
           <label style={{
@@ -465,7 +540,7 @@ function BlockInspector({
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {['single', 'multiple'].map(function(type) {
-              var isActive = (qb as any).questionType === type;
+              var isActive = qb.questionType === type;
               return (
                 <button
                   key={type}
@@ -502,6 +577,18 @@ function BlockInspector({
           </select>
         </InspectorField>
 
+        {/* Timer */}
+        <InspectorField label="Time limit (seconds, 0 = no limit)">
+          <input
+            type="number"
+            value={qb.timeLimit || 0}
+            onChange={function(e) { updateField('timeLimit', parseInt(e.target.value) || 0); }}
+            style={inputStyle}
+            min={0}
+            placeholder="0"
+          />
+        </InspectorField>
+
         {/* Options section */}
         <div style={{ marginBottom: 16 }}>
           <label style={{
@@ -510,69 +597,129 @@ function BlockInspector({
           }}>
             Answers
           </label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {qb.options.map(function(opt, oi) {
               return (
                 <div key={opt.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px', background: C.SIDEBAR, borderRadius: 8,
+                  padding: '10px', background: C.SIDEBAR, borderRadius: 10,
                   border: '1px solid ' + C.BORDER,
                 }}>
-                  {/* Letter badge */}
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 6,
-                    background: C.ACCENT, color: '#FFFFFF',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {String.fromCharCode(65 + oi)}
-                  </div>
-                  {/* Option text */}
-                  <input
-                    value={opt.text}
-                    onChange={function(e) {
-                      var newOpts = qb.options.slice();
-                      newOpts[oi] = Object.assign({}, opt, { text: e.target.value });
-                      updateField('options', newOpts);
-                    }}
-                    style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
-                    placeholder={'Option ' + String.fromCharCode(65 + oi)}
-                  />
-                  {/* Score input */}
-                  <input
-                    type="number"
-                    value={opt.score || 0}
-                    onChange={function(e) {
-                      var newOpts = qb.options.slice();
-                      newOpts[oi] = Object.assign({}, opt, { score: parseInt(e.target.value) || 0 });
-                      updateField('options', newOpts);
-                    }}
-                    style={Object.assign({}, inputStyle, { width: 50, padding: '6px 4px', fontSize: 12, textAlign: 'center' as const })}
-                    title="Score"
-                    placeholder="0"
-                  />
-                  {/* Delete button */}
-                  {qb.options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={function() {
-                        var newOpts = qb.options.filter(function(_, idx) { return idx !== oi; });
+                  {/* Row 1: badge + text + score + delete */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 6,
+                      background: C.ACCENT, color: '#FFFFFF',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {String.fromCharCode(65 + oi)}
+                    </div>
+                    <input
+                      value={opt.text}
+                      onChange={function(e) {
+                        var newOpts = qb.options.slice();
+                        newOpts[oi] = Object.assign({}, opt, { text: e.target.value });
                         updateField('options', newOpts);
                       }}
-                      style={{
-                        width: 28, height: 28, borderRadius: 6, flexShrink: 0,
-                        background: 'transparent', border: 'none',
-                        color: C.TEXT_SUBTLE, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                      onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.08)'; e.currentTarget.style.color = '#ff3b30'; }}
-                      onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
-                    >
-                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                        <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
-                      </svg>
-                    </button>
+                      style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
+                      placeholder={'Option ' + String.fromCharCode(65 + oi)}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                      <span style={{ fontSize: 10, color: C.TEXT_SUBTLE }}>pts</span>
+                      <input
+                        type="number"
+                        value={opt.score || 0}
+                        onChange={function(e) {
+                          var newOpts = qb.options.slice();
+                          newOpts[oi] = Object.assign({}, opt, { score: parseInt(e.target.value) || 0 });
+                          updateField('options', newOpts);
+                        }}
+                        style={Object.assign({}, inputStyle, { width: 46, padding: '6px 4px', fontSize: 12, textAlign: 'center' as const })}
+                        title="Score points"
+                      />
+                    </div>
+                    {qb.options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={function() {
+                          var newOpts = qb.options.filter(function(_, idx) { return idx !== oi; });
+                          updateField('options', newOpts);
+                        }}
+                        style={{
+                          width: 26, height: 26, borderRadius: 6, flexShrink: 0,
+                          background: 'transparent', border: 'none',
+                          color: C.TEXT_SUBTLE, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                        onMouseEnter={function(e) { e.currentTarget.style.background = 'rgba(255,59,48,0.08)'; e.currentTarget.style.color = '#ff3b30'; }}
+                        onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT_SUBTLE; }}
+                      >
+                        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Row 2: Image URL (for imageChoice style) */}
+                  {qb.questionStyle === 'imageChoice' && (
+                    <div style={{ marginBottom: 4 }}>
+                      <input
+                        value={opt.imageUrl || ''}
+                        onChange={function(e) {
+                          var newOpts = qb.options.slice();
+                          newOpts[oi] = Object.assign({}, opt, { imageUrl: e.target.value });
+                          updateField('options', newOpts);
+                        }}
+                        style={Object.assign({}, inputStyle, { padding: '5px 8px', fontSize: 11 })}
+                        placeholder="Image URL for this option..."
+                      />
+                      {opt.imageUrl && (
+                        <div style={{ marginTop: 4, borderRadius: 6, overflow: 'hidden', height: 48, background: '#f3f4f6' }}>
+                          <img src={opt.imageUrl} alt={opt.text} style={{ height: '100%', objectFit: 'cover', display: 'block' }}
+                            onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        </div>
+                      )}
+                    </div>
                   )}
+
+                  {/* Row 3: Explanation */}
+                  <input
+                    value={opt.explanation || ''}
+                    onChange={function(e) {
+                      var newOpts = qb.options.slice();
+                      newOpts[oi] = Object.assign({}, opt, { explanation: e.target.value });
+                      updateField('options', newOpts);
+                    }}
+                    style={Object.assign({}, inputStyle, { padding: '5px 8px', fontSize: 11, fontStyle: 'italic' as const })}
+                    placeholder="Explanation shown after answer (optional)"
+                  />
+
+                  {/* Row 4: Branch target */}
+                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_SUBTLE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 3h5v5M4 20L21 3" />
+                    </svg>
+                    <select
+                      value={(qb.branchRules || []).find(function(r) { return r.if_answer === opt.id; })?.goto || ''}
+                      onChange={function(e) {
+                        var rules = (qb.branchRules || []).filter(function(r) { return r.if_answer !== opt.id; });
+                        if (e.target.value) {
+                          rules.push({ if_answer: opt.id, goto: e.target.value });
+                        }
+                        updateField('branchRules', rules.length > 0 ? rules : undefined);
+                      }}
+                      style={Object.assign({}, selectStyle, { padding: '4px 6px', fontSize: 11, flex: 1 })}
+                    >
+                      <option value="">Next question (default)</option>
+                      {allBlocks.filter(function(b) { return b.id !== block.id && (b.type === 'question' || b.type === 'outcome' || b.type === 'leadGate'); }).map(function(b) {
+                        var bLabel = b.type === 'question'
+                          ? 'Q' + (allQuestions.findIndex(function(q) { return q.id === b.id; }) + 1) + ': ' + (b as QuestionBlock).text.slice(0, 25)
+                          : blockLabel(b) + ': ' + blockPreview(b).slice(0, 25);
+                        return <option key={b.id} value={b.id}>{bLabel}</option>;
+                      })}
+                    </select>
+                  </div>
                 </div>
               );
             })}
@@ -596,8 +743,6 @@ function BlockInspector({
             )}
           </div>
         </div>
-
-        {/* Delete button note: handled via inline delete on BlockCard */}
       </div>
     );
   }
@@ -713,6 +858,31 @@ function BlockInspector({
           </InspectorField>
         </div>
 
+        {/* Hero image */}
+        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+          <label style={{
+            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6,
+          }}>
+            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ verticalAlign: '-1px', marginRight: 4 }}>
+              <rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" />
+            </svg>
+            Result image
+          </label>
+          <input
+            value={ob.imageUrl || ''}
+            onChange={function(e) { updateField('imageUrl', e.target.value); }}
+            style={inputStyle}
+            placeholder="Image URL for result page..."
+          />
+          {ob.imageUrl && (
+            <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
+              <img src={ob.imageUrl} alt={ob.title} style={{ width: '100%', display: 'block', maxHeight: 140, objectFit: 'cover' }}
+                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+          )}
+        </div>
+
         <InspectorField label="CTA text">
           <input value={ob.ctaText || ''} onChange={function(e) { updateField('ctaText', e.target.value); }} style={inputStyle} placeholder="Learn more" />
         </InspectorField>
@@ -726,6 +896,39 @@ function BlockInspector({
           <InspectorField label="Max score">
             <input type="number" value={ob.maxScore ?? ''} onChange={function(e) { updateField('maxScore', e.target.value === '' ? undefined : parseInt(e.target.value)); }} style={inputStyle} />
           </InspectorField>
+        </div>
+
+        {/* Social sharing */}
+        <div style={{ marginTop: 8, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+          <label style={{
+            display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+            fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED,
+          }}>
+            <input
+              type="checkbox"
+              checked={ob.shareEnabled || false}
+              onChange={function(e) { updateField('shareEnabled', e.target.checked); }}
+              style={{ accentColor: C.ACCENT }}
+            />
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx={18} cy={5} r={3} /><circle cx={6} cy={12} r={3} /><circle cx={18} cy={19} r={3} />
+              <line x1={8.59} y1={13.51} x2={15.42} y2={17.49} /><line x1={15.41} y1={6.51} x2={8.59} y2={10.49} />
+            </svg>
+            Enable social sharing
+          </label>
+          {ob.shareEnabled && (
+            <div style={{ marginTop: 8 }}>
+              <input
+                value={ob.shareText || ''}
+                onChange={function(e) { updateField('shareText', e.target.value); }}
+                style={Object.assign({}, inputStyle, { fontSize: 12 })}
+                placeholder="I got [result]! Take the quiz..."
+              />
+              <div style={{ marginTop: 6, fontSize: 10, color: C.TEXT_SUBTLE }}>
+                Share text template. Buttons for Twitter, Facebook, LinkedIn will show on result.
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -915,10 +1118,61 @@ function BlockInspector({
 /*  Live preview component                                             */
 /* ------------------------------------------------------------------ */
 
+function extractVideoId(url: string): { platform: string; id: string } | null {
+  if (!url) return null;
+  var ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return { platform: 'youtube', id: ytMatch[1] };
+  var vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return { platform: 'vimeo', id: vimeoMatch[1] };
+  return null;
+}
+
+function VideoEmbed({ url }: { url: string }) {
+  var vid = extractVideoId(url);
+  if (!vid) return <div style={{ padding: 12, background: '#f9fafb', borderRadius: 8, fontSize: 11, color: '#98a2b3', textAlign: 'center' }}>Invalid video URL</div>;
+  var src = vid.platform === 'youtube'
+    ? 'https://www.youtube.com/embed/' + vid.id
+    : 'https://player.vimeo.com/video/' + vid.id;
+  return (
+    <div style={{ position: 'relative', paddingBottom: '56.25%', borderRadius: 8, overflow: 'hidden', marginBottom: 8 }}>
+      <iframe src={src} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} allowFullScreen />
+    </div>
+  );
+}
+
+function ShareButtons({ text, title }: { text: string; title: string }) {
+  var encodedText = encodeURIComponent(text || 'Check out my quiz result: ' + title);
+  return (
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+      {/* Twitter/X */}
+      <div style={{
+        width: 36, height: 36, borderRadius: 8, background: '#1DA1F2', color: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+      }} title="Share on X">
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+      </div>
+      {/* Facebook */}
+      <div style={{
+        width: 36, height: 36, borderRadius: 8, background: '#1877F2', color: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+      }} title="Share on Facebook">
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
+      </div>
+      {/* LinkedIn */}
+      <div style={{
+        width: 36, height: 36, borderRadius: 8, background: '#0A66C2', color: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+      }} title="Share on LinkedIn">
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+      </div>
+    </div>
+  );
+}
+
 function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
   var questions = blocks.filter(function(b) { return b.type === 'question'; }) as QuestionBlock[];
-  var headings = blocks.filter(function(b) { return b.type === 'heading'; }) as HeadingBlock[];
-  var texts = blocks.filter(function(b) { return b.type === 'text'; }) as TextBlock[];
+  var totalQ = questions.length;
+  var questionIndex = 0;
 
   return (
     <div style={{
@@ -929,12 +1183,34 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: C.TEXT_SUBTLE, marginBottom: 16 }}>
         Live preview
       </div>
+
+      {/* Progress bar */}
+      {totalQ > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 10, color: C.TEXT_SUBTLE, fontWeight: 600 }}>Progress</span>
+            <span style={{ fontSize: 10, color: C.ACCENT, fontWeight: 700 }}>{totalQ} questions</span>
+          </div>
+          <div style={{ height: 6, background: '#F2F4F7', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: 3,
+              background: 'linear-gradient(90deg, ' + C.ACCENT + ', #10B981)',
+              width: '33%', transition: 'width 0.5s ease',
+            }} />
+          </div>
+        </div>
+      )}
+
       {blocks.map(function(block, idx) {
         if (block.type === 'heading') {
           var hb = block as HeadingBlock;
           var sizes: Record<number, number> = { 1: 22, 2: 18, 3: 15 };
           return (
-            <div key={block.id} style={{ fontSize: sizes[hb.level] || 18, fontWeight: 700, color: C.TEXT, textAlign: (hb.align || 'left') as any, marginBottom: 12, lineHeight: 1.3 }}>
+            <div key={block.id} style={{
+              fontSize: sizes[hb.level] || 18, fontWeight: 700, color: C.TEXT,
+              textAlign: (hb.align || 'left') as any, marginBottom: 12, lineHeight: 1.3,
+              animation: 'fadeInUp 0.3s ease',
+            }}>
               {hb.text}
             </div>
           );
@@ -966,22 +1242,108 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
         }
         if (block.type === 'question') {
           var qb = block as QuestionBlock;
+          questionIndex++;
+          var qNum = questionIndex;
           return (
             <div key={block.id} style={{ marginBottom: 16, padding: 16, background: C.SIDEBAR, borderRadius: 10, border: '1px solid ' + C.BORDER }}>
+              {/* Question number + timer badge */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Question {qNum} of {totalQ}
+                </span>
+                {qb.timeLimit ? (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, color: '#EF4444', background: '#FEF2F2',
+                    padding: '3px 8px', borderRadius: 4,
+                  }}>
+                    <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ verticalAlign: '-1px', marginRight: 3 }}>
+                      <circle cx={12} cy={12} r={10} /><polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    {qb.timeLimit}s
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Media */}
+              {qb.mediaUrl && qb.mediaType === 'image' && (
+                <div style={{ marginBottom: 10, borderRadius: 8, overflow: 'hidden' }}>
+                  <img src={qb.mediaUrl} alt="" style={{ width: '100%', display: 'block', maxHeight: 160, objectFit: 'cover' }}
+                    onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+              )}
+              {qb.mediaUrl && qb.mediaType === 'video' && (
+                <VideoEmbed url={qb.mediaUrl} />
+              )}
+
               <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 10, lineHeight: 1.4 }}>
                 {qb.text}
               </div>
-              {qb.options.map(function(opt, oi) {
-                return (
-                  <div key={opt.id} style={{
-                    padding: '8px 12px', marginBottom: 4, borderRadius: 8,
-                    background: '#FFFFFF', border: '1px solid ' + C.BORDER,
-                    fontSize: 13, color: C.TEXT, cursor: 'default',
-                  }}>
-                    {String.fromCharCode(65 + oi)}. {opt.text}
-                  </div>
-                );
-              })}
+              {qb.subtitle && (
+                <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10 }}>{qb.subtitle}</div>
+              )}
+
+              {/* Render by style */}
+              {qb.questionStyle === 'imageChoice' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {qb.options.map(function(opt, oi) {
+                    return (
+                      <div key={opt.id} style={{
+                        borderRadius: 10, overflow: 'hidden',
+                        border: '2px solid ' + C.BORDER, cursor: 'pointer',
+                        transition: 'border-color 0.15s ease',
+                        background: '#fff',
+                      }}>
+                        {opt.imageUrl ? (
+                          <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }}
+                            onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        ) : (
+                          <div style={{ height: 80, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}>
+                              <rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" />
+                            </svg>
+                          </div>
+                        )}
+                        <div style={{ padding: '8px 10px', fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' }}>
+                          {opt.text || 'Option ' + String.fromCharCode(65 + oi)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                qb.options.map(function(opt, oi) {
+                  return (
+                    <div key={opt.id} style={{
+                      padding: '10px 14px', marginBottom: 4, borderRadius: 8,
+                      background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                      fontSize: 13, color: C.TEXT, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      transition: 'border-color 0.15s ease, background 0.15s ease',
+                    }}>
+                      <div style={{
+                        width: 22, height: 22, borderRadius: qb.questionType === 'multiple' ? 4 : 11,
+                        border: '2px solid ' + C.BORDER, flexShrink: 0,
+                      }} />
+                      <span>{String.fromCharCode(65 + oi)}. {opt.text}</span>
+                      {opt.score ? (
+                        <span style={{ marginLeft: 'auto', fontSize: 10, color: C.TEXT_SUBTLE, fontWeight: 600 }}>
+                          {opt.score > 0 ? '+' : ''}{opt.score} pts
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                })
+              )}
+
+              {/* Branch indicators */}
+              {qb.branchRules && qb.branchRules.length > 0 && (
+                <div style={{ marginTop: 10, padding: '8px 10px', background: '#F5F3FF', borderRadius: 6, fontSize: 10, color: '#7C3AED' }}>
+                  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ verticalAlign: '-1px', marginRight: 4 }}>
+                    <path d="M16 3h5v5M4 20L21 3" />
+                  </svg>
+                  {qb.branchRules.length} branch rule{qb.branchRules.length > 1 ? 's' : ''} active
+                </div>
+              )}
             </div>
           );
         }
@@ -991,10 +1353,14 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
             <div key={block.id} style={{ marginBottom: 16, padding: 20, background: C.ACCENT_LIGHT, borderRadius: 10, border: '1px solid ' + C.ACCENT + '30', textAlign: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 6 }}>{lgb.headline}</div>
               {lgb.subtext && <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 12 }}>{lgb.subtext}</div>}
-              <div style={{ padding: '8px 14px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, color: C.TEXT_SUBTLE, marginBottom: 8 }}>
-                you@example.com
-              </div>
-              <div style={{ padding: '8px 16px', background: C.ACCENT, color: '#FFFFFF', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'inline-block' }}>
+              {lgb.fields.map(function(field) {
+                return (
+                  <div key={field.id} style={{ padding: '8px 14px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, color: C.TEXT_SUBTLE, marginBottom: 6, textAlign: 'left' }}>
+                    {field.label}{field.required ? ' *' : ''}
+                  </div>
+                );
+              })}
+              <div style={{ padding: '10px 16px', background: C.ACCENT, color: '#FFFFFF', borderRadius: 8, fontSize: 13, fontWeight: 600, display: 'inline-block', marginTop: 6 }}>
                 {lgb.buttonLabel}
               </div>
             </div>
@@ -1003,15 +1369,34 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
         if (block.type === 'outcome') {
           var ob = block as OutcomeBlock;
           return (
-            <div key={block.id} style={{ marginBottom: 16, padding: 16, background: '#F0FDF4', borderRadius: 10, border: '1px solid #BBF7D0' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#16A34A', marginBottom: 6 }}>Outcome</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>{ob.title}</div>
-              <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.5 }}>{ob.description}</div>
-              {ob.ctaText && (
-                <div style={{ marginTop: 10, padding: '6px 14px', background: C.ACCENT, color: '#FFFFFF', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'inline-block' }}>
-                  {ob.ctaText}
+            <div key={block.id} style={{ marginBottom: 16, borderRadius: 12, overflow: 'hidden', border: '1px solid #BBF7D0', background: '#F0FDF4' }}>
+              {/* Hero image */}
+              {ob.imageUrl && (
+                <div style={{ height: 120, overflow: 'hidden' }}>
+                  <img src={ob.imageUrl} alt={ob.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    onError={function(e) { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
                 </div>
               )}
+              <div style={{ padding: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#16A34A', marginBottom: 6 }}>
+                  Your result
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginBottom: 6 }}>{ob.title}</div>
+                <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.6 }}>{ob.description}</div>
+                {ob.ctaText && (
+                  <div style={{ marginTop: 12, padding: '10px 20px', background: C.ACCENT, color: '#FFFFFF', borderRadius: 8, fontSize: 13, fontWeight: 600, display: 'inline-block' }}>
+                    {ob.ctaText}
+                  </div>
+                )}
+                {ob.shareEnabled && (
+                  <ShareButtons text={ob.shareText || ''} title={ob.title} />
+                )}
+                {(ob.minScore !== undefined || ob.maxScore !== undefined) && (
+                  <div style={{ marginTop: 10, fontSize: 10, color: C.TEXT_SUBTLE }}>
+                    Score range: {ob.minScore ?? '...'} - {ob.maxScore ?? '...'}
+                  </div>
+                )}
+              </div>
             </div>
           );
         }
@@ -1489,6 +1874,95 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
                   </div>
                   <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Lead gate</div>
                 </div>
+              </div>
+            </div>
+
+            {/* Quiz Settings */}
+            <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 12 }}>Quiz Settings</div>
+
+              {/* Randomize questions */}
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+                padding: '10px 12px', background: C.SURFACE, borderRadius: 8,
+                border: '1px solid ' + C.BORDER, marginBottom: 8,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={function() {
+                    /* Quiz-level settings would be stored on the quiz object,
+                       not in blocks. This toggle is for UI preview. */
+                  }}
+                  style={{ accentColor: C.ACCENT, width: 16, height: 16 }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT }}>Shuffle questions</div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Randomize order each attempt</div>
+                </div>
+              </label>
+
+              {/* Show progress bar */}
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+                padding: '10px 12px', background: C.SURFACE, borderRadius: 8,
+                border: '1px solid ' + C.BORDER, marginBottom: 8,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={function() {}}
+                  style={{ accentColor: C.ACCENT, width: 16, height: 16 }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT }}>Progress bar</div>
+                  <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Show completion progress</div>
+                </div>
+              </label>
+
+              {/* Animation style */}
+              <div style={{
+                padding: '10px 12px', background: C.SURFACE, borderRadius: 8,
+                border: '1px solid ' + C.BORDER,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Transition animation</div>
+                <select style={Object.assign({}, selectStyle, { fontSize: 12, padding: '6px 10px' })}>
+                  <option value="slide">Slide</option>
+                  <option value="fade">Fade</option>
+                  <option value="scale">Scale</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Feature summary */}
+            <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 10 }}>Features used</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).questionStyle === 'imageChoice'; }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#F0FDF4', color: '#16A34A' }}>Image choices</span>
+                )}
+                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).mediaUrl; }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB' }}>Media</span>
+                )}
+                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).branchRules && (b as QuestionBlock).branchRules!.length > 0; }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED' }}>Branching</span>
+                )}
+                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).timeLimit; }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#FEF2F2', color: '#EF4444' }}>Timers</span>
+                )}
+                {blocks.some(function(b) { return b.type === 'outcome' && (b as OutcomeBlock).shareEnabled; }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#FFF7ED', color: '#EA580C' }}>Social sharing</span>
+                )}
+                {blocks.some(function(b) { return b.type === 'outcome' && (b as OutcomeBlock).imageUrl; }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#ECFDF5', color: '#059669' }}>Rich results</span>
+                )}
+                {blocks.some(function(b) { return b.type === 'leadGate'; }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#FFF1F2', color: '#E11D48' }}>Lead capture</span>
+                )}
+                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).options.some(function(o) { return o.explanation; }); }) && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#FEFCE8', color: '#CA8A04' }}>Explanations</span>
+                )}
               </div>
             </div>
 

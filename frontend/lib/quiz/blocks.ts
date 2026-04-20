@@ -29,6 +29,7 @@ export interface QuestionOption {
   text: string;
   score?: number;
   imageUrl?: string;
+  explanation?: string;
 }
 
 export interface BranchRule {
@@ -44,6 +45,10 @@ export interface QuestionBlock extends BaseQuizBlock {
   options: QuestionOption[];
   required?: boolean;
   branchRules?: BranchRule[];
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
+  timeLimit?: number;
+  questionType?: 'single' | 'multiple';
 }
 
 export interface HeadingBlock extends BaseQuizBlock {
@@ -81,6 +86,8 @@ export interface OutcomeBlock extends BaseQuizBlock {
   minScore?: number;
   maxScore?: number;
   imageUrl?: string;
+  shareEnabled?: boolean;
+  shareText?: string;
 }
 
 export interface LeadGateBlock extends BaseQuizBlock {
@@ -233,6 +240,7 @@ export function legacyToBlocks(quiz: {
         text: rawOpts[j].text || rawOpts[j].label || '',
         score: rawOpts[j].score || 0,
         imageUrl: rawOpts[j].imageUrl || undefined,
+        explanation: rawOpts[j].explanation || undefined,
       });
     }
     blocks.push({
@@ -244,6 +252,10 @@ export function legacyToBlocks(quiz: {
       options: opts,
       required: true,
       branchRules: q.next_question_rules || undefined,
+      mediaUrl: q.mediaUrl || q.media_url || undefined,
+      mediaType: q.mediaType || q.media_type || undefined,
+      timeLimit: q.timeLimit || q.time_limit || undefined,
+      questionType: q.questionType || q.question_type || 'single',
     } as QuestionBlock);
   }
 
@@ -289,6 +301,8 @@ export function legacyToBlocks(quiz: {
       minScore: o.minScore ?? o.min_score,
       maxScore: o.maxScore ?? o.max_score,
       imageUrl: o.imageUrl || o.image_url || undefined,
+      shareEnabled: o.shareEnabled || undefined,
+      shareText: o.shareText || o.share_text || undefined,
     } as OutcomeBlock);
   }
 
@@ -317,10 +331,14 @@ export function blocksToLegacy(blocks: QuizBlock[]): {
         text: qb.text,
         subtitle: qb.subtitle || undefined,
         type: qb.questionStyle === 'imageChoice' ? 'image_choice' : undefined,
+        questionType: qb.questionType || 'single',
         options: qb.options.map(function(opt) {
-          return { id: opt.id, text: opt.text, score: opt.score || 0, imageUrl: opt.imageUrl };
+          return { id: opt.id, text: opt.text, score: opt.score || 0, imageUrl: opt.imageUrl, explanation: opt.explanation };
         }),
         next_question_rules: qb.branchRules || undefined,
+        mediaUrl: qb.mediaUrl || undefined,
+        mediaType: qb.mediaType || undefined,
+        timeLimit: qb.timeLimit || undefined,
       });
     } else if (block.type === 'outcome') {
       var ob = block as OutcomeBlock;
@@ -333,6 +351,8 @@ export function blocksToLegacy(blocks: QuizBlock[]): {
         minScore: ob.minScore,
         maxScore: ob.maxScore,
         imageUrl: ob.imageUrl || undefined,
+        shareEnabled: ob.shareEnabled || undefined,
+        shareText: ob.shareText || undefined,
       });
     } else if (block.type === 'leadGate') {
       var lgb = block as LeadGateBlock;
