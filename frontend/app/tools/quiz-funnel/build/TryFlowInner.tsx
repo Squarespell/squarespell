@@ -1338,10 +1338,13 @@ export function TryFlowInner({
           <div className="s3-main">
            <div className="s3-main-inner">
             <div className="s3-main-head">
-              <h2 className="s3-main-title" onClick={function() { setSelectedIdx(-1); }}>
-                {quiz?.title || 'Your quiz'}
-                <svg className="s3-main-title-edit" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-              </h2>
+              <div>
+                <h2>{quiz?.title || 'Your quiz'}</h2>
+                <span className="s3-edit-link" onClick={function() { setSelectedIdx(-1); }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                  Edit title &amp; description
+                </span>
+              </div>
               <div className="s3-count">
                 <span>{quiz?.questions.length || 0}</span> questions · {quiz?.outcomes?.length || 0} outcomes
               </div>
