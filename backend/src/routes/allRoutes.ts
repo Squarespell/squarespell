@@ -1360,7 +1360,18 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
     ? new Date(new Date(user.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
     : null;
   var limits = getPlanLimits(plan);
-  res.json({ plan: plan, quiz_count: user.quiz_count, limits: limits, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics } });
+  // Count leads and emails for the current month
+  var monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  var monthISO = monthStart.toISOString();
+  var [leadRes, emailRes] = await Promise.all([
+    supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId).gte('created_at', monthISO),
+    supabase.from('email_logs').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId).gte('sent_at', monthISO),
+  ]);
+  var leadsThisMonth = leadRes.count || 0;
+  var emailsThisMonth = emailRes.count || 0;
+  res.json({ plan: plan, quiz_count: user.quiz_count, limits: limits, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics } });
 });
 userRouter.get('/recommendations', async function(req: AuthenticatedRequest, res) {
   try {
