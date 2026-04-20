@@ -781,19 +781,12 @@ export function DesignStep({
         </PrimaryButton>
       </div>
 
-      {/* === MAIN AREA: Editor (left) + Campaign Sidebar (right) === */}
+      {/* === MAIN AREA: Campaign Sidebar (left) + Editor (right) === */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        {/* Editor iframe */}
-        <iframe
-          ref={editorRef}
-          title="Email editor"
-          src={'/email-editor.html?v=' + editorCacheBust}
-          style={{ flex: 1, border: 'none', minWidth: 0 }}
-        />
 
-        {/* === CAMPAIGN SIDEBAR - Always visible === */}
+        {/* === CAMPAIGN SIDEBAR - Always visible (left) === */}
         <div style={{
-          width: 320, flexShrink: 0, background: '#FFFFFF', borderLeft: '1px solid ' + C.BORDER,
+          width: 320, flexShrink: 0, background: '#FFFFFF', borderRight: '1px solid ' + C.BORDER,
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
           {/* Sidebar header */}
@@ -976,6 +969,14 @@ export function DesignStep({
 
           </div>
         </div>
+
+        {/* Editor iframe (right) */}
+        <iframe
+          ref={editorRef}
+          title="Email editor"
+          src={'/email-editor.html?v=' + editorCacheBust}
+          style={{ flex: 1, border: 'none', minWidth: 0 }}
+        />
       </div>
     </div>
   );
