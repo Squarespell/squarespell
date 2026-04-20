@@ -823,7 +823,7 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
   <div class="topbar-logo">
     <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
   </div>
-  <div class="topbar-title" id="topbarTitle">Quiz Result Email</div>
+  <div class="topbar-title" id="topbarTitle">Email Editor</div>
   <div class="topbar-toggle">
     <button class="active" id="btnEdit" onclick="setMode('edit')">Edit</button>
     <button id="btnPreview" onclick="setMode('preview')">Preview</button>
@@ -2808,13 +2808,21 @@ window.addEventListener('message', function(e) {
         canvas.classList.add('editing');
 
         // Auto-annotate elements for editing if they don't have editor classes
-        // Make all text elements editable
-        canvas.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div, li, td, a, label, blockquote').forEach(function(el) {
-          // Skip elements that are containers for other elements, only target leaf text nodes
-          if (el.children.length === 0 || (el.children.length > 0 && el.textContent.trim().length > 0 && el.tagName !== 'DIV' && el.tagName !== 'TD' && el.tagName !== 'TR' && el.tagName !== 'TABLE')) {
-            if (!el.classList.contains('editable-text')) {
-              el.classList.add('editable-text');
-            }
+        // Make text elements editable - only leaf-level elements with actual text
+        canvas.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, li, a, label, blockquote, td[dir]').forEach(function(el) {
+          // Only target elements that directly contain text (leaf nodes or near-leaf)
+          var text = el.textContent.trim();
+          if (!text) return;
+          // Skip if it's a large container (has many child elements)
+          if (el.children.length > 3) return;
+          // Skip layout TDs (ones that contain tables or are structural)
+          if (el.tagName === 'TD' && !el.hasAttribute('dir')) return;
+          // Skip hidden elements
+          var elStyle = el.getAttribute('style') || '';
+          if (elStyle.indexOf('display:none') >= 0 || elStyle.indexOf('display: none') >= 0) return;
+          if (elStyle.indexOf('font-size:0') >= 0 || elStyle.indexOf('font-size: 0') >= 0) return;
+          if (!el.classList.contains('editable-text')) {
+            el.classList.add('editable-text');
           }
         });
 
@@ -2823,7 +2831,7 @@ window.addEventListener('message', function(e) {
         canvas.querySelectorAll('img').forEach(function(img) {
           var alt = (img.getAttribute('alt') || '').toLowerCase();
           var src = img.getAttribute('src') || '';
-          if ((alt === 'logo' || alt.indexOf('logo') >= 0) && (!src || src === '#' || src.indexOf('data:') < 0)) {
+          if ((alt === 'logo' || alt.indexOf('logo') >= 0) && (!src || src === '#' || src === '')) {
             // Replace broken logo img with styled placeholder
             var placeholder = document.createElement('div');
             placeholder.className = 'editable-logo logo-placeholder';
@@ -2926,6 +2934,7 @@ window.addEventListener('message', function(e) {
         });
 
         // Canva-style template detection: if very few TRs found, drill into nested content table
+        var isCanvaStyle = false;
         if (allTrs.length <= 5) {
           var bestInnerBody = null;
           var bestInnerCount = 0;
@@ -2947,6 +2956,7 @@ window.addEventListener('message', function(e) {
             allTrs = Array.from(containerBody.children).filter(function(el) {
               return el.tagName === 'TR' && !el.classList.contains('insert-point-tr');
             });
+            isCanvaStyle = true;
           }
         }
 
@@ -2994,73 +3004,221 @@ window.addEventListener('message', function(e) {
           return el;
         }
 
-        allTrs.forEach(function(tr) {
-          var td = tr.children[0];
-          if (!td || td.tagName !== 'TD') return;
+        // ---------------------------------------------------------------
+        // Canva-style: group consecutive non-spacer TRs into logical
+        // sections based on visual boundaries (layout tables, headings,
+        // images, CTA buttons, footers). Each group = one editor section.
+        // ---------------------------------------------------------------
+        if (isCanvaStyle) {
+          // Helper: detect if a TR is a "layout" row (contains a multi-column table like .layout-0)
+          function isLayoutRow(tr) {
+            var td = tr.children[0];
+            if (!td) return false;
+            // Layout tables have class like layout-0, layout-1 etc
+            var layoutTable = td.querySelector('table[class*="layout-"]');
+            if (layoutTable) return true;
+            // Also detect tables with multiple column TDs (width percentage)
+            var tables = td.querySelectorAll(':scope > table, :scope > div > table');
+            for (var lt = 0; lt < tables.length; lt++) {
+              var colTds = tables[lt].querySelectorAll(':scope > tbody > tr > td[width], :scope > tr > td[width]');
+              if (colTds.length >= 2) return true;
+            }
+            return false;
+          }
 
-          var sectionStyle = td.getAttribute('style') || '';
-          var bgMatch = sectionStyle.match(/background-color\s*:\s*([^;]+)/);
-          var sectionBg = bgMatch ? bgMatch[1].trim() : '#FFFFFF';
-          var pad = parsePadding(sectionStyle);
+          // Helper: detect CTA/button row
+          function isButtonRow(tr) {
+            var td = tr.children[0];
+            if (!td) return false;
+            var links = td.querySelectorAll('a');
+            for (var li = 0; li < links.length; li++) {
+              var s = links[li].getAttribute('style') || '';
+              if (s.indexOf('background-color') >= 0 || s.indexOf('border-radius') >= 0) return true;
+            }
+            return false;
+          }
 
-          // For V2 templates, dig into the row table to find the content column
-          var contentTd = td;
-          if (isV2) {
-            var rowTable = td.querySelector(':scope > table');
-            if (rowTable) {
-              var innerTd = rowTable.querySelector('td');
-              if (innerTd) contentTd = innerTd;
+          // Helper: detect heading row (large font-size)
+          function isHeadingRow(tr) {
+            var td = tr.children[0];
+            if (!td) return false;
+            var style = td.getAttribute('style') || '';
+            var fsMatch = style.match(/font-size\s*:\s*([\d.]+)/);
+            if (fsMatch && parseFloat(fsMatch[1]) >= 20) return true;
+            if (td.querySelector('h1, h2, h3')) return true;
+            return false;
+          }
+
+          // Helper: detect image row
+          function isImageRow(tr) {
+            var td = tr.children[0];
+            if (!td) return false;
+            var imgs = td.querySelectorAll('img');
+            if (imgs.length > 0) return true;
+            return false;
+          }
+
+          // Group TRs: each layout row, button row, or standalone heading/image
+          // becomes a section boundary. Consecutive text-only rows are grouped.
+          var groups = [];
+          var currentGroup = [];
+
+          function flushGroup() {
+            if (currentGroup.length > 0) {
+              groups.push(currentGroup);
+              currentGroup = [];
             }
           }
 
-          // Canva templates: drill into nested wrappers (table > tbody > tr > td) to find real content
-          contentTd = drillToContent(contentTd);
+          for (var gi = 0; gi < allTrs.length; gi++) {
+            var gtr = allTrs[gi];
+            // Layout rows, button rows, and image rows are always their own section
+            if (isLayoutRow(gtr) || isButtonRow(gtr) || isImageRow(gtr)) {
+              flushGroup();
+              groups.push([gtr]);
+            } else if (isHeadingRow(gtr)) {
+              // Headings start a new group (flush previous text)
+              flushGroup();
+              currentGroup.push(gtr);
+            } else {
+              // Regular text/content row -- add to current group
+              currentGroup.push(gtr);
+            }
+          }
+          flushGroup();
 
-          var children = getContentChildren(contentTd);
+          // Now wrap each group as a single section
+          groups.forEach(function(group) {
+            if (group.length === 0) return;
+            var firstTr = group[0];
+            var firstTd = firstTr.children[0];
+            var sectionStyle = firstTd ? (firstTd.getAttribute('style') || '') : '';
+            var bgMatch = sectionStyle.match(/background-color\s*:\s*([^;]+)/);
+            var sectionBg = bgMatch ? bgMatch[1].trim() : '#FFFFFF';
+            var pad = parsePadding(sectionStyle);
 
-          // Also try to split by inner tables if children are mostly tables
-          // Canva often wraps each content piece in its own table inside a TD
-          if (children.length > 1) {
-            // SPLIT: each content child becomes its own section TR
-            children.forEach(function(child, ci) {
-              var bpt = (ci === 0) ? pad.top : '4px';
-              var bpb = (ci === children.length - 1) ? pad.bottom : '4px';
-              var blockTr = createBlockSectionTr(child, sectionBg, pad.right, pad.left, bpt, bpb);
-              containerBody.insertBefore(blockTr, tr);
+            // Create a single section TR containing all TRs in the group
+            var newTr = document.createElement('tr');
+            var newTd = document.createElement('td');
+            newTd.setAttribute('style', 'background-color:' + sectionBg + ';padding:' + pad.top + ' ' + pad.right + ' ' + pad.bottom + ' ' + pad.left + ';');
+            newTd.classList.add('email-section');
+            newTd.setAttribute('data-sid', uid());
+            var inner = document.createElement('div');
+            inner.className = 'section-inner';
+
+            // If single TR, just clone its TD content
+            if (group.length === 1) {
+              var srcTd = firstTr.children[0];
+              if (srcTd) {
+                while (srcTd.firstChild) inner.appendChild(srcTd.firstChild);
+              }
+            } else {
+              // Multiple TRs: wrap in a table to preserve layout
+              var wrapTable = document.createElement('table');
+              wrapTable.setAttribute('width', '100%');
+              wrapTable.setAttribute('border', '0');
+              wrapTable.setAttribute('cellpadding', '0');
+              wrapTable.setAttribute('cellspacing', '0');
+              var wrapTbody = document.createElement('tbody');
+              group.forEach(function(gtr) {
+                wrapTbody.appendChild(gtr.cloneNode(true));
+              });
+              wrapTable.appendChild(wrapTbody);
+              inner.appendChild(wrapTable);
+            }
+
+            newTd.appendChild(inner);
+            newTd.insertAdjacentHTML('beforeend', sectionToolbarHtml());
+            newTr.appendChild(newTd);
+
+            // Insert before the first TR in this group
+            containerBody.insertBefore(newTr, firstTr);
+
+            // Remove original TRs
+            group.forEach(function(gtr) {
+              if (gtr.parentNode) gtr.remove();
             });
-            tr.remove();
-          } else if (children.length === 1 && children[0].tagName === 'TABLE') {
-            // Single table child -- check if IT has multiple TRs we should split
-            var innerTable = children[0];
-            var itb = innerTable.querySelector(':scope > tbody') || innerTable;
-            var innerTrs = Array.from(itb.children).filter(function(c) { return c.tagName === 'TR'; });
-            // Filter spacers from inner TRs
-            innerTrs = innerTrs.filter(function(itr) {
-              var itd = itr.children[0];
-              if (!itd || itd.tagName !== 'TD') return false;
-              var h = itd.getAttribute('height');
-              var s = itd.getAttribute('style') || '';
-              var t = itd.textContent.trim();
-              if (h && s.indexOf('font-size:0') >= 0 && (t === '' || t === '\u00a0')) return false;
-              if (!t && itd.children.length === 0) return false;
-              return true;
-            });
-            if (innerTrs.length > 1) {
-              // Split each inner TR into its own section
-              innerTrs.forEach(function(itr, ci) {
+          });
+
+        } else {
+          // ---------------------------------------------------------------
+          // V2 / legacy template splitting (original logic)
+          // ---------------------------------------------------------------
+          allTrs.forEach(function(tr) {
+            var td = tr.children[0];
+            if (!td || td.tagName !== 'TD') return;
+
+            var sectionStyle = td.getAttribute('style') || '';
+            var bgMatch = sectionStyle.match(/background-color\s*:\s*([^;]+)/);
+            var sectionBg = bgMatch ? bgMatch[1].trim() : '#FFFFFF';
+            var pad = parsePadding(sectionStyle);
+
+            // For V2 templates, dig into the row table to find the content column
+            var contentTd = td;
+            if (isV2) {
+              var rowTable = td.querySelector(':scope > table');
+              if (rowTable) {
+                var innerTd = rowTable.querySelector('td');
+                if (innerTd) contentTd = innerTd;
+              }
+            }
+
+            contentTd = drillToContent(contentTd);
+            var children = getContentChildren(contentTd);
+
+            if (children.length > 1) {
+              children.forEach(function(child, ci) {
                 var bpt = (ci === 0) ? pad.top : '4px';
-                var bpb = (ci === innerTrs.length - 1) ? pad.bottom : '4px';
-                var itd = itr.children[0];
-                var node = itd || itr;
-                var blockTr = createBlockSectionTr(node, sectionBg, pad.right, pad.left, bpt, bpb);
+                var bpb = (ci === children.length - 1) ? pad.bottom : '4px';
+                var blockTr = createBlockSectionTr(child, sectionBg, pad.right, pad.left, bpt, bpb);
                 containerBody.insertBefore(blockTr, tr);
               });
               tr.remove();
+            } else if (children.length === 1 && children[0].tagName === 'TABLE') {
+              var innerTable = children[0];
+              var itb = innerTable.querySelector(':scope > tbody') || innerTable;
+              var innerTrs = Array.from(itb.children).filter(function(c) { return c.tagName === 'TR'; });
+              innerTrs = innerTrs.filter(function(itr) {
+                var itd = itr.children[0];
+                if (!itd || itd.tagName !== 'TD') return false;
+                var h = itd.getAttribute('height');
+                var s = itd.getAttribute('style') || '';
+                var t = itd.textContent.trim();
+                if (h && s.indexOf('font-size:0') >= 0 && (t === '' || t === '\u00a0')) return false;
+                if (!t && itd.children.length === 0) return false;
+                return true;
+              });
+              if (innerTrs.length > 1) {
+                innerTrs.forEach(function(itr, ci) {
+                  var bpt = (ci === 0) ? pad.top : '4px';
+                  var bpb = (ci === innerTrs.length - 1) ? pad.bottom : '4px';
+                  var itd = itr.children[0];
+                  var node = itd || itr;
+                  var blockTr = createBlockSectionTr(node, sectionBg, pad.right, pad.left, bpt, bpb);
+                  containerBody.insertBefore(blockTr, tr);
+                });
+                tr.remove();
+              } else {
+                td.classList.add('email-section');
+                td.setAttribute('data-sid', uid());
+                if (!td.querySelector('.section-inner')) {
+                  var inner = document.createElement('div');
+                  inner.className = 'section-inner';
+                  while (td.firstChild) inner.appendChild(td.firstChild);
+                  td.appendChild(inner);
+                }
+                td.insertAdjacentHTML('beforeend', toolbar);
+              }
             } else {
-              // Wrap as single section
               td.classList.add('email-section');
               td.setAttribute('data-sid', uid());
-              if (!td.querySelector('.section-inner')) {
+              if (isV2 && contentTd !== td) {
+                var inner = document.createElement('div');
+                inner.className = 'section-inner';
+                while (contentTd.firstChild) inner.appendChild(contentTd.firstChild);
+                td.innerHTML = '';
+                td.appendChild(inner);
+              } else if (!td.querySelector('.section-inner')) {
                 var inner = document.createElement('div');
                 inner.className = 'section-inner';
                 while (td.firstChild) inner.appendChild(td.firstChild);
@@ -3068,26 +3226,8 @@ window.addEventListener('message', function(e) {
               }
               td.insertAdjacentHTML('beforeend', toolbar);
             }
-          } else {
-            // Single content or already granular -- wrap as one section
-            td.classList.add('email-section');
-            td.setAttribute('data-sid', uid());
-            // Flatten row table wrapper if present (V2)
-            if (isV2 && contentTd !== td) {
-              var inner = document.createElement('div');
-              inner.className = 'section-inner';
-              while (contentTd.firstChild) inner.appendChild(contentTd.firstChild);
-              td.innerHTML = '';
-              td.appendChild(inner);
-            } else if (!td.querySelector('.section-inner')) {
-              var inner = document.createElement('div');
-              inner.className = 'section-inner';
-              while (td.firstChild) inner.appendChild(td.firstChild);
-              td.appendChild(inner);
-            }
-            td.insertAdjacentHTML('beforeend', toolbar);
-          }
-        });
+          });
+        }
 
         // Re-enable contenteditable on already-marked elements
         canvas.querySelectorAll('[contenteditable]').forEach(function(el) {
@@ -3110,22 +3250,25 @@ window.addEventListener('message', function(e) {
         addInsertPoints();
         addSectionLabels();
 
-        // Add logo placeholder to empty header sections
-        canvas.querySelectorAll('.email-section').forEach(function(td) {
-          var inner = td.querySelector('.section-inner');
-          if (!inner) return;
-          // Check if this is the first section and has no visible content (empty logo section)
+        // Add logo placeholder ONLY to the very first section if empty (header area)
+        var allSections = canvas.querySelectorAll('.email-section');
+        var addedLogoPlaceholder = false;
+        for (var si = 0; si < allSections.length && si < 2; si++) {
+          var secTd = allSections[si];
+          var inner = secTd.querySelector('.section-inner');
+          if (!inner) continue;
           var hasContent = inner.querySelector('img, h1, h2, h3, p, a, table, div:not(:empty)');
           var isEmpty = !hasContent && inner.textContent.trim() === '';
-          if (isEmpty) {
+          if (isEmpty && !addedLogoPlaceholder) {
             var placeholder = document.createElement('div');
             placeholder.className = 'editable-logo logo-placeholder';
             placeholder.style.cssText = 'width:140px;height:50px;background:#F3F4F6;border:2px dashed #D1D5DB;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-size:11px;color:#9CA3AF;';
             placeholder.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add logo';
             placeholder.onclick = function() { showGlobalStylesView(); };
             inner.appendChild(placeholder);
+            addedLogoPlaceholder = true;
           }
-        });
+        }
 
         // Push initial undo state
         undoStack = [canvas.innerHTML];
