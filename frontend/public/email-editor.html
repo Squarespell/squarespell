@@ -303,6 +303,25 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
 .sep-align-btn:hover { border-color: #0D7377; color: #0D7377; }
 .sep-align-btn.active { background: #0D7377; border-color: #0D7377; color: #FFFFFF; }
 
+/* Hint styling */
+.sep-hint { display: flex; align-items: flex-start; gap: 6px; padding: 8px 10px; background: #FEF3C7; border-radius: 6px; font-size: 11px; color: #92400E; line-height: 1.4; margin-top: 8px; }
+.sep-hint svg { flex-shrink: 0; margin-top: 1px; }
+
+/* Global flash animation */
+@keyframes globalFlash { 0% { box-shadow: 0 0 0 3px rgba(13,115,119,0.4); } 100% { box-shadow: none; } }
+.global-flash { animation: globalFlash 0.4s ease-out; }
+
+/* Reset link styling */
+.sep-reset-link { font-size: 11px; color: #0D7377; cursor: pointer; margin-top: 4px; text-decoration: underline; }
+.sep-reset-link:hover { color: #0B6165; }
+
+/* Block selection styling */
+.editable-text.block-selected, .editable-img.block-selected, .editable-btn.block-selected {
+  outline: 2px solid #0D7377 !important;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* --- Section style panel (background + padding) --- */
 .section-style-panel {
   position: fixed; background: #FFFFFF; border-radius: 14px;
@@ -444,9 +463,9 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
   box-shadow: 0 0 0 1px rgba(13,115,119,0.15);
 }
 .editing .email-section:hover > .section-toolbar { opacity: 1; pointer-events: auto; }
-/* Selected state - strong teal border */
+/* Selected state - strong teal border (dashed) */
 .editing .email-section.section-selected {
-  border: 2px solid #0D7377; border-style: solid;
+  border: 2px dashed #0D7377;
   box-shadow: 0 0 0 3px rgba(13,115,119,0.12);
 }
 
@@ -934,7 +953,7 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
     <!-- Right Sidebar (always visible, Squarespace-style) -->
     <div class="section-editor-panel" id="sectionEditorPanel">
       <div class="sep-header">
-        <span class="sep-header-title" id="sepTitle">Site Styles</span>
+        <span class="sep-header-title" id="sepTitle">Edit</span>
         <button class="sep-close" id="sepCloseBtn" onclick="closeSectionEditor()" style="display:none;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -995,6 +1014,11 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
                 </div>
               </div>
             </div>
+            <!-- Font Warning Hint -->
+            <div class="sep-hint" id="fontWarning" style="display:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span id="fontWarningText">Outlook will show Arial instead of this font.</span>
+            </div>
             <!-- Website -->
             <div class="sep-group">
               <div class="sep-group-label">Website</div>
@@ -1023,6 +1047,41 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
         </div>
         <!-- DESIGN TAB -->
         <div id="sepTabDesign" style="display:none;">
+          <!-- Global Design (shown when no section selected) -->
+          <div id="sepGlobalDesign" style="display:none;">
+            <div class="sep-group">
+              <div class="sep-group-label">Button Shape</div>
+              <div class="sep-align-row">
+                <button class="sep-align-btn active" onclick="setGlobalButtonShape('rounded', this)" title="Rounded">Rounded</button>
+                <button class="sep-align-btn" onclick="setGlobalButtonShape('pill', this)" title="Pill">Pill</button>
+                <button class="sep-align-btn" onclick="setGlobalButtonShape('square', this)" title="Square">Square</button>
+              </div>
+            </div>
+            <div class="sep-group">
+              <div class="sep-group-label">Button Style</div>
+              <div class="sep-align-row">
+                <button class="sep-align-btn active" onclick="setGlobalButtonStyle('filled', this)" title="Filled">Filled</button>
+                <button class="sep-align-btn" onclick="setGlobalButtonStyle('outline', this)" title="Outline">Outline</button>
+              </div>
+            </div>
+            <div class="sep-group">
+              <div class="sep-group-label">Heading Scale</div>
+              <div class="sep-align-row">
+                <button class="sep-align-btn" onclick="setGlobalHeadingScale('small', this)" title="Small">Small</button>
+                <button class="sep-align-btn active" onclick="setGlobalHeadingScale('medium', this)" title="Medium">Medium</button>
+                <button class="sep-align-btn" onclick="setGlobalHeadingScale('large', this)" title="Large">Large</button>
+              </div>
+            </div>
+            <div class="sep-group">
+              <div class="sep-group-label">Section Spacing</div>
+              <div class="sep-align-row">
+                <button class="sep-align-btn" onclick="setGlobalSectionSpacing('compact', this)" title="Compact">Compact</button>
+                <button class="sep-align-btn active" onclick="setGlobalSectionSpacing('normal', this)" title="Normal">Normal</button>
+                <button class="sep-align-btn" onclick="setGlobalSectionSpacing('spacious', this)" title="Spacious">Spacious</button>
+              </div>
+            </div>
+          </div>
+          <!-- Section Design (shown when a section is selected) -->
           <div class="sep-group" id="sepSectionDesign">
             <div class="sep-group-label">Section Background</div>
             <div class="sep-color-row">
@@ -1284,6 +1343,7 @@ input[type="range"]::-moz-range-track { height: 4px; background: #E4E3E0; border
   <div class="btn-editor-row"><label>Font size</label><input type="range" class="range-slider" id="btnFontSize" min="10" max="24" value="15" oninput="updateBtnFontSize(this.value)"><span id="btnFontSizeVal" style="font-size:12px;color:#6B7280;min-width:30px;text-align:right;">15px</span></div>
   <div class="btn-editor-row"><label>Radius</label><input type="range" class="range-slider" id="btnRadius" min="0" max="30" value="8" oninput="updateBtnRadius(this.value)"><span id="btnRadiusVal" style="font-size:12px;color:#6B7280;min-width:30px;text-align:right;">8px</span></div>
   <div class="btn-editor-row"><label>Full width</label><button class="toggle-switch" id="btnFullWidth" onclick="toggleBtnFullWidth(this)"></button></div>
+  <div class="sep-reset-link" onclick="resetBtnColorToGlobal()">Reset to global primary</div>
 </div>
 
 <!-- ================================================================
@@ -1350,6 +1410,11 @@ var activeBtnEl = null;
 var confirmCb = null;
 var globalColors = { primary: '#0D7377', background: '#FFFFFF', text: '#1A1A1A' };
 var globalFont = 'Inter, sans-serif';
+var globalButtonShape = 'rounded';
+var globalButtonStyle = 'filled';
+var globalHeadingScale = 'medium';
+var globalSectionSpacing = 'normal';
+var selectedBlockEl = null;
 var sectionIdCounter = 0;
 
 function sectionToolbarHtml() {
@@ -1741,6 +1806,12 @@ function bindEditableText() {
       originalText = el.innerHTML;
       el.setAttribute('contenteditable', 'true');
       el.classList.add('active');
+
+      // Mark block as selected
+      if (selectedBlockEl) selectedBlockEl.classList.remove('block-selected');
+      selectedBlockEl = el;
+      el.classList.add('block-selected');
+
       el.focus();
       showTextToolbar(el);
     });
@@ -1757,6 +1828,10 @@ function deactivateText() {
   if (!activeTextEl) return;
   activeTextEl.removeAttribute('contenteditable');
   activeTextEl.classList.remove('active');
+  if (selectedBlockEl === activeTextEl) {
+    selectedBlockEl.classList.remove('block-selected');
+    selectedBlockEl = null;
+  }
   activeTextEl = null;
   document.getElementById('textToolbar').classList.remove('visible');
 }
@@ -1927,9 +2002,15 @@ function openImagePanel(el) {
     sectionTd.classList.add('section-selected');
   }
 
+  // Mark block as selected
+  if (selectedBlockEl) selectedBlockEl.classList.remove('block-selected');
+  selectedBlockEl = el;
+  el.classList.add('block-selected');
+
   // Show image editor in sidebar
   document.getElementById('sepGlobalStyles').style.display = 'none';
   document.getElementById('sepSectionContent').style.display = 'none';
+  document.getElementById('sepGlobalDesign').style.display = 'none';
   var existingPicker = document.getElementById('sepBlockPicker');
   if (existingPicker) existingPicker.remove();
   document.getElementById('sepTitle').textContent = 'Edit Image';
@@ -2169,6 +2250,12 @@ if (dropZone) {
 function openBtnPanel(el) {
   if (mode !== 'edit') return;
   activeBtnEl = el;
+
+  // Mark block as selected
+  if (selectedBlockEl) selectedBlockEl.classList.remove('block-selected');
+  selectedBlockEl = el;
+  el.classList.add('block-selected');
+
   var panel = document.getElementById('buttonPanel');
   var rect = el.getBoundingClientRect();
   panel.style.left = Math.min(rect.left, window.innerWidth - 340) + 'px';
@@ -2201,7 +2288,13 @@ function openBtnPanel(el) {
   }
   panel.classList.add('visible');
 }
-function closeBtn() { document.getElementById('buttonPanel').classList.remove('visible'); }
+function closeBtn() {
+  document.getElementById('buttonPanel').classList.remove('visible');
+  if (selectedBlockEl) {
+    selectedBlockEl.classList.remove('block-selected');
+    selectedBlockEl = null;
+  }
+}
 
 function updateBtnText(val) { if (activeBtnEl) activeBtnEl.textContent = val; }
 function updateBtnLink(val) { if (activeBtnEl) activeBtnEl.href = val; }
@@ -2233,6 +2326,13 @@ function updateBtnPadding() {
 function updateBtnFontSize(val) {
   document.getElementById('btnFontSizeVal').textContent = val + 'px';
   if (activeBtnEl) activeBtnEl.style.fontSize = val + 'px';
+}
+
+function resetBtnColorToGlobal() {
+  if (activeBtnEl) {
+    activeBtnEl.style.backgroundColor = globalColors.primary;
+    document.getElementById('btnBgColor').value = globalColors.primary;
+  }
 }
 
 // ================================================================
@@ -2368,6 +2468,29 @@ function applyGlobalColor(type, value) {
       });
     }
   }
+
+  // Add flash highlight to affected elements
+  var canvas = document.getElementById('emailCanvas');
+  if (canvas) {
+    var flashElements = [];
+    if (type === 'primary') {
+      flashElements = Array.from(canvas.querySelectorAll('.editable-btn'));
+    } else if (type === 'background') {
+      var bodyEl = canvas.querySelector('.email-body');
+      if (bodyEl) flashElements = [bodyEl];
+    } else if (type === 'text') {
+      var textEls = Array.from(canvas.querySelectorAll('.editable-text'));
+      flashElements = textEls.slice(0, 10);
+    }
+
+    flashElements.forEach(function(el) {
+      el.classList.add('global-flash');
+      setTimeout(function() {
+        el.classList.remove('global-flash');
+      }, 400);
+    });
+  }
+
   pushUndoState();
   renderTemplate();
 }
@@ -2538,6 +2661,16 @@ function applyGlobalFont(value) {
   document.querySelectorAll('#fontPickerList .font-picker-option').forEach(function(opt) {
     opt.classList.toggle('active', opt.getAttribute('data-value') === value);
   });
+
+  // Show/hide font warning based on safe fonts list
+  var safeFonts = ['Arial', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma', 'Trebuchet MS'];
+  var fontName = value.split(',')[0].replace(/'/g, '').trim();
+  var warning = document.getElementById('fontWarning');
+  if (warning) {
+    var isSafe = safeFonts.indexOf(fontName) >= 0;
+    warning.style.display = isSafe ? 'none' : '';
+  }
+
   closeFontPicker();
   renderTemplate();
 }
@@ -2686,6 +2819,92 @@ function filterFonts(query) {
     return f.name.toLowerCase().indexOf(q) >= 0;
   });
   renderFontList(filtered);
+}
+
+// ================================================================
+// GLOBAL DESIGN FUNCTIONS
+// ================================================================
+function setGlobalButtonShape(shape, btn) {
+  globalButtonShape = shape;
+  var buttons = btn.parentElement.querySelectorAll('.sep-align-btn');
+  buttons.forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  applyGlobalDesign();
+}
+
+function setGlobalButtonStyle(style, btn) {
+  globalButtonStyle = style;
+  var buttons = btn.parentElement.querySelectorAll('.sep-align-btn');
+  buttons.forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  applyGlobalDesign();
+}
+
+function setGlobalHeadingScale(scale, btn) {
+  globalHeadingScale = scale;
+  var buttons = btn.parentElement.querySelectorAll('.sep-align-btn');
+  buttons.forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  applyGlobalDesign();
+}
+
+function setGlobalSectionSpacing(spacing, btn) {
+  globalSectionSpacing = spacing;
+  var buttons = btn.parentElement.querySelectorAll('.sep-align-btn');
+  buttons.forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  applyGlobalDesign();
+}
+
+function applyGlobalDesign() {
+  var canvas = document.getElementById('emailCanvas');
+  if (!canvas) return;
+
+  // Apply button shape
+  var borderRadii = { rounded: '8px', pill: '50px', square: '0px' };
+  canvas.querySelectorAll('.editable-btn').forEach(function(btn) {
+    btn.style.borderRadius = borderRadii[globalButtonShape] || '8px';
+  });
+
+  // Apply button style
+  if (globalButtonStyle === 'outline') {
+    canvas.querySelectorAll('.editable-btn').forEach(function(btn) {
+      var bgColor = btn.style.backgroundColor || globalColors.primary;
+      btn.style.backgroundColor = 'transparent';
+      btn.style.color = bgColor;
+      btn.style.border = '2px solid ' + bgColor;
+    });
+  } else {
+    canvas.querySelectorAll('.editable-btn').forEach(function(btn) {
+      var bgColor = btn.style.backgroundColor || globalColors.primary;
+      btn.style.backgroundColor = bgColor;
+      btn.style.color = '#FFFFFF';
+      btn.style.border = 'none';
+    });
+  }
+
+  // Apply heading scale
+  var headingScales = {
+    small: { h1: '24px', h2: '20px' },
+    medium: { h1: '32px', h2: '24px' },
+    large: { h1: '40px', h2: '30px' }
+  };
+  var scales = headingScales[globalHeadingScale] || headingScales.medium;
+  canvas.querySelectorAll('h1').forEach(function(h) { h.style.fontSize = scales.h1; });
+  canvas.querySelectorAll('h2').forEach(function(h) { h.style.fontSize = scales.h2; });
+
+  // Apply section spacing
+  var spacingValues = { compact: '16px', normal: '24px', spacious: '40px' };
+  var spacing = spacingValues[globalSectionSpacing] || '24px';
+  canvas.querySelectorAll('.email-section').forEach(function(sec) {
+    var inner = sec.querySelector('.section-inner');
+    if (inner && !inner.style.padding) {
+      inner.style.padding = spacing;
+    }
+  });
+
+  pushUndoState();
+  renderTemplate();
 }
 
 // Close font picker when clicking outside
@@ -4172,14 +4391,24 @@ function closeSectionEditor() {
   // Don't hide panel - return to global styles view
   if (selectedSectionEl) selectedSectionEl.classList.remove('section-selected');
   selectedSectionEl = null;
+  if (selectedBlockEl) {
+    selectedBlockEl.classList.remove('block-selected');
+    selectedBlockEl = null;
+  }
   showGlobalStylesView();
 }
 
 function showGlobalStylesView() {
-  document.getElementById('sepTitle').textContent = 'Site Styles';
+  document.getElementById('sepTitle').textContent = 'Edit';
   document.getElementById('sepCloseBtn').style.display = 'none';
   document.getElementById('sepGlobalStyles').style.display = '';
   document.getElementById('sepSectionContent').style.display = 'none';
+  document.getElementById('sepGlobalDesign').style.display = '';
+  document.getElementById('sepSectionDesign').style.display = 'none';
+  if (selectedBlockEl) {
+    selectedBlockEl.classList.remove('block-selected');
+    selectedBlockEl = null;
+  }
   switchSepTab('content');
 }
 
@@ -4276,6 +4505,17 @@ function switchSepTab(tab) {
   document.querySelector('.sep-tab[data-tab="' + tab + '"]').classList.add('active');
   document.getElementById('sepTabContent').style.display = tab === 'content' ? '' : 'none';
   document.getElementById('sepTabDesign').style.display = tab === 'design' ? '' : 'none';
+
+  // When switching to Design tab, show global or section design based on selection
+  if (tab === 'design') {
+    if (selectedSectionEl) {
+      document.getElementById('sepGlobalDesign').style.display = 'none';
+      document.getElementById('sepSectionDesign').style.display = '';
+    } else {
+      document.getElementById('sepGlobalDesign').style.display = '';
+      document.getElementById('sepSectionDesign').style.display = 'none';
+    }
+  }
 }
 
 function applySepBg() {
