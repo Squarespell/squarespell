@@ -674,13 +674,13 @@ export function DesignStep({
   // ==============================
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: C.SURFACE, display: 'flex', flexDirection: 'column' }}>
-      {/* Fixed top bar - template + subject + preheader */}
+      {/* Top nav bar - template selector + continue */}
       <div style={{
-        padding: '10px 20px', borderBottom: '1px solid ' + C.BORDER,
-        display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0,
+        padding: '8px 20px', borderBottom: '1px solid ' + C.BORDER,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         background: C.SURFACE,
       }}>
-        {/* Back to templates */}
+        {/* Left: back to templates */}
         <button
           onClick={function() { setPhase('gallery'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
           style={{
@@ -695,67 +695,98 @@ export function DesignStep({
             <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
             <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
           </svg>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 100 }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>
             {selectedItem ? selectedItem.title : 'Templates'}
           </span>
         </button>
 
-        {/* Subject */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
-              placeholder="Subject line..." className="sq-dinput" style={inputStyle} />
-            <button
-              onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4, padding: '7px 10px',
-                background: state.abEnabled ? C.ACCENT_LIGHT : 'transparent',
-                border: '1px solid ' + (state.abEnabled ? C.ACCENT : C.BORDER),
-                borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                color: state.abEnabled ? C.ACCENT : C.TEXT_MUTED, whiteSpace: 'nowrap', flexShrink: 0,
-              }}
-            >
-              A/B
-            </button>
-          </div>
-        </div>
-
-        {/* Preheader */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input value={state.preheader || ''} onChange={function(e) { setState({ preheader: e.target.value }); }}
-              placeholder="Preview text..." className="sq-dinput" style={inputStyle} />
-          </div>
-        </div>
-
-        {/* Save + Continue */}
+        {/* Right: continue */}
         <PrimaryButton onClick={onNext} disabled={!state.templateId || !state.subject}>
           Continue to send
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, verticalAlign: 'middle' }}><polyline points="9 18 15 12 9 6" /></svg>
         </PrimaryButton>
       </div>
 
-      {/* A/B expanded row */}
-      {state.abEnabled && (
-        <div style={{
-          padding: '8px 20px', borderBottom: '1px solid ' + C.BORDER,
-          background: C.ELEVATED, display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0,
-        }}>
-          <span style={{ color: C.TEXT_MUTED, fontSize: 11, fontWeight: 600, flexShrink: 0 }}>B:</span>
-          <input value={state.subjectB || ''} onChange={function(e) { setState({ subjectB: e.target.value }); }}
-            placeholder="Try a different angle" className="sq-dinput" style={inputStyle} />
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-            <input type="number" min={10} max={50} value={state.abTestPercent || 20}
-              onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
-              style={{ width: 50, padding: '7px 6px', background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
-            <span style={{ color: C.TEXT_SUBTLE, fontSize: 11 }}>% test</span>
-            <input type="number" min={1} max={48} value={state.abWaitHours || 4}
-              onChange={function(e) { setState({ abWaitHours: Math.min(48, Math.max(1, Number(e.target.value))) }); }}
-              style={{ width: 50, padding: '7px 6px', background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
-            <span style={{ color: C.TEXT_SUBTLE, fontSize: 11 }}>h wait</span>
+      {/* Subject + Preheader bar */}
+      <div style={{
+        padding: '10px 20px', borderBottom: '1px solid ' + C.BORDER,
+        background: C.ELEVATED, flexShrink: 0,
+      }}>
+        {/* Subject row */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: state.abEnabled ? 8 : 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <label style={{ color: C.TEXT_MUTED, fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as any, letterSpacing: 0.5, flexShrink: 0, width: 56 }}>Subject</label>
+            <input value={state.subject} onChange={function(e) { setState({ subject: e.target.value }); }}
+              placeholder="Enter your subject line..." className="sq-dinput" style={subjectInputStyle} />
+          </div>
+          <button
+            onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
+            title="A/B test your subject line - send two variants and pick the winner automatically"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px',
+              background: state.abEnabled ? C.ACCENT : 'transparent',
+              border: '1px solid ' + (state.abEnabled ? C.ACCENT : C.BORDER),
+              borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              color: state.abEnabled ? '#FFFFFF' : C.TEXT_MUTED, whiteSpace: 'nowrap', flexShrink: 0,
+              transition: 'all 0.15s',
+            }}
+          >
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 3h5v5" /><path d="M8 3H3v5" /><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" /><path d="m15 9 6-6" />
+            </svg>
+            A/B Test
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <label style={{ color: C.TEXT_MUTED, fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as any, letterSpacing: 0.5, flexShrink: 0 }}>Preheader</label>
+            <input value={state.preheader || ''} onChange={function(e) { setState({ preheader: e.target.value }); }}
+              placeholder="Preview text shown in inbox..." className="sq-dinput" style={subjectInputStyle} />
           </div>
         </div>
-      )}
+
+        {/* A/B variant B row */}
+        {state.abEnabled && (
+          <div style={{
+            display: 'flex', gap: 10, alignItems: 'center',
+            padding: '8px 12px', background: C.SURFACE, borderRadius: 8,
+            border: '1px solid ' + C.BORDER,
+          }}>
+            <div style={{
+              padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700,
+              background: C.ACCENT_LIGHT, color: C.ACCENT, flexShrink: 0,
+            }}>B</div>
+            <input value={state.subjectB || ''} onChange={function(e) { setState({ subjectB: e.target.value }); }}
+              placeholder="Try a different subject line angle..." className="sq-dinput" style={subjectInputStyle} />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input type="number" min={10} max={50} value={state.abTestPercent || 20}
+                  onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
+                  style={{ width: 44, padding: '5px 4px', background: C.ELEVATED, border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 12, textAlign: 'center' as any, boxSizing: 'border-box' }} />
+                <span style={{ color: C.TEXT_SUBTLE, fontSize: 11 }}>% test</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input type="number" min={1} max={48} value={state.abWaitHours || 4}
+                  onChange={function(e) { setState({ abWaitHours: Math.min(48, Math.max(1, Number(e.target.value))) }); }}
+                  style={{ width: 44, padding: '5px 4px', background: C.ELEVATED, border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 12, textAlign: 'center' as any, boxSizing: 'border-box' }} />
+                <span style={{ color: C.TEXT_SUBTLE, fontSize: 11 }}>h wait</span>
+              </div>
+              <button
+                onClick={function() { setState({ abEnabled: false }); }}
+                title="Remove A/B test"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 24, height: 24, borderRadius: 6, border: 'none',
+                  background: 'transparent', cursor: 'pointer', color: C.TEXT_MUTED,
+                  transition: 'color 0.15s',
+                }}
+              >
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Editor iframe - fills all remaining space */}
       <iframe
@@ -794,6 +825,12 @@ function injectDesignFocusStyles() {
 
 var inputStyle: React.CSSProperties = {
   width: '100%', padding: '8px 10px', background: C.ELEVATED,
+  border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13,
+  boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
+};
+
+var subjectInputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 12px', background: C.SURFACE,
   border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13,
   boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
 };
