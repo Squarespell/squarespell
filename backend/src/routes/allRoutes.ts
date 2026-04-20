@@ -1996,3 +1996,74 @@ export const templatesRouter = Router();
 templatesRouter.get('/', (req, res) => {
   res.json({ templates: [] });
 });
+
+// ── Media Router (upload to Supabase Storage + Pexels search) ────────────────
+export const mediaRouter = Router();
+
+// POST /api/media/upload — accepts base64-encoded file, stores in Supabase storage
+mediaRouter.post('/upload', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data: base64Data, fileName, contentType } = req.body;
+    if (!base64Data || !fileName) {
+      return res.status(400).json({ error: 'data (base64) and fileName are required' });
+    }
+    const userId = req.userId || 'anon';
+    const ext = fileName.split('.').pop() || 'jpg';
+    const safeFileName = `${userId}/${Date.now()}_${crypto.randomUUID().slice(0, 8)}.${ext}`;
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Upload to Supabase storage bucket "quiz-media"
+    const { data, error } = await supabase.storage
+      .from('quiz-media')
+      .upload(safeFileName, buffer, {
+        contentType: contentType || 'image/jpeg',
+        upsert: false,
+      });
+
+    if (error) {
+      log.error('Supabase upload error', { error: error.message });
+      return res.status(500).json({ error: 'Upload failed: ' + error.message });
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('quiz-media')
+      .getPublicUrl(safeFileName);
+
+    res.json({ url: urlData.publicUrl, path: safeFileName });
+  } catch (err: any) {
+    log.error('Media upload error', { error: err.message });
+    res.status(500).json({ error: err.message || 'Upload failed' });
+  }
+});
+
+// GET /api/media/search?q=...&page=1 — search Pexels for stock images
+mediaRouter.get('/search', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const query = (req.query.q as string || '').trim();
+    const page = parseInt(req.query.page as string) || 1;
+    if (!query) return res.json({ results: [] });
+
+    const pexelsKey = process.env.PEXELS_ACCESS_KEY;
+    if (!pexelsKey) {
+      return res.status(503).json({ error: 'Stock image search not configured' });
+    }
+    const url = 'https://api.pexels.com/v1/search?query=' + encodeURIComponent(query) + '&per_page=15&page=' + page;
+    const resp = await fetch(url, { headers: { Authorization: pexelsKey } });
+    if (!resp.ok) {
+      return res.status(502).json({ error: 'Pexels API error: ' + resp.status });
+    }
+    const data: any = await resp.json();
+    const results = (data.photos || []).map((p: any) => ({
+      id: String(p.id),
+      thumb: p.src?.medium || p.src?.small,
+      regular: p.src?.large2x || p.src?.large || p.src?.original,
+      alt: p.alt || query,
+      credit: p.photographer || 'Pexels',
+      creditUrl: p.photographer_url || 'https://pexels.com',
+    }));
+    res.json({ results, total: data.total_results || 0 });
+  } catch (err: any) {
+    log.error('Pexels search error', { error: err.message });
+    res.status(500).json({ error: err.message || 'Search failed' });
+  }
+});

@@ -560,6 +560,375 @@ function SidebarSection({
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  MediaPicker — Squarespace-style image/video upload & browse       */
+/* ------------------------------------------------------------------ */
+
+var API_BASE = (typeof window !== 'undefined' && (window as any).__NEXT_PUBLIC_API_URL)
+  || process.env.NEXT_PUBLIC_API_URL
+  || 'https://squarespell-api.onrender.com';
+
+function MediaPicker({
+  mediaType,
+  mediaUrl,
+  onChangeType,
+  onChangeUrl,
+  onClear,
+}: {
+  mediaType?: 'image' | 'video';
+  mediaUrl: string;
+  onChangeType: (t: 'image' | 'video' | undefined) => void;
+  onChangeUrl: (url: string) => void;
+  onClear: () => void;
+}) {
+  var [tab, setTab] = useState<'content' | 'browse'>('content');
+  var [uploading, setUploading] = useState(false);
+  var [searchQuery, setSearchQuery] = useState('');
+  var [searchResults, setSearchResults] = useState<any[]>([]);
+  var [searching, setSearching] = useState(false);
+  var [showLinkInput, setShowLinkInput] = useState(false);
+  var fileInputRef = useRef<HTMLInputElement>(null);
+
+  // If there's already media, show the preview with remove option
+  if (mediaUrl) {
+    return (
+      <div>
+        {mediaType === 'image' && (
+          <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid ' + C.BORDER, marginBottom: 10 }}>
+            <img src={mediaUrl} alt="Media" style={{ width: '100%', display: 'block', maxHeight: 160, objectFit: 'cover' }}
+              onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          </div>
+        )}
+        {mediaType === 'video' && (
+          <div style={{ padding: '12px 14px', background: '#F9FAFB', borderRadius: 10, border: '1px solid ' + C.BORDER, marginBottom: 10, fontSize: 12, color: C.TEXT_MUTED, wordBreak: 'break-all' }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, verticalAlign: 'middle' }}>
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            {mediaUrl}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button type="button" onClick={function() { setShowLinkInput(true); }}
+            style={{ flex: 1, padding: '7px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, background: C.SURFACE, border: '1px solid ' + C.BORDER, color: C.TEXT_MUTED, cursor: 'pointer', fontFamily: C.FONT }}>
+            Replace
+          </button>
+          <button type="button" onClick={onClear}
+            style={{ padding: '7px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, background: 'transparent', border: '1px solid ' + C.BORDER, color: '#ff3b30', cursor: 'pointer', fontFamily: C.FONT }}>
+            Remove
+          </button>
+        </div>
+        {showLinkInput && (
+          <div style={{ marginTop: 8 }}>
+            <input
+              value={mediaUrl}
+              onChange={function(e) { onChangeUrl(e.target.value); }}
+              style={Object.assign({}, inputStyle, { fontSize: 12 })}
+              placeholder={mediaType === 'video' ? 'YouTube or Vimeo URL...' : 'Paste image URL...'}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // No media yet — show the Squarespace-style picker
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    var file = e.target.files?.[0];
+    if (!file) return;
+    var isVideo = file.type.startsWith('video/');
+    setUploading(true);
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = (reader.result as string).split(',')[1];
+      var token = '';
+      // Get auth token from Clerk
+      if (typeof window !== 'undefined' && (window as any).Clerk) {
+        (window as any).Clerk.session?.getToken().then(function(t: string) {
+          token = t || '';
+          doUpload(base64, file!.name, file!.type, token, isVideo);
+        }).catch(function() {
+          doUpload(base64, file!.name, file!.type, '', isVideo);
+        });
+      } else {
+        doUpload(base64, file!.name, file!.type, '', isVideo);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function doUpload(base64: string, fileName: string, contentType: string, token: string, isVideo: boolean) {
+    fetch(API_BASE + '/api/media/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
+      body: JSON.stringify({ data: base64, fileName: fileName, contentType: contentType }),
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.url) {
+        onChangeType(isVideo ? 'video' : 'image');
+        onChangeUrl(data.url);
+      }
+      setUploading(false);
+    })
+    .catch(function() { setUploading(false); });
+  }
+
+  function handleSearch() {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    var token = '';
+    var doSearch = function(t: string) {
+      fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(searchQuery) + '&page=1', {
+        headers: { Authorization: t ? 'Bearer ' + t : '' },
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setSearchResults(data.results || []);
+        setSearching(false);
+      })
+      .catch(function() { setSearching(false); });
+    };
+    if (typeof window !== 'undefined' && (window as any).Clerk) {
+      (window as any).Clerk.session?.getToken().then(function(t: string) { doSearch(t || ''); }).catch(function() { doSearch(''); });
+    } else { doSearch(''); }
+  }
+
+  function selectStock(url: string) {
+    onChangeType('image');
+    onChangeUrl(url);
+    setSearchResults([]);
+    setTab('content');
+  }
+
+  var tabStyle = function(active: boolean): React.CSSProperties {
+    return {
+      padding: '8px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+      background: 'none', border: 'none',
+      color: active ? C.TEXT : C.TEXT_MUTED,
+      borderBottom: active ? '2px solid ' + C.TEXT : '2px solid transparent',
+      fontFamily: C.FONT + ',system-ui,sans-serif',
+    };
+  };
+
+  var menuBtnStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 10,
+    width: '100%', padding: '12px 14px', background: '#FFFFFF',
+    border: '1px solid ' + C.BORDER, borderRadius: 10,
+    cursor: 'pointer', fontSize: 13, fontWeight: 600,
+    color: C.TEXT, fontFamily: C.FONT + ',system-ui,sans-serif',
+    transition: 'background 0.12s',
+  };
+
+  return (
+    <div>
+      {/* Type toggle */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
+        {(['image', 'video'] as const).map(function(mt) {
+          var isActive = mediaType === mt;
+          return (
+            <button key={mt} type="button"
+              onClick={function() { onChangeType(isActive ? undefined : mt); }}
+              style={{
+                padding: '8px 12px', borderRadius: 8,
+                background: isActive ? C.ACCENT : C.SIDEBAR,
+                border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
+                color: isActive ? '#FFFFFF' : C.TEXT_MUTED,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
+              }}
+            >
+              {mt === 'image' ? 'Image' : 'Video'}
+            </button>
+          );
+        })}
+      </div>
+
+      {mediaType && (
+        <div>
+          {/* Tabs: Content / Browse Stock */}
+          {mediaType === 'image' && (
+            <div style={{ display: 'flex', gap: 16, borderBottom: '1px solid ' + C.BORDER, marginBottom: 14 }}>
+              <button type="button" style={tabStyle(tab === 'content')} onClick={function() { setTab('content'); }}>Content</button>
+              <button type="button" style={tabStyle(tab === 'browse')} onClick={function() { setTab('browse'); }}>Browse Stock</button>
+            </div>
+          )}
+
+          {/* Content tab (or only tab for video) */}
+          {(tab === 'content' || mediaType === 'video') && (
+            <div>
+              {/* Upload drop zone */}
+              <div
+                onClick={function() { fileInputRef.current?.click(); }}
+                style={{
+                  border: '2px dashed ' + C.BORDER, borderRadius: 12,
+                  padding: '28px 16px', textAlign: 'center',
+                  cursor: uploading ? 'wait' : 'pointer',
+                  background: '#FAFAFA', transition: 'border-color 0.15s, background 0.15s',
+                  marginBottom: 10,
+                }}
+                onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.background = 'rgba(13,115,119,0.03)'; }}
+                onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = '#FAFAFA'; }}
+              >
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%', background: '#EAECF0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 10px',
+                }}>
+                  {uploading ? (
+                    <div style={{ width: 16, height: 16, border: '2px solid ' + C.ACCENT, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  ) : (
+                    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <line x1={12} y1={5} x2={12} y2={19} /><line x1={5} y1={12} x2={19} y2={12} />
+                    </svg>
+                  )}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3 }}>
+                  {uploading ? 'Uploading...' : (mediaType === 'video' ? 'Add a Video' : 'Add an Image')}
+                </div>
+                <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
+                  {mediaType === 'video' ? '30 minutes max' : '20 MB max'}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={mediaType === 'video' ? 'video/*' : 'image/*'}
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+              </div>
+
+              {/* Action menu */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button type="button" onClick={function() { fileInputRef.current?.click(); }}
+                  style={menuBtnStyle}
+                  onMouseEnter={function(e) { e.currentTarget.style.background = '#F9FAFB'; }}
+                  onMouseLeave={function(e) { e.currentTarget.style.background = '#FFFFFF'; }}
+                >
+                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                  </svg>
+                  UPLOAD FILE
+                </button>
+
+                {mediaType === 'image' && (
+                  <button type="button" onClick={function() { setTab('browse'); }}
+                    style={menuBtnStyle}
+                    onMouseEnter={function(e) { e.currentTarget.style.background = '#F9FAFB'; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.background = '#FFFFFF'; }}
+                  >
+                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx={11} cy={11} r={8} /><line x1={21} y1={21} x2={16.65} y2={16.65} />
+                    </svg>
+                    BROWSE STOCK IMAGES
+                  </button>
+                )}
+
+                <button type="button" onClick={function() { setShowLinkInput(!showLinkInput); }}
+                  style={menuBtnStyle}
+                  onMouseEnter={function(e) { e.currentTarget.style.background = '#F9FAFB'; }}
+                  onMouseLeave={function(e) { e.currentTarget.style.background = '#FFFFFF'; }}
+                >
+                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+                  </svg>
+                  {mediaType === 'video' ? 'ADD FROM LINK' : 'PASTE URL'}
+                </button>
+              </div>
+
+              {showLinkInput && (
+                <div style={{ marginTop: 10 }}>
+                  <input
+                    autoFocus
+                    placeholder={mediaType === 'video' ? 'YouTube or Vimeo URL...' : 'https://...'}
+                    onKeyDown={function(e) {
+                      if (e.key === 'Enter' && (e.target as HTMLInputElement).value) {
+                        onChangeUrl((e.target as HTMLInputElement).value);
+                      }
+                    }}
+                    onBlur={function(e) { if (e.target.value) { onChangeUrl(e.target.value); } }}
+                    style={Object.assign({}, inputStyle, { fontSize: 13 })}
+                  />
+                  {mediaType === 'video' && (
+                    <div style={{ fontSize: 11, color: C.TEXT_SUBTLE, marginTop: 4 }}>YouTube or Vimeo</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Browse Stock tab — Pexels search */}
+          {tab === 'browse' && mediaType === 'image' && (
+            <div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                <input
+                  value={searchQuery}
+                  onChange={function(e) { setSearchQuery(e.target.value); }}
+                  onKeyDown={function(e) { if (e.key === 'Enter') handleSearch(); }}
+                  placeholder="Search free photos..."
+                  style={Object.assign({}, inputStyle, { flex: 1, fontSize: 13 })}
+                />
+                <button type="button" onClick={handleSearch}
+                  disabled={searching}
+                  style={{
+                    padding: '8px 14px', borderRadius: 8,
+                    background: C.ACCENT, border: 'none', color: '#FFFFFF',
+                    fontSize: 12, fontWeight: 600, cursor: searching ? 'wait' : 'pointer',
+                    fontFamily: C.FONT, flexShrink: 0,
+                  }}
+                >
+                  {searching ? '...' : 'Search'}
+                </button>
+              </div>
+
+              {/* Results grid */}
+              {searchResults.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
+                  {searchResults.map(function(img) {
+                    return (
+                      <div key={img.id}
+                        onClick={function() { selectStock(img.regular || img.thumb); }}
+                        style={{
+                          borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
+                          border: '2px solid transparent', transition: 'border-color 0.15s',
+                          position: 'relative',
+                        }}
+                        onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                        onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}
+                      >
+                        <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }} />
+                        <div style={{
+                          position: 'absolute', bottom: 0, left: 0, right: 0,
+                          background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
+                          padding: '12px 6px 4px', fontSize: 9, color: '#fff',
+                        }}>
+                          {img.credit}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {searchResults.length === 0 && !searching && searchQuery && (
+                <div style={{ textAlign: 'center', padding: '20px 10px', color: C.TEXT_MUTED, fontSize: 12 }}>
+                  No results. Try a different search term.
+                </div>
+              )}
+
+              <div style={{ fontSize: 10, color: C.TEXT_SUBTLE, marginTop: 8, textAlign: 'center' }}>
+                Photos provided by Pexels
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Spin animation for upload */}
+      <style dangerouslySetInnerHTML={{ __html: '@keyframes spin { to { transform: rotate(360deg); } }' }} />
+    </div>
+  );
+}
+
 function BlockInspector({
   block,
   allBlocks,
@@ -646,46 +1015,17 @@ function BlockInspector({
           </div>
         </SidebarSection>
 
-        {/* Media */}
+        {/* Media — Squarespace-style image/video picker */}
         <SidebarSection title="Media" defaultOpen={!!qb.mediaUrl}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
-            {(['image', 'video'] as const).map(function(mt) {
-              var isActive = qb.mediaType === mt;
-              return (
-                <button
-                  key={mt}
-                  type="button"
-                  onClick={function() { updateField('mediaType', isActive ? undefined : mt); }}
-                  style={{
-                    padding: '8px 12px', borderRadius: 8,
-                    background: isActive ? C.ACCENT : C.SIDEBAR,
-                    border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
-                    color: isActive ? '#FFFFFF' : C.TEXT_MUTED,
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    fontFamily: 'Inter,system-ui,sans-serif',
-                  }}
-                >
-                  {mt === 'image' ? 'Add image' : 'Add video'}
-                </button>
-              );
-            })}
-          </div>
-          {qb.mediaType && (
-            <input
-              value={qb.mediaUrl || ''}
-              onChange={function(e) { updateField('mediaUrl', e.target.value); }}
-              style={inputStyle}
-              placeholder={qb.mediaType === 'video' ? 'YouTube or Vimeo URL...' : 'Paste image URL...'}
-            />
-          )}
-          {qb.mediaUrl && qb.mediaType === 'image' && (
-            <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
-              <img src={qb.mediaUrl} alt="Preview" style={{ width: '100%', display: 'block', maxHeight: 120, objectFit: 'cover' }}
-                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            </div>
-          )}
+          <MediaPicker
+            mediaType={qb.mediaType}
+            mediaUrl={qb.mediaUrl || ''}
+            onChangeType={function(t) { updateField('mediaType', t); }}
+            onChangeUrl={function(url) { updateField('mediaUrl', url); }}
+            onClear={function() { updateField('mediaType', undefined); updateField('mediaUrl', ''); }}
+          />
 
           {/* Image choice URLs per option */}
           {qb.questionStyle === 'imageChoice' && (

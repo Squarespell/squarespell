@@ -22,7 +22,7 @@ import express from 'express';
 import cors from 'cors';
 import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
-import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter } from './routes/allRoutes';
+import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter, mediaRouter } from './routes/allRoutes';
 import emailsRouter from './routes/emails';
 import resendWebhookRouter from './routes/resendWebhook';
 import unsubscribeRouter from './routes/unsubscribe';
@@ -107,6 +107,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/media', express.json({ limit: '25mb' }));
 app.use(express.json());
 app.use(requestLogger);
 
@@ -129,6 +130,7 @@ app.use('/api/integrations', integrationsRouter);
 app.use('/api/cron', cronRouter);
 app.use('/api/cron', trialReminderRouter);
 app.use('/api/emails', emailsRouter);
+app.use('/api/media', mediaRouter);
 app.use('/api/webhooks', resendWebhookRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
