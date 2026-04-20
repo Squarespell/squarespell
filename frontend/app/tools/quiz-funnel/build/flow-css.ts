@@ -421,7 +421,7 @@ export const FLOW_CSS = `
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 28px; border-bottom: 1px solid var(--border); gap: 24px;
   }
-  .s3-top-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  .s3-top-left { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1; }
   .icon-btn {
     width: 38px; height: 38px; border-radius: 10px;
     background: var(--surface); border: 1px solid var(--border);
@@ -450,8 +450,8 @@ export const FLOW_CSS = `
     50% { box-shadow: 0 0 0 5px rgba(52,211,153,0); }
   }
   .s3-saved { font-size: 12px; color: var(--text-dim); }
-  .s3-top-right { display: flex; gap: 10px; }
-  .s3-body { display: grid; grid-template-columns: 1fr 340px; height: calc(100vh - 90px); overflow: hidden; }
+  .s3-top-right { display: flex; gap: 10px; flex-shrink: 0; align-items: center; }
+  .s3-body { display: grid; grid-template-columns: 1fr 380px; height: calc(100vh - 90px); overflow: hidden; }
   .s3-main { overflow-y: auto; overflow-x: hidden; height: 100%; width: 100%; }
   .s3-main-inner { padding: 32px 40px 80px; max-width: 880px; width: 100%; margin: 0 auto; }
   .s3-main-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
@@ -618,7 +618,7 @@ export const FLOW_CSS = `
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .answer-input {
-    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border);
     color: var(--text); font-size: 13px;
     border-radius: 8px; padding: 9px 12px; outline: none;
   }
