@@ -697,4 +697,141 @@ r.post('/ai-design', async (req, res) => {
   }
 });
 
+// ── Saved templates CRUD ──────────────────────────────────────────
+
+// List saved templates
+r.get('/templates/saved', async function(req: any, res) {
+  try {
+    var userId = req.dbUserId;
+    var category = req.query.category as string | undefined;
+    var q = supabase
+      .from('saved_templates')
+      .select('id, name, description, category, is_v2, subject, preheader, created_at, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
+    if (category && category !== 'all') {
+      q = q.eq('category', category);
+    }
+
+    var { data, error } = await q;
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err: any) {
+    log.error('[saved-templates] list failed', { err: err.message });
+    res.status(500).json({ error: 'Failed to list saved templates' });
+  }
+});
+
+// Get single saved template (full data with blocks)
+r.get('/templates/saved/:id', async function(req: any, res) {
+  try {
+    var userId = req.dbUserId;
+    var { data, error } = await supabase
+      .from('saved_templates')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !data) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+    res.json(data);
+  } catch (err: any) {
+    log.error('[saved-templates] get failed', { err: err.message });
+    res.status(500).json({ error: 'Failed to get template' });
+  }
+});
+
+// Save new template
+r.post('/templates/saved', async function(req: any, res) {
+  try {
+    var userId = req.dbUserId;
+    var { name, description, category, blocks, v2_sections, subject, preheader, is_v2, thumbnail_html } = req.body;
+
+    if (!name) {
+      res.status(400).json({ error: 'Template name is required' });
+      return;
+    }
+
+    var { data, error } = await supabase
+      .from('saved_templates')
+      .insert({
+        user_id: userId,
+        name: name,
+        description: description || null,
+        category: category || 'custom',
+        blocks: blocks || null,
+        v2_sections: v2_sections || null,
+        subject: subject || null,
+        preheader: preheader || null,
+        is_v2: is_v2 || false,
+        thumbnail_html: thumbnail_html || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err: any) {
+    log.error('[saved-templates] create failed', { err: err.message });
+    res.status(500).json({ error: 'Failed to save template' });
+  }
+});
+
+// Update saved template
+r.patch('/templates/saved/:id', async function(req: any, res) {
+  try {
+    var userId = req.dbUserId;
+    var updates: Record<string, any> = {};
+    var allowedFields = ['name', 'description', 'category', 'blocks', 'v2_sections', 'subject', 'preheader', 'is_v2', 'thumbnail_html'];
+
+    for (var i = 0; i < allowedFields.length; i++) {
+      var field = allowedFields[i];
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+    updates.updated_at = new Date().toISOString();
+
+    var { data, error } = await supabase
+      .from('saved_templates')
+      .update(updates)
+      .eq('id', req.params.id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+    res.json(data);
+  } catch (err: any) {
+    log.error('[saved-templates] update failed', { err: err.message });
+    res.status(500).json({ error: 'Failed to update template' });
+  }
+});
+
+// Delete saved template
+r.delete('/templates/saved/:id', async function(req: any, res) {
+  try {
+    var userId = req.dbUserId;
+    var { error } = await supabase
+      .from('saved_templates')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    res.json({ deleted: true });
+  } catch (err: any) {
+    log.error('[saved-templates] delete failed', { err: err.message });
+    res.status(500).json({ error: 'Failed to delete template' });
+  }
+});
+
 export default r;

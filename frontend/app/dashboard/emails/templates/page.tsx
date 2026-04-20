@@ -4,9 +4,10 @@
 // templates in a unified grid. V2 templates render through the new TABLE-based
 // render engine with Outlook/mobile support.
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 import { PageHeader, Card, Pill, PrimaryButton } from '../../_components/PageShell';
+import { useDashboardAuth } from '../../_components/useDashboardAuth';
 import { EMAIL_TEMPLATES, CATEGORY_LABELS, SITE_TYPE_LABELS } from '../../../../lib/email/templates';
 import { DEFAULT_BRAND_KIT } from '../../../../lib/email/brandKit';
 import { SAMPLE_CONTEXT } from '../../../../lib/email/mergeContext';
@@ -15,6 +16,20 @@ import { V2_TEMPLATES } from '../../../../lib/email/v2/templates';
 import { renderTemplateV2, SAMPLE_DATA } from '../../../../lib/email/v2/renderer';
 import type { EmailTemplate, TemplateCategory, SiteType } from '../../../../lib/email/blocks';
 import type { EmailTemplateV2 } from '../../../../lib/email/v2/schema';
+
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+
+type SavedTemplate = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  is_v2: boolean;
+  subject: string | null;
+  preheader: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 // ---------------------------------------------------------------------------
 // Unified gallery item type
@@ -118,10 +133,67 @@ var SITE_FILTERS: (SiteType | 'all')[] = [
 // Page
 // ---------------------------------------------------------------------------
 
+var SAVED_CATEGORIES = [
+  { value: 'all', label: 'All' },
+  { value: 'custom', label: 'Custom' },
+  { value: 'post-quiz', label: 'Post-quiz' },
+  { value: 'outcome', label: 'Outcome' },
+  { value: 'nurture', label: 'Nurture' },
+  { value: 'abandoner', label: 'Abandoner' },
+  { value: 'booking', label: 'Booking' },
+  { value: 'discount', label: 'Discount' },
+  { value: 'promotional', label: 'Promotional' },
+  { value: 'quiz-result', label: 'Quiz result' },
+  { value: 'lead-nurture', label: 'Lead nurture' },
+];
+
 export default function EmailTemplatesPage() {
+  var { token } = useDashboardAuth();
+  var [tab, setTab] = useState<'library' | 'saved'>('library');
   var [filter, setFilter] = useState('all');
   var [siteFilter, setSiteFilter] = useState<SiteType | 'all'>('all');
   var [selected, setSelected] = useState<GalleryItem | null>(null);
+  var [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  var [savedFilter, setSavedFilter] = useState('all');
+  var [loadingSaved, setLoadingSaved] = useState(false);
+  var [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Fetch saved templates
+  var fetchSaved = useCallback(function() {
+    if (!token) return;
+    setLoadingSaved(true);
+    fetch(API + '/api/emails/templates/saved', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (Array.isArray(data)) setSavedTemplates(data);
+      })
+      .catch(function() {})
+      .finally(function() { setLoadingSaved(false); });
+  }, [token]);
+
+  useEffect(function() {
+    if (tab === 'saved') fetchSaved();
+  }, [tab, fetchSaved]);
+
+  function handleDeleteSaved(id: string) {
+    if (!token) return;
+    fetch(API + '/api/emails/templates/saved/' + id, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function() {
+        setSavedTemplates(function(prev) { return prev.filter(function(t) { return t.id !== id; }); });
+        setDeleteConfirm(null);
+      })
+      .catch(function() {});
+  }
+
+  var filteredSaved = useMemo(function() {
+    if (savedFilter === 'all') return savedTemplates;
+    return savedTemplates.filter(function(t) { return t.category === savedFilter; });
+  }, [savedTemplates, savedFilter]);
 
   var allItems = useMemo(function () {
     var v2Items = V2_TEMPLATES.map(adaptV2);
@@ -161,6 +233,178 @@ export default function EmailTemplatesPage() {
         subtitle="Quiz-native templates. Each one only exists because you have a quiz feeding it."
       />
 
+      {/* Tab toggle */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        padding: 3, background: C.BG, border: '1px solid ' + C.HAIRLINE,
+        borderRadius: 8, marginBottom: 20, width: 'fit-content',
+      }}>
+        <button
+          type="button"
+          onClick={function() { setTab('library'); }}
+          style={{
+            padding: '8px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6,
+            border: 'none', cursor: 'pointer',
+            background: tab === 'library' ? C.ACCENT_LIGHT : 'transparent',
+            color: tab === 'library' ? C.ACCENT : C.TEXT_MUTED,
+            fontFamily: '"DM Sans",system-ui,sans-serif',
+          }}
+        >
+          Template library
+        </button>
+        <button
+          type="button"
+          onClick={function() { setTab('saved'); }}
+          style={{
+            padding: '8px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6,
+            border: 'none', cursor: 'pointer',
+            background: tab === 'saved' ? C.ACCENT_LIGHT : 'transparent',
+            color: tab === 'saved' ? C.ACCENT : C.TEXT_MUTED,
+            fontFamily: '"DM Sans",system-ui,sans-serif',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}
+        >
+          My templates
+          {savedTemplates.length > 0 && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: '2px 6px',
+              borderRadius: 10, background: C.ACCENT, color: '#FFFFFF',
+            }}>
+              {savedTemplates.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Saved templates tab */}
+      {tab === 'saved' && (
+        <div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+            {SAVED_CATEGORIES.map(function(cat) {
+              var active = cat.value === savedFilter;
+              return (
+                <button
+                  key={cat.value}
+                  onClick={function() { setSavedFilter(cat.value); }}
+                  style={{
+                    padding: '7px 14px', borderRadius: 8, fontSize: 13,
+                    fontWeight: 500, cursor: 'pointer',
+                    background: active ? C.ACCENT : 'transparent',
+                    color: active ? '#FFFFFF' : C.TEXT_MUTED,
+                    border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
+                    fontFamily: '"DM Sans",system-ui,sans-serif',
+                  }}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {loadingSaved && (
+            <div style={{ padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>
+              Loading saved templates...
+            </div>
+          )}
+
+          {!loadingSaved && filteredSaved.length === 0 && (
+            <div style={{
+              padding: '48px 20px', textAlign: 'center',
+              border: '1px dashed ' + C.BORDER, borderRadius: 14,
+              color: C.TEXT_MUTED, fontSize: 14,
+            }}>
+              <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_SUBTLE}
+                strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+                style={{ margin: '0 auto 12px', display: 'block' }}>
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+              {savedFilter === 'all'
+                ? 'No saved templates yet. Create an email and save it as a template to reuse later.'
+                : 'No saved templates in this category.'}
+            </div>
+          )}
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: 16,
+          }}>
+            {filteredSaved.map(function(tpl) {
+              return (
+                <Card key={tpl.id} style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ padding: 18 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: C.TEXT }}>{tpl.name}</div>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {tpl.is_v2 && <Pill variant="accent">V2</Pill>}
+                        <Pill variant="accent">{tpl.category}</Pill>
+                      </div>
+                    </div>
+                    {tpl.description && (
+                      <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5, marginBottom: 10 }}>
+                        {tpl.description}
+                      </div>
+                    )}
+                    {tpl.subject && (
+                      <div style={{ fontSize: 12, color: C.TEXT_SUBTLE, marginBottom: 10 }}>
+                        Subject: {tpl.subject}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: C.TEXT_SUBTLE, marginBottom: 14 }}>
+                      Saved {new Date(tpl.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <PrimaryButton href={'/dashboard/emails/new?saved=' + tpl.id}>
+                        Use template
+                      </PrimaryButton>
+                      {deleteConfirm === tpl.id ? (
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            onClick={function() { handleDeleteSaved(tpl.id); }}
+                            style={{
+                              padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                              background: '#ff3b30', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+                              fontFamily: '"DM Sans",system-ui,sans-serif',
+                            }}
+                          >
+                            Confirm delete
+                          </button>
+                          <button
+                            onClick={function() { setDeleteConfirm(null); }}
+                            style={{
+                              padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                              background: 'transparent', color: C.TEXT_MUTED, border: '1px solid ' + C.BORDER,
+                              cursor: 'pointer', fontFamily: '"DM Sans",system-ui,sans-serif',
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={function() { setDeleteConfirm(tpl.id); }}
+                          style={{
+                            padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                            background: 'transparent', color: C.TEXT_SUBTLE, border: '1px solid ' + C.BORDER,
+                            cursor: 'pointer', fontFamily: '"DM Sans",system-ui,sans-serif',
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Library tab */}
+      {tab === 'library' && <>
       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: C.TEXT_SUBTLE, marginBottom: 6 }}>Email type</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         {activeCategories.map(function (f) {
@@ -285,6 +529,8 @@ export default function EmailTemplatesPage() {
           );
         })}
       </div>
+
+      </>}
 
       {selected ? (
         <div

@@ -10,7 +10,7 @@ export type SendTiming = 'now' | 'scheduled';
 
 export function ReviewStep({
   audience, design, setDesign, mode, setMode, recipientCount,
-  onBack, onSend, onSchedule, onTestSend, onSaveDraft,
+  onBack, onSend, onSchedule, onTestSend, onSaveDraft, onSaveAsTemplate,
   sending, result,
 }: {
   audience: AudienceState;
@@ -24,6 +24,7 @@ export function ReviewStep({
   onSchedule: (scheduledAt: string) => void;
   onTestSend: (to: string) => Promise<void>;
   onSaveDraft: () => void;
+  onSaveAsTemplate?: (name: string, category: string, description: string) => Promise<void>;
   sending: boolean;
   result: any;
 }) {
@@ -37,6 +38,12 @@ export function ReviewStep({
   var [resendEnabled, setResendEnabled] = useState(false);
   var [resendHours, setResendHours] = useState(24);
   var [resendSubject, setResendSubject] = useState('');
+  var [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  var [tplName, setTplName] = useState('');
+  var [tplCategory, setTplCategory] = useState('custom');
+  var [tplDescription, setTplDescription] = useState('');
+  var [savingTemplate, setSavingTemplate] = useState(false);
+  var [tplSaved, setTplSaved] = useState(false);
 
   const sendTest = async () => {
     if (!testEmail) return;
@@ -247,6 +254,11 @@ export function ReviewStep({
         <GhostButton onClick={onBack}>Back</GhostButton>
         <div style={{ display: 'flex', gap: 10 }}>
           <GhostButton onClick={onSaveDraft}>Save draft</GhostButton>
+          {onSaveAsTemplate && (
+            <GhostButton onClick={function() { setSaveTemplateOpen(true); setTplName(design.subject || ''); }}>
+              {tplSaved ? 'Template saved' : 'Save as template'}
+            </GhostButton>
+          )}
           <PrimaryButton
             onClick={() => setConfirmOpen(true)}
             disabled={sending || recipientCount === 0 || !design.fromEmail || (timing === 'scheduled' && !scheduledDate)}
@@ -265,6 +277,67 @@ export function ReviewStep({
             : result.error
               ? `Error: ${result.error}`
               : `Queued ${result.sent} sends, resolved ${result.resolved}, skipped ${result.skipped}.`}
+        </div>
+      )}
+
+      {saveTemplateOpen && onSaveAsTemplate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, padding: 28, maxWidth: 440, width: '90%' }}>
+            <h3 style={{ margin: '0 0 6px', color: C.TEXT, fontSize: 18 }}>Save as template</h3>
+            <p style={{ margin: '0 0 18px', color: C.TEXT_SUBTLE, fontSize: 13 }}>
+              Save this email design so you can reuse it later.
+            </p>
+            <Label>Template name</Label>
+            <input
+              value={tplName}
+              onChange={function(e) { setTplName(e.target.value); }}
+              placeholder="e.g. Welcome email"
+              style={Object.assign({}, inputStyle, { width: '100%', marginBottom: 14 })}
+            />
+            <Label>Category</Label>
+            <select
+              value={tplCategory}
+              onChange={function(e) { setTplCategory(e.target.value); }}
+              style={Object.assign({}, inputStyle, { width: '100%', marginBottom: 14, cursor: 'pointer' })}
+            >
+              <option value="custom">Custom</option>
+              <option value="post-quiz">Post-quiz</option>
+              <option value="outcome">Outcome</option>
+              <option value="nurture">Nurture</option>
+              <option value="abandoner">Abandoner</option>
+              <option value="booking">Booking</option>
+              <option value="discount">Discount</option>
+              <option value="promotional">Promotional</option>
+              <option value="quiz-result">Quiz result</option>
+              <option value="lead-nurture">Lead nurture</option>
+            </select>
+            <Label>Description (optional)</Label>
+            <input
+              value={tplDescription}
+              onChange={function(e) { setTplDescription(e.target.value); }}
+              placeholder="Short description..."
+              style={Object.assign({}, inputStyle, { width: '100%', marginBottom: 20 })}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <GhostButton onClick={function() { setSaveTemplateOpen(false); }}>Cancel</GhostButton>
+              <PrimaryButton
+                onClick={function() {
+                  if (!tplName.trim()) return;
+                  setSavingTemplate(true);
+                  onSaveAsTemplate(tplName.trim(), tplCategory, tplDescription.trim())
+                    .then(function() {
+                      setSaveTemplateOpen(false);
+                      setTplSaved(true);
+                      setSavingTemplate(false);
+                    })
+                    .catch(function() { setSavingTemplate(false); });
+                }}
+                disabled={savingTemplate || !tplName.trim()}
+              >
+                {savingTemplate ? 'Saving...' : 'Save template'}
+              </PrimaryButton>
+            </div>
+          </div>
         </div>
       )}
 

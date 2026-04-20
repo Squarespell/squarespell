@@ -17,7 +17,7 @@ import { ReviewStep } from './_steps/ReviewStep';
 import { api } from '../../../../lib/api';
 
 function NewCampaignPageInner() {
-  var { status } = useDashboardAuth();
+  var { token, status } = useDashboardAuth();
   var router = useRouter();
   var shellRef = useRef<HTMLDivElement>(null);
 
@@ -213,6 +213,26 @@ function NewCampaignPageInner() {
               }
             }}
             onSaveDraft={function() { saveOrSend(false); }}
+            onSaveAsTemplate={async function(name: string, category: string, description: string) {
+              var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+              if (!token) throw new Error('Not signed in');
+              var res = await fetch(API_URL + '/api/emails/templates/saved', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                body: JSON.stringify({
+                  name: name,
+                  category: category,
+                  description: description || null,
+                  subject: design.subject || null,
+                  preheader: (design as any).preheader || null,
+                  blocks: (design as any).blocks || null,
+                  v2_sections: (design as any).v2Sections || null,
+                  is_v2: !!(design as any).v2Sections,
+                  thumbnail_html: design.html ? design.html.slice(0, 10000) : null,
+                }),
+              });
+              if (!res.ok) throw new Error('Failed to save template');
+            }}
             onTestSend={testSend}
             sending={sending} result={result}
           />
