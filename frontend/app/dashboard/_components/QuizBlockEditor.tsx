@@ -575,35 +575,16 @@ function BlockInspector({
     onChange(Object.assign({}, block, { [key]: value }));
   }
 
-  // Question inspector — clean collapsible sections
+  // Question inspector — features-only sidebar (text editing is inline on cards)
   if (block.type === 'question') {
     var qb = block as QuestionBlock;
     var allQuestions = allBlocks.filter(function(b) { return b.type === 'question'; }) as QuestionBlock[];
     return (
       <div>
-        {/* Section 1: Question text (always open) */}
-        <SidebarSection title="Question" defaultOpen={true}
-          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={12} cy={12} r={10} /><path d="M12 16v-4M12 8h.01" /></svg>}
-        >
-          <textarea
-            value={qb.text}
-            onChange={function(e) { updateField('text', e.target.value); }}
-            style={Object.assign({}, inputStyle, { minHeight: 72, resize: 'vertical' as const, marginBottom: 10 })}
-            placeholder="Your question here..."
-          />
-          <input
-            value={qb.subtitle || ''}
-            onChange={function(e) { updateField('subtitle', e.target.value); }}
-            style={Object.assign({}, inputStyle, { fontSize: 13 })}
-            placeholder="Subtitle (optional)"
-          />
-        </SidebarSection>
-
-        {/* Section 2: Answers */}
-        <SidebarSection title={'Answers (' + qb.options.length + ')'} defaultOpen={true}
+        {/* Answer style settings */}
+        <SidebarSection title="Answer style" defaultOpen={true}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /></svg>}
         >
-          {/* Type + style in a compact row */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <select
               value={qb.questionType || 'single'}
@@ -624,91 +605,48 @@ function BlockInspector({
               <option value="imageChoice">Image choice</option>
             </select>
           </div>
-
-          {/* Answer list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {qb.options.map(function(opt, oi) {
-              return (
-                <div key={opt.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px', background: C.SIDEBAR, borderRadius: 8,
-                  border: '1px solid ' + C.BORDER,
-                }}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: 6,
-                    background: C.ACCENT, color: '#FFFFFF',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {String.fromCharCode(65 + oi)}
-                  </div>
-                  <input
-                    value={opt.text}
-                    onChange={function(e) {
-                      var newOpts = qb.options.slice();
-                      newOpts[oi] = Object.assign({}, opt, { text: e.target.value });
-                      updateField('options', newOpts);
-                    }}
-                    style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 13 })}
-                    placeholder={'Option ' + String.fromCharCode(65 + oi)}
-                  />
-                  <input
-                    type="number"
-                    value={opt.score || 0}
-                    onChange={function(e) {
-                      var newOpts = qb.options.slice();
-                      newOpts[oi] = Object.assign({}, opt, { score: parseInt(e.target.value) || 0 });
-                      updateField('options', newOpts);
-                    }}
-                    style={Object.assign({}, inputStyle, { width: 44, padding: '6px 4px', fontSize: 12, textAlign: 'center' as const })}
-                    title="Score"
-                  />
-                  {qb.options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={function() {
-                        var newOpts = qb.options.filter(function(_, idx) { return idx !== oi; });
-                        updateField('options', newOpts);
-                      }}
-                      style={{
-                        width: 24, height: 24, borderRadius: 6, flexShrink: 0,
-                        background: 'transparent', border: 'none',
-                        color: C.TEXT_SUBTLE, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                      onMouseEnter={function(e) { e.currentTarget.style.color = '#ff3b30'; }}
-                      onMouseLeave={function(e) { e.currentTarget.style.color = C.TEXT_SUBTLE; }}
-                    >
-                      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                        <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-            {qb.options.length < 8 && (
-              <button
-                type="button"
-                onClick={function() {
-                  var newOpts = qb.options.slice();
-                  newOpts.push({ id: uid(), text: '', score: 0 });
-                  updateField('options', newOpts);
-                }}
-                style={{
-                  padding: '8px', borderRadius: 8,
-                  background: 'transparent', border: '1px dashed ' + C.BORDER,
-                  color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: 'Inter,system-ui,sans-serif',
-                }}
-              >
-                + Add option
-              </button>
-            )}
+          {/* Add / remove options */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: C.TEXT_MUTED, fontWeight: 600 }}>{qb.options.length} options</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {qb.options.length > 2 && (
+                <button
+                  type="button"
+                  onClick={function() {
+                    var newOpts = qb.options.slice(0, -1);
+                    updateField('options', newOpts);
+                  }}
+                  style={{
+                    padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    background: 'transparent', border: '1px solid ' + C.BORDER,
+                    color: C.TEXT_MUTED, cursor: 'pointer', fontFamily: C.FONT + ',system-ui,sans-serif',
+                  }}
+                >
+                  - Remove last
+                </button>
+              )}
+              {qb.options.length < 8 && (
+                <button
+                  type="button"
+                  onClick={function() {
+                    var newOpts = qb.options.slice();
+                    newOpts.push({ id: uid(), text: '', score: 0 });
+                    updateField('options', newOpts);
+                  }}
+                  style={{
+                    padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    background: C.ACCENT, border: 'none',
+                    color: '#FFFFFF', cursor: 'pointer', fontFamily: C.FONT + ',system-ui,sans-serif',
+                  }}
+                >
+                  + Add option
+                </button>
+              )}
+            </div>
           </div>
         </SidebarSection>
 
-        {/* Section 3: Media — collapsed by default */}
+        {/* Media */}
         <SidebarSection title="Media" defaultOpen={!!qb.mediaUrl}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>}
         >
@@ -1720,11 +1658,15 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
         display: 'grid',
         gridTemplateColumns: '1fr 380px',
         gap: 0,
-        minHeight: '100%',
+        height: 'calc(100vh - 60px)',
+        overflow: 'hidden',
       }}
     >
-      {/* Canvas */}
-      <div style={{ padding: '24px 32px', overflowY: 'auto' }}>
+      {/* Canvas — independently scrollable */}
+      <div style={{
+        padding: '24px 32px', overflowY: 'auto', height: '100%',
+        scrollbarWidth: 'thin' as const, scrollbarColor: '#D0D5DD transparent',
+      }}>
         {/* Toolbar */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1869,12 +1811,13 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
         </div>
       </div>
 
-      {/* Sidebar — always visible */}
+      {/* Sidebar — always visible, independently scrollable */}
       <div style={{
         borderLeft: '1px solid ' + C.BORDER,
         background: C.SURFACE,
         overflowY: 'auto',
-        position: 'sticky', top: 0, height: 'calc(100vh - 60px)',
+        height: '100%',
+        scrollbarWidth: 'thin' as const, scrollbarColor: '#D0D5DD transparent',
       }}>
         {selectedBlock ? (
           <>
