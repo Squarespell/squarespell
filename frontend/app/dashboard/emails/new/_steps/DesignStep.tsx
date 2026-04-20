@@ -10,9 +10,8 @@ import { V2_TEMPLATES } from '../../../../../lib/email/v2/templates';
 import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/renderer';
 import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
 import { autoDesignTemplate } from '../../../../../lib/email/v2/autoDesign';
-import type { BrandKitFromAPI, QuizData, AutoDesignResult } from '../../../../../lib/email/v2/autoDesign';
+import type { AutoDesignResult } from '../../../../../lib/email/v2/autoDesign';
 import { CANVA_TEMPLATES, CANVA_CATEGORIES } from '../../../../../lib/email/canvaTemplates';
-import { api } from '../../../../../lib/api';
 
 export type DesignState = {
   templateId: string;
@@ -82,37 +81,12 @@ export function DesignStep({
   var editorRef = useRef<HTMLIFrameElement>(null);
   var [editorReady, setEditorReady] = useState(false);
   var [previewItem, setPreviewItem] = useState<TemplateItem | null>(null);
-  var [aiDesign, setAiDesign] = useState<AutoDesignResult | null>(null);
-  var [aiDesignLoading, setAiDesignLoading] = useState(true);
+  // Compute AI design instantly (synchronous) - no loading, no glitch
+  var aiDesign = useMemo(function() {
+    return autoDesignTemplate(null, null);
+  }, []);
 
   useEffect(function() { injectDesignFocusStyles(); }, []);
-
-  // Fetch brand kit + quiz data and auto-generate AI designed template
-  var aiDesignFetched = useRef(false);
-  useEffect(function() {
-    if (aiDesignFetched.current) return;
-    aiDesignFetched.current = true;
-    setAiDesignLoading(true);
-
-    var brandKitPromise = api.getBrandKit().catch(function() { return null; });
-    var quizPromise = quizId
-      ? api.getQuiz(quizId).catch(function() { return null; })
-      : Promise.resolve(null);
-
-    Promise.all([brandKitPromise, quizPromise]).then(function(results) {
-      var bk = results[0] as BrandKitFromAPI | null;
-      var quiz = results[1] as QuizData | null;
-
-      // Only generate if we have at least a brand kit or quiz data
-      if (bk || quiz) {
-        var result = autoDesignTemplate(bk, quiz);
-        setAiDesign(result);
-      }
-      setAiDesignLoading(false);
-    }).catch(function() {
-      setAiDesignLoading(false);
-    });
-  }, [quizId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Categories
   var categories = useMemo(function() {
@@ -148,17 +122,13 @@ export function DesignStep({
     return allItems.length > 0 ? allItems[0].id : '';
   }, [allItems, quizCategory]);
 
-  // Auto-select: wait for AI design to finish, then pick AI result or fallback to first template
+  // Auto-select AI design on mount (synchronous, no loading delay)
   var didAutoSelect = useRef(false);
   var userManuallySelected = useRef(false);
   useEffect(function() {
     if (didAutoSelect.current) return;
-    if (userManuallySelected.current) return;
     if (state.templateId) { didAutoSelect.current = true; return; }
-    // Wait until AI design loading is complete before auto-selecting
-    if (aiDesignLoading) return;
     didAutoSelect.current = true;
-    // Prefer AI design if available
     if (aiDesign) {
       setState({
         templateId: aiDesign.templateId,
@@ -166,16 +136,8 @@ export function DesignStep({
         preheader: aiDesign.preheader,
         html: aiDesign.html,
       });
-      return;
     }
-    // Fallback: select first template
-    if (allItems.length === 0) return;
-    var recId = recommendedId || allItems[0].id;
-    var item = allItems.find(function(t) { return t.id === recId; });
-    if (item) {
-      setState({ templateId: item.id, subject: item.subject, preheader: item.preheader, html: item.html });
-    }
-  }, [allItems, recommendedId, state.templateId, setState, aiDesignLoading, aiDesign]);
+  }, [aiDesign, state.templateId, setState]);
 
   // Listen for messages from editor iframe
   useEffect(function() {
@@ -251,25 +213,7 @@ export function DesignStep({
     ? { id: '__ai_designed__', title: aiDesign.title, description: aiDesign.description, category: 'ai', isV2: true, html: aiDesign.html, subject: aiDesign.subject, preheader: aiDesign.preheader } as TemplateItem
     : allItems.find(function(t) { return t.id === state.templateId; });
 
-  // Predict which Canva template the AI will pick (same logic as pickBestCanvaTemplate)
-  // so we can filter it from the grid immediately, even before the async fetch completes
-  var predictedAiSourceId = useMemo(function() {
-    if (allItems.length === 0) return '';
-    // Same logic as autoDesign pickBestCanvaTemplate
-    var bestId = allItems[0].id;
-    if (quizCategory) {
-      var cat = quizCategory.toLowerCase();
-      for (var i = 0; i < allItems.length; i++) {
-        if (allItems[i].category.toLowerCase().indexOf(cat) >= 0) {
-          bestId = allItems[i].id;
-          break;
-        }
-      }
-    }
-    return bestId;
-  }, [allItems, quizCategory]);
-
-  var aiSourceId = aiDesign ? aiDesign.sourceCanvaId : predictedAiSourceId;
+  var aiSourceId = aiDesign ? aiDesign.sourceCanvaId : '';
   // Reorder items: recommended first, then rest; exclude the AI-picked template to avoid duplicate
   var orderedItems = useMemo(function() {
     var rec: TemplateItem[] = [];
@@ -509,24 +453,6 @@ export function DesignStep({
               </div>
             )}
 
-            {/* Loading state for AI design */}
-            {aiDesignLoading && !aiDesign && (
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: 200, borderRadius: 14, border: '2px dashed ' + C.BORDER,
-                background: 'linear-gradient(135deg, #F0FDFA 0%, #F7F7F5 100%)',
-              }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 18, border: '3px solid ' + C.BORDER,
-                    borderTopColor: C.ACCENT, animation: 'spin 0.8s linear infinite',
-                    margin: '0 auto 12px',
-                  }} />
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT }}>Designing your template...</div>
-                  <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 4 }}>Applying your brand colors, logo and quiz content</div>
-                </div>
-              </div>
-            )}
 
             {orderedItems.map(function(t) {
               var selected = t.id === state.templateId;
