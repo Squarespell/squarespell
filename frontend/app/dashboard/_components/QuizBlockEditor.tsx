@@ -189,7 +189,7 @@ function AddBlockInserter({
                   background: 'transparent', border: 'none', borderRadius: 8,
                   color: C.TEXT_MUTED, fontSize: 10, fontWeight: 600,
                   cursor: 'pointer', transition: 'all 0.12s ease',
-                  fontFamily: '"DM Sans",system-ui,sans-serif',
+                  fontFamily: 'Inter,system-ui,sans-serif',
                 }}
                 onMouseEnter={function(e) {
                   e.currentTarget.style.background = C.ACCENT_LIGHT;
@@ -386,14 +386,14 @@ function InspectorField({
 var inputStyle: React.CSSProperties = {
   width: '100%', padding: '9px 12px', fontSize: 13,
   background: C.BG, border: '1px solid ' + C.BORDER,
-  borderRadius: 8, color: C.TEXT, fontFamily: '"DM Sans",system-ui,sans-serif',
+  borderRadius: 8, color: C.TEXT, fontFamily: 'Inter,system-ui,sans-serif',
   outline: 'none',
 };
 
 var selectStyle: React.CSSProperties = {
   width: '100%', padding: '9px 12px', fontSize: 13,
   background: C.BG, border: '1px solid ' + C.BORDER,
-  borderRadius: 8, color: C.TEXT, fontFamily: '"DM Sans",system-ui,sans-serif',
+  borderRadius: 8, color: C.TEXT, fontFamily: 'Inter,system-ui,sans-serif',
   outline: 'none', cursor: 'pointer',
 };
 
@@ -508,7 +508,7 @@ function BlockInspector({
                   padding: '8px 12px', borderRadius: 8,
                   background: 'transparent', border: '1px dashed ' + C.BORDER,
                   color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: '"DM Sans",system-ui,sans-serif',
+                  cursor: 'pointer', fontFamily: 'Inter,system-ui,sans-serif',
                 }}
               >
                 + Add option
@@ -696,7 +696,7 @@ function BlockInspector({
                   padding: '8px 12px', borderRadius: 8,
                   background: 'transparent', border: '1px dashed ' + C.BORDER,
                   color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: '"DM Sans",system-ui,sans-serif',
+                  cursor: 'pointer', fontFamily: 'Inter,system-ui,sans-serif',
                 }}
               >
                 + Add field
@@ -775,6 +775,125 @@ function BlockInspector({
 /*  Main export: QuizBlockEditor                                      */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Live preview component                                             */
+/* ------------------------------------------------------------------ */
+
+function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
+  var questions = blocks.filter(function(b) { return b.type === 'question'; }) as QuestionBlock[];
+  var headings = blocks.filter(function(b) { return b.type === 'heading'; }) as HeadingBlock[];
+  var texts = blocks.filter(function(b) { return b.type === 'text'; }) as TextBlock[];
+
+  return (
+    <div style={{
+      padding: 20, background: '#FFFFFF', borderRadius: 12,
+      border: '1px solid ' + C.BORDER, maxHeight: 'calc(100vh - 120px)',
+      overflowY: 'auto', fontSize: 13,
+    }}>
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: C.TEXT_SUBTLE, marginBottom: 16 }}>
+        Live preview
+      </div>
+      {blocks.map(function(block, idx) {
+        if (block.type === 'heading') {
+          var hb = block as HeadingBlock;
+          var sizes: Record<number, number> = { 1: 22, 2: 18, 3: 15 };
+          return (
+            <div key={block.id} style={{ fontSize: sizes[hb.level] || 18, fontWeight: 700, color: C.TEXT, textAlign: (hb.align || 'left') as any, marginBottom: 12, lineHeight: 1.3 }}>
+              {hb.text}
+            </div>
+          );
+        }
+        if (block.type === 'text') {
+          var tb = block as TextBlock;
+          return (
+            <div key={block.id} style={{ fontSize: 13, color: C.TEXT_MUTED, textAlign: (tb.align || 'left') as any, marginBottom: 12, lineHeight: 1.6 }}>
+              {tb.content}
+            </div>
+          );
+        }
+        if (block.type === 'image') {
+          var ib = block as ImageBlock;
+          return (
+            <div key={block.id} style={{ marginBottom: 12, textAlign: 'center' }}>
+              {ib.url ? (
+                <img src={ib.url} alt={ib.alt} style={{ maxWidth: '100%', borderRadius: 8, border: '1px solid ' + C.BORDER }} />
+              ) : (
+                <div style={{ padding: '24px 16px', background: C.SIDEBAR, borderRadius: 8, color: C.TEXT_SUBTLE, fontSize: 12 }}>
+                  Image placeholder
+                </div>
+              )}
+            </div>
+          );
+        }
+        if (block.type === 'divider') {
+          return <hr key={block.id} style={{ border: 'none', borderTop: '1px ' + ((block as any).style || 'solid') + ' ' + C.BORDER, margin: '16px 0' }} />;
+        }
+        if (block.type === 'question') {
+          var qb = block as QuestionBlock;
+          return (
+            <div key={block.id} style={{ marginBottom: 16, padding: 16, background: C.SIDEBAR, borderRadius: 10, border: '1px solid ' + C.BORDER }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 10, lineHeight: 1.4 }}>
+                {qb.text}
+              </div>
+              {qb.options.map(function(opt, oi) {
+                return (
+                  <div key={opt.id} style={{
+                    padding: '8px 12px', marginBottom: 4, borderRadius: 8,
+                    background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                    fontSize: 13, color: C.TEXT, cursor: 'default',
+                  }}>
+                    {String.fromCharCode(65 + oi)}. {opt.text}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+        if (block.type === 'leadGate') {
+          var lgb = block as LeadGateBlock;
+          return (
+            <div key={block.id} style={{ marginBottom: 16, padding: 20, background: C.ACCENT_LIGHT, borderRadius: 10, border: '1px solid ' + C.ACCENT + '30', textAlign: 'center' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 6 }}>{lgb.headline}</div>
+              {lgb.subtext && <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 12 }}>{lgb.subtext}</div>}
+              <div style={{ padding: '8px 14px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, color: C.TEXT_SUBTLE, marginBottom: 8 }}>
+                you@example.com
+              </div>
+              <div style={{ padding: '8px 16px', background: C.ACCENT, color: '#FFFFFF', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'inline-block' }}>
+                {lgb.buttonLabel}
+              </div>
+            </div>
+          );
+        }
+        if (block.type === 'outcome') {
+          var ob = block as OutcomeBlock;
+          return (
+            <div key={block.id} style={{ marginBottom: 16, padding: 16, background: '#F0FDF4', borderRadius: 10, border: '1px solid #BBF7D0' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#16A34A', marginBottom: 6 }}>Outcome</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>{ob.title}</div>
+              <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.5 }}>{ob.description}</div>
+              {ob.ctaText && (
+                <div style={{ marginTop: 10, padding: '6px 14px', background: C.ACCENT, color: '#FFFFFF', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'inline-block' }}>
+                  {ob.ctaText}
+                </div>
+              )}
+            </div>
+          );
+        }
+        return null;
+      })}
+      {blocks.length === 0 && (
+        <div style={{ color: C.TEXT_SUBTLE, textAlign: 'center', padding: '20px 0' }}>
+          Add blocks to see a preview
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main export: QuizBlockEditor                                      */
+/* ------------------------------------------------------------------ */
+
 export interface QuizBlockEditorProps {
   blocks: QuizBlock[];
   onChange: (blocks: QuizBlock[]) => void;
@@ -784,6 +903,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
   var history = useHistory(initialBlocks);
   var blocks = history.current;
   var [selectedId, setSelectedId] = useState<string | null>(null);
+  var [showPreview, setShowPreview] = useState(false);
   var [expandedInserter, setExpandedInserter] = useState<number | null>(null);
   var [dragSourceId, setDragSourceId] = useState<string | null>(null);
   var [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -972,7 +1092,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
       ref={containerRef}
       style={{
         display: 'grid',
-        gridTemplateColumns: selectedBlock ? '1fr 320px' : '1fr',
+        gridTemplateColumns: selectedBlock ? '1fr 320px' : showPreview ? '1fr 340px' : '1fr',
         gap: 0,
         minHeight: '100%',
       }}
@@ -993,6 +1113,27 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              type="button"
+              onClick={function() { setShowPreview(!showPreview); setSelectedId(null); }}
+              title={showPreview ? 'Hide preview' : 'Show live preview'}
+              style={{
+                height: 30, padding: '0 10px', borderRadius: 6,
+                background: showPreview ? C.ACCENT_LIGHT : 'transparent',
+                border: showPreview ? '1px solid ' + C.ACCENT + '30' : 'none',
+                color: showPreview ? C.ACCENT : C.TEXT_MUTED,
+                cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 5,
+                fontFamily: 'Inter,system-ui,sans-serif',
+                marginRight: 4,
+              }}
+            >
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx={12} cy={12} r={3} />
+              </svg>
+              Preview
+            </button>
             <button
               type="button"
               onClick={history.undo}
@@ -1152,6 +1293,19 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
             allBlocks={blocks}
             onChange={updateBlock}
           />
+        </div>
+      )}
+
+      {/* Live preview panel */}
+      {showPreview && !selectedBlock && (
+        <div style={{
+          borderLeft: '1px solid ' + C.HAIRLINE,
+          background: C.SIDEBAR,
+          padding: '20px 16px',
+          overflowY: 'auto',
+          maxHeight: 'calc(100vh - 60px)',
+        }}>
+          <LivePreview blocks={blocks} />
         </div>
       )}
     </div>

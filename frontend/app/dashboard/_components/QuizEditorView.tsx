@@ -359,41 +359,95 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   if (state === 'empty') return <EditorEmpty />;
   if (!quiz) return <EditorLoading label="Loading editor..." />;
 
+  // Plan gate: only paid plans get block editor
+  var canUseBlocks = ['starter', 'pro', 'agency'].indexOf(userPlan) >= 0;
+  var [showBlockGate, setShowBlockGate] = useState(false);
+
   // Editor mode toggle button
   var modeToggle = (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 2,
-      padding: 3, background: C.GRAY_100, border: '1px solid ' + C.GRAY_200,
-      borderRadius: 8,
-    }}>
-      <button
-        type="button"
-        onClick={function() { setEditorMode('classic'); }}
-        style={{
-          padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
-          border: 'none', cursor: 'pointer',
-          background: editorMode === 'classic' ? C.SURFACE : 'transparent',
-          color: editorMode === 'classic' ? C.GRAY_900 : C.GRAY_500,
-          fontFamily: C.FONT,
-          boxShadow: editorMode === 'classic' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
-        }}
-      >
-        Classic
-      </button>
-      <button
-        type="button"
-        onClick={function() { setEditorMode('blocks'); setInitialBlocksReady(false); }}
-        style={{
-          padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
-          border: 'none', cursor: 'pointer',
-          background: editorMode === 'blocks' ? C.SURFACE : 'transparent',
-          color: editorMode === 'blocks' ? C.GRAY_900 : C.GRAY_500,
-          fontFamily: C.FONT,
-          boxShadow: editorMode === 'blocks' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
-        }}
-      >
-        Block editor
-      </button>
+    <div style={{ position: 'relative' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 2,
+        padding: 3, background: C.GRAY_100, border: '1px solid ' + C.GRAY_200,
+        borderRadius: 8,
+      }}>
+        <button
+          type="button"
+          onClick={function() { setEditorMode('classic'); setShowBlockGate(false); }}
+          style={{
+            padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
+            border: 'none', cursor: 'pointer',
+            background: editorMode === 'classic' ? C.SURFACE : 'transparent',
+            color: editorMode === 'classic' ? C.GRAY_900 : C.GRAY_500,
+            fontFamily: C.FONT,
+            boxShadow: editorMode === 'classic' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
+          }}
+        >
+          Classic
+        </button>
+        <button
+          type="button"
+          onClick={function() {
+            if (canUseBlocks) {
+              setEditorMode('blocks');
+              setInitialBlocksReady(false);
+              setShowBlockGate(false);
+            } else {
+              setShowBlockGate(true);
+            }
+          }}
+          style={{
+            padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 6,
+            border: 'none', cursor: 'pointer',
+            background: editorMode === 'blocks' ? C.SURFACE : 'transparent',
+            color: editorMode === 'blocks' ? C.GRAY_900 : C.GRAY_500,
+            fontFamily: C.FONT,
+            boxShadow: editorMode === 'blocks' ? '0 1px 2px rgba(16,24,40,0.06)' : 'none',
+          }}
+        >
+          Block editor
+        </button>
+      </div>
+      {showBlockGate && !canUseBlocks && (
+        <div style={{
+          position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+          marginTop: 8, padding: '14px 18px', background: C.SURFACE,
+          border: '1px solid ' + C.GRAY_200, borderRadius: 12,
+          boxShadow: '0 4px 16px rgba(16,24,40,0.1)', zIndex: 30,
+          minWidth: 260, textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 6 }}>
+            Block editor is a paid feature
+          </div>
+          <div style={{ fontSize: 12, color: C.GRAY_500, marginBottom: 12, lineHeight: 1.5 }}>
+            Upgrade to Starter or above for drag-and-drop blocks, content blocks, logic branching, and more.
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={function() { setShowBlockGate(false); }}
+              style={{
+                padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8,
+                border: '1px solid ' + C.GRAY_200, background: 'transparent',
+                color: C.GRAY_500, cursor: 'pointer', fontFamily: C.FONT,
+              }}
+            >
+              Maybe later
+            </button>
+            <Link
+              href="/dashboard/billing"
+              style={{
+                padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8,
+                border: 'none', background: C.ACCENT, color: '#FFFFFF',
+                cursor: 'pointer', fontFamily: C.FONT, textDecoration: 'none',
+                display: 'inline-flex', alignItems: 'center',
+              }}
+            >
+              Upgrade plan
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 
