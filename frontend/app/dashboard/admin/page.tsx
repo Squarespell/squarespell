@@ -125,7 +125,7 @@ function AdminDashboard() {
         var response = await fetch(API + '/api/admin/metrics', {
           method: 'GET',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
         });
 
         if (response.status === 403) {
@@ -148,7 +148,7 @@ function AdminDashboard() {
     }
 
     fetchMetrics();
-  }, [authStatus, router]);
+  }, [authStatus, router, token]);
 
   if (authStatus === 'loading' || isLoadingData) {
     return <PageLoading />;
