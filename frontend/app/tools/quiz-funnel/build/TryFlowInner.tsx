@@ -72,21 +72,52 @@ const GOAL_OPTIONS = [
 ];
 
 /* ========================================================================= */
-/* Template matching helper                                                  */
+/* Template matching helper — with score threshold                           */
 /* ========================================================================= */
+var MIN_MATCH_SCORE = 2; // need at least 2 keyword hits to be a "good" match
+
 function matchTemplatesToBusiness(businessType: string): QuizTemplateData[] {
   var keywords = (businessType || '').toLowerCase().split(/[\s,;\/&]+/).filter(function(w) { return w.length > 2; });
+  if (keywords.length === 0) return []; // no business type = no templates
   var scored = QUIZ_TEMPLATE_CATALOG.map(function(tpl) {
-    var haystack = (tpl.tags.join(' ') + ' ' + tpl.category + ' ' + tpl.audience + ' ' + tpl.name).toLowerCase();
+    var haystack = (tpl.tags.join(' ') + ' ' + tpl.category + ' ' + tpl.audience + ' ' + tpl.name + ' ' + tpl.description).toLowerCase();
     var score = 0;
     keywords.forEach(function(kw) { if (haystack.indexOf(kw) !== -1) score += 1; });
+    // bonus for exact business type match
     if (haystack.indexOf(businessType.toLowerCase().trim()) !== -1) score += 2;
+    // bonus for audience match
+    var audienceWords = tpl.audience.toLowerCase();
+    keywords.forEach(function(kw) { if (audienceWords.indexOf(kw) !== -1) score += 1; });
     return { tpl: tpl, score: score };
   });
   scored.sort(function(a, b) { return b.score - a.score; });
-  var results = scored.slice(0, 2).map(function(s) { return s.tpl; });
-  if (results.length < 2) results = QUIZ_TEMPLATE_CATALOG.slice(0, 2);
-  return results;
+  // only return templates above the threshold
+  var goodMatches = scored.filter(function(s) { return s.score >= MIN_MATCH_SCORE; });
+  return goodMatches.slice(0, 2).map(function(s) { return s.tpl; });
+}
+
+/* ========================================================================= */
+/* Contextual subtitle for matched templates                                 */
+/* ========================================================================= */
+function templateSubtitle(tpl: QuizTemplateData, businessType: string): string {
+  var biz = (businessType || '').toLowerCase();
+  // Map template categories to contextual descriptions
+  var contextMap: Record<string, string> = {
+    'product_recommendation': 'Help visitors find the right ' + (biz || 'product') + ' for their needs',
+    'service_matcher': 'Match potential clients to your service packages automatically',
+    'business_assessment': 'Score and qualify leads based on their readiness level',
+    'knowledge_quiz': 'Test what your audience knows and build authority',
+    'coaching_readiness': 'Pre-qualify coaching leads by their stage and needs',
+    'personality_style': 'Reveal personal style archetypes — highly shareable format',
+    'gift_finder': 'Help shoppers find the perfect gift from your catalog',
+  };
+  if (contextMap[tpl.id]) return contextMap[tpl.id];
+  // fallback: use "Popular for [audience]" if we matched on audience
+  if (tpl.audience) {
+    var audienceShort = tpl.audience.split(',')[0].trim();
+    return 'Popular with ' + audienceShort.toLowerCase();
+  }
+  return tpl.description;
 }
 
 /* ========================================================================= */
@@ -1187,10 +1218,12 @@ export function TryFlowInner({
                   <div className="sq-pick-desc">Fully custom quiz built from your website content, audience, and offers. Powered by AI.</div>
                 </div>
 
-                {/* Template cards */}
+                {/* Matched template cards (only shown if score >= threshold) */}
                 {matchedTemplates.map(function(tpl, tplIdx) {
                   var isSelected = pickChoice === tpl.id;
                   var categoryLabel = tpl.category || 'Template';
+                  var bizType = brand?.business?.type || '';
+                  var subtitle = templateSubtitle(tpl, bizType);
                   return (
                     <div
                       key={tpl.id}
@@ -1199,18 +1232,36 @@ export function TryFlowInner({
                     >
                       {isSelected && <div className="sq-pick-check"><SvgCheck size={14} /></div>}
                       <div className={'sq-pick-icon sq-pick-icon-tpl' + (tplIdx === 1 ? ' sq-pick-icon-tpl2' : '')}>
-                        {tplIdx === 0 ? (
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                        ) : (
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                        )}
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={tpl.iconPath} /></svg>
                       </div>
                       <div className="sq-pick-badge sq-pick-badge-tpl">{categoryLabel}</div>
                       <div className="sq-pick-name">{tpl.name}</div>
-                      <div className="sq-pick-desc">{tpl.description}</div>
+                      <div className="sq-pick-desc">{subtitle}</div>
                     </div>
                   );
                 })}
+
+                {/* "Browse all templates" fallback card(s) to fill 3 columns */}
+                {matchedTemplates.length < 2 && (
+                  <Link href="/templates" className={'sq-pick-card sq-pick-card-browse'}>
+                    <div className="sq-pick-icon sq-pick-icon-browse">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    </div>
+                    <div className="sq-pick-badge sq-pick-badge-browse">Gallery</div>
+                    <div className="sq-pick-name">Browse All Templates</div>
+                    <div className="sq-pick-desc">{QUIZ_TEMPLATE_CATALOG.length}+ ready-made quiz templates for every industry. Pick one and customize.</div>
+                  </Link>
+                )}
+                {matchedTemplates.length < 1 && (
+                  <Link href="/templates" className={'sq-pick-card sq-pick-card-browse'}>
+                    <div className="sq-pick-icon sq-pick-icon-browse">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                    <div className="sq-pick-badge sq-pick-badge-browse">Explore</div>
+                    <div className="sq-pick-name">Find Your Template</div>
+                    <div className="sq-pick-desc">Browse by industry, goal, or quiz type. Filter and preview before you choose.</div>
+                  </Link>
+                )}
               </div>
 
               {errorMsg && (

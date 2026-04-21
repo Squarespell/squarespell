@@ -1630,6 +1630,25 @@ export const FLOW_CSS = `
     line-height: 1.55;
   }
 
+  /* Browse all templates card */
+  .sq-pick-card-browse {
+    border-style: dashed;
+    text-decoration: none;
+    color: inherit;
+  }
+  .sq-pick-card-browse:hover {
+    border-style: solid;
+    border-color: rgba(13,115,119,0.3);
+    background: rgba(13,115,119,0.015);
+  }
+  .sq-pick-icon-browse {
+    background: rgba(0,0,0,0.04);
+    color: var(--text-muted);
+  }
+  .sq-pick-badge-browse {
+    color: var(--text-dim);
+  }
+
   @media (max-width: 1000px) {
     .s3-body { grid-template-columns: 1fr; }
     .s2-wrap { padding: 16px 16px 40px; }
