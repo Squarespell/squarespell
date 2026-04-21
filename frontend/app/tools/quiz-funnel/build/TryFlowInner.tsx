@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import FLOW_CSS from './flow-css';
 import { api } from '@/lib/api';
 import { publicQuizUrl, embedSnippet, APP_URL } from '@/lib/urls';
@@ -62,14 +61,8 @@ interface OnboardingQ {
 }
 
 /* ========================================================================= */
-/* Stage 2: Goal selection (Option C - AI analyzes site, user picks goal)    */
+/* Stage 2: Split-screen brand analysis + quiz style selector                */
 /* ========================================================================= */
-const GOAL_OPTIONS = [
-  { id: 'capture_leads', label: 'Capture leads', description: 'Qualify visitors and collect emails before showing personalized results' },
-  { id: 'recommend_service', label: 'Recommend a service', description: 'Guide visitors to the right product, plan, or package for them' },
-  { id: 'score_segment', label: 'Score and segment', description: 'Score visitors by intent and readiness to buy, then segment automatically' },
-  { id: 'grow_email', label: 'Grow email list', description: 'Offer a free result or resource in exchange for email signup' },
-];
 
 /* ========================================================================= */
 /* Template matching helper — with score threshold                           */
@@ -264,15 +257,15 @@ export function TryFlowInner({
   const [sessionToken, setSessionToken] = useState('');
   const [claimToken, setClaimToken] = useState('');
 
-  // Stage 2 - goal selection (Option C)
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [analysisStep, setAnalysisStep] = useState(0);
-  const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, number>>({});
+  // Stage 2 - sub-step flow: 'brand' -> 'choose' -> 'building'
+  var [s2SubStep, setS2SubStep] = useState<'brand' | 'choose' | 'building'>('brand');
   const [buildingQuiz, setBuildingQuiz] = useState(false);
+  var [buildStep, setBuildStep] = useState(0); // 0-3 for the 4 progress steps
 
   // Stage 2 - pick choice (AI custom vs template)
   const [pickChoice, setPickChoice] = useState<string>('ai');
   const [matchedTemplates, setMatchedTemplates] = useState<QuizTemplateData[]>([]);
+  var [showAllTemplates, setShowAllTemplates] = useState(false);
 
   // Stage 2 - inline editing of AI-detected tags
   const [editingTag, setEditingTag] = useState<string | null>(null);
@@ -374,12 +367,14 @@ export function TryFlowInner({
       }
       setBrand(data.brand ?? null);
       setSessionToken(data.session_token);
-      setOnboardingAnswers({});
       setUrl(normalized);
       // Match templates based on scraped business type
       var bizType = data.brand?.business?.type || '';
       setMatchedTemplates(matchTemplatesToBusiness(bizType));
       setPickChoice('ai');
+      setS2SubStep('brand');
+      setBuildStep(0);
+      setShowAllTemplates(false);
       setStage(2);
       // eslint-disable-next-line no-console
       console.info('[squarespell] advanced to Stage 2');
@@ -504,10 +499,25 @@ export function TryFlowInner({
   }, [sessionToken, brand, url]);
 
   var handlePickGenerate = useCallback(function() {
+    setS2SubStep('building');
+    setBuildStep(0);
     if (pickChoice === 'ai') {
-      buildQuiz();
+      // Animate the progress steps while AI builds
+      var stepTimers: ReturnType<typeof setTimeout>[] = [];
+      stepTimers.push(setTimeout(function() { setBuildStep(1); }, 800));
+      stepTimers.push(setTimeout(function() { setBuildStep(2); }, 2200));
+      stepTimers.push(setTimeout(function() { setBuildStep(3); }, 4000));
+      buildQuiz().finally(function() {
+        stepTimers.forEach(function(t) { clearTimeout(t); });
+      });
     } else {
-      handleCreateFromTemplate(pickChoice);
+      // Template creation is instant, simulate brief progress
+      setTimeout(function() { setBuildStep(1); }, 300);
+      setTimeout(function() { setBuildStep(2); }, 500);
+      setTimeout(function() { setBuildStep(3); }, 700);
+      setTimeout(function() {
+        handleCreateFromTemplate(pickChoice);
+      }, 900);
     }
   }, [pickChoice, buildQuiz, handleCreateFromTemplate]);
 
@@ -1098,212 +1108,407 @@ export function TryFlowInner({
         </div>
       </div>
 
-      {/* ============ STAGE 2: GOAL SELECTION (OPTION C) ============ */}
+      {/* ============ STAGE 2: SPLIT-SCREEN FLOW ============ */}
       <div className={`stage${stage === 2 ? ' active' : ''}`} id="stage-2">
         <div className="topbar">
           <div className="brand"><div className="brand-dot" /> squarespell</div>
           <div className="top-right">
-            <button className="btn btn-ghost" onClick={() => setStage(1)}>Start over</button>
+            <button className="btn btn-ghost" onClick={function() { if (s2SubStep === 'choose') { setS2SubStep('brand'); } else { setStage(1); } }}>
+              {s2SubStep === 'choose' ? 'Back' : 'Start over'}
+            </button>
           </div>
         </div>
 
-        <div className="s2-wrap">
-          {/* Error state - when scrape fails (429, timeout, etc) */}
-          {!loading && !sessionToken && errorMsg && (
-            <div className="s2-error-state">
-              <div className="s2-error-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-              </div>
-              <div className="s2-error-title">Something went wrong</div>
-              <div className="s2-error-msg">{errorMsg}</div>
-              <button
-                type="button"
-                className="btn-gen ready"
-                onClick={function() { setErrorMsg(''); goAnalyze(url); }}
-              >
-                <SvgRefresh />
-                Try again
-              </button>
+        {/* Error state - full width centered */}
+        {!loading && !sessionToken && errorMsg && (
+          <div className="s2-error-split">
+            <div className="s2-error-icon" style={{ marginBottom: 20 }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
             </div>
-          )}
+            <div className="s2-error-title" style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Something went wrong</div>
+            <div className="s2-error-msg" style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 28, maxWidth: 400, lineHeight: 1.5 }}>{errorMsg}</div>
+            <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); goAnalyze(url); }}>
+              <SvgRefresh /> Try again
+            </button>
+          </div>
+        )}
 
-          {/* Loading skeleton state */}
-          {loading && (
-            <div className="s2-skeleton">
-              <div className="analysis-status">
-                <div className="analysis-spinner"></div>
+        {/* Loading skeleton - split-screen layout */}
+        {loading && (
+          <div className="s2-skel-split">
+            <div className="s2-skel-left">
+              <div className="s2-skel-preview shimmer"></div>
+            </div>
+            <div className="s2-skel-right">
+              <div className="analysis-status" style={{ textAlign: 'left', marginBottom: 24 }}>
+                <div className="analysis-spinner" style={{ margin: '0 0 14px' }}></div>
                 <div className="analysis-text">Reading your website...</div>
                 <div className="analysis-detail">Extracting brand, copy, and offers</div>
               </div>
-
-              <div className="skel-header">
-                <div className="skel-badge shimmer"></div>
-                <div className="skel-title shimmer"></div>
-                <div className="skel-title-2 shimmer"></div>
-                <div className="skel-sub shimmer"></div>
-              </div>
-
-              <div className="skel-brand shimmer">
-                <div className="skel-brand-icon"></div>
-                <div className="skel-brand-lines">
-                  <div className="skel-brand-line1"></div>
-                  <div className="skel-brand-line2"></div>
-                </div>
-              </div>
-
-              {/* 3 vertical card skeletons matching Option C layout */}
-              <div className="skel-pick-grid">
-                <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-icon"></div>
-                  <div className="skel-pick-badge"></div>
-                  <div className="skel-pick-name"></div>
-                  <div className="skel-pick-desc"></div>
-                  <div className="skel-pick-desc-2"></div>
-                </div>
-                <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-icon"></div>
-                  <div className="skel-pick-badge"></div>
-                  <div className="skel-pick-name"></div>
-                  <div className="skel-pick-desc"></div>
-                  <div className="skel-pick-desc-2"></div>
-                </div>
-                <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-icon"></div>
-                  <div className="skel-pick-badge"></div>
-                  <div className="skel-pick-name"></div>
-                  <div className="skel-pick-desc"></div>
-                  <div className="skel-pick-desc-2"></div>
-                </div>
-              </div>
-              <div className="skel-btn shimmer"></div>
+              <div className="s2-skel-badge shimmer"></div>
+              <div className="s2-skel-h1 shimmer"></div>
+              <div className="s2-skel-h2 shimmer"></div>
+              <div className="s2-skel-p shimmer"></div>
+              <div className="s2-skel-row shimmer"></div>
+              <div className="s2-skel-row shimmer"></div>
+              <div className="s2-skel-row shimmer"></div>
+              <div className="s2-skel-btn shimmer"></div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Loaded state - Pick your quiz */}
-          {!loading && sessionToken && (
-            <div className="s2-loaded">
-              <div className="step-badge">
-                <SvgBolt size={14} />
-                SITE ANALYZED
-              </div>
-              <h1 className="step-title">Choose your quiz<br /><span className="step-title-acc">Pick one, we handle the rest.</span></h1>
-              <p className="step-sub">We read your site and matched it with the best quiz options. Select one to get started.</p>
+        {/* Loaded state — split-screen sub-steps */}
+        {!loading && sessionToken && (
+          <div className="s2-split">
 
-              {/* Brand card */}
-              <div className="brand-card">
-                <div className="brand-icon">{siteLetter}</div>
-                <div className="brand-info">
-                  <div className="brand-label">Brand captured</div>
-                  <div className="brand-url">{domain}</div>
-                </div>
-                <div className="brand-check">
-                  <SvgCheck size={16} />
-                  Verified
-                </div>
-              </div>
+            {/* ===== LEFT PANEL ===== */}
+            <div className="s2-left">
+              <div className="s2-left-inner">
 
-              {/* 3 Pick cards - Option C vertical icon cards */}
-              <div className="sq-pick-grid">
-                {/* AI Custom card */}
-                <div
-                  className={'sq-pick-card' + (pickChoice === 'ai' ? ' sq-pick-selected' : '')}
-                  onClick={function() { setPickChoice('ai'); }}
-                >
-                  {pickChoice === 'ai' && <div className="sq-pick-check"><SvgCheck size={14} /></div>}
-                  <div className="sq-pick-icon sq-pick-icon-ai">
-                    <SvgBolt size={24} />
-                  </div>
-                  <div className="sq-pick-badge sq-pick-badge-ai">Recommended</div>
-                  <div className="sq-pick-name">AI Custom Quiz</div>
-                  <div className="sq-pick-desc">Fully custom quiz built from your website content, audience, and offers. Powered by AI.</div>
-                </div>
-
-                {/* Matched template cards (only shown if score >= threshold) */}
-                {matchedTemplates.map(function(tpl, tplIdx) {
-                  var isSelected = pickChoice === tpl.id;
-                  var categoryLabel = tpl.category || 'Template';
-                  var bizType = brand?.business?.type || '';
-                  var subtitle = templateSubtitle(tpl, bizType);
-                  return (
-                    <div
-                      key={tpl.id}
-                      className={'sq-pick-card' + (isSelected ? ' sq-pick-selected' : '')}
-                      onClick={function() { setPickChoice(tpl.id); }}
-                    >
-                      {isSelected && <div className="sq-pick-check"><SvgCheck size={14} /></div>}
-                      <div className={'sq-pick-icon sq-pick-icon-tpl' + (tplIdx === 1 ? ' sq-pick-icon-tpl2' : '')}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={tpl.iconPath} /></svg>
+                {/* 2a: Website preview mockup with brand swatches */}
+                {s2SubStep === 'brand' && (
+                  <div className="s2-substep">
+                    <div className="s2-site-preview">
+                      <div className="s2-site-chrome">
+                        <div className="s2-site-dots"><span></span><span></span><span></span></div>
+                        <div className="s2-site-addr">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                          <span>{domain}</span>
+                        </div>
                       </div>
-                      <div className="sq-pick-badge sq-pick-badge-tpl">{categoryLabel}</div>
-                      <div className="sq-pick-name">{tpl.name}</div>
-                      <div className="sq-pick-desc">{subtitle}</div>
+                      <div className="s2-site-body" style={{ background: brand?.colors?.background || '#fff' }}>
+                        <div className="s2-site-body-bar w60" style={{ background: brand?.colors?.primary ? brand.colors.primary + '1a' : undefined }}></div>
+                        <div className="s2-site-body-bar w80"></div>
+                        <div className="s2-site-body-bar w45"></div>
+                        <div className="s2-site-body-bar w70"></div>
+                        <div className="s2-site-body-bar w60"></div>
+                        <div className="s2-site-body-bar w80"></div>
+                        <div className="s2-swatches">
+                          {brand?.colors?.primary && <div className="s2-swatch" style={{ background: brand.colors.primary }}></div>}
+                          {brand?.colors?.background && <div className="s2-swatch" style={{ background: brand.colors.background }}></div>}
+                          {brand?.colors?.text && <div className="s2-swatch" style={{ background: brand.colors.text }}></div>}
+                        </div>
+                      </div>
                     </div>
-                  );
-                })}
-
-                {/* "Browse all templates" fallback card(s) to fill 3 columns */}
-                {matchedTemplates.length < 2 && (
-                  <Link href="/templates" className={'sq-pick-card sq-pick-card-browse'}>
-                    <div className="sq-pick-icon sq-pick-icon-browse">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                    </div>
-                    <div className="sq-pick-badge sq-pick-badge-browse">Gallery</div>
-                    <div className="sq-pick-name">Browse All Templates</div>
-                    <div className="sq-pick-desc">{QUIZ_TEMPLATE_CATALOG.length}+ ready-made quiz templates for every industry. Pick one and customize.</div>
-                  </Link>
-                )}
-                {matchedTemplates.length < 1 && (
-                  <Link href="/templates" className={'sq-pick-card sq-pick-card-browse'}>
-                    <div className="sq-pick-icon sq-pick-icon-browse">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    </div>
-                    <div className="sq-pick-badge sq-pick-badge-browse">Explore</div>
-                    <div className="sq-pick-name">Find Your Template</div>
-                    <div className="sq-pick-desc">Browse by industry, goal, or quiz type. Filter and preview before you choose.</div>
-                  </Link>
-                )}
-              </div>
-
-              {errorMsg && (
-                <div className="s2-analyze-err">
-                  <div>{errorMsg}</div>
-                  <button
-                    type="button"
-                    className="hook-err-retry"
-                    onClick={function() { setErrorMsg(''); handlePickGenerate(); }}
-                  >
-                    Try again
-                  </button>
-                </div>
-              )}
-
-              {buildingQuiz ? (
-                <div className="gen-loading">
-                  <div className="gen-loading-spinner"></div>
-                  <div className="gen-loading-title">Building your quiz</div>
-                  <div className="gen-loading-sub">{pickChoice === 'ai' ? 'AI is crafting questions tailored to your website...' : 'Setting up your template...'}</div>
-                  <div className="gen-skeleton-cards">
-                    <div className="gen-skel-card"><div className="gen-skel-line w70"></div><div className="gen-skel-line w50"></div></div>
-                    <div className="gen-skel-card"><div className="gen-skel-line w60"></div><div className="gen-skel-line w80"></div></div>
-                    <div className="gen-skel-card"><div className="gen-skel-line w75"></div><div className="gen-skel-line w45"></div></div>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <button
-                    className="btn-gen ready"
-                    onClick={handlePickGenerate}
-                    type="button"
-                  >
-                    <SvgBolt size={18} />
-                    {pickChoice === 'ai' ? 'Generate my quiz' : 'Use this template'}
-                  </button>
-                  <div className="btn-hint">{pickChoice === 'ai' ? 'Takes about 30 seconds. You can edit everything after.' : 'Instant setup. You can edit everything after.'}</div>
-                </>
-              )}
+                )}
+
+                {/* 2b: Live quiz preview that reflects user's brand */}
+                {s2SubStep === 'choose' && (
+                  <div className="s2-substep">
+                    <div className="s2-quiz-preview">
+                      <div className="s2-quiz-mock-header">
+                        <div className="s2-quiz-mock-logo" style={{ background: brand?.colors?.primary || 'var(--accent)' }}>{siteLetter}</div>
+                        <div className="s2-quiz-mock-name">{brand?.site_name || domain}</div>
+                      </div>
+                      <div className="s2-quiz-mock-body">
+                        <div className="s2-quiz-mock-progress">
+                          <div className="s2-quiz-mock-fill" style={{ background: brand?.colors?.primary || 'var(--accent)' }}></div>
+                        </div>
+                        <div className="s2-quiz-mock-q">{pickChoice === 'ai' ? 'What brings you here today?' : (QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === pickChoice; })?.blocks()?.[0] as any)?.text || 'What brings you here today?'}</div>
+                        <div className="s2-quiz-mock-opts">
+                          <div className="s2-quiz-mock-opt" style={{ borderColor: brand?.colors?.primary ? brand.colors.primary + '40' : undefined }}>Looking for something specific</div>
+                          <div className="s2-quiz-mock-opt">Just browsing options</div>
+                          <div className="s2-quiz-mock-opt">Need a recommendation</div>
+                          <div className="s2-quiz-mock-opt">Comparing alternatives</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="s2-preview-label">
+                      <SvgCheck size={14} />
+                      Live preview with your brand
+                    </div>
+                  </div>
+                )}
+
+                {/* 2c: Animated assembling blocks */}
+                {s2SubStep === 'building' && (
+                  <div className="s2-substep">
+                    <div className="s2-build-visual">
+                      <div className="s2-build-blocks">
+                        <div className="s2-build-block">
+                          <div className="s2-build-block-line w70 accent"></div>
+                          <div className="s2-build-block-line w90"></div>
+                          <div className="s2-build-block-line w50"></div>
+                        </div>
+                        <div className="s2-build-block">
+                          <div className="s2-build-block-line w50 accent"></div>
+                          <div className="s2-build-block-line w70"></div>
+                          <div className="s2-build-block-line w40"></div>
+                        </div>
+                        <div className="s2-build-block">
+                          <div className="s2-build-block-line w90 accent"></div>
+                          <div className="s2-build-block-line w50"></div>
+                        </div>
+                        <div className="s2-build-block">
+                          <div className="s2-build-block-line w40 accent"></div>
+                          <div className="s2-build-block-line w70"></div>
+                          <div className="s2-build-block-line w90"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* ===== RIGHT PANEL ===== */}
+            <div className="s2-right">
+              <div className="s2-right-inner">
+
+                {/* 2a: Brand analysis results */}
+                {s2SubStep === 'brand' && (
+                  <div className="s2-substep" key="brand">
+                    <div className="s2-brand-badge">
+                      <SvgCheck size={14} />
+                      SITE ANALYZED
+                    </div>
+                    <h1 className="s2-brand-title">
+                      We analyzed your brand<br />
+                      <span className="s2-brand-title-acc">{brand?.site_name || domain}</span>
+                    </h1>
+                    <p className="s2-brand-sub">Here is what we detected from your website. Edit anything that does not look right.</p>
+
+                    <div className="s2-brand-details">
+                      {/* Business type */}
+                      <div className="s2-detail-row">
+                        <div className="s2-detail-icon s2-detail-icon-type">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        </div>
+                        <div className="s2-detail-content">
+                          <div className="s2-detail-label">Business type</div>
+                          {editingTag === 'type' ? (
+                            <input
+                              ref={editInputRef}
+                              className="s2-detail-input"
+                              value={editValues['type'] || ''}
+                              onChange={function(e) { setEditValues(function(p) { return { ...p, type: e.target.value }; }); }}
+                              onBlur={function() { commitEditTag('type'); }}
+                              onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('type'); if (e.key === 'Escape') setEditingTag(null); }}
+                            />
+                          ) : (
+                            <div className="s2-detail-value">{brand?.business?.type || 'Unknown'}</div>
+                          )}
+                        </div>
+                        {editingTag !== 'type' && (
+                          <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('type', brand?.business?.type || ''); }}>Edit</button>
+                        )}
+                      </div>
+
+                      {/* Audience */}
+                      <div className="s2-detail-row">
+                        <div className="s2-detail-icon s2-detail-icon-audience">
+                          <SvgUsers size={18} />
+                        </div>
+                        <div className="s2-detail-content">
+                          <div className="s2-detail-label">Audience</div>
+                          {editingTag === 'audience' ? (
+                            <input
+                              ref={editInputRef}
+                              className="s2-detail-input"
+                              value={editValues['audience'] || ''}
+                              onChange={function(e) { setEditValues(function(p) { return { ...p, audience: e.target.value }; }); }}
+                              onBlur={function() { commitEditTag('audience'); }}
+                              onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('audience'); if (e.key === 'Escape') setEditingTag(null); }}
+                            />
+                          ) : (
+                            <div className="s2-detail-value">{brand?.business?.audience || 'Unknown'}</div>
+                          )}
+                        </div>
+                        {editingTag !== 'audience' && (
+                          <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('audience', brand?.business?.audience || ''); }}>Edit</button>
+                        )}
+                      </div>
+
+                      {/* Tone */}
+                      <div className="s2-detail-row">
+                        <div className="s2-detail-icon s2-detail-icon-tone">
+                          <SvgSpark size={18} />
+                        </div>
+                        <div className="s2-detail-content">
+                          <div className="s2-detail-label">Tone</div>
+                          {editingTag === 'tone' ? (
+                            <input
+                              ref={editInputRef}
+                              className="s2-detail-input"
+                              value={editValues['tone'] || ''}
+                              onChange={function(e) { setEditValues(function(p) { return { ...p, tone: e.target.value }; }); }}
+                              onBlur={function() { commitEditTag('tone'); }}
+                              onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('tone'); if (e.key === 'Escape') setEditingTag(null); }}
+                            />
+                          ) : (
+                            <div className="s2-detail-value">{brand?.business?.tone || 'Unknown'}</div>
+                          )}
+                        </div>
+                        {editingTag !== 'tone' && (
+                          <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('tone', brand?.business?.tone || ''); }}>Edit</button>
+                        )}
+                      </div>
+
+                      {/* Brand colors */}
+                      <div className="s2-detail-row">
+                        <div className="s2-detail-icon s2-detail-icon-colors">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12c0 2.76 1.12 5.26 2.93 7.07L12 22z"/></svg>
+                        </div>
+                        <div className="s2-detail-content">
+                          <div className="s2-detail-label">Brand colors</div>
+                          <div className="s2-color-dots">
+                            {brand?.colors?.primary && <div className="s2-color-dot" style={{ background: brand.colors.primary }} title={'Primary: ' + brand.colors.primary}></div>}
+                            {brand?.colors?.background && <div className="s2-color-dot" style={{ background: brand.colors.background }} title={'Background: ' + brand.colors.background}></div>}
+                            {brand?.colors?.text && <div className="s2-color-dot" style={{ background: brand.colors.text }} title={'Text: ' + brand.colors.text}></div>}
+                            {brand?.colors?.accent && <div className="s2-color-dot" style={{ background: brand.colors.accent }} title={'Accent: ' + brand.colors.accent}></div>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="s2-continue-btn"
+                      onClick={function() { setS2SubStep('choose'); }}
+                    >
+                      Continue
+                      <SvgArrowRight size={16} />
+                    </button>
+                  </div>
+                )}
+
+                {/* 2b: Quiz style selector */}
+                {s2SubStep === 'choose' && (
+                  <div className="s2-substep" key="choose">
+                    <div className="s2-choose-label">Step 2 of 2</div>
+                    <h1 className="s2-choose-title">Choose your quiz style</h1>
+                    <p className="s2-choose-sub">We will build it using your brand and content. You can edit everything after.</p>
+
+                    <div className="s2-path-options">
+                      {/* AI Custom path */}
+                      <div
+                        className={'s2-path-card' + (pickChoice === 'ai' ? ' selected' : '')}
+                        onClick={function() { setPickChoice('ai'); }}
+                      >
+                        <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
+                        <div className="s2-path-icon s2-path-icon-ai"><SvgBolt size={18} /></div>
+                        <div className="s2-path-content">
+                          <div className="s2-path-name">AI-generated quiz</div>
+                          <div className="s2-path-desc">Custom quiz built from your website content, audience, and offers</div>
+                        </div>
+                        <div className="s2-path-badge s2-path-badge-rec">Recommended</div>
+                      </div>
+
+                      {/* Template path */}
+                      <div
+                        className={'s2-path-card' + (pickChoice !== 'ai' ? ' selected' : '')}
+                        onClick={function() {
+                          if (pickChoice === 'ai') {
+                            var firstMatch = matchedTemplates[0];
+                            setPickChoice(firstMatch ? firstMatch.id : 'tpl');
+                          }
+                        }}
+                      >
+                        <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
+                        <div className="s2-path-icon s2-path-icon-tpl">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                        </div>
+                        <div className="s2-path-content">
+                          <div className="s2-path-name">Start from a template</div>
+                          <div className="s2-path-desc">Pick a proven quiz structure and customize it</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expandable template list */}
+                    <div className={'s2-tpl-list' + (pickChoice !== 'ai' ? ' open' : '')}>
+                      <div className="s2-tpl-list-inner">
+                        {(showAllTemplates ? QUIZ_TEMPLATE_CATALOG : (matchedTemplates.length > 0 ? matchedTemplates : QUIZ_TEMPLATE_CATALOG.slice(0, 5))).map(function(tpl) {
+                          var isSelected = pickChoice === tpl.id;
+                          return (
+                            <div
+                              key={tpl.id}
+                              className={'s2-tpl-item' + (isSelected ? ' selected' : '')}
+                              onClick={function() { setPickChoice(tpl.id); }}
+                            >
+                              <div className="s2-tpl-item-radio"><div className="s2-tpl-item-radio-dot"></div></div>
+                              <div className="s2-tpl-info">
+                                <div className="s2-tpl-name">{tpl.name}</div>
+                                <div className="s2-tpl-desc">{tpl.description}</div>
+                              </div>
+                              <div className="s2-tpl-tag">{tpl.category.replace(/_/g, ' ')}</div>
+                            </div>
+                          );
+                        })}
+                        {!showAllTemplates && QUIZ_TEMPLATE_CATALOG.length > 5 && (
+                          <button type="button" className="s2-tpl-showall" onClick={function() { setShowAllTemplates(true); }}>
+                            Show all {QUIZ_TEMPLATE_CATALOG.length} templates
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {errorMsg && (
+                      <div className="s2-analyze-err" style={{ marginBottom: 16 }}>
+                        <div>{errorMsg}</div>
+                        <button type="button" className="hook-err-retry" onClick={function() { setErrorMsg(''); handlePickGenerate(); }}>
+                          Try again
+                        </button>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      className="s2-generate-btn"
+                      onClick={handlePickGenerate}
+                      disabled={buildingQuiz || (pickChoice !== 'ai' && pickChoice === 'tpl')}
+                    >
+                      <SvgBolt size={18} />
+                      {pickChoice === 'ai' ? 'Generate my quiz' : 'Use this template'}
+                    </button>
+                    <div className="s2-generate-hint">
+                      {pickChoice === 'ai' ? 'Takes about 30 seconds. You can edit everything after.' : 'Instant setup. You can edit everything after.'}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2c: Building progress steps */}
+                {s2SubStep === 'building' && (
+                  <div className="s2-substep" key="building">
+                    <h1 className="s2-build-title">Building your quiz</h1>
+                    <p className="s2-build-sub">
+                      {pickChoice === 'ai'
+                        ? 'AI is crafting a custom quiz from your website content...'
+                        : 'Setting up your template with your brand...'}
+                    </p>
+
+                    <div className="s2-progress-steps">
+                      {[
+                        { label: 'Analyzing your content', detail: 'Reading pages, copy, and offers' },
+                        { label: 'Crafting questions', detail: 'Building engaging quiz questions' },
+                        { label: 'Designing outcomes', detail: 'Creating personalized result paths' },
+                        { label: 'Applying your brand', detail: 'Styling with your colors and fonts' },
+                      ].map(function(step, i) {
+                        var isDone = buildStep > i;
+                        var isActive = buildStep === i;
+                        return (
+                          <div key={i} className={'s2-progress-step' + (isDone ? ' done' : '') + (isActive ? ' active' : '')}>
+                            <div className="s2-progress-check">
+                              {isDone && <SvgCheck size={14} />}
+                              {isActive && <div className="s2-progress-spinner"></div>}
+                            </div>
+                            <div className="s2-progress-text">
+                              <div className="s2-progress-label">{step.label}</div>
+                              <div className="s2-progress-detail">{step.detail}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ============ STAGE 3: EDITOR ============ */}
