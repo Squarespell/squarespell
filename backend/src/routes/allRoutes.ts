@@ -2693,14 +2693,14 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     });
 
     // Get revenue from quiz_payments
-    var paymentsResult = await supabase.from('quiz_payments').select('id, amount, created_at');
+    var paymentsResult = await supabase.from('quiz_payments').select('id, amount_cents, created_at');
     if (paymentsResult.error) throw paymentsResult.error;
     var allPayments = paymentsResult.data || [];
 
     var totalRevenue = 0;
     var revenueThisMonth = 0;
     allPayments.forEach(function(p: any) {
-      var amt = Number(p.amount || 0);
+      var amt = Number(p.amount_cents || 0) / 100;
       totalRevenue += amt;
       if (new Date(p.created_at) >= thisMonthStart) {
         revenueThisMonth += amt;
