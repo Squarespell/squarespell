@@ -1171,59 +1171,96 @@ export function TryFlowInner({
             <div className="s2-left">
               <div className="s2-left-inner">
 
-                {/* 2a: Website preview mockup with brand swatches */}
+                {/* 2a: Premium brand identity card */}
                 {s2SubStep === 'brand' && (
                   <div className="s2-substep">
-                    <div className="s2-site-preview">
-                      <div className="s2-site-chrome">
-                        <div className="s2-site-dots"><span></span><span></span><span></span></div>
-                        <div className="s2-site-addr">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                          <span>{domain}</span>
-                        </div>
+                    <div className="s2-brand-hero">
+                      <div className="s2-brand-hero-bg" style={{ background: 'linear-gradient(145deg, ' + (brand?.colors?.primary || '#0D7377') + ' 0%, ' + (brand?.colors?.text || '#1A1A1A') + ' 100%)' }}></div>
+                      <div className="s2-brand-hero-content">
+                        {brand?.favicon_url ? (
+                          <img src={brand.favicon_url} className="s2-brand-hero-icon" alt="" />
+                        ) : (
+                          <div className="s2-brand-hero-letter" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}>{siteLetter}</div>
+                        )}
+                        <div className="s2-brand-hero-name">{brand?.site_name || domain}</div>
+                        <div className="s2-brand-hero-url">{domain}</div>
                       </div>
-                      <div className="s2-site-body" style={{ background: brand?.colors?.background || '#fff' }}>
-                        <div className="s2-site-body-bar w60" style={{ background: brand?.colors?.primary ? brand.colors.primary + '1a' : undefined }}></div>
-                        <div className="s2-site-body-bar w80"></div>
-                        <div className="s2-site-body-bar w45"></div>
-                        <div className="s2-site-body-bar w70"></div>
-                        <div className="s2-site-body-bar w60"></div>
-                        <div className="s2-site-body-bar w80"></div>
-                        <div className="s2-swatches">
-                          {brand?.colors?.primary && <div className="s2-swatch" style={{ background: brand.colors.primary }}></div>}
-                          {brand?.colors?.background && <div className="s2-swatch" style={{ background: brand.colors.background }}></div>}
-                          {brand?.colors?.text && <div className="s2-swatch" style={{ background: brand.colors.text }}></div>}
-                        </div>
+                      <div className="s2-brand-hero-swatches">
+                        {brand?.colors?.primary && <div className="s2-brand-hero-swatch" style={{ background: brand.colors.primary }}></div>}
+                        {brand?.colors?.background && <div className="s2-brand-hero-swatch" style={{ background: brand.colors.background }}></div>}
+                        {brand?.colors?.text && <div className="s2-brand-hero-swatch" style={{ background: brand.colors.text }}></div>}
+                        {brand?.colors?.accent && <div className="s2-brand-hero-swatch" style={{ background: brand.colors.accent }}></div>}
                       </div>
+                    </div>
+                    <div className="s2-brand-hero-label">
+                      <SvgCheck size={14} />
+                      Brand detected from {domain}
                     </div>
                   </div>
                 )}
 
-                {/* 2b: Live quiz preview that reflects user's brand */}
+                {/* 2b: Quiz preview (AI mode) or Template gallery (template mode) */}
                 {s2SubStep === 'choose' && (
                   <div className="s2-substep">
-                    <div className="s2-quiz-preview">
-                      <div className="s2-quiz-mock-header">
-                        <div className="s2-quiz-mock-logo" style={{ background: brand?.colors?.primary || 'var(--accent)' }}>{siteLetter}</div>
-                        <div className="s2-quiz-mock-name">{brand?.site_name || domain}</div>
-                      </div>
-                      <div className="s2-quiz-mock-body">
-                        <div className="s2-quiz-mock-progress">
-                          <div className="s2-quiz-mock-fill" style={{ background: brand?.colors?.primary || 'var(--accent)' }}></div>
+                    {pickChoice === 'ai' ? (
+                      <>
+                        <div className="s2-quiz-preview">
+                          <div className="s2-quiz-mock-header">
+                            <div className="s2-quiz-mock-logo" style={{ background: brand?.colors?.primary || 'var(--accent)' }}>{siteLetter}</div>
+                            <div className="s2-quiz-mock-name">{brand?.site_name || domain}</div>
+                          </div>
+                          <div className="s2-quiz-mock-body">
+                            <div className="s2-quiz-mock-progress">
+                              <div className="s2-quiz-mock-fill" style={{ background: brand?.colors?.primary || 'var(--accent)' }}></div>
+                            </div>
+                            <div className="s2-quiz-mock-q">What brings you here today?</div>
+                            <div className="s2-quiz-mock-opts">
+                              <div className="s2-quiz-mock-opt" style={{ borderColor: brand?.colors?.primary ? brand.colors.primary + '40' : undefined }}>Looking for something specific</div>
+                              <div className="s2-quiz-mock-opt">Just browsing options</div>
+                              <div className="s2-quiz-mock-opt">Need a recommendation</div>
+                              <div className="s2-quiz-mock-opt">Comparing alternatives</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="s2-quiz-mock-q">{pickChoice === 'ai' ? 'What brings you here today?' : (QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === pickChoice; })?.blocks()?.[0] as any)?.text || 'What brings you here today?'}</div>
-                        <div className="s2-quiz-mock-opts">
-                          <div className="s2-quiz-mock-opt" style={{ borderColor: brand?.colors?.primary ? brand.colors.primary + '40' : undefined }}>Looking for something specific</div>
-                          <div className="s2-quiz-mock-opt">Just browsing options</div>
-                          <div className="s2-quiz-mock-opt">Need a recommendation</div>
-                          <div className="s2-quiz-mock-opt">Comparing alternatives</div>
+                        <div className="s2-preview-label">
+                          <SvgCheck size={14} />
+                          Live preview with your brand
+                        </div>
+                      </>
+                    ) : (
+                      <div className="s2-tpl-gallery">
+                        <div className="s2-tpl-gallery-header">
+                          <span className="s2-tpl-gallery-title">Templates</span>
+                          <span className="s2-tpl-gallery-count">{QUIZ_TEMPLATE_CATALOG.length} available</span>
+                        </div>
+                        <div className="s2-tpl-gallery-scroll">
+                          {(showAllTemplates ? QUIZ_TEMPLATE_CATALOG : (matchedTemplates.length > 0 ? matchedTemplates.concat(QUIZ_TEMPLATE_CATALOG.filter(function(t) { return !matchedTemplates.find(function(m) { return m.id === t.id; }); })) : QUIZ_TEMPLATE_CATALOG)).map(function(tpl) {
+                            var isSelected = pickChoice === tpl.id;
+                            var isRecommended = matchedTemplates.find(function(m) { return m.id === tpl.id; });
+                            return (
+                              <div
+                                key={tpl.id}
+                                className={'s2-tpl-card' + (isSelected ? ' selected' : '')}
+                                onClick={function() { setPickChoice(tpl.id); }}
+                              >
+                                {isRecommended && <div className="s2-tpl-rec-badge">Recommended</div>}
+                                <div className="s2-tpl-card-icon" style={{ background: isSelected ? 'var(--accent)' : 'rgba(99,102,241,0.06)', color: isSelected ? '#fff' : '#6366f1' }}>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                                </div>
+                                <div className="s2-tpl-card-body">
+                                  <div className="s2-tpl-card-name">{tpl.name}</div>
+                                  <div className="s2-tpl-card-desc">{tpl.description}</div>
+                                </div>
+                                <div className="s2-tpl-card-tag">{tpl.category.replace(/_/g, ' ')}</div>
+                                <div className="s2-tpl-card-check">
+                                  {isSelected && <SvgCheck size={14} />}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    </div>
-                    <div className="s2-preview-label">
-                      <SvgCheck size={14} />
-                      Live preview with your brand
-                    </div>
+                    )}
                   </div>
                 )}
 
@@ -1443,33 +1480,13 @@ export function TryFlowInner({
                       </div>
                     </div>
 
-                    {/* Expandable template list */}
-                    <div className={'s2-tpl-list' + (pickChoice !== 'ai' ? ' open' : '')}>
-                      <div className="s2-tpl-list-inner">
-                        {(showAllTemplates ? QUIZ_TEMPLATE_CATALOG : (matchedTemplates.length > 0 ? matchedTemplates : QUIZ_TEMPLATE_CATALOG.slice(0, 5))).map(function(tpl) {
-                          var isSelected = pickChoice === tpl.id;
-                          return (
-                            <div
-                              key={tpl.id}
-                              className={'s2-tpl-item' + (isSelected ? ' selected' : '')}
-                              onClick={function() { setPickChoice(tpl.id); }}
-                            >
-                              <div className="s2-tpl-item-radio"><div className="s2-tpl-item-radio-dot"></div></div>
-                              <div className="s2-tpl-info">
-                                <div className="s2-tpl-name">{tpl.name}</div>
-                                <div className="s2-tpl-desc">{tpl.description}</div>
-                              </div>
-                              <div className="s2-tpl-tag">{tpl.category.replace(/_/g, ' ')}</div>
-                            </div>
-                          );
-                        })}
-                        {!showAllTemplates && QUIZ_TEMPLATE_CATALOG.length > 5 && (
-                          <button type="button" className="s2-tpl-showall" onClick={function() { setShowAllTemplates(true); }}>
-                            Show all {QUIZ_TEMPLATE_CATALOG.length} templates
-                          </button>
-                        )}
+                    {/* Selected template name shown inline when in template mode */}
+                    {pickChoice !== 'ai' && pickChoice !== 'tpl' && (
+                      <div className="s2-tpl-selected-info">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        <span>{QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === pickChoice; })?.name || 'Template'}</span>
                       </div>
-                    </div>
+                    )}
 
                     {errorMsg && (
                       <div className="s2-analyze-err" style={{ marginBottom: 16 }}>
