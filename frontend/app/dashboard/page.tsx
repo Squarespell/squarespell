@@ -193,9 +193,9 @@ function DashStatCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
-            background: C.GRAY_50, border: '1px solid ' + C.GRAY_200,
+            background: C.ACCENT_LIGHT, border: '1px solid rgba(13,115,119,0.12)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: C.GRAY_600,
+            color: C.ACCENT,
           }}>
             {icon}
           </div>
@@ -624,12 +624,8 @@ function RecentLeadsTable({ leads, quizzes }: { leads: Lead[]; quizzes: Quiz[] }
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none' }}>
-                  <span style={{
-                    padding: '4px 10px', borderRadius: 6, background: C.GRAY_50,
-                    border: '1px solid ' + C.GRAY_200, fontSize: 13, color: C.GRAY_700,
-                    whiteSpace: 'nowrap',
-                  }}>{lead.quizzes?.title || quizMap[lead.quiz_id] || 'Quiz'}</span>
+                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none', fontSize: 14, color: C.GRAY_700, whiteSpace: 'nowrap' }}>
+                  {lead.quizzes?.title || quizMap[lead.quiz_id] || 'Quiz'}
                 </td>
                 <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none' }}>
                   <span style={{
@@ -697,12 +693,13 @@ function QuestionDropoff({ questions, quizTitle }: { questions: DropoffQuestion[
             {questions.map(function(q, qi) {
               return (
                 <tr key={qi}>
-                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: C.GRAY_600 }}>{q.question}</td>
+                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: C.GRAY_600 }}>{qi + 1}. {q.question}</td>
                   <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: '#F04438' }}>{q.dropoff_rate}%</td>
-                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, width: 140 }}>
+                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, width: 160 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 6, background: C.GRAY_100, borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: q.completion_rate + '%', background: C.ACCENT, borderRadius: 3 }} />
+                      <div style={{ flex: 1, height: 6, background: C.GRAY_100, borderRadius: 3, overflow: 'hidden', display: 'flex' }}>
+                        <div style={{ height: '100%', width: q.dropoff_rate + '%', background: '#F04438', borderRadius: '3px 0 0 3px', flexShrink: 0 }} />
+                        <div style={{ height: '100%', width: q.completion_rate + '%', background: C.ACCENT, borderRadius: '0 3px 3px 0', flexShrink: 0 }} />
                       </div>
                       <span style={{ fontSize: 13, fontWeight: 500, color: C.GRAY_700, minWidth: 35, textAlign: 'right' }}>{q.completion_rate}%</span>
                     </div>
@@ -789,10 +786,10 @@ function ABTestingBanner({ onDismiss }: { onDismiss: () => void }) {
     }}>
       <div style={{
         width: 40, height: 40, borderRadius: 10,
-        background: 'linear-gradient(135deg,' + C.ACCENT + ' 0%,#0a5a5e 100%)',
+        background: '#FFFAEB',
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B54708" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6"/><path d="M10 3v4.4a1 1 0 01-.3.7L6 12a5 5 0 003.5 8.5h5A5 5 0 0018 12l-3.7-3.9a1 1 0 01-.3-.7V3"/></svg>
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>Boost your conversions with A/B testing</div>
@@ -1147,7 +1144,7 @@ function OverviewInner() {
             margin: 0, fontSize: 24, fontWeight: 600, color: C.GRAY_900,
             letterSpacing: '-0.02em', marginBottom: 4, fontFamily: C.FONT,
           }}>
-            Welcome back, {displayName}
+            Welcome back, {displayName} &#128075;
           </h1>
           <p style={{ margin: 0, fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT }}>
             Here&apos;s what&apos;s happening with your quizzes today.
@@ -1160,9 +1157,8 @@ function OverviewInner() {
             fontSize: 14, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
             cursor: 'pointer', fontFamily: C.FONT, boxShadow: C.SHADOW_XS,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             {dateRange || 'Select dates'}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </button>
           <button
             onClick={function() { setNewQuizOpen(true); }}
