@@ -6,6 +6,8 @@ import Link from 'next/link';
 import FLOW_CSS from './flow-css';
 import { api } from '@/lib/api';
 import { publicQuizUrl, embedSnippet, APP_URL } from '@/lib/urls';
+import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '@/lib/quiz/templates';
+import { blocksToLegacy } from '@/lib/quiz/blocks';
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
@@ -68,6 +70,24 @@ const GOAL_OPTIONS = [
   { id: 'score_segment', label: 'Score and segment', description: 'Score visitors by intent and readiness to buy, then segment automatically' },
   { id: 'grow_email', label: 'Grow email list', description: 'Offer a free result or resource in exchange for email signup' },
 ];
+
+/* ========================================================================= */
+/* Template matching helper                                                  */
+/* ========================================================================= */
+function matchTemplatesToBusiness(businessType: string): QuizTemplateData[] {
+  var keywords = (businessType || '').toLowerCase().split(/[\s,;\/&]+/).filter(function(w) { return w.length > 2; });
+  var scored = QUIZ_TEMPLATE_CATALOG.map(function(tpl) {
+    var haystack = (tpl.tags.join(' ') + ' ' + tpl.category + ' ' + tpl.audience + ' ' + tpl.name).toLowerCase();
+    var score = 0;
+    keywords.forEach(function(kw) { if (haystack.indexOf(kw) !== -1) score += 1; });
+    if (haystack.indexOf(businessType.toLowerCase().trim()) !== -1) score += 2;
+    return { tpl: tpl, score: score };
+  });
+  scored.sort(function(a, b) { return b.score - a.score; });
+  var results = scored.slice(0, 2).map(function(s) { return s.tpl; });
+  if (results.length < 2) results = QUIZ_TEMPLATE_CATALOG.slice(0, 2);
+  return results;
+}
 
 /* ========================================================================= */
 /* SVG icons                                                                 */
@@ -219,6 +239,10 @@ export function TryFlowInner({
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, number>>({});
   const [buildingQuiz, setBuildingQuiz] = useState(false);
 
+  // Stage 2 - pick choice (AI custom vs template)
+  const [pickChoice, setPickChoice] = useState<string>('ai');
+  const [matchedTemplates, setMatchedTemplates] = useState<QuizTemplateData[]>([]);
+
   // Stage 2 - inline editing of AI-detected tags
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
@@ -321,6 +345,10 @@ export function TryFlowInner({
       setSessionToken(data.session_token);
       setOnboardingAnswers({});
       setUrl(normalized);
+      // Match templates based on scraped business type
+      var bizType = data.brand?.business?.type || '';
+      setMatchedTemplates(matchTemplatesToBusiness(bizType));
+      setPickChoice('ai');
       setStage(2);
       // eslint-disable-next-line no-console
       console.info('[squarespell] advanced to Stage 2');
@@ -353,13 +381,44 @@ export function TryFlowInner({
   }, [mode, urlParam, goAnalyze]);
 
   /* ======================== STAGE 2 -> STAGE 3 ======================== */
+  var handleCreateFromTemplate = useCallback(function(templateId: string) {
+    var tpl = QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === templateId; });
+    if (!tpl) return;
+    setBuildingQuiz(true);
+    setErrorMsg('');
+    try {
+      var blocks = tpl.blocks();
+      var legacy = blocksToLegacy(blocks);
+      var normalizedQuiz: Quiz = {
+        title: tpl.name,
+        description: tpl.description || '',
+        questions: legacy.questions || [],
+        outcomes: legacy.outcomes || [],
+        leadGate: legacy.leadGate,
+        settings: {},
+      };
+      setQuiz(normalizedQuiz);
+      setSelectedIdx(0);
+      setStage(3);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      setTimeout(function() {
+        document.getElementById('stage-3')?.scrollIntoView({ behavior: 'instant', block: 'start' });
+        document.querySelector('.s3-main')?.scrollTo({ top: 0, behavior: 'instant' });
+      }, 50);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to create quiz from template.');
+    } finally {
+      setBuildingQuiz(false);
+    }
+  }, []);
+
   const buildQuiz = useCallback(async () => {
-    if (!selectedGoal || !sessionToken) return;
+    if (!sessionToken) return;
     setBuildingQuiz(true);
     setErrorMsg('');
     try {
       const payload: Record<string, string> = {
-        goal: selectedGoal,
+        goal: 'capture_leads',
         business_type: brand?.business?.type || 'unknown',
         audience: brand?.business?.audience || 'unknown',
         tone: brand?.business?.tone || 'unknown',
@@ -411,7 +470,15 @@ export function TryFlowInner({
     } finally {
       setBuildingQuiz(false);
     }
-  }, [selectedGoal, sessionToken, brand, url]);
+  }, [sessionToken, brand, url]);
+
+  var handlePickGenerate = useCallback(function() {
+    if (pickChoice === 'ai') {
+      buildQuiz();
+    } else {
+      handleCreateFromTemplate(pickChoice);
+    }
+  }, [pickChoice, buildQuiz, handleCreateFromTemplate]);
 
   /* ======================== STAGE 3 editor helpers ==================== */
   const scheduleSave = useCallback((nextQuiz: Quiz) => {
@@ -1060,15 +1127,15 @@ export function TryFlowInner({
             </div>
           )}
 
-          {/* Loaded state */}
+          {/* Loaded state - Pick your quiz */}
           {!loading && sessionToken && (
             <div className="s2-loaded">
               <div className="step-badge">
                 <SvgBolt size={14} />
                 SITE ANALYZED
               </div>
-              <h1 className="step-title">Here's what we found.<br /><span className="step-title-acc">Pick your goal, we do the rest.</span></h1>
-              <p className="step-sub">Our AI read your site in seconds. Confirm below, choose one goal, and we generate a full branded quiz.</p>
+              <h1 className="step-title">Choose your quiz<br /><span className="step-title-acc">Pick one, we handle the rest.</span></h1>
+              <p className="step-sub">We read your site and matched it with the best quiz options. Select one to get started.</p>
 
               {/* Brand card */}
               <div className="brand-card">
@@ -1083,130 +1150,86 @@ export function TryFlowInner({
                 </div>
               </div>
 
-              {/* AI Detected panel */}
-              {brand && brand.business && (
-                <div className="ai-panel">
-                  <div className="ai-header">
-                    <SvgSpark size={18} />
-                    <span className="ai-header-text">AI detected from your site</span>
+              {/* 3 Pick cards - phone mockup style */}
+              <div className="sq-pick-grid">
+                {/* AI Custom card */}
+                <div
+                  className={'sq-pick-card' + (pickChoice === 'ai' ? ' sq-pick-selected' : '')}
+                  onClick={function() { setPickChoice('ai'); }}
+                >
+                  <div className="sq-pick-check">
+                    <SvgCheck size={12} />
                   </div>
-                  <div className="ai-tags">
-                    {/* Business Type */}
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Business type</span>
-                        {editingTag === 'type' ? (
-                          <input
-                            ref={editInputRef}
-                            className="ai-tag-input"
-                            value={editValues['type'] || ''}
-                            onChange={(e) => setEditValues((prev) => ({ ...prev, type: e.target.value }))}
-                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('type'); if (e.key === 'Escape') setEditingTag(null); }}
-                            onBlur={() => commitEditTag('type')}
-                            maxLength={80}
-                          />
-                        ) : (
-                          <span className="ai-tag-value">{brand.business?.type || 'Unknown'}</span>
-                        )}
-                      </div>
-                      {editingTag !== 'type' && (
-                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('type', brand.business?.type || ''); }}>edit</button>
-                      )}
+                  <div className="sq-pick-badge sq-pick-badge-ai">
+                    <SvgBolt size={12} />
+                    AI Custom
+                  </div>
+                  <div className="sq-pick-phone" style={{ borderColor: brand?.colors?.primary || '#0D7377' }}>
+                    <div className="sq-pick-phone-notch"></div>
+                    <div className="sq-pick-phone-header" style={{ background: brand?.colors?.primary || '#0D7377' }}>
+                      <div className="sq-pick-phone-logo">{siteLetter}</div>
+                      <div className="sq-pick-phone-title" style={{ color: '#fff' }}>Custom Quiz</div>
                     </div>
-                    {/* Audience */}
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Audience</span>
-                        {editingTag === 'audience' ? (
-                          <input
-                            ref={editingTag === 'audience' ? editInputRef : undefined}
-                            className="ai-tag-input"
-                            value={editValues['audience'] || ''}
-                            onChange={(e) => setEditValues((prev) => ({ ...prev, audience: e.target.value }))}
-                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('audience'); if (e.key === 'Escape') setEditingTag(null); }}
-                            onBlur={() => commitEditTag('audience')}
-                            maxLength={80}
-                          />
-                        ) : (
-                          <span className="ai-tag-value">{brand.business?.audience || 'Unknown'}</span>
-                        )}
+                    <div className="sq-pick-phone-body">
+                      <div className="sq-pick-phone-q">What best describes your needs?</div>
+                      <div className="sq-pick-phone-opts">
+                        <div className="sq-pick-phone-opt" style={{ borderColor: brand?.colors?.primary || '#0D7377' }}>Option A</div>
+                        <div className="sq-pick-phone-opt">Option B</div>
+                        <div className="sq-pick-phone-opt">Option C</div>
                       </div>
-                      {editingTag !== 'audience' && (
-                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('audience', brand.business?.audience || ''); }}>edit</button>
-                      )}
-                    </div>
-                    {/* Tone */}
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Tone</span>
-                        {editingTag === 'tone' ? (
-                          <input
-                            ref={editingTag === 'tone' ? editInputRef : undefined}
-                            className="ai-tag-input"
-                            value={editValues['tone'] || ''}
-                            onChange={(e) => setEditValues((prev) => ({ ...prev, tone: e.target.value }))}
-                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('tone'); if (e.key === 'Escape') setEditingTag(null); }}
-                            onBlur={() => commitEditTag('tone')}
-                            maxLength={80}
-                          />
-                        ) : (
-                          <span className="ai-tag-value">{brand.business?.tone || 'Unknown'}</span>
-                        )}
-                      </div>
-                      {editingTag !== 'tone' && (
-                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('tone', brand.business?.tone || ''); }}>edit</button>
-                      )}
-                    </div>
-                    {/* Key Offer */}
-                    <div className="ai-tag">
-                      <div className="ai-tag-content">
-                        <span className="ai-tag-label">Key offer</span>
-                        {editingTag === 'key_offer' ? (
-                          <input
-                            ref={editingTag === 'key_offer' ? editInputRef : undefined}
-                            className="ai-tag-input"
-                            value={editValues['key_offer'] || ''}
-                            onChange={(e) => setEditValues((prev) => ({ ...prev, key_offer: e.target.value }))}
-                            onKeyDown={(e) => { if (e.key === 'Enter') commitEditTag('key_offer'); if (e.key === 'Escape') setEditingTag(null); }}
-                            onBlur={() => commitEditTag('key_offer')}
-                            maxLength={80}
-                          />
-                        ) : (
-                          <span className="ai-tag-value">{brand.business?.key_offer || 'Unknown'}</span>
-                        )}
-                      </div>
-                      {editingTag !== 'key_offer' && (
-                        <button type="button" className="ai-tag-edit" onClick={(e) => { e.stopPropagation(); startEditTag('key_offer', brand.business?.key_offer || ''); }}>edit</button>
-                      )}
+                      <div className="sq-pick-phone-btn" style={{ background: brand?.colors?.primary || '#0D7377' }}>Next</div>
                     </div>
                   </div>
+                  <div className="sq-pick-name">AI-Generated Quiz</div>
+                  <div className="sq-pick-desc">Fully custom quiz built from your website content, tone, and offers</div>
                 </div>
-              )}
 
-              {/* Goal selection */}
-              <div className="goal-intro">One last thing</div>
-              <div className="goal-question">What should this quiz do for your business?</div>
-
-              <div className="goal-grid">
-                {GOAL_OPTIONS.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className={`goal-card${selectedGoal === goal.id ? ' selected' : ''}`}
-                    onClick={() => setSelectedGoal(goal.id)}
-                  >
-                    <div className="goal-check">
-                      <SvgCheck size={12} />
+                {/* Template cards */}
+                {matchedTemplates.map(function(tpl) {
+                  var isSelected = pickChoice === tpl.id;
+                  var firstBlock = tpl.blocks().find(function(b: any) { return b.type === 'question'; });
+                  var previewQ = (firstBlock as any)?.label || 'Which option fits you best?';
+                  var previewOpts = ((firstBlock as any)?.options || []).slice(0, 3);
+                  return (
+                    <div
+                      key={tpl.id}
+                      className={'sq-pick-card' + (isSelected ? ' sq-pick-selected' : '')}
+                      onClick={function() { setPickChoice(tpl.id); }}
+                    >
+                      <div className="sq-pick-check">
+                        <SvgCheck size={12} />
+                      </div>
+                      <div className="sq-pick-badge sq-pick-badge-tpl">
+                        <SvgPackage size={12} />
+                        Template
+                      </div>
+                      <div className="sq-pick-phone" style={{ borderColor: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>
+                        <div className="sq-pick-phone-notch"></div>
+                        <div className="sq-pick-phone-header" style={{ background: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>
+                          <div className="sq-pick-phone-logo">{siteLetter}</div>
+                          <div className="sq-pick-phone-title" style={{ color: '#fff' }}>{tpl.name.length > 20 ? tpl.name.slice(0, 18) + '...' : tpl.name}</div>
+                        </div>
+                        <div className="sq-pick-phone-body">
+                          <div className="sq-pick-phone-q">{previewQ.length > 45 ? previewQ.slice(0, 42) + '...' : previewQ}</div>
+                          <div className="sq-pick-phone-opts">
+                            {previewOpts.length > 0 ? previewOpts.map(function(opt: any, i: number) {
+                              return <div key={i} className={'sq-pick-phone-opt' + (i === 0 ? '' : '')} style={i === 0 ? { borderColor: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' } : {}}>{typeof opt === 'string' ? opt : (opt.label || opt.text || 'Option ' + (i + 1))}</div>;
+                            }) : (
+                              <>
+                                <div className="sq-pick-phone-opt" style={{ borderColor: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>Option A</div>
+                                <div className="sq-pick-phone-opt">Option B</div>
+                                <div className="sq-pick-phone-opt">Option C</div>
+                              </>
+                            )}
+                          </div>
+                          <div className="sq-pick-phone-btn" style={{ background: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>Next</div>
+                        </div>
+                      </div>
+                      <div className="sq-pick-name">{tpl.name}</div>
+                      <div className="sq-pick-desc">{tpl.description.length > 80 ? tpl.description.slice(0, 77) + '...' : tpl.description}</div>
                     </div>
-                    <div className={`goal-icon goal-icon-${goal.id.replace(/_/g, '-')}`}>
-                      {goal.id === 'capture_leads' && <SvgUsers size={22} />}
-                      {goal.id === 'recommend_service' && <SvgPackage size={22} />}
-                      {goal.id === 'score_segment' && <SvgBarChart size={22} />}
-                      {goal.id === 'grow_email' && <SvgMail size={22} />}
-                    </div>
-                    <div className="goal-title">{goal.label}</div>
-                    <div className="goal-desc">{goal.description}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {errorMsg && (
@@ -1215,7 +1238,7 @@ export function TryFlowInner({
                   <button
                     type="button"
                     className="hook-err-retry"
-                    onClick={() => { setErrorMsg(''); if (brand && sessionToken) buildQuiz(); else goAnalyze(url); }}
+                    onClick={function() { setErrorMsg(''); handlePickGenerate(); }}
                   >
                     Try again
                   </button>
@@ -1226,7 +1249,7 @@ export function TryFlowInner({
                 <div className="gen-loading">
                   <div className="gen-loading-spinner"></div>
                   <div className="gen-loading-title">Building your quiz</div>
-                  <div className="gen-loading-sub">AI is crafting questions tailored to your website...</div>
+                  <div className="gen-loading-sub">{pickChoice === 'ai' ? 'AI is crafting questions tailored to your website...' : 'Setting up your template...'}</div>
                   <div className="gen-skeleton-cards">
                     <div className="gen-skel-card"><div className="gen-skel-line w70"></div><div className="gen-skel-line w50"></div></div>
                     <div className="gen-skel-card"><div className="gen-skel-line w60"></div><div className="gen-skel-line w80"></div></div>
@@ -1236,15 +1259,14 @@ export function TryFlowInner({
               ) : (
                 <>
                   <button
-                    className={`btn-gen${selectedGoal ? ' ready' : ' disabled'}`}
-                    disabled={!selectedGoal}
-                    onClick={buildQuiz}
+                    className="btn-gen ready"
+                    onClick={handlePickGenerate}
                     type="button"
                   >
                     <SvgBolt size={18} />
-                    Generate my quiz
+                    {pickChoice === 'ai' ? 'Generate my quiz' : 'Use this template'}
                   </button>
-                  <div className="btn-hint">Takes about 30 seconds. You can edit everything after.</div>
+                  <div className="btn-hint">{pickChoice === 'ai' ? 'Takes about 30 seconds. You can edit everything after.' : 'Instant setup. You can edit everything after.'}</div>
                 </>
               )}
             </div>

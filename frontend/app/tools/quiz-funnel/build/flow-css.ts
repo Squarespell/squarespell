@@ -1512,10 +1512,177 @@ export const FLOW_CSS = `
   .s6-preview-mini span { height: 6px; background: var(--border); border-radius: 100px; flex: 1; }
   .s6-preview-mini span:first-child { background: var(--accent); flex: 2; }
 
+  /* ---- Pick cards (phone mockup style) ---- */
+  .sq-pick-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 28px 0 32px;
+  }
+  .sq-pick-card {
+    position: relative;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 16px 18px;
+    cursor: pointer;
+    transition: all 0.25s var(--ease);
+    text-align: center;
+  }
+  .sq-pick-card:hover {
+    border-color: rgba(13,115,119,0.35);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  }
+  .sq-pick-card.sq-pick-selected {
+    border-color: var(--accent);
+    background: rgba(13,115,119,0.03);
+    box-shadow: 0 0 0 3px rgba(13,115,119,0.12), 0 8px 24px rgba(13,115,119,0.08);
+  }
+  .sq-pick-card.sq-pick-selected .sq-pick-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .sq-pick-check {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s var(--ease);
+  }
+  .sq-pick-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+    margin-bottom: 14px;
+  }
+  .sq-pick-badge-ai {
+    background: rgba(13,115,119,0.1);
+    color: var(--accent);
+  }
+  .sq-pick-badge-tpl {
+    background: rgba(99,102,241,0.1);
+    color: #6366f1;
+  }
+  .sq-pick-phone {
+    width: 100%;
+    max-width: 180px;
+    margin: 0 auto 16px;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    aspect-ratio: 9 / 16;
+    display: flex;
+    flex-direction: column;
+  }
+  .sq-pick-phone-notch {
+    width: 60px;
+    height: 6px;
+    border-radius: 100px;
+    background: rgba(0,0,0,0.15);
+    margin: 8px auto 0;
+  }
+  .sq-pick-phone-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-top: 4px;
+  }
+  .sq-pick-phone-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sq-pick-phone-title {
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sq-pick-phone-body {
+    flex: 1;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sq-pick-phone-q {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.35;
+    text-align: left;
+    margin-bottom: 4px;
+  }
+  .sq-pick-phone-opts {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+  .sq-pick-phone-opt {
+    font-size: 10px;
+    padding: 6px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sq-pick-phone-btn {
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    padding: 6px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: auto;
+  }
+  .sq-pick-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .sq-pick-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
   @media (max-width: 1000px) {
     .s3-body { grid-template-columns: 1fr; }
     .s2-wrap { padding: 20px 24px 60px; }
     .goal-grid { grid-template-columns: 1fr; }
+    .sq-pick-grid { grid-template-columns: 1fr; }
     .ai-tags { flex-direction: column; }
     .ai-tag { width: 100%; }
     .s6-wrap { grid-template-columns: 1fr; }
