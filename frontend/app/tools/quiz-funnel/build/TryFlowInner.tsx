@@ -1347,18 +1347,38 @@ export function TryFlowInner({
                       </div>
 
                       {/* Brand colors */}
-                      <div className="s2-detail-row">
-                        <div className="s2-detail-icon s2-detail-icon-colors">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12c0 2.76 1.12 5.26 2.93 7.07L12 22z"/></svg>
-                        </div>
-                        <div className="s2-detail-content">
-                          <div className="s2-detail-label">Brand colors</div>
-                          <div className="s2-color-dots">
-                            {brand?.colors?.primary && <div className="s2-color-dot" style={{ background: brand.colors.primary }} title={'Primary: ' + brand.colors.primary}></div>}
-                            {brand?.colors?.background && <div className="s2-color-dot" style={{ background: brand.colors.background }} title={'Background: ' + brand.colors.background}></div>}
-                            {brand?.colors?.text && <div className="s2-color-dot" style={{ background: brand.colors.text }} title={'Text: ' + brand.colors.text}></div>}
-                            {brand?.colors?.accent && <div className="s2-color-dot" style={{ background: brand.colors.accent }} title={'Accent: ' + brand.colors.accent}></div>}
+                      <div className="s2-detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                          <div className="s2-detail-icon s2-detail-icon-colors">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12c0 2.76 1.12 5.26 2.93 7.07L12 22z"/></svg>
                           </div>
+                          <div className="s2-detail-label" style={{ marginBottom: 0 }}>Brand colors</div>
+                        </div>
+                        <div className="s2-color-palette">
+                          {brand?.colors?.primary && (
+                            <div className="s2-color-chip">
+                              <div className="s2-color-dot" style={{ background: brand.colors.primary }}></div>
+                              <span className="s2-color-label">{brand.colors.primary}</span>
+                            </div>
+                          )}
+                          {brand?.colors?.background && (
+                            <div className="s2-color-chip">
+                              <div className="s2-color-dot" style={{ background: brand.colors.background }}></div>
+                              <span className="s2-color-label">{brand.colors.background}</span>
+                            </div>
+                          )}
+                          {brand?.colors?.text && (
+                            <div className="s2-color-chip">
+                              <div className="s2-color-dot" style={{ background: brand.colors.text }}></div>
+                              <span className="s2-color-label">{brand.colors.text}</span>
+                            </div>
+                          )}
+                          {brand?.colors?.accent && (
+                            <div className="s2-color-chip">
+                              <div className="s2-color-dot" style={{ background: brand.colors.accent }}></div>
+                              <span className="s2-color-label">{brand.colors.accent}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

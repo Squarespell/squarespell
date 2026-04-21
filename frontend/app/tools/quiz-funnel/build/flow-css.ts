@@ -1585,43 +1585,48 @@ export const FLOW_CSS = `
     to { opacity: 1; transform: scale(1); }
   }
 
-  /* Split-screen container */
+  /* Split-screen container — locked to viewport, no scroll */
   .s2-split {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: calc(100vh - 72px);
+    height: calc(100vh - 72px);
     max-width: 1400px;
     margin: 0 auto;
+    overflow: hidden;
   }
 
-  /* Left visual panel */
+  /* Left visual panel — fixed, centered */
   .s2-left {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 48px 40px;
+    padding: 40px 36px;
     position: relative;
     overflow: hidden;
     background: var(--bg-2);
     border-right: 1px solid var(--border);
+    height: 100%;
   }
   .s2-left-inner {
     width: 100%;
-    max-width: 480px;
+    max-width: 460px;
     animation: s2ScaleIn 0.7s var(--ease-spring) both;
   }
 
-  /* Right content panel */
+  /* Right content panel — centered with contained overflow */
   .s2-right {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 48px 56px;
-    min-height: 100%;
+    align-items: flex-start;
+    padding: 36px 48px;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
   }
   .s2-right-inner {
-    max-width: 460px;
+    max-width: 440px;
     width: 100%;
   }
 
@@ -1734,21 +1739,21 @@ export const FLOW_CSS = `
   .s2-brand-badge svg { width: 14px; height: 14px; }
 
   .s2-brand-title {
-    font-size: clamp(24px, 3vw, 32px);
+    font-size: clamp(22px, 2.8vw, 28px);
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1.15;
     color: var(--text);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     animation: s2SlideUp 0.6s var(--ease-spring) 0.15s both;
   }
   .s2-brand-title-acc { color: var(--accent); }
 
   .s2-brand-sub {
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text-muted);
-    line-height: 1.6;
-    margin-bottom: 28px;
+    line-height: 1.55;
+    margin-bottom: 20px;
     animation: s2SlideUp 0.6s var(--ease-spring) 0.2s both;
   }
 
@@ -1756,15 +1761,15 @@ export const FLOW_CSS = `
   .s2-brand-details {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 32px;
+    gap: 8px;
+    margin-bottom: 24px;
     animation: s2SlideUp 0.6s var(--ease-spring) 0.25s both;
   }
   .s2-detail-row {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
+    gap: 12px;
+    padding: 12px 16px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -1837,21 +1842,42 @@ export const FLOW_CSS = `
   }
   .s2-detail-input:focus { box-shadow: 0 0 0 3px rgba(13,115,119,0.1); }
 
-  /* Brand color dots inline */
-  .s2-color-dots {
+  /* Brand color palette row */
+  .s2-color-palette {
     display: flex;
-    gap: 6px;
+    gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
+  }
+  .s2-color-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    transition: all 0.2s var(--ease-spring);
+  }
+  .s2-color-chip:hover {
+    border-color: var(--border-2);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
   }
   .s2-color-dot {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    border: 2px solid var(--surface);
-    box-shadow: 0 0 0 1px var(--border);
-    transition: transform 0.2s var(--ease-spring);
+    border: 2px solid rgba(255,255,255,0.8);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.08), inset 0 1px 2px rgba(0,0,0,0.06);
+    flex-shrink: 0;
   }
-  .s2-color-dot:hover { transform: scale(1.2); }
+  .s2-color-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: ui-monospace, Menlo, monospace;
+    letter-spacing: 0.01em;
+  }
 
   /* Continue CTA */
   .s2-continue-btn {
@@ -2394,17 +2420,19 @@ export const FLOW_CSS = `
   .s2-skel-split {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: calc(100vh - 72px);
+    height: calc(100vh - 72px);
     max-width: 1400px;
     margin: 0 auto;
+    overflow: hidden;
   }
   .s2-skel-left {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 48px 40px;
+    padding: 40px 36px;
     background: var(--bg-2);
     border-right: 1px solid var(--border);
+    height: 100%;
   }
   .s2-skel-preview {
     width: 100%;
