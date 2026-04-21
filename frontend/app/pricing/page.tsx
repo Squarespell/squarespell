@@ -146,7 +146,7 @@ function PricingInner() {
     setLoading(plan);
     try {
       const token = await getToken();
-      const res = await fetch(`${API}/api/create-checkout`, {
+      const res = await fetch(`${API}/api/stripe/create-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ plan, billing }),

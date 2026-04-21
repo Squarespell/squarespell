@@ -1723,7 +1723,7 @@ userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const PRICE_IDS: Record<string,Record<string,string>> = { growth: { monthly: process.env.STRIPE_GROWTH_PRICE_ID!, yearly: process.env.STRIPE_GROWTH_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
+const PRICE_IDS: Record<string,Record<string,string>> = { growth: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
 
 export const stripeRouter = Router();
 stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
