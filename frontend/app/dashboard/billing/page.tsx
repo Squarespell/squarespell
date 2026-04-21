@@ -312,6 +312,31 @@ export default function BillingPage() {
 
   var isTrial = plan?.plan === 'trial' || plan?.plan === 'free';
   var isPaid = plan && !isTrial && plan.plan !== 'starter' && plan.plan !== 'growth';
+  var [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  function handleCheckout(planId: string) {
+    if (!token) return;
+    setCheckoutLoading(planId);
+    var billing = yearly ? 'yearly' : 'monthly';
+    fetch(API + '/api/stripe/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ plan: planId, billing: billing }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert(data.error || 'Could not start checkout');
+          setCheckoutLoading(null);
+        }
+      })
+      .catch(function() {
+        alert('Something went wrong. Please try again.');
+        setCheckoutLoading(null);
+      });
+  }
 
   const openPortal = () => {
     if (!token) return;
@@ -529,8 +554,10 @@ export default function BillingPage() {
                       );
                     })}
                   </ul>
-                  {!isCurrentPlan && (
-                    <GhostButton onClick={function() { router.push('/pricing' + (yearly ? '?interval=yearly' : '')); }}>Choose {p.name}</GhostButton>
+                  {!isCurrentPlan && p.id !== 'free' && (
+                    <GhostButton onClick={function() { handleCheckout(p.id); }}>
+                      {checkoutLoading === p.id ? 'Loading...' : 'Choose ' + p.name}
+                    </GhostButton>
                   )}
                 </div>
               );
