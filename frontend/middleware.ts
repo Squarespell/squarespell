@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
+const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/admin(.*)'])
 
 /**
  * Host + path routing rules.
@@ -32,6 +32,7 @@ const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
  */
 const APP_HOST = 'app.squarespell.com'
 const QUIZ_HOST_PREFIX = 'quiz.'
+const ADMIN_HOST_PREFIX = 'admin.'
 
 function isQuizHost(host: string | null): boolean {
   if (!host) return false
@@ -39,12 +40,30 @@ function isQuizHost(host: string | null): boolean {
   return h.startsWith(QUIZ_HOST_PREFIX)
 }
 
+function isAdminHost(host: string | null): boolean {
+  if (!host) return false
+  const h = host.toLowerCase()
+  return h.startsWith(ADMIN_HOST_PREFIX)
+}
+
 export default clerkMiddleware((auth, req) => {
   const host = req.headers.get('host')
   const pathname = req.nextUrl.pathname
 
-  // 1. Legacy quiz.squarespell.com → permanent 301 to app.squarespell.com.
-  //    Preserves path, query, and hash so /q/abc?ref=foo continues to work.
+  // 1a. admin.squarespell.com → rewrite to /admin path.
+  //     The admin dashboard is a standalone page, no dashboard shell.
+  if (isAdminHost(host)) {
+    const target = req.nextUrl.clone()
+    if (pathname === '/' || pathname === '') {
+      target.pathname = '/admin'
+    } else if (!pathname.startsWith('/admin') && !pathname.startsWith('/sign-in') && !pathname.startsWith('/sign-up') && !pathname.startsWith('/_next') && !pathname.startsWith('/api')) {
+      target.pathname = '/admin' + pathname
+    }
+    return NextResponse.rewrite(target)
+  }
+
+  // 1b. Legacy quiz.squarespell.com → permanent 301 to app.squarespell.com.
+  //     Preserves path, query, and hash so /q/abc?ref=foo continues to work.
   if (isQuizHost(host)) {
     const target = req.nextUrl.clone()
     target.protocol = 'https:'
