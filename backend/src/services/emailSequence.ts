@@ -182,7 +182,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
   }
 
   try {
-    // Find all pending emails where send_at <= now
+    // Find all pending emails where send_at <= now, PLUS failed emails ready for retry
     const now = new Date();
     const { data: queueItems, error: queryError } = await supabase
       .from('email_sequence_queue')
@@ -192,6 +192,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
         lead_id,
         sequence_id,
         email_index,
+        retry_count,
         email_sequences!inner(
           id,
           quiz_id,
@@ -208,7 +209,7 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
         )
         `
       )
-      .eq('status', 'pending')
+      .or('status.eq.pending,status.eq.retry')
       .lte('send_at', now.toISOString())
       .limit(100);
 
@@ -355,17 +356,40 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
         log.info(`[EmailSequence] Sent email ${item.email_index + 1} to ${leadData.email}`);
         processed++;
       } catch (err: any) {
-        log.error('[EmailSequence] Failed to send email for queue item ${item.id}:', { err: err.message });
+        log.error('[EmailSequence] Failed to send email for queue item ' + item.id + ':', { err: err.message });
 
-        // Mark as failed with error message
-        await supabase
-          .from('email_sequence_queue')
-          .update({
-            status: 'failed',
-            error_message: err.message,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', item.id);
+        // Retry with exponential backoff: 1m, 5m, 30m, 2h, 12h (max 5 retries)
+        var currentRetry = (item as any).retry_count || 0;
+        var MAX_RETRIES = 5;
+        var RETRY_DELAYS = [60, 300, 1800, 7200, 43200]; // seconds
+
+        if (currentRetry < MAX_RETRIES) {
+          var nextRetryDelay = RETRY_DELAYS[currentRetry] || 43200;
+          var nextRetryAt = new Date(Date.now() + nextRetryDelay * 1000).toISOString();
+          await supabase
+            .from('email_sequence_queue')
+            .update({
+              status: 'retry',
+              retry_count: currentRetry + 1,
+              next_retry_at: nextRetryAt,
+              send_at: nextRetryAt,
+              last_error: (err.message || 'Unknown error').slice(0, 500),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.id);
+          log.info('[EmailSequence] Scheduled retry ' + (currentRetry + 1) + '/' + MAX_RETRIES + ' for item ' + item.id + ' at ' + nextRetryAt);
+        } else {
+          // Max retries exhausted — mark as permanently failed
+          await supabase
+            .from('email_sequence_queue')
+            .update({
+              status: 'failed',
+              last_error: (err.message || 'Unknown error').slice(0, 500),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.id);
+          log.error('[EmailSequence] Permanently failed after ' + MAX_RETRIES + ' retries: item ' + item.id);
+        }
 
         failed++;
       }

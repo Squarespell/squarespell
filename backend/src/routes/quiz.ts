@@ -115,6 +115,16 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
 });
 
 router.post('/:id/publish', async (req: AuthenticatedRequest, res) => {
+  // M3: Validate quiz has at least 1 question and 1 outcome before publishing
+  const { data: quizForValidation } = await supabase
+    .from('quizzes').select('questions,outcomes')
+    .eq('id', req.params.id).eq('user_id', req.dbUserId).single();
+  if (!quizForValidation) return res.status(404).json({ error: 'Quiz not found' });
+  var questions = quizForValidation.questions as any[] || [];
+  var outcomes = quizForValidation.outcomes as any[] || [];
+  if (questions.length === 0) return res.status(400).json({ error: 'Quiz must have at least 1 question to publish' });
+  if (outcomes.length === 0) return res.status(400).json({ error: 'Quiz must have at least 1 outcome to publish' });
+
   // If the slug is still the legacy 8-char random, regenerate from title
   // so the published URL is human-readable.
   const { data: existing } = await supabase

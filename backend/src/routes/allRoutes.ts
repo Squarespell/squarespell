@@ -17,6 +17,9 @@ import { getRecommendations } from '../services/recommendations';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, notifyNewLead } from '../services/notifications';
 import * as quizPaymentsService from '../services/quizPayments';
 import { supabase } from '../db/supabaseClient';
+import { encryptConfig, decryptConfig } from '../utils/encryption';
+import { validateWebhookUrl } from '../utils/urlValidator';
+import { logIntegrationError } from '../services/integrationErrorLog';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { UAParser } from 'ua-parser-js';
@@ -190,22 +193,14 @@ async function markDraftClaimed(claimToken: string, userId: string): Promise<voi
 // build-quiz can use them without re-scraping.
 const previewSessionCache = new Map<string, { brand: any; url: string; onboarding_questions: any[]; answers: Record<string, string>; createdAt: number }>();
 
-// ── Public Preview Generate (no auth, rate-limited by IP) ────────────────────
-const previewRateMap = new Map<string, { count: number; resetAt: number }>();
+// ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
+import { previewLimiter, getClientIp } from '../services/rateLimiter';
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
-  // Simple rate limit: 50 previews per IP per hour
-  const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim();
-  const now = Date.now();
-  const entry = previewRateMap.get(ip);
-  if (entry && entry.resetAt > now && entry.count >= 50) {
-    return res.status(429).json({ error: 'Too many previews. Please try again later or sign up for unlimited access.' });
-  }
-  if (!entry || entry.resetAt <= now) {
-    previewRateMap.set(ip, { count: 1, resetAt: now + 3600000 });
-  } else {
-    entry.count++;
-  }
+  // Rate limit via Redis-backed Upstash limiter (replaces in-memory Map)
+  const ip = getClientIp(req);
+  const { success: previewRlOk } = await previewLimiter.limit('preview:' + ip);
+  if (!previewRlOk) return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
 
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
@@ -244,17 +239,9 @@ previewRouter.post('/preview-generate', async (req, res) => {
 
 // ── Stage 1 → Stage 2: Analyze the site and return 5 onboarding questions ───
 previewRouter.post('/preview-analyze', async (req, res) => {
-  const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim();
-  const now = Date.now();
-  const entry = previewRateMap.get(ip);
-  if (entry && entry.resetAt > now && entry.count >= 50) {
-    return res.status(429).json({ error: 'Too many previews. Please try again later or sign up for unlimited access.' });
-  }
-  if (!entry || entry.resetAt <= now) {
-    previewRateMap.set(ip, { count: 1, resetAt: now + 3600000 });
-  } else {
-    entry.count++;
-  }
+  const ip = getClientIp(req);
+  const { success: analyzeRlOk } = await previewLimiter.limit('analyze:' + ip);
+  if (!analyzeRlOk) return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
 
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
@@ -489,8 +476,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
   const { data: owner } = await supabase.from('users').select('plan,brand_kit').eq('id', quiz.user_id).single();
   const { leads: leadLimit } = getPlanLimits(owner?.plan ?? 'free');
-  const { count } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id);
-  if ((count ?? 0) >= leadLimit) return res.status(403).json({ error: 'Lead limit reached' });
+
   const metadata: Record<string, any> = {};
   if (typeof time_to_complete_ms === 'number') {
     metadata.time_to_complete_ms = time_to_complete_ms;
@@ -510,9 +496,29 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     metadata.os = ua.os.name;
   }
 
-  const { data: leadData, error } = await supabase.from('leads').insert({ quiz_id: quiz.id, user_id: quiz.user_id, name: name ?? null, email, answers: answers ?? {}, outcome_id: outcome_id ?? null, metadata, consent: consent === true, consent_text: consent ? (consent_text || null) : null }).select('id, metadata, score').single();
-  if (error) return res.status(500).json({ error: error.message });
-  const leadId = leadData?.id;
+  // Atomic lead insert with limit check — prevents race condition (C4 fix)
+  const { data: leadResult, error } = await supabase.rpc('insert_lead_with_limit_check', {
+    p_quiz_id: quiz.id,
+    p_user_id: quiz.user_id,
+    p_name: name ?? null,
+    p_email: email,
+    p_answers: answers ?? {},
+    p_outcome_id: outcome_id ?? null,
+    p_metadata: metadata,
+    p_consent: consent === true,
+    p_consent_text: consent ? (consent_text || null) : null,
+    p_lead_limit: leadLimit,
+  });
+
+  if (error) {
+    if (error.message && error.message.includes('LEAD_LIMIT_REACHED')) {
+      return res.status(403).json({ error: 'Lead limit reached' });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+
+  var leadData = Array.isArray(leadResult) ? leadResult[0] : leadResult;
+  const leadId = leadData?.lead_id;
   await supabase.rpc('increment_lead_count', { qid: quiz.id });
 
   const { data: ownerUser } = await supabase.from('users').select('email,brand_kit').eq('id', quiz.user_id).single();
@@ -538,8 +544,12 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     var quizTitleForNotif = '';
     var { data: qInfoNotif } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
     quizTitleForNotif = qInfoNotif?.title || 'Your quiz';
-    notifyNewLead(quiz.user_id, email, quizTitleForNotif, quiz.id).catch(function() {});
-  } catch {}
+    notifyNewLead(quiz.user_id, email, quizTitleForNotif, quiz.id).catch(function(e: any) {
+      log.info('[Notification] Failed to notify new lead:', { detail: e?.message });
+    });
+  } catch (notifErr: any) {
+    log.info('[Notification] Error setting up notification:', { detail: (notifErr as any)?.message });
+  }
 
   // GDPR gate: skip all outbound emails if consent is required but not given
   const gdprEnabled = (quiz.settings as any)?.gdpr_consent_enabled === true;
@@ -587,7 +597,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       leadId,
       quiz.id,
       outcome_id,
-      leadData?.score ?? null,
+      leadData?.lead_score ?? null,
       [],
       (quiz as any).mode || null,
     ).catch((e: any) => log.info('[EmailSeq] enqueue failed', { err: e?.message }));
@@ -613,30 +623,57 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       const outcomeTags = matchedOutcomeForTag ? ['sq:' + (quizMeta?.slug ?? ''), 'outcome:' + (matchedOutcomeForTag.title || 'unknown')] : ['sq:' + (quizMeta?.slug ?? '')];
 
       for (const integration of integrations) {
+        // Decrypt sensitive config fields before use
+        var decConfig = decryptConfig(integration.config || {});
+
         // Check quiz_id mapping — if integration has quiz_ids, only fire for matching quizzes
-        if (integration.config?.quiz_ids && Array.isArray(integration.config.quiz_ids) && integration.config.quiz_ids.length > 0) {
-          if (!integration.config.quiz_ids.includes(quiz.id)) continue;
+        if (decConfig.quiz_ids && Array.isArray(decConfig.quiz_ids) && decConfig.quiz_ids.length > 0) {
+          if (!decConfig.quiz_ids.includes(quiz.id)) continue;
         }
 
-        if (integration.type === 'webhook' && integration.config?.url) {
-          fetch(integration.config.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(webhookPayload) }).catch(function() {});
+        if (integration.type === 'webhook' && decConfig.url) {
+          // Validate webhook URL to prevent SSRF
+          var webhookUrlErr = validateWebhookUrl(decConfig.url);
+          if (webhookUrlErr) {
+            logIntegrationError(integration.id, integration.type, quiz.user_id, quiz.id, 'SSRF blocked: ' + webhookUrlErr).catch(function() {});
+            continue;
+          }
+          fetch(decConfig.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(webhookPayload) })
+            .then(function(resp) {
+              if (!resp.ok) {
+                logIntegrationError(integration.id, integration.type, quiz.user_id, quiz.id, 'Webhook HTTP ' + resp.status).catch(function() {});
+              }
+            })
+            .catch(function(e: any) {
+              logIntegrationError(integration.id, integration.type, quiz.user_id, quiz.id, e?.message || 'Webhook fetch failed').catch(function() {});
+            });
         } else if (integration.type === 'mailchimp' || integration.type === 'klaviyo' || integration.type === 'convertkit') {
           // Push to email marketing platform via integration service
           const { pushLeadToIntegration } = await import('../services/integrations/index');
           pushLeadToIntegration(
-            { type: integration.type, config: integration.config },
-            { email, firstName: name ?? '', tags: outcomeTags, metadata: { quiz_title: quizMeta?.title ?? '', outcome: matchedOutcomeForTag?.title ?? '', score: leadData?.score ?? null } }
+            { type: integration.type, config: decConfig },
+            { email, firstName: name ?? '', tags: outcomeTags, metadata: { quiz_title: quizMeta?.title ?? '', outcome: matchedOutcomeForTag?.title ?? '', score: leadData?.lead_score ?? null } }
           ).then(function(result) {
-            if (!result.success) log.info('[Integration] ' + integration.type + ' push failed:', { detail: result.error });
-            else log.info('[Integration] ' + integration.type + ' push success for:', { detail: email });
-          }).catch(function(e: any) { log.info('[Integration] ' + integration.type + ' error:', { detail: e?.message }); });
-        } else if (integration.type === 'google_sheets' && integration.config?.spreadsheet_id) {
+            if (!result.success) {
+              log.info('[Integration] ' + integration.type + ' push failed:', { detail: result.error });
+              logIntegrationError(integration.id, integration.type, quiz.user_id, quiz.id, result.error || 'Unknown push failure').catch(function() {});
+            } else {
+              log.info('[Integration] ' + integration.type + ' push success for:', { detail: email });
+            }
+          }).catch(function(e: any) {
+            log.info('[Integration] ' + integration.type + ' error:', { detail: e?.message });
+            logIntegrationError(integration.id, integration.type, quiz.user_id, quiz.id, e?.message || 'Integration exception').catch(function() {});
+          });
+        } else if (integration.type === 'google_sheets' && decConfig.spreadsheet_id) {
           // Push to Google Sheets
           const { appendLeadToSheet } = await import('../services/integrations/googleSheets');
           appendLeadToSheet(
-            { spreadsheet_id: integration.config.spreadsheet_id, service_account_json: integration.config.service_account_json || '', sheet_name: integration.config.sheet_name },
-            { timestamp: new Date().toISOString(), email, name: name ?? '', quiz_name: quizMeta?.title ?? '', mode: (quizMeta as any)?.mode || 'lead_quiz', outcome: matchedOutcomeForTag?.title ?? '', score: leadData?.score ?? undefined, answers: answers ?? {} }
-          ).catch(function(e: any) { log.info('[GoogleSheets] push failed:', { detail: e?.message }); });
+            { spreadsheet_id: decConfig.spreadsheet_id, service_account_json: decConfig.service_account_json || '', sheet_name: decConfig.sheet_name },
+            { timestamp: new Date().toISOString(), email, name: name ?? '', quiz_name: quizMeta?.title ?? '', mode: (quizMeta as any)?.mode || 'lead_quiz', outcome: matchedOutcomeForTag?.title ?? '', score: leadData?.lead_score ?? undefined, answers: answers ?? {} }
+          ).catch(function(e: any) {
+            log.info('[GoogleSheets] push failed:', { detail: e?.message });
+            logIntegrationError(integration.id, integration.type, quiz.user_id, quiz.id, e?.message || 'Google Sheets push failed').catch(function() {});
+          });
         }
       }
     }
@@ -674,7 +711,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           (quiz as any).mode || 'lead_quiz',
           answersSummary,
           matchedOutcome?.title || 'No specific outcome',
-          leadData.score ?? undefined
+          leadData.lead_score ?? undefined
         ).then((aiSummary) => {
           if (aiSummary && leadId) {
             (async () => {
@@ -683,7 +720,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
                   .from('leads')
                   .update({
                     metadata: {
-                      ...leadData.metadata,
+                      ...(leadData?.lead_metadata || metadata),
                       ai_summary: aiSummary
                     }
                   })
@@ -780,32 +817,87 @@ leadsRouter.get('/leads/:id', requireAuth, attachUser, async (req: Authenticated
   }
 });
 
-// GDPR data deletion request — lets quiz owners or leads request data removal
+// GDPR data deletion — two-step: request token via email, then confirm with token.
+// Step 1: Request deletion — sends verification email with a token
 leadsRouter.post('/gdpr/delete-request', async (req, res) => {
   const { email, quiz_slug } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
 
+  // Rate limit: 3 requests per hour per IP
+  var gdprIp = ((req.headers['x-forwarded-for'] as string) || req.ip || 'unknown').split(',')[0].trim();
+  var { success: rlSuccess } = await (await import('../services/rateLimiter')).leadLimiter.limit('gdpr:' + gdprIp);
+  if (!rlSuccess) return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+
   try {
-    // Find the quiz and check if GDPR deletion is allowed
-    if (quiz_slug) {
-      const { data: quiz } = await supabase.from('quizzes').select('id,settings').eq('slug', quiz_slug).single();
-      if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-      const settings = (quiz.settings as any) || {};
-      if (settings.gdpr_consent_enabled && settings.gdpr_allow_deletion === false) {
-        return res.status(403).json({ error: 'Data deletion requests are not enabled for this quiz' });
-      }
-      // Delete leads for this specific quiz
-      const { error: delError, count } = await supabase.from('leads').delete().eq('quiz_id', quiz.id).eq('email', email);
-      if (delError) return res.status(500).json({ error: delError.message });
-      res.json({ success: true, deleted: count || 0, message: 'Your data has been deleted for this quiz.' });
-    } else {
-      // Delete all leads for this email across all quizzes
-      const { error: delError, count } = await supabase.from('leads').delete().eq('email', email);
-      if (delError) return res.status(500).json({ error: delError.message });
-      res.json({ success: true, deleted: count || 0, message: 'All your data has been deleted.' });
+    // Generate a secure verification token
+    var deleteToken = crypto.randomBytes(32).toString('hex');
+    var expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour expiry
+
+    // Store the token
+    await supabase.from('gdpr_deletion_requests').insert({
+      email: email,
+      quiz_slug: quiz_slug || null,
+      token: deleteToken,
+      expires_at: expiresAt,
+      confirmed: false,
+    });
+
+    // Send verification email (if Resend is configured)
+    if (resend) {
+      var confirmUrl = APP_URL + '/api/gdpr/confirm-delete?token=' + deleteToken;
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
+        to: email,
+        subject: 'Confirm your data deletion request',
+        html: '<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px"><h2 style="font-size:20px;margin:0 0 16px">Data Deletion Request</h2><p>We received a request to delete your quiz data. Click the button below to confirm.</p><p>This link expires in 1 hour.</p><a href="' + confirmUrl + '" style="display:inline-block;margin-top:16px;background:#0D7377;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Confirm Deletion</a><p style="margin-top:24px;color:#888;font-size:12px">If you did not request this, you can safely ignore this email.</p></div>',
+      });
     }
+
+    // Always return success to prevent email enumeration
+    res.json({ success: true, message: 'If this email has quiz data, a verification email has been sent. Please check your inbox.' });
   } catch (err: any) {
     res.status(500).json({ error: err?.message || 'Failed to process deletion request' });
+  }
+});
+
+// Step 2: Confirm deletion with token
+leadsRouter.get('/gdpr/confirm-delete', async (req, res) => {
+  var token = req.query.token as string;
+  if (!token) return res.status(400).json({ error: 'token required' });
+
+  try {
+    // Look up the token
+    var { data: request } = await supabase.from('gdpr_deletion_requests')
+      .select('id, email, quiz_slug, expires_at, confirmed')
+      .eq('token', token)
+      .single();
+
+    if (!request) return res.status(404).json({ error: 'Invalid or expired deletion token' });
+    if (request.confirmed) return res.status(400).json({ error: 'This deletion request has already been processed' });
+    if (new Date(request.expires_at) < new Date()) return res.status(410).json({ error: 'This deletion link has expired. Please submit a new request.' });
+
+    // Perform the actual deletion
+    if (request.quiz_slug) {
+      var { data: quiz } = await supabase.from('quizzes').select('id,settings').eq('slug', request.quiz_slug).single();
+      if (quiz) {
+        var settings = (quiz.settings as any) || {};
+        if (settings.gdpr_consent_enabled && settings.gdpr_allow_deletion === false) {
+          return res.status(403).json({ error: 'Data deletion is not enabled for this quiz' });
+        }
+        await supabase.from('leads').delete().eq('quiz_id', quiz.id).eq('email', request.email);
+      }
+    } else {
+      await supabase.from('leads').delete().eq('email', request.email);
+    }
+
+    // Mark token as used
+    await supabase.from('gdpr_deletion_requests').update({ confirmed: true }).eq('id', request.id);
+
+    // Return a user-friendly HTML page
+    res.setHeader('Content-Type', 'text/html');
+    res.send('<html><body style="font-family:system-ui,sans-serif;max-width:480px;margin:80px auto;text-align:center"><h2>Data Deleted</h2><p>Your quiz data has been successfully removed.</p></body></html>');
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to process deletion' });
   }
 });
 
@@ -816,25 +908,44 @@ integrationsRouter.use(requireAuth, attachUser);
 integrationsRouter.get('/', async (req: AuthenticatedRequest, res) => {
   const { data, error } = await supabase.from('integrations').select('id,type,config,active,created_at').eq('user_id', req.dbUserId).order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data ?? []);
+  // Decrypt sensitive fields before sending to client
+  var decryptedData = (data ?? []).map(function(row: any) {
+    return { ...row, config: decryptConfig(row.config || {}) };
+  });
+  res.json(decryptedData);
 });
 
 integrationsRouter.post('/', async (req: AuthenticatedRequest, res) => {
   const { type, config } = req.body;
   if (!type || !config) return res.status(400).json({ error: 'type and config required' });
-  if (type === 'webhook' && !config.url) return res.status(400).json({ error: 'Webhook URL required' });
-  const { data, error } = await supabase.from('integrations').insert({ user_id: req.dbUserId, type, config, active: true }).select().single();
+  if (type === 'webhook') {
+    if (!config.url) return res.status(400).json({ error: 'Webhook URL required' });
+    var urlError = validateWebhookUrl(config.url);
+    if (urlError) return res.status(400).json({ error: urlError });
+  }
+  // Encrypt sensitive fields before storing
+  var encryptedConfig = encryptConfig(config);
+  const { data, error } = await supabase.from('integrations').insert({ user_id: req.dbUserId, type, config: encryptedConfig, active: true }).select().single();
   if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data);
+  // Return decrypted config to client
+  res.status(201).json({ ...data, config: decryptConfig(data.config || {}) });
 });
 
 integrationsRouter.patch('/:id', async (req: AuthenticatedRequest, res) => {
   const allowed = ['config', 'active'];
   const updates: Record<string, any> = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
+  // Encrypt config if being updated
+  if (updates.config) {
+    if (updates.config.url) {
+      var urlErr = validateWebhookUrl(updates.config.url);
+      if (urlErr) return res.status(400).json({ error: urlErr });
+    }
+    updates.config = encryptConfig(updates.config);
+  }
   const { data, error } = await supabase.from('integrations').update(updates).eq('id', req.params.id).eq('user_id', req.dbUserId).select().single();
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  res.json({ ...data, config: decryptConfig(data.config || {}) });
 });
 
 integrationsRouter.delete('/:id', async (req: AuthenticatedRequest, res) => {
@@ -846,17 +957,21 @@ integrationsRouter.delete('/:id', async (req: AuthenticatedRequest, res) => {
 integrationsRouter.post('/test/:id', async (req: AuthenticatedRequest, res) => {
   const { data: integration } = await supabase.from('integrations').select('type,config').eq('id', req.params.id).eq('user_id', req.dbUserId).single();
   if (!integration) return res.status(404).json({ error: 'Integration not found' });
-  if (integration.type === 'webhook' && integration.config?.url) {
+  // Decrypt config before testing
+  var decTestConfig = decryptConfig(integration.config || {});
+  if (integration.type === 'webhook' && decTestConfig.url) {
     try {
+      var webhookTestErr = validateWebhookUrl(decTestConfig.url);
+      if (webhookTestErr) return res.status(400).json({ success: false, error: webhookTestErr });
       const testPayload = { event: 'test', lead: { name: 'Test User', email: 'test@example.com', outcome_id: 'test', answers: {}, captured_at: new Date().toISOString() }, quiz: { id: 'test', title: 'Test Quiz', slug: 'test' } };
-      const response = await fetch(integration.config.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(testPayload) });
+      const response = await fetch(decTestConfig.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(testPayload) });
       res.json({ success: response.ok, status: response.status });
     } catch (e: any) { res.json({ success: false, error: e.message }); }
   } else if (integration.type === 'mailchimp' || integration.type === 'klaviyo' || integration.type === 'convertkit') {
     try {
       const { pushLeadToIntegration } = await import('../services/integrations/index');
       const result = await pushLeadToIntegration(
-        { type: integration.type, config: integration.config },
+        { type: integration.type, config: decTestConfig },
         { email: 'test@squarespell.com', firstName: 'Test', tags: ['sq:test'], metadata: { quiz_title: 'Test Quiz', outcome: 'Test Outcome' } }
       );
       res.json(result);
@@ -904,6 +1019,27 @@ integrationsRouter.post('/lists', async (req: AuthenticatedRequest, res) => {
 // ── Analytics ─────────────────────────────────────────────────────────────────
 export const analyticsRouter = Router();
 analyticsRouter.use(requireAuth, attachUser);
+
+// ── Integration Error Monitoring (H3) ────────────────────────────────────────
+integrationsRouter.get('/errors', async (req: AuthenticatedRequest, res) => {
+  try {
+    var { getIntegrationErrors } = await import('../services/integrationErrorLog');
+    var errors = await getIntegrationErrors(req.dbUserId!, 50);
+    res.json(errors);
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'Failed to fetch integration errors' });
+  }
+});
+
+integrationsRouter.delete('/errors', async (req: AuthenticatedRequest, res) => {
+  try {
+    var { clearIntegrationErrors } = await import('../services/integrationErrorLog');
+    await clearIntegrationErrors(req.dbUserId!, req.query.integration_id as string);
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'Failed to clear errors' });
+  }
+});
 
 // ── Attribution pipeline ─────────────────────────────────────────────────────
 // GET /api/analytics/attribution - cross-quiz attribution data
@@ -1627,6 +1763,35 @@ cronRouter.post('/process-email-queue', async (_req, res) => {
   } catch (err: any) {
     log.error('[Cron] process-email-queue failed:', { err: err });
     res.status(500).json({ error: err?.message || 'queue drain failed' });
+  }
+});
+
+// GDPR token cleanup — delete expired tokens (runs daily via cron)
+cronRouter.post('/cleanup-gdpr-tokens', async (req, res) => {
+  var cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    var { error } = await supabase.from('gdpr_deletion_requests').delete().lt('expires_at', new Date(Date.now() - 86400000).toISOString());
+    res.json({ ok: true, error: error?.message || null });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message });
+  }
+});
+
+// Integration error cleanup — delete errors older than 30 days
+cronRouter.post('/cleanup-integration-errors', async (req, res) => {
+  var cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    var thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+    var { error } = await supabase.from('integration_errors').delete().lt('created_at', thirtyDaysAgo);
+    res.json({ ok: true, error: error?.message || null });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message });
   }
 });
 

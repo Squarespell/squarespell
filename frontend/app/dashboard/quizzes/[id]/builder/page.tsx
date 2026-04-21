@@ -374,6 +374,17 @@ export default function QuizBuilderPage() {
   /* ========================= Save ========================= */
   const handleSave = useCallback(async () => {
     if (!quiz) return;
+
+    // M3: Validate quiz has at least 1 question and 1 outcome before saving
+    if (!quiz.questions || quiz.questions.length === 0) {
+      showToast('Add at least 1 question before saving');
+      return;
+    }
+    if (!quiz.outcomes || quiz.outcomes.length === 0) {
+      showToast('Add at least 1 outcome before saving');
+      return;
+    }
+
     try {
       setSaveStatus('saving');
       await autosave.saveNow();
@@ -479,6 +490,8 @@ export default function QuizBuilderPage() {
         onTitleChange={(newTitle) => setQuiz({ ...quiz, title: newTitle })}
         onEditingChange={setEditingTitle}
         saveStatus={saveStatus}
+        autosaveStatus={autosave.status}
+        autosaveError={autosave.error}
         onSave={handleSave}
         onPreview={() => window.open(`/tools/quiz-funnel/preview?quizId=${quizId}`, '_blank')}
         onBack={() => router.push('/dashboard/quizzes')}
@@ -647,6 +660,8 @@ function TopBar({
   onTitleChange,
   onEditingChange,
   saveStatus,
+  autosaveStatus,
+  autosaveError,
   onSave,
   onPreview,
   onBack,
@@ -656,6 +671,8 @@ function TopBar({
   onTitleChange: (title: string) => void;
   onEditingChange: (editing: boolean) => void;
   saveStatus: 'idle' | 'saving' | 'saved';
+  autosaveStatus?: 'saved' | 'saving' | 'unsaved' | 'error';
+  autosaveError?: string | null;
   onSave: () => void;
   onPreview: () => void;
   onBack: () => void;
@@ -763,6 +780,23 @@ function TopBar({
           <SvgEye />
           Preview
         </button>
+
+        {/* Autosave status indicator (M1 fix) */}
+        {autosaveStatus === 'error' && (
+          <span style={{ color: '#ef4444', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }} title={autosaveError || 'Save failed'}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Save failed
+          </span>
+        )}
+        {autosaveStatus === 'saving' && (
+          <span style={{ color: COLORS.TEXT_MUTED, fontSize: 12 }}>Auto-saving...</span>
+        )}
+        {autosaveStatus === 'unsaved' && (
+          <span style={{ color: '#f59e0b', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+            Unsaved
+          </span>
+        )}
 
         <button
           onClick={onSave}
