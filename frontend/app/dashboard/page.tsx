@@ -177,7 +177,9 @@ function DashStatCard({
   sub?: string;
   progress?: { current: number; max: number };
 }) {
-  var trendUp = change === undefined || change >= 0;
+  var hasChange = change !== undefined;
+  var trendUp = !hasChange || change >= 0;
+  var sparkColor = hasChange ? (trendUp ? C.SUCCESS_500 : C.ERROR_500) : C.GRAY_300;
   return (
     <div
       style={{
@@ -202,7 +204,7 @@ function DashStatCard({
           <svg width="24" height="16" viewBox="0 0 24 16" fill="none">
             <polyline
               points={trendUp ? '2,12 8,8 14,10 22,3' : '2,4 8,8 14,6 22,13'}
-              stroke={trendUp ? C.SUCCESS_500 : C.ERROR_500}
+              stroke={sparkColor}
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -433,10 +435,10 @@ function TopQuizzesList({ quizzes }: { quizzes: Quiz[] }) {
 
 function ConversionFunnel({ funnel }: { funnel: FunnelData }) {
   var steps = [
-    { label: 'Views', value: funnel.views, pct: '100%', opacity: 1 },
-    { label: 'Started', value: funnel.started, pct: funnel.views > 0 ? ((funnel.started / funnel.views) * 100).toFixed(1) + '%' : '0%', opacity: 0.85 },
-    { label: 'Completed', value: funnel.completed, pct: funnel.views > 0 ? ((funnel.completed / funnel.views) * 100).toFixed(1) + '%' : '0%', opacity: 0.7 },
-    { label: 'Leads', value: funnel.leads, pct: funnel.views > 0 ? ((funnel.leads / funnel.views) * 100).toFixed(1) + '%' : '0%', opacity: 0.6 },
+    { label: 'Views', value: funnel.views, pct: '100%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
+    { label: 'Started', value: funnel.started, pct: funnel.views > 0 ? ((funnel.started / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
+    { label: 'Completed', value: funnel.completed, pct: funnel.views > 0 ? ((funnel.completed / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
+    { label: 'Leads', value: funnel.leads, pct: funnel.views > 0 ? ((funnel.leads / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.BRAND_50, borderColor: 'rgba(13,115,119,0.25)' },
   ];
 
   return (
@@ -452,9 +454,9 @@ function ConversionFunnel({ funnel }: { funnel: FunnelData }) {
               <div
                 style={{
                   flex: 1, padding: '14px 16px', borderRadius: 8,
-                  background: C.ACCENT_LIGHT, border: '1px solid rgba(13,115,119,0.15)',
+                  background: step.bg, border: '1px solid ' + step.borderColor,
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  width: barW + '%', opacity: step.opacity,
+                  width: barW + '%',
                 }}
               >
                 <div>

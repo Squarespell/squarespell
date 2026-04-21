@@ -298,8 +298,9 @@ function SidebarPlanCard({ plan }: { plan: { name: string; renewsAt: string; vie
         fontFamily: C.FONT,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900 }}>{plan.name}</span>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.SUCCESS_500, flexShrink: 0 }} />
       </div>
       <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8 }}>Renews on {plan.renewsAt}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -863,7 +864,7 @@ export function DashboardShell({
             >
               {icons.search}
               <span style={{ flex: 1, textAlign: 'left', color: C.GRAY_500, fontSize: 14 }}>Search anything...</span>
-              <kbd style={{ padding: '2px 6px', border: '1px solid ' + C.GRAY_200, borderRadius: 4, fontSize: 11, color: C.GRAY_400, background: C.GRAY_50, fontWeight: 500, fontFamily: C.FONT }}>&thinsp;K</kbd>
+              <kbd style={{ padding: '2px 6px', border: '1px solid ' + C.GRAY_200, borderRadius: 4, fontSize: 11, color: C.GRAY_400, background: C.GRAY_50, fontWeight: 500, fontFamily: C.FONT }}>&#8984; K</kbd>
             </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
