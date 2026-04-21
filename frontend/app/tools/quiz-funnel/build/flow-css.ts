@@ -1516,18 +1516,22 @@ export const FLOW_CSS = `
   .sq-pick-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 20px;
     margin: 28px 0 32px;
+    align-items: stretch;
   }
   .sq-pick-card {
     position: relative;
     background: var(--surface);
     border: 2px solid var(--border);
     border-radius: 16px;
-    padding: 20px 16px 18px;
+    padding: 20px 16px 20px;
     cursor: pointer;
     transition: all 0.25s var(--ease);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .sq-pick-card:hover {
     border-color: rgba(13,115,119,0.35);
@@ -1558,6 +1562,7 @@ export const FLOW_CSS = `
     opacity: 0;
     transform: scale(0.5);
     transition: all 0.2s var(--ease);
+    z-index: 2;
   }
   .sq-pick-badge {
     display: inline-flex;
@@ -1570,6 +1575,7 @@ export const FLOW_CSS = `
     padding: 4px 10px;
     border-radius: 100px;
     margin-bottom: 14px;
+    flex-shrink: 0;
   }
   .sq-pick-badge-ai {
     background: rgba(13,115,119,0.1);
@@ -1582,33 +1588,38 @@ export const FLOW_CSS = `
   .sq-pick-phone {
     width: 100%;
     max-width: 180px;
+    height: 300px;
     margin: 0 auto 16px;
     border: 2px solid var(--border);
-    border-radius: 20px;
+    border-radius: 24px;
     overflow: hidden;
     background: #fff;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-    aspect-ratio: 9 / 16;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
   }
   .sq-pick-phone-notch {
-    width: 60px;
-    height: 6px;
+    width: 50px;
+    height: 5px;
     border-radius: 100px;
-    background: rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.12);
     margin: 8px auto 0;
+    flex-shrink: 0;
   }
   .sq-pick-phone-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     margin-top: 4px;
+    flex-shrink: 0;
+    min-height: 40px;
   }
   .sq-pick-phone-logo {
     width: 24px;
     height: 24px;
+    min-width: 24px;
     border-radius: 6px;
     background: rgba(255,255,255,0.25);
     color: #fff;
@@ -1627,10 +1638,10 @@ export const FLOW_CSS = `
   }
   .sq-pick-phone-body {
     flex: 1;
-    padding: 12px 10px;
+    padding: 10px 10px 8px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    overflow: hidden;
   }
   .sq-pick-phone-q {
     font-size: 11px;
@@ -1638,17 +1649,23 @@ export const FLOW_CSS = `
     color: var(--text);
     line-height: 1.35;
     text-align: left;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .sq-pick-phone-opts {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     flex: 1;
+    overflow: hidden;
   }
   .sq-pick-phone-opt {
     font-size: 10px;
-    padding: 6px 8px;
+    padding: 7px 10px;
     border: 1.5px solid var(--border);
     border-radius: 8px;
     color: var(--text-muted);
@@ -1656,21 +1673,24 @@ export const FLOW_CSS = `
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 0;
   }
   .sq-pick-phone-btn {
     font-size: 10px;
     font-weight: 700;
     color: #fff;
-    padding: 6px;
+    padding: 8px;
     border-radius: 8px;
     text-align: center;
     margin-top: auto;
+    flex-shrink: 0;
   }
   .sq-pick-name {
     font-size: 15px;
     font-weight: 700;
     color: var(--text);
     margin-bottom: 4px;
+    margin-top: auto;
   }
   .sq-pick-desc {
     font-size: 12px;

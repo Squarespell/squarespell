@@ -1185,8 +1185,11 @@ export function TryFlowInner({
                 </div>
 
                 {/* Template cards */}
-                {matchedTemplates.map(function(tpl) {
+                {matchedTemplates.map(function(tpl, tplIdx) {
                   var isSelected = pickChoice === tpl.id;
+                  var brandColor = brand?.colors?.primary || '#0D7377';
+                  var tplAccent = tplIdx === 0 ? '#6366f1' : '#8b5cf6';
+                  var phoneColor = brandColor !== '#0D7377' ? brandColor : tplAccent;
                   var firstBlock = tpl.blocks().find(function(b: any) { return b.type === 'question'; });
                   var previewQ = (firstBlock as any)?.label || 'Which option fits you best?';
                   var previewOpts = ((firstBlock as any)?.options || []).slice(0, 3);
@@ -1203,30 +1206,31 @@ export function TryFlowInner({
                         <SvgPackage size={12} />
                         Template
                       </div>
-                      <div className="sq-pick-phone" style={{ borderColor: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>
+                      <div className="sq-pick-phone" style={{ borderColor: phoneColor }}>
                         <div className="sq-pick-phone-notch"></div>
-                        <div className="sq-pick-phone-header" style={{ background: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>
+                        <div className="sq-pick-phone-header" style={{ background: phoneColor }}>
                           <div className="sq-pick-phone-logo">{siteLetter}</div>
-                          <div className="sq-pick-phone-title" style={{ color: '#fff' }}>{tpl.name.length > 20 ? tpl.name.slice(0, 18) + '...' : tpl.name}</div>
+                          <div className="sq-pick-phone-title" style={{ color: '#fff' }}>{tpl.name}</div>
                         </div>
                         <div className="sq-pick-phone-body">
-                          <div className="sq-pick-phone-q">{previewQ.length > 45 ? previewQ.slice(0, 42) + '...' : previewQ}</div>
+                          <div className="sq-pick-phone-q">{previewQ}</div>
                           <div className="sq-pick-phone-opts">
                             {previewOpts.length > 0 ? previewOpts.map(function(opt: any, i: number) {
-                              return <div key={i} className={'sq-pick-phone-opt' + (i === 0 ? '' : '')} style={i === 0 ? { borderColor: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' } : {}}>{typeof opt === 'string' ? opt : (opt.label || opt.text || 'Option ' + (i + 1))}</div>;
+                              var optText = typeof opt === 'string' ? opt : (opt.label || opt.text || 'Option ' + (i + 1));
+                              return <div key={i} className="sq-pick-phone-opt" style={i === 0 ? { borderColor: phoneColor } : {}}>{optText}</div>;
                             }) : (
                               <>
-                                <div className="sq-pick-phone-opt" style={{ borderColor: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>Option A</div>
+                                <div className="sq-pick-phone-opt" style={{ borderColor: phoneColor }}>Option A</div>
                                 <div className="sq-pick-phone-opt">Option B</div>
                                 <div className="sq-pick-phone-opt">Option C</div>
                               </>
                             )}
                           </div>
-                          <div className="sq-pick-phone-btn" style={{ background: brand?.colors?.accent || brand?.colors?.primary || '#6366f1' }}>Next</div>
+                          <div className="sq-pick-phone-btn" style={{ background: phoneColor }}>Next</div>
                         </div>
                       </div>
                       <div className="sq-pick-name">{tpl.name}</div>
-                      <div className="sq-pick-desc">{tpl.description.length > 80 ? tpl.description.slice(0, 77) + '...' : tpl.description}</div>
+                      <div className="sq-pick-desc">{tpl.description}</div>
                     </div>
                   );
                 })}
