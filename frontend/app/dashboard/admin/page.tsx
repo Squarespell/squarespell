@@ -18,7 +18,6 @@ import { useRouter } from 'next/navigation';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { Card, PageLoading } from '../_components/PageShell';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -107,14 +106,14 @@ function StatRow({ items }: { items: Array<{ label: string; value: string; subte
 
 function AdminDashboard() {
   var router = useRouter();
-  var { isLoading, isAuthenticated } = useDashboardAuth();
+  var { token, status: authStatus } = useDashboardAuth();
   var [data, setData] = useState<AdminMetrics | null>(null);
   var [error, setError] = useState<string>('');
   var [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(function() {
-    if (isLoading) return;
-    if (!isAuthenticated) {
+    if (authStatus === 'loading') return;
+    if (authStatus !== 'ready') {
       router.push('/dashboard');
       return;
     }
@@ -149,9 +148,9 @@ function AdminDashboard() {
     }
 
     fetchMetrics();
-  }, [isLoading, isAuthenticated, router]);
+  }, [authStatus, router]);
 
-  if (isLoading || isLoadingData) {
+  if (authStatus === 'loading' || isLoadingData) {
     return <PageLoading />;
   }
 
@@ -282,35 +281,32 @@ function AdminDashboard() {
             marginBottom: 24
           }}
         >
-          {/* User Breakdown Pie Chart */}
+          {/* User Breakdown */}
           <Card>
             <div style={{ padding: '20px', borderBottom: '1px solid ' + C.BORDER }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: C.TEXT }}>
                 Users by Plan
               </h2>
             </div>
-            <div style={{ padding: '20px', height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={planData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={function({ name, value }: any) {
-                      return name + ': ' + value;
-                    }}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {planData.map(function(entry, idx) {
-                      return <Cell key={'cell_' + idx} fill={entry.fill} />;
-                    })}
-                  </Pie>
-                  <Tooltip formatter={function(value: any) { return fmt(Number(value)); }} />
-                </PieChart>
-              </ResponsiveContainer>
+            <div style={{ padding: '20px' }}>
+              {planData.map(function(entry, idx) {
+                var maxVal = Math.max.apply(null, planData.map(function(p) { return p.value; }));
+                var pct = maxVal > 0 ? (entry.value / maxVal) * 100 : 0;
+                return (
+                  <div key={idx} style={{ marginBottom: 14 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>{entry.name}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>{fmt(entry.value)}</span>
+                    </div>
+                    <div style={{ height: 8, background: C.GRAY_100, borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: pct + '%', background: entry.fill, borderRadius: 4, transition: 'width 0.3s' }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {planData.length === 0 && (
+                <div style={{ fontSize: 13, color: C.TEXT_SECONDARY, textAlign: 'center', padding: 20 }}>No users yet</div>
+              )}
             </div>
           </Card>
 
