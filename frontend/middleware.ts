@@ -50,16 +50,16 @@ export default clerkMiddleware((auth, req) => {
   const host = req.headers.get('host')
   const pathname = req.nextUrl.pathname
 
-  // 1a. admin.squarespell.com → rewrite to /admin path.
-  //     The admin dashboard is a standalone page, no dashboard shell.
+  // 1a. admin.squarespell.com → redirect to app.squarespell.com/admin.
+  //     The admin dashboard lives at /admin on the app host (standalone page, no
+  //     dashboard shell). We redirect instead of rewrite so the Clerk session
+  //     cookie (scoped to app.squarespell.com) is available.
   if (isAdminHost(host)) {
     const target = req.nextUrl.clone()
-    if (pathname === '/' || pathname === '') {
-      target.pathname = '/admin'
-    } else if (!pathname.startsWith('/admin') && !pathname.startsWith('/sign-in') && !pathname.startsWith('/sign-up') && !pathname.startsWith('/_next') && !pathname.startsWith('/api')) {
-      target.pathname = '/admin' + pathname
-    }
-    return NextResponse.rewrite(target)
+    target.protocol = 'https:'
+    target.host = APP_HOST
+    target.pathname = '/admin'
+    return NextResponse.redirect(target, 302)
   }
 
   // 1b. Legacy quiz.squarespell.com → permanent 301 to app.squarespell.com.
