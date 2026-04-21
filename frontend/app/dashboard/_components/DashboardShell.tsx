@@ -169,20 +169,6 @@ var icons = {
   ),
 };
 
-var OTHER_SECTION_PREFIXES = [
-  '/dashboard/quizzes',
-  '/dashboard/editor',
-  '/dashboard/leads',
-  '/dashboard/emails',
-  '/dashboard/analytics',
-  '/dashboard/integrations',
-  '/dashboard/embed',
-  '/dashboard/brand-kit',
-  '/dashboard/billing',
-  '/dashboard/referrals',
-  '/dashboard/settings',
-];
-
 function isOverviewRoute(pathname: string): boolean {
   return pathname === '/dashboard';
 }
@@ -190,8 +176,15 @@ function isOverviewRoute(pathname: string): boolean {
 function isEditorRoute(pathname: string): boolean {
   if (pathname === '/dashboard/editor' || pathname.startsWith('/dashboard/editor/')) return true;
   if (pathname === '/dashboard') return false;
-  if (pathname === '/dashboard/quizzes' || pathname.startsWith('/dashboard/quizzes/')) return false;
-  if (OTHER_SECTION_PREFIXES.some(function(prefix) { return prefix !== '/dashboard/editor' && (pathname === prefix || pathname.startsWith(prefix + '/')); })) {
+  var knownPrefixes = [
+    '/dashboard/quizzes', '/dashboard/leads', '/dashboard/analytics',
+    '/dashboard/integrations', '/dashboard/webhooks', '/dashboard/api-keys',
+    '/dashboard/billing', '/dashboard/settings', '/dashboard/team',
+    '/dashboard/domains', '/dashboard/tracking', '/dashboard/ab-tests',
+    '/dashboard/lead-scoring', '/dashboard/segments', '/dashboard/exports',
+    '/dashboard/activity',
+  ];
+  if (knownPrefixes.some(function(prefix) { return pathname === prefix || pathname.startsWith(prefix + '/'); })) {
     return false;
   }
   return pathname.startsWith('/dashboard/');
@@ -208,43 +201,82 @@ type NavSection = {
 
 var NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Workspace',
+    label: 'Overview',
     items: [
-      { href: '/dashboard', label: 'Overview', icon: icons.overview, match: isOverviewRoute },
-      { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
-      { href: '/dashboard/quizzes', label: 'Quizzes', icon: icons.quizzes, match: isQuizzesRoute },
-      { href: '/dashboard/leads', label: 'Leads', icon: icons.leads },
-      { href: '/dashboard/emails', label: 'Emails', icon: icons.emails, match: function(p) { return (p === '/dashboard/emails' || p.startsWith('/dashboard/emails/')) && !p.startsWith('/dashboard/emails/templates'); } },
-      { href: '/dashboard/emails/templates', label: 'Templates', icon: icons.templates },
+      { href: '/dashboard', label: 'Dashboard', icon: icons.overview, match: isOverviewRoute },
       {
         href: '/dashboard/analytics',
         label: 'Analytics',
         icon: icons.analytics,
         match: function(p) { return p === '/dashboard/analytics' || p.startsWith('/dashboard/analytics/'); },
       },
+      { href: '/dashboard/activity', label: 'Activity feed', icon: icons.referrals },
     ],
   },
   {
-    label: 'Growth',
+    label: 'Quizzes',
     items: [
-      { href: '/dashboard/embed', label: 'Embed & install', icon: icons.embed },
+      { href: '/dashboard/quizzes', label: 'All quizzes', icon: icons.quizzes, match: isQuizzesRoute },
+      { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
+      { href: '/dashboard/templates', label: 'Templates', icon: icons.templates },
+      { href: '/dashboard/ab-tests', label: 'A/B tests', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 00-1.172-2.872L3 3"/><path d="M21 3l-7.828 7.828A4 4 0 0012 13.657V22"/>
+        </svg>
+      ) },
+    ],
+  },
+  {
+    label: 'Leads',
+    items: [
+      { href: '/dashboard/leads', label: 'All leads', icon: icons.leads },
+      { href: '/dashboard/lead-scoring', label: 'Lead scoring', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      ) },
+      { href: '/dashboard/segments', label: 'Segments', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+        </svg>
+      ) },
+      { href: '/dashboard/exports', label: 'Exports', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      ) },
+    ],
+  },
+  {
+    label: 'Integrations',
+    items: [
       { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
-      { href: '/dashboard/brand-kit', label: 'Brand kit', icon: icons.brand },
-      { href: '/dashboard/referrals', label: 'Referrals', icon: icons.referrals },
+      { href: '/dashboard/webhooks', label: 'Webhooks', icon: icons.embed },
+      { href: '/dashboard/api-keys', label: 'API keys', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+        </svg>
+      ) },
     ],
   },
   {
-    label: 'Account',
+    label: 'Settings',
     items: [
+      { href: '/dashboard/settings', label: 'General', icon: icons.settings },
       { href: '/dashboard/billing', label: 'Billing & plan', icon: icons.billing },
-      { href: '/dashboard/trash', label: 'Trash', icon: icons.trash },
+      { href: '/dashboard/team', label: 'Team', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      ) },
+      { href: '/dashboard/domains', label: 'Domains', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+        </svg>
+      ) },
+      { href: '/dashboard/tracking', label: 'Tracking scripts', icon: icons.embed },
     ],
   },
-];
-
-var BOTTOM_NAV: NavItem[] = [
-  { href: 'https://docs.squarespell.com', label: 'Help & docs', icon: icons.help },
-  { href: '/dashboard/settings', label: 'Settings', icon: icons.settings },
 ];
 
 function isActive(item: NavItem, pathname: string): boolean {
@@ -252,102 +284,94 @@ function isActive(item: NavItem, pathname: string): boolean {
   return pathname === item.href || pathname.startsWith(item.href + '/');
 }
 
-/* "New features" sidebar card */
-function NewFeaturesCard({ onDismiss }: { onDismiss: () => void }) {
+/* Sidebar plan usage card */
+function SidebarPlanCard({ plan }: { plan: { name: string; renewsAt: string; viewsUsed: number; viewsLimit: number } }) {
+  var pct = plan.viewsLimit > 0 ? Math.round((plan.viewsUsed / plan.viewsLimit) * 100) : 0;
   return (
     <div
       style={{
         margin: '0 16px 12px',
-        padding: '16px',
+        padding: 16,
         background: C.GRAY_50,
         border: '1px solid ' + C.GRAY_200,
         borderRadius: 12,
-        position: 'relative',
+        fontFamily: C.FONT,
       }}
     >
-      <button
-        type="button"
-        onClick={onDismiss}
-        style={{
-          position: 'absolute',
-          top: 12,
-          right: 12,
-          width: 24,
-          height: 24,
-          border: 'none',
-          background: 'transparent',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: C.GRAY_400,
-          borderRadius: 6,
-          padding: 0,
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-      <div style={{ fontFamily: C.FONT, fontSize: 14, fontWeight: 600, color: C.GRAY_900, marginBottom: 4, paddingRight: 20 }}>
-        New features available!
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900 }}>{plan.name}</span>
       </div>
-      <div style={{ fontFamily: C.FONT, fontSize: 13, color: C.GRAY_500, lineHeight: 1.5, marginBottom: 12 }}>
-        Check out the new dashboard view. Pages now load faster.
+      <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8 }}>Renews on {plan.renewsAt}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900 }}>
+          {plan.viewsUsed.toLocaleString()} / {plan.viewsLimit.toLocaleString()}
+        </span>
       </div>
-      <div
-        style={{
-          width: '100%',
-          height: 120,
-          borderRadius: 8,
-          background: 'linear-gradient(135deg, ' + C.BRAND_50 + ' 0%, ' + C.BRAND_100 + ' 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 12,
-          border: '1px solid ' + C.GRAY_200,
-        }}
-      >
-        <div style={{
-          width: 40, height: 40, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.9)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
-          boxShadow: C.SHADOW_SM,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={C.GRAY_700} stroke="none">
-            <polygon points="5,3 19,12 5,21"/>
-          </svg>
+      <div style={{ fontSize: 12, color: C.GRAY_500, marginBottom: 6 }}>views used</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <div style={{ flex: 1, height: 6, background: C.GRAY_200, borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: pct + '%', background: C.ACCENT, borderRadius: 3, transition: 'width 0.3s' }} />
         </div>
+        <span style={{ fontSize: 12, fontWeight: 500, color: C.ACCENT }}>{pct}%</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button
-          type="button"
-          onClick={onDismiss}
-          style={{
-            fontFamily: C.FONT,
-            fontSize: 14,
-            fontWeight: 600,
-            color: C.GRAY_500,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          Dismiss
-        </button>
-        <a
-          href="/changelog"
-          style={{
-            fontFamily: C.FONT,
-            fontSize: 14,
-            fontWeight: 600,
-            color: C.ACCENT,
-            textDecoration: 'none',
-          }}
-        >
-          What&apos;s new?
-        </a>
-      </div>
+      <Link
+        href="/dashboard/billing"
+        style={{
+          display: 'block',
+          width: '100%',
+          padding: 8,
+          background: C.SURFACE,
+          border: '1px solid ' + C.GRAY_300,
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          color: C.GRAY_700,
+          textAlign: 'center',
+          textDecoration: 'none',
+          fontFamily: C.FONT,
+          transition: 'all 0.12s',
+        }}
+      >
+        Upgrade plan
+      </Link>
     </div>
+  );
+}
+
+/* Sidebar help section */
+function SidebarHelpCard() {
+  return (
+    <a
+      href="https://docs.squarespell.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        margin: '0 16px 12px',
+        padding: '12px 16px',
+        borderRadius: 10,
+        background: C.ACCENT_LIGHT,
+        textDecoration: 'none',
+        transition: 'all 0.12s',
+      }}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%',
+        background: C.ACCENT, display: 'flex',
+        alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>Need help?</div>
+        <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>Visit our help center or contact support</div>
+      </div>
+      <span style={{ color: C.GRAY_400, fontSize: 16 }}>&rarr;</span>
+    </a>
   );
 }
 
@@ -374,15 +398,9 @@ export function DashboardShell({
   var [mobileOpen, setMobileOpen] = useState(false);
   var [isMobile, setIsMobile] = useState(false);
   var [bannerToken, setBannerToken] = useState<string | null>(null);
-  var [showNewFeatures, setShowNewFeatures] = useState(true);
-
-  useEffect(function() {
-    try {
-      if (localStorage.getItem('sq_new_features_dismissed') === '1') {
-        setShowNewFeatures(false);
-      }
-    } catch {}
-  }, []);
+  var [planData, setPlanData] = useState<{ name: string; renewsAt: string; viewsUsed: number; viewsLimit: number }>({
+    name: 'Pro Plan', renewsAt: '', viewsUsed: 0, viewsLimit: 25000,
+  });
 
   useEffect(function() {
     var check = function() { setIsMobile(window.innerWidth < 768); };
@@ -412,10 +430,30 @@ export function DashboardShell({
 
   var sidebarWidth = 280;
 
-  function dismissNewFeatures() {
-    setShowNewFeatures(false);
-    try { localStorage.setItem('sq_new_features_dismissed', '1'); } catch {}
-  }
+  // Fetch plan data for sidebar card
+  useEffect(function() {
+    if (!bannerToken) return;
+    var cancelled = false;
+    var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+    (async function() {
+      try {
+        var res = await fetch(apiBase + '/api/user/plan', { headers: { Authorization: 'Bearer ' + bannerToken } });
+        if (res.ok) {
+          var data = await res.json();
+          if (!cancelled) {
+            var renewDate = data.current_period_end ? new Date(data.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+            setPlanData({
+              name: (data.plan || 'free').charAt(0).toUpperCase() + (data.plan || 'free').slice(1) + ' Plan',
+              renewsAt: renewDate,
+              viewsUsed: data.usage?.views || 0,
+              viewsLimit: data.limits?.views || 25000,
+            });
+          }
+        }
+      } catch {}
+    })();
+    return function() { cancelled = true; };
+  }, [bannerToken]);
 
   var sidebar = (
     <aside
@@ -515,11 +553,12 @@ export function DashboardShell({
             <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 16 }}>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 600,
-                  color: C.GRAY_500,
-                  padding: '8px 12px 4px',
-                  letterSpacing: '-0.01em',
+                  color: C.GRAY_400,
+                  padding: '8px 8px 4px',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase' as const,
                   fontFamily: C.FONT,
                 }}
               >
@@ -567,7 +606,7 @@ export function DashboardShell({
                         width: 20,
                         height: 20,
                         flexShrink: 0,
-                        color: active ? C.GRAY_900 : C.GRAY_500,
+                        color: active ? C.ACCENT : C.GRAY_500,
                         transition: 'color 0.12s ease',
                       }}
                     >
@@ -581,70 +620,13 @@ export function DashboardShell({
           );
         })}
 
-        <div style={{ height: 1, background: C.GRAY_200, margin: '12px 12px' }} />
-
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: C.GRAY_500,
-            padding: '8px 12px 4px',
-            letterSpacing: '-0.01em',
-            fontFamily: C.FONT,
-          }}
-        >
-          Resources
-        </div>
-
-        {BOTTOM_NAV.map(function(item) {
-          var isExternal = item.href.startsWith('http');
-          var active = !isExternal && isActive(item, pathname || '');
-          var Wrap: any = isExternal ? 'a' : Link;
-          var wrapProps: any = isExternal
-            ? { href: item.href, target: '_blank', rel: 'noopener noreferrer' }
-            : { href: item.href };
-          return (
-            <Wrap
-              key={item.href}
-              {...wrapProps}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '8px 12px',
-                borderRadius: 6,
-                textDecoration: 'none',
-                color: active ? C.GRAY_900 : C.GRAY_700,
-                background: active ? C.GRAY_50 : 'transparent',
-                fontSize: 14,
-                fontWeight: active ? 600 : 500,
-                fontFamily: C.FONT,
-                transition: 'all 0.12s ease',
-              }}
-              onMouseEnter={function(e: any) {
-                if (!active) {
-                  e.currentTarget.style.background = C.GRAY_50;
-                  e.currentTarget.style.color = C.GRAY_900;
-                }
-              }}
-              onMouseLeave={function(e: any) {
-                if (!active) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = C.GRAY_700;
-                }
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, flexShrink: 0, color: active ? C.GRAY_900 : C.GRAY_500 }}>
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </Wrap>
-          );
-        })}
       </nav>
 
-      {/* New features card */}
-      {showNewFeatures && <NewFeaturesCard onDismiss={dismissNewFeatures} />}
+      {/* Plan card */}
+      <SidebarPlanCard plan={planData} />
+
+      {/* Help card */}
+      <SidebarHelpCard />
 
       {/* Account footer */}
       <div style={{ padding: '16px', borderTop: '1px solid ' + C.GRAY_200 }}>
