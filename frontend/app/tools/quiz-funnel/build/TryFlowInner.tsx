@@ -97,12 +97,18 @@ function templateSubtitle(tpl: QuizTemplateData, businessType: string): string {
   // Map template categories to contextual descriptions
   var contextMap: Record<string, string> = {
     'product_recommendation': 'Help visitors find the right ' + (biz || 'product') + ' for their needs',
-    'service_matcher': 'Match potential clients to your service packages automatically',
-    'business_assessment': 'Score and qualify leads based on their readiness level',
-    'knowledge_quiz': 'Test what your audience knows and build authority',
-    'coaching_readiness': 'Pre-qualify coaching leads by their stage and needs',
-    'personality_style': 'Reveal personal style archetypes — highly shareable format',
-    'gift_finder': 'Help shoppers find the perfect gift from your catalog',
+    'personalized_skincare': 'Build a custom skincare routine for each visitor',
+    'customer_feedback': 'Collect post-purchase feedback in a conversational format',
+    'product_research': 'Understand how your audience finds and evaluates your product',
+    'lead_generation': 'Qualify leads automatically by business size and readiness',
+    'product_feedback': 'Gather actionable feedback on features and usability',
+    'event_feedback': 'Capture attendee satisfaction while the experience is fresh',
+    'employee_satisfaction': 'Anonymous pulse survey for workplace culture insights',
+    'custom_apparel': 'Guided custom apparel ordering with visual style selection',
+    'subscription_renewal': 'Streamline renewals with personalized upgrade offers',
+    'data_capture': 'Capture contact info through an engaging conversational flow',
+    'ecommerce_lead_gen': 'Convert browsers into subscribers with visual style preferences',
+    'trivia_challenge': 'Test audience knowledge and build authority with scored quizzes',
   };
   if (contextMap[tpl.id]) return contextMap[tpl.id];
   // fallback: use "Popular for [audience]" if we matched on audience
