@@ -159,6 +159,14 @@ var icons = {
       <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
     </svg>
   ),
+  referrals: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M5 20c0-2 2-4 4-4s4 2 4 4"/>
+      <path d="M19 5l-3 3m0-3l3 3"/>
+      <path d="M19 5c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4"/>
+    </svg>
+  ),
 };
 
 var OTHER_SECTION_PREFIXES = [
@@ -171,6 +179,7 @@ var OTHER_SECTION_PREFIXES = [
   '/dashboard/embed',
   '/dashboard/brand-kit',
   '/dashboard/billing',
+  '/dashboard/referrals',
   '/dashboard/settings',
 ];
 
@@ -221,6 +230,7 @@ var NAV_SECTIONS: NavSection[] = [
       { href: '/dashboard/embed', label: 'Embed & install', icon: icons.embed },
       { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
       { href: '/dashboard/brand-kit', label: 'Brand kit', icon: icons.brand },
+      { href: '/dashboard/referrals', label: 'Referrals', icon: icons.referrals },
     ],
   },
   {

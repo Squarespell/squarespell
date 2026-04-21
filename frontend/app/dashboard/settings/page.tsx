@@ -123,6 +123,23 @@ export default function SettingsPage() {
               </Link>
             </div>
           </Card>
+
+          <Card>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>White-Label Branding</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>Custom branding</div>
+                <div style={{ fontSize: 12.5, color: C.TEXT_MUTED }}>Customize quiz appearance with your brand (Agency plan).</div>
+              </div>
+              <Link href="/dashboard/settings/white-label" style={{
+                padding: '10px 18px', background: C.SURFACE, color: C.TEXT,
+                border: `1px solid ${C.BORDER}`, borderRadius: 100, fontSize: 13,
+                fontWeight: 600, textDecoration: 'none',
+              }}>
+                Manage
+              </Link>
+            </div>
+          </Card>
         </div>
       )}
     </DashboardShell>

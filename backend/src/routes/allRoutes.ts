@@ -20,6 +20,7 @@ import { supabase } from '../db/supabaseClient';
 import { encryptConfig, decryptConfig } from '../utils/encryption';
 import { validateWebhookUrl } from '../utils/urlValidator';
 import { logIntegrationError } from '../services/integrationErrorLog';
+import { getReferralCode, trackReferral, convertReferral, getReferralStats, listReferrals } from '../services/referrals';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { UAParser } from 'ua-parser-js';
@@ -1754,6 +1755,33 @@ stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRe
   res.redirect(portal.url);
 });
 
+stripeRouter.get('/invoices', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data: user } = await supabase.from('users').select('stripe_customer_id').eq('id', req.dbUserId).single();
+    if (!user?.stripe_customer_id) {
+      return res.json({ invoices: [] });
+    }
+    const invoices = await stripe.invoices.list({
+      customer: user.stripe_customer_id,
+      limit: 10,
+    });
+    const formattedInvoices = invoices.data.map(function(invoice) {
+      return {
+        id: invoice.id,
+        number: invoice.number,
+        date: new Date(invoice.created * 1000).toISOString().split('T')[0],
+        amount: invoice.amount_paid || 0,
+        status: invoice.status,
+        url: invoice.hosted_invoice_url,
+      };
+    });
+    res.json({ invoices: formattedInvoices });
+  } catch (err: any) {
+    log.error('Get invoices error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to fetch invoices' });
+  }
+});
+
 // ── Cron: Weekly Digest ───────────────────────────────────────────────────────
 export const cronRouter = Router();
 cronRouter.post('/process-email-queue', async (_req, res) => {
@@ -2347,5 +2375,400 @@ mediaRouter.get('/search', requireAuth, attachUser, async (req: AuthenticatedReq
   } catch (err: any) {
     log.error('Pexels search error', { error: err.message });
     res.status(500).json({ error: err.message || 'Search failed' });
+  }
+});
+
+// ── Referrals Router (affiliate/referral system) ──────────────────────────────
+export var referralsRouter = Router();
+
+// GET /api/referrals/code — get user's referral code (auth required)
+referralsRouter.get('/code', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
+  try {
+    if (!req.dbUserId) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    var result = await getReferralCode(req.dbUserId);
+    if (!result) {
+      return res.status(500).json({ error: 'Failed to get referral code' });
+    }
+
+    var appUrl = process.env.APP_URL || 'https://app.squarespell.com';
+    var referralUrl = appUrl + '/sign-up?ref=' + result.code;
+
+    res.json({
+      code: result.code,
+      url: referralUrl,
+    });
+  } catch (err: any) {
+    log.error('Get referral code error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to get referral code' });
+  }
+});
+
+// GET /api/referrals/stats — get referral stats (auth required)
+referralsRouter.get('/stats', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
+  try {
+    if (!req.dbUserId) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    var stats = await getReferralStats(req.dbUserId);
+    if (!stats) {
+      return res.status(500).json({ error: 'Failed to get referral stats' });
+    }
+
+    res.json(stats);
+  } catch (err: any) {
+    log.error('Get referral stats error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to get referral stats' });
+  }
+});
+
+// GET /api/referrals/list — list all referrals (auth required)
+referralsRouter.get('/list', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
+  try {
+    if (!req.dbUserId) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    var referrals = await listReferrals(req.dbUserId);
+    res.json({ referrals });
+  } catch (err: any) {
+    log.error('List referrals error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to list referrals' });
+  }
+});
+
+// POST /api/public/referral/track — public endpoint to track referral signup
+export var publicReferralRouter = Router();
+
+publicReferralRouter.post('/track', async function(req, res) {
+  try {
+    var { code, email } = req.body;
+    if (!code || !email) {
+      return res.status(400).json({ error: 'code and email required' });
+    }
+
+    var result = await trackReferral(code, email);
+    if (!result) {
+      return res.status(400).json({ error: 'Invalid or expired referral code' });
+    }
+
+    res.json({ success: true, referralId: result.id });
+  } catch (err: any) {
+    log.error('Track referral error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to track referral' });
+  }
+});
+
+// ── White-Label Branding ──────────────────────────────────────────────────────
+
+export var whiteLabelRouter = Router();
+
+// GET /api/white-label — get current user's white-label settings (auth required)
+whiteLabelRouter.get('/', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
+  try {
+    if (!req.dbUserId) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    var result = await supabase
+      .from('users')
+      .select('white_label_enabled, custom_brand_name, custom_brand_logo_url, custom_brand_color, hide_powered_by')
+      .eq('id', req.dbUserId)
+      .single();
+
+    if (result.error || !result.data) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      white_label_enabled: result.data.white_label_enabled,
+      custom_brand_name: result.data.custom_brand_name,
+      custom_brand_logo_url: result.data.custom_brand_logo_url,
+      custom_brand_color: result.data.custom_brand_color,
+      hide_powered_by: result.data.hide_powered_by,
+    });
+  } catch (err: any) {
+    log.error('Get white-label error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to get white-label settings' });
+  }
+});
+
+// PATCH /api/white-label — update white-label settings (auth required, agency plan only)
+whiteLabelRouter.patch('/', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
+  try {
+    if (!req.dbUserId) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    var userResult = await supabase
+      .from('users')
+      .select('plan')
+      .eq('id', req.dbUserId)
+      .single();
+
+    if (userResult.error || !userResult.data) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    var plan = userResult.data.plan ?? 'free';
+    if (plan !== 'agency') {
+      return res.status(403).json({
+        error: 'plan_required',
+        message: 'White-label branding is only available on the Agency plan.',
+      });
+    }
+
+    var updateData: any = {};
+    if (req.body.white_label_enabled !== undefined) updateData.white_label_enabled = req.body.white_label_enabled;
+    if (req.body.custom_brand_name !== undefined) updateData.custom_brand_name = req.body.custom_brand_name;
+    if (req.body.custom_brand_logo_url !== undefined) updateData.custom_brand_logo_url = req.body.custom_brand_logo_url;
+    if (req.body.custom_brand_color !== undefined) updateData.custom_brand_color = req.body.custom_brand_color;
+    if (req.body.hide_powered_by !== undefined) updateData.hide_powered_by = req.body.hide_powered_by;
+
+    var updateResult = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', req.dbUserId)
+      .select();
+
+    if (updateResult.error) {
+      throw updateResult.error;
+    }
+
+    res.json({
+      success: true,
+      white_label_enabled: updateResult.data?.[0]?.white_label_enabled,
+      custom_brand_name: updateResult.data?.[0]?.custom_brand_name,
+      custom_brand_logo_url: updateResult.data?.[0]?.custom_brand_logo_url,
+      custom_brand_color: updateResult.data?.[0]?.custom_brand_color,
+      hide_powered_by: updateResult.data?.[0]?.hide_powered_by,
+    });
+  } catch (err: any) {
+    log.error('Update white-label error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to update white-label settings' });
+  }
+});
+
+// GET /api/public/white-label/:userId — public endpoint to get user's white-label settings
+export var publicWhiteLabelRouter = Router();
+
+publicWhiteLabelRouter.get('/:userId', async function(req, res) {
+  try {
+    var userId = req.params.userId;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId required' });
+    }
+
+    var result = await supabase
+      .from('users')
+      .select('white_label_enabled, custom_brand_name, custom_brand_logo_url, custom_brand_color, hide_powered_by')
+      .eq('id', userId)
+      .single();
+
+    if (result.error || !result.data) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!result.data.white_label_enabled) {
+      return res.status(200).json({
+        white_label_enabled: false,
+      });
+    }
+
+    res.json({
+      white_label_enabled: result.data.white_label_enabled,
+      custom_brand_name: result.data.custom_brand_name,
+      custom_brand_logo_url: result.data.custom_brand_logo_url,
+      custom_brand_color: result.data.custom_brand_color,
+      hide_powered_by: result.data.hide_powered_by,
+    });
+  } catch (err: any) {
+    log.error('Get public white-label error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to get white-label settings' });
+  }
+});
+
+// ── Admin Analytics ───────────────────────────────────────────────────────────
+export var adminAnalyticsRouter = Router();
+
+/**
+ * GET /api/admin/metrics
+ * Requires admin authentication (ADMIN_EMAILS env var)
+ * Returns key business metrics: MRR, churn, activation, user counts, revenue
+ */
+adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Verify user is authenticated
+    if (!req.dbUserId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get user from database to check if admin
+    var userResult = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('id', req.dbUserId)
+      .single();
+
+    if (userResult.error || !userResult.data) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Check if user is admin - allow specific admin emails
+    var adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(function(e) { return e.trim(); }).filter(Boolean);
+    var isAdmin = adminEmails.length > 0 && adminEmails.includes(userResult.data.email);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Forbidden - admin access required' });
+    }
+
+    // Get all users
+    var usersResult = await supabase.from('users').select('id, email, plan, created_at').order('created_at', { ascending: false });
+    if (usersResult.error) throw usersResult.error;
+    var allUsers = usersResult.data || [];
+
+    // Count total users
+    var totalUsers = allUsers.length;
+
+    // Get current date and calculate dates for metrics
+    var now = new Date();
+    var thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    var lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    var thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Count new users this month
+    var newUsersThisMonth = allUsers.filter(function(u) {
+      return new Date(u.created_at) >= thisMonthStart;
+    }).length;
+
+    // Count active users (logged in last 30 days) - approximate via analytics_events
+    var activeResult = await supabase
+      .from('analytics_events')
+      .select('id, metadata')
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .limit(1000);
+    if (activeResult.error) throw activeResult.error;
+    var activeUserIds = new Set();
+    (activeResult.data || []).forEach(function(event: any) {
+      if (event.metadata && event.metadata.user_id) {
+        activeUserIds.add(event.metadata.user_id);
+      }
+    });
+    var activeUsers = activeUserIds.size;
+
+    // Count quizzes
+    var quizzesResult = await supabase.from('quizzes').select('id, status, user_id').order('created_at', { ascending: false });
+    if (quizzesResult.error) throw quizzesResult.error;
+    var allQuizzes = quizzesResult.data || [];
+    var totalQuizzes = allQuizzes.length;
+    var publishedQuizzes = allQuizzes.filter(function(q) { return q.status === 'live'; }).length;
+
+    // Count leads
+    var leadsResult = await supabase.from('leads').select('id, created_at').order('created_at', { ascending: false });
+    if (leadsResult.error) throw leadsResult.error;
+    var allLeads = leadsResult.data || [];
+    var totalLeads = allLeads.length;
+
+    var leadsThisMonth = allLeads.filter(function(l) {
+      return new Date(l.created_at) >= thisMonthStart;
+    }).length;
+
+    // Calculate MRR (Monthly Recurring Revenue)
+    // Sum up all paid plans: starter ($29), growth ($99), pro ($199), agency ($499)
+    var planPrices: Record<string, number> = {
+      'starter': 29,
+      'growth': 99,
+      'pro': 199,
+      'agency': 499
+    };
+    var mrr = 0;
+    allUsers.forEach(function(u) {
+      if (u.plan && planPrices[u.plan]) {
+        mrr += planPrices[u.plan];
+      }
+    });
+
+    // Get revenue from quiz_payments
+    var paymentsResult = await supabase.from('quiz_payments').select('id, amount, created_at');
+    if (paymentsResult.error) throw paymentsResult.error;
+    var allPayments = paymentsResult.data || [];
+
+    var totalRevenue = 0;
+    var revenueThisMonth = 0;
+    allPayments.forEach(function(p: any) {
+      var amt = Number(p.amount || 0);
+      totalRevenue += amt;
+      if (new Date(p.created_at) >= thisMonthStart) {
+        revenueThisMonth += amt;
+      }
+    });
+
+    // Count users by plan
+    var planCounts: Record<string, number> = {
+      'free': 0,
+      'starter': 0,
+      'growth': 0,
+      'pro': 0,
+      'agency': 0,
+      'trial': 0
+    };
+    allUsers.forEach(function(u) {
+      var plan = u.plan || 'free';
+      if (planCounts.hasOwnProperty(plan)) {
+        planCounts[plan]++;
+      }
+    });
+
+    // Calculate churn (users from last month who are no longer active or downgraded)
+    var usersLastMonth = allUsers.filter(function(u) {
+      var created = new Date(u.created_at);
+      return created >= lastMonthStart && created <= lastMonthEnd;
+    }).length;
+
+    var lastMonthEnd30DaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    var usersFromTwoMonthsAgo = allUsers.filter(function(u) {
+      var created = new Date(u.created_at);
+      return created < lastMonthStart && created >= lastMonthEnd30DaysAgo;
+    }).length;
+
+    var estimatedChurnRate = usersFromTwoMonthsAgo > 0 ? Math.round((1 - usersLastMonth / usersFromTwoMonthsAgo) * 100) : 0;
+
+    return res.json({
+      timestamp: now.toISOString(),
+      users: {
+        total: totalUsers,
+        newThisMonth: newUsersThisMonth,
+        activeLastMonth: Math.max(activeUsers, 0),
+        byPlan: planCounts
+      },
+      quizzes: {
+        total: totalQuizzes,
+        published: publishedQuizzes,
+        draft: totalQuizzes - publishedQuizzes
+      },
+      leads: {
+        total: totalLeads,
+        thisMonth: leadsThisMonth,
+        avgPerUser: totalUsers > 0 ? Math.round(totalLeads / totalUsers * 100) / 100 : 0
+      },
+      revenue: {
+        mrr: Math.round(mrr * 100) / 100,
+        totalRevenue: Math.round(totalRevenue * 100) / 100,
+        thisMonth: Math.round(revenueThisMonth * 100) / 100,
+        quizPaymentsCount: allPayments.length
+      },
+      metrics: {
+        estimatedChurnRate: estimatedChurnRate,
+        activationRate: totalUsers > 0 ? Math.round((publishedQuizzes / totalUsers) * 100) : 0,
+        leadsPerQuiz: totalQuizzes > 0 ? Math.round((totalLeads / totalQuizzes) * 100) / 100 : 0
+      }
+    });
+  } catch (err: any) {
+    log.error('Admin metrics error:', { err: err });
+    res.status(500).json({ error: err.message ?? 'Failed to fetch metrics' });
   }
 });

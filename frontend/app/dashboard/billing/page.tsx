@@ -4,7 +4,7 @@
  * /dashboard/billing - Plan, usage, and billing portal entrypoint.
  *
  * Shows the current plan from /api/user/plan, usage bars for quizzes + leads,
- * trial countdown if applicable, and a Stripe customer-portal button for paid
+ * trial countdown if applicable, invoices, and a Stripe customer-portal button for paid
  * plans. Upgrade CTAs route to /pricing, preserving the existing checkout flow.
  */
 
@@ -35,6 +35,15 @@ type UserPlan = {
   features?: { removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string };
 };
 
+type Invoice = {
+  id: string;
+  number: string;
+  date: string;
+  amount: number;
+  status: string;
+  url: string;
+};
+
 const PLAN_CATALOG: Array<{
   id: UserPlan['plan'];
   name: string;
@@ -44,8 +53,16 @@ const PLAN_CATALOG: Array<{
   features: string[];
 }> = [
   {
+    id: 'free',
+    name: 'Free',
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    tagline: 'Get started with Squarespell',
+    features: ['1 quiz', '100 leads / month', '50 emails / month', 'Basic analytics'],
+  },
+  {
     id: 'growth',
-    name: 'Growth',
+    name: 'Starter',
     monthlyPrice: 29,
     yearlyPrice: 276,
     tagline: 'For coaches and consultants scaling their leads',
@@ -70,8 +87,8 @@ const PLAN_CATALOG: Array<{
 ];
 
 function UsageBar({ label, used, limit }: { label: string; used: number; limit: number }) {
-  const pct = limit > 0 && isFinite(limit) ? Math.min(100, (used / limit) * 100) : 0;
-  const over = limit > 0 && isFinite(limit) && used > limit * 0.85;
+  var pct = limit > 0 && isFinite(limit) ? Math.min(100, (used / limit) * 100) : 0;
+  var over = limit > 0 && isFinite(limit) && used > limit * 0.85;
   return (
     <div>
       <div
@@ -106,13 +123,13 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
           height: 6,
           borderRadius: 3,
           background: C.SURFACE,
-          border: `1px solid ${C.BORDER}`,
+          border: '1px solid ' + C.BORDER,
           overflow: 'hidden',
         }}
       >
         <div
           style={{
-            width: `${pct}%`,
+            width: pct + '%',
             height: '100%',
             background: over ? '#ff9f43' : C.ACCENT,
             transition: 'width 0.3s ease',
@@ -123,9 +140,139 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
   );
 }
 
+function CurrentPlanBadge({ plan }: { plan: UserPlan }) {
+  var billingCycleText = plan.plan === 'free' || plan.plan === 'trial' ? 'No billing' : 'Monthly billing';
+  if (plan.plan === 'trial' && plan.trial_ends_at) {
+    var daysLeft = Math.max(0, Math.ceil((new Date(plan.trial_ends_at).getTime() - Date.now()) / 86400000));
+    billingCycleText = daysLeft + ' days left';
+  }
+
+  return (
+    <div style={{
+      background: C.ELEVATED,
+      border: '1px solid ' + C.BORDER,
+      borderRadius: 12,
+      padding: 18,
+      marginBottom: 20,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+            Current plan
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 28, fontWeight: 800, color: C.ACCENT, textTransform: 'capitalize' }}>
+              {plan.plan === 'growth' ? 'Starter' : plan.plan}
+            </span>
+            <Pill variant={plan.plan === 'trial' || plan.plan === 'free' ? 'accent' : 'live'}>
+              {plan.plan === 'trial' || plan.plan === 'free' ? 'Trial' : 'Active'}
+            </Pill>
+          </div>
+          <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginTop: 8 }}>
+            {billingCycleText}
+          </div>
+        </div>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <path d="M12 2c6.627 0 12 4.925 12 11s-5.373 11-12 11S0 18.075 0 13 5.373 2 12 2z"/>
+          <path d="M8 13h8M11 10l3 3-3 3"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function InvoicesSection({ token }: { token: string | null }) {
+  var [invoices, setInvoices] = useState<Invoice[]>([]);
+  var [invoicesLoading, setInvoicesLoading] = useState(true);
+
+  useEffect(function() {
+    if (!token) return;
+    fetch(API + '/api/stripe/invoices', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(r) {
+        if (!r.ok) throw new Error('Failed to load invoices');
+        return r.json();
+      })
+      .then(function(data) {
+        setInvoices(data.invoices || []);
+        setInvoicesLoading(false);
+      })
+      .catch(function(e) {
+        console.error(e);
+        setInvoicesLoading(false);
+      });
+  }, [token]);
+
+  if (invoicesLoading) {
+    return null;
+  }
+
+  if (invoices.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <h3 style={{ margin: '0 0 14px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
+        Invoice history
+      </h3>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid ' + C.BORDER }}>
+              <th style={{ textAlign: 'left', padding: '10px 0', fontWeight: 700, color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date</th>
+              <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 700, color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Invoice</th>
+              <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 700, color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Amount</th>
+              <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 700, color: C.TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.map(function(invoice) {
+              return (
+                <tr key={invoice.id} style={{ borderBottom: '1px solid ' + C.BORDER, transition: 'background 0.2s' }}>
+                  <td style={{ padding: '12px 0', color: C.TEXT }}>
+                    {new Date(invoice.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </td>
+                  <td style={{ padding: '12px 12px', color: C.TEXT }}>
+                    {invoice.url ? (
+                      <a href={invoice.url} target="_blank" rel="noopener noreferrer" style={{ color: C.ACCENT, textDecoration: 'none', fontWeight: 600 }}>
+                        {invoice.number}
+                      </a>
+                    ) : (
+                      <span style={{ fontWeight: 600 }}>{invoice.number}</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px 12px', color: C.TEXT, fontVariantNumeric: 'tabular-nums' }}>
+                    ${(invoice.amount / 100).toFixed(2)}
+                  </td>
+                  <td style={{ padding: '12px 12px' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '3px 10px',
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      textTransform: 'capitalize',
+                      background: invoice.status === 'paid' ? '#ecfdf5' : '#fffbeb',
+                      color: invoice.status === 'paid' ? '#065f46' : '#92400e',
+                    }}>
+                      {invoice.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
 export default function BillingPage() {
-  const router = useRouter();
-  const { token, status: authStatus } = useDashboardAuth();
+  var router = useRouter();
+  var { token, status: authStatus } = useDashboardAuth();
   var [plan, setPlan] = useState<UserPlan | null>(null);
   var [loading, setLoading] = useState(true);
   var [yearly, setYearly] = useState(false);
@@ -157,14 +304,14 @@ export default function BillingPage() {
     fetchPlan();
   }, [token]);
 
-  const trialDaysLeft = useMemo(() => {
+  var trialDaysLeft = useMemo(function() {
     if (!plan?.trial_ends_at) return 0;
-    const diff = new Date(plan.trial_ends_at).getTime() - Date.now();
+    var diff = new Date(plan.trial_ends_at).getTime() - Date.now();
     return Math.max(0, Math.ceil(diff / 86400000));
   }, [plan]);
 
-  const isTrial = plan?.plan === 'trial' || plan?.plan === 'free';
-  const isPaid = plan && !isTrial && plan.plan !== 'starter';
+  var isTrial = plan?.plan === 'trial' || plan?.plan === 'free';
+  var isPaid = plan && !isTrial && plan.plan !== 'starter' && plan.plan !== 'growth';
 
   const openPortal = () => {
     if (!token) return;
@@ -221,77 +368,42 @@ export default function BillingPage() {
     );
   }
 
+  var displayPlanName = plan.plan === 'growth' ? 'Starter' : plan.plan;
+
   return (
     <DashboardShell title="Billing & plan">
       <PageHeader title="Billing & plan" subtitle="Manage your Squarespell subscription" />
 
       <div style={{ display: 'grid', gap: 20 }}>
-        <Card>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: 16,
-              flexWrap: 'wrap',
-              marginBottom: 22,
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: C.TEXT_MUTED,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: 6,
-                }}
-              >
-                Current plan
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 800,
-                    color: C.TEXT,
-                    textTransform: 'capitalize',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  {plan.plan}
-                </span>
-                {isTrial && (
-                  <Pill variant="accent">
-                    {trialDaysLeft > 0 ? `${trialDaysLeft} days left` : 'Trial ended'}
-                  </Pill>
-                )}
-                {isPaid && <Pill variant="live">Active</Pill>}
-              </div>
-              <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginTop: 6 }}>{plan.email}</div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {isPaid ? (
-                <>
-                  <PrimaryButton onClick={() => router.push('/pricing')}>Change plan</PrimaryButton>
-                  <GhostButton onClick={openPortal}>Manage billing</GhostButton>
-                </>
-              ) : (
-                <PrimaryButton onClick={() => router.push('/pricing')}>Upgrade now</PrimaryButton>
-              )}
-            </div>
-          </div>
+        <CurrentPlanBadge plan={plan} />
 
+        <Card>
+          <div style={{ marginBottom: 16 }}>
+            <h3 style={{ margin: '0 0 14px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
+              Current usage
+            </h3>
+          </div>
           <div style={{ display: 'grid', gap: 18 }}>
             <UsageBar label="Quizzes" used={plan.quiz_count} limit={plan.limits.quizzes} />
             <UsageBar label="Leads (monthly)" used={plan.leads_this_month || 0} limit={plan.limits.leads} />
             <UsageBar label="Emails (monthly)" used={plan.emails_this_month || 0} limit={plan.limits.emails || 50} />
           </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 18 }}>
+            {isPaid ? (
+              <>
+                <PrimaryButton onClick={function() { router.push('/pricing'); }}>Change plan</PrimaryButton>
+                <GhostButton onClick={openPortal}>Manage billing</GhostButton>
+              </>
+            ) : (
+              <PrimaryButton onClick={function() { router.push('/pricing'); }}>Upgrade now</PrimaryButton>
+            )}
+          </div>
         </Card>
 
+        <InvoicesSection token={token} />
+
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
             <h2
               style={{
                 margin: 0,
@@ -302,12 +414,12 @@ export default function BillingPage() {
                 letterSpacing: '0.06em',
               }}
             >
-              Available plans
+              All plans
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 13, fontWeight: yearly ? 500 : 700, color: yearly ? C.TEXT_MUTED : C.TEXT }}>Monthly</span>
               <button
-                onClick={() => setYearly(!yearly)}
+                onClick={function() { setYearly(!yearly); }}
                 style={{
                   width: 44,
                   height: 24,
@@ -349,26 +461,30 @@ export default function BillingPage() {
               gap: 14,
             }}
           >
-            {PLAN_CATALOG.map((p) => {
-              const current = plan.plan === p.id;
-              const displayPrice = yearly
-                ? `$${Math.round(p.yearlyPrice / 12)}/mo`
-                : `$${p.monthlyPrice}/mo`;
-              const billedNote = yearly
-                ? `Billed $${p.yearlyPrice}/year`
+            {PLAN_CATALOG.map(function(p) {
+              var current = plan.plan === p.id;
+              var displayPrice = yearly
+                ? '$' + Math.round(p.yearlyPrice / 12) + '/mo'
+                : '$' + p.monthlyPrice + '/mo';
+              var billedNote = yearly
+                ? 'Billed $' + p.yearlyPrice + '/year'
                 : null;
+              var isCurrentPlan = (p.id === 'free' && plan.plan === 'free') ||
+                                 (p.id === 'growth' && plan.plan === 'growth') ||
+                                 (p.id === 'pro' && plan.plan === 'pro') ||
+                                 (p.id === 'agency' && plan.plan === 'agency');
               return (
                 <div
                   key={p.id}
                   style={{
                     background: C.ELEVATED,
-                    border: current ? `1px solid ${C.ACCENT}` : `1px solid ${C.BORDER}`,
+                    border: isCurrentPlan ? '1px solid ' + C.ACCENT : '1px solid ' + C.BORDER,
                     borderRadius: 14,
                     padding: 22,
                     position: 'relative',
                   }}
                 >
-                  {current && (
+                  {isCurrentPlan && (
                     <div style={{ position: 'absolute', top: 14, right: 14 }}>
                       <Pill variant="accent">Current</Pill>
                     </div>
@@ -376,9 +492,15 @@ export default function BillingPage() {
                   <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
                     {p.name}
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: C.ACCENT, marginBottom: 2 }}>
-                    {displayPrice}
-                  </div>
+                  {p.monthlyPrice === 0 ? (
+                    <div style={{ fontSize: 22, fontWeight: 800, color: C.ACCENT, marginBottom: 2 }}>
+                      Free
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 22, fontWeight: 800, color: C.ACCENT, marginBottom: 2 }}>
+                      {displayPrice}
+                    </div>
+                  )}
                   {billedNote && (
                     <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginBottom: 6 }}>
                       {billedNote}
@@ -388,25 +510,27 @@ export default function BillingPage() {
                     {p.tagline}
                   </div>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', marginBottom: 16 }}>
-                    {p.features.map((f) => (
-                      <li
-                        key={f}
-                        style={{
-                          fontSize: 13,
-                          color: C.TEXT,
-                          padding: '6px 0',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 8,
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
-                        {f}
-                      </li>
-                    ))}
+                    {p.features.map(function(f) {
+                      return (
+                        <li
+                          key={f}
+                          style={{
+                            fontSize: 13,
+                            color: C.TEXT,
+                            padding: '6px 0',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 8,
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+                          {f}
+                        </li>
+                      );
+                    })}
                   </ul>
-                  {!current && (
-                    <GhostButton onClick={() => router.push(`/pricing${yearly ? '?interval=yearly' : ''}`)}>Choose {p.name}</GhostButton>
+                  {!isCurrentPlan && (
+                    <GhostButton onClick={function() { router.push('/pricing' + (yearly ? '?interval=yearly' : '')); }}>Choose {p.name}</GhostButton>
                   )}
                 </div>
               );
@@ -416,14 +540,13 @@ export default function BillingPage() {
 
         <Card>
           <h3 style={{ margin: '0 0 6px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
-            Need an invoice or to cancel?
+            Need to manage your billing?
           </h3>
           <p style={{ margin: '0 0 14px 0', fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
-            Paid customers can manage payment methods, download invoices, and cancel anytime through
-            the Stripe customer portal.
+            Access the Stripe customer portal to update payment methods, download invoices, and manage your subscription.
           </p>
           {isPaid ? (
-            <GhostButton onClick={openPortal}>Open billing portal ↗</GhostButton>
+            <GhostButton onClick={openPortal}>Open billing portal</GhostButton>
           ) : (
             <div style={{ fontSize: 12.5, color: C.TEXT_MUTED }}>
               Upgrade to a paid plan to access the billing portal.

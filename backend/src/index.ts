@@ -22,7 +22,7 @@ import express from 'express';
 import cors from 'cors';
 import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
-import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter, mediaRouter } from './routes/allRoutes';
+import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter, mediaRouter, referralsRouter, publicReferralRouter, whiteLabelRouter, publicWhiteLabelRouter, adminAnalyticsRouter } from './routes/allRoutes';
 import emailsRouter from './routes/emails';
 import resendWebhookRouter from './routes/resendWebhook';
 import unsubscribeRouter from './routes/unsubscribe';
@@ -81,6 +81,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/scrape-brand',
   '/api/public/unsubscribe',
   '/api/public/resubscribe',
+  '/api/public/white-label',
   '/api/webhooks',
   '/api/emails/unsplash',
 ];
@@ -132,6 +133,11 @@ app.use('/api/cron', trialReminderRouter);
 app.use('/api/emails', emailsRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/webhooks', resendWebhookRouter);
+app.use('/api/referrals', referralsRouter);
+app.use('/api/public/referral', publicReferralRouter);
+app.use('/api/white-label', whiteLabelRouter);
+app.use('/api/public/white-label', publicWhiteLabelRouter);
+app.use('/api/admin', adminAnalyticsRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
