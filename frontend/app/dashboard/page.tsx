@@ -177,6 +177,7 @@ function DashStatCard({
   sub?: string;
   progress?: { current: number; max: number };
 }) {
+  var trendUp = change === undefined || change >= 0;
   return (
     <div
       style={{
@@ -189,13 +190,25 @@ function DashStatCard({
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_500 }}>{label}</span>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: C.GRAY_50, border: '1px solid ' + C.GRAY_200,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: C.GRAY_600,
-        }}>
-          {icon}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: C.GRAY_50, border: '1px solid ' + C.GRAY_200,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: C.GRAY_600,
+          }}>
+            {icon}
+          </div>
+          <svg width="24" height="16" viewBox="0 0 24 16" fill="none">
+            <polyline
+              points={trendUp ? '2,12 8,8 14,10 22,3' : '2,4 8,8 14,6 22,13'}
+              stroke={trendUp ? C.SUCCESS_500 : C.ERROR_500}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
         </div>
       </div>
       <div
@@ -1124,26 +1137,7 @@ function OverviewInner() {
   var displayName = userName || 'there';
 
   return (
-    <DashboardShell
-      title="Dashboard"
-      topbarRight={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={function() { setNewQuizOpen(true); }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 18px', background: C.ACCENT, color: '#fff',
-              borderRadius: 8, fontSize: 14, fontWeight: 600,
-              border: '1px solid ' + C.ACCENT, cursor: 'pointer',
-              fontFamily: C.FONT, boxShadow: C.SHADOW_XS,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New quiz
-          </button>
-        </div>
-      }
-    >
+    <DashboardShell title="Dashboard">
       <NewQuizModal open={newQuizOpen} onClose={function() { setNewQuizOpen(false); }} />
 
       {/* Welcome header */}
@@ -1153,7 +1147,7 @@ function OverviewInner() {
             margin: 0, fontSize: 24, fontWeight: 600, color: C.GRAY_900,
             letterSpacing: '-0.02em', marginBottom: 4, fontFamily: C.FONT,
           }}>
-            Welcome back, {displayName} &#128075;
+            Welcome back, {displayName}
           </h1>
           <p style={{ margin: 0, fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT }}>
             Here&apos;s what&apos;s happening with your quizzes today.

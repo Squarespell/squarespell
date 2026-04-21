@@ -806,12 +806,12 @@ export function DashboardShell({
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderBottom: '1px solid ' + C.GRAY_200,
-            padding: '16px 32px',
+            padding: '0 32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 16,
-            minHeight: 64,
+            height: 64,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
@@ -837,27 +837,67 @@ export function DashboardShell({
                 {mobileOpen ? icons.close : icons.menu}
               </button>
             )}
-            {title && (
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: 18,
-                  fontWeight: 600,
-                  color: C.GRAY_900,
-                  letterSpacing: '-0.02em',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  fontFamily: C.FONT,
-                }}
-              >
-                {title}
-              </h1>
-            )}
+            {/* Topbar search */}
+            <button
+              type="button"
+              onClick={function() {
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 14px',
+                border: '1px solid ' + C.GRAY_200,
+                borderRadius: 8,
+                color: C.GRAY_400,
+                fontSize: 14,
+                minWidth: 320,
+                cursor: 'pointer',
+                background: C.SURFACE,
+                fontFamily: C.FONT,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_300; }}
+              onMouseLeave={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_200; }}
+            >
+              {icons.search}
+              <span style={{ flex: 1, textAlign: 'left', color: C.GRAY_500, fontSize: 14 }}>Search anything...</span>
+              <kbd style={{ padding: '2px 6px', border: '1px solid ' + C.GRAY_200, borderRadius: 4, fontSize: 11, color: C.GRAY_400, background: C.GRAY_50, fontWeight: 500, fontFamily: C.FONT }}>&thinsp;K</kbd>
+            </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <NotificationBell />
             {topbarRight}
+            {/* Topbar user profile */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '6px 12px 6px 6px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'all 0.12s',
+              }}
+              onMouseEnter={function(e: any) { e.currentTarget.style.background = C.GRAY_50; }}
+              onMouseLeave={function(e: any) { e.currentTarget.style.background = 'transparent'; }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, fontWeight: 600, color: '#999',
+                overflow: 'hidden',
+              }}>
+                {userInitial}
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{userName}</div>
+                <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>Owner</div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
         </header>
         )}
