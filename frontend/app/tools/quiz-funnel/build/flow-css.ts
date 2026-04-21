@@ -263,24 +263,24 @@ export const FLOW_CSS = `
   }
 
   /* ============ STAGE 2: Goal selection (Option C) ============ */
-  .s2-wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+  .s2-wrap { max-width: 860px; margin: 0 auto; padding: 20px 24px 40px; }
 
   /* Skeleton loading state */
   .s2-skeleton { display: block; }
-  .analysis-status { text-align: center; margin-bottom: 32px; }
+  .analysis-status { text-align: center; margin-bottom: 20px; }
   .analysis-spinner { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(13,115,119,0.15); border-top-color: var(--accent); animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .analysis-text { font-size: 14px; color: var(--accent); font-weight: 600; }
   .analysis-detail { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
-  .skel-header { margin-bottom: 36px; }
-  .skel-badge { width: 180px; height: 28px; border-radius: 100px; background: rgba(0,0,0,0.04); margin-bottom: 20px; }
-  .skel-title { height: 38px; width: 85%; border-radius: 8px; background: rgba(0,0,0,0.04); margin-bottom: 12px; }
-  .skel-title-2 { height: 38px; width: 60%; border-radius: 8px; background: rgba(0,0,0,0.04); margin-bottom: 16px; }
-  .skel-sub { height: 16px; width: 75%; border-radius: 6px; background: rgba(0,0,0,0.03); margin-bottom: 8px; }
+  .skel-header { margin-bottom: 16px; }
+  .skel-badge { width: 150px; height: 24px; border-radius: 100px; background: rgba(0,0,0,0.04); margin-bottom: 12px; }
+  .skel-title { height: 28px; width: 70%; border-radius: 8px; background: rgba(0,0,0,0.04); margin-bottom: 8px; }
+  .skel-title-2 { height: 28px; width: 50%; border-radius: 8px; background: rgba(0,0,0,0.04); margin-bottom: 10px; }
+  .skel-sub { height: 14px; width: 65%; border-radius: 6px; background: rgba(0,0,0,0.03); margin-bottom: 6px; }
   .skel-sub-2 { height: 16px; width: 55%; border-radius: 6px; background: rgba(0,0,0,0.03); }
 
-  .skel-brand { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 36px; }
+  .skel-brand { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 16px; }
   .skel-brand-icon { width: 42px; height: 42px; border-radius: 10px; background: rgba(13,115,119,0.15); flex-shrink: 0; }
   .skel-brand-lines { flex: 1; }
   .skel-brand-line1 { height: 10px; width: 80px; border-radius: 4px; background: rgba(0,0,0,0.06); margin-bottom: 8px; }
@@ -323,14 +323,14 @@ export const FLOW_CSS = `
     line-height: 1.5;
   }
 
-  .skel-pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0 32px; }
-  .skel-pick-card { border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.015); padding: 28px 24px; display: flex; flex-direction: column; align-items: flex-start; }
-  .skel-pick-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(0,0,0,0.04); margin-bottom: 20px; }
-  .skel-pick-badge { width: 90px; height: 18px; border-radius: 4px; background: rgba(0,0,0,0.04); margin-bottom: 10px; }
-  .skel-pick-name { width: 75%; height: 20px; border-radius: 4px; background: rgba(0,0,0,0.06); margin-bottom: 10px; }
-  .skel-pick-desc { width: 100%; height: 13px; border-radius: 4px; background: rgba(0,0,0,0.035); margin-bottom: 6px; }
-  .skel-pick-desc-2 { width: 70%; height: 13px; border-radius: 4px; background: rgba(0,0,0,0.025); }
-  .skel-btn { height: 54px; border-radius: 12px; background: rgba(0,0,0,0.04); }
+  .skel-pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0 20px; }
+  .skel-pick-card { border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.015); padding: 20px 18px; display: flex; flex-direction: column; align-items: flex-start; }
+  .skel-pick-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(0,0,0,0.04); margin-bottom: 14px; }
+  .skel-pick-badge { width: 80px; height: 14px; border-radius: 4px; background: rgba(0,0,0,0.04); margin-bottom: 8px; }
+  .skel-pick-name { width: 75%; height: 18px; border-radius: 4px; background: rgba(0,0,0,0.06); margin-bottom: 8px; }
+  .skel-pick-desc { width: 100%; height: 12px; border-radius: 4px; background: rgba(0,0,0,0.035); margin-bottom: 5px; }
+  .skel-pick-desc-2 { width: 70%; height: 12px; border-radius: 4px; background: rgba(0,0,0,0.025); }
+  .skel-btn { height: 48px; border-radius: 12px; background: rgba(0,0,0,0.04); }
 
   /* Shimmer animation */
   .shimmer { position: relative; overflow: hidden; }
@@ -345,17 +345,17 @@ export const FLOW_CSS = `
   .s2-loaded { display: block; animation: fadeUp 0.5s ease; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-  .step-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(13,115,119,0.08); border: 1px solid rgba(13,115,119,0.2); border-radius: 100px; padding: 6px 16px; font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
-  .step-title { font-size: clamp(26px, 4vw, 34px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 12px; }
+  .step-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(13,115,119,0.08); border: 1px solid rgba(13,115,119,0.2); border-radius: 100px; padding: 5px 14px; font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
+  .step-title { font-size: clamp(22px, 3.5vw, 28px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 8px; }
   .step-title-acc { color: var(--accent); }
-  .step-sub { font-size: 15px; color: var(--text-muted); line-height: 1.65; margin-bottom: 36px; }
+  .step-sub { font-size: 14px; color: var(--text-muted); line-height: 1.55; margin-bottom: 16px; }
 
   /* Brand card */
-  .brand-card { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 32px; }
-  .brand-icon { width: 42px; height: 42px; border-radius: 10px; background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #FFFFFF; font-weight: 800; font-size: 18px; }
+  .brand-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; }
+  .brand-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #FFFFFF; font-weight: 800; font-size: 15px; }
   .brand-info { flex: 1; }
-  .brand-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
-  .brand-url { font-size: 15px; font-weight: 600; color: var(--text); }
+  .brand-label { font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+  .brand-url { font-size: 14px; font-weight: 600; color: var(--text); }
   .brand-check { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--success); font-weight: 600; }
   .brand-check svg { width: 16px; height: 16px; }
 
@@ -397,13 +397,13 @@ export const FLOW_CSS = `
   .goal-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
 
   /* Generate button */
-  .btn-gen { width: 100%; padding: 16px 24px; border-radius: 12px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-gen { width: 100%; padding: 14px 24px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .btn-gen.ready { background: var(--accent); color: #FFFFFF; }
   .btn-gen.ready:hover { background: #0a5a5e; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(13,115,119,0.2); }
   .btn-gen.disabled { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.25); cursor: default; }
   .btn-gen svg { width: 18px; height: 18px; }
 
-  .btn-hint { text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-muted); }
+  .btn-hint { text-align: center; margin-top: 8px; font-size: 12px; color: var(--text-muted); }
 
   /* Quiz generation loading skeleton */
   .gen-loading { text-align: center; padding: 40px 0 20px; animation: fadeUp 0.4s ease; }
@@ -1545,16 +1545,16 @@ export const FLOW_CSS = `
   .sq-pick-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin: 28px 0 32px;
+    gap: 14px;
+    margin: 16px 0 20px;
     align-items: stretch;
   }
   .sq-pick-card {
     position: relative;
     background: var(--surface);
     border: 2px solid var(--border);
-    border-radius: 14px;
-    padding: 28px 24px;
+    border-radius: 12px;
+    padding: 20px 18px;
     cursor: pointer;
     transition: all 0.2s var(--ease);
     display: flex;
@@ -1574,10 +1574,10 @@ export const FLOW_CSS = `
   /* Checkmark - top right */
   .sq-pick-check {
     position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 28px;
-    height: 28px;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: var(--accent);
     color: #fff;
@@ -1589,13 +1589,13 @@ export const FLOW_CSS = `
 
   /* Icon */
   .sq-pick-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     flex-shrink: 0;
   }
   .sq-pick-icon-ai { background: rgba(13,115,119,0.08); color: var(--accent); }
@@ -1604,35 +1604,35 @@ export const FLOW_CSS = `
 
   /* Badge */
   .sq-pick-badge {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
   .sq-pick-badge-ai { color: var(--accent); }
   .sq-pick-badge-tpl { color: #6366f1; }
 
   /* Name */
   .sq-pick-name {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: var(--text);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     line-height: 1.25;
     letter-spacing: -0.01em;
   }
 
   /* Description */
   .sq-pick-desc {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-muted);
-    line-height: 1.65;
+    line-height: 1.55;
   }
 
   @media (max-width: 1000px) {
     .s3-body { grid-template-columns: 1fr; }
-    .s2-wrap { padding: 20px 24px 60px; }
+    .s2-wrap { padding: 16px 16px 40px; }
     .goal-grid { grid-template-columns: 1fr; }
     .sq-pick-grid { grid-template-columns: 1fr; }
     .sq-pick-card { padding: 24px 20px; }
