@@ -1120,55 +1120,28 @@ export function TryFlowInner({
                 </div>
               </div>
 
-              {/* 3 minimal card skeletons matching Option C layout */}
+              {/* 3 vertical card skeletons matching Option C layout */}
               <div className="skel-pick-grid">
                 <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-radio"></div>
-                  <div className="skel-pick-content">
-                    <div className="skel-pick-top-row">
-                      <div className="skel-pick-icon"></div>
-                      <div className="skel-pick-badge"></div>
-                    </div>
-                    <div className="skel-pick-name"></div>
-                    <div className="skel-pick-desc"></div>
-                    <div className="skel-pick-desc-2"></div>
-                    <div className="skel-pick-meta-row">
-                      <div className="skel-pick-meta-item"></div>
-                      <div className="skel-pick-meta-item"></div>
-                    </div>
-                  </div>
+                  <div className="skel-pick-icon"></div>
+                  <div className="skel-pick-badge"></div>
+                  <div className="skel-pick-name"></div>
+                  <div className="skel-pick-desc"></div>
+                  <div className="skel-pick-desc-2"></div>
                 </div>
                 <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-radio"></div>
-                  <div className="skel-pick-content">
-                    <div className="skel-pick-top-row">
-                      <div className="skel-pick-icon"></div>
-                      <div className="skel-pick-badge"></div>
-                    </div>
-                    <div className="skel-pick-name"></div>
-                    <div className="skel-pick-desc"></div>
-                    <div className="skel-pick-desc-2"></div>
-                    <div className="skel-pick-meta-row">
-                      <div className="skel-pick-meta-item"></div>
-                      <div className="skel-pick-meta-item"></div>
-                    </div>
-                  </div>
+                  <div className="skel-pick-icon"></div>
+                  <div className="skel-pick-badge"></div>
+                  <div className="skel-pick-name"></div>
+                  <div className="skel-pick-desc"></div>
+                  <div className="skel-pick-desc-2"></div>
                 </div>
                 <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-radio"></div>
-                  <div className="skel-pick-content">
-                    <div className="skel-pick-top-row">
-                      <div className="skel-pick-icon"></div>
-                      <div className="skel-pick-badge"></div>
-                    </div>
-                    <div className="skel-pick-name"></div>
-                    <div className="skel-pick-desc"></div>
-                    <div className="skel-pick-desc-2"></div>
-                    <div className="skel-pick-meta-row">
-                      <div className="skel-pick-meta-item"></div>
-                      <div className="skel-pick-meta-item"></div>
-                    </div>
-                  </div>
+                  <div className="skel-pick-icon"></div>
+                  <div className="skel-pick-badge"></div>
+                  <div className="skel-pick-name"></div>
+                  <div className="skel-pick-desc"></div>
+                  <div className="skel-pick-desc-2"></div>
                 </div>
               </div>
               <div className="skel-btn shimmer"></div>
@@ -1198,68 +1171,43 @@ export function TryFlowInner({
                 </div>
               </div>
 
-              {/* 3 Pick cards - Option C minimal icon style */}
+              {/* 3 Pick cards - Option C vertical icon cards */}
               <div className="sq-pick-grid">
                 {/* AI Custom card */}
                 <div
                   className={'sq-pick-card' + (pickChoice === 'ai' ? ' sq-pick-selected' : '')}
                   onClick={function() { setPickChoice('ai'); }}
                 >
-                  <div className="sq-pick-radio">{pickChoice === 'ai' && <div className="sq-pick-radio-dot" />}</div>
-                  <div className="sq-pick-content">
-                    <div className="sq-pick-top-row">
-                      <div className="sq-pick-icon sq-pick-icon-ai">
-                        <SvgBolt size={20} />
-                      </div>
-                      <div className="sq-pick-badge sq-pick-badge-ai">Recommended</div>
-                    </div>
-                    <div className="sq-pick-name">AI-Generated Quiz</div>
-                    <div className="sq-pick-desc">Fully custom quiz built from your website content, brand voice, and offers. Tailored questions and scoring.</div>
-                    <div className="sq-pick-meta">
-                      <span className="sq-pick-meta-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        ~30 seconds
-                      </span>
-                      <span className="sq-pick-meta-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        Fully editable
-                      </span>
-                    </div>
+                  {pickChoice === 'ai' && <div className="sq-pick-check"><SvgCheck size={14} /></div>}
+                  <div className="sq-pick-icon sq-pick-icon-ai">
+                    <SvgBolt size={24} />
                   </div>
+                  <div className="sq-pick-badge sq-pick-badge-ai">Recommended</div>
+                  <div className="sq-pick-name">AI Custom Quiz</div>
+                  <div className="sq-pick-desc">Fully custom quiz built from your website content, audience, and offers. Powered by AI.</div>
                 </div>
 
                 {/* Template cards */}
                 {matchedTemplates.map(function(tpl, tplIdx) {
                   var isSelected = pickChoice === tpl.id;
-                  var firstBlock = tpl.blocks().find(function(b: any) { return b.type === 'question'; });
-                  var questionCount = tpl.blocks().filter(function(b: any) { return b.type === 'question'; }).length;
+                  var categoryLabel = tpl.category || 'Template';
                   return (
                     <div
                       key={tpl.id}
                       className={'sq-pick-card' + (isSelected ? ' sq-pick-selected' : '')}
                       onClick={function() { setPickChoice(tpl.id); }}
                     >
-                      <div className="sq-pick-radio">{isSelected && <div className="sq-pick-radio-dot" />}</div>
-                      <div className="sq-pick-content">
-                        <div className="sq-pick-top-row">
-                          <div className="sq-pick-icon sq-pick-icon-tpl">
-                            <SvgPackage size={20} />
-                          </div>
-                          <div className="sq-pick-badge sq-pick-badge-tpl">Template</div>
-                        </div>
-                        <div className="sq-pick-name">{tpl.name}</div>
-                        <div className="sq-pick-desc">{tpl.description}</div>
-                        <div className="sq-pick-meta">
-                          <span className="sq-pick-meta-item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-                            {questionCount} questions
-                          </span>
-                          <span className="sq-pick-meta-item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                            Instant setup
-                          </span>
-                        </div>
+                      {isSelected && <div className="sq-pick-check"><SvgCheck size={14} /></div>}
+                      <div className={'sq-pick-icon sq-pick-icon-tpl' + (tplIdx === 1 ? ' sq-pick-icon-tpl2' : '')}>
+                        {tplIdx === 0 ? (
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        ) : (
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                        )}
                       </div>
+                      <div className="sq-pick-badge sq-pick-badge-tpl">{categoryLabel}</div>
+                      <div className="sq-pick-name">{tpl.name}</div>
+                      <div className="sq-pick-desc">{tpl.description}</div>
                     </div>
                   );
                 })}
