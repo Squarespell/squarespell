@@ -1593,11 +1593,16 @@ export const FLOW_CSS = `
     overflow: hidden;
   }
 
-  /* Left visual panel — full-bleed images, no padding */
+  /* Left panel — dark gradient with floating product mockups */
   .s2-left {
     position: relative;
     overflow: hidden;
     height: 100%;
+    background: linear-gradient(165deg, #0b2c2e 0%, #061819 50%, #0a2224 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
   }
 
   /* Right content panel — centered with generous whitespace */
@@ -1626,304 +1631,307 @@ export const FLOW_CSS = `
     animation: s2FadeIn 0.3s ease reverse both;
   }
 
-  /* ---- Full-bleed visual system for left panel ---- */
-  .s2-vis {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
+  /* ---- Dark panel content layout ---- */
+  .s2-dark-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 480px;
     animation: s2FadeIn 0.6s var(--ease-spring) both;
   }
-  .s2-vis-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
+  .s2-dark-headline {
+    font-size: clamp(32px, 3.5vw, 44px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    animation: s2SlideUp 0.7s var(--ease-spring) 0.1s both;
   }
-  .s2-vis-shade {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.35) 100%);
-    z-index: 1;
+  .s2-dark-headline span {
+    color: #2dd4bf;
+    font-style: italic;
   }
-  .s2-vis-float {
-    position: absolute;
-    z-index: 2;
-    animation: s2ScaleIn 0.7s var(--ease-spring) 0.2s both;
-  }
-  .s2-vis-float-bottom {
-    bottom: 32px;
-    left: 32px;
-    right: 32px;
-  }
-  .s2-vis-float-center {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(100% - 64px);
-    max-width: 400px;
+  .s2-dark-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.55;
+    margin-bottom: 32px;
+    max-width: 360px;
+    animation: s2SlideUp 0.7s var(--ease-spring) 0.18s both;
   }
 
-  /* Floating brand card (glass-morphism) */
-  .s2-float-card {
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px;
-    padding: 20px 22px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    border: 1px solid rgba(255,255,255,0.6);
+  /* Decorative floating particles */
+  .s2-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
   }
-  .s2-float-card-row {
+  .s2-dot {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(13,115,119,0.4);
+  }
+  .s2-dot-1 { width: 6px; height: 6px; top: 15%; left: 12%; animation: s2Float 4s ease-in-out infinite; }
+  .s2-dot-2 { width: 4px; height: 4px; top: 25%; right: 18%; background: rgba(45,212,191,0.35); animation: s2Float 5s ease-in-out 0.5s infinite; }
+  .s2-dot-3 { width: 8px; height: 8px; bottom: 20%; left: 20%; background: rgba(45,212,191,0.2); animation: s2Float 6s ease-in-out 1s infinite; }
+  .s2-dot-4 { width: 5px; height: 5px; top: 60%; right: 10%; animation: s2Float 4.5s ease-in-out 0.8s infinite; }
+  .s2-dot-5 { width: 3px; height: 3px; bottom: 35%; left: 8%; background: rgba(255,255,255,0.15); animation: s2Float 5.5s ease-in-out 1.5s infinite; }
+
+  /* Floating product mockup container */
+  .s2-mockup {
+    animation: s2ScaleIn 0.8s var(--ease-spring) 0.25s both;
+  }
+
+  /* Shared mock card — dark glass style */
+  .s2-mock-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    overflow: hidden;
+  }
+  .s2-mock-card-tilt {
+    transform: perspective(1200px) rotateY(-5deg) rotateX(3deg);
+    transition: transform 0.6s var(--ease-spring);
+  }
+
+  /* ---- Brand identity mockup card ---- */
+  .s2-mock-card-head {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 14px;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-  .s2-float-card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+  .s2-mock-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     object-fit: contain;
-    background: #fff;
+    background: rgba(255,255,255,0.1);
     padding: 4px;
     flex-shrink: 0;
   }
-  .s2-float-card-letter {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+  .s2-mock-card-letter {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: #fff;
     flex-shrink: 0;
   }
-  .s2-float-card-info { flex: 1; min-width: 0; }
-  .s2-float-card-name {
-    font-size: 16px;
+  .s2-mock-card-name {
+    font-size: 15px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: #fff;
     letter-spacing: -0.01em;
-    line-height: 1.25;
   }
-  .s2-float-card-url {
-    font-size: 12px;
-    color: #888;
+  .s2-mock-card-url {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
     font-family: ui-monospace, Menlo, monospace;
     margin-top: 1px;
   }
-  .s2-float-card-colors {
-    display: flex;
-    gap: 8px;
+  .s2-mock-card-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
   }
-  .s2-float-card-swatch {
-    width: 28px;
-    height: 28px;
+  .s2-mock-card-palette {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .s2-mock-swatch {
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     animation: s2SwatchPop 0.4s var(--ease-spring) both;
   }
-  .s2-float-card-swatch:nth-child(1) { animation-delay: 0.4s; }
-  .s2-float-card-swatch:nth-child(2) { animation-delay: 0.5s; }
-  .s2-float-card-swatch:nth-child(3) { animation-delay: 0.6s; }
-  .s2-float-card-swatch:nth-child(4) { animation-delay: 0.7s; }
-
-  /* Floating quiz preview (glass-morphism) */
-  .s2-float-quiz {
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.15);
-    border: 1px solid rgba(255,255,255,0.6);
+  .s2-mock-swatch:nth-child(1) { animation-delay: 0.4s; }
+  .s2-mock-swatch:nth-child(2) { animation-delay: 0.5s; }
+  .s2-mock-swatch:nth-child(3) { animation-delay: 0.6s; }
+  .s2-mock-swatch:nth-child(4) { animation-delay: 0.7s; }
+  .s2-mock-card-rows {
+    padding: 8px 20px 16px;
   }
-  .s2-float-quiz-header {
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+  .s2-mock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .s2-mock-row:last-child { border-bottom: none; }
+  .s2-mock-row-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .s2-mock-row-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    max-width: 200px;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---- Quiz preview mockup ---- */
+  .s2-mock-quiz-head {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 14px 18px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
   }
-  .s2-float-quiz-logo {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
+  .s2-mock-quiz-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    font-size: 11px;
-    color: #fff;
+    font-size: 10px;
     flex-shrink: 0;
   }
-  .s2-float-quiz-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1a1a1a;
+  .s2-mock-quiz-body {
+    padding: 20px 18px 24px;
+    background: rgba(0,0,0,0.15);
   }
-  .s2-float-quiz-body {
-    padding: 22px 20px 26px;
-  }
-  .s2-float-quiz-progress {
+  .s2-mock-quiz-bar {
     height: 3px;
-    background: rgba(0,0,0,0.06);
+    background: rgba(255,255,255,0.08);
     border-radius: 100px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     overflow: hidden;
   }
-  .s2-float-quiz-fill {
+  .s2-mock-quiz-bar-fill {
     height: 100%;
+    width: 30%;
     border-radius: 100px;
-    width: 35%;
   }
-  .s2-float-quiz-q {
-    font-size: 16px;
+  .s2-mock-quiz-q {
+    font-size: 15px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: #fff;
     margin-bottom: 14px;
-    letter-spacing: -0.01em;
     line-height: 1.3;
+    letter-spacing: -0.01em;
   }
-  .s2-float-quiz-opts {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-  .s2-float-quiz-opt {
+  .s2-mock-quiz-opt {
     padding: 10px 14px;
-    border-radius: 9px;
-    border: 1.5px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
     font-size: 12px;
     font-weight: 500;
-    color: #555;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 6px;
     transition: all 0.2s;
   }
-  .s2-float-quiz-opt:nth-child(1) { animation: s2SlideUp 0.4s var(--ease-spring) 0.3s both; }
-  .s2-float-quiz-opt:nth-child(2) { animation: s2SlideUp 0.4s var(--ease-spring) 0.38s both; }
-  .s2-float-quiz-opt:nth-child(3) { animation: s2SlideUp 0.4s var(--ease-spring) 0.46s both; }
+  .s2-mock-quiz-opt:last-child { margin-bottom: 0; }
+  .s2-mock-quiz-opt:nth-child(1) { animation: s2SlideUp 0.4s var(--ease-spring) 0.35s both; }
+  .s2-mock-quiz-opt:nth-child(2) { animation: s2SlideUp 0.4s var(--ease-spring) 0.42s both; }
+  .s2-mock-quiz-opt:nth-child(3) { animation: s2SlideUp 0.4s var(--ease-spring) 0.49s both; }
 
-  /* Floating template gallery (glass-morphism) */
-  .s2-float-tpl-gallery {
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.15);
-    border: 1px solid rgba(255,255,255,0.6);
-    max-height: 420px;
-    display: flex;
-    flex-direction: column;
+  /* ---- Template grid mockup (dark cards) ---- */
+  .s2-mock-tpl-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    animation: s2ScaleIn 0.7s var(--ease-spring) 0.2s both;
   }
-  .s2-float-tpl-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    flex-shrink: 0;
-  }
-  .s2-float-tpl-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1a1a1a;
-  }
-  .s2-float-tpl-count {
-    font-size: 11px;
-    font-weight: 600;
-    color: #999;
-    background: rgba(0,0,0,0.04);
-    padding: 2px 8px;
-    border-radius: 100px;
-  }
-  .s2-float-tpl-scroll {
-    overflow-y: auto;
-    padding: 6px;
-    flex: 1;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0,0,0,0.08) transparent;
-  }
-  .s2-float-tpl-scroll::-webkit-scrollbar { width: 3px; }
-  .s2-float-tpl-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 100px; }
-  .s2-float-tpl-item {
-    padding: 10px 14px;
-    border-radius: 10px;
+  .s2-mock-tpl-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
     cursor: pointer;
-    transition: all 0.2s var(--ease-spring);
-    border: 1.5px solid transparent;
+    transition: all 0.25s var(--ease-spring);
     position: relative;
-    margin-bottom: 2px;
   }
-  .s2-float-tpl-item:hover { background: rgba(0,0,0,0.02); }
-  .s2-float-tpl-item.selected {
-    background: rgba(13,115,119,0.04);
-    border-color: rgba(13,115,119,0.3);
+  .s2-mock-tpl-card:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.15);
   }
-  .s2-float-tpl-rec {
+  .s2-mock-tpl-card.selected {
+    background: rgba(13,115,119,0.12);
+    border-color: rgba(45,212,191,0.4);
+    box-shadow: 0 0 20px rgba(13,115,119,0.15);
+  }
+  .s2-mock-tpl-badge {
     position: absolute;
     top: -6px;
-    right: 10px;
+    right: 8px;
     font-size: 8px;
     font-weight: 700;
-    letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 2px 8px;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
     border-radius: 100px;
-    background: var(--accent);
-    color: #fff;
+    background: #2dd4bf;
+    color: #071c1d;
   }
-  .s2-float-tpl-name {
-    font-size: 13px;
+  .s2-mock-tpl-name {
+    font-size: 12px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: rgba(255,255,255,0.85);
     line-height: 1.3;
+    margin-bottom: 2px;
   }
-  .s2-float-tpl-cat {
+  .s2-mock-tpl-cat {
     font-size: 10px;
-    color: #888;
+    color: rgba(255,255,255,0.35);
     text-transform: capitalize;
-    margin-top: 1px;
+  }
+  .s2-mock-tpl-more {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.3);
+    padding: 8px;
   }
 
-  /* Floating build blocks (glass-morphism) */
-  .s2-float-build {
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.15);
-    border: 1px solid rgba(255,255,255,0.6);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  /* ---- Build blocks mockup ---- */
+  .s2-mock-build-block {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
   }
-  .s2-float-build-block {
-    background: rgba(0,0,0,0.02);
-    border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 10px;
-    padding: 14px 16px;
-  }
-  .s2-float-build-block:nth-child(1) { animation: s2BlockAssemble 0.7s var(--ease-spring) 0.2s both; }
-  .s2-float-build-block:nth-child(2) { animation: s2BlockAssemble 0.7s var(--ease-spring) 0.5s both; }
-  .s2-float-build-block:nth-child(3) { animation: s2BlockAssemble 0.7s var(--ease-spring) 0.8s both; }
-  .s2-float-build-line {
+  .s2-mock-build-block:last-child { border-bottom: none; }
+  .s2-mock-build-block:nth-child(1) { animation: s2BlockAssemble 0.7s var(--ease-spring) 0.3s both; }
+  .s2-mock-build-block:nth-child(2) { animation: s2BlockAssemble 0.7s var(--ease-spring) 0.6s both; }
+  .s2-mock-build-block:nth-child(3) { animation: s2BlockAssemble 0.7s var(--ease-spring) 0.9s both; }
+  .s2-mock-build-line {
     height: 7px;
     border-radius: 4px;
-    background: rgba(0,0,0,0.06);
+    background: rgba(255,255,255,0.06);
     margin-bottom: 7px;
   }
-  .s2-float-build-line:last-child { margin-bottom: 0; }
-  .s2-float-build-line.w50 { width: 50%; }
-  .s2-float-build-line.w70 { width: 70%; }
-  .s2-float-build-line.w90 { width: 90%; }
-  .s2-float-build-line.w40 { width: 40%; }
-  .s2-float-build-line.accent { background: rgba(13,115,119,0.15); }
+  .s2-mock-build-line:last-child { margin-bottom: 0; }
+  .s2-mock-build-line.w50 { width: 50%; }
+  .s2-mock-build-line.w70 { width: 70%; }
+  .s2-mock-build-line.w90 { width: 90%; }
+  .s2-mock-build-line.w40 { width: 40%; }
+  .s2-mock-build-line.accent { background: rgba(45,212,191,0.2); }
 
   /* ---- 2a: Right panel brand summary ---- */
   .s2-brand-badge {
@@ -2118,7 +2126,7 @@ export const FLOW_CSS = `
   .s2-continue-btn svg { width: 16px; height: 16px; transition: transform 0.2s var(--ease-spring); }
   .s2-continue-btn:hover svg { transform: translateX(3px); }
 
-  /* (Old quiz preview and label removed — replaced by floating glass variants above) */
+  /* (Quiz preview styles now in dark panel mockup section above) */
 
   /* ---- 2b: Right panel quiz style selector ---- */
   .s2-choose-label {
@@ -2242,7 +2250,7 @@ export const FLOW_CSS = `
     color: var(--accent);
   }
 
-  /* (Old template gallery cards removed — replaced by floating glass variant above) */
+  /* (Template gallery styles now in dark panel mockup section above) */
 
   /* Selected template info pill (right panel) */
   .s2-tpl-selected-info {
@@ -2302,7 +2310,7 @@ export const FLOW_CSS = `
     animation: s2FadeIn 0.5s var(--ease-spring) 0.3s both;
   }
 
-  /* (Old build blocks removed — replaced by floating glass variant above) */
+  /* (Build block styles now in dark panel mockup section above) */
 
   /* ---- 2c: Progress steps (right panel) ---- */
   .s2-build-title {
@@ -2423,13 +2431,13 @@ export const FLOW_CSS = `
   .s2-skel-left {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(145deg, #e8e4df 0%, #d4cfc8 100%);
+    background: linear-gradient(165deg, #0b2c2e 0%, #061819 50%, #0a2224 100%);
     height: 100%;
   }
   .s2-skel-preview {
     position: absolute;
     inset: 0;
-    background: linear-gradient(145deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.06) 100%);
+    background: linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);
   }
   .s2-skel-right {
     display: flex;

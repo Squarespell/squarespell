@@ -1167,123 +1167,131 @@ export function TryFlowInner({
         {!loading && sessionToken && (
           <div className="s2-split">
 
-            {/* ===== LEFT PANEL — Full-bleed visuals ===== */}
+            {/* ===== LEFT PANEL — Dark gradient + floating product mockups ===== */}
             <div className="s2-left">
+              {/* Decorative particles */}
+              <div className="s2-particles">
+                <span className="s2-dot s2-dot-1"></span>
+                <span className="s2-dot s2-dot-2"></span>
+                <span className="s2-dot s2-dot-3"></span>
+                <span className="s2-dot s2-dot-4"></span>
+                <span className="s2-dot s2-dot-5"></span>
+              </div>
 
-              {/* 2a: Brand analysis — full-bleed image with floating brand card */}
+              {/* 2a: Brand analysis — headline + floating brand identity mockup */}
               {s2SubStep === 'brand' && (
-                <div className="s2-vis">
-                  <img
-                    src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1200&q=80&fit=crop&auto=format"
-                    className="s2-vis-img"
-                    alt=""
-                  />
-                  <div className="s2-vis-shade"></div>
-                  <div className="s2-vis-float s2-vis-float-bottom">
-                    <div className="s2-float-card">
-                      <div className="s2-float-card-row">
+                <div className="s2-dark-content">
+                  <div className="s2-dark-headline">
+                    Brand Identity<br /><span>Detected</span>
+                  </div>
+                  <div className="s2-dark-sub">We extracted your colors, fonts, and business details automatically.</div>
+
+                  <div className="s2-mockup s2-mockup-brand">
+                    <div className="s2-mock-card">
+                      <div className="s2-mock-card-head">
                         {brand?.favicon_url ? (
-                          <img src={brand.favicon_url} className="s2-float-card-icon" alt="" />
+                          <img src={brand.favicon_url} className="s2-mock-card-icon" alt="" />
                         ) : (
-                          <div className="s2-float-card-letter" style={{ background: brand?.colors?.primary || 'var(--accent)' }}>{siteLetter}</div>
+                          <div className="s2-mock-card-letter" style={{ background: brand?.colors?.primary || '#0D7377' }}>{siteLetter}</div>
                         )}
-                        <div className="s2-float-card-info">
-                          <div className="s2-float-card-name">{brand?.site_name || domain}</div>
-                          <div className="s2-float-card-url">{domain}</div>
+                        <div>
+                          <div className="s2-mock-card-name">{brand?.site_name || domain}</div>
+                          <div className="s2-mock-card-url">{domain}</div>
                         </div>
                       </div>
-                      <div className="s2-float-card-colors">
-                        {brand?.colors?.primary && <div className="s2-float-card-swatch" style={{ background: brand.colors.primary }}></div>}
-                        {brand?.colors?.background && <div className="s2-float-card-swatch" style={{ background: brand.colors.background, border: '1px solid rgba(0,0,0,0.1)' }}></div>}
-                        {brand?.colors?.text && <div className="s2-float-card-swatch" style={{ background: brand.colors.text }}></div>}
-                        {brand?.colors?.accent && <div className="s2-float-card-swatch" style={{ background: brand.colors.accent }}></div>}
+                      <div className="s2-mock-card-divider"></div>
+                      <div className="s2-mock-card-palette">
+                        {brand?.colors?.primary && <div className="s2-mock-swatch" style={{ background: brand.colors.primary }}></div>}
+                        {brand?.colors?.background && <div className="s2-mock-swatch" style={{ background: brand.colors.background }}></div>}
+                        {brand?.colors?.text && <div className="s2-mock-swatch" style={{ background: brand.colors.text }}></div>}
+                        {brand?.colors?.accent && <div className="s2-mock-swatch" style={{ background: brand.colors.accent }}></div>}
+                      </div>
+                      <div className="s2-mock-card-rows">
+                        <div className="s2-mock-row"><span className="s2-mock-row-label">Type</span><span className="s2-mock-row-val">{brand?.business?.type || 'Business'}</span></div>
+                        <div className="s2-mock-row"><span className="s2-mock-row-label">Audience</span><span className="s2-mock-row-val">{brand?.business?.audience || 'General'}</span></div>
+                        <div className="s2-mock-row"><span className="s2-mock-row-label">Tone</span><span className="s2-mock-row-val">{brand?.business?.tone || 'Professional'}</span></div>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* 2b: Quiz style — full-bleed image with floating quiz preview or template gallery */}
+              {/* 2b: Quiz style — headline + floating quiz preview mockup */}
               {s2SubStep === 'choose' && (
-                <div className="s2-vis">
-                  <img
-                    src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=1200&q=80&fit=crop&auto=format"
-                    className="s2-vis-img"
-                    alt=""
-                  />
-                  <div className="s2-vis-shade"></div>
-                  <div className="s2-vis-float s2-vis-float-center">
+                <div className="s2-dark-content">
+                  <div className="s2-dark-headline">
+                    {pickChoice === 'ai' ? (<>AI-Powered Quiz<br /><span>Generation</span></>) : (<>Template<br /><span>Gallery</span></>)}
+                  </div>
+                  <div className="s2-dark-sub">
+                    {pickChoice === 'ai'
+                      ? 'Custom quiz crafted from your website content and brand.'
+                      : 'Pick a proven structure and customize it with your brand.'}
+                  </div>
+
+                  <div className="s2-mockup s2-mockup-quiz">
                     {pickChoice === 'ai' ? (
-                      <div className="s2-float-quiz">
-                        <div className="s2-float-quiz-header">
-                          <div className="s2-float-quiz-logo" style={{ background: brand?.colors?.primary || 'var(--accent)' }}>{siteLetter}</div>
-                          <div className="s2-float-quiz-name">{brand?.site_name || domain}</div>
+                      <div className="s2-mock-card s2-mock-card-tilt">
+                        <div className="s2-mock-quiz-head" style={{ background: brand?.colors?.primary || '#0D7377' }}>
+                          <div className="s2-mock-quiz-logo">{siteLetter}</div>
+                          <span>{brand?.site_name || domain}</span>
                         </div>
-                        <div className="s2-float-quiz-body">
-                          <div className="s2-float-quiz-progress">
-                            <div className="s2-float-quiz-fill" style={{ background: brand?.colors?.primary || 'var(--accent)' }}></div>
-                          </div>
-                          <div className="s2-float-quiz-q">What brings you here today?</div>
-                          <div className="s2-float-quiz-opts">
-                            <div className="s2-float-quiz-opt" style={{ borderColor: brand?.colors?.primary ? brand.colors.primary + '40' : undefined }}>Looking for something specific</div>
-                            <div className="s2-float-quiz-opt">Just browsing options</div>
-                            <div className="s2-float-quiz-opt">Need a recommendation</div>
-                          </div>
+                        <div className="s2-mock-quiz-body">
+                          <div className="s2-mock-quiz-bar"><div className="s2-mock-quiz-bar-fill" style={{ background: brand?.colors?.primary || '#0D7377' }}></div></div>
+                          <div className="s2-mock-quiz-q">What brings you here today?</div>
+                          <div className="s2-mock-quiz-opt">Looking for something specific</div>
+                          <div className="s2-mock-quiz-opt">Just browsing options</div>
+                          <div className="s2-mock-quiz-opt">Need a recommendation</div>
                         </div>
                       </div>
                     ) : (
-                      <div className="s2-float-tpl-gallery">
-                        <div className="s2-float-tpl-header">
-                          <span className="s2-float-tpl-title">Templates</span>
-                          <span className="s2-float-tpl-count">{QUIZ_TEMPLATE_CATALOG.length}</span>
-                        </div>
-                        <div className="s2-float-tpl-scroll">
-                          {(matchedTemplates.length > 0 ? matchedTemplates.concat(QUIZ_TEMPLATE_CATALOG.filter(function(t) { return !matchedTemplates.find(function(m) { return m.id === t.id; }); })) : QUIZ_TEMPLATE_CATALOG).map(function(tpl) {
-                            var isSelected = pickChoice === tpl.id;
-                            var isRecommended = matchedTemplates.find(function(m) { return m.id === tpl.id; });
-                            return (
-                              <div
-                                key={tpl.id}
-                                className={'s2-float-tpl-item' + (isSelected ? ' selected' : '')}
-                                onClick={function() { setPickChoice(tpl.id); }}
-                              >
-                                {isRecommended && <div className="s2-float-tpl-rec">Recommended</div>}
-                                <div className="s2-float-tpl-name">{tpl.name}</div>
-                                <div className="s2-float-tpl-cat">{tpl.category.replace(/_/g, ' ')}</div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <div className="s2-mock-tpl-grid">
+                        {(matchedTemplates.length > 0 ? matchedTemplates.concat(QUIZ_TEMPLATE_CATALOG.filter(function(t) { return !matchedTemplates.find(function(m) { return m.id === t.id; }); })) : QUIZ_TEMPLATE_CATALOG).slice(0, 6).map(function(tpl) {
+                          var isSelected = pickChoice === tpl.id;
+                          var isRec = matchedTemplates.find(function(m) { return m.id === tpl.id; });
+                          return (
+                            <div
+                              key={tpl.id}
+                              className={'s2-mock-tpl-card' + (isSelected ? ' selected' : '')}
+                              onClick={function() { setPickChoice(tpl.id); }}
+                            >
+                              {isRec && <span className="s2-mock-tpl-badge">Rec</span>}
+                              <div className="s2-mock-tpl-name">{tpl.name}</div>
+                              <div className="s2-mock-tpl-cat">{tpl.category.replace(/_/g, ' ')}</div>
+                            </div>
+                          );
+                        })}
+                        {QUIZ_TEMPLATE_CATALOG.length > 6 && (
+                          <div className="s2-mock-tpl-more">+{QUIZ_TEMPLATE_CATALOG.length - 6} more</div>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* 2c: Building — full-bleed image with floating progress blocks */}
+              {/* 2c: Building — headline + assembling mockup */}
               {s2SubStep === 'building' && (
-                <div className="s2-vis">
-                  <img
-                    src="https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=1200&q=80&fit=crop&auto=format"
-                    className="s2-vis-img"
-                    alt=""
-                  />
-                  <div className="s2-vis-shade"></div>
-                  <div className="s2-vis-float s2-vis-float-center">
-                    <div className="s2-float-build">
-                      <div className="s2-float-build-block">
-                        <div className="s2-float-build-line w70 accent"></div>
-                        <div className="s2-float-build-line w90"></div>
-                        <div className="s2-float-build-line w50"></div>
+                <div className="s2-dark-content">
+                  <div className="s2-dark-headline">
+                    Crafting Your<br /><span>Quiz</span>
+                  </div>
+                  <div className="s2-dark-sub">AI is assembling questions, outcomes, and branding for you.</div>
+
+                  <div className="s2-mockup s2-mockup-build">
+                    <div className="s2-mock-card s2-mock-card-tilt">
+                      <div className="s2-mock-build-block">
+                        <div className="s2-mock-build-line w70 accent"></div>
+                        <div className="s2-mock-build-line w90"></div>
+                        <div className="s2-mock-build-line w50"></div>
                       </div>
-                      <div className="s2-float-build-block">
-                        <div className="s2-float-build-line w50 accent"></div>
-                        <div className="s2-float-build-line w70"></div>
-                        <div className="s2-float-build-line w40"></div>
+                      <div className="s2-mock-build-block">
+                        <div className="s2-mock-build-line w50 accent"></div>
+                        <div className="s2-mock-build-line w70"></div>
                       </div>
-                      <div className="s2-float-build-block">
-                        <div className="s2-float-build-line w90 accent"></div>
-                        <div className="s2-float-build-line w50"></div>
+                      <div className="s2-mock-build-block">
+                        <div className="s2-mock-build-line w90 accent"></div>
+                        <div className="s2-mock-build-line w40"></div>
+                        <div className="s2-mock-build-line w70"></div>
                       </div>
                     </div>
                   </div>
