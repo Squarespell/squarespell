@@ -2680,10 +2680,10 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     // Calculate MRR (Monthly Recurring Revenue)
     // Sum up all paid plans: starter ($29), growth ($99), pro ($199), agency ($499)
     var planPrices: Record<string, number> = {
-      'starter': 29,
-      'growth': 99,
-      'pro': 199,
-      'agency': 499
+      'starter': 19,
+      'growth': 19,
+      'pro': 39,
+      'agency': 79
     };
     var mrr = 0;
     allUsers.forEach(function(u) {
