@@ -263,7 +263,7 @@ export const FLOW_CSS = `
   }
 
   /* ============ STAGE 2: Goal selection (Option C) ============ */
-  .s2-wrap { max-width: 680px; margin: 0 auto; padding: 48px 24px 80px; }
+  .s2-wrap { max-width: 780px; margin: 0 auto; padding: 48px 24px 80px; }
 
   /* Skeleton loading state */
   .s2-skeleton { display: block; }
@@ -323,16 +323,18 @@ export const FLOW_CSS = `
     line-height: 1.5;
   }
 
-  .skel-pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 28px 0 32px; }
-  .skel-pick-card { border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.015); padding: 20px 16px; display: flex; flex-direction: column; align-items: center; }
-  .skel-pick-badge { width: 80px; height: 20px; border-radius: 100px; background: rgba(0,0,0,0.04); margin-bottom: 14px; }
-  .skel-pick-phone { width: 100%; max-width: 180px; height: 300px; border-radius: 24px; border: 2px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.02); margin-bottom: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
-  .skel-pick-phone-bar { height: 36px; border-radius: 8px; background: rgba(0,0,0,0.05); flex-shrink: 0; }
-  .skel-pick-phone-line { height: 12px; width: 80%; border-radius: 4px; background: rgba(0,0,0,0.04); margin: 4px 0; flex-shrink: 0; }
-  .skel-pick-phone-opt { height: 28px; border-radius: 8px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.04); flex-shrink: 0; }
-  .skel-pick-phone-btn { height: 28px; border-radius: 8px; background: rgba(0,0,0,0.05); margin-top: auto; flex-shrink: 0; }
-  .skel-pick-name { width: 120px; height: 16px; border-radius: 4px; background: rgba(0,0,0,0.05); margin-bottom: 6px; }
-  .skel-pick-desc { width: 160px; height: 12px; border-radius: 4px; background: rgba(0,0,0,0.03); }
+  .skel-pick-grid { display: flex; flex-direction: column; gap: 14px; margin: 28px 0 32px; }
+  .skel-pick-card { border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.015); padding: 22px 24px; display: flex; align-items: flex-start; gap: 16px; }
+  .skel-pick-radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.08); flex-shrink: 0; margin-top: 2px; }
+  .skel-pick-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .skel-pick-top-row { display: flex; align-items: center; gap: 12px; }
+  .skel-pick-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(0,0,0,0.05); flex-shrink: 0; }
+  .skel-pick-badge { width: 80px; height: 22px; border-radius: 100px; background: rgba(0,0,0,0.04); }
+  .skel-pick-name { width: 55%; height: 18px; border-radius: 4px; background: rgba(0,0,0,0.06); }
+  .skel-pick-desc { width: 90%; height: 13px; border-radius: 4px; background: rgba(0,0,0,0.035); }
+  .skel-pick-desc-2 { width: 70%; height: 13px; border-radius: 4px; background: rgba(0,0,0,0.025); }
+  .skel-pick-meta-row { display: flex; gap: 16px; margin-top: 4px; }
+  .skel-pick-meta-item { width: 100px; height: 14px; border-radius: 4px; background: rgba(0,0,0,0.03); }
   .skel-btn { height: 54px; border-radius: 12px; background: rgba(0,0,0,0.04); }
 
   /* Shimmer animation */
@@ -1544,57 +1546,76 @@ export const FLOW_CSS = `
   .s6-preview-mini span:first-child { background: var(--accent); flex: 2; }
 
   /* ---- Pick cards (phone mockup style) ---- */
+  /* Option C: Minimal icon cards (Typeform/Linear style) */
   .sq-pick-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
     margin: 28px 0 32px;
-    align-items: stretch;
   }
   .sq-pick-card {
     position: relative;
     background: var(--surface);
     border: 2px solid var(--border);
-    border-radius: 16px;
-    padding: 20px 16px 20px;
+    border-radius: 14px;
+    padding: 22px 24px;
     cursor: pointer;
-    transition: all 0.25s var(--ease);
-    text-align: center;
+    transition: all 0.2s var(--ease);
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+    gap: 16px;
   }
   .sq-pick-card:hover {
-    border-color: rgba(13,115,119,0.35);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    border-color: rgba(13,115,119,0.3);
+    background: rgba(13,115,119,0.015);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   }
   .sq-pick-card.sq-pick-selected {
     border-color: var(--accent);
     background: rgba(13,115,119,0.03);
-    box-shadow: 0 0 0 3px rgba(13,115,119,0.12), 0 8px 24px rgba(13,115,119,0.08);
+    box-shadow: 0 0 0 3px rgba(13,115,119,0.1);
   }
-  .sq-pick-card.sq-pick-selected .sq-pick-check {
-    opacity: 1;
-    transform: scale(1);
-  }
-  .sq-pick-check {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 24px;
-    height: 24px;
+
+  /* Radio button */
+  .sq-pick-radio {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
     border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
+    border: 2px solid var(--border-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transform: scale(0.5);
-    transition: all 0.2s var(--ease);
-    z-index: 2;
+    transition: border-color 0.15s;
+    margin-top: 2px;
+    flex-shrink: 0;
   }
+  .sq-pick-card:hover .sq-pick-radio { border-color: rgba(13,115,119,0.4); }
+  .sq-pick-card.sq-pick-selected .sq-pick-radio { border-color: var(--accent); }
+  .sq-pick-radio-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Card content */
+  .sq-pick-content { flex: 1; min-width: 0; }
+  .sq-pick-top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+
+  .sq-pick-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .sq-pick-icon-ai { background: rgba(13,115,119,0.1); color: var(--accent); }
+  .sq-pick-icon-tpl { background: rgba(99,102,241,0.1); color: #6366f1; }
+
   .sq-pick-badge {
     display: inline-flex;
     align-items: center;
@@ -1603,137 +1624,54 @@ export const FLOW_CSS = `
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 4px 10px;
+    padding: 3px 10px;
     border-radius: 100px;
-    margin-bottom: 14px;
     flex-shrink: 0;
   }
   .sq-pick-badge-ai {
-    background: rgba(13,115,119,0.1);
+    background: rgba(13,115,119,0.08);
     color: var(--accent);
   }
   .sq-pick-badge-tpl {
-    background: rgba(99,102,241,0.1);
+    background: rgba(99,102,241,0.08);
     color: #6366f1;
   }
-  .sq-pick-phone {
-    width: 100%;
-    max-width: 180px;
-    height: 300px;
-    margin: 0 auto 16px;
-    border: 2px solid var(--border);
-    border-radius: 24px;
-    overflow: hidden;
-    background: #fff;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-  }
-  .sq-pick-phone-notch {
-    width: 50px;
-    height: 5px;
-    border-radius: 100px;
-    background: rgba(0,0,0,0.12);
-    margin: 8px auto 0;
-    flex-shrink: 0;
-  }
-  .sq-pick-phone-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    margin-top: 4px;
-    flex-shrink: 0;
-    min-height: 40px;
-  }
-  .sq-pick-phone-logo {
-    width: 24px;
-    height: 24px;
-    min-width: 24px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.25);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .sq-pick-phone-title {
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .sq-pick-phone-body {
-    flex: 1;
-    padding: 10px 10px 8px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .sq-pick-phone-q {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.35;
-    text-align: left;
-    margin-bottom: 8px;
-    flex-shrink: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .sq-pick-phone-opts {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex: 1;
-    overflow: hidden;
-  }
-  .sq-pick-phone-opt {
-    font-size: 10px;
-    padding: 7px 10px;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-muted);
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 0;
-  }
-  .sq-pick-phone-btn {
-    font-size: 10px;
-    font-weight: 700;
-    color: #fff;
-    padding: 8px;
-    border-radius: 8px;
-    text-align: center;
-    margin-top: auto;
-    flex-shrink: 0;
-  }
+
   .sq-pick-name {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text);
-    margin-bottom: 4px;
-    margin-top: auto;
+    margin-bottom: 6px;
+    line-height: 1.3;
   }
   .sq-pick-desc {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-muted);
-    line-height: 1.5;
+    line-height: 1.6;
+    margin-bottom: 12px;
   }
+
+  .sq-pick-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .sq-pick-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+  }
+  .sq-pick-meta-item svg { opacity: 0.6; }
 
   @media (max-width: 1000px) {
     .s3-body { grid-template-columns: 1fr; }
     .s2-wrap { padding: 20px 24px 60px; }
     .goal-grid { grid-template-columns: 1fr; }
-    .sq-pick-grid { grid-template-columns: 1fr; }
+    .sq-pick-card { padding: 18px 16px; }
+    .sq-pick-meta { flex-wrap: wrap; gap: 12px; }
     .ai-tags { flex-direction: column; }
     .ai-tag { width: 100%; }
     .s6-wrap { grid-template-columns: 1fr; }

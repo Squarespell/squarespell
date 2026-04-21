@@ -1120,46 +1120,55 @@ export function TryFlowInner({
                 </div>
               </div>
 
-              {/* 3 phone mockup skeletons */}
+              {/* 3 minimal card skeletons matching Option C layout */}
               <div className="skel-pick-grid">
                 <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-badge"></div>
-                  <div className="skel-pick-phone">
-                    <div className="skel-pick-phone-bar"></div>
-                    <div className="skel-pick-phone-line"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-btn"></div>
+                  <div className="skel-pick-radio"></div>
+                  <div className="skel-pick-content">
+                    <div className="skel-pick-top-row">
+                      <div className="skel-pick-icon"></div>
+                      <div className="skel-pick-badge"></div>
+                    </div>
+                    <div className="skel-pick-name"></div>
+                    <div className="skel-pick-desc"></div>
+                    <div className="skel-pick-desc-2"></div>
+                    <div className="skel-pick-meta-row">
+                      <div className="skel-pick-meta-item"></div>
+                      <div className="skel-pick-meta-item"></div>
+                    </div>
                   </div>
-                  <div className="skel-pick-name"></div>
-                  <div className="skel-pick-desc"></div>
                 </div>
                 <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-badge"></div>
-                  <div className="skel-pick-phone">
-                    <div className="skel-pick-phone-bar"></div>
-                    <div className="skel-pick-phone-line"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-btn"></div>
+                  <div className="skel-pick-radio"></div>
+                  <div className="skel-pick-content">
+                    <div className="skel-pick-top-row">
+                      <div className="skel-pick-icon"></div>
+                      <div className="skel-pick-badge"></div>
+                    </div>
+                    <div className="skel-pick-name"></div>
+                    <div className="skel-pick-desc"></div>
+                    <div className="skel-pick-desc-2"></div>
+                    <div className="skel-pick-meta-row">
+                      <div className="skel-pick-meta-item"></div>
+                      <div className="skel-pick-meta-item"></div>
+                    </div>
                   </div>
-                  <div className="skel-pick-name"></div>
-                  <div className="skel-pick-desc"></div>
                 </div>
                 <div className="skel-pick-card shimmer">
-                  <div className="skel-pick-badge"></div>
-                  <div className="skel-pick-phone">
-                    <div className="skel-pick-phone-bar"></div>
-                    <div className="skel-pick-phone-line"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-opt"></div>
-                    <div className="skel-pick-phone-btn"></div>
+                  <div className="skel-pick-radio"></div>
+                  <div className="skel-pick-content">
+                    <div className="skel-pick-top-row">
+                      <div className="skel-pick-icon"></div>
+                      <div className="skel-pick-badge"></div>
+                    </div>
+                    <div className="skel-pick-name"></div>
+                    <div className="skel-pick-desc"></div>
+                    <div className="skel-pick-desc-2"></div>
+                    <div className="skel-pick-meta-row">
+                      <div className="skel-pick-meta-item"></div>
+                      <div className="skel-pick-meta-item"></div>
+                    </div>
                   </div>
-                  <div className="skel-pick-name"></div>
-                  <div className="skel-pick-desc"></div>
                 </div>
               </div>
               <div className="skel-btn shimmer"></div>
@@ -1189,87 +1198,68 @@ export function TryFlowInner({
                 </div>
               </div>
 
-              {/* 3 Pick cards - phone mockup style */}
+              {/* 3 Pick cards - Option C minimal icon style */}
               <div className="sq-pick-grid">
                 {/* AI Custom card */}
                 <div
                   className={'sq-pick-card' + (pickChoice === 'ai' ? ' sq-pick-selected' : '')}
                   onClick={function() { setPickChoice('ai'); }}
                 >
-                  <div className="sq-pick-check">
-                    <SvgCheck size={12} />
-                  </div>
-                  <div className="sq-pick-badge sq-pick-badge-ai">
-                    <SvgBolt size={12} />
-                    AI Custom
-                  </div>
-                  <div className="sq-pick-phone" style={{ borderColor: brand?.colors?.primary || '#0D7377' }}>
-                    <div className="sq-pick-phone-notch"></div>
-                    <div className="sq-pick-phone-header" style={{ background: brand?.colors?.primary || '#0D7377' }}>
-                      <div className="sq-pick-phone-logo">{siteLetter}</div>
-                      <div className="sq-pick-phone-title" style={{ color: '#fff' }}>Custom Quiz</div>
-                    </div>
-                    <div className="sq-pick-phone-body">
-                      <div className="sq-pick-phone-q">What best describes your needs?</div>
-                      <div className="sq-pick-phone-opts">
-                        <div className="sq-pick-phone-opt" style={{ borderColor: brand?.colors?.primary || '#0D7377' }}>Option A</div>
-                        <div className="sq-pick-phone-opt">Option B</div>
-                        <div className="sq-pick-phone-opt">Option C</div>
+                  <div className="sq-pick-radio">{pickChoice === 'ai' && <div className="sq-pick-radio-dot" />}</div>
+                  <div className="sq-pick-content">
+                    <div className="sq-pick-top-row">
+                      <div className="sq-pick-icon sq-pick-icon-ai">
+                        <SvgBolt size={20} />
                       </div>
-                      <div className="sq-pick-phone-btn" style={{ background: brand?.colors?.primary || '#0D7377' }}>Next</div>
+                      <div className="sq-pick-badge sq-pick-badge-ai">Recommended</div>
+                    </div>
+                    <div className="sq-pick-name">AI-Generated Quiz</div>
+                    <div className="sq-pick-desc">Fully custom quiz built from your website content, brand voice, and offers. Tailored questions and scoring.</div>
+                    <div className="sq-pick-meta">
+                      <span className="sq-pick-meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        ~30 seconds
+                      </span>
+                      <span className="sq-pick-meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        Fully editable
+                      </span>
                     </div>
                   </div>
-                  <div className="sq-pick-name">AI-Generated Quiz</div>
-                  <div className="sq-pick-desc">Fully custom quiz built from your website content, tone, and offers</div>
                 </div>
 
                 {/* Template cards */}
                 {matchedTemplates.map(function(tpl, tplIdx) {
                   var isSelected = pickChoice === tpl.id;
-                  var brandColor = brand?.colors?.primary || '#0D7377';
-                  var tplAccent = tplIdx === 0 ? '#6366f1' : '#8b5cf6';
-                  var phoneColor = brandColor !== '#0D7377' ? brandColor : tplAccent;
                   var firstBlock = tpl.blocks().find(function(b: any) { return b.type === 'question'; });
-                  var previewQ = (firstBlock as any)?.label || 'Which option fits you best?';
-                  var previewOpts = ((firstBlock as any)?.options || []).slice(0, 3);
+                  var questionCount = tpl.blocks().filter(function(b: any) { return b.type === 'question'; }).length;
                   return (
                     <div
                       key={tpl.id}
                       className={'sq-pick-card' + (isSelected ? ' sq-pick-selected' : '')}
                       onClick={function() { setPickChoice(tpl.id); }}
                     >
-                      <div className="sq-pick-check">
-                        <SvgCheck size={12} />
-                      </div>
-                      <div className="sq-pick-badge sq-pick-badge-tpl">
-                        <SvgPackage size={12} />
-                        Template
-                      </div>
-                      <div className="sq-pick-phone" style={{ borderColor: phoneColor }}>
-                        <div className="sq-pick-phone-notch"></div>
-                        <div className="sq-pick-phone-header" style={{ background: phoneColor }}>
-                          <div className="sq-pick-phone-logo">{siteLetter}</div>
-                          <div className="sq-pick-phone-title" style={{ color: '#fff' }}>{tpl.name}</div>
-                        </div>
-                        <div className="sq-pick-phone-body">
-                          <div className="sq-pick-phone-q">{previewQ}</div>
-                          <div className="sq-pick-phone-opts">
-                            {previewOpts.length > 0 ? previewOpts.map(function(opt: any, i: number) {
-                              var optText = typeof opt === 'string' ? opt : (opt.label || opt.text || 'Option ' + (i + 1));
-                              return <div key={i} className="sq-pick-phone-opt" style={i === 0 ? { borderColor: phoneColor } : {}}>{optText}</div>;
-                            }) : (
-                              <>
-                                <div className="sq-pick-phone-opt" style={{ borderColor: phoneColor }}>Option A</div>
-                                <div className="sq-pick-phone-opt">Option B</div>
-                                <div className="sq-pick-phone-opt">Option C</div>
-                              </>
-                            )}
+                      <div className="sq-pick-radio">{isSelected && <div className="sq-pick-radio-dot" />}</div>
+                      <div className="sq-pick-content">
+                        <div className="sq-pick-top-row">
+                          <div className="sq-pick-icon sq-pick-icon-tpl">
+                            <SvgPackage size={20} />
                           </div>
-                          <div className="sq-pick-phone-btn" style={{ background: phoneColor }}>Next</div>
+                          <div className="sq-pick-badge sq-pick-badge-tpl">Template</div>
+                        </div>
+                        <div className="sq-pick-name">{tpl.name}</div>
+                        <div className="sq-pick-desc">{tpl.description}</div>
+                        <div className="sq-pick-meta">
+                          <span className="sq-pick-meta-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                            {questionCount} questions
+                          </span>
+                          <span className="sq-pick-meta-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            Instant setup
+                          </span>
                         </div>
                       </div>
-                      <div className="sq-pick-name">{tpl.name}</div>
-                      <div className="sq-pick-desc">{tpl.description}</div>
                     </div>
                   );
                 })}
