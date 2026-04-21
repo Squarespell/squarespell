@@ -1091,7 +1091,6 @@ export function TryFlowInner({
                 <div className="skel-title shimmer"></div>
                 <div className="skel-title-2 shimmer"></div>
                 <div className="skel-sub shimmer"></div>
-                <div className="skel-sub-2 shimmer"></div>
               </div>
 
               <div className="skel-brand shimmer">
@@ -1102,26 +1101,47 @@ export function TryFlowInner({
                 </div>
               </div>
 
-              <div className="skel-analysis">
-                <div className="skel-analysis-header">
-                  <div className="skel-analysis-icon shimmer"></div>
-                  <div className="skel-analysis-title shimmer"></div>
+              {/* 3 phone mockup skeletons */}
+              <div className="skel-pick-grid">
+                <div className="skel-pick-card shimmer">
+                  <div className="skel-pick-badge"></div>
+                  <div className="skel-pick-phone">
+                    <div className="skel-pick-phone-bar"></div>
+                    <div className="skel-pick-phone-line"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-btn"></div>
+                  </div>
+                  <div className="skel-pick-name"></div>
+                  <div className="skel-pick-desc"></div>
                 </div>
-                <div className="skel-tags">
-                  <div className="skel-tag skel-tag-1 shimmer"></div>
-                  <div className="skel-tag skel-tag-2 shimmer"></div>
-                  <div className="skel-tag skel-tag-3 shimmer"></div>
-                  <div className="skel-tag skel-tag-4 shimmer"></div>
+                <div className="skel-pick-card shimmer">
+                  <div className="skel-pick-badge"></div>
+                  <div className="skel-pick-phone">
+                    <div className="skel-pick-phone-bar"></div>
+                    <div className="skel-pick-phone-line"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-btn"></div>
+                  </div>
+                  <div className="skel-pick-name"></div>
+                  <div className="skel-pick-desc"></div>
                 </div>
-              </div>
-
-              <div className="skel-goal-label shimmer"></div>
-              <div className="skel-goal-title shimmer"></div>
-              <div className="skel-goals">
-                <div className="skel-goal shimmer"></div>
-                <div className="skel-goal shimmer"></div>
-                <div className="skel-goal shimmer"></div>
-                <div className="skel-goal shimmer"></div>
+                <div className="skel-pick-card shimmer">
+                  <div className="skel-pick-badge"></div>
+                  <div className="skel-pick-phone">
+                    <div className="skel-pick-phone-bar"></div>
+                    <div className="skel-pick-phone-line"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-opt"></div>
+                    <div className="skel-pick-phone-btn"></div>
+                  </div>
+                  <div className="skel-pick-name"></div>
+                  <div className="skel-pick-desc"></div>
+                </div>
               </div>
               <div className="skel-btn shimmer"></div>
             </div>

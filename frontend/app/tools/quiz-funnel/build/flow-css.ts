@@ -298,10 +298,16 @@ export const FLOW_CSS = `
   .skel-tag-3 { width: 130px; }
   .skel-tag-4 { width: 150px; }
 
-  .skel-goal-label { height: 14px; width: 200px; border-radius: 4px; background: rgba(0,0,0,0.04); margin-bottom: 12px; }
-  .skel-goal-title { height: 18px; width: 280px; border-radius: 4px; background: rgba(0,0,0,0.05); margin-bottom: 20px; }
-  .skel-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
-  .skel-goal { height: 120px; border-radius: 14px; background: rgba(0,0,0,0.025); border: 1px solid rgba(0,0,0,0.06); }
+  .skel-pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 28px 0 32px; }
+  .skel-pick-card { border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.015); padding: 20px 16px; display: flex; flex-direction: column; align-items: center; }
+  .skel-pick-badge { width: 80px; height: 20px; border-radius: 100px; background: rgba(0,0,0,0.04); margin-bottom: 14px; }
+  .skel-pick-phone { width: 100%; max-width: 180px; height: 300px; border-radius: 24px; border: 2px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.02); margin-bottom: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+  .skel-pick-phone-bar { height: 36px; border-radius: 8px; background: rgba(0,0,0,0.05); flex-shrink: 0; }
+  .skel-pick-phone-line { height: 12px; width: 80%; border-radius: 4px; background: rgba(0,0,0,0.04); margin: 4px 0; flex-shrink: 0; }
+  .skel-pick-phone-opt { height: 28px; border-radius: 8px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.04); flex-shrink: 0; }
+  .skel-pick-phone-btn { height: 28px; border-radius: 8px; background: rgba(0,0,0,0.05); margin-top: auto; flex-shrink: 0; }
+  .skel-pick-name { width: 120px; height: 16px; border-radius: 4px; background: rgba(0,0,0,0.05); margin-bottom: 6px; }
+  .skel-pick-desc { width: 160px; height: 12px; border-radius: 4px; background: rgba(0,0,0,0.03); }
   .skel-btn { height: 54px; border-radius: 12px; background: rgba(0,0,0,0.04); }
 
   /* Shimmer animation */
