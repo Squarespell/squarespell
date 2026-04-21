@@ -194,11 +194,11 @@ const previewSessionCache = new Map<string, { brand: any; url: string; onboardin
 const previewRateMap = new Map<string, { count: number; resetAt: number }>();
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
-  // Simple rate limit: 5 previews per IP per hour
+  // Simple rate limit: 50 previews per IP per hour
   const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim();
   const now = Date.now();
   const entry = previewRateMap.get(ip);
-  if (entry && entry.resetAt > now && entry.count >= 5) {
+  if (entry && entry.resetAt > now && entry.count >= 50) {
     return res.status(429).json({ error: 'Too many previews. Please try again later or sign up for unlimited access.' });
   }
   if (!entry || entry.resetAt <= now) {
@@ -247,7 +247,7 @@ previewRouter.post('/preview-analyze', async (req, res) => {
   const ip = (req.headers['x-forwarded-for'] as string || req.ip || 'unknown').split(',')[0].trim();
   const now = Date.now();
   const entry = previewRateMap.get(ip);
-  if (entry && entry.resetAt > now && entry.count >= 5) {
+  if (entry && entry.resetAt > now && entry.count >= 50) {
     return res.status(429).json({ error: 'Too many previews. Please try again later or sign up for unlimited access.' });
   }
   if (!entry || entry.resetAt <= now) {

@@ -1077,8 +1077,27 @@ export function TryFlowInner({
         </div>
 
         <div className="s2-wrap">
+          {/* Error state - when scrape fails (429, timeout, etc) */}
+          {!loading && !sessionToken && errorMsg && (
+            <div className="s2-error-state">
+              <div className="s2-error-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+              </div>
+              <div className="s2-error-title">Something went wrong</div>
+              <div className="s2-error-msg">{errorMsg}</div>
+              <button
+                type="button"
+                className="btn-gen ready"
+                onClick={function() { setErrorMsg(''); goAnalyze(url); }}
+              >
+                <SvgRefresh />
+                Try again
+              </button>
+            </div>
+          )}
+
           {/* Loading skeleton state */}
-          {(loading || !sessionToken) && (
+          {loading && (
             <div className="s2-skeleton">
               <div className="analysis-status">
                 <div className="analysis-spinner"></div>

@@ -298,6 +298,31 @@ export const FLOW_CSS = `
   .skel-tag-3 { width: 130px; }
   .skel-tag-4 { width: 150px; }
 
+  /* ---- Error state ---- */
+  .s2-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .s2-error-icon { margin-bottom: 20px; }
+  .s2-error-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .s2-error-msg {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+
   .skel-pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 28px 0 32px; }
   .skel-pick-card { border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); background: rgba(0,0,0,0.015); padding: 20px 16px; display: flex; flex-direction: column; align-items: center; }
   .skel-pick-badge { width: 80px; height: 20px; border-radius: 100px; background: rgba(0,0,0,0.04); margin-bottom: 14px; }
