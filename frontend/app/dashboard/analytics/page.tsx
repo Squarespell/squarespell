@@ -6,9 +6,12 @@
  * Reuses the existing per-quiz endpoint (/api/analytics/:quizId) by fanning
  * out one request per quiz and summing the results. Also shows a per-quiz
  * table so users can click through to a specific quiz's dashboard.
+ *
+ * Supports date-range filtering via preset buttons (Today, 7d, 30d, 90d, All time)
+ * and a custom date range picker. Backend already supports ?since= query param.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
@@ -23,7 +26,7 @@ import {
   PageLoading,
 } from '../_components/PageShell';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type Quiz = {
   id: string;
@@ -44,13 +47,43 @@ type Analytics = {
 
 type Row = Quiz & { analytics: Analytics | null };
 
+type DatePreset = 'today' | '7d' | '30d' | '90d' | 'all' | 'custom';
+
+var DATE_PRESETS: Array<{ key: DatePreset; label: string }> = [
+  { key: 'today', label: 'Today' },
+  { key: '7d', label: '7 days' },
+  { key: '30d', label: '30 days' },
+  { key: '90d', label: '90 days' },
+  { key: 'all', label: 'All time' },
+  { key: 'custom', label: 'Custom' },
+];
+
+function getSinceDate(preset: DatePreset, customFrom: string): string | null {
+  if (preset === 'all') return null;
+  if (preset === 'custom' && customFrom) return new Date(customFrom).toISOString();
+  var now = new Date();
+  var daysMap: Record<string, number> = { today: 0, '7d': 7, '30d': 30, '90d': 90 };
+  var days = daysMap[preset] ?? 30;
+  if (days === 0) {
+    now.setHours(0, 0, 0, 0);
+    return now.toISOString();
+  }
+  now.setDate(now.getDate() - days);
+  return now.toISOString();
+}
+
 function fmt(n: number): string {
   return n.toLocaleString('en-US');
 }
 
 function pct(n: number): string {
   if (!isFinite(n)) return '0%';
-  return `${Math.round(n)}%`;
+  return Math.round(n) + '%';
+}
+
+function formatDateShort(isoStr: string): string {
+  var d = new Date(isoStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export default function AnalyticsPage() {
@@ -58,11 +91,19 @@ export default function AnalyticsPage() {
   var [rows, setRows] = useState<Row[]>([]);
   var [loading, setLoading] = useState(true);
   var [error, setError] = useState(false);
+  var [datePreset, setDatePreset] = useState<DatePreset>('30d');
+  var [customFrom, setCustomFrom] = useState('');
+  var [customTo, setCustomTo] = useState('');
+  var [showCustomPicker, setShowCustomPicker] = useState(false);
 
-  function fetchData() {
+  var fetchData = useCallback(function(preset?: DatePreset, cFrom?: string) {
     if (!token) return;
     setLoading(true);
     setError(false);
+
+    var activePreset = preset !== undefined ? preset : datePreset;
+    var activeFrom = cFrom !== undefined ? cFrom : customFrom;
+    var since = getSinceDate(activePreset, activeFrom);
 
     fetch(API + '/api/quizzes', {
       headers: { Authorization: 'Bearer ' + token },
@@ -74,7 +115,9 @@ export default function AnalyticsPage() {
       .then(function(quizzes: Quiz[]) {
         return Promise.all(
           quizzes.map(function(q) {
-            return fetch(API + '/api/analytics/' + q.id, {
+            var url = API + '/api/analytics/' + q.id;
+            if (since) url = url + '?since=' + encodeURIComponent(since);
+            return fetch(url, {
               headers: { Authorization: 'Bearer ' + token },
             })
               .then(function(ar) {
@@ -94,24 +137,41 @@ export default function AnalyticsPage() {
         setError(true);
         setLoading(false);
       });
-  }
+  }, [token, datePreset, customFrom]);
 
   useEffect(function() { fetchData(); }, [token]);
 
-  const totals = useMemo(() => {
-    let views = 0;
-    let completions = 0;
-    let leads = 0;
-    for (const r of rows) {
+  function handlePresetChange(preset: DatePreset) {
+    setDatePreset(preset);
+    if (preset === 'custom') {
+      setShowCustomPicker(true);
+      return;
+    }
+    setShowCustomPicker(false);
+    fetchData(preset);
+  }
+
+  function applyCustomRange() {
+    if (!customFrom) return;
+    setShowCustomPicker(false);
+    fetchData('custom', customFrom);
+  }
+
+  var totals = useMemo(function() {
+    var views = 0;
+    var completions = 0;
+    var leads = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
       if (!r.analytics) continue;
       views += r.analytics.views;
       completions += r.analytics.completions;
       leads += r.analytics.leads;
     }
     return {
-      views,
-      completions,
-      leads,
+      views: views,
+      completions: completions,
+      leads: leads,
       completion_rate: views > 0 ? (completions / views) * 100 : 0,
       lead_rate: views > 0 ? (leads / views) * 100 : 0,
     };
@@ -148,6 +208,10 @@ export default function AnalyticsPage() {
     );
   }
 
+  var rangeLabel = datePreset === 'custom' && customFrom
+    ? formatDateShort(customFrom) + (customTo ? ' - ' + formatDateShort(customTo) : ' - Now')
+    : '';
+
   return (
     <DashboardShell title="Analytics">
       <PageHeader
@@ -173,6 +237,91 @@ export default function AnalyticsPage() {
           </Link>
         }
       />
+
+      {/* ── Date Range Filter ── */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap',
+          background: C.SURFACE, border: '1px solid ' + C.BORDER,
+          borderRadius: 10, padding: 4, width: 'fit-content',
+        }}>
+          {DATE_PRESETS.map(function(p) {
+            var active = datePreset === p.key;
+            return (
+              <button
+                key={p.key}
+                onClick={function() { handlePresetChange(p.key); }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 7,
+                  border: 'none',
+                  background: active ? C.ACCENT : 'transparent',
+                  color: active ? '#fff' : C.TEXT_MUTED,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: '"DM Sans",system-ui,sans-serif',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Custom date range inputs */}
+        {showCustomPicker && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, marginTop: 10,
+            padding: '12px 16px', background: C.SURFACE,
+            border: '1px solid ' + C.BORDER, borderRadius: 10, width: 'fit-content',
+          }}>
+            <label style={{ fontSize: 12, color: C.TEXT_MUTED, fontWeight: 600 }}>From</label>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={function(e) { setCustomFrom(e.target.value); }}
+              style={{
+                padding: '6px 10px', borderRadius: 6, border: '1px solid ' + C.BORDER,
+                background: C.BG, color: C.TEXT, fontSize: 12.5,
+                fontFamily: '"DM Sans",system-ui,sans-serif', outline: 'none',
+              }}
+            />
+            <label style={{ fontSize: 12, color: C.TEXT_MUTED, fontWeight: 600 }}>To</label>
+            <input
+              type="date"
+              value={customTo}
+              onChange={function(e) { setCustomTo(e.target.value); }}
+              placeholder="Now"
+              style={{
+                padding: '6px 10px', borderRadius: 6, border: '1px solid ' + C.BORDER,
+                background: C.BG, color: C.TEXT, fontSize: 12.5,
+                fontFamily: '"DM Sans",system-ui,sans-serif', outline: 'none',
+              }}
+            />
+            <button
+              onClick={applyCustomRange}
+              disabled={!customFrom}
+              style={{
+                padding: '6px 16px', borderRadius: 6, border: 'none',
+                background: customFrom ? C.ACCENT : C.BORDER, color: '#fff',
+                fontSize: 12.5, fontWeight: 600, cursor: customFrom ? 'pointer' : 'default',
+                fontFamily: '"DM Sans",system-ui,sans-serif',
+              }}
+            >
+              Apply
+            </button>
+          </div>
+        )}
+
+        {rangeLabel && !showCustomPicker && (
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 6, fontWeight: 500 }}>
+            Showing data from {rangeLabel}
+          </div>
+        )}
+      </div>
 
       {rows.length === 0 ? (
         <EmptyState
@@ -209,30 +358,32 @@ export default function AnalyticsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: C.BG }}>
-                    {['Quiz', 'Status', 'Views', 'Completions', 'Leads', 'Completion rate', ''].map((h) => (
-                      <th
-                        key={h}
-                        style={{
-                          textAlign: 'left',
-                          padding: '14px 18px',
-                          fontSize: 11,
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.06em',
-                          color: C.TEXT_MUTED,
-                          borderBottom: `1px solid ${C.BORDER}`,
-                        }}
-                      >
-                        {h}
-                      </th>
-                    ))}
+                    {['Quiz', 'Status', 'Views', 'Completions', 'Leads', 'Completion rate', ''].map(function(h) {
+                      return (
+                        <th
+                          key={h}
+                          style={{
+                            textAlign: 'left',
+                            padding: '14px 18px',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            color: C.TEXT_MUTED,
+                            borderBottom: '1px solid ' + C.BORDER,
+                          }}
+                        >
+                          {h}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => {
-                    const a = r.analytics;
+                  {rows.map(function(r) {
+                    var a = r.analytics;
                     return (
-                      <tr key={r.id} style={{ borderBottom: `1px solid ${C.BORDER}` }}>
+                      <tr key={r.id} style={{ borderBottom: '1px solid ' + C.BORDER }}>
                         <td style={{ padding: '14px 18px', color: C.TEXT, fontWeight: 600 }}>{r.title || 'Untitled'}</td>
                         <td style={{ padding: '14px 18px' }}>
                           <Pill variant={r.status === 'live' ? 'live' : 'draft'}>{r.status}</Pill>
@@ -243,7 +394,7 @@ export default function AnalyticsPage() {
                         <td style={{ padding: '14px 18px', color: C.TEXT_MUTED }}>{pct(a?.completion_rate ?? 0)}</td>
                         <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                           <Link
-                            href={`/dashboard/${r.id}`}
+                            href={'/dashboard/' + r.id}
                             style={{
                               color: C.ACCENT,
                               fontSize: 12.5,

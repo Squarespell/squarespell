@@ -51,6 +51,16 @@ interface Quiz {
     cta_url?: string;
     show_branding?: boolean;
     requireEmail?: boolean;
+    redirect_url?: string;
+    redirect_delay?: number;
+    gdpr_consent_enabled?: boolean;
+    gdpr_consent_text?: string;
+    gdpr_policy_url?: string;
+    gdpr_allow_deletion?: boolean;
+    gdpr_data_retention_days?: number;
+    schedule_enabled?: boolean;
+    publish_at?: string;
+    unpublish_at?: string;
   };
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
@@ -76,9 +86,12 @@ export default function EmbedQuizClient({
   const [submitting, setSubmitting] = useState(false);
   const [leadError, setLeadError] = useState('');
   const [outcome, setOutcome] = useState<QuizOutcome | null>(null);
+  const [gdprConsent, setGdprConsent] = useState(false);
   const sessionIdRef = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   );
+
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
 
   const totalQs = quiz.questions.length || 0;
   const currentQ = quiz.questions[qIdx];
@@ -86,6 +99,29 @@ export default function EmbedQuizClient({
   const progress =
     stage === 'question' ? Math.round(((qIdx + 1) / Math.max(totalQs, 1)) * 100) :
     stage === 'leadgate' ? 95 : 100;
+
+  // Custom redirect after quiz completion
+  useEffect(function() {
+    if (stage !== 'result') return;
+    var redirectUrl = quiz.settings?.redirect_url;
+    if (!redirectUrl) return;
+    var delay = quiz.settings?.redirect_delay ?? 5;
+    setRedirectCountdown(delay);
+    var interval = setInterval(function() {
+      setRedirectCountdown(function(prev) {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          if (window.parent !== window) {
+            window.parent.postMessage({ source: 'squarespell', type: 'redirect', url: redirectUrl }, '*');
+          }
+          window.top ? window.top.location.href = redirectUrl : window.location.href = redirectUrl;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return function() { clearInterval(interval); };
+  }, [stage, quiz.settings?.redirect_url, quiz.settings?.redirect_delay]);
 
   const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
   const brandSurface = quiz.branding?.colors?.surface || brandBg;
@@ -165,9 +201,16 @@ export default function EmbedQuizClient({
       setLeadError('Please enter a valid email');
       return;
     }
+    // If GDPR consent is required, enforce it
+    const gdprRequired = quiz.settings?.gdpr_consent_enabled === true;
+    if (gdprRequired && !gdprConsent) {
+      setLeadError('Please accept the consent checkbox to continue');
+      return;
+    }
     setSubmitting(true);
     setLeadError('');
     const o = getOutcome(answers);
+    const consentText = quiz.settings?.gdpr_consent_text || 'I agree to receive communications from this business';
     try {
       await fetch(`${API}/api/quiz/${quiz.slug}/lead`, {
         method: 'POST',
@@ -178,6 +221,8 @@ export default function EmbedQuizClient({
           answers,
           outcome_id: o?.id,
           session_id: sessionIdRef.current,
+          consent: gdprRequired ? gdprConsent : undefined,
+          consent_text: gdprRequired && gdprConsent ? consentText : undefined,
         }),
       });
       setOutcome(o);
@@ -664,6 +709,27 @@ export default function EmbedQuizClient({
                           />
                         </div>
                       </div>
+                      {quiz.settings?.gdpr_consent_enabled && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, margin: '10px 0 6px', fontSize: 12, lineHeight: 1.5, opacity: 0.85 }}>
+                          <input
+                            type="checkbox"
+                            checked={gdprConsent}
+                            onChange={function(e) { setGdprConsent(e.target.checked); }}
+                            style={{ marginTop: 2, cursor: 'pointer', flexShrink: 0 }}
+                          />
+                          <span>
+                            {quiz.settings?.gdpr_consent_text || 'I agree to receive communications from this business'}
+                            {quiz.settings?.gdpr_policy_url && (
+                              <span>
+                                {' '}
+                                <a href={quiz.settings.gdpr_policy_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', opacity: 0.8 }}>
+                                  Privacy Policy
+                                </a>
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
                       {leadError && <div className="sq-err">{leadError}</div>}
                       <button className="sq-btn sq-btn-lead" onClick={submitLead} disabled={submitting || !email.trim()} type="button">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -699,6 +765,12 @@ export default function EmbedQuizClient({
                 <button className="sq-btn" type="button">
                   {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                 </button>
+              )}
+
+              {redirectCountdown !== null && redirectCountdown > 0 && (
+                <div style={{ marginTop: 12, fontSize: 12, opacity: 0.6, textAlign: 'center' }}>
+                  Redirecting in {redirectCountdown}s...
+                </div>
               )}
             </div>
           )}

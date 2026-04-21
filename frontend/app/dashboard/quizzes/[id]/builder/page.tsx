@@ -2076,20 +2076,44 @@ function SettingsPanel({
   settings: any;
   onUpdate: (key: string, value: any) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const gdprEnabled = settings.gdpr_consent_enabled === true;
-  const gdprText = settings.gdpr_consent_text || '';
+  var [expanded, setExpanded] = useState(false);
+  var gdprEnabled = settings.gdpr_consent_enabled === true;
+  var gdprText = settings.gdpr_consent_text || '';
+  var redirectUrl = settings.redirect_url || '';
+  var redirectDelay = settings.redirect_delay || 5;
+  var scheduleEnabled = settings.schedule_enabled === true;
+  var publishAt = settings.publish_at || '';
+  var unpublishAt = settings.unpublish_at || '';
+  var gdprPolicyUrl = settings.gdpr_policy_url || '';
+  var gdprDataRetentionDays = settings.gdpr_data_retention_days || '';
+  var gdprAllowDeletion = settings.gdpr_allow_deletion !== false;
+
+  var settingsInputStyle: React.CSSProperties = {
+    width: '100%', padding: '8px 10px',
+    background: COLORS.SURFACE, border: '1px solid ' + COLORS.BORDER,
+    borderRadius: 4, color: COLORS.TEXT, fontSize: 12, outline: 'none',
+    fontFamily: '"DM Sans",system-ui,sans-serif',
+  };
+
+  var settingsLabelStyle: React.CSSProperties = {
+    fontSize: 11, color: COLORS.TEXT_MUTED, display: 'block', marginBottom: 4,
+  };
+
+  var settingsBlockStyle: React.CSSProperties = {
+    background: COLORS.ELEVATED, border: '1px solid ' + COLORS.BORDER,
+    borderRadius: 6, padding: 14,
+  };
 
   return (
     <div style={{
       margin: '0 16px 16px',
       background: COLORS.SURFACE,
-      border: `1px solid ${COLORS.BORDER}`,
+      border: '1px solid ' + COLORS.BORDER,
       borderRadius: 8,
       overflow: 'hidden',
     }}>
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={function() { setExpanded(!expanded); }}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '14px 16px', background: 'transparent', border: 'none',
@@ -2102,16 +2126,87 @@ function SettingsPanel({
 
       {expanded && (
         <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* GDPR Consent */}
-          <div style={{
-            background: COLORS.ELEVATED, border: `1px solid ${COLORS.BORDER}`,
-            borderRadius: 6, padding: 14,
-          }}>
+
+          {/* ── Custom Redirect After Completion ── */}
+          <div style={settingsBlockStyle}>
+            <div style={{ color: COLORS.TEXT, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+              Custom redirect after completion
+            </div>
+            <div style={{ color: COLORS.TEXT_MUTED, fontSize: 11, marginBottom: 10 }}>
+              Redirect visitors to a specific page after they see their result (e.g. product page, booking link).
+            </div>
+            <label style={settingsLabelStyle}>Redirect URL</label>
+            <input
+              type="url"
+              value={redirectUrl}
+              onChange={function(e) { onUpdate('redirect_url', e.target.value); }}
+              placeholder="https://yoursite.com/thank-you"
+              style={{ ...settingsInputStyle, marginBottom: 8 }}
+            />
+            {redirectUrl && (
+              <div>
+                <label style={settingsLabelStyle}>Delay before redirect (seconds)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={redirectDelay}
+                  onChange={function(e) { onUpdate('redirect_delay', Number(e.target.value)); }}
+                  style={{ ...settingsInputStyle, width: 80 }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ── Quiz Scheduling ── */}
+          <div style={settingsBlockStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: scheduleEnabled ? 12 : 0 }}>
+              <input
+                type="checkbox"
+                checked={scheduleEnabled}
+                onChange={function(e) { onUpdate('schedule_enabled', e.target.checked); }}
+                style={{ accentColor: COLORS.ACCENT, cursor: 'pointer' }}
+              />
+              <div>
+                <div style={{ color: COLORS.TEXT, fontSize: 13, fontWeight: 600 }}>
+                  Schedule quiz availability
+                </div>
+                <div style={{ color: COLORS.TEXT_MUTED, fontSize: 11, marginTop: 2 }}>
+                  Auto-publish and auto-unpublish at specific dates. Perfect for seasonal promotions.
+                </div>
+              </div>
+            </div>
+            {scheduleEnabled && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={settingsLabelStyle}>Publish at</label>
+                  <input
+                    type="datetime-local"
+                    value={publishAt}
+                    onChange={function(e) { onUpdate('publish_at', e.target.value); }}
+                    style={settingsInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={settingsLabelStyle}>Unpublish at</label>
+                  <input
+                    type="datetime-local"
+                    value={unpublishAt}
+                    onChange={function(e) { onUpdate('unpublish_at', e.target.value); }}
+                    style={settingsInputStyle}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── GDPR Consent ── */}
+          <div style={settingsBlockStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: gdprEnabled ? 12 : 0 }}>
               <input
                 type="checkbox"
                 checked={gdprEnabled}
-                onChange={e => onUpdate('gdpr_consent_enabled', e.target.checked)}
+                onChange={function(e) { onUpdate('gdpr_consent_enabled', e.target.checked); }}
                 style={{ accentColor: COLORS.ACCENT, cursor: 'pointer' }}
               />
               <div>
@@ -2124,24 +2219,54 @@ function SettingsPanel({
               </div>
             </div>
             {gdprEnabled && (
-              <div>
-                <label style={{ fontSize: 11, color: COLORS.TEXT_MUTED, display: 'block', marginBottom: 4 }}>
-                  Consent text
-                </label>
-                <input
-                  type="text"
-                  value={gdprText}
-                  onChange={e => onUpdate('gdpr_consent_text', e.target.value)}
-                  placeholder="I agree to receive communications from this business"
-                  style={{
-                    width: '100%', padding: '8px 10px',
-                    background: COLORS.SURFACE, border: `1px solid ${COLORS.BORDER}`,
-                    borderRadius: 4, color: COLORS.TEXT, fontSize: 12, outline: 'none',
-                  }}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <label style={settingsLabelStyle}>Consent checkbox text</label>
+                  <input
+                    type="text"
+                    value={gdprText}
+                    onChange={function(e) { onUpdate('gdpr_consent_text', e.target.value); }}
+                    placeholder="I agree to receive communications from this business"
+                    style={settingsInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={settingsLabelStyle}>Privacy policy URL (shown as link)</label>
+                  <input
+                    type="url"
+                    value={gdprPolicyUrl}
+                    onChange={function(e) { onUpdate('gdpr_policy_url', e.target.value); }}
+                    placeholder="https://yoursite.com/privacy-policy"
+                    style={settingsInputStyle}
+                  />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={settingsLabelStyle}>Data retention (days)</label>
+                    <input
+                      type="number"
+                      min="30"
+                      max="3650"
+                      value={gdprDataRetentionDays}
+                      onChange={function(e) { onUpdate('gdpr_data_retention_days', Number(e.target.value)); }}
+                      placeholder="365"
+                      style={settingsInputStyle}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 18 }}>
+                    <input
+                      type="checkbox"
+                      checked={gdprAllowDeletion}
+                      onChange={function(e) { onUpdate('gdpr_allow_deletion', e.target.checked); }}
+                      style={{ accentColor: COLORS.ACCENT, cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: 12, color: COLORS.TEXT }}>Allow data deletion requests</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
+
         </div>
       )}
     </div>

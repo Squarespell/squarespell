@@ -445,6 +445,21 @@ publicQuizRouter.get('/:slug', async (req, res) => {
     data = r.data;
   }
   if (!data) return res.status(404).json({ error: 'Quiz not found' });
+
+  // Check quiz scheduling — if enabled, verify current time is within publish window
+  const quizSettings = (data.settings as any) || {};
+  if (quizSettings.schedule_enabled) {
+    const now = new Date();
+    if (quizSettings.publish_at) {
+      const publishDate = new Date(quizSettings.publish_at);
+      if (now < publishDate) return res.status(404).json({ error: 'Quiz not yet available' });
+    }
+    if (quizSettings.unpublish_at) {
+      const unpublishDate = new Date(quizSettings.unpublish_at);
+      if (now > unpublishDate) return res.status(404).json({ error: 'Quiz is no longer available' });
+    }
+  }
+
   res.json(data);
 });
 publicQuizRouter.post('/:slug/event', async (req, res) => {
@@ -580,23 +595,52 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     log.info('[GDPR] Skipping sequence emails - no consent', { email });
   }
 
-  // Fire Zapier/webhook integrations
+  // Fire all integrations: webhooks, Mailchimp, Klaviyo, ConvertKit, Google Sheets
   try {
     const { data: integrations } = await supabase.from('integrations').select('id,type,config').eq('user_id', quiz.user_id).eq('active', true);
     if (integrations && integrations.length > 0) {
-      const { data: quizMeta } = await supabase.from('quizzes').select('title,slug').eq('id', quiz.id).single();
+      const { data: quizMeta } = await supabase.from('quizzes').select('title,slug,mode').eq('id', quiz.id).single();
       const webhookPayload = {
         event: 'lead.captured',
         lead: { name: name ?? '', email, outcome_id: outcome_id ?? '', answers: answers ?? {}, captured_at: new Date().toISOString() },
         quiz: { id: quiz.id, title: quizMeta?.title ?? '', slug: quizMeta?.slug ?? '' },
       };
+
+      // Determine outcome title for tags
+      const matchedOutcomeForTag = outcome_id && quiz.outcomes
+        ? (quiz.outcomes as any[]).find(function(o: any) { return o.id === outcome_id; })
+        : null;
+      const outcomeTags = matchedOutcomeForTag ? ['sq:' + (quizMeta?.slug ?? ''), 'outcome:' + (matchedOutcomeForTag.title || 'unknown')] : ['sq:' + (quizMeta?.slug ?? '')];
+
       for (const integration of integrations) {
+        // Check quiz_id mapping — if integration has quiz_ids, only fire for matching quizzes
+        if (integration.config?.quiz_ids && Array.isArray(integration.config.quiz_ids) && integration.config.quiz_ids.length > 0) {
+          if (!integration.config.quiz_ids.includes(quiz.id)) continue;
+        }
+
         if (integration.type === 'webhook' && integration.config?.url) {
-          fetch(integration.config.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(webhookPayload) }).catch(() => {});
+          fetch(integration.config.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(webhookPayload) }).catch(function() {});
+        } else if (integration.type === 'mailchimp' || integration.type === 'klaviyo' || integration.type === 'convertkit') {
+          // Push to email marketing platform via integration service
+          const { pushLeadToIntegration } = await import('../services/integrations/index');
+          pushLeadToIntegration(
+            { type: integration.type, config: integration.config },
+            { email, firstName: name ?? '', tags: outcomeTags, metadata: { quiz_title: quizMeta?.title ?? '', outcome: matchedOutcomeForTag?.title ?? '', score: leadData?.score ?? null } }
+          ).then(function(result) {
+            if (!result.success) log.info('[Integration] ' + integration.type + ' push failed:', { detail: result.error });
+            else log.info('[Integration] ' + integration.type + ' push success for:', { detail: email });
+          }).catch(function(e: any) { log.info('[Integration] ' + integration.type + ' error:', { detail: e?.message }); });
+        } else if (integration.type === 'google_sheets' && integration.config?.spreadsheet_id) {
+          // Push to Google Sheets
+          const { appendLeadToSheet } = await import('../services/integrations/googleSheets');
+          appendLeadToSheet(
+            { spreadsheet_id: integration.config.spreadsheet_id, service_account_json: integration.config.service_account_json || '', sheet_name: integration.config.sheet_name },
+            { timestamp: new Date().toISOString(), email, name: name ?? '', quiz_name: quizMeta?.title ?? '', mode: (quizMeta as any)?.mode || 'lead_quiz', outcome: matchedOutcomeForTag?.title ?? '', score: leadData?.score ?? undefined, answers: answers ?? {} }
+          ).catch(function(e: any) { log.info('[GoogleSheets] push failed:', { detail: e?.message }); });
         }
       }
     }
-  } catch (e) { log.info('Webhook dispatch failed:', { detail: e }); }
+  } catch (e) { log.info('Integration dispatch failed:', { detail: e }); }
 
   
   // Generate AI lead insights (non-blocking)
@@ -736,6 +780,35 @@ leadsRouter.get('/leads/:id', requireAuth, attachUser, async (req: Authenticated
   }
 });
 
+// GDPR data deletion request — lets quiz owners or leads request data removal
+leadsRouter.post('/gdpr/delete-request', async (req, res) => {
+  const { email, quiz_slug } = req.body;
+  if (!email) return res.status(400).json({ error: 'email required' });
+
+  try {
+    // Find the quiz and check if GDPR deletion is allowed
+    if (quiz_slug) {
+      const { data: quiz } = await supabase.from('quizzes').select('id,settings').eq('slug', quiz_slug).single();
+      if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+      const settings = (quiz.settings as any) || {};
+      if (settings.gdpr_consent_enabled && settings.gdpr_allow_deletion === false) {
+        return res.status(403).json({ error: 'Data deletion requests are not enabled for this quiz' });
+      }
+      // Delete leads for this specific quiz
+      const { error: delError, count } = await supabase.from('leads').delete().eq('quiz_id', quiz.id).eq('email', email);
+      if (delError) return res.status(500).json({ error: delError.message });
+      res.json({ success: true, deleted: count || 0, message: 'Your data has been deleted for this quiz.' });
+    } else {
+      // Delete all leads for this email across all quizzes
+      const { error: delError, count } = await supabase.from('leads').delete().eq('email', email);
+      if (delError) return res.status(500).json({ error: delError.message });
+      res.json({ success: true, deleted: count || 0, message: 'All your data has been deleted.' });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to process deletion request' });
+  }
+});
+
 // ── Integrations ─────────────────────────────────────────────────────────────
 export const integrationsRouter = Router();
 integrationsRouter.use(requireAuth, attachUser);
@@ -779,8 +852,52 @@ integrationsRouter.post('/test/:id', async (req: AuthenticatedRequest, res) => {
       const response = await fetch(integration.config.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(testPayload) });
       res.json({ success: response.ok, status: response.status });
     } catch (e: any) { res.json({ success: false, error: e.message }); }
+  } else if (integration.type === 'mailchimp' || integration.type === 'klaviyo' || integration.type === 'convertkit') {
+    try {
+      const { pushLeadToIntegration } = await import('../services/integrations/index');
+      const result = await pushLeadToIntegration(
+        { type: integration.type, config: integration.config },
+        { email: 'test@squarespell.com', firstName: 'Test', tags: ['sq:test'], metadata: { quiz_title: 'Test Quiz', outcome: 'Test Outcome' } }
+      );
+      res.json(result);
+    } catch (e: any) { res.json({ success: false, error: e.message }); }
   } else {
     res.status(400).json({ error: 'Unsupported integration type for testing' });
+  }
+});
+
+// Fetch lists/audiences from email platforms (for setup UI)
+integrationsRouter.post('/lists', async (req: AuthenticatedRequest, res) => {
+  const { type, apiKey } = req.body;
+  if (!type || !apiKey) return res.status(400).json({ error: 'type and apiKey required' });
+
+  try {
+    if (type === 'mailchimp') {
+      const dc = apiKey.split('-').pop();
+      if (!dc) return res.status(400).json({ error: 'Invalid Mailchimp API key' });
+      const response = await fetch('https://' + dc + '.api.mailchimp.com/3.0/lists?count=100&fields=lists.id,lists.name,lists.stats.member_count', {
+        headers: { 'Authorization': 'Bearer ' + apiKey },
+      });
+      if (!response.ok) return res.status(400).json({ error: 'Invalid Mailchimp API key' });
+      const data = await response.json() as any;
+      res.json({ lists: (data.lists || []).map(function(l: any) { return { id: l.id, name: l.name, member_count: l.stats?.member_count ?? 0 }; }) });
+    } else if (type === 'klaviyo') {
+      const response = await fetch('https://a.klaviyo.com/api/lists/', {
+        headers: { 'Authorization': 'Klaviyo-API-Key ' + apiKey, 'revision': '2024-02-15' },
+      });
+      if (!response.ok) return res.status(400).json({ error: 'Invalid Klaviyo API key' });
+      const data = await response.json() as any;
+      res.json({ lists: (data.data || []).map(function(l: any) { return { id: l.id, name: l.attributes?.name ?? l.id }; }) });
+    } else if (type === 'convertkit') {
+      const response = await fetch('https://api.convertkit.com/v3/forms?api_key=' + apiKey);
+      if (!response.ok) return res.status(400).json({ error: 'Invalid ConvertKit API key' });
+      const data = await response.json() as any;
+      res.json({ lists: (data.forms || []).map(function(f: any) { return { id: String(f.id), name: f.name }; }) });
+    } else {
+      res.status(400).json({ error: 'Unsupported type' });
+    }
+  } catch (e: any) {
+    res.status(500).json({ error: e.message || 'Failed to fetch lists' });
   }
 });
 

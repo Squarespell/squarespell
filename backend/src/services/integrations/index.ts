@@ -1,5 +1,6 @@
 import { addMailchimpContact } from './mailchimp';
 import { addKlaviyoContact } from './klaviyo';
+import { addConvertkitSubscriber } from './convertkit';
 import { addActivecampaignContact } from './activecampaign';
 import { addHubspotContact } from './hubspot';
 import { prefillAcuityLink, checkAcuityBooking } from './acuity';
@@ -45,6 +46,19 @@ export async function pushLeadToIntegration(
         return await addKlaviyoContact(
           config.apiKey,
           config.listId,
+          lead.email,
+          lead.firstName || '',
+          lead.tags,
+          lead.metadata
+        );
+
+      case 'convertkit':
+        if (!config.apiKey || !config.formId) {
+          return { success: false, error: 'Missing ConvertKit API key or form ID' };
+        }
+        return await addConvertkitSubscriber(
+          config.apiKey,
+          config.formId,
           lead.email,
           lead.firstName || '',
           lead.tags,
