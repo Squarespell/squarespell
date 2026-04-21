@@ -1726,13 +1726,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const PRICE_IDS: Record<string,Record<string,string>> = { growth: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
 
 export const stripeRouter = Router();
-stripeRouter.get('/debug-prices', async (_req, res) => {
-  try {
-    const prices = await stripe.prices.list({ limit: 20, active: true, expand: ['data.product'] });
-    var result = prices.data.map(function(p: any) { return { id: p.id, product: typeof p.product === 'object' ? p.product.name : p.product, amount: p.unit_amount, currency: p.currency, interval: p.recurring?.interval }; });
-    res.json(result);
-  } catch (e: any) { res.status(500).json({ error: e.message }); }
-});
 stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   const billing = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
   const priceId = (PRICE_IDS[req.body.plan] as any)?.[billing];
