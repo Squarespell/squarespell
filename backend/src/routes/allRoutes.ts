@@ -826,7 +826,7 @@ leadsRouter.get('/leads/:id', requireAuth, attachUser, async (req: Authenticated
         calculated_price,
         metadata,
         quiz_id,
-        quizzes(id, title, slug, mode, questions, outcomes, branding, settings)
+        quizzes(id, title, slug, mode, questions, outcomes, branding, settings, user_id)
       `)
       .eq('id', req.params.id)
       .single();

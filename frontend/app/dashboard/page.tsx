@@ -848,7 +848,7 @@ function ABTestingBanner({ onDismiss }: { onDismiss: () => void }) {
         <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Test different questions, paths, and designs to see what converts best.</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <Link href="/dashboard/analytics" style={{
+        <Link href="/dashboard/quizzes" style={{
           padding: '8px 16px', background: '#F04438', color: '#fff', borderRadius: 8,
           fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: C.FONT,
           transition: 'all 0.12s',

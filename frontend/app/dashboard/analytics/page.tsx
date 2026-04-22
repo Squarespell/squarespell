@@ -394,7 +394,7 @@ export default function AnalyticsPage() {
                         <td style={{ padding: '14px 18px', color: C.TEXT_MUTED }}>{pct(a?.completion_rate ?? 0)}</td>
                         <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                           <Link
-                            href={'/dashboard/' + r.id}
+                            href={'/dashboard/analytics/' + r.id}
                             style={{
                               color: C.ACCENT,
                               fontSize: 12.5,

@@ -67,14 +67,34 @@ export default function ReferralsPage() {
   }, [token]);
 
   function copyToClipboard() {
-    if (referralUrl) {
-      navigator.clipboard.writeText(referralUrl).then(function() {
-        setCopied(true);
-        setTimeout(function() {
-          setCopied(false);
-        }, 2000);
-      });
+    if (!referralUrl) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(referralUrl).then(function() {
+          setCopied(true);
+          setTimeout(function() { setCopied(false); }, 2000);
+        }).catch(function() {
+          fallbackCopy();
+        });
+      } else {
+        fallbackCopy();
+      }
+    } catch {
+      fallbackCopy();
     }
+  }
+
+  function fallbackCopy() {
+    var textarea = document.createElement('textarea');
+    textarea.value = referralUrl;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    setCopied(true);
+    setTimeout(function() { setCopied(false); }, 2000);
   }
 
   if (authStatus === 'loading') {

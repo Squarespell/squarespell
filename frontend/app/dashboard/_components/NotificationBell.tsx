@@ -95,8 +95,11 @@ export function NotificationBell() {
     })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (Array.isArray(data.notifications)) setNotifications(data.notifications);
-        if (typeof data.unread_count === 'number') setUnreadCount(data.unread_count);
+        var items = Array.isArray(data.notifications) ? data.notifications : [];
+        setNotifications(items);
+        // Always derive unread count from actual items to avoid badge/content mismatch
+        var unread = items.filter(function(n: NotifItem) { return !n.read; }).length;
+        setUnreadCount(unread);
       })
       .catch(function() {})
       .finally(function() { setLoading(false); });
