@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 import { PublishModal } from "./Modals";
-import { QuizBlockEditor } from './QuizBlockEditor';
+import { QuizBlockEditor, QuizSettings } from './QuizBlockEditor';
 import { QuizBlock, legacyToBlocks, blocksToLegacy } from '@/lib/quiz/blocks';
 
 interface DbQuiz {
@@ -300,6 +300,35 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     }
   }, [quiz, initialBlocksReady]);
 
+  // Quiz settings state
+  var [quizSettings, setQuizSettings] = useState<QuizSettings>({});
+  var settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Initialize settings from quiz data
+  useEffect(function() {
+    if (quiz && quiz.settings) {
+      setQuizSettings({
+        shuffle_questions: quiz.settings.shuffle_questions || false,
+        show_progress_bar: quiz.settings.show_progress_bar !== false,
+        transition_type: quiz.settings.transition_type || 'slide',
+      });
+    }
+  }, [quiz]);
+
+  // Handle settings change with auto-save
+  var handleSettingsChange = useCallback(function(newSettings: QuizSettings) {
+    setQuizSettings(newSettings);
+    if (settingsSaveTimerRef.current) clearTimeout(settingsSaveTimerRef.current);
+    settingsSaveTimerRef.current = setTimeout(function() {
+      if (!resolvedId) return;
+      api.updateQuiz(resolvedId, {
+        settings: Object.assign({}, quiz?.settings || {}, newSettings),
+      }).catch(function(err: any) {
+        console.error('[block-editor] Settings auto-save failed:', err);
+      });
+    }, 800);
+  }, [resolvedId, quiz]);
+
   // Auto-save block changes with debounce
   var handleBlocksChange = useCallback(function(blocks: QuizBlock[]) {
     setEditorBlocks(blocks);
@@ -348,6 +377,8 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
       <QuizBlockEditor
         blocks={editorBlocks}
         onChange={handleBlocksChange}
+        settings={quizSettings}
+        onSettingsChange={handleSettingsChange}
       />
       {publishError && (
         <div style={{position:"fixed",top:16,right:16,zIndex:60,background:"#fee",color:"#900",padding:"10px 14px",borderRadius:8,fontSize:13,boxShadow:"0 6px 18px rgba(0,0,0,0.18)"}}>{publishError}</div>

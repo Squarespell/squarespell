@@ -1844,12 +1844,20 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
 /*  Main export: QuizBlockEditor                                      */
 /* ------------------------------------------------------------------ */
 
+export interface QuizSettings {
+  shuffle_questions?: boolean;
+  show_progress_bar?: boolean;
+  transition_type?: 'slide' | 'fade' | 'scale' | 'none';
+}
+
 export interface QuizBlockEditorProps {
   blocks: QuizBlock[];
   onChange: (blocks: QuizBlock[]) => void;
+  settings?: QuizSettings;
+  onSettingsChange?: (settings: QuizSettings) => void;
 }
 
-export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEditorProps) {
+export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
   var [selectedId, setSelectedId] = useState<string | null>(null);
@@ -2323,10 +2331,11 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
               }}>
                 <input
                   type="checkbox"
-                  checked={false}
+                  checked={settings?.shuffle_questions || false}
                   onChange={function() {
-                    /* Quiz-level settings would be stored on the quiz object,
-                       not in blocks. This toggle is for UI preview. */
+                    if (onSettingsChange) {
+                      onSettingsChange(Object.assign({}, settings, { shuffle_questions: !(settings?.shuffle_questions || false) }));
+                    }
                   }}
                   style={{ accentColor: C.ACCENT, width: 18, height: 18 }}
                 />
@@ -2344,8 +2353,12 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
               }}>
                 <input
                   type="checkbox"
-                  checked={true}
-                  onChange={function() {}}
+                  checked={settings?.show_progress_bar !== false}
+                  onChange={function() {
+                    if (onSettingsChange) {
+                      onSettingsChange(Object.assign({}, settings, { show_progress_bar: settings?.show_progress_bar === false ? true : false }));
+                    }
+                  }}
                   style={{ accentColor: C.ACCENT, width: 18, height: 18 }}
                 />
                 <div>
@@ -2367,8 +2380,12 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange }: QuizBlockEd
                     { value: 'scale', label: 'Scale' },
                     { value: 'none', label: 'None' },
                   ]}
-                  value={'slide'}
-                  onChange={function() {}}
+                  value={settings?.transition_type || 'slide'}
+                  onChange={function(val) {
+                    if (onSettingsChange) {
+                      onSettingsChange(Object.assign({}, settings, { transition_type: val }));
+                    }
+                  }}
                 />
               </div>
             </div>

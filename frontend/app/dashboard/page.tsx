@@ -786,19 +786,45 @@ function RecentLeadsTable({ leads, quizzes }: { leads: Lead[]; quizzes: Quiz[] }
 
 // ═══════ QUESTION DROP-OFF ═══════
 
-function QuestionDropoff({ questions, quizTitle }: { questions: DropoffQuestion[]; quizTitle: string }) {
+function QuestionDropoff({ questions, quizTitle, quizzes, selectedQuizId, onQuizChange }: {
+  questions: DropoffQuestion[];
+  quizTitle: string;
+  quizzes?: Array<{ id: string; title: string }>;
+  selectedQuizId?: string;
+  onQuizChange?: (quizId: string) => void;
+}) {
   return (
     <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
         <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Question drop-off analysis</span>
-        <div style={{
-          padding: '6px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
-          fontSize: 13, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
-          display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
-        }}>
-          {quizTitle}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
+        {quizzes && quizzes.length > 0 && onQuizChange ? (
+          <select
+            value={selectedQuizId || ''}
+            onChange={function(e) { onQuizChange(e.target.value); }}
+            style={{
+              padding: '8px 32px 8px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
+              fontSize: 13, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
+              fontFamily: C.FONT, cursor: 'pointer', outline: 'none',
+              appearance: 'none' as const,
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'14\' height=\'14\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23667085\' stroke-width=\'2\' stroke-linecap=\'round\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 10px center',
+              maxWidth: 280,
+            }}
+          >
+            {quizzes.map(function(q) {
+              return <option key={q.id} value={q.id}>{q.title || 'Untitled'}</option>;
+            })}
+          </select>
+        ) : (
+          <div style={{
+            padding: '6px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
+            fontSize: 13, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
+            display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
+          }}>
+            {quizTitle}
+          </div>
+        )}
       </div>
       <div style={{ padding: '8px 24px 24px' }}>
         <table style={{ width: '100%', fontFamily: C.FONT }}>
@@ -963,6 +989,7 @@ function OverviewInner() {
   var [sources, setSources] = useState<LeadSource[]>([]);
   var [dropoffQuestions, setDropoffQuestions] = useState<DropoffQuestion[]>([]);
   var [dropoffQuizTitle, setDropoffQuizTitle] = useState('');
+  var [dropoffQuizId, setDropoffQuizId] = useState('');
   var [activities, setActivities] = useState<ActivityItem[]>([]);
   var [showABBanner, setShowABBanner] = useState(true);
   var [newQuizOpen, setNewQuizOpen] = useState(false);
@@ -1175,6 +1202,7 @@ function OverviewInner() {
         if (quizData.length > 0 && !cancelled) {
           var topQuiz = quizData.slice().sort(function(a, b) { return b.view_count - a.view_count; })[0];
           setDropoffQuizTitle(topQuiz.title);
+          setDropoffQuizId(topQuiz.id);
           try {
             var doRes = await fetch(API + '/api/analytics/' + topQuiz.id + '/dropoff', {
               headers: { Authorization: 'Bearer ' + token },
@@ -1270,6 +1298,22 @@ function OverviewInner() {
 
     return function() { cancelled = true; };
   }, [selectedDays]);
+
+  // Handle dropoff quiz change
+  function handleDropoffQuizChange(quizId: string) {
+    setDropoffQuizId(quizId);
+    var selectedQuiz = quizzes.find(function(q) { return q.id === quizId; });
+    if (selectedQuiz) setDropoffQuizTitle(selectedQuiz.title);
+    if (!token) return;
+    fetch(API + '/api/analytics/' + quizId + '/dropoff', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(data) {
+        if (Array.isArray(data)) setDropoffQuestions(data.slice(0, 5));
+      })
+      .catch(function() {});
+  }
 
   // Fetch chart timeseries
   useEffect(function() {
@@ -1475,7 +1519,13 @@ function OverviewInner() {
 
       {/* Bottom row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-        <QuestionDropoff questions={dropoffQuestions} quizTitle={dropoffQuizTitle || 'Select quiz'} />
+        <QuestionDropoff
+          questions={dropoffQuestions}
+          quizTitle={dropoffQuizTitle || 'Select quiz'}
+          quizzes={quizzes.map(function(q) { return { id: q.id, title: q.title }; })}
+          selectedQuizId={dropoffQuizId}
+          onQuizChange={handleDropoffQuizChange}
+        />
         <RecentActivityList activities={activities} />
       </div>
 
