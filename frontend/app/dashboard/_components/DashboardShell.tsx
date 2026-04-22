@@ -15,7 +15,7 @@
  *   by NOT rendering inside this shell
  */
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, useClerk, useUser } from '@clerk/nextjs';
@@ -393,6 +393,8 @@ export function DashboardShell({
   var [mobileOpen, setMobileOpen] = useState(false);
   var [isMobile, setIsMobile] = useState(false);
   var [bannerToken, setBannerToken] = useState<string | null>(null);
+  var sidebarScrollRef = useRef<HTMLDivElement>(null);
+  var sidebarScrollPos = useRef(0);
   var [planData, setPlanData] = useState<{ name: string; renewsAt: string; viewsUsed: number; viewsLimit: number }>({
     name: 'Pro Plan', renewsAt: '', viewsUsed: 0, viewsLimit: 25000,
   });
@@ -414,6 +416,17 @@ export function DashboardShell({
     })();
     return function() { cancelled = true; };
   }, [getToken]);
+
+  // Restore sidebar scroll position on mount (survives re-mount across routes)
+  useEffect(function() {
+    var el = sidebarScrollRef.current;
+    if (el) {
+      try {
+        var saved = sessionStorage.getItem('sq-sidebar-scroll');
+        if (saved) el.scrollTop = Number(saved);
+      } catch {}
+    }
+  }, []);
 
   useEffect(function() {
     setMobileOpen(false);
@@ -502,84 +515,95 @@ export function DashboardShell({
         </Link>
       </div>
 
-      {/* Primary nav */}
-      <nav aria-label="Main" style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
-        {NAV_SECTIONS.map(function(section, sectionIdx) {
-          return (
-            <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 16 }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: C.GRAY_400,
-                  padding: '8px 8px 4px',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase' as const,
-                  fontFamily: C.FONT,
-                }}
-              >
-                {section.label}
-              </div>
-              {section.items.map(function(item) {
-                var active = isActive(item, pathname || '');
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '8px 12px',
-                      margin: '1px 0',
-                      borderRadius: 6,
-                      textDecoration: 'none',
-                      color: active ? C.GRAY_900 : C.GRAY_700,
-                      background: active ? C.GRAY_50 : 'transparent',
-                      fontSize: 14,
-                      fontWeight: active ? 600 : 500,
-                      fontFamily: C.FONT,
-                      transition: 'all 0.12s ease',
-                    }}
-                    onMouseEnter={function(e: any) {
-                      if (!active) {
-                        e.currentTarget.style.background = C.GRAY_50;
-                        e.currentTarget.style.color = C.GRAY_900;
-                      }
-                    }}
-                    onMouseLeave={function(e: any) {
-                      if (!active) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = C.GRAY_700;
-                      }
-                    }}
-                  >
-                    <span
+      {/* Scrollable area: nav + plan card scroll together */}
+      <div
+        ref={sidebarScrollRef}
+        onScroll={function(e: any) {
+          var pos = e.currentTarget.scrollTop;
+          sidebarScrollPos.current = pos;
+          try { sessionStorage.setItem('sq-sidebar-scroll', String(pos)); } catch {}
+        }}
+        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}
+      >
+        <nav aria-label="Main" style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {NAV_SECTIONS.map(function(section, sectionIdx) {
+            return (
+              <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 16 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: C.GRAY_400,
+                    padding: '8px 8px 4px',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase' as const,
+                    fontFamily: C.FONT,
+                  }}
+                >
+                  {section.label}
+                </div>
+                {section.items.map(function(item) {
+                  var active = isActive(item, pathname || '');
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 20,
-                        height: 20,
-                        flexShrink: 0,
-                        color: active ? C.ACCENT : C.GRAY_500,
-                        transition: 'color 0.12s ease',
+                        gap: 12,
+                        padding: '8px 12px',
+                        margin: '1px 0',
+                        borderRadius: 6,
+                        textDecoration: 'none',
+                        color: active ? C.GRAY_900 : C.GRAY_700,
+                        background: active ? C.GRAY_50 : 'transparent',
+                        fontSize: 14,
+                        fontWeight: active ? 600 : 500,
+                        fontFamily: C.FONT,
+                        transition: 'all 0.12s ease',
+                      }}
+                      onMouseEnter={function(e: any) {
+                        if (!active) {
+                          e.currentTarget.style.background = C.GRAY_50;
+                          e.currentTarget.style.color = C.GRAY_900;
+                        }
+                      }}
+                      onMouseLeave={function(e: any) {
+                        if (!active) {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = C.GRAY_700;
+                        }
                       }}
                     >
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          );
-        })}
+                      <span
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 20,
+                          height: 20,
+                          flexShrink: 0,
+                          color: active ? C.ACCENT : C.GRAY_500,
+                          transition: 'color 0.12s ease',
+                        }}
+                      >
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
 
-      </nav>
-
-      {/* Plan card */}
-      <SidebarPlanCard plan={planData} />
+        {/* Plan card — scrolls with nav */}
+        <div style={{ padding: '16px 0 8px' }}>
+          <SidebarPlanCard plan={planData} />
+        </div>
+      </div>
 
       {/* Account footer */}
       <div style={{ padding: '16px', borderTop: '1px solid ' + C.GRAY_200 }}>
