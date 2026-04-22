@@ -248,16 +248,102 @@ function PerformanceChart({
   data,
   period,
   onPeriodChange,
+  dateRange,
+  selectedDays,
+  onDaysChange,
 }: {
   data: ChartPoint[];
   period: string;
   onPeriodChange: (p: string) => void;
+  dateRange?: string;
+  selectedDays?: number;
+  onDaysChange?: (days: number) => void;
 }) {
+  var [localPickerOpen, setLocalPickerOpen] = useState(false);
+
+  var periodToggle = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {onDaysChange && (
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={function() { setLocalPickerOpen(!localPickerOpen); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 7,
+              fontSize: 12.5, fontWeight: 500, color: C.GRAY_600, background: C.SURFACE,
+              cursor: 'pointer', fontFamily: C.FONT,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {dateRange || 'Last 30 days'}
+          </button>
+          {localPickerOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', right: 0, marginTop: 6,
+              background: C.SURFACE, border: '1px solid ' + C.GRAY_200,
+              borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+              padding: 6, zIndex: 50, minWidth: 160,
+            }}>
+              {[
+                { days: 7, label: 'Last 7 days' },
+                { days: 30, label: 'Last 30 days' },
+                { days: 90, label: 'Last 90 days' },
+                { days: 0, label: 'All time' },
+              ].map(function(opt) {
+                var isActive = selectedDays === opt.days;
+                return (
+                  <button
+                    key={opt.days}
+                    onClick={function() {
+                      onDaysChange(opt.days);
+                      setLocalPickerOpen(false);
+                    }}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'left',
+                      padding: '8px 12px', border: 'none', borderRadius: 6,
+                      background: isActive ? C.ACCENT_LIGHT : 'transparent',
+                      color: isActive ? C.ACCENT : C.GRAY_700,
+                      fontSize: 13, fontWeight: isActive ? 600 : 500,
+                      cursor: 'pointer', fontFamily: C.FONT,
+                      transition: 'background 0.1s',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 2, background: C.GRAY_100, borderRadius: 8, padding: 2 }}>
+        {['Daily', 'Weekly', 'Monthly'].map(function(p) {
+          var isActive = period === p.toLowerCase();
+          return (
+            <button
+              key={p}
+              onClick={function() { onPeriodChange(p.toLowerCase()); }}
+              style={{
+                padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: isActive ? 600 : 500,
+                color: isActive ? C.GRAY_900 : C.GRAY_500, background: isActive ? C.SURFACE : 'transparent',
+                border: 'none', cursor: 'pointer', fontFamily: C.FONT,
+                boxShadow: isActive ? C.SHADOW_XS : 'none', transition: 'all 0.12s',
+              }}
+            >
+              {p}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   if (data.length === 0) {
     return (
       <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
         <div style={{ padding: '20px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Performance overview</div>
+          {periodToggle}
         </div>
         <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.GRAY_400, fontSize: 14, fontFamily: C.FONT }}>
           No data for this period yet
@@ -312,25 +398,7 @@ function PerformanceChart({
     <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
       <div style={{ padding: '20px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Performance overview</div>
-        <div style={{ display: 'flex', gap: 2, background: C.GRAY_100, borderRadius: 8, padding: 2 }}>
-          {['Daily', 'Weekly', 'Monthly'].map(function(p) {
-            var isActive = period === p.toLowerCase();
-            return (
-              <button
-                key={p}
-                onClick={function() { onPeriodChange(p.toLowerCase()); }}
-                style={{
-                  padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: isActive ? 600 : 500,
-                  color: isActive ? C.GRAY_900 : C.GRAY_500, background: isActive ? C.SURFACE : 'transparent',
-                  border: 'none', cursor: 'pointer', fontFamily: C.FONT,
-                  boxShadow: isActive ? C.SHADOW_XS : 'none', transition: 'all 0.12s',
-                }}
-              >
-                {p}
-              </button>
-            );
-          })}
-        </div>
+        {periodToggle}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
@@ -1393,7 +1461,7 @@ function OverviewInner() {
       </div>
 
       {/* Performance chart */}
-      <PerformanceChart data={chartData} period={chartPeriod} onPeriodChange={setChartPeriod} />
+      <PerformanceChart data={chartData} period={chartPeriod} onPeriodChange={setChartPeriod} dateRange={dateRange} selectedDays={selectedDays} onDaysChange={function(days) { setSelectedDays(days); }} />
 
       {/* Three-column row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
