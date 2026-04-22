@@ -502,45 +502,6 @@ export function DashboardShell({
         </Link>
       </div>
 
-      {/* Search trigger */}
-      <div style={{ padding: '4px 16px 8px' }}>
-        <button
-          type="button"
-          onClick={function() {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
-          }}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 14px',
-            background: C.SURFACE,
-            border: '1px solid ' + C.GRAY_300,
-            borderRadius: 8,
-            color: C.GRAY_500,
-            fontSize: 14,
-            fontWeight: 400,
-            cursor: 'pointer',
-            fontFamily: C.FONT,
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_400; }}
-          onMouseLeave={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_300; }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icons.search}</span>
-          <span style={{ flex: 1, textAlign: 'left' }}>Search</span>
-          <kbd style={{
-            fontFamily: C.FONT,
-            fontSize: 12,
-            fontWeight: 500,
-            color: C.GRAY_400,
-          }}>
-            Cmd+K
-          </kbd>
-        </button>
-      </div>
-
       {/* Primary nav */}
       <nav aria-label="Main" style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
         {NAV_SECTIONS.map(function(section, sectionIdx) {
@@ -619,9 +580,6 @@ export function DashboardShell({
 
       {/* Plan card */}
       <SidebarPlanCard plan={planData} />
-
-      {/* Help card */}
-      <SidebarHelpCard />
 
       {/* Account footer */}
       <div style={{ padding: '16px', borderTop: '1px solid ' + C.GRAY_200 }}>
@@ -861,38 +819,9 @@ export function DashboardShell({
               <kbd style={{ padding: '2px 6px', border: '1px solid ' + C.GRAY_200, borderRadius: 4, fontSize: 11, color: C.GRAY_400, background: C.GRAY_50, fontWeight: 500, fontFamily: C.FONT }}>&#8984; K</kbd>
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <NotificationBell />
             {topbarRight}
-            {/* Topbar user profile */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '6px 12px 6px 6px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                transition: 'all 0.12s',
-              }}
-              onMouseEnter={function(e: any) { e.currentTarget.style.background = C.GRAY_50; }}
-              onMouseLeave={function(e: any) { e.currentTarget.style.background = 'transparent'; }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, fontWeight: 600, color: '#999',
-                overflow: 'hidden',
-              }}>
-                {userInitial}
-              </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{userName}</div>
-                <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>Owner</div>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
           </div>
         </header>
         )}
