@@ -248,7 +248,7 @@ export function legacyToBlocks(quiz: {
       type: 'question',
       text: q.text || q.title || '',
       subtitle: q.subtitle || undefined,
-      questionStyle: q.type === 'image_choice' ? 'imageChoice' : 'buttons',
+      questionStyle: q.questionStyle || (q.type === 'image_choice' ? 'imageChoice' : 'buttons'),
       options: opts,
       required: true,
       branchRules: q.next_question_rules || undefined,
@@ -331,6 +331,7 @@ export function blocksToLegacy(blocks: QuizBlock[]): {
         text: qb.text,
         subtitle: qb.subtitle || undefined,
         type: qb.questionStyle === 'imageChoice' ? 'image_choice' : undefined,
+        questionStyle: qb.questionStyle || 'buttons',
         questionType: qb.questionType || 'single',
         options: qb.options.map(function(opt) {
           return { id: opt.id, text: opt.text, score: opt.score || 0, imageUrl: opt.imageUrl, explanation: opt.explanation };

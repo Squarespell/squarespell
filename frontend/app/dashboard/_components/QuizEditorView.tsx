@@ -287,15 +287,20 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   var [editorBlocks, setEditorBlocks] = useState<QuizBlock[]>([]);
   var saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize blocks from quiz data
+  // Initialize blocks from quiz data — prefer saved editor_blocks for round-trip fidelity
   useEffect(function() {
     if (quiz && !initialBlocksReady) {
-      var converted = legacyToBlocks({
-        questions: quiz.questions,
-        outcomes: quiz.outcomes,
-        leadGate: quiz.leadGate,
-      });
-      setEditorBlocks(converted);
+      var savedBlocks = quiz.settings?.editor_blocks;
+      if (Array.isArray(savedBlocks) && savedBlocks.length > 0) {
+        setEditorBlocks(savedBlocks as QuizBlock[]);
+      } else {
+        var converted = legacyToBlocks({
+          questions: quiz.questions,
+          outcomes: quiz.outcomes,
+          leadGate: quiz.leadGate,
+        });
+        setEditorBlocks(converted);
+      }
       setInitialBlocksReady(true);
     }
   }, [quiz, initialBlocksReady]);
@@ -321,13 +326,17 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     if (settingsSaveTimerRef.current) clearTimeout(settingsSaveTimerRef.current);
     settingsSaveTimerRef.current = setTimeout(function() {
       if (!resolvedId) return;
+      // Preserve editor_blocks when saving settings so we don't wipe them
+      var mergedSettings = Object.assign({}, quiz?.settings || {}, newSettings, {
+        editor_blocks: editorBlocks.length > 0 ? editorBlocks : (quiz?.settings as any)?.editor_blocks,
+      });
       api.updateQuiz(resolvedId, {
-        settings: Object.assign({}, quiz?.settings || {}, newSettings),
+        settings: mergedSettings,
       }).catch(function(err: any) {
         console.error('[block-editor] Settings auto-save failed:', err);
       });
     }, 800);
-  }, [resolvedId, quiz]);
+  }, [resolvedId, quiz, editorBlocks]);
 
   // Auto-save block changes with debounce
   var handleBlocksChange = useCallback(function(blocks: QuizBlock[]) {
@@ -336,15 +345,23 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     saveTimerRef.current = setTimeout(function() {
       if (!resolvedId) return;
       var legacy = blocksToLegacy(blocks);
+      // Save legacy format (questions, outcomes) for backward compat with
+      // quiz-taking, analytics, and publishing.  Also save the raw blocks
+      // array inside settings.editor_blocks so ALL block types and properties
+      // survive the round-trip (headings, text, images, dividers, logic,
+      // lead gate, questionStyle, etc.).
+      var mergedSettings = Object.assign({}, quiz?.settings || {}, quizSettings, {
+        editor_blocks: blocks,
+      });
       api.updateQuiz(resolvedId, {
         questions: legacy.questions,
         outcomes: legacy.outcomes,
-        leadGate: legacy.leadGate,
+        settings: mergedSettings,
       }).catch(function(err: any) {
         console.error('[block-editor] Auto-save failed:', err);
       });
     }, 800);
-  }, [resolvedId]);
+  }, [resolvedId, quiz, quizSettings]);
 
   if (state === 'loading') return <EditorLoading label="Loading editor..." />;
   if (state === 'error') return <EditorError message={errorMsg} />;
