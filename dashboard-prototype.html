@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squarespell Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════ RESET & TOKENS ═══════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --bg:#FFFFFF;--surface:#FFFFFF;
+  --gray-25:#FCFCFD;--gray-50:#F9FAFB;--gray-100:#F2F4F7;--gray-200:#EAECF0;--gray-300:#D0D5DD;--gray-400:#98A2B3;--gray-500:#667085;--gray-600:#475467;--gray-700:#344054;--gray-800:#182230;--gray-900:#101828;
+  --accent:#0D7377;--accent-light:#F0FAFB;--accent-hover:#0B6165;
+  --brand-50:#E0F5F6;--brand-100:#B3E6E8;
+  --success:#027A48;--success-light:#ECFDF3;--success-500:#12B76A;
+  --warning:#B54708;--warning-light:#FFFAEB;
+  --error:#F04438;--error-light:#FEF3F2;
+  --shadow-xs:0px 1px 2px rgba(16,24,40,0.05);
+  --shadow-sm:0px 1px 3px rgba(16,24,40,0.1),0px 1px 2px rgba(16,24,40,0.06);
+  --shadow-md:0px 4px 8px -2px rgba(16,24,40,0.1),0px 2px 4px -2px rgba(16,24,40,0.06);
+}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);line-height:1.5;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font-family:var(--font);cursor:pointer;border:none;background:none}
+ul,ol{list-style:none}
+
+/* ═══════ LAYOUT ═══════ */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:280px;background:var(--bg);border-right:1px solid var(--gray-200);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50}
+.main{margin-left:280px;flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.content{padding:32px;flex:1}
+
+/* ═══════ SIDEBAR ═══════ */
+.sidebar-header{padding:20px 20px 16px;display:flex;align-items:center;gap:12px}
+.sidebar-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#0D7377 0%,#0a5a5e 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(13,115,119,0.3)}
+.sidebar-brand{font-size:16px;font-weight:700;color:var(--gray-900);letter-spacing:-0.02em}
+.sidebar-search{margin:0 16px 16px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;color:var(--gray-400);font-size:14px;cursor:pointer;transition:all 0.15s}
+.sidebar-search:hover{border-color:var(--gray-300);background:var(--gray-50)}
+.sidebar-search-icon{flex-shrink:0;color:var(--gray-400)}
+.sidebar-search-text{flex:1;color:var(--gray-500);font-size:14px}
+.sidebar-search-kbd{padding:2px 6px;border:1px solid var(--gray-200);border-radius:4px;font-size:11px;color:var(--gray-400);background:var(--gray-50);font-weight:500}
+.sidebar-nav{flex:1;overflow-y:auto;padding:0 12px}
+.nav-section{margin-bottom:20px}
+.nav-section-label{padding:0 8px;margin-bottom:4px;font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.06em}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;font-size:14px;font-weight:500;color:var(--gray-600);transition:all 0.12s;cursor:pointer;margin-bottom:1px}
+.nav-item:hover{background:var(--gray-50);color:var(--gray-900)}
+.nav-item.active{background:var(--gray-50);color:var(--gray-900);font-weight:600}
+.nav-item-icon{display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex-shrink:0;color:var(--gray-500)}
+.nav-item.active .nav-item-icon{color:var(--accent)}
+
+/* Sidebar plan card */
+.sidebar-plan{margin:0 16px 12px;padding:16px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px}
+.sidebar-plan-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.sidebar-plan-name{font-size:14px;font-weight:600;color:var(--gray-900)}
+.sidebar-plan-badge{font-size:11px;color:var(--gray-500)}
+.sidebar-plan-usage{font-size:13px;color:var(--gray-500);margin-bottom:8px}
+.sidebar-plan-bar{height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.sidebar-plan-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s}
+.sidebar-plan-sub{font-size:12px;color:var(--gray-500);display:flex;justify-content:space-between}
+.sidebar-plan-btn{display:block;width:100%;margin-top:12px;padding:8px;background:var(--bg);border:1px solid var(--gray-300);border-radius:8px;font-size:13px;font-weight:600;color:var(--gray-700);text-align:center;transition:all 0.12s}
+.sidebar-plan-btn:hover{background:var(--gray-50);border-color:var(--gray-400)}
+
+/* Sidebar help */
+.sidebar-help{margin:0 16px 12px;padding:12px 16px;display:flex;align-items:center;gap:10px;border-radius:10px;background:var(--accent-light);cursor:pointer;transition:all 0.12s}
+.sidebar-help:hover{background:var(--brand-50)}
+.sidebar-help-icon{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-help-text{flex:1}
+.sidebar-help-title{font-size:13px;font-weight:600;color:var(--gray-900)}
+.sidebar-help-sub{font-size:12px;color:var(--gray-500)}
+.sidebar-help-arrow{color:var(--gray-400);font-size:16px}
+
+/* Sidebar user */
+.sidebar-user{padding:12px 16px;border-top:1px solid var(--gray-200);display:flex;align-items:center;gap:10px}
+.sidebar-user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent) 0%,#0a5a5e 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;flex-shrink:0}
+.sidebar-user-info{flex:1;min-width:0}
+.sidebar-user-name{font-size:14px;font-weight:600;color:var(--gray-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-user-email{font-size:12px;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-user-logout{padding:6px;border-radius:6px;color:var(--gray-400);display:flex;align-items:center;justify-content:center;transition:all 0.12s}
+.sidebar-user-logout:hover{background:var(--gray-100);color:var(--gray-600)}
+
+/* ═══════ TOPBAR ═══════ */
+.topbar-search{display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--gray-200);border-radius:8px;color:var(--gray-400);font-size:14px;min-width:320px;cursor:pointer;transition:all 0.15s;background:var(--bg)}
+.topbar-search:hover{border-color:var(--gray-300)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.notif-btn{position:relative;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gray-500);transition:all 0.12s}
+.notif-btn:hover{background:var(--gray-50)}
+.notif-badge{position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--error);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.topbar-user{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border-radius:8px;cursor:pointer;transition:all 0.12s}
+.topbar-user:hover{background:var(--gray-50)}
+.topbar-user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#e0e0e0 0%,#c0c0c0 100%);overflow:hidden}
+.topbar-user-avatar img{width:100%;height:100%;object-fit:cover}
+.topbar-user-info{text-align:left}
+.topbar-user-name{font-size:14px;font-weight:600;color:var(--gray-900)}
+.topbar-user-role{font-size:12px;color:var(--gray-500)}
+.topbar-user-chevron{color:var(--gray-400)}
+
+/* ═══════ WELCOME HEADER ═══════ */
+.welcome{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px}
+.welcome-text h1{font-size:24px;font-weight:600;color:var(--gray-900);letter-spacing:-0.02em;margin-bottom:4px}
+.welcome-text p{font-size:14px;color:var(--gray-500)}
+.welcome-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.date-picker{display:flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;font-weight:500;color:var(--gray-700);background:var(--bg);cursor:pointer;transition:all 0.12s;box-shadow:var(--shadow-xs)}
+.date-picker:hover{background:var(--gray-50)}
+.date-picker svg{color:var(--gray-400)}
+.create-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow-xs);transition:all 0.15s}
+.create-btn:hover{background:var(--accent-hover);transform:translateY(-1px)}
+.create-btn svg{width:16px;height:16px}
+
+/* ═══════ STAT CARDS ═══════ */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--bg);border:1px solid var(--gray-200);border-radius:12px;padding:20px}
+.stat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stat-label{font-size:14px;font-weight:500;color:var(--gray-500)}
+.stat-icon{width:32px;height:32px;border-radius:8px;background:var(--gray-50);border:1px solid var(--gray-200);display:flex;align-items:center;justify-content:center;color:var(--gray-600)}
+.stat-value{font-size:30px;font-weight:700;color:var(--gray-900);letter-spacing:-0.02em;line-height:1.1;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.stat-change{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:500}
+.stat-change.up{color:var(--success)}
+.stat-change-arrow{display:inline-flex;align-items:center}
+.stat-compare{font-size:13px;color:var(--gray-500);margin-left:4px}
+.stat-sub{font-size:13px;color:var(--gray-500)}
+.stat-progress{margin-top:8px}
+.stat-progress-bar{height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden}
+.stat-progress-fill{height:100%;background:var(--accent);border-radius:3px}
+
+/* ═══════ CHART CARD ═══════ */
+.card{background:var(--bg);border:1px solid var(--gray-200);border-radius:12px;overflow:hidden}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px}
+.card-title{font-size:16px;font-weight:600;color:var(--gray-900);letter-spacing:-0.01em}
+.card-subtitle{font-size:14px;color:var(--gray-500);margin-top:2px}
+.card-link{font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;transition:color 0.12s}
+.card-link:hover{color:var(--accent-hover)}
+
+/* Chart toggle */
+.chart-toggle{display:flex;gap:2px;background:var(--gray-100);border-radius:8px;padding:2px}
+.chart-toggle-btn{padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--gray-500);transition:all 0.12s}
+.chart-toggle-btn.active{background:var(--bg);color:var(--gray-900);font-weight:600;box-shadow:var(--shadow-xs)}
+
+/* Legend */
+.chart-legend{display:flex;align-items:center;gap:16px;padding:0 24px 12px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-500)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+
+/* Chart area */
+.chart-area{padding:0 24px 24px;position:relative}
+.chart-svg{width:100%;height:240px}
+
+/* ═══════ THREE COLUMN ROW ═══════ */
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+
+/* Top quizzes */
+.quiz-list{padding:8px 24px 24px}
+.quiz-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100)}
+.quiz-item:last-child{border-bottom:none}
+.quiz-rank{width:20px;font-size:14px;font-weight:600;color:var(--gray-400);text-align:center;flex-shrink:0}
+.quiz-info{flex:1;min-width:0}
+.quiz-name{font-size:14px;font-weight:500;color:var(--gray-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quiz-views{font-size:12px;color:var(--gray-500)}
+.quiz-rate{padding:4px 10px;border-radius:16px;background:var(--accent-light);color:var(--accent);font-size:13px;font-weight:600;flex-shrink:0}
+
+/* Conversion funnel */
+.funnel{padding:8px 24px 24px;display:flex;flex-direction:column;gap:8px}
+.funnel-step{display:flex;align-items:center;gap:12px}
+.funnel-bar{flex:1;padding:14px 16px;border-radius:8px;display:flex;align-items:center;justify-content:space-between}
+.funnel-bar-1{background:var(--accent-light);border:1px solid rgba(13,115,119,0.15)}
+.funnel-bar-2{background:var(--accent-light);border:1px solid rgba(13,115,119,0.12);opacity:0.85}
+.funnel-bar-3{background:var(--accent-light);border:1px solid rgba(13,115,119,0.1);opacity:0.7}
+.funnel-bar-4{background:var(--accent-light);border:1px solid rgba(13,115,119,0.08);opacity:0.6}
+.funnel-label{font-size:13px;font-weight:500;color:var(--gray-700)}
+.funnel-value{font-size:14px;font-weight:700;color:var(--gray-900)}
+.funnel-pct{font-size:13px;font-weight:600;color:var(--accent);min-width:50px;text-align:right}
+
+/* Lead sources donut */
+.sources{padding:8px 24px 24px;display:flex;flex-direction:column;align-items:center}
+.donut-wrap{position:relative;width:180px;height:180px;margin-bottom:16px}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.donut-center-value{font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-0.02em}
+.donut-center-label{font-size:12px;color:var(--gray-500)}
+.source-legend{width:100%;display:flex;flex-direction:column;gap:8px}
+.source-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-600)}
+.source-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.source-name{flex:1}.source-count{font-weight:600;color:var(--gray-900)}
+.source-pct{color:var(--gray-500);min-width:50px;text-align:right}
+
+/* ═══════ RECENT LEADS TABLE ═══════ */
+.leads-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px}
+.leads-header-left{display:flex;align-items:center;gap:10px}
+.leads-header-left h3{font-size:16px;font-weight:600;color:var(--gray-900)}
+.leads-live-dot{width:8px;height:8px;border-radius:50%;background:var(--success-500);animation:live-pulse 2s infinite}
+@keyframes live-pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.leads-filters{display:flex;align-items:center;gap:8px}
+.filter-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--gray-300);border-radius:8px;font-size:13px;font-weight:500;color:var(--gray-700);background:var(--bg);transition:all 0.12s}
+.filter-btn:hover{background:var(--gray-50)}
+.export-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--gray-300);border-radius:8px;font-size:13px;font-weight:500;color:var(--gray-700);background:var(--bg);transition:all 0.12s}
+.export-btn:hover{background:var(--gray-50)}
+
+.leads-table{width:100%;border-collapse:collapse}
+.leads-table th{padding:10px 24px;text-align:left;font-size:12px;font-weight:500;color:var(--gray-500);border-bottom:1px solid var(--gray-200);background:var(--gray-50)}
+.leads-table td{padding:12px 24px;border-bottom:1px solid var(--gray-100);font-size:14px;color:var(--gray-600);vertical-align:middle}
+.leads-table tr:last-child td{border-bottom:none}
+.lead-cell{display:flex;align-items:center;gap:10px}
+.lead-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.lead-name{font-size:14px;font-weight:500;color:var(--gray-900)}
+.lead-email{font-size:12px;color:var(--gray-500)}
+.lead-quiz{padding:4px 10px;border-radius:6px;background:var(--gray-50);border:1px solid var(--gray-200);font-size:13px;color:var(--gray-700);white-space:nowrap}
+.score-badge{width:32px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.score-high{background:var(--success-light);color:var(--success)}
+.score-mid{background:var(--accent-light);color:var(--accent)}
+.score-low{background:var(--warning-light);color:var(--warning)}
+.status-pill{padding:3px 10px;border-radius:16px;font-size:12px;font-weight:500;display:inline-flex;align-items:center}
+.status-new{background:var(--accent-light);color:var(--accent)}
+.status-contacted{background:var(--gray-100);color:var(--gray-600)}
+.status-qualified{background:var(--success-light);color:var(--success)}
+.status-nurturing{background:#FFF6ED;color:#C4320A}
+.leads-more{padding:12px 24px;text-align:center;border-top:1px solid var(--gray-200)}
+.leads-more a{font-size:14px;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+.td-actions{text-align:right}
+.action-dots{padding:4px 8px;border-radius:4px;font-size:16px;color:var(--gray-400);cursor:pointer;transition:all 0.12s;letter-spacing:2px}
+.action-dots:hover{background:var(--gray-50);color:var(--gray-600)}
+
+/* ═══════ BOTTOM ROW ═══════ */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+
+/* Question drop-off */
+.dropoff{padding:8px 24px 24px}
+.dropoff-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.dropoff-select{padding:6px 12px;border:1px solid var(--gray-300);border-radius:8px;font-size:13px;font-weight:500;color:var(--gray-700);background:var(--bg);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px}
+.dropoff-table{width:100%}
+.dropoff-table th{padding:8px 0;text-align:left;font-size:12px;font-weight:500;color:var(--gray-500);border-bottom:1px solid var(--gray-200)}
+.dropoff-table td{padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-600)}
+.dropoff-table td:nth-child(2){color:var(--error)}
+.dropoff-table td:nth-child(3){width:140px}
+.dropoff-bar{display:flex;align-items:center;gap:8px}
+.dropoff-bar-track{flex:1;height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden}
+.dropoff-bar-fill{height:100%;background:var(--accent);border-radius:3px}
+.dropoff-bar-pct{font-size:13px;font-weight:500;color:var(--gray-700);min-width:35px;text-align:right}
+.dropoff-more{margin-top:12px;text-align:center}
+.dropoff-more a{font-size:14px;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+
+/* Recent activity */
+.activity-list{padding:8px 24px 24px}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100)}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.activity-icon-lead{background:var(--accent-light);color:var(--accent)}
+.activity-icon-quiz{background:var(--success-light);color:var(--success-500)}
+.activity-icon-integration{background:#F4EBFF;color:#7F56D9}
+.activity-icon-ab{background:var(--warning-light);color:var(--warning)}
+.activity-icon-export{background:var(--gray-100);color:var(--gray-600)}
+.activity-info{flex:1;min-width:0}
+.activity-title{font-size:14px;font-weight:500;color:var(--gray-900)}
+.activity-desc{font-size:13px;color:var(--gray-500)}
+.activity-time{font-size:12px;color:var(--gray-400);flex-shrink:0;white-space:nowrap}
+
+/* ═══════ AB BANNER ═══════ */
+.ab-banner{background:var(--bg);border:1px solid var(--gray-200);border-radius:12px;padding:16px 24px;display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.ab-banner-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent) 0%,#0a5a5e 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ab-banner-text{flex:1}
+.ab-banner-title{font-size:15px;font-weight:600;color:var(--gray-900)}
+.ab-banner-sub{font-size:13px;color:var(--gray-500)}
+.ab-banner-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ab-btn-primary{padding:8px 16px;background:var(--error);color:#fff;border-radius:8px;font-size:13px;font-weight:600;transition:all 0.12s}
+.ab-btn-primary:hover{opacity:0.9}
+.ab-btn-ghost{padding:8px 16px;border:1px solid var(--gray-300);border-radius:8px;font-size:13px;font-weight:500;color:var(--gray-700);background:var(--bg);transition:all 0.12s}
+.ab-btn-ghost:hover{background:var(--gray-50)}
+.ab-banner-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--gray-400);transition:all 0.12s}
+.ab-banner-close:hover{background:var(--gray-100);color:var(--gray-600)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+<!-- ═══════ SIDEBAR ═══════ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <span class="sidebar-brand">Squarespell</span>
+  </div>
+
+  <div class="sidebar-search">
+    <svg class="sidebar-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <span class="sidebar-search-text">Search anything...</span>
+    <span class="sidebar-search-kbd">&nbsp;K</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item active" href="#">
+        <span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 5-7"/></svg></span>
+        Analytics
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg></span>
+        Activity feed
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Quizzes</div>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></span>All quizzes</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>Quiz editor</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Templates</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 00-1.172-2.872L3 3"/><path d="M21 3l-7.828 7.828A4 4 0 0012 13.657V22"/></svg></span>A/B tests</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Leads</div>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg></span>All leads</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>Lead scoring</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></span>Segments</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>Exports</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Integrations</div>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Integrations</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>Webhooks</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>API keys</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Settings</div>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>General</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>Billing &amp; plan</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>Team</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></span>Domains</a>
+      <a class="nav-item" href="#"><span class="nav-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>Tracking scripts</a>
+    </div>
+  </nav>
+
+  <!-- Plan card -->
+  <div class="sidebar-plan">
+    <div class="sidebar-plan-header">
+      <span class="sidebar-plan-name">Pro Plan</span>
+    </div>
+    <div class="sidebar-plan-usage">Renews on Jul 14, 2025</div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:14px;font-weight:600;color:var(--gray-900)">8,620 / 25,000</span>
+    </div>
+    <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px">views used</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div class="sidebar-plan-bar" style="flex:1"><div class="sidebar-plan-bar-fill" style="width:34%"></div></div>
+      <span style="font-size:12px;font-weight:500;color:var(--accent)">34%</span>
+    </div>
+    <button class="sidebar-plan-btn">Upgrade plan</button>
+  </div>
+
+  <!-- Help -->
+  <div class="sidebar-help">
+    <div class="sidebar-help-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="sidebar-help-text">
+      <div class="sidebar-help-title">Need help?</div>
+      <div class="sidebar-help-sub">Visit our help center or<br>contact support</div>
+    </div>
+    <span class="sidebar-help-arrow">&rarr;</span>
+  </div>
+
+  <!-- User -->
+  <div class="sidebar-user">
+    <div class="sidebar-user-avatar">M</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name">Muhammad</div>
+      <div class="sidebar-user-email">hasnaim.munir700@g...</div>
+    </div>
+    <button class="sidebar-user-logout">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+</aside>
+
+<!-- ═══════ MAIN ═══════ -->
+<div class="main">
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <span style="flex:1;color:var(--gray-500)">Search anything...</span>
+      <span class="sidebar-search-kbd">&nbsp;K</span>
+    </div>
+    <div class="topbar-right">
+      <button class="notif-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-badge">5</span>
+      </button>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar" style="background:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22%3E%3Crect fill=%22%23e5e5e5%22 width=%2236%22 height=%2236%22 rx=%2218%22/%3E%3Ctext x=%2218%22 y=%2224%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2214%22 font-family=%22sans-serif%22%3EM%3C/text%3E%3C/svg%3E') center/cover"></div>
+        <div class="topbar-user-info">
+          <div class="topbar-user-name">Muhammad</div>
+          <div class="topbar-user-role">Owner</div>
+        </div>
+        <svg class="topbar-user-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Welcome -->
+    <div class="welcome">
+      <div class="welcome-text">
+        <h1>Welcome back, Muhammad &#128075;</h1>
+        <p>Here's what's happening with your quizzes today.</p>
+      </div>
+      <div class="welcome-actions">
+        <button class="date-picker">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          May 15 &ndash; Jun 14, 2025
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button class="create-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Create quiz
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Total views</span>
+          <div class="stat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>&nbsp;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17l4-5 4 3 5-7"/></svg></div>
+        </div>
+        <div class="stat-value">24,320</div>
+        <div><span class="stat-change up"><span class="stat-change-arrow">&uarr;</span> 18.6%</span><span class="stat-compare">vs Apr 15 &ndash; May 14</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Leads captured</span>
+          <div class="stat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg>&nbsp;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17l4-5 4 3 5-7"/></svg></div>
+        </div>
+        <div class="stat-value">5,342</div>
+        <div><span class="stat-change up"><span class="stat-change-arrow">&uarr;</span> 23.4%</span><span class="stat-compare">vs Apr 15 &ndash; May 14</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Completion rate</span>
+          <div class="stat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>&nbsp;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17l4-5 4 3 5-7"/></svg></div>
+        </div>
+        <div class="stat-value">58.3%</div>
+        <div><span class="stat-change up"><span class="stat-change-arrow">&uarr;</span> 8.7%</span><span class="stat-compare">vs Apr 15 &ndash; May 14</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Lead rate</span>
+          <div class="stat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l4-5 4 3 5-7"/></svg>&nbsp;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17l4-5 4 3 5-7"/></svg></div>
+        </div>
+        <div class="stat-value">20.8%</div>
+        <div><span class="stat-change up"><span class="stat-change-arrow">&uarr;</span> 12.2%</span><span class="stat-compare">vs Apr 15 &ndash; May 14</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Active quizzes</span>
+          <div class="stat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>&nbsp;<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17l4-5 4 3 5-7"/></svg></div>
+        </div>
+        <div class="stat-value">12 <span style="font-size:18px;font-weight:500;color:var(--gray-400)">/ 20</span></div>
+        <div class="stat-sub">60% of limit used</div>
+      </div>
+    </div>
+
+    <!-- Performance chart -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Performance overview</div>
+        </div>
+        <div class="chart-toggle">
+          <button class="chart-toggle-btn">Daily</button>
+          <button class="chart-toggle-btn active">Weekly</button>
+          <button class="chart-toggle-btn">Monthly</button>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span> Views</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--gray-300)"></span> Leads</div>
+      </div>
+      <div class="chart-area">
+        <svg class="chart-svg" viewBox="0 0 800 240" preserveAspectRatio="none">
+          <!-- Grid lines -->
+          <line x1="0" y1="0" x2="800" y2="0" stroke="#F2F4F7" stroke-width="1"/>
+          <line x1="0" y1="60" x2="800" y2="60" stroke="#F2F4F7" stroke-width="1"/>
+          <line x1="0" y1="120" x2="800" y2="120" stroke="#F2F4F7" stroke-width="1"/>
+          <line x1="0" y1="180" x2="800" y2="180" stroke="#F2F4F7" stroke-width="1"/>
+          <line x1="0" y1="239" x2="800" y2="239" stroke="#EAECF0" stroke-width="1"/>
+          <!-- Y axis labels -->
+          <text x="0" y="10" fill="#667085" font-size="11" font-family="Inter">4K</text>
+          <text x="0" y="68" fill="#667085" font-size="11" font-family="Inter">3K</text>
+          <text x="0" y="128" fill="#667085" font-size="11" font-family="Inter">2K</text>
+          <text x="0" y="188" fill="#667085" font-size="11" font-family="Inter">1K</text>
+          <text x="0" y="237" fill="#667085" font-size="11" font-family="Inter">0</text>
+          <!-- Views line (teal) -->
+          <defs>
+            <linearGradient id="viewsGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#0D7377" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#0D7377" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M60 190 L200 170 L340 150 L480 158 L540 155 L600 148 L680 120 L760 82" fill="none" stroke="#0D7377" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M60 190 L200 170 L340 150 L480 158 L540 155 L600 148 L680 120 L760 82 L760 240 L60 240 Z" fill="url(#viewsGrad)"/>
+          <!-- Leads line (gray) -->
+          <path d="M60 210 L200 200 L340 195 L480 190 L540 188 L600 185 L680 178 L760 160" fill="none" stroke="#D0D5DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"/>
+          <!-- Data points -->
+          <circle cx="60" cy="190" r="4" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="200" cy="170" r="4" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="340" cy="150" r="4" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="480" cy="158" r="4" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="540" cy="155" r="4" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="600" cy="148" r="4" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="680" cy="120" r="4" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="760" cy="82" r="5" fill="#0D7377" stroke="#fff" stroke-width="2"/>
+          <circle cx="760" cy="160" r="4" fill="#D0D5DD" stroke="#fff" stroke-width="2"/>
+          <!-- X axis labels -->
+          <text x="60" y="258" fill="#667085" font-size="11" font-family="Inter" text-anchor="middle">May 15-21</text>
+          <text x="200" y="258" fill="#667085" font-size="11" font-family="Inter" text-anchor="middle">May 22-28</text>
+          <text x="370" y="258" fill="#667085" font-size="11" font-family="Inter" text-anchor="middle">May 29 &ndash; Jun 4</text>
+          <text x="560" y="258" fill="#667085" font-size="11" font-family="Inter" text-anchor="middle">Jun 5-11</text>
+          <text x="720" y="258" fill="#667085" font-size="11" font-family="Inter" text-anchor="middle">Jun 12-14</text>
+          <!-- Tooltip -->
+          <g transform="translate(690, 50)">
+            <rect x="0" y="0" width="120" height="64" rx="8" fill="white" stroke="#EAECF0" stroke-width="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.08))"/>
+            <text x="10" y="18" fill="#667085" font-size="11" font-family="Inter">Jun 12 &ndash; 14, 2025</text>
+            <circle cx="14" cy="32" r="4" fill="#0D7377"/>
+            <text x="24" y="36" fill="#667085" font-size="12" font-family="Inter">Views</text>
+            <text x="85" y="36" fill="#101828" font-size="12" font-family="Inter" font-weight="600">3,620</text>
+            <circle cx="14" cy="50" r="4" fill="#D0D5DD"/>
+            <text x="24" y="54" fill="#667085" font-size="12" font-family="Inter">Leads</text>
+            <text x="85" y="54" fill="#101828" font-size="12" font-family="Inter" font-weight="600">842</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Three column row -->
+    <div class="three-col">
+      <!-- Top quizzes -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Top quizzes</span>
+          <span class="card-link">View all</span>
+        </div>
+        <div class="quiz-list">
+          <div class="quiz-item"><span class="quiz-rank">1</span><div class="quiz-info"><div class="quiz-name">Product Recommendation Quiz</div><div class="quiz-views">8,432 views</div></div><span class="quiz-rate">32.4%</span></div>
+          <div class="quiz-item"><span class="quiz-rank">2</span><div class="quiz-info"><div class="quiz-name">Marketing Agency Quiz</div><div class="quiz-views">6,120 views</div></div><span class="quiz-rate">24.1%</span></div>
+          <div class="quiz-item"><span class="quiz-rank">3</span><div class="quiz-info"><div class="quiz-name">Website Builder Quiz</div><div class="quiz-views">4,982 views</div></div><span class="quiz-rate">18.7%</span></div>
+          <div class="quiz-item"><span class="quiz-rank">4</span><div class="quiz-info"><div class="quiz-name">E-commerce Quiz</div><div class="quiz-views">3,210 views</div></div><span class="quiz-rate">12.0%</span></div>
+          <div class="quiz-item"><span class="quiz-rank">5</span><div class="quiz-info"><div class="quiz-name">SEO Audit Quiz</div><div class="quiz-views">1,576 views</div></div><span class="quiz-rate">6.2%</span></div>
+        </div>
+      </div>
+      <!-- Conversion funnel -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Conversion funnel</span>
+        </div>
+        <div class="funnel">
+          <div class="funnel-step"><div class="funnel-bar funnel-bar-1"><div><div class="funnel-label">Views</div><div class="funnel-value">24,320</div></div></div><span class="funnel-pct">100%</span></div>
+          <div class="funnel-step"><div class="funnel-bar funnel-bar-2" style="width:85%"><div><div class="funnel-label">Started</div><div class="funnel-value">13,842</div></div></div><span class="funnel-pct">56.9%</span></div>
+          <div class="funnel-step"><div class="funnel-bar funnel-bar-3" style="width:65%"><div><div class="funnel-label">Completed</div><div class="funnel-value">8,142</div></div></div><span class="funnel-pct">33.5%</span></div>
+          <div class="funnel-step"><div class="funnel-bar funnel-bar-4" style="width:45%"><div><div class="funnel-label">Leads</div><div class="funnel-value">5,342</div></div></div><span class="funnel-pct">21.9%</span></div>
+        </div>
+      </div>
+      <!-- Lead sources -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Lead sources</span>
+          <span class="card-link">View all</span>
+        </div>
+        <div class="sources">
+          <div class="donut-wrap">
+            <svg viewBox="0 0 180 180" width="180" height="180">
+              <circle cx="90" cy="90" r="70" fill="none" stroke="#EAECF0" stroke-width="20"/>
+              <!-- Direct 40.4% -->
+              <circle cx="90" cy="90" r="70" fill="none" stroke="#0D7377" stroke-width="20" stroke-dasharray="177.5 262" stroke-dashoffset="110" stroke-linecap="round"/>
+              <!-- Organic 31.5% -->
+              <circle cx="90" cy="90" r="70" fill="none" stroke="#4DC2C6" stroke-width="20" stroke-dasharray="138.5 301" stroke-dashoffset="-67.5" stroke-linecap="round"/>
+              <!-- Social 16.5% -->
+              <circle cx="90" cy="90" r="70" fill="none" stroke="#B3E6E8" stroke-width="20" stroke-dasharray="72.5 367" stroke-dashoffset="-206" stroke-linecap="round"/>
+              <!-- Email 8.3% -->
+              <circle cx="90" cy="90" r="70" fill="none" stroke="#F79009" stroke-width="20" stroke-dasharray="36.5 403" stroke-dashoffset="-278.5" stroke-linecap="round"/>
+              <!-- Referral 3.3% -->
+              <circle cx="90" cy="90" r="70" fill="none" stroke="#F04438" stroke-width="20" stroke-dasharray="14.5 425" stroke-dashoffset="-315" stroke-linecap="round"/>
+            </svg>
+            <div class="donut-center">
+              <div class="donut-center-value">5,342</div>
+              <div class="donut-center-label">Total</div>
+            </div>
+          </div>
+          <div class="source-legend">
+            <div class="source-item"><span class="source-dot" style="background:#0D7377"></span><span class="source-name">Direct</span><span class="source-count">2,156</span><span class="source-pct">(40.4%)</span></div>
+            <div class="source-item"><span class="source-dot" style="background:#4DC2C6"></span><span class="source-name">Organic Search</span><span class="source-count">1,682</span><span class="source-pct">(31.5%)</span></div>
+            <div class="source-item"><span class="source-dot" style="background:#B3E6E8"></span><span class="source-name">Social Media</span><span class="source-count">882</span><span class="source-pct">(16.5%)</span></div>
+            <div class="source-item"><span class="source-dot" style="background:#F79009"></span><span class="source-name">Email Campaign</span><span class="source-count">442</span><span class="source-pct">(8.3%)</span></div>
+            <div class="source-item"><span class="source-dot" style="background:#F04438"></span><span class="source-name">Referral</span><span class="source-count">180</span><span class="source-pct">(3.3%)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent leads -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="leads-header">
+        <div class="leads-header-left">
+          <h3>Recent leads</h3>
+          <span class="leads-live-dot"></span>
+        </div>
+        <div class="leads-filters">
+          <button class="filter-btn">All quizzes <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <button class="filter-btn">All sources <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <button class="export-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>
+        </div>
+      </div>
+      <table class="leads-table">
+        <thead>
+          <tr><th>Lead</th><th>Quiz</th><th>Score</th><th>Source</th><th>Submitted</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="lead-cell"><div class="lead-avatar" style="background:#E8D5F5;color:#7F56D9">AB</div><div><div class="lead-name">Alex Brown</div><div class="lead-email">alex.brown@email.com</div></div></div></td>
+            <td><span class="lead-quiz">Product Recommendation Quiz</span></td>
+            <td><span class="score-badge score-high">85</span></td>
+            <td>Organic Search</td>
+            <td><div>Jun 14, 2025</div><div style="font-size:12px;color:var(--gray-400)">10:24 AM</div></td>
+            <td><span class="status-pill status-new">New</span></td>
+            <td class="td-actions"><span class="action-dots">&#8942;</span></td>
+          </tr>
+          <tr>
+            <td><div class="lead-cell"><div class="lead-avatar" style="background:#D1FADF;color:#027A48">SJ</div><div><div class="lead-name">Sarah Johnson</div><div class="lead-email">sarah.tj@email.com</div></div></div></td>
+            <td><span class="lead-quiz">Marketing Agency Quiz</span></td>
+            <td><span class="score-badge score-mid">72</span></td>
+            <td>Direct</td>
+            <td><div>Jun 14, 2025</div><div style="font-size:12px;color:var(--gray-400)">09:15 AM</div></td>
+            <td><span class="status-pill status-contacted">Contacted</span></td>
+            <td class="td-actions"><span class="action-dots">&#8942;</span></td>
+          </tr>
+          <tr>
+            <td><div class="lead-cell"><div class="lead-avatar" style="background:#D1E9FF;color:#1570EF">DW</div><div><div class="lead-name">David Wilson</div><div class="lead-email">david.wilson@email.com</div></div></div></td>
+            <td><span class="lead-quiz">Website Builder Quiz</span></td>
+            <td><span class="score-badge score-low">45</span></td>
+            <td>Social Media</td>
+            <td><div>Jun 13, 2025</div><div style="font-size:12px;color:var(--gray-400)">04:32 PM</div></td>
+            <td><span class="status-pill status-qualified">Qualified</span></td>
+            <td class="td-actions"><span class="action-dots">&#8942;</span></td>
+          </tr>
+          <tr>
+            <td><div class="lead-cell"><div class="lead-avatar" style="background:#FEF0C7;color:#B54708">EM</div><div><div class="lead-name">Emily Martinez</div><div class="lead-email">emily.m@email.com</div></div></div></td>
+            <td><span class="lead-quiz">E-commerce Quiz</span></td>
+            <td><span class="score-badge score-low">38</span></td>
+            <td>Email Campaign</td>
+            <td><div>Jun 13, 2025</div><div style="font-size:12px;color:var(--gray-400)">01:45 PM</div></td>
+            <td><span class="status-pill status-nurturing">Nurturing</span></td>
+            <td class="td-actions"><span class="action-dots">&#8942;</span></td>
+          </tr>
+          <tr>
+            <td><div class="lead-cell"><div class="lead-avatar" style="background:#F4EBFF;color:#7F56D9">RT</div><div><div class="lead-name">Robert Taylor</div><div class="lead-email">robert.t@email.com</div></div></div></td>
+            <td><span class="lead-quiz">SEO Audit Quiz</span></td>
+            <td><span class="score-badge score-low">25</span></td>
+            <td>Direct</td>
+            <td><div>Jun 12, 2025</div><div style="font-size:12px;color:var(--gray-400)">11:20 AM</div></td>
+            <td><span class="status-pill status-new">New</span></td>
+            <td class="td-actions"><span class="action-dots">&#8942;</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="leads-more">
+        <a href="#">View all leads &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Bottom row -->
+    <div class="bottom-row">
+      <!-- Question drop-off -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Question drop-off analysis</span>
+          <div class="dropoff-select">Website Builder Quiz <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+        <div class="dropoff">
+          <table class="dropoff-table">
+            <thead><tr><th>Question</th><th>Drop-off</th><th>Completion rate</th></tr></thead>
+            <tbody>
+              <tr><td>1. What type of website do you need?</td><td>12%</td><td><div class="dropoff-bar"><div class="dropoff-bar-track"><div class="dropoff-bar-fill" style="width:88%"></div></div><span class="dropoff-bar-pct">88%</span></div></td></tr>
+              <tr><td>2. What's your primary goal?</td><td>18%</td><td><div class="dropoff-bar"><div class="dropoff-bar-track"><div class="dropoff-bar-fill" style="width:82%"></div></div><span class="dropoff-bar-pct">82%</span></div></td></tr>
+              <tr><td>3. Do you have a budget in mind?</td><td>24%</td><td><div class="dropoff-bar"><div class="dropoff-bar-track"><div class="dropoff-bar-fill" style="width:76%"></div></div><span class="dropoff-bar-pct">76%</span></div></td></tr>
+              <tr><td>4. Which features are important?</td><td>31%</td><td><div class="dropoff-bar"><div class="dropoff-bar-track"><div class="dropoff-bar-fill" style="width:69%"></div></div><span class="dropoff-bar-pct">69%</span></div></td></tr>
+              <tr><td>5. When do you plan to launch?</td><td>28%</td><td><div class="dropoff-bar"><div class="dropoff-bar-track"><div class="dropoff-bar-fill" style="width:72%"></div></div><span class="dropoff-bar-pct">72%</span></div></td></tr>
+            </tbody>
+          </table>
+          <div class="dropoff-more"><a href="#">View full analysis &rarr;</a></div>
+        </div>
+      </div>
+      <!-- Recent activity -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Recent activity</span>
+          <span class="card-link">View all</span>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-icon activity-icon-lead"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg></div>
+            <div class="activity-info"><div class="activity-title">New lead captured</div><div class="activity-desc">Alex Brown submitted Product Recommendation Quiz</div></div>
+            <span class="activity-time">2m ago</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon activity-icon-quiz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="activity-info"><div class="activity-title">Quiz published</div><div class="activity-desc">Marketing Agency Quiz is now live</div></div>
+            <span class="activity-time">1h ago</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon activity-icon-integration"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
+            <div class="activity-info"><div class="activity-title">Integration connected</div><div class="activity-desc">Mailchimp integration was connected</div></div>
+            <span class="activity-time">3h ago</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon activity-icon-ab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 00-1.172-2.872L3 3"/><path d="M21 3l-7.828 7.828A4 4 0 0012 13.657V22"/></svg></div>
+            <div class="activity-info"><div class="activity-title">A/B test completed</div><div class="activity-desc">Homepage Quiz test has completed</div></div>
+            <span class="activity-time">5h ago</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon activity-icon-export"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+            <div class="activity-info"><div class="activity-title">Export completed</div><div class="activity-desc">Leads export is ready for download</div></div>
+            <span class="activity-time">1d ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- A/B Testing banner -->
+    <div class="ab-banner">
+      <div class="ab-banner-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="ab-banner-text">
+        <div class="ab-banner-title">Boost your conversions with A/B testing</div>
+        <div class="ab-banner-sub">Test different questions, paths, and designs to see what converts best.</div>
+      </div>
+      <div class="ab-banner-actions">
+        <button class="ab-btn-primary">Create A/B test</button>
+        <button class="ab-btn-ghost">Learn more</button>
+      </div>
+      <button class="ab-banner-close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+  </main>
+</div>
+</div>
+
+</body>
+</html>
