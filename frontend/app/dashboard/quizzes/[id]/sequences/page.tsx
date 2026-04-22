@@ -412,7 +412,7 @@ export default function SequencesPage() {
 
               {/* Form Actions */}
               <div style={{ display: 'flex', gap: 10, paddingTop: 10 }}>
-                <PrimaryButton onClick={undefined}>{editingId ? 'Update Sequence' : 'Create Sequence'}</PrimaryButton>
+                <PrimaryButton type="submit">{editingId ? 'Update Sequence' : 'Create Sequence'}</PrimaryButton>
                 <button type="button" onClick={handleCancel} style={{ padding: '10px 20px', background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 10, color: C.TEXT_MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               </div>
             </form>

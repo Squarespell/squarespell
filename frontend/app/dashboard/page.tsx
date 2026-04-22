@@ -532,9 +532,21 @@ function LeadSourcesDonut({ sources, total }: { sources: LeadSource[]; total: nu
 // ═══════ RECENT LEADS TABLE ═══════
 
 function RecentLeadsTable({ leads, quizzes }: { leads: Lead[]; quizzes: Quiz[] }) {
+  var [leadQuizFilter, setLeadQuizFilter] = useState('all');
+  var [leadSourceFilter, setLeadSourceFilter] = useState('all');
+  var [quizFilterOpen, setQuizFilterOpen] = useState(false);
+  var [sourceFilterOpen, setSourceFilterOpen] = useState(false);
+
   var quizMap: Record<string, string> = {};
   for (var qi = 0; qi < quizzes.length; qi++) {
     quizMap[quizzes[qi].id] = quizzes[qi].title;
+  }
+
+  var uniqueSources: string[] = [];
+  var seenSources: Record<string, boolean> = {};
+  for (var si = 0; si < leads.length; si++) {
+    var src = leads[si].source || 'Direct';
+    if (!seenSources[src]) { seenSources[src] = true; uniqueSources.push(src); }
   }
 
   function scoreVariant(score: number | null): { bg: string; fg: string } {
@@ -566,23 +578,57 @@ function RecentLeadsTable({ leads, quizzes }: { leads: Lead[]; quizzes: Quiz[] }
           <style>{`@keyframes sq-live-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-            border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
-            color: C.GRAY_700, background: C.SURFACE, cursor: 'pointer', fontFamily: C.FONT,
-          }}>
-            All quizzes
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-            border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
-            color: C.GRAY_700, background: C.SURFACE, cursor: 'pointer', fontFamily: C.FONT,
-          }}>
-            All sources
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <Link href="/dashboard/exports" style={{
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={function() { setQuizFilterOpen(!quizFilterOpen); setSourceFilterOpen(false); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+                border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
+                color: C.GRAY_700, background: C.SURFACE, cursor: 'pointer', fontFamily: C.FONT,
+              }}
+            >
+              {leadQuizFilter === 'all' ? 'All quizzes' : quizzes.find(function(q) { return q.id === leadQuizFilter; })?.title || 'All quizzes'}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {quizFilterOpen && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, marginTop: 4, background: C.SURFACE,
+                border: '1px solid ' + C.GRAY_200, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                padding: 4, zIndex: 50, minWidth: 180, maxHeight: 220, overflowY: 'auto',
+              }}>
+                <button onClick={function() { setLeadQuizFilter('all'); setQuizFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadQuizFilter === 'all' ? C.ACCENT_LIGHT : 'transparent', color: leadQuizFilter === 'all' ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT }}>All quizzes</button>
+                {quizzes.map(function(q) {
+                  return <button key={q.id} onClick={function() { setLeadQuizFilter(q.id); setQuizFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadQuizFilter === q.id ? C.ACCENT_LIGHT : 'transparent', color: leadQuizFilter === q.id ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.title || 'Untitled'}</button>;
+                })}
+              </div>
+            )}
+          </div>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={function() { setSourceFilterOpen(!sourceFilterOpen); setQuizFilterOpen(false); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+                border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
+                color: C.GRAY_700, background: C.SURFACE, cursor: 'pointer', fontFamily: C.FONT,
+              }}
+            >
+              {leadSourceFilter === 'all' ? 'All sources' : leadSourceFilter}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {sourceFilterOpen && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, marginTop: 4, background: C.SURFACE,
+                border: '1px solid ' + C.GRAY_200, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                padding: 4, zIndex: 50, minWidth: 160,
+              }}>
+                <button onClick={function() { setLeadSourceFilter('all'); setSourceFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadSourceFilter === 'all' ? C.ACCENT_LIGHT : 'transparent', color: leadSourceFilter === 'all' ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT }}>All sources</button>
+                {uniqueSources.map(function(s) {
+                  return <button key={s} onClick={function() { setLeadSourceFilter(s); setSourceFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadSourceFilter === s ? C.ACCENT_LIGHT : 'transparent', color: leadSourceFilter === s ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT }}>{s}</button>;
+                })}
+              </div>
+            )}
+          </div>
+          <Link href="/dashboard/leads" style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
             border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
             color: C.GRAY_700, background: C.SURFACE, textDecoration: 'none', fontFamily: C.FONT,
@@ -606,7 +652,11 @@ function RecentLeadsTable({ leads, quizzes }: { leads: Lead[]; quizzes: Quiz[] }
           </tr>
         </thead>
         <tbody>
-          {leads.slice(0, 5).map(function(lead, li) {
+          {leads.filter(function(lead) {
+            if (leadQuizFilter !== 'all' && lead.quiz_id !== leadQuizFilter) return false;
+            if (leadSourceFilter !== 'all' && (lead.source || 'Direct') !== leadSourceFilter) return false;
+            return true;
+          }).slice(0, 5).map(function(lead, li) {
             var ac = AVATAR_COLORS[li % AVATAR_COLORS.length];
             var sc = scoreVariant(lead.score);
             var ss = statusStyle(lead.status);
@@ -744,7 +794,7 @@ function RecentActivityList({ activities }: { activities: ActivityItem[] }) {
     <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
         <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Recent activity</span>
-        <Link href="/dashboard/activity" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>View all</Link>
+        <Link href="/dashboard/analytics" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>View all</Link>
       </div>
       <div style={{ padding: '8px 24px 24px' }}>
         {activities.length === 0 ? (
@@ -798,7 +848,7 @@ function ABTestingBanner({ onDismiss }: { onDismiss: () => void }) {
         <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Test different questions, paths, and designs to see what converts best.</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <Link href="/dashboard/ab-tests" style={{
+        <Link href="/dashboard/analytics" style={{
           padding: '8px 16px', background: '#F04438', color: '#fff', borderRadius: 8,
           fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: C.FONT,
           transition: 'all 0.12s',
