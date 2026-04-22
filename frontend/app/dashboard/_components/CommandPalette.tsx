@@ -30,21 +30,22 @@ type Quiz = {
 /* ------------------------------------------------------------------ */
 
 const PAGES: SearchResult[] = [
-  { id: 'p-overview', type: 'page', title: 'Overview', href: '/dashboard' },
-  { id: 'p-quizzes', type: 'page', title: 'Quizzes', href: '/dashboard/quizzes' },
-  { id: 'p-editor', type: 'page', title: 'Quiz editor', href: '/dashboard/editor' },
-  { id: 'p-leads', type: 'page', title: 'Leads', href: '/dashboard/leads' },
-  { id: 'p-emails', type: 'page', title: 'Emails', href: '/dashboard/emails' },
-  { id: 'p-templates', type: 'page', title: 'Templates', href: '/dashboard/emails/templates' },
+  { id: 'p-overview', type: 'page', title: 'Dashboard', href: '/dashboard' },
   { id: 'p-analytics', type: 'page', title: 'Analytics', href: '/dashboard/analytics' },
-  { id: 'p-embed', type: 'page', title: 'Embed & install', href: '/dashboard/embed' },
+  { id: 'p-quizzes', type: 'page', title: 'All quizzes', href: '/dashboard/quizzes' },
+  { id: 'p-editor', type: 'page', title: 'Quiz editor', href: '/dashboard/editor' },
+  { id: 'p-translations', type: 'page', title: 'Translations', href: '/dashboard/translations' },
+  { id: 'p-leads', type: 'page', title: 'All leads', href: '/dashboard/leads' },
+  { id: 'p-segmentation', type: 'page', title: 'Segmentation', href: '/dashboard/segmentation' },
+  { id: 'p-emails', type: 'page', title: 'Email sequences', href: '/dashboard/emails' },
+  { id: 'p-automations', type: 'page', title: 'Automations', href: '/dashboard/automations' },
+  { id: 'p-commerce', type: 'page', title: 'Commerce', href: '/dashboard/commerce' },
+  { id: 'p-settings', type: 'page', title: 'Settings', href: '/dashboard/settings' },
+  { id: 'p-billing', type: 'page', title: 'Billing & plan', href: '/dashboard/billing' },
   { id: 'p-integrations', type: 'page', title: 'Integrations', href: '/dashboard/integrations' },
   { id: 'p-brand', type: 'page', title: 'Brand kit', href: '/dashboard/brand-kit' },
-  { id: 'p-billing', type: 'page', title: 'Billing & plan', href: '/dashboard/billing' },
-  { id: 'p-trash', type: 'page', title: 'Trash', href: '/dashboard/trash' },
-  { id: 'p-settings', type: 'page', title: 'Settings', href: '/dashboard/settings' },
-  { id: 'p-deliverability', type: 'page', title: 'Deliverability', href: '/dashboard/emails/deliverability' },
-  { id: 'p-suppressions', type: 'page', title: 'Suppression list', href: '/dashboard/emails/suppressions' },
+  { id: 'p-team', type: 'page', title: 'Team', href: '/dashboard/team' },
+  { id: 'p-referrals', type: 'page', title: 'Referrals', href: '/dashboard/referrals' },
 ];
 
 /* ------------------------------------------------------------------ */

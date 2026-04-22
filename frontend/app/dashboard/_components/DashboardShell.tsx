@@ -178,11 +178,11 @@ function isEditorRoute(pathname: string): boolean {
   if (pathname === '/dashboard') return false;
   var knownPrefixes = [
     '/dashboard/quizzes', '/dashboard/leads', '/dashboard/analytics',
-    '/dashboard/integrations', '/dashboard/webhooks', '/dashboard/api-keys',
-    '/dashboard/billing', '/dashboard/settings', '/dashboard/team',
-    '/dashboard/domains', '/dashboard/tracking', '/dashboard/ab-tests',
-    '/dashboard/lead-scoring', '/dashboard/segments', '/dashboard/exports',
-    '/dashboard/activity',
+    '/dashboard/integrations', '/dashboard/billing', '/dashboard/settings',
+    '/dashboard/team', '/dashboard/emails', '/dashboard/segmentation',
+    '/dashboard/automations', '/dashboard/commerce', '/dashboard/translations',
+    '/dashboard/brand-kit', '/dashboard/referrals', '/dashboard/embed',
+    '/dashboard/admin', '/dashboard/trash',
   ];
   if (knownPrefixes.some(function(prefix) { return pathname === prefix || pathname.startsWith(prefix + '/'); })) {
     return false;
@@ -210,7 +210,6 @@ var NAV_SECTIONS: NavSection[] = [
         icon: icons.analytics,
         match: function(p) { return p === '/dashboard/analytics' || p.startsWith('/dashboard/analytics/'); },
       },
-      { href: '/dashboard/activity', label: 'Activity feed', icon: icons.referrals },
     ],
   },
   {
@@ -218,10 +217,9 @@ var NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard/quizzes', label: 'All quizzes', icon: icons.quizzes, match: isQuizzesRoute },
       { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
-      { href: '/dashboard/templates', label: 'Templates', icon: icons.templates },
-      { href: '/dashboard/ab-tests', label: 'A/B tests', icon: (
+      { href: '/dashboard/translations', label: 'Translations', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 00-1.172-2.872L3 3"/><path d="M21 3l-7.828 7.828A4 4 0 0012 13.657V22"/>
+          <path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/>
         </svg>
       ) },
     ],
@@ -230,31 +228,30 @@ var NAV_SECTIONS: NavSection[] = [
     label: 'Leads',
     items: [
       { href: '/dashboard/leads', label: 'All leads', icon: icons.leads },
-      { href: '/dashboard/lead-scoring', label: 'Lead scoring', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-      ) },
-      { href: '/dashboard/segments', label: 'Segments', icon: (
+      { href: '/dashboard/segmentation', label: 'Segmentation', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-        </svg>
-      ) },
-      { href: '/dashboard/exports', label: 'Exports', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       ) },
     ],
   },
   {
-    label: 'Integrations',
+    label: 'Engage',
     items: [
-      { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
-      { href: '/dashboard/webhooks', label: 'Webhooks', icon: icons.embed },
-      { href: '/dashboard/api-keys', label: 'API keys', icon: (
+      { href: '/dashboard/emails', label: 'Email sequences', icon: icons.emails },
+      { href: '/dashboard/automations', label: 'Automations', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+          <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      ) },
+    ],
+  },
+  {
+    label: 'Commerce',
+    items: [
+      { href: '/dashboard/commerce', label: 'Products', icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
         </svg>
       ) },
     ],
@@ -264,17 +261,14 @@ var NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard/settings', label: 'General', icon: icons.settings },
       { href: '/dashboard/billing', label: 'Billing & plan', icon: icons.billing },
+      { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
+      { href: '/dashboard/brand-kit', label: 'Brand kit', icon: icons.brand },
       { href: '/dashboard/team', label: 'Team', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
         </svg>
       ) },
-      { href: '/dashboard/domains', label: 'Domains', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-        </svg>
-      ) },
-      { href: '/dashboard/tracking', label: 'Tracking scripts', icon: icons.embed },
+      { href: '/dashboard/referrals', label: 'Referrals', icon: icons.referrals },
     ],
   },
 ];
