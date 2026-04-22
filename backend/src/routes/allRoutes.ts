@@ -21,6 +21,9 @@ import { encryptConfig, decryptConfig } from '../utils/encryption';
 import { validateWebhookUrl } from '../utils/urlValidator';
 import { logIntegrationError } from '../services/integrationErrorLog';
 import { getReferralCode, trackReferral, convertReferral, getReferralStats, listReferrals } from '../services/referrals';
+import { runAutoTagRules } from '../services/segmentation';
+import { markPartialAsConverted } from '../services/partialCompletion';
+import { processAutomationEvent } from '../services/automationEngine';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { UAParser } from 'ua-parser-js';
@@ -471,7 +474,7 @@ publicQuizRouter.post('/:slug/process-other', async (req, res) => {
 // ── Leads ─────────────────────────────────────────────────────────────────────
 export const leadsRouter = Router();
 leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
-  const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text } = req.body;
+  const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
@@ -550,6 +553,37 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     });
   } catch (notifErr: any) {
     log.info('[Notification] Error setting up notification:', { detail: (notifErr as any)?.message });
+  }
+
+  // Mark partial completion as converted (non-blocking)
+  if (leadId && quizSessionId) {
+    markPartialAsConverted(quiz.id, quizSessionId, leadId).catch(function(e: any) {
+      log.info('[PartialCompletion] Mark converted failed', { leadId, err: e?.message });
+    });
+  }
+
+  // Auto-tag lead based on user's rules (non-blocking)
+  if (leadId) {
+    runAutoTagRules(leadId, quiz.user_id, quiz.id).catch(function(e: any) {
+      log.info('[Segmentation] Auto-tag failed', { leadId, err: e?.message });
+    });
+  }
+
+  // Fire automation rules for lead_created event (non-blocking)
+  if (leadId) {
+    processAutomationEvent({
+      event_type: 'lead_created',
+      lead_id: leadId,
+      user_id: quiz.user_id,
+      quiz_id: quiz.id,
+      lead_email: email,
+      lead_name: name,
+      outcome_id: outcome_id,
+      score: leadData?.lead_score ?? null,
+      answers: answers,
+    }).catch(function(e: any) {
+      log.info('[Automation] lead_created processing failed', { leadId, err: e?.message });
+    });
   }
 
   // GDPR gate: skip all outbound emails if consent is required but not given
