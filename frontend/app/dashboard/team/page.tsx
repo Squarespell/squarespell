@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type TeamRole = 'owner' | 'admin' | 'editor' | 'viewer';
 
@@ -37,7 +37,7 @@ type TeamQuiz = {
   created_at: string;
 };
 
-const ROLE_COLORS: Record<TeamRole, { bg: string; text: string }> = {
+var ROLE_COLORS: Record<TeamRole, { bg: string; text: string }> = {
   owner: { bg: '#0D7377', text: '#FFFFFF' },
   admin: { bg: '#2D6A4F', text: '#FFFFFF' },
   editor: { bg: '#B45309', text: '#FFFFFF' },
@@ -45,25 +45,25 @@ const ROLE_COLORS: Record<TeamRole, { bg: string; text: string }> = {
 };
 
 export default function TeamPage() {
-  const { token, status: authStatus } = useDashboardAuth();
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [teamQuizzes, setTeamQuizzes] = useState<TeamQuiz[]>([]);
-  const [createTeamOpen, setCreateTeamOpen] = useState(false);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<TeamRole>('editor');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  var { token, status: authStatus } = useDashboardAuth();
+  var [teams, setTeams] = useState<Team[]>([]);
+  var [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  var [teamQuizzes, setTeamQuizzes] = useState<TeamQuiz[]>([]);
+  var [createTeamOpen, setCreateTeamOpen] = useState(false);
+  var [newTeamName, setNewTeamName] = useState('');
+  var [inviteOpen, setInviteOpen] = useState(false);
+  var [inviteEmail, setInviteEmail] = useState('');
+  var [inviteRole, setInviteRole] = useState<TeamRole>('editor');
+  var [loading, setLoading] = useState(false);
+  var [error, setError] = useState('');
+  var [success, setSuccess] = useState('');
 
-  useEffect(() => {
+  useEffect(function() {
     if (!token || authStatus === 'loading') return;
     fetchTeams();
   }, [token, authStatus]);
 
-  useEffect(() => {
+  useEffect(function() {
     if (!selectedTeam || !token) return;
     fetchTeamDetails();
     fetchTeamQuizzes();
@@ -71,11 +71,11 @@ export default function TeamPage() {
 
   async function fetchTeams() {
     try {
-      const res = await fetch(`${API}/api/teams`, {
-        headers: { Authorization: `Bearer ${token}` },
+      var res = await fetch(API + '/api/teams', {
+        headers: { Authorization: 'Bearer ' + token },
       });
       if (!res.ok) throw new Error('Failed to fetch teams');
-      const data = await res.json();
+      var data = await res.json();
       setTeams(data);
       if (data.length > 0 && !selectedTeam) {
         setSelectedTeam(data[0]);
@@ -88,11 +88,11 @@ export default function TeamPage() {
   async function fetchTeamDetails() {
     if (!selectedTeam) return;
     try {
-      const res = await fetch(`${API}/api/teams/${selectedTeam.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      var res = await fetch(API + '/api/teams/' + selectedTeam.id, {
+        headers: { Authorization: 'Bearer ' + token },
       });
       if (!res.ok) throw new Error('Failed to fetch team details');
-      const data = await res.json();
+      var data = await res.json();
       setSelectedTeam(data);
     } catch (err: any) {
       console.error('Error fetching team details:', err);
@@ -102,11 +102,11 @@ export default function TeamPage() {
   async function fetchTeamQuizzes() {
     if (!selectedTeam) return;
     try {
-      const res = await fetch(`${API}/api/teams/${selectedTeam.id}/quizzes`, {
-        headers: { Authorization: `Bearer ${token}` },
+      var res = await fetch(API + '/api/teams/' + selectedTeam.id + '/quizzes', {
+        headers: { Authorization: 'Bearer ' + token },
       });
       if (res.ok) {
-        const data = await res.json();
+        var data = await res.json();
         setTeamQuizzes(data);
       }
     } catch (err: any) {
@@ -120,27 +120,27 @@ export default function TeamPage() {
     setError('');
 
     try {
-      const res = await fetch(`${API}/api/teams`, {
+      var res = await fetch(API + '/api/teams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: 'Bearer ' + token,
         },
         body: JSON.stringify({ name: newTeamName }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create team');
+        var errData = await res.json();
+        throw new Error(errData.error || 'Failed to create team');
       }
 
-      const newTeam = await res.json();
+      var newTeam = await res.json();
       setTeams([...teams, newTeam]);
       setSelectedTeam(newTeam);
       setNewTeamName('');
       setCreateTeamOpen(false);
       setSuccess('Team created successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(function() { setSuccess(''); }, 3000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -155,25 +155,25 @@ export default function TeamPage() {
     setError('');
 
     try {
-      const res = await fetch(`${API}/api/teams/${selectedTeam.id}/members`, {
+      var res = await fetch(API + '/api/teams/' + selectedTeam.id + '/members', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: 'Bearer ' + token,
         },
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to invite member');
+        var errData = await res.json();
+        throw new Error(errData.error || 'Failed to invite member');
       }
 
       setInviteEmail('');
       setInviteRole('editor');
       setInviteOpen(false);
       setSuccess('Member invited successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(function() { setSuccess(''); }, 3000);
       await fetchTeamDetails();
     } catch (err: any) {
       setError(err.message);
@@ -187,14 +187,14 @@ export default function TeamPage() {
     if (!confirm('Remove this member from the team?')) return;
 
     try {
-      const res = await fetch(`${API}/api/teams/${selectedTeam.id}/members/${userId}`, {
+      var res = await fetch(API + '/api/teams/' + selectedTeam.id + '/members/' + userId, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: 'Bearer ' + token },
       });
 
       if (!res.ok) throw new Error('Failed to remove member');
       setSuccess('Member removed');
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(function() { setSuccess(''); }, 3000);
       await fetchTeamDetails();
     } catch (err: any) {
       setError(err.message);
@@ -205,25 +205,25 @@ export default function TeamPage() {
     if (!selectedTeam) return;
 
     try {
-      const res = await fetch(`${API}/api/teams/${selectedTeam.id}/members/${userId}`, {
+      var res = await fetch(API + '/api/teams/' + selectedTeam.id + '/members/' + userId, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: 'Bearer ' + token,
         },
         body: JSON.stringify({ role: newRole }),
       });
 
       if (!res.ok) throw new Error('Failed to update role');
       setSuccess('Role updated');
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(function() { setSuccess(''); }, 3000);
       await fetchTeamDetails();
     } catch (err: any) {
       setError(err.message);
     }
   }
 
-  const isOwnerOrAdmin =
+  var isOwnerOrAdmin =
     selectedTeam && (selectedTeam.user_role === 'owner' || selectedTeam.user_role === 'admin');
 
   if (authStatus === 'loading') return <DashboardShell><div style={{ padding: '2rem' }}>Loading...</div></DashboardShell>;
@@ -240,12 +240,12 @@ export default function TeamPage() {
           <div>
             <div style={{ marginBottom: '1rem' }}>
               <button
-                onClick={() => setCreateTeamOpen(!createTeamOpen)}
+                onClick={function() { setCreateTeamOpen(!createTeamOpen); }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   background: C.ACCENT,
-                  color: '#000',
+                  color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '0.5rem',
                   fontWeight: 'bold',
@@ -263,7 +263,7 @@ export default function TeamPage() {
                 style={{
                   padding: '1rem',
                   background: C.SURFACE,
-                  border: `1px solid ${C.BORDER}`,
+                  border: '1px solid ' + C.BORDER,
                   borderRadius: '0.5rem',
                   marginBottom: '1rem',
                 }}
@@ -272,12 +272,12 @@ export default function TeamPage() {
                   type="text"
                   placeholder="Team name"
                   value={newTeamName}
-                  onChange={(e) => setNewTeamName(e.target.value)}
+                  onChange={function(e) { setNewTeamName(e.target.value); }}
                   style={{
                     width: '100%',
                     padding: '0.5rem',
                     background: C.BG,
-                    border: `1px solid ${C.BORDER}`,
+                    border: '1px solid ' + C.BORDER,
                     borderRadius: '0.375rem',
                     color: C.TEXT,
                     marginBottom: '0.5rem',
@@ -290,7 +290,7 @@ export default function TeamPage() {
                     width: '100%',
                     padding: '0.5rem',
                     background: C.ACCENT,
-                    color: '#000',
+                    color: '#FFFFFF',
                     border: 'none',
                     borderRadius: '0.375rem',
                     fontWeight: 'bold',
@@ -305,15 +305,15 @@ export default function TeamPage() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {teams.map((team) => (
+              {teams.map(function(team) { return (
                 <button
                   key={team.id}
-                  onClick={() => setSelectedTeam(team)}
+                  onClick={function() { setSelectedTeam(team); }}
                   style={{
                     padding: '0.75rem',
                     background: selectedTeam?.id === team.id ? C.ELEVATED : C.SURFACE,
-                    border: selectedTeam?.id === team.id ? `1px solid ${C.ACCENT}` : `1px solid ${C.BORDER}`,
-                    borderLeft: selectedTeam?.id === team.id ? `3px solid ${C.ACCENT}` : 'none',
+                    border: selectedTeam?.id === team.id ? '1px solid ' + C.ACCENT : '1px solid ' + C.BORDER,
+                    borderLeft: selectedTeam?.id === team.id ? '3px solid ' + C.ACCENT : 'none',
                     borderRadius: '0.375rem',
                     color: C.TEXT,
                     textAlign: 'left',
@@ -324,7 +324,7 @@ export default function TeamPage() {
                 >
                   {team.name}
                 </button>
-              ))}
+              ); })}
             </div>
           </div>
 
@@ -360,11 +360,11 @@ export default function TeamPage() {
                   </h3>
                   {isOwnerOrAdmin && (
                     <button
-                      onClick={() => setInviteOpen(!inviteOpen)}
+                      onClick={function() { setInviteOpen(!inviteOpen); }}
                       style={{
                         padding: '0.5rem 1rem',
                         background: C.ACCENT,
-                        color: '#000',
+                        color: '#FFFFFF',
                         border: 'none',
                         borderRadius: '0.375rem',
                         fontWeight: 'bold',
@@ -383,7 +383,7 @@ export default function TeamPage() {
                     style={{
                       padding: '1rem',
                       background: C.SURFACE,
-                      border: `1px solid ${C.BORDER}`,
+                      border: '1px solid ' + C.BORDER,
                       borderRadius: '0.5rem',
                       marginBottom: '1rem',
                     }}
@@ -396,12 +396,12 @@ export default function TeamPage() {
                         type="email"
                         placeholder="user@example.com"
                         value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
+                        onChange={function(e) { setInviteEmail(e.target.value); }}
                         style={{
                           width: '100%',
                           padding: '0.5rem',
                           background: C.BG,
-                          border: `1px solid ${C.BORDER}`,
+                          border: '1px solid ' + C.BORDER,
                           borderRadius: '0.375rem',
                           color: C.TEXT,
                         }}
@@ -413,12 +413,12 @@ export default function TeamPage() {
                       </label>
                       <select
                         value={inviteRole}
-                        onChange={(e) => setInviteRole(e.target.value as TeamRole)}
+                        onChange={function(e) { setInviteRole(e.target.value as TeamRole); }}
                         style={{
                           width: '100%',
                           padding: '0.5rem',
                           background: C.BG,
-                          border: `1px solid ${C.BORDER}`,
+                          border: '1px solid ' + C.BORDER,
                           borderRadius: '0.375rem',
                           color: C.TEXT,
                         }}
@@ -435,7 +435,7 @@ export default function TeamPage() {
                         width: '100%',
                         padding: '0.5rem',
                         background: C.ACCENT,
-                        color: '#000',
+                        color: '#FFFFFF',
                         border: 'none',
                         borderRadius: '0.375rem',
                         fontWeight: 'bold',
@@ -450,13 +450,13 @@ export default function TeamPage() {
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {selectedTeam.members?.map((member) => (
+                  {selectedTeam.members?.map(function(member) { return (
                     <div
                       key={member.id}
                       style={{
                         padding: '1rem',
                         background: C.SURFACE,
-                        border: `1px solid ${C.BORDER}`,
+                        border: '1px solid ' + C.BORDER,
                         borderRadius: '0.375rem',
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -476,11 +476,11 @@ export default function TeamPage() {
                           <>
                             <select
                               value={member.role}
-                              onChange={(e) => handleUpdateRole(member.user_id, e.target.value as TeamRole)}
+                              onChange={function(e) { handleUpdateRole(member.user_id, e.target.value as TeamRole); }}
                               style={{
                                 padding: '0.375rem',
                                 background: C.BG,
-                                border: `1px solid ${C.BORDER}`,
+                                border: '1px solid ' + C.BORDER,
                                 borderRadius: '0.25rem',
                                 color: C.TEXT,
                                 fontSize: '0.75rem',
@@ -491,7 +491,7 @@ export default function TeamPage() {
                               <option value="admin">Admin</option>
                             </select>
                             <button
-                              onClick={() => handleRemoveMember(member.user_id)}
+                              onClick={function() { handleRemoveMember(member.user_id); }}
                               style={{
                                 padding: '0.375rem 0.75rem',
                                 background: C.DANGER_LIGHT,
@@ -520,7 +520,7 @@ export default function TeamPage() {
                         )}
                       </div>
                     </div>
-                  ))}
+                  ); })}
                 </div>
               </div>
 
@@ -535,13 +535,13 @@ export default function TeamPage() {
                   </p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {teamQuizzes.map((quiz) => (
+                    {teamQuizzes.map(function(quiz) { return (
                       <div
                         key={quiz.id}
                         style={{
                           padding: '1rem',
                           background: C.SURFACE,
-                          border: `1px solid ${C.BORDER}`,
+                          border: '1px solid ' + C.BORDER,
                           borderRadius: '0.375rem',
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -549,7 +549,7 @@ export default function TeamPage() {
                         }}
                       >
                         <Link
-                          href={`/quiz/${quiz.slug}`}
+                          href={'/quiz/' + quiz.slug}
                           style={{
                             color: C.ACCENT,
                             textDecoration: 'none',
@@ -561,14 +561,14 @@ export default function TeamPage() {
                         </Link>
                         {isOwnerOrAdmin && (
                           <button
-                            onClick={async () => {
+                            onClick={async function() {
                               if (!confirm('Remove this quiz from the team?')) return;
                               try {
-                                const res = await fetch(
-                                  `${API}/api/teams/${selectedTeam.id}/quizzes/${quiz.id}`,
+                                var res = await fetch(
+                                  API + '/api/teams/' + selectedTeam.id + '/quizzes/' + quiz.id,
                                   {
                                     method: 'DELETE',
-                                    headers: { Authorization: `Bearer ${token}` },
+                                    headers: { Authorization: 'Bearer ' + token },
                                   }
                                 );
                                 if (!res.ok) throw new Error('Failed to remove quiz');
@@ -591,7 +591,7 @@ export default function TeamPage() {
                           </button>
                         )}
                       </div>
-                    ))}
+                    ); })}
                   </div>
                 )}
               </div>

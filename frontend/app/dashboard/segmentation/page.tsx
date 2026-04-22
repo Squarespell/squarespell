@@ -19,6 +19,7 @@ export default function SegmentationPage() {
   var [newSegName, setNewSegName] = useState('');
   var [newSegDesc, setNewSegDesc] = useState('');
   var [creating, setCreating] = useState(false);
+  var [error, setError] = useState('');
 
   var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -47,6 +48,7 @@ export default function SegmentationPage() {
   async function createTag() {
     if (!newTagName.trim() || !token) return;
     setCreating(true);
+    setError('');
     try {
       var res = await fetch(apiBase + '/api/tags', {
         method: 'POST',
@@ -57,14 +59,20 @@ export default function SegmentationPage() {
         var data = await res.json();
         setTags(function(prev) { return [data.tag || data, ...prev]; });
         setNewTagName('');
+      } else {
+        var errData = await res.json().catch(function() { return { error: 'Failed to create tag' }; });
+        setError(errData.error || 'Failed to create tag');
       }
-    } catch {}
+    } catch (e: any) {
+      setError(e.message || 'Network error');
+    }
     setCreating(false);
   }
 
   async function createSegment() {
     if (!newSegName.trim() || !token) return;
     setCreating(true);
+    setError('');
     try {
       var res = await fetch(apiBase + '/api/segments', {
         method: 'POST',
@@ -76,8 +84,13 @@ export default function SegmentationPage() {
         setSegments(function(prev) { return [data.segment || data, ...prev]; });
         setNewSegName('');
         setNewSegDesc('');
+      } else {
+        var errData = await res.json().catch(function() { return { error: 'Failed to create segment' }; });
+        setError(errData.error || 'Failed to create segment');
       }
-    } catch {}
+    } catch (e: any) {
+      setError(e.message || 'Network error');
+    }
     setCreating(false);
   }
 
@@ -132,6 +145,12 @@ export default function SegmentationPage() {
         <button type="button" style={tabStyle(tab === 'tags')} onClick={function() { setTab('tags'); }}>Tags</button>
         <button type="button" style={tabStyle(tab === 'segments')} onClick={function() { setTab('segments'); }}>Segments</button>
       </div>
+
+      {error && (
+        <div style={{ padding: '10px 16px', background: C.DANGER + '10', border: '1px solid ' + C.DANGER + '30', borderRadius: 8, color: C.DANGER, fontSize: 13, fontFamily: C.FONT, marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <PageLoading />

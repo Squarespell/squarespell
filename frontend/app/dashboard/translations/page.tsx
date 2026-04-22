@@ -117,7 +117,7 @@ export default function TranslationsPage() {
                       >
                         {LANGUAGE_NAMES[lang] || lang}
                         {isDefault && (
-                          <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>default</span>
+                          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.05em' }}>Default</span>
                         )}
                       </div>
                     );
