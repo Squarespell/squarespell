@@ -850,7 +850,10 @@ function OverviewInner() {
   var [newQuizOpen, setNewQuizOpen] = useState(false);
   var [dateRange, setDateRange] = useState('');
   var [userName, setUserName] = useState('');
+  var [datePickerOpen, setDatePickerOpen] = useState(false);
+  var [selectedDays, setSelectedDays] = useState(30);
   var initRef = useRef(false);
+  var dateChangeRef = useRef(false);
 
   // Claim flow (preserved from original)
   useEffect(function() {
@@ -981,7 +984,10 @@ function OverviewInner() {
           totalLeads += quizData[qi].lead_count || 0;
 
           try {
-            var ar = await fetch(API + '/api/analytics/' + quizData[qi].id, {
+            var sinceDate = new Date();
+            sinceDate.setDate(sinceDate.getDate() - selectedDays);
+            var sinceParam = selectedDays > 0 ? '?since=' + encodeURIComponent(sinceDate.toISOString()) : '';
+            var ar = await fetch(API + '/api/analytics/' + quizData[qi].id + sinceParam, {
               headers: { Authorization: 'Bearer ' + token },
             });
             if (ar.ok) {
@@ -1035,12 +1041,16 @@ function OverviewInner() {
 
           // Set date range display
           var now = new Date();
-          var thirtyAgo = new Date(now.getTime() - 30 * 86400000);
-          setDateRange(
-            thirtyAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-            ' \u2013 ' +
-            now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          );
+          if (selectedDays > 0) {
+            var rangeStart = new Date(now.getTime() - selectedDays * 86400000);
+            setDateRange(
+              rangeStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+              ' \u2013 ' +
+              now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            );
+          } else {
+            setDateRange('All time');
+          }
         }
 
         // Fetch dropoff for top quiz
@@ -1069,6 +1079,79 @@ function OverviewInner() {
 
     return function() { cancelled = true; };
   }, [token, router, searchParams]);
+
+  // Re-fetch analytics when date range changes
+  useEffect(function() {
+    if (!dateChangeRef.current) {
+      dateChangeRef.current = true;
+      return;
+    }
+    if (!token || quizzes.length === 0) return;
+    var cancelled = false;
+
+    (async function() {
+      var totalViews = 0;
+      var totalLeads = 0;
+      var totalCompletions = 0;
+      var totalStarted = 0;
+
+      for (var qi = 0; qi < quizzes.length; qi++) {
+        totalViews += quizzes[qi].view_count || 0;
+        totalLeads += quizzes[qi].lead_count || 0;
+        try {
+          var sinceDate = new Date();
+          sinceDate.setDate(sinceDate.getDate() - selectedDays);
+          var sinceParam = selectedDays > 0 ? '?since=' + encodeURIComponent(sinceDate.toISOString()) : '';
+          var ar = await fetch(API + '/api/analytics/' + quizzes[qi].id + sinceParam, {
+            headers: { Authorization: 'Bearer ' + token },
+          });
+          if (ar.ok) {
+            var ad = await ar.json();
+            totalCompletions += ad.completions || 0;
+            totalStarted += ad.started || ad.completions || 0;
+            totalViews = (totalViews - (quizzes[qi].view_count || 0)) + (ad.views || 0);
+            totalLeads = (totalLeads - (quizzes[qi].lead_count || 0)) + (ad.leads || 0);
+          }
+        } catch {}
+      }
+
+      if (!cancelled) {
+        var compRate = totalViews > 0 ? (totalCompletions / totalViews) * 100 : 0;
+        var ldRate = totalViews > 0 ? (totalLeads / totalViews) * 100 : 0;
+        setAnalytics({
+          total_views: totalViews,
+          total_leads: totalLeads,
+          completion_rate: compRate,
+          lead_rate: ldRate,
+          active_quizzes: quizzes.filter(function(q) { return q.status === 'live'; }).length,
+          quiz_limit: 20,
+          views_change: 0, leads_change: 0, completion_change: 0, lead_rate_change: 0, compare_label: '',
+        });
+
+        setFunnel({
+          views: totalViews,
+          started: totalStarted || Math.round(totalViews * 0.57),
+          completed: totalCompletions || Math.round(totalViews * 0.33),
+          leads: totalLeads,
+        });
+
+        // Update date range display
+        var now = new Date();
+        if (selectedDays > 0) {
+          var rangeStart = new Date(now.getTime() - selectedDays * 86400000);
+          setDateRange(
+            rangeStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+            ' \u2013 ' +
+            now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          );
+        } else {
+          setDateRange('All time');
+        }
+      }
+    })();
+
+    return function() { cancelled = true; };
+  }, [selectedDays]);
 
   // Fetch chart timeseries
   useEffect(function() {
@@ -1153,15 +1236,57 @@ function OverviewInner() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '9px 14px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
-            fontSize: 14, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
-            cursor: 'pointer', fontFamily: C.FONT, boxShadow: C.SHADOW_XS,
-          }}>
-            {dateRange || 'Select dates'}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={function() { setDatePickerOpen(!datePickerOpen); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '9px 14px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
+                fontSize: 14, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
+                cursor: 'pointer', fontFamily: C.FONT, boxShadow: C.SHADOW_XS,
+              }}
+            >
+              {dateRange || 'Last 30 days'}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </button>
+            {datePickerOpen && (
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                background: C.SURFACE, border: '1px solid ' + C.GRAY_200,
+                borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                padding: 6, zIndex: 50, minWidth: 160,
+              }}>
+                {[
+                  { days: 7, label: 'Last 7 days' },
+                  { days: 30, label: 'Last 30 days' },
+                  { days: 90, label: 'Last 90 days' },
+                  { days: 0, label: 'All time' },
+                ].map(function(opt) {
+                  var isActive = selectedDays === opt.days;
+                  return (
+                    <button
+                      key={opt.days}
+                      onClick={function() {
+                        setSelectedDays(opt.days);
+                        setDatePickerOpen(false);
+                      }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '8px 12px', border: 'none', borderRadius: 6,
+                        background: isActive ? C.ACCENT_LIGHT : 'transparent',
+                        color: isActive ? C.ACCENT : C.GRAY_700,
+                        fontSize: 13, fontWeight: isActive ? 600 : 500,
+                        cursor: 'pointer', fontFamily: C.FONT,
+                        transition: 'background 0.1s',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <button
             onClick={function() { setNewQuizOpen(true); }}
             style={{
