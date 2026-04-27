@@ -1,28 +1,31 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
-let _getToken: (() => Promise<string>) | null = null;
+var _getToken: (() => Promise<string>) | null = null;
+var _getTokenFresh: (() => Promise<string>) | null = null;
 
-export function setAuthToken(fn: (() => Promise<string>) | string | null) {
+export function setAuthToken(fn: (() => Promise<string>) | string | null, freshFn?: (() => Promise<string>) | null) {
   if (typeof fn === 'function') {
     _getToken = fn;
   } else if (typeof fn === 'string') {
-    _getToken = () => Promise.resolve(fn);
+    _getToken = function() { return Promise.resolve(fn); };
   } else {
     _getToken = null;
   }
+  _getTokenFresh = freshFn || null;
 }
 
-async function getHeaders(): Promise<Record<string, string>> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+async function getHeaders(fresh?: boolean): Promise<Record<string, string>> {
+  var headers: Record<string, string> = { 'Content-Type': 'application/json' };
   try {
-    if (_getToken) {
-      const token = await _getToken();
+    var tokenFn = (fresh && _getTokenFresh) ? _getTokenFresh : _getToken;
+    if (tokenFn) {
+      var token = await tokenFn();
       if (token) headers['Authorization'] = 'Bearer ' + token;
     } else if (typeof window !== 'undefined') {
-      const clerk = (window as any).Clerk;
+      var clerk = (window as any).Clerk;
       if (clerk && clerk.session) {
-        const token = await clerk.session.getToken();
-        if (token) headers['Authorization'] = 'Bearer ' + token;
+        var token2 = await clerk.session.getToken();
+        if (token2) headers['Authorization'] = 'Bearer ' + token2;
       }
     }
   } catch (e) {}
@@ -30,8 +33,12 @@ async function getHeaders(): Promise<Record<string, string>> {
 }
 
 async function req(path: string, options?: RequestInit) {
-  const res = await fetch(API_URL + path, { ...options, headers: await getHeaders() });
-  const data = await res.json();
+  var res = await fetch(API_URL + path, { ...options, headers: await getHeaders() });
+  // One-shot retry on 401: force a fresh token and try once more
+  if (res.status === 401 && _getTokenFresh) {
+    res = await fetch(API_URL + path, { ...options, headers: await getHeaders(true) });
+  }
+  var data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
 }

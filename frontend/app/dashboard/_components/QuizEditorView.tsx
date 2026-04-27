@@ -155,11 +155,17 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
   const { getToken } = useAuth();
 
   // Wire Clerk token into the shared api client BEFORE any request fires.
-  // Fixes editor Unauthorized: window.Clerk fallback races with hydration.
-  useEffect(() => {
-    api.setAuthToken(async () => {
-      try { return (await getToken({ skipCache: true })) || ''; } catch { return ''; }
-    });
+  // Provides a cached token for normal requests, and a fresh (skipCache)
+  // token for automatic 401 retry inside req().
+  useEffect(function() {
+    api.setAuthToken(
+      function() {
+        try { return getToken().then(function(t) { return t || ''; }); } catch(e) { return Promise.resolve(''); }
+      },
+      function() {
+        try { return getToken({ skipCache: true } as any).then(function(t) { return t || ''; }); } catch(e) { return Promise.resolve(''); }
+      }
+    );
   }, [getToken]);
 
   const [publishModalOpen, setPublishModalOpen] = useState(false);
