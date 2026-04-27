@@ -455,84 +455,155 @@ function BlockCard({
           onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
         }
 
-        /* Open Pexels image browser for a specific option */
-        function openImageBrowser(optIndex: number) {
+        /* ---- Unified Image Picker (Squarespace-style) ---- */
+        function openImagePicker(optIndex: number) {
           var modal = document.createElement('div');
           modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)';
           var box = document.createElement('div');
-          box.style.cssText = 'background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,0.2)';
-          box.innerHTML = '<div style="padding:16px 20px;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;gap:10px">'
-            + '<div style="flex:1;display:flex;align-items:center;gap:8px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:0 12px">'
-            + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>'
-            + '<input id="pxSearch" type="text" placeholder="Search free images..." style="flex:1;border:none;outline:none;font-size:14px;padding:10px 0;background:transparent;font-family:Inter,system-ui,sans-serif" />'
-            + '</div>'
-            + '<button id="pxClose" style="width:34px;height:34px;border-radius:8px;border:1px solid #E5E7EB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085">'
-            + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>'
-            + '<div id="pxResults" style="flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;min-height:200px">'
-            + '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:14px">Type to search free stock images</div></div>'
-            + '<div style="padding:8px 16px;border-top:1px solid #E5E7EB;font-size:10px;color:#98A2B3;text-align:center">Images provided by Pexels</div>';
+          box.style.cssText = 'background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:82vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,0.2)';
+
+          /* Header with CLOSE */
+          var header = document.createElement('div');
+          header.style.cssText = 'padding:16px 20px;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;justify-content:space-between';
+          header.innerHTML = '<span style="font-size:13px;font-weight:700;color:#344054;letter-spacing:0.02em;cursor:pointer" id="imgPickerClose">CLOSE</span>'
+            + '<span style="font-size:11px;color:#98A2B3;font-weight:500">Add Image</span>';
+          box.appendChild(header);
+
+          /* Tab bar */
+          var tabBar = document.createElement('div');
+          tabBar.style.cssText = 'display:flex;border-bottom:1px solid #E5E7EB';
+          var tabs = [
+            { id: 'upload', label: 'Upload File', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' },
+            { id: 'stock', label: 'Browse Stock Images', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' },
+          ];
+          tabs.forEach(function(tab) {
+            var btn = document.createElement('button');
+            btn.id = 'tab_' + tab.id;
+            btn.style.cssText = 'flex:1;padding:14px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:#667085;display:flex;align-items:center;justify-content:center;gap:8px;font-family:Inter,system-ui,sans-serif;border-bottom:2px solid transparent;transition:all 0.15s';
+            btn.innerHTML = tab.icon + tab.label;
+            btn.addEventListener('click', function() { showTab(tab.id); });
+            tabBar.appendChild(btn);
+          });
+          box.appendChild(tabBar);
+
+          /* Content area */
+          var content = document.createElement('div');
+          content.style.cssText = 'flex:1;overflow-y:auto;min-height:280px';
+          box.appendChild(content);
+
           modal.appendChild(box);
           document.body.appendChild(modal);
 
-          var searchInput = box.querySelector('#pxSearch') as HTMLInputElement;
-          var resultsDiv = box.querySelector('#pxResults') as HTMLDivElement;
-          var closeBtn = box.querySelector('#pxClose') as HTMLButtonElement;
-          var timer: any = null;
-
-          function close() { document.body.removeChild(modal); }
+          function close() { if (modal.parentNode) document.body.removeChild(modal); }
           modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
-          closeBtn.addEventListener('click', close);
-          searchInput.focus();
+          (header.querySelector('#imgPickerClose') as HTMLElement).addEventListener('click', close);
 
-          function doSearch(q: string) {
-            resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">Searching...</div>';
-            var fetchFn = function(token: string) {
-              fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(q) + '&page=1', {
-                headers: { Authorization: token ? 'Bearer ' + token : '' },
-              })
-              .then(function(res) { return res.json(); })
-              .then(function(data) {
-                if (!data.results || data.results.length === 0) {
-                  resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">No images found. Try another term.</div>';
-                  return;
+          var activeTab = '';
+
+          function showTab(tabId: string) {
+            activeTab = tabId;
+            /* Style tabs */
+            tabs.forEach(function(t) {
+              var el = tabBar.querySelector('#tab_' + t.id) as HTMLElement;
+              if (t.id === tabId) {
+                el.style.color = '#0D7377';
+                el.style.borderBottomColor = '#0D7377';
+              } else {
+                el.style.color = '#667085';
+                el.style.borderBottomColor = 'transparent';
+              }
+            });
+
+            if (tabId === 'upload') {
+              content.innerHTML = '<div style="padding:40px 20px;text-align:center">'
+                + '<div style="width:80px;height:80px;margin:0 auto 16px;border-radius:16px;background:#F9FAFB;border:2px dashed #D0D5DD;display:flex;align-items:center;justify-content:center">'
+                + '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>'
+                + '<div style="font-size:14px;font-weight:600;color:#344054;margin-bottom:6px">Upload an image</div>'
+                + '<div style="font-size:12px;color:#667085;margin-bottom:20px">JPG, PNG, GIF or WebP. Max 5MB.</div>'
+                + '<label style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:#0D7377;color:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,system-ui,sans-serif">'
+                + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
+                + 'Choose File'
+                + '<input type="file" accept="image/*" style="display:none" id="imgPickerFileInput" />'
+                + '</label>'
+                + '</div>';
+              var fileInput = content.querySelector('#imgPickerFileInput') as HTMLInputElement;
+              fileInput.addEventListener('change', function() {
+                var f = fileInput.files?.[0];
+                if (f) {
+                  handleOptionImageUpload(optIndex, f);
+                  close();
                 }
-                resultsDiv.innerHTML = '';
-                data.results.forEach(function(img: any) {
-                  var card = document.createElement('div');
-                  card.style.cssText = 'border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s';
-                  card.innerHTML = '<img src="' + (img.thumb || img.url) + '" style="width:100%;height:100px;object-fit:cover;display:block" />';
-                  card.addEventListener('mouseenter', function() { card.style.borderColor = '#0D7377'; });
-                  card.addEventListener('mouseleave', function() { card.style.borderColor = 'transparent'; });
-                  card.addEventListener('click', function() {
-                    setOptionImage(optIndex, img.url || img.thumb);
-                    close();
-                  });
-                  resultsDiv.appendChild(card);
-                });
-              })
-              .catch(function() {
-                resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#EF4444;font-size:13px">Search failed. Check connection.</div>';
               });
-            };
-            if (typeof window !== 'undefined' && (window as any).Clerk) {
-              (window as any).Clerk.session?.getToken().then(function(t: string) { fetchFn(t || ''); }).catch(function() { fetchFn(''); });
-            } else { fetchFn(''); }
+            }
+
+            if (tabId === 'stock') {
+              content.innerHTML = '<div style="padding:12px 16px;border-bottom:1px solid #F2F4F7">'
+                + '<div style="display:flex;align-items:center;gap:8px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:0 12px">'
+                + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>'
+                + '<input id="stockSearch" type="text" placeholder="Search free stock images..." style="flex:1;border:none;outline:none;font-size:14px;padding:10px 0;background:transparent;font-family:Inter,system-ui,sans-serif" />'
+                + '</div></div>'
+                + '<div id="stockResults" style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
+                + '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">Type to search stock images</div></div>';
+
+              var searchInput = content.querySelector('#stockSearch') as HTMLInputElement;
+              var resultsDiv = content.querySelector('#stockResults') as HTMLDivElement;
+              var timer: any = null;
+              searchInput.focus();
+
+              var doSearch = function(q: string) {
+                resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">Searching...</div>';
+                var fetchFn = function(token: string) {
+                  fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(q) + '&page=1', {
+                    headers: { Authorization: token ? 'Bearer ' + token : '' },
+                  })
+                  .then(function(res) { return res.json(); })
+                  .then(function(data) {
+                    if (!data.results || data.results.length === 0) {
+                      resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">No images found. Try another term.</div>';
+                      return;
+                    }
+                    resultsDiv.innerHTML = '';
+                    data.results.forEach(function(img: any) {
+                      var card = document.createElement('div');
+                      card.style.cssText = 'border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s;aspect-ratio:1';
+                      card.innerHTML = '<img src="' + (img.thumb || img.url) + '" style="width:100%;height:100%;object-fit:cover;display:block" />';
+                      card.addEventListener('mouseenter', function() { card.style.borderColor = '#0D7377'; });
+                      card.addEventListener('mouseleave', function() { card.style.borderColor = 'transparent'; });
+                      card.addEventListener('click', function() {
+                        setOptionImage(optIndex, img.url || img.thumb);
+                        close();
+                      });
+                      resultsDiv.appendChild(card);
+                    });
+                  })
+                  .catch(function() {
+                    resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#EF4444;font-size:13px">Search failed. Check connection.</div>';
+                  });
+                };
+                if (typeof window !== 'undefined' && (window as any).Clerk) {
+                  (window as any).Clerk.session?.getToken().then(function(t: string) { fetchFn(t || ''); }).catch(function() { fetchFn(''); });
+                } else { fetchFn(''); }
+              };
+
+              searchInput.addEventListener('input', function() {
+                clearTimeout(timer);
+                var val = searchInput.value.trim();
+                if (val.length < 2) return;
+                timer = setTimeout(function() { doSearch(val); }, 400);
+              });
+              searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') close();
+                if (e.key === 'Enter') {
+                  clearTimeout(timer);
+                  var val = searchInput.value.trim();
+                  if (val) doSearch(val);
+                }
+              });
+            }
           }
 
-          searchInput.addEventListener('input', function() {
-            clearTimeout(timer);
-            var val = searchInput.value.trim();
-            if (val.length < 2) return;
-            timer = setTimeout(function() { doSearch(val); }, 400);
-          });
-          searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') close();
-            if (e.key === 'Enter') {
-              clearTimeout(timer);
-              var val = searchInput.value.trim();
-              if (val) doSearch(val);
-            }
-          });
+          /* Default to upload tab */
+          showTab('upload');
         }
 
         /* ---- GRID layout ---- */
@@ -547,28 +618,27 @@ function BlockCard({
                     background: '#fff', transition: 'border-color 0.15s',
                   }}>
                     <div style={{ position: 'relative' }}>
-                      <label style={{ cursor: 'pointer', display: 'block' }}>
+                      <div onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}
+                        style={{ cursor: selected ? 'pointer' : 'default' }}>
                         {opt.imageUrl ? (
                           <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 70, objectFit: 'cover', display: 'block' }}
                             onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         ) : (
                           <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
                             {selected ? (
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <span style={{ fontSize: 9, color: C.TEXT_MUTED, fontWeight: 600, padding: '2px 6px', background: '#F2F4F7', borderRadius: 4 }}>Upload</span>
-                                <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImageBrowser(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', padding: '2px 6px', background: C.ACCENT_LIGHT, borderRadius: 4 }}>Browse</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                                <span style={{ fontSize: 10, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
                               </div>
                             ) : (
                               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                             )}
                           </div>
                         )}
-                        <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
-                          onChange={function(e) { var f = e.target.files?.[0]; if (f) handleOptionImageUpload(oi, f); }} />
-                      </label>
+                      </div>
                       {opt.imageUrl && selected && (
                         <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 3 }}>
-                          <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImageBrowser(oi); }}
+                          <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImagePicker(oi); }}
                             style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', cursor: 'pointer' }}>Replace</span>
                           <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); setOptionImage(oi, ''); }}
                             style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(239,68,68,0.85)', color: '#fff', cursor: 'pointer' }}>Delete</span>
@@ -599,31 +669,31 @@ function BlockCard({
             <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {qb.options.map(function(opt, oi) {
                 return (
-                  <label key={opt.id} style={{
+                  <div key={opt.id} style={{
                     position: 'relative', borderRadius: 10, overflow: 'hidden',
                     border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
-                    minHeight: 80, display: 'flex', alignItems: 'flex-end', cursor: 'pointer',
+                    minHeight: 80, display: 'flex', alignItems: 'flex-end',
+                    cursor: selected ? 'pointer' : 'default',
                   }}>
                     {opt.imageUrl ? (
                       <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                      <div onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}
+                        style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4, cursor: selected ? 'pointer' : 'default' }}>
                         {selected ? (
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <span style={{ fontSize: 9, color: C.TEXT_MUTED, fontWeight: 600, padding: '2px 6px', background: 'rgba(255,255,255,0.8)', borderRadius: 4 }}>Upload</span>
-                            <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImageBrowser(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', padding: '2px 6px', background: 'rgba(255,255,255,0.8)', borderRadius: 4 }}>Browse</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                            <span style={{ fontSize: 10, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
                           </div>
                         ) : (
                           <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                         )}
                       </div>
                     )}
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
-                      onChange={function(e) { var f = e.target.files?.[0]; if (f) handleOptionImageUpload(oi, f); }} />
                     {opt.imageUrl && selected && (
                       <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 2, display: 'flex', gap: 3 }}>
-                        <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImageBrowser(oi); }}
+                        <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImagePicker(oi); }}
                           style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', cursor: 'pointer' }}>Replace</span>
                         <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); setOptionImage(oi, ''); }}
                           style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(239,68,68,0.85)', color: '#fff', cursor: 'pointer' }}>Delete</span>
@@ -637,7 +707,7 @@ function BlockCard({
                         color: opt.imageUrl ? '#fff' : C.TEXT_MUTED,
                       }}>+{opt.score || 0}pts</span>
                     </div>
-                  </label>
+                  </div>
                 );
               })}
             </div>
@@ -655,19 +725,16 @@ function BlockCard({
                     padding: selected ? '4px 4px 4px 8px' : '8px 10px',
                     borderRadius: 8, background: '#FFFFFF', border: '1px solid ' + C.BORDER,
                   }}>
-                    <div style={{ position: 'relative', flexShrink: 0 }}>
-                      <label style={{ cursor: 'pointer', display: 'block' }}>
-                        {opt.imageUrl ? (
-                          <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', display: 'block' }}
-                            onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        ) : (
-                          <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                          </div>
-                        )}
-                        <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
-                          onChange={function(e) { var f = e.target.files?.[0]; if (f) handleOptionImageUpload(oi, f); }} />
-                      </label>
+                    <div style={{ position: 'relative', flexShrink: 0 }}
+                      onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}>
+                      {opt.imageUrl ? (
+                        <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', display: 'block', cursor: selected ? 'pointer' : 'default' }}
+                          onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selected ? 'pointer' : 'default' }}>
+                          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={selected ? C.ACCENT : '#D0D5DD'} strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                        </div>
+                      )}
                       {opt.imageUrl && selected && (
                         <div style={{ position: 'absolute', top: -4, right: -4, zIndex: 2 }}>
                           <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); setOptionImage(oi, ''); }}
