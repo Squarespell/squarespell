@@ -24,6 +24,7 @@ import { getReferralCode, trackReferral, convertReferral, getReferralStats, list
 import { runAutoTagRules } from '../services/segmentation';
 import { markPartialAsConverted } from '../services/partialCompletion';
 import { processAutomationEvent } from '../services/automationEngine';
+import { sendPlatformEmail } from '../services/platformEmails';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { UAParser } from 'ua-parser-js';
@@ -1769,17 +1770,79 @@ stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: Authe
   res.json({ url: session.url });
 });
 stripeRouter.post('/webhook', async (req, res) => {
-  let event: Stripe.Event;
+  var event: Stripe.Event;
   try { event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'] as string, process.env.STRIPE_WEBHOOK_SECRET!); }
   catch { return res.status(400).json({ error: 'Invalid signature' }); }
+
   if (event.type === 'checkout.session.completed') {
-    const s = event.data.object as Stripe.Checkout.Session;
-    if (s.metadata?.db_user_id && s.metadata?.plan) await supabase.from('users').update({ plan: s.metadata.plan, stripe_customer_id: s.customer as string, stripe_subscription_id: s.subscription as string }).eq('id', s.metadata.db_user_id);
+    var s = event.data.object as Stripe.Checkout.Session;
+    if (s.metadata?.db_user_id && s.metadata?.plan) {
+      await supabase.from('users').update({ plan: s.metadata.plan, stripe_customer_id: s.customer as string, stripe_subscription_id: s.subscription as string }).eq('id', s.metadata.db_user_id);
+      // Send payment confirmed / plan upgraded email
+      var { data: paidUser } = await supabase.from('users').select('id,email,first_name').eq('id', s.metadata.db_user_id).single();
+      if (paidUser) {
+        sendPlatformEmail({
+          userId: paidUser.id,
+          email: paidUser.email,
+          emailType: 'payment_confirmed',
+          firstName: paidUser.first_name || '',
+          data: { planName: (s.metadata.plan || 'Pro').charAt(0).toUpperCase() + (s.metadata.plan || 'pro').slice(1) },
+        }).catch(function(err) { log.error('[StripeWebhook] payment_confirmed email failed:', { err: err?.message }); });
+      }
+    }
   }
+
+  if (event.type === 'customer.subscription.updated') {
+    var subUpd = event.data.object as Stripe.Subscription;
+    var prevAttrs = (event.data as any).previous_attributes || {};
+    // Only send upgrade email if the plan actually changed (items changed)
+    if (prevAttrs.items) {
+      var { data: upgUser } = await supabase.from('users').select('id,email,first_name,plan').eq('stripe_subscription_id', subUpd.id).single();
+      if (upgUser) {
+        sendPlatformEmail({
+          userId: upgUser.id,
+          email: upgUser.email,
+          emailType: 'plan_upgraded',
+          firstName: upgUser.first_name || '',
+          data: { planName: (upgUser.plan || 'Pro').charAt(0).toUpperCase() + (upgUser.plan || 'pro').slice(1) },
+        }).catch(function(err) { log.error('[StripeWebhook] plan_upgraded email failed:', { err: err?.message }); });
+      }
+    }
+  }
+
   if (event.type === 'customer.subscription.deleted') {
-    const sub = event.data.object as Stripe.Subscription;
+    var sub = event.data.object as Stripe.Subscription;
+    // Fetch user before downgrading so we have their email
+    var { data: cancelUser } = await supabase.from('users').select('id,email,first_name').eq('stripe_subscription_id', sub.id).single();
     await supabase.from('users').update({ plan: 'free', stripe_subscription_id: null }).eq('stripe_subscription_id', sub.id);
+    if (cancelUser) {
+      var endsAt = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+      sendPlatformEmail({
+        userId: cancelUser.id,
+        email: cancelUser.email,
+        emailType: 'subscription_cancelled',
+        firstName: cancelUser.first_name || '',
+        data: { endsAt: endsAt },
+      }).catch(function(err) { log.error('[StripeWebhook] subscription_cancelled email failed:', { err: err?.message }); });
+    }
   }
+
+  if (event.type === 'invoice.payment_failed') {
+    var failedInvoice = event.data.object as Stripe.Invoice;
+    var custId = typeof failedInvoice.customer === 'string' ? failedInvoice.customer : (failedInvoice.customer as any)?.id;
+    if (custId) {
+      var { data: failUser } = await supabase.from('users').select('id,email,first_name').eq('stripe_customer_id', custId).single();
+      if (failUser) {
+        sendPlatformEmail({
+          userId: failUser.id,
+          email: failUser.email,
+          emailType: 'payment_failed',
+          firstName: failUser.first_name || '',
+        }).catch(function(err) { log.error('[StripeWebhook] payment_failed email failed:', { err: err?.message }); });
+      }
+    }
+  }
+
   res.json({ received: true });
 });
 stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
@@ -2039,143 +2102,238 @@ cronRouter.post('/weekly-digest', async (req, res) => {
   }
 });
 
-// ── Cron: Trial Reminders ─────────────────────────────────────────────────────
+// ── Cron: Lifecycle Emails (onboarding + trial + win-back) ──────────────────
 export const trialReminderRouter = Router();
 trialReminderRouter.post('/trial-reminders', async (req, res) => {
-  // Verify cron job secret
-  const cronSecret = req.headers['x-cron-secret'];
+  var cronSecret = req.headers['x-cron-secret'];
   if (cronSecret !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!resend) {
-    return res.status(500).json({ error: 'Resend not configured' });
-  }
-
   try {
-    // Get all trial and free users
-    const { data: users, error: usersError } = await supabase
+    // Get all users who are on trial or free (not yet paid)
+    var { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id,email,first_name,created_at,plan');
+      .select('id,email,first_name,created_at,plan,last_login_at');
 
     if (usersError) throw usersError;
 
-    let emailsSent = 0;
+    var emailsSent = 0;
+    var errors = 0;
 
-    for (const user of users ?? []) {
+    for (var i = 0; i < (users || []).length; i++) {
+      var user = users![i];
       try {
-        const createdAt = new Date(user.created_at);
-        const now = new Date();
-        const daysSinceSignup = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        var createdAt = new Date(user.created_at);
+        var now = new Date();
+        var daysSinceSignup = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        var isTrial = user.plan === 'trial' || user.plan === 'free';
+        var isPaid = user.plan === 'starter' || user.plan === 'growth' || user.plan === 'pro' || user.plan === 'agency';
 
-        // Day 1: Welcome email
-        if (daysSinceSignup === 1 && (user.plan === 'trial' || user.plan === 'free')) {
-          const { count: quizCount } = await supabase
-            .from('quizzes')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id);
+        // ── STAGE 1: ONBOARDING (trial/free users only) ──
 
-          // Only send if no quizzes created yet
-          if ((quizCount ?? 0) === 0) {
-            const html = `
-              <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
-                <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Welcome to Squarespell!</h1>
-                <p style="margin:0 0 24px;color:#888;font-size:14px">Your 7-day free trial starts now</p>
-
-                <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
-                  <h2 style="margin:0 0 12px;color:#f0f2f5;font-size:16px;font-weight:600">Get started in 3 steps</h2>
-                  <ol style="margin:0;padding-left:20px;color:#f0f2f5;font-size:14px;line-height:1.8">
-                    <li>Create your first quiz from your website URL</li>
-                    <li>Share it with your audience</li>
-                    <li>Collect leads and insights in real-time</li>
-                  </ol>
-                </div>
-
-                <a href="${APP_URL}/dashboard?tab=create" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Create Your First Quiz</a>
-
-                <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Questions? We're here to help</p>
-              </div>
-            `;
-
-            await resend.emails.send({
-              from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
-              to: user.email,
-              subject: 'Welcome to Squarespell - Create your first quiz',
-              html,
-            });
-
-            emailsSent++;
+        // Day 1: Getting started guide
+        if (daysSinceSignup === 1 && isTrial) {
+          var { count: qCount } = await supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('user_id', user.id);
+          if ((qCount || 0) === 0) {
+            var sent = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'getting_started', firstName: user.first_name || '' });
+            if (sent) emailsSent++;
           }
         }
 
-        // Day 5: Trial ending soon (2 days left)
-        if (daysSinceSignup === 5 && (user.plan === 'trial' || user.plan === 'free')) {
-          const html = `
-            <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
-              <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Your trial ends in 2 days</h1>
-              <p style="margin:0 0 24px;color:#888;font-size:14px">Upgrade to keep your quizzes and continue collecting leads</p>
-
-              <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
-                <h2 style="margin:0 0 12px;color:#f0f2f5;font-size:16px;font-weight:600">What you'll keep with Squarespell Pro</h2>
-                <ul style="margin:0;padding-left:20px;color:#f0f2f5;font-size:14px;line-height:1.8;list-style:none">
-                  <li style="margin-bottom:8px">✓ Unlimited quizzes</li>
-                  <li style="margin-bottom:8px">✓ Advanced analytics</li>
-                  <li style="margin-bottom:8px">✓ Unlimited lead collection</li>
-                  <li style="margin-bottom:8px">✓ Priority support</li>
-                </ul>
-              </div>
-
-              <a href="${MARKETING_URL}/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade Now</a>
-
-              <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Don't lose access to your quizzes</p>
-            </div>
-          `;
-
-          await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
-            to: user.email,
-            subject: 'Your Squarespell trial ends in 2 days',
-            html,
-          });
-
-          emailsSent++;
+        // Day 3: Template showcase
+        if (daysSinceSignup === 3 && isTrial) {
+          var sent2 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'template_showcase', firstName: user.first_name || '' });
+          if (sent2) emailsSent++;
         }
 
-        // Day 7: Trial expired
-        if (daysSinceSignup === 7 && (user.plan === 'trial' || user.plan === 'free')) {
-          const html = `
-            <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5">
-              <h1 style="font-size:28px;margin:0 0 8px;color:#D2FF1D">Your trial has expired</h1>
-              <p style="margin:0 0 24px;color:#888;font-size:14px">Upgrade now to keep your quizzes and continue collecting leads</p>
-
-              <div style="background:#0f1219;border-radius:12px;padding:20px;margin-bottom:20px">
-                <p style="margin:0;color:#f0f2f5;font-size:14px">Your quizzes are still here, but they're currently offline. Upgrade to your plan to reactivate them immediately.</p>
-              </div>
-
-              <a href="${MARKETING_URL}/pricing" style="display:block;width:100%;background:#D2FF1D;color:#07090c;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;text-align:center;box-sizing:border-box;margin-bottom:12px">Upgrade to Pro</a>
-
-              <p style="margin:0;padding-top:20px;border-top:1px solid #1a1f2e;color:#666;font-size:12px">Save your quiz data by upgrading today</p>
-            </div>
-          `;
-
-          await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
-            to: user.email,
-            subject: 'Restore your Squarespell quizzes - Upgrade now',
-            html,
-          });
-
-          emailsSent++;
+        // Day 5: First quiz nudge (only if they still have 0 quizzes)
+        if (daysSinceSignup === 5 && isTrial) {
+          var { count: qCount5 } = await supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('user_id', user.id);
+          if ((qCount5 || 0) === 0) {
+            var sent3 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'first_quiz_nudge', firstName: user.first_name || '' });
+            if (sent3) emailsSent++;
+          }
         }
-      } catch (e) {
-        log.error('Failed to send trial reminder', { userId: user.id, err: e });
+
+        // ── STAGE 2: TRIAL COUNTDOWN (trial/free users only, 14-day trial) ──
+
+        // Day 7: Halfway reminder
+        if (daysSinceSignup === 7 && isTrial) {
+          var { count: qc7 } = await supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('user_id', user.id);
+          var { count: lc7 } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', user.id);
+          var sent4 = await sendPlatformEmail({
+            userId: user.id, email: user.email, emailType: 'trial_day7_halfway', firstName: user.first_name || '',
+            data: { quizCount: qc7 || 0, leadCount: lc7 || 0 },
+          });
+          if (sent4) emailsSent++;
+        }
+
+        // Day 11: 3 days left
+        if (daysSinceSignup === 11 && isTrial) {
+          var sent5 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'trial_day11_3days', firstName: user.first_name || '' });
+          if (sent5) emailsSent++;
+        }
+
+        // Day 13: Last day warning
+        if (daysSinceSignup === 13 && isTrial) {
+          var sent6 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'trial_day13_lastday', firstName: user.first_name || '' });
+          if (sent6) emailsSent++;
+        }
+
+        // Day 14: Trial expired
+        if (daysSinceSignup === 14 && isTrial) {
+          var sent7 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'trial_day14_expired', firstName: user.first_name || '' });
+          if (sent7) emailsSent++;
+        }
+
+        // ── STAGE 5: WIN-BACK (paid users who went inactive) ──
+
+        if (isPaid && user.last_login_at) {
+          var lastLogin = new Date(user.last_login_at);
+          var daysSinceLogin = Math.floor((now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
+
+          // 7 days inactive
+          if (daysSinceLogin >= 7 && daysSinceLogin < 10) {
+            var sevenAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
+            var { count: rv } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('event_type', 'view').gte('created_at', sevenAgo);
+            var { count: rl } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', sevenAgo);
+            var sent8 = await sendPlatformEmail({
+              userId: user.id, email: user.email, emailType: 'winback_7d', firstName: user.first_name || '',
+              data: { recentViews: rv || 0, recentLeads: rl || 0 },
+            });
+            if (sent8) emailsSent++;
+          }
+
+          // 30 days inactive
+          if (daysSinceLogin >= 30 && daysSinceLogin < 33) {
+            var sent9 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'winback_30d', firstName: user.first_name || '' });
+            if (sent9) emailsSent++;
+          }
+
+          // 60 days inactive
+          if (daysSinceLogin >= 60 && daysSinceLogin < 63) {
+            var sent10 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'winback_60d', firstName: user.first_name || '' });
+            if (sent10) emailsSent++;
+          }
+        }
+
+      } catch (e: any) {
+        errors++;
+        log.error('[Lifecycle] Failed for user ' + user.id, { err: e?.message });
       }
     }
 
+    res.json({ success: true, sent: emailsSent, errors: errors, usersProcessed: (users || []).length });
+  } catch (err: any) {
+    log.error('[Lifecycle] Cron error:', { err: err?.message });
+    res.status(500).json({ error: err.message || 'Lifecycle cron failed' });
+  }
+});
+
+// ── Cron: Monthly Report ────────────────────────────────────────────────────
+trialReminderRouter.post('/monthly-report', async (req, res) => {
+  var cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    var { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id,email,first_name,plan')
+      .in('plan', ['starter', 'growth', 'pro', 'agency']);
+    if (usersError) throw usersError;
+
+    var emailsSent = 0;
+    var now = new Date();
+    var monthName = now.toLocaleString('en-US', { month: 'long' });
+    var thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString();
+
+    for (var i = 0; i < (users || []).length; i++) {
+      var user = users![i];
+      try {
+        var { data: quizzes } = await supabase.from('quizzes').select('id,title').eq('user_id', user.id);
+        var totalViews = 0; var totalCompletions = 0; var totalLeads = 0;
+        var topQuiz = '';  var topViews = 0;
+
+        for (var j = 0; j < (quizzes || []).length; j++) {
+          var quiz = quizzes![j];
+          var { count: v } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id).eq('event_type', 'view').gte('created_at', thirtyDaysAgo);
+          var { count: c } = await supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id).eq('event_type', 'complete').gte('created_at', thirtyDaysAgo);
+          var { count: l } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id).gte('created_at', thirtyDaysAgo);
+          totalViews += (v || 0); totalCompletions += (c || 0); totalLeads += (l || 0);
+          if ((v || 0) > topViews) { topViews = v || 0; topQuiz = quiz.title; }
+        }
+
+        if (totalViews === 0 && totalLeads === 0) continue;
+
+        var convRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
+        var sent = await sendPlatformEmail({
+          userId: user.id, email: user.email, emailType: 'monthly_report', firstName: user.first_name || '',
+          data: { monthName: monthName, stats: { views: totalViews, completions: totalCompletions, leads: totalLeads, conversionRate: convRate, topQuiz: topQuiz } },
+        });
+        if (sent) emailsSent++;
+      } catch (e: any) {
+        log.error('[MonthlyReport] Failed for user ' + user.id, { err: e?.message });
+      }
+    }
     res.json({ success: true, sent: emailsSent });
   } catch (err: any) {
-    log.error('Trial reminder error:', { err: err });
-    res.status(500).json({ error: err.message ?? 'Failed to send trial reminders' });
+    log.error('[MonthlyReport] Cron error:', { err: err?.message });
+    res.status(500).json({ error: err.message || 'Monthly report cron failed' });
+  }
+});
+
+// ── Cron: Lead Milestones + First Lead ──────────────────────────────────────
+trialReminderRouter.post('/lead-milestones', async (req, res) => {
+  var cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    var { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id,email,first_name');
+    if (usersError) throw usersError;
+
+    var emailsSent = 0;
+    var milestones = [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
+
+    for (var i = 0; i < (users || []).length; i++) {
+      var user = users![i];
+      try {
+        var { count: totalLeads } = await supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', user.id);
+        var count = totalLeads || 0;
+
+        // First lead congratulation
+        if (count === 1) {
+          var sent = await sendPlatformEmail({
+            userId: user.id, email: user.email, emailType: 'first_lead_congrats', firstName: user.first_name || '',
+            data: { leadCount: 1 },
+          });
+          if (sent) emailsSent++;
+        }
+
+        // Milestone emails
+        for (var m = 0; m < milestones.length; m++) {
+          if (count >= milestones[m]) {
+            var sent2 = await sendPlatformEmail({
+              userId: user.id, email: user.email,
+              emailType: 'lead_milestone',
+              firstName: user.first_name || '',
+              data: { milestone: milestones[m] },
+            });
+            if (sent2) emailsSent++;
+          }
+        }
+      } catch (e: any) {
+        log.error('[LeadMilestone] Failed for user ' + user.id, { err: e?.message });
+      }
+    }
+    res.json({ success: true, sent: emailsSent });
+  } catch (err: any) {
+    log.error('[LeadMilestone] Cron error:', { err: err?.message });
+    res.status(500).json({ error: err.message || 'Lead milestone cron failed' });
   }
 });
 

@@ -59,12 +59,18 @@ export async function attachUser(
     // Look up by clerk_user_id (text), not id (uuid)
     const { data: existing } = await supabase
       .from('users')
-      .select('id, clerk_user_id, plan, created_at')
+      .select('id, clerk_user_id, plan, created_at, last_login_at')
       .eq('clerk_user_id', req.userId)
       .single();
 
     if (existing) {
       req.dbUserId = existing.id;
+      // Update last_login_at for win-back email tracking (at most once per hour
+      // to avoid hammering the DB on every request)
+      var lastLogin = existing.last_login_at ? new Date(existing.last_login_at).getTime() : 0;
+      if (Date.now() - lastLogin > 3600000) {
+        Promise.resolve(supabase.from('users').update({ last_login_at: new Date().toISOString() }).eq('id', existing.id)).catch(function() {});
+      }
       return next();
     }
 
