@@ -377,6 +377,7 @@ interface DashboardShellProps {
   topbarRight?: ReactNode;
   contentPadding?: string;
   hideTopbar?: boolean;
+  hideSidebar?: boolean;
 }
 
 export function DashboardShell({
@@ -385,8 +386,12 @@ export function DashboardShell({
   topbarRight,
   contentPadding = '32px 32px 56px',
   hideTopbar = false,
+  hideSidebar,
 }: DashboardShellProps) {
   var pathname = usePathname();
+  // Auto-hide sidebar on editor routes to give maximum canvas space
+  var isOnEditor = isEditorRoute(pathname);
+  var shouldHideSidebar = hideSidebar !== undefined ? hideSidebar : isOnEditor;
   var router = useRouter();
   var { signOut } = useClerk();
   var { user } = useUser();
@@ -754,9 +759,9 @@ export function DashboardShell({
         }
       `}</style>
 
-      {sidebar}
+      {!shouldHideSidebar && sidebar}
       <CommandPalette />
-      <OnboardingTour />
+      {!shouldHideSidebar && <OnboardingTour />}
 
       {/* Scrim for mobile drawer */}
       {isMobile && mobileOpen && (
@@ -787,7 +792,7 @@ export function DashboardShell({
         }}
       >
         {/* Topbar */}
-        {!hideTopbar && (
+        {!hideTopbar && !shouldHideSidebar && (
         <header
           style={{
             position: 'sticky',
@@ -865,10 +870,10 @@ export function DashboardShell({
         )}
 
         {/* Persistent banner slot */}
-        <TopBanner token={bannerToken} />
+        {!shouldHideSidebar && <TopBanner token={bannerToken} />}
 
         {/* Page content */}
-        <main id="sq-main" style={{ flex: 1, padding: contentPadding, minWidth: 0 }}>{children}</main>
+        <main id="sq-main" style={{ flex: 1, padding: shouldHideSidebar ? 0 : contentPadding, minWidth: 0 }}>{children}</main>
       </div>
     </div>
   );
