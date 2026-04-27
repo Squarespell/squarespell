@@ -181,7 +181,7 @@ function isEditorRoute(pathname: string): boolean {
     '/dashboard/quizzes', '/dashboard/leads', '/dashboard/analytics',
     '/dashboard/integrations', '/dashboard/billing', '/dashboard/settings',
     '/dashboard/team', '/dashboard/emails', '/dashboard/segmentation',
-    '/dashboard/automations', '/dashboard/commerce', '/dashboard/translations',
+    '/dashboard/automations', '/dashboard/commerce',
     '/dashboard/brand-kit', '/dashboard/referrals', '/dashboard/embed',
     '/dashboard/admin', '/dashboard/trash',
   ];
@@ -218,11 +218,6 @@ var NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard/quizzes', label: 'All quizzes', icon: icons.quizzes, match: isQuizzesRoute },
       { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
-      { href: '/dashboard/translations', label: 'Translations', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/>
-        </svg>
-      ) },
     ],
   },
   {
