@@ -1789,9 +1789,18 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                 <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10 }}>{qb.subtitle}</div>
               )}
 
-              {/* Render by answerLayout / questionStyle */}
+              {/* Render by answerLayout / questionStyle — both selectors drive canvas */}
               {(function() {
+                /* Derive effective layout from both selectors:
+                   - answerLayout takes priority when explicitly set
+                   - questionStyle maps: buttons→list, cards→grid, imageChoice→grid, dropdown→list */
                 var layout = qb.answerLayout || 'list';
+                if (!qb.answerLayout || qb.answerLayout === 'list') {
+                  if (qb.questionStyle === 'cards') layout = 'grid';
+                  else if (qb.questionStyle === 'imageChoice') layout = 'grid';
+                  else if (qb.questionStyle === 'dropdown') layout = 'list';
+                  else layout = qb.answerLayout || 'list';
+                }
                 var hasImages = qb.options.some(function(o) { return !!o.imageUrl; });
 
                 /* Grid layout or imageChoice */
