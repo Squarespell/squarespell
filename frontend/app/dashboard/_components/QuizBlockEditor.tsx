@@ -417,6 +417,34 @@ function BlockCard({
           );
         }
 
+        /* Inline image upload for answer option cards */
+        function handleOptionImageUpload(optIndex: number, file: File) {
+          var reader = new FileReader();
+          reader.onload = function() {
+            var base64 = (reader.result as string).split(',')[1];
+            var doUp = function(token: string) {
+              fetch(API_BASE + '/api/media/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
+                body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
+              })
+              .then(function(res) { if (!res.ok) throw new Error('Upload failed'); return res.json(); })
+              .then(function(data) {
+                if (data.url) {
+                  var newOpts = qb!.options.slice();
+                  newOpts[optIndex] = Object.assign({}, newOpts[optIndex], { imageUrl: data.url });
+                  onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
+                }
+              })
+              .catch(function() {});
+            };
+            if (typeof window !== 'undefined' && (window as any).Clerk) {
+              (window as any).Clerk.session?.getToken().then(function(t: string) { doUp(t || ''); }).catch(function() { doUp(''); });
+            } else { doUp(''); }
+          };
+          reader.readAsDataURL(file);
+        }
+
         /* ---- GRID layout ---- */
         if (layout === 'grid') {
           return (
@@ -428,14 +456,19 @@ function BlockCard({
                     border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
                     background: '#fff', transition: 'border-color 0.15s',
                   }}>
-                    {opt.imageUrl ? (
-                      <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 70, objectFit: 'cover', display: 'block' }}
-                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    ) : (
-                      <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                      </div>
-                    )}
+                    <label style={{ cursor: 'pointer', display: 'block', position: 'relative' }}>
+                      {opt.imageUrl ? (
+                        <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 70, objectFit: 'cover', display: 'block' }}
+                          onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                          {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Click to upload</span>}
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
+                        onChange={function(e) { var f = e.target.files?.[0]; if (f) handleOptionImageUpload(oi, f); }} />
+                    </label>
                     <div style={{ padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ width: 20, height: 20, borderRadius: 5, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
                       {selected ? (
@@ -460,23 +493,26 @@ function BlockCard({
             <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {qb.options.map(function(opt, oi) {
                 return (
-                  <div key={opt.id} style={{
+                  <label key={opt.id} style={{
                     position: 'relative', borderRadius: 10, overflow: 'hidden',
                     border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
-                    minHeight: 80, display: 'flex', alignItems: 'flex-end',
+                    minHeight: 80, display: 'flex', alignItems: 'flex-end', cursor: 'pointer',
                   }}>
                     {opt.imageUrl ? (
                       <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
                         <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                        {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Click to upload</span>}
                       </div>
                     )}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
+                      onChange={function(e) { var f = e.target.files?.[0]; if (f) handleOptionImageUpload(oi, f); }} />
                     <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '6px 8px', background: opt.imageUrl ? 'linear-gradient(transparent, rgba(0,0,0,0.6))' : 'transparent' }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: opt.imageUrl ? '#fff' : C.TEXT }}>{LETTERS[oi]}. {opt.text || 'Option ' + LETTERS[oi]}</span>
                     </div>
-                  </div>
+                  </label>
                 );
               })}
             </div>
@@ -494,14 +530,18 @@ function BlockCard({
                     padding: selected ? '4px 4px 4px 8px' : '8px 10px',
                     borderRadius: 8, background: '#FFFFFF', border: '1px solid ' + C.BORDER,
                   }}>
-                    {opt.imageUrl ? (
-                      <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
-                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    ) : (
-                      <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                      </div>
-                    )}
+                    <label style={{ cursor: 'pointer', flexShrink: 0 }}>
+                      {opt.imageUrl ? (
+                        <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', display: 'block' }}
+                          onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
+                        onChange={function(e) { var f = e.target.files?.[0]; if (f) handleOptionImageUpload(oi, f); }} />
+                    </label>
                     <div style={{ width: 20, height: 20, borderRadius: 5, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
                     {selected ? (
                       <input value={opt.text} onChange={function(e) { updateOptionText(oi, e.target.value); }} onClick={function(e) { e.stopPropagation(); }} placeholder={'Option ' + LETTERS[oi]}
@@ -1102,12 +1142,14 @@ function BlockInspector({
   block,
   allBlocks,
   onChange,
+  onChangeAllQuestions,
   onDeselect,
   userPlan,
 }: {
   block: QuizBlock;
   allBlocks: QuizBlock[];
   onChange: (updated: QuizBlock) => void;
+  onChangeAllQuestions?: (key: string, value: any) => void;
   onDeselect?: () => void;
   userPlan?: UserPlan;
 }) {
@@ -1133,7 +1175,10 @@ function BlockInspector({
                 { value: 'multiple', label: 'Multi' },
               ]}
               value={qb.questionType || 'single'}
-              onChange={function(v) { updateField('questionType', v); }}
+              onChange={function(v) {
+                if (onChangeAllQuestions) { onChangeAllQuestions('questionType', v); }
+                else { updateField('questionType', v); }
+              }}
             />
           </div>
           {/* Answer layout — single control for how answers appear */}
@@ -1152,9 +1197,14 @@ function BlockInspector({
                     key={opt.value}
                     type="button"
                     onClick={function() {
-                      // Set answerLayout and sync questionStyle for the embed renderer
+                      // Apply layout to ALL questions
                       var style = opt.value === 'grid' ? 'cards' : opt.value === 'fullBackground' ? 'imageChoice' : opt.value === 'imageThumbnails' ? 'imageChoice' : 'buttons';
-                      onChange(Object.assign({}, block, { answerLayout: opt.value, questionStyle: style }));
+                      if (onChangeAllQuestions) {
+                        onChangeAllQuestions('answerLayout', opt.value);
+                        onChangeAllQuestions('questionStyle', style);
+                      } else {
+                        onChange(Object.assign({}, block, { answerLayout: opt.value, questionStyle: style }));
+                      }
                     }}
                     style={{
                       padding: '10px 8px', borderRadius: 8,
@@ -1214,87 +1264,7 @@ function BlockInspector({
           </div>
         </SidebarSection>
 
-        {/* Media — Squarespace-style image/video picker */}
-        <SidebarSection title="Media" defaultOpen={!!qb.mediaUrl}
-          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>}
-        >
-          <MediaPicker
-            mediaType={qb.mediaType}
-            mediaUrl={qb.mediaUrl || ''}
-            onChangeType={function(t) { updateField('mediaType', t); }}
-            onChangeUrl={function(url) { updateField('mediaUrl', url); }}
-            onClear={function() { updateField('mediaType', undefined); updateField('mediaUrl', ''); }}
-          />
-
-          {/* Answer images — shown for all layouts that support images */}
-          {(qb.answerLayout === 'grid' || qb.answerLayout === 'imageThumbnails' || qb.answerLayout === 'fullBackground' || qb.questionStyle === 'imageChoice') && (
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 8 }}>Answer images</div>
-              {qb.options.map(function(opt, oi) {
-                return (
-                  <div key={opt.id} style={{ marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, width: 16, textAlign: 'center' }}>{String.fromCharCode(65 + oi)}</span>
-                      <input
-                        value={opt.imageUrl || ''}
-                        onChange={function(e) {
-                          var newOpts = qb.options.slice();
-                          newOpts[oi] = Object.assign({}, opt, { imageUrl: e.target.value });
-                          updateField('options', newOpts);
-                        }}
-                        style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
-                        placeholder="Paste image URL or upload..."
-                      />
-                      <label style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 6, background: C.ACCENT, color: '#fff', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
-                        Upload
-                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={function(e) {
-                          var file = e.target.files?.[0];
-                          if (!file) return;
-                          var reader = new FileReader();
-                          reader.onload = function() {
-                            var base64 = (reader.result as string).split(',')[1];
-                            var token = '';
-                            var doUp = function(t: string) {
-                              fetch(API_BASE + '/api/media/upload', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', Authorization: t ? 'Bearer ' + t : '' },
-                                body: JSON.stringify({ data: base64, fileName: file!.name, contentType: file!.type }),
-                              })
-                              .then(function(res) { return res.json(); })
-                              .then(function(data) {
-                                if (data.url) {
-                                  var newOpts = qb.options.slice();
-                                  newOpts[oi] = Object.assign({}, qb.options[oi], { imageUrl: data.url });
-                                  updateField('options', newOpts);
-                                }
-                              })
-                              .catch(function() {});
-                            };
-                            if (typeof window !== 'undefined' && (window as any).Clerk) {
-                              (window as any).Clerk.session?.getToken().then(function(t: string) { doUp(t || ''); }).catch(function() { doUp(''); });
-                            } else { doUp(''); }
-                          };
-                          reader.readAsDataURL(file);
-                        }} />
-                      </label>
-                      {opt.imageUrl && (
-                        <button onClick={function() {
-                          var newOpts = qb.options.slice();
-                          newOpts[oi] = Object.assign({}, opt, { imageUrl: '' });
-                          updateField('options', newOpts);
-                        }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d44', fontSize: 14, padding: 2, flexShrink: 0 }} title="Remove image">×</button>
-                      )}
-                    </div>
-                    {opt.imageUrl && (
-                      <img src={opt.imageUrl} alt="" style={{ width: '100%', height: 48, borderRadius: 6, objectFit: 'cover', marginTop: 4, marginLeft: 22 }}
-                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </SidebarSection>
+        {/* Media section removed — image upload is now inline on grid/thumbnail cards */}
 
         {/* Section 4: Branching — collapsed by default */}
         <SidebarSection title={<>Branching{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}</>} defaultOpen={!!(qb.branchRules && qb.branchRules.length > 0)}
@@ -2352,16 +2322,77 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
   });
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '220px 1fr 380px',
-        gap: 0,
-        height: 'calc(100vh - 60px)',
-        overflow: 'hidden',
-      }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      {/* ── Top Bar ── */}
+      <div style={{
+        height: 56, minHeight: 56,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 20px',
+        borderBottom: '1px solid ' + C.BORDER,
+        background: C.SURFACE,
+        fontFamily: C.FONT + ',system-ui,sans-serif',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <a href="/dashboard/quizzes" style={{ display: 'flex', alignItems: 'center', color: C.TEXT_MUTED, textDecoration: 'none' }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </a>
+          <span style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.02em' }}>Quiz Editor</span>
+          <span style={{ fontSize: 12, color: C.TEXT_SUBTLE, fontWeight: 500 }}>
+            {blocks.filter(function(b) { return b.type === 'question'; }).length} questions
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            onClick={function() { setShowPreview(!showPreview); setSelectedId(null); }}
+            style={{
+              height: 34, padding: '0 14px', borderRadius: 8,
+              background: showPreview ? C.ACCENT_LIGHT : C.SURFACE,
+              border: '1px solid ' + (showPreview ? C.ACCENT + '40' : C.BORDER),
+              color: showPreview ? C.ACCENT : C.TEXT,
+              cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontFamily: C.FONT + ',system-ui,sans-serif',
+            }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx={12} cy={12} r={3} />
+            </svg>
+            Preview
+          </button>
+          <button
+            type="button"
+            style={{
+              height: 34, padding: '0 18px', borderRadius: 8,
+              background: C.ACCENT, border: 'none',
+              color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontFamily: C.FONT + ',system-ui,sans-serif',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+            }}
+            title="Changes are auto-saved"
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Published
+          </button>
+        </div>
+      </div>
+      {/* ── 3-Column Editor Grid ── */}
+      <div
+        ref={containerRef}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '220px 1fr 380px',
+          gap: 0,
+          flex: 1,
+          overflow: 'hidden',
+        }}
+      >
       {/* Left question sidebar — numbered question list */}
       <div style={{
         borderRight: '1px solid ' + C.BORDER,
@@ -2546,32 +2577,8 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
             <span style={{ fontSize: 12, color: C.TEXT_MUTED, fontWeight: 600 }}>
               {blocks.length} block{blocks.length !== 1 ? 's' : ''}
             </span>
-            <span style={{ fontSize: 12, color: C.TEXT_SUBTLE }}>
-              {blocks.filter(function(b) { return b.type === 'question'; }).length} questions
-            </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button
-              type="button"
-              onClick={function() { setShowPreview(!showPreview); setSelectedId(null); }}
-              title={showPreview ? 'Hide preview' : 'Show live preview'}
-              style={{
-                height: 30, padding: '0 10px', borderRadius: 6,
-                background: showPreview ? C.ACCENT_LIGHT : 'transparent',
-                border: showPreview ? '1px solid ' + C.ACCENT + '30' : 'none',
-                color: showPreview ? C.ACCENT : C.TEXT_MUTED,
-                cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 5,
-                fontFamily: 'Inter,system-ui,sans-serif',
-                marginRight: 4,
-              }}
-            >
-              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx={12} cy={12} r={3} />
-              </svg>
-              Preview
-            </button>
             <button
               type="button"
               onClick={function() { setShowSkipLogicModal(true); }}
@@ -2759,6 +2766,17 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               block={selectedBlock}
               allBlocks={blocks}
               onChange={updateBlock}
+              onChangeAllQuestions={function(key: string, value: any) {
+                var next = blocks.map(function(b) {
+                  if (b.type === 'question') {
+                    var update: Record<string, any> = {};
+                    update[key] = value;
+                    return Object.assign({}, b, update);
+                  }
+                  return b;
+                });
+                commit(next);
+              }}
               onDeselect={function() { setSelectedId(null); }}
               userPlan={userPlan}
             />
@@ -3154,6 +3172,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
