@@ -488,7 +488,7 @@ function BlockCard({
 
           /* Content area */
           var content = document.createElement('div');
-          content.style.cssText = 'flex:1;overflow-y:auto;min-height:280px';
+          content.style.cssText = 'flex:1;overflow:hidden;min-height:280px;display:flex;flex-direction:column';
           box.appendChild(content);
 
           modal.appendChild(box);
@@ -542,7 +542,7 @@ function BlockCard({
                 + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>'
                 + '<input id="stockSearch" type="text" placeholder="Search images..." style="flex:1;border:none;outline:none;font-size:14px;padding:10px 0;background:transparent;font-family:Inter,system-ui,sans-serif" />'
                 + '</div></div>'
-                + '<div id="stockResults" style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;overflow-y:auto;max-height:calc(82vh - 180px)">'
+                + '<div id="stockResults" style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;overflow-y:auto;flex:1;align-content:start">'
                 + '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">'
                 + '<div style="width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:#0D7377;border-radius:50%;margin:0 auto 8px;animation:spin 0.8s linear infinite"></div>'
                 + 'Loading images...</div></div>';
@@ -565,8 +565,8 @@ function BlockCard({
                 resultsDiv.innerHTML = '';
                 data.results.forEach(function(img: any) {
                   var card = document.createElement('div');
-                  card.style.cssText = 'border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s;aspect-ratio:1';
-                  card.innerHTML = '<img src="' + (img.thumb || img.url) + '" style="width:100%;height:100%;object-fit:cover;display:block" />';
+                  card.style.cssText = 'border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s';
+                  card.innerHTML = '<img src="' + (img.thumb || img.url) + '" style="width:100%;height:120px;object-fit:cover;display:block" />';
                   card.addEventListener('mouseenter', function() { card.style.borderColor = '#0D7377'; });
                   card.addEventListener('mouseleave', function() { card.style.borderColor = 'transparent'; });
                   card.addEventListener('click', function() {
