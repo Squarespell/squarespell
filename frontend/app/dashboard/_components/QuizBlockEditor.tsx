@@ -1491,7 +1491,21 @@ function BlockInspector({
           </div>
         </SidebarSection>
 
-        {/* Media section removed — image upload is now inline on grid/thumbnail cards */}
+        {/* Section 3: Question Media — image or video attached to the question itself */}
+        <SidebarSection title="Question Media" defaultOpen={!!(qb.mediaUrl)}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={2} y={2} width={20} height={20} rx={2.18} /><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5" /></svg>}
+        >
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.5 }}>
+            Add an image or video to display above the answer options.
+          </div>
+          <MediaPicker
+            mediaType={qb.mediaType}
+            mediaUrl={qb.mediaUrl || ''}
+            onChangeType={function(t) { updateField('mediaType', t); }}
+            onChangeUrl={function(u) { updateField('mediaUrl', u); }}
+            onClear={function() { updateField('mediaUrl', ''); updateField('mediaType', undefined); }}
+          />
+        </SidebarSection>
 
         {/* Section 4: Branching — collapsed by default */}
         <SidebarSection title={<>Branching{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}</>} defaultOpen={!!(qb.branchRules && qb.branchRules.length > 0)}
@@ -2153,11 +2167,16 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
             ) : null}
           </div>
 
-          {/* Media */}
+          {/* Media — image or video */}
           {qb.mediaUrl && qb.mediaType === 'image' && (
             <div style={{ marginBottom: 10, borderRadius: 8, overflow: 'hidden' }}>
               <img src={qb.mediaUrl} alt="" style={{ width: '100%', display: 'block', maxHeight: 160, objectFit: 'cover' }}
                 onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+          )}
+          {qb.mediaUrl && qb.mediaType === 'video' && (
+            <div style={{ marginBottom: 10, borderRadius: 8, overflow: 'hidden' }}>
+              <VideoEmbed url={qb.mediaUrl} />
             </div>
           )}
 
