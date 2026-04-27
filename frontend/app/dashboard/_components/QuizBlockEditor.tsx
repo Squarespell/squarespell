@@ -252,23 +252,23 @@ function BlockCard({
 
   function updateQuestionText(text: string) {
     if (!qb) return;
-    onChange({ ...qb, text: text } as QuizBlock);
+    onChange(Object.assign({}, qb, { text: text }) as QuizBlock);
   }
 
   function updateOptionText(optIdx: number, text: string) {
     if (!qb) return;
     var newOpts = qb.options.map(function(o, i) {
-      return i === optIdx ? { ...o, text: text } : o;
+      return i === optIdx ? Object.assign({}, o, { text: text }) : o;
     });
-    onChange({ ...qb, options: newOpts } as QuizBlock);
+    onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
   }
 
   function updateOptionScore(optIdx: number, score: number) {
     if (!qb) return;
     var newOpts = qb.options.map(function(o, i) {
-      return i === optIdx ? { ...o, score: score } : o;
+      return i === optIdx ? Object.assign({}, o, { score: score }) : o;
     });
-    onChange({ ...qb, options: newOpts } as QuizBlock);
+    onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
   }
 
   return (
@@ -585,7 +585,8 @@ function BlockCard({
               );
             })}
           </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
