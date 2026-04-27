@@ -84,15 +84,37 @@ export function OnboardingTour() {
   var [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   var tooltipRef = useRef<HTMLDivElement>(null);
 
-  // Check if tour should show
+  // Check if tour should show — only for genuinely new users.
+  // If the user already has quiz data on the page (sidebar shows questions),
+  // they're an existing user and we mark the tour as completed silently.
   useEffect(function() {
     try {
       var completed = localStorage.getItem(STORAGE_KEY);
-      if (!completed) {
-        // Small delay so page renders first
-        var timer = setTimeout(function() { setActive(true); }, 800);
-        return function() { clearTimeout(timer); };
+      if (completed) return;
+
+      // Existing users: if the page already has quiz content, skip tour
+      var hasQuizContent = document.querySelector('[data-tour="editor"]') &&
+        (document.querySelectorAll('[class*="question"]').length > 0 ||
+         document.querySelectorAll('[class*="block"]').length > 0);
+
+      // Also check if user signed up more than 5 minutes ago by looking
+      // for any meaningful dashboard data (stat cards with non-zero values)
+      var statCards = document.querySelectorAll('[class*="stat"], [class*="Stat"]');
+      var hasExistingData = false;
+      for (var i = 0; i < statCards.length; i++) {
+        var txt = statCards[i].textContent || '';
+        if (/[1-9]/.test(txt)) { hasExistingData = true; break; }
       }
+
+      if (hasQuizContent || hasExistingData) {
+        // Existing user — silently mark tour done
+        localStorage.setItem(STORAGE_KEY, 'true');
+        return;
+      }
+
+      // New user — show tour after a short delay
+      var timer = setTimeout(function() { setActive(true); }, 800);
+      return function() { clearTimeout(timer); };
     } catch(e) {
       // localStorage not available
     }
