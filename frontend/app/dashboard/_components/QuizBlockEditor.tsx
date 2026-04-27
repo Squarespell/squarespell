@@ -651,33 +651,35 @@ function BlockCard({
         };
 
         /* ---- GRID layout ---- */
+        /* Grid = small landscape image on top + prominent white text bar below */
         if (layout === 'grid') {
           return (
-            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {qb.options.map(function(opt, oi) {
                 return (
                   <div key={opt.id} style={{
                     borderRadius: 10, overflow: 'hidden',
                     border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
                     background: '#fff', transition: 'border-color 0.15s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                   }}>
                     <div style={{ position: 'relative' }}>
                       <div onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}
                         style={{ cursor: selected ? 'pointer' : 'default' }}>
                         {opt.imageUrl ? (
-                          <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
+                          <div style={{ aspectRatio: '16/9', overflow: 'hidden' }}>
                             <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                               onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                           </div>
                         ) : (
-                          <div style={{ aspectRatio: '4/3', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ aspectRatio: '16/9', background: '#F9FAFB', borderBottom: '1px solid #F2F4F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {selected ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                                <span style={{ fontSize: 11, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                                <span style={{ fontSize: 10, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
                               </div>
                             ) : (
-                              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                             )}
                           </div>
                         )}
@@ -692,16 +694,17 @@ function BlockCard({
           );
         }
 
-        /* ---- FULL BACKGROUND layout ---- */
+        /* ---- FULL IMAGE layout ---- */
+        /* Full Image = tall portrait card, image IS the entire card, text overlaid on dark gradient */
         if (layout === 'fullBackground') {
           return (
-            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {qb.options.map(function(opt, oi) {
                 return (
                   <div key={opt.id} style={{
-                    position: 'relative', borderRadius: 10, overflow: 'hidden',
-                    border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
-                    aspectRatio: '4/3', display: 'flex', alignItems: 'flex-end',
+                    position: 'relative', borderRadius: 12, overflow: 'hidden',
+                    border: '1px solid ' + (selected ? C.ACCENT + '40' : 'rgba(0,0,0,0.08)'),
+                    aspectRatio: '3/4', display: 'flex', alignItems: 'flex-end',
                     cursor: selected ? 'pointer' : 'default',
                   }}>
                     {opt.imageUrl ? (
@@ -709,27 +712,27 @@ function BlockCard({
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
                       <div onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}
-                        style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selected ? 'pointer' : 'default' }}>
+                        style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #1D2939 0%, #344054 50%, #475467 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selected ? 'pointer' : 'default' }}>
                         {selected ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                            <span style={{ fontSize: 11, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Add Image</span>
                           </div>
                         ) : (
-                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                          <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                         )}
                       </div>
                     )}
                     {opt.imageUrl && selected && imageOverlay(oi)}
-                    <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '20px 10px 8px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '28px 10px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.65))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(255,255,255,0.25)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0, backdropFilter: 'blur(4px)' }}>{LETTERS[oi]}</div>
+                        <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
                       </div>
                       <span style={{
                         fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 5,
-                        background: 'rgba(255,255,255,0.2)',
-                        color: '#fff', backdropFilter: 'blur(4px)',
+                        background: 'rgba(255,255,255,0.15)',
+                        color: 'rgba(255,255,255,0.9)',
                       }}>+{opt.score || 0}pts</span>
                     </div>
                   </div>
@@ -2181,20 +2184,21 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
               });
             }
 
+            /* Grid preview: landscape 16:9 image + white text bar */
             if (layout === 'grid' || qb.questionStyle === 'imageChoice') {
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {qb.options.map(function(opt, oi) {
                     return (
                       <div key={opt.id} onClick={function() { handleSelectAnswer(oi); }}
-                        style={optStyle(oi, { borderRadius: 10, overflow: 'hidden' })}>
+                        style={optStyle(oi, { borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' })}>
                         {opt.imageUrl ? (
-                          <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
+                          <div style={{ aspectRatio: '16/9', overflow: 'hidden' }}>
                             <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                               onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                           </div>
                         ) : (
-                          <div style={{ aspectRatio: '4/3', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ aspectRatio: '16/9', background: '#F9FAFB', borderBottom: '1px solid #F2F4F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                           </div>
                         )}
@@ -2209,6 +2213,7 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
               );
             }
 
+            /* List + Image preview: horizontal rows with 48px thumbnails */
             if (layout === 'imageThumbnails') {
               return qb.options.map(function(opt, oi) {
                 return (
@@ -2229,6 +2234,7 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
               });
             }
 
+            /* Full Image preview: tall portrait 3:4, dark background, overlaid text */
             if (layout === 'fullBackground') {
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -2237,15 +2243,15 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                     return (
                       <div key={opt.id} onClick={function() { handleSelectAnswer(oi); }}
                         style={{
-                          position: 'relative', borderRadius: 10, overflow: 'hidden',
-                          border: '2px solid ' + (isSel ? C.ACCENT : C.BORDER), cursor: 'pointer',
-                          aspectRatio: '4/3', display: 'flex', alignItems: 'flex-end',
+                          position: 'relative', borderRadius: 12, overflow: 'hidden',
+                          border: '2px solid ' + (isSel ? C.ACCENT : 'rgba(0,0,0,0.08)'), cursor: 'pointer',
+                          aspectRatio: '3/4', display: 'flex', alignItems: 'flex-end',
                           transition: 'all 0.15s ease',
-                          background: opt.imageUrl ? 'transparent' : 'linear-gradient(135deg, #F3F4F6, #E5E7EB)',
+                          background: opt.imageUrl ? 'transparent' : 'linear-gradient(160deg, #1D2939 0%, #344054 50%, #475467 100%)',
                         }}>
                         {opt.imageUrl && <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />}
-                        <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '20px 10px 8px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '28px 10px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ fontSize: 12, fontWeight: 600 }}>{opt.text || 'Option ' + String.fromCharCode(65 + oi)}</span>
                           <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.8 }}>+{opt.score || 0}pts</span>
                         </div>
