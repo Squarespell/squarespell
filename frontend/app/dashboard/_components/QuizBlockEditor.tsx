@@ -455,27 +455,84 @@ function BlockCard({
           onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
         }
 
-        /* Search Pexels for stock images */
-        function searchPexels(optIndex: number) {
-          var query = prompt('Search free stock images (Pexels):');
-          if (!query) return;
-          var doSearch = function(token: string) {
-            fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(query as string) + '&page=1', {
-              headers: { Authorization: token ? 'Bearer ' + token : '' },
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-              if (data.results && data.results.length > 0) {
-                setOptionImage(optIndex, data.results[0].url);
-              } else {
-                alert('No images found for "' + query + '". Try a different search term.');
-              }
-            })
-            .catch(function(err) { console.error('Pexels search error:', err); alert('Stock image search failed. Check your connection.'); });
-          };
-          if (typeof window !== 'undefined' && (window as any).Clerk) {
-            (window as any).Clerk.session?.getToken().then(function(t: string) { doSearch(t || ''); }).catch(function() { doSearch(''); });
-          } else { doSearch(''); }
+        /* Open Pexels image browser for a specific option */
+        function openImageBrowser(optIndex: number) {
+          var modal = document.createElement('div');
+          modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)';
+          var box = document.createElement('div');
+          box.style.cssText = 'background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,0.2)';
+          box.innerHTML = '<div style="padding:16px 20px;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;gap:10px">'
+            + '<div style="flex:1;display:flex;align-items:center;gap:8px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:0 12px">'
+            + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>'
+            + '<input id="pxSearch" type="text" placeholder="Search free images..." style="flex:1;border:none;outline:none;font-size:14px;padding:10px 0;background:transparent;font-family:Inter,system-ui,sans-serif" />'
+            + '</div>'
+            + '<button id="pxClose" style="width:34px;height:34px;border-radius:8px;border:1px solid #E5E7EB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085">'
+            + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>'
+            + '<div id="pxResults" style="flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;min-height:200px">'
+            + '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:14px">Type to search free stock images</div></div>'
+            + '<div style="padding:8px 16px;border-top:1px solid #E5E7EB;font-size:10px;color:#98A2B3;text-align:center">Images provided by Pexels</div>';
+          modal.appendChild(box);
+          document.body.appendChild(modal);
+
+          var searchInput = box.querySelector('#pxSearch') as HTMLInputElement;
+          var resultsDiv = box.querySelector('#pxResults') as HTMLDivElement;
+          var closeBtn = box.querySelector('#pxClose') as HTMLButtonElement;
+          var timer: any = null;
+
+          function close() { document.body.removeChild(modal); }
+          modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+          closeBtn.addEventListener('click', close);
+          searchInput.focus();
+
+          function doSearch(q: string) {
+            resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">Searching...</div>';
+            var fetchFn = function(token: string) {
+              fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(q) + '&page=1', {
+                headers: { Authorization: token ? 'Bearer ' + token : '' },
+              })
+              .then(function(res) { return res.json(); })
+              .then(function(data) {
+                if (!data.results || data.results.length === 0) {
+                  resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">No images found. Try another term.</div>';
+                  return;
+                }
+                resultsDiv.innerHTML = '';
+                data.results.forEach(function(img: any) {
+                  var card = document.createElement('div');
+                  card.style.cssText = 'border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s';
+                  card.innerHTML = '<img src="' + (img.thumb || img.url) + '" style="width:100%;height:100px;object-fit:cover;display:block" />';
+                  card.addEventListener('mouseenter', function() { card.style.borderColor = '#0D7377'; });
+                  card.addEventListener('mouseleave', function() { card.style.borderColor = 'transparent'; });
+                  card.addEventListener('click', function() {
+                    setOptionImage(optIndex, img.url || img.thumb);
+                    close();
+                  });
+                  resultsDiv.appendChild(card);
+                });
+              })
+              .catch(function() {
+                resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#EF4444;font-size:13px">Search failed. Check connection.</div>';
+              });
+            };
+            if (typeof window !== 'undefined' && (window as any).Clerk) {
+              (window as any).Clerk.session?.getToken().then(function(t: string) { fetchFn(t || ''); }).catch(function() { fetchFn(''); });
+            } else { fetchFn(''); }
+          }
+
+          searchInput.addEventListener('input', function() {
+            clearTimeout(timer);
+            var val = searchInput.value.trim();
+            if (val.length < 2) return;
+            timer = setTimeout(function() { doSearch(val); }, 400);
+          });
+          searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') close();
+            if (e.key === 'Enter') {
+              clearTimeout(timer);
+              var val = searchInput.value.trim();
+              if (val) doSearch(val);
+            }
+          });
         }
 
         /* ---- GRID layout ---- */
@@ -494,10 +551,15 @@ function BlockCard({
                         <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 70, objectFit: 'cover', display: 'block' }}
                           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       ) : (
-                        <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
-                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                          {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Upload</span>}
-                          {selected && <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); searchPexels(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>or Pexels</span>}
+                        <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                          {selected ? (
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <span style={{ fontSize: 9, color: C.TEXT_MUTED, fontWeight: 600, padding: '2px 6px', background: '#F2F4F7', borderRadius: 4 }}>Upload</span>
+                              <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImageBrowser(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', padding: '2px 6px', background: C.ACCENT_LIGHT, borderRadius: 4 }}>Browse</span>
+                            </div>
+                          ) : (
+                            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                          )}
                         </div>
                       )}
                       <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
@@ -512,7 +574,7 @@ function BlockCard({
                       ) : (
                         <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: C.TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
                       )}
-                      {!selected && scoreBadge(opt)}
+                      {scoreBadge(opt)}
                     </div>
                   </div>
                 );
@@ -536,10 +598,15 @@ function BlockCard({
                       <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
-                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                        {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Upload</span>}
-                        {selected && <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); searchPexels(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>or Pexels</span>}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                        {selected ? (
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <span style={{ fontSize: 9, color: C.TEXT_MUTED, fontWeight: 600, padding: '2px 6px', background: 'rgba(255,255,255,0.8)', borderRadius: 4 }}>Upload</span>
+                            <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImageBrowser(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', padding: '2px 6px', background: 'rgba(255,255,255,0.8)', borderRadius: 4 }}>Browse</span>
+                          </div>
+                        ) : (
+                          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                        )}
                       </div>
                     )}
                     <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
@@ -2602,6 +2669,10 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
         padding: '24px 32px', overflowY: 'auto', height: '100%',
         scrollbarWidth: 'thin' as const, scrollbarColor: '#D0D5DD transparent',
       }}>
+        {showPreview ? (
+          <LivePreview blocks={blocks} />
+        ) : (
+        <>
         {/* Toolbar */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -2740,8 +2811,8 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
           <strong style={{ color: C.TEXT_MUTED }}>Shortcuts:</strong>{' '}
           Cmd+N add question, Cmd+D duplicate, Alt+Arrow reorder, Delete remove, Cmd+Z undo, Escape deselect
         </div>
-
-        {showPreview && <LivePreview blocks={blocks} />}
+        </>
+        )}
       </div>
 
       {/* Sidebar — always visible, independently scrollable */}
