@@ -19,6 +19,9 @@ export type QuizBlockType =
 
 export type QuestionStyle = 'buttons' | 'cards' | 'dropdown' | 'imageChoice';
 
+/** Visual layout for answer options — how answers are arranged on screen */
+export type AnswerLayout = 'list' | 'grid' | 'imageThumbnails' | 'fullBackground';
+
 export interface BaseQuizBlock {
   id: string;
   type: QuizBlockType;
@@ -42,6 +45,9 @@ export interface QuestionBlock extends BaseQuizBlock {
   text: string;
   subtitle?: string;
   questionStyle: QuestionStyle;
+  /** Visual layout for answer rendering: list (vertical), grid (2x2),
+   *  imageThumbnails (list with image previews), fullBackground (image fills option) */
+  answerLayout?: AnswerLayout;
   options: QuestionOption[];
   required?: boolean;
   branchRules?: BranchRule[];

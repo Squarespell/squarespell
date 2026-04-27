@@ -1406,7 +1406,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'product_recommendation',
     category: 'Ecommerce',
     name: 'Product Recommendation Quiz',
-    description: 'Match shoppers to their perfect product based on style, budget, and preferences. Proven to increase average order value by personalizing the shopping experience.',
+    description: 'Increase average order value by 15-30% by matching shoppers to their perfect product. Captures emails, reduces decision fatigue, and drives higher cart values through personalized recommendations.',
     audience: 'Online stores, DTC brands, product-based businesses',
     whyItWorks: 'Brands like Warby Parker and Function of Beauty built empires on recommendation quizzes. They reduce decision fatigue and drive higher cart values.',
     iconPath: 'M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82zM7 7h.01',
@@ -1417,7 +1417,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'personalized_skincare',
     category: 'Beauty & Wellness',
     name: 'Personalized Skincare Quiz',
-    description: 'Build a custom skincare routine based on skin type, concerns, and lifestyle. The most popular quiz format for beauty brands with 40-60% completion rates.',
+    description: 'Capture 40-60% more leads than static forms by guiding visitors through a personalized skincare routine. Builds trust, grows your email list, and drives product bundle sales in a single interaction.',
     audience: 'Skincare brands, beauty retailers, estheticians, dermatologists',
     whyItWorks: 'Customers genuinely need help choosing skincare. This quiz builds trust, captures emails, and drives product bundle sales in a single interaction.',
     iconPath: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM9 9h.01M15 9h.01M8 14s1.5 2 4 2 4-2 4-2',
@@ -1428,7 +1428,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'customer_feedback',
     category: 'Feedback',
     name: 'Customer Feedback Survey',
-    description: 'Collect post-purchase satisfaction data with a conversational, engaging format. Covers product quality, delivery, and likelihood to recommend.',
+    description: 'Get 3x more customer feedback than traditional surveys. The conversational format boosts completion rates, surfaces actionable insights, and identifies at-risk customers before they churn.',
     audience: 'Ecommerce brands, SaaS companies, service businesses',
     whyItWorks: 'One-question-at-a-time feedback forms get 3x higher completion than traditional surveys. The conversational format feels like a chat, not a chore.',
     iconPath: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2zM8 10h.01M12 10h.01M16 10h.01',
@@ -1439,7 +1439,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'product_research',
     category: 'Research',
     name: 'Product Research Survey',
-    description: 'Understand your target audience: how they found you, what they think of your product, and how you compare to alternatives.',
+    description: 'Validate product ideas and uncover competitive gaps before investing in development. Collects richer, more honest data than email surveys by guiding respondents through one question at a time.',
     audience: 'Product teams, startups, marketing departments',
     whyItWorks: 'Research surveys that feel like conversations get richer, more honest data. Conditional logic skips irrelevant questions so respondents stay engaged.',
     iconPath: 'M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z',
@@ -1450,7 +1450,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'lead_generation',
     category: 'Lead Generation',
     name: 'Lead Generation Quiz',
-    description: 'Qualify leads automatically by asking about business size, challenges, budget, and timeline. Routes prospects to the right service tier.',
+    description: 'Generate 3-5x more leads than static contact forms. Prospects self-qualify by answering questions about their needs, so your sales team only talks to high-intent buyers ready to convert.',
     audience: 'B2B companies, agencies, SaaS, professional services',
     whyItWorks: 'Assessment-style quizzes generate 3-5x more leads than static forms. Prospects self-qualify by answering questions, making sales conversations more efficient.',
     iconPath: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM22 8l-4 4-2-2',
@@ -1461,7 +1461,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'product_feedback',
     category: 'Feedback',
     name: 'Product Feedback Survey',
-    description: 'Gather actionable product feedback on features, usability, and satisfaction. Identifies power users and at-risk customers.',
+    description: 'Reduce churn by catching at-risk users early and identifying your biggest fans. Goes beyond NPS to understand which features matter, what frustrates users, and what to build next.',
     audience: 'SaaS companies, product teams, digital products',
     whyItWorks: 'Goes beyond NPS to understand which features matter, what frustrates users, and what to build next. The segmented results help prioritize your roadmap.',
     iconPath: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
@@ -1472,7 +1472,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'event_feedback',
     category: 'Events',
     name: 'Event Feedback Form',
-    description: 'Collect attendee feedback on content, speakers, venue, and logistics. Perfect for conferences, workshops, and corporate events.',
+    description: 'Get 4x more post-event responses by collecting feedback while the experience is fresh. Captures actionable insights on content, speakers, and logistics to make your next event even better.',
     audience: 'Event organizers, conference producers, corporate events teams',
     whyItWorks: 'Post-event feedback collected within 24 hours gets 4x more responses. The engaging format captures insights while the experience is still fresh.',
     iconPath: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
@@ -1483,7 +1483,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'employee_satisfaction',
     category: 'Human Resources',
     name: 'Employee Satisfaction Survey',
-    description: 'Anonymous pulse survey covering job satisfaction, management quality, company culture, recognition, and leadership confidence.',
+    description: 'Get 2x more honest employee feedback with anonymous, conversational surveys. Flags teams and topics that need attention so you can act before engagement drops.',
     audience: 'HR teams, people operations, company leadership',
     whyItWorks: 'Anonymous, conversational surveys get 2x more honest responses than traditional engagement surveys. The scoring system flags teams and topics that need attention.',
     iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
@@ -1494,7 +1494,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'custom_apparel',
     category: 'Ecommerce',
     name: 'Custom Apparel Order',
-    description: 'Capture custom t-shirt and merch orders with style selection, quantity, design readiness, and timeline. Visual product choices included.',
+    description: 'Eliminate back-and-forth emails by capturing complete custom orders upfront. Visual product choices let customers see exactly what they are ordering, producing clean, actionable orders every time.',
     audience: 'Print shops, merch companies, promotional product suppliers',
     whyItWorks: 'Image choice questions let customers see exactly what they are ordering. The guided flow eliminates back-and-forth emails and produces clean, actionable orders.',
     iconPath: 'M20.38 3.46L16 2 12 5.5 8 2 3.62 3.46A2 2 0 002 5.4V21a1 1 0 001.5.86L8 19l4 3 4-3 4.5 2.86A1 1 0 0022 21V5.4a2 2 0 00-1.62-1.94z',
@@ -1505,7 +1505,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'subscription_renewal',
     category: 'SaaS',
     name: 'Subscription Renewal',
-    description: 'Streamline renewals by assessing satisfaction, feature usage, and upgrade interest. Routes customers to the right renewal offer.',
+    description: 'Reduce churn and boost upsells by proactively routing customers to personalized renewal offers. Catches at-risk accounts early and converts satisfied users into higher-tier plans.',
     audience: 'SaaS companies, subscription services, membership platforms',
     whyItWorks: 'Proactive renewal quizzes reduce churn by catching at-risk customers early and upselling satisfied ones. The personalized offers feel helpful, not pushy.',
     iconPath: 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
@@ -1516,7 +1516,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'data_capture',
     category: 'Lead Generation',
     name: 'Data Capture Form',
-    description: 'Capture contact information and buying intent through an engaging, conversational flow. Routes prospects by readiness level.',
+    description: 'Boost form completion rates by 40% with a conversational flow that feels like a chat, not a data extraction. Captures contact info and buying intent, then routes prospects by readiness level.',
     audience: 'Any business collecting leads — agencies, SaaS, services, ecommerce',
     whyItWorks: 'Conversational forms get 40% higher completion rates than static forms. Each question feels like a natural conversation, not a data extraction.',
     iconPath: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
@@ -1527,7 +1527,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'ecommerce_lead_gen',
     category: 'Ecommerce',
     name: 'Ecommerce Lead Gen Quiz',
-    description: 'Convert browsers into subscribers with a visual style preference quiz. Image-rich questions and curated product recommendations drive email signups.',
+    description: 'Grow your email list 60% faster with image-rich style quizzes that visitors actually want to complete. Personalized product recommendations give visitors an irresistible reason to hand over their email.',
     audience: 'Online stores, jewelry brands, home goods, fashion, beauty',
     whyItWorks: 'Visual quizzes with image choice questions see 60% higher engagement than text-only forms. The personalized results create an irresistible reason to hand over an email.',
     iconPath: 'M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0',
@@ -1538,7 +1538,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'trivia_challenge',
     category: 'Engagement',
     name: 'Trivia Challenge',
-    description: 'Test audience knowledge with scored questions and detailed answer explanations. Builds authority, drives sharing, and captures leads before revealing results.',
+    description: 'Drive viral sharing and build authority with scored trivia that visitors can not resist completing. Captures leads before revealing results, and the competitive format drives repeat visits and social shares.',
     audience: 'Educators, bloggers, thought leaders, course creators, brands',
     whyItWorks: 'Trivia quizzes trigger curiosity and competitiveness. The scored format drives repeat visits and social sharing, while explanations position you as the expert.',
     iconPath: 'M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z',
@@ -1557,4 +1557,26 @@ export function getTemplateCategories(): string[] {
     if (cats.indexOf(t.category) === -1) cats.push(t.category);
   });
   return cats;
+}
+
+/**
+ * Get the hero/thumbnail image for a template.
+ * Uses the mediaUrl from the first question block.
+ */
+export function getTemplateThumbnail(id: string): string {
+  var tpl = findTemplateData(id);
+  if (!tpl) return '';
+  var blocks = tpl.blocks();
+  var firstQ = blocks.find(function(b) { return b.type === 'question'; }) as any;
+  return (firstQ && firstQ.mediaUrl) || '';
+}
+
+/**
+ * Get the question count for a template (without exposing full blocks).
+ */
+export function getTemplateQuestionCount(id: string): number {
+  var tpl = findTemplateData(id);
+  if (!tpl) return 0;
+  var blocks = tpl.blocks();
+  return blocks.filter(function(b) { return b.type === 'question'; }).length;
 }

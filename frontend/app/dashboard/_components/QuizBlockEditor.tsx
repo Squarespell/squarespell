@@ -28,6 +28,8 @@ import {
   OutcomeBlock,
   LeadGateBlock,
   LogicBlock,
+  BranchRule,
+  AnswerLayout,
   QUIZ_PALETTE,
   createDefaultQuizBlock,
   uid,
@@ -567,7 +569,7 @@ function SidebarSection({
   defaultOpen,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   icon?: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
@@ -976,11 +978,13 @@ function BlockInspector({
   allBlocks,
   onChange,
   onDeselect,
+  userPlan,
 }: {
   block: QuizBlock;
   allBlocks: QuizBlock[];
   onChange: (updated: QuizBlock) => void;
   onDeselect?: () => void;
+  userPlan?: UserPlan;
 }) {
   function updateField(key: string, value: any) {
     onChange(Object.assign({}, block, { [key]: value }));
@@ -1019,6 +1023,39 @@ function BlockInspector({
               value={qb.questionStyle}
               onChange={function(v) { updateField('questionStyle', v); }}
             />
+          </div>
+          {/* Answer layout — visual arrangement of options */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 8 }}>Answer layout</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {([
+                { value: 'list', label: 'List', icon: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01' },
+                { value: 'grid', label: '2×2 Grid', icon: 'M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z' },
+                { value: 'imageThumbnails', label: 'Thumbnails', icon: 'M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM8.5 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 15l-5-5L5 21' },
+                { value: 'fullBackground', label: 'Full Image', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 15l4-4 4 4 4-4 4 4' },
+              ] as { value: string; label: string; icon: string }[]).map(function(opt) {
+                var isActive = (qb.answerLayout || 'list') === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={function() { updateField('answerLayout', opt.value); }}
+                    style={{
+                      padding: '10px 8px', borderRadius: 8,
+                      border: '1.5px solid ' + (isActive ? C.ACCENT : C.BORDER),
+                      background: isActive ? C.ACCENT_LIGHT : 'transparent',
+                      cursor: 'pointer', display: 'flex', flexDirection: 'column' as const,
+                      alignItems: 'center', gap: 5, fontFamily: C.FONT + ',system-ui,sans-serif',
+                    }}
+                  >
+                    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={isActive ? C.ACCENT : C.TEXT_MUTED} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d={opt.icon} />
+                    </svg>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: isActive ? C.ACCENT : C.TEXT_MUTED }}>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {/* Add / remove options */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
@@ -1103,7 +1140,7 @@ function BlockInspector({
         </SidebarSection>
 
         {/* Section 4: Branching — collapsed by default */}
-        <SidebarSection title="Branching" defaultOpen={!!(qb.branchRules && qb.branchRules.length > 0)}
+        <SidebarSection title={<>Branching{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}</>} defaultOpen={!!(qb.branchRules && qb.branchRules.length > 0)}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>}
         >
           <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 14, lineHeight: 1.5 }}>
@@ -1138,7 +1175,7 @@ function BlockInspector({
         </SidebarSection>
 
         {/* Section 5: Advanced — collapsed */}
-        <SidebarSection title="Advanced" defaultOpen={false}
+        <SidebarSection title={<>Advanced{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}</>} defaultOpen={false}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={12} cy={12} r={3} /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>}
         >
           {/* Timer */}
@@ -1348,7 +1385,7 @@ function BlockInspector({
         </SidebarSection>
 
         {/* Section: Social sharing */}
-        <SidebarSection title="Social sharing" defaultOpen={ob.shareEnabled || false}
+        <SidebarSection title={<>Social sharing{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}</>} defaultOpen={ob.shareEnabled || false}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={18} cy={5} r={3} /><circle cx={6} cy={12} r={3} /><circle cx={18} cy={19} r={3} /><line x1={8.59} y1={13.51} x2={15.42} y2={17.49} /><line x1={15.41} y1={6.51} x2={8.59} y2={10.49} /></svg>}
         >
           <label style={{
@@ -1848,16 +1885,49 @@ export interface QuizSettings {
   shuffle_questions?: boolean;
   show_progress_bar?: boolean;
   transition_type?: 'slide' | 'fade' | 'scale' | 'none';
+  remove_branding?: boolean;
+  enable_recaptcha?: boolean;
+  custom_css?: string;
 }
+
+export type UserPlan = 'free' | 'trial' | 'starter' | 'pro' | 'agency';
 
 export interface QuizBlockEditorProps {
   blocks: QuizBlock[];
   onChange: (blocks: QuizBlock[]) => void;
   settings?: QuizSettings;
   onSettingsChange?: (settings: QuizSettings) => void;
+  userPlan?: UserPlan;
 }
 
-export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange }: QuizBlockEditorProps) {
+/** Plan badge shown inline next to gated features */
+function PlanBadge({ requiredPlan }: { requiredPlan: 'starter' | 'pro' | 'agency' }) {
+  var colors: Record<string, { bg: string; text: string }> = {
+    starter: { bg: '#EFF6FF', text: '#2563EB' },
+    pro: { bg: '#F5F3FF', text: '#7C3AED' },
+    agency: { bg: '#FFF7ED', text: '#EA580C' },
+  };
+  var c = colors[requiredPlan] || colors.pro;
+  return (
+    <span style={{
+      fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+      background: c.bg, color: c.text, textTransform: 'uppercase', letterSpacing: '0.04em',
+      marginLeft: 6, verticalAlign: 'middle',
+    }}>
+      {requiredPlan}
+    </span>
+  );
+}
+
+/** Check if user's plan includes the required tier */
+function hasPlanAccess(userPlan: UserPlan | undefined, required: 'starter' | 'pro' | 'agency'): boolean {
+  var tiers: Record<string, number> = { free: 0, trial: 0, starter: 1, pro: 2, agency: 3 };
+  var userTier = tiers[userPlan || 'free'] || 0;
+  var requiredTier = tiers[required] || 0;
+  return userTier >= requiredTier;
+}
+
+export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange, userPlan }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
   var [selectedId, setSelectedId] = useState<string | null>(null);
@@ -2030,6 +2100,8 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
     return function() { window.removeEventListener('keydown', handleKey); };
   }, [blocks, selectedId, history]);
 
+  var [showSkipLogicModal, setShowSkipLogicModal] = useState(false);
+
   // Close inserter on outside click
   useEffect(function() {
     function handleClick(e: MouseEvent) {
@@ -2045,17 +2117,197 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
   // Count questions for numbering
   var questionCounter = 0;
 
+  /* ------------------------------------------------------------------ */
+  /*  Left question sidebar helpers                                      */
+  /* ------------------------------------------------------------------ */
+  var questionBlocks = blocks.filter(function(b) { return b.type === 'question'; });
+  var outcomeBlocks = blocks.filter(function(b) { return b.type === 'outcome'; });
+  var hasLeadGate = blocks.some(function(b) { return b.type === 'leadGate'; });
+  var otherBlocks = blocks.filter(function(b) {
+    return b.type !== 'question' && b.type !== 'outcome' && b.type !== 'leadGate';
+  });
+
   return (
     <div
       ref={containerRef}
       style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 380px',
+        gridTemplateColumns: '220px 1fr 380px',
         gap: 0,
         height: 'calc(100vh - 60px)',
         overflow: 'hidden',
       }}
     >
+      {/* Left question sidebar — numbered question list */}
+      <div style={{
+        borderRight: '1px solid ' + C.BORDER,
+        background: C.SURFACE,
+        overflowY: 'auto', height: '100%',
+        scrollbarWidth: 'thin' as const, scrollbarColor: '#D0D5DD transparent',
+        padding: '16px 0',
+      }}>
+        {/* Section: Questions */}
+        <div style={{ padding: '0 12px', marginBottom: 6 }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: C.TEXT_SUBTLE,
+            textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 4px',
+            marginBottom: 8,
+          }}>
+            Questions ({questionBlocks.length})
+          </div>
+        </div>
+        {questionBlocks.map(function(qBlock, qi) {
+          var q = qBlock as QuestionBlock;
+          var isSelected = selectedId === q.id;
+          return (
+            <button
+              key={q.id}
+              type="button"
+              onClick={function() { setSelectedId(q.id); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                width: '100%', padding: '8px 16px', border: 'none', cursor: 'pointer',
+                background: isSelected ? C.ACCENT_LIGHT : 'transparent',
+                borderLeft: isSelected ? '3px solid ' + C.ACCENT : '3px solid transparent',
+                fontSize: 12, fontWeight: isSelected ? 600 : 500,
+                color: isSelected ? C.ACCENT : C.TEXT,
+                fontFamily: 'Inter,system-ui,sans-serif',
+                textAlign: 'left', transition: 'all 0.1s ease',
+              }}
+            >
+              <span style={{
+                width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                background: isSelected ? C.ACCENT : C.BORDER,
+                color: isSelected ? '#fff' : C.TEXT_MUTED,
+                fontSize: 11, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {qi + 1}
+              </span>
+              <span style={{
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+                flex: 1,
+              }}>
+                {q.text || 'Untitled question'}
+              </span>
+            </button>
+          );
+        })}
+
+        {/* Section: Closings (outcomes + lead gate) */}
+        {(outcomeBlocks.length > 0 || hasLeadGate) && (
+          <>
+            <div style={{
+              borderTop: '1px solid ' + C.BORDER, margin: '12px 12px 6px',
+            }} />
+            <div style={{ padding: '0 12px', marginBottom: 6 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 700, color: C.TEXT_SUBTLE,
+                textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 4px',
+                marginBottom: 8,
+              }}>
+                Closings
+              </div>
+            </div>
+            {hasLeadGate && (
+              <button
+                type="button"
+                onClick={function() {
+                  var lg = blocks.find(function(b) { return b.type === 'leadGate'; });
+                  if (lg) setSelectedId(lg.id);
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  width: '100%', padding: '8px 16px', border: 'none', cursor: 'pointer',
+                  background: selectedId && blocks.find(function(b) { return b.id === selectedId && b.type === 'leadGate'; }) ? C.ACCENT_LIGHT : 'transparent',
+                  borderLeft: selectedId && blocks.find(function(b) { return b.id === selectedId && b.type === 'leadGate'; }) ? '3px solid ' + C.ACCENT : '3px solid transparent',
+                  fontSize: 12, fontWeight: 500,
+                  color: C.TEXT, fontFamily: 'Inter,system-ui,sans-serif',
+                  textAlign: 'left',
+                }}
+              >
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x={3} y={11} width={18} height={11} rx={2} ry={2} />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+                Lead Gate
+              </button>
+            )}
+            {outcomeBlocks.map(function(oBlock, oi) {
+              var o = oBlock as OutcomeBlock;
+              var isSelected = selectedId === o.id;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={function() { setSelectedId(o.id); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    width: '100%', padding: '8px 16px', border: 'none', cursor: 'pointer',
+                    background: isSelected ? C.ACCENT_LIGHT : 'transparent',
+                    borderLeft: isSelected ? '3px solid ' + C.ACCENT : '3px solid transparent',
+                    fontSize: 12, fontWeight: isSelected ? 600 : 500,
+                    color: isSelected ? C.ACCENT : C.TEXT,
+                    fontFamily: 'Inter,system-ui,sans-serif',
+                    textAlign: 'left',
+                  }}
+                >
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={isSelected ? C.ACCENT : C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, flex: 1 }}>
+                    {o.title || 'Outcome ' + (oi + 1)}
+                  </span>
+                </button>
+              );
+            })}
+          </>
+        )}
+
+        {/* Section: Other blocks */}
+        {otherBlocks.length > 0 && (
+          <>
+            <div style={{
+              borderTop: '1px solid ' + C.BORDER, margin: '12px 12px 6px',
+            }} />
+            <div style={{ padding: '0 12px', marginBottom: 6 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 700, color: C.TEXT_SUBTLE,
+                textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 4px',
+                marginBottom: 8,
+              }}>
+                Content ({otherBlocks.length})
+              </div>
+            </div>
+            {otherBlocks.map(function(oBlock) {
+              var isSelected = selectedId === oBlock.id;
+              return (
+                <button
+                  key={oBlock.id}
+                  type="button"
+                  onClick={function() { setSelectedId(oBlock.id); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    width: '100%', padding: '8px 16px', border: 'none', cursor: 'pointer',
+                    background: isSelected ? C.ACCENT_LIGHT : 'transparent',
+                    borderLeft: isSelected ? '3px solid ' + C.ACCENT : '3px solid transparent',
+                    fontSize: 12, fontWeight: isSelected ? 600 : 500,
+                    color: isSelected ? C.ACCENT : C.TEXT,
+                    fontFamily: 'Inter,system-ui,sans-serif',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, flex: 1 }}>
+                    {blockLabel(oBlock)}
+                  </span>
+                </button>
+              );
+            })}
+          </>
+        )}
+      </div>
+
       {/* Canvas — independently scrollable */}
       <div style={{
         padding: '24px 32px', overflowY: 'auto', height: '100%',
@@ -2095,6 +2347,26 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
                 <circle cx={12} cy={12} r={3} />
               </svg>
               Preview
+            </button>
+            <button
+              type="button"
+              onClick={function() { setShowSkipLogicModal(true); }}
+              title="Skip logic overview"
+              style={{
+                height: 30, padding: '0 10px', borderRadius: 6,
+                background: showSkipLogicModal ? C.ACCENT_LIGHT : 'transparent',
+                border: showSkipLogicModal ? '1px solid ' + C.ACCENT + '30' : 'none',
+                color: showSkipLogicModal ? C.ACCENT : C.TEXT_MUTED,
+                cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 5,
+                fontFamily: 'Inter,system-ui,sans-serif',
+                marginRight: 4,
+              }}
+            >
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+              </svg>
+              Skip Logic{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}
             </button>
             <button
               type="button"
@@ -2264,6 +2536,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               allBlocks={blocks}
               onChange={updateBlock}
               onDeselect={function() { setSelectedId(null); }}
+              userPlan={userPlan}
             />
           </>
         ) : (
@@ -2388,6 +2661,86 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
                   }}
                 />
               </div>
+
+              {/* Remove Squarespell branding — Pro */}
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'pro') ? 'pointer' : 'not-allowed',
+                padding: '14px 16px', background: C.SURFACE, borderRadius: 12,
+                border: '1px solid ' + C.BORDER, marginTop: 10,
+                opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.6,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={settings?.remove_branding || false}
+                  disabled={!hasPlanAccess(userPlan, 'pro')}
+                  onChange={function() {
+                    if (onSettingsChange && hasPlanAccess(userPlan, 'pro')) {
+                      onSettingsChange(Object.assign({}, settings, { remove_branding: !(settings?.remove_branding || false) }));
+                    }
+                  }}
+                  style={{ accentColor: C.ACCENT, width: 18, height: 18 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, display: 'flex', alignItems: 'center' }}>
+                    Remove branding{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Hide &quot;Powered by Squarespell&quot; watermark</div>
+                </div>
+              </label>
+
+              {/* reCAPTCHA — Starter */}
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'starter') ? 'pointer' : 'not-allowed',
+                padding: '14px 16px', background: C.SURFACE, borderRadius: 12,
+                border: '1px solid ' + C.BORDER, marginTop: 10,
+                opacity: hasPlanAccess(userPlan, 'starter') ? 1 : 0.6,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={settings?.enable_recaptcha || false}
+                  disabled={!hasPlanAccess(userPlan, 'starter')}
+                  onChange={function() {
+                    if (onSettingsChange && hasPlanAccess(userPlan, 'starter')) {
+                      onSettingsChange(Object.assign({}, settings, { enable_recaptcha: !(settings?.enable_recaptcha || false) }));
+                    }
+                  }}
+                  style={{ accentColor: C.ACCENT, width: 18, height: 18 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, display: 'flex', alignItems: 'center' }}>
+                    reCAPTCHA protection{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Block spam submissions with Google reCAPTCHA</div>
+                </div>
+              </label>
+
+              {/* Custom CSS — Pro */}
+              <div style={{
+                padding: '14px 16px', background: C.SURFACE, borderRadius: 12,
+                border: '1px solid ' + C.BORDER, marginTop: 10,
+                opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.6,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 6, display: 'flex', alignItems: 'center' }}>
+                  Custom CSS{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}
+                </div>
+                <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 8 }}>Add custom styles to your quiz embed</div>
+                <textarea
+                  value={settings?.custom_css || ''}
+                  disabled={!hasPlanAccess(userPlan, 'pro')}
+                  onChange={function(e) {
+                    if (onSettingsChange && hasPlanAccess(userPlan, 'pro')) {
+                      onSettingsChange(Object.assign({}, settings, { custom_css: e.target.value }));
+                    }
+                  }}
+                  placeholder={hasPlanAccess(userPlan, 'pro') ? '.squarespell-quiz {\n  /* your styles */\n}' : 'Upgrade to Pro to add custom CSS'}
+                  style={{
+                    width: '100%', minHeight: 72, padding: '8px 10px', borderRadius: 8,
+                    border: '1px solid ' + C.BORDER, fontSize: 12, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                    color: C.TEXT, background: hasPlanAccess(userPlan, 'pro') ? '#fff' : '#F9FAFB',
+                    resize: 'vertical' as const,
+                  }}
+                />
+              </div>
             </div>
 
             {/* Feature summary */}
@@ -2425,6 +2778,158 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
           </div>
         )}
       </div>
+
+      {/* Skip Logic Modal — all questions at a glance with per-answer routing */}
+      {showSkipLogicModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }} onClick={function(e) { if (e.target === e.currentTarget) setShowSkipLogicModal(false); }}>
+          <div style={{
+            background: '#fff', borderRadius: 16, width: '100%', maxWidth: 800,
+            maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' as const,
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+          }}>
+            {/* Modal header */}
+            <div style={{
+              padding: '20px 24px', borderBottom: '1px solid ' + C.BORDER,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 700, color: C.TEXT, margin: 0 }}>Skip Logic Overview</h2>
+                <p style={{ fontSize: 12, color: C.TEXT_MUTED, margin: '4px 0 0' }}>
+                  Route users to different questions based on their answers. Set "Next question" for default flow.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={function() { setShowSkipLogicModal(false); }}
+                style={{
+                  width: 34, height: 34, borderRadius: 10,
+                  background: 'transparent', border: '1px solid ' + C.BORDER,
+                  color: C.TEXT_MUTED, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal body — scrollable list of all questions */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 24px' }}>
+              {questionBlocks.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: C.TEXT_MUTED, fontSize: 14 }}>
+                  No questions yet. Add questions to set up skip logic.
+                </div>
+              )}
+              {questionBlocks.map(function(qBlock, qi) {
+                var q = qBlock as QuestionBlock;
+                var hasRules = q.branchRules && q.branchRules.length > 0;
+                return (
+                  <div key={q.id} style={{
+                    marginBottom: 16, border: '1px solid ' + C.BORDER,
+                    borderRadius: 12, overflow: 'hidden',
+                    background: hasRules ? 'rgba(13,115,119,0.02)' : C.SURFACE,
+                  }}>
+                    {/* Question header */}
+                    <div style={{
+                      padding: '14px 16px', borderBottom: '1px solid ' + C.BORDER,
+                      display: 'flex', alignItems: 'center', gap: 10,
+                    }}>
+                      <span style={{
+                        width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                        background: hasRules ? C.ACCENT : C.BORDER,
+                        color: hasRules ? '#fff' : C.TEXT_MUTED,
+                        fontSize: 12, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {qi + 1}
+                      </span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, flex: 1 }}>
+                        {q.text || 'Untitled question'}
+                      </span>
+                      {hasRules && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
+                          background: '#F5F3FF', color: '#7C3AED',
+                        }}>
+                          {q.branchRules!.length} rule{q.branchRules!.length !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Per-answer routing */}
+                    <div style={{ padding: '12px 16px' }}>
+                      {q.options.map(function(opt, oi) {
+                        var currentTarget = (q.branchRules || []).find(function(r) { return r.if_answer === opt.id; })?.goto || '';
+                        return (
+                          <div key={opt.id} style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            marginBottom: oi < q.options.length - 1 ? 8 : 0,
+                          }}>
+                            <span style={{
+                              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                              background: C.ACCENT_LIGHT, color: C.ACCENT,
+                              fontSize: 11, fontWeight: 700,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {String.fromCharCode(65 + oi)}
+                            </span>
+                            <span style={{
+                              fontSize: 13, color: C.TEXT, flex: 1,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+                              maxWidth: 200,
+                            }}>
+                              {opt.text || 'Option ' + (oi + 1)}
+                            </span>
+                            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_SUBTLE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                            <select
+                              value={currentTarget}
+                              onChange={function(e) {
+                                var newBlock = JSON.parse(JSON.stringify(q));
+                                var rules = (newBlock.branchRules || []).filter(function(r: BranchRule) { return r.if_answer !== opt.id; });
+                                if (e.target.value) {
+                                  rules.push({ if_answer: opt.id, goto: e.target.value });
+                                }
+                                newBlock.branchRules = rules.length > 0 ? rules : undefined;
+                                updateBlock(newBlock);
+                              }}
+                              style={{
+                                padding: '6px 10px', borderRadius: 6,
+                                border: '1px solid ' + C.BORDER, fontSize: 12,
+                                color: currentTarget ? C.ACCENT : C.TEXT_MUTED,
+                                fontWeight: currentTarget ? 600 : 400,
+                                background: currentTarget ? C.ACCENT_LIGHT : '#fff',
+                                cursor: 'pointer', fontFamily: 'Inter,system-ui,sans-serif',
+                                minWidth: 200,
+                              }}
+                            >
+                              <option value="">Next question (default)</option>
+                              {blocks.filter(function(b) { return b.id !== q.id && (b.type === 'question' || b.type === 'outcome' || b.type === 'leadGate'); }).map(function(b) {
+                                var bIdx = questionBlocks.findIndex(function(qb) { return qb.id === b.id; });
+                                var bLabel = b.type === 'question'
+                                  ? 'Q' + (bIdx + 1) + ': ' + ((b as QuestionBlock).text || 'Untitled').slice(0, 30)
+                                  : blockLabel(b) + ': ' + blockPreview(b).slice(0, 30);
+                                return <option key={b.id} value={b.id}>{bLabel}</option>;
+                              })}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
