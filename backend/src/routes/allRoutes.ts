@@ -1760,6 +1760,26 @@ userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const PRICE_IDS: Record<string,Record<string,string>> = { growth: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
 
+// Reverse lookup: Stripe price ID → our plan name
+function priceIdToPlan(priceId: string): string | null {
+  for (var plan in PRICE_IDS) {
+    for (var billing in PRICE_IDS[plan]) {
+      if (PRICE_IDS[plan][billing] === priceId) return plan;
+    }
+  }
+  return null;
+}
+
+// Reverse lookup: Stripe price ID → billing interval
+function priceIdToBilling(priceId: string): string | null {
+  for (var plan in PRICE_IDS) {
+    for (var billing in PRICE_IDS[plan]) {
+      if (PRICE_IDS[plan][billing] === priceId) return billing;
+    }
+  }
+  return null;
+}
+
 export const stripeRouter = Router();
 stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   const billing = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
@@ -1795,16 +1815,25 @@ stripeRouter.post('/webhook', async (req, res) => {
   if (event.type === 'customer.subscription.updated') {
     var subUpd = event.data.object as Stripe.Subscription;
     var prevAttrs = (event.data as any).previous_attributes || {};
-    // Only send upgrade email if the plan actually changed (items changed)
-    if (prevAttrs.items) {
+    // Read the current price from the subscription to determine the new plan
+    var currentPriceId = subUpd.items?.data?.[0]?.price?.id || '';
+    var newPlan = priceIdToPlan(currentPriceId);
+
+    // Always sync the plan in our database when the subscription changes
+    if (newPlan) {
       var { data: upgUser } = await supabase.from('users').select('id,email,first_name,plan').eq('stripe_subscription_id', subUpd.id).single();
-      if (upgUser) {
+      if (upgUser && upgUser.plan !== newPlan) {
+        var oldPlan = upgUser.plan;
+        await supabase.from('users').update({ plan: newPlan }).eq('id', upgUser.id);
+        log.info('[StripeWebhook] Plan synced: ' + oldPlan + ' → ' + newPlan + ' for user ' + upgUser.id);
+
+        // Send upgrade/change email
         sendPlatformEmail({
           userId: upgUser.id,
           email: upgUser.email,
           emailType: 'plan_upgraded',
           firstName: upgUser.first_name || '',
-          data: { planName: (upgUser.plan || 'Pro').charAt(0).toUpperCase() + (upgUser.plan || 'pro').slice(1) },
+          data: { planName: newPlan.charAt(0).toUpperCase() + newPlan.slice(1) },
         }).catch(function(err) { log.error('[StripeWebhook] plan_upgraded email failed:', { err: err?.message }); });
       }
     }
@@ -1850,6 +1879,107 @@ stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRe
   if (!user?.stripe_customer_id) return res.redirect(`${process.env.FRONTEND_URL}/pricing`);
   const portal = await stripe.billingPortal.sessions.create({ customer: user.stripe_customer_id, return_url: `${process.env.FRONTEND_URL}/dashboard` });
   res.redirect(portal.url);
+});
+
+// ── Switch Plan (upgrade/downgrade with proration) ──────────────────────────
+stripeRouter.post('/switch-plan', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    var targetPlan = req.body.plan;
+    var targetBilling = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
+    var newPriceId = (PRICE_IDS[targetPlan] as any)?.[targetBilling];
+    if (!newPriceId) return res.status(400).json({ error: 'Invalid plan' });
+
+    var { data: user } = await supabase.from('users').select('stripe_subscription_id,stripe_customer_id,plan').eq('id', req.dbUserId).single();
+    if (!user?.stripe_subscription_id) {
+      return res.status(400).json({ error: 'No active subscription. Please subscribe first.', redirect: '/pricing' });
+    }
+
+    // If already on this plan, no-op
+    if (user.plan === targetPlan) {
+      return res.json({ ok: true, message: 'Already on this plan', plan: targetPlan });
+    }
+
+    // Fetch the current subscription to get the item ID
+    var subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+    var subItemId = subscription.items.data[0]?.id;
+    if (!subItemId) {
+      return res.status(500).json({ error: 'Could not find subscription item' });
+    }
+
+    // Update the subscription — Stripe automatically prorates
+    var updated = await stripe.subscriptions.update(user.stripe_subscription_id, {
+      items: [{ id: subItemId, price: newPriceId }],
+      proration_behavior: 'create_prorations',
+    });
+
+    // Immediately sync plan in our DB (webhook will also fire, but this is instant)
+    await supabase.from('users').update({ plan: targetPlan }).eq('id', req.dbUserId);
+
+    log.info('[SwitchPlan] ' + user.plan + ' → ' + targetPlan + ' for user ' + req.dbUserId);
+
+    res.json({
+      ok: true,
+      plan: targetPlan,
+      billing: targetBilling,
+      message: 'Plan switched to ' + targetPlan + '. Proration applied automatically.',
+    });
+  } catch (err: any) {
+    log.error('[SwitchPlan] Failed:', { err: err?.message });
+    res.status(500).json({ error: err?.message || 'Failed to switch plan' });
+  }
+});
+
+// ── Preview proration (show user what they'll pay) ──────────────────────────
+stripeRouter.post('/preview-proration', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    var targetPlan = req.body.plan;
+    var targetBilling = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
+    var newPriceId = (PRICE_IDS[targetPlan] as any)?.[targetBilling];
+    if (!newPriceId) return res.status(400).json({ error: 'Invalid plan' });
+
+    var { data: user } = await supabase.from('users').select('stripe_subscription_id,stripe_customer_id,plan').eq('id', req.dbUserId).single();
+    if (!user?.stripe_subscription_id) {
+      return res.status(400).json({ error: 'No active subscription' });
+    }
+
+    var subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+    var subItemId = subscription.items.data[0]?.id;
+    if (!subItemId) {
+      return res.status(500).json({ error: 'Could not find subscription item' });
+    }
+
+    // Create a preview invoice to see what the proration would be
+    var invoice = await stripe.invoices.retrieveUpcoming({
+      customer: user.stripe_customer_id!,
+      subscription: user.stripe_subscription_id,
+      subscription_items: [{ id: subItemId, price: newPriceId }],
+      subscription_proration_behavior: 'create_prorations',
+      subscription_proration_date: Math.floor(Date.now() / 1000),
+    });
+
+    // Find the proration line items
+    var prorationLines = (invoice.lines?.data || []).filter(function(line: any) {
+      return line.proration;
+    });
+    var prorationAmount = prorationLines.reduce(function(sum: number, line: any) {
+      return sum + (line.amount || 0);
+    }, 0);
+
+    res.json({
+      ok: true,
+      currentPlan: user.plan,
+      newPlan: targetPlan,
+      newBilling: targetBilling,
+      prorationAmount: prorationAmount,  // in cents (positive = charge, negative = credit)
+      prorationFormatted: (prorationAmount >= 0 ? '' : '-') + '$' + (Math.abs(prorationAmount) / 100).toFixed(2),
+      nextInvoiceTotal: invoice.total,
+      nextInvoiceFormatted: '$' + (invoice.total / 100).toFixed(2),
+      currency: invoice.currency,
+    });
+  } catch (err: any) {
+    log.error('[PreviewProration] Failed:', { err: err?.message });
+    res.status(500).json({ error: err?.message || 'Failed to preview proration' });
+  }
 });
 
 stripeRouter.get('/invoices', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {

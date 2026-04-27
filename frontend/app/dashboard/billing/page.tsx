@@ -311,8 +311,31 @@ export default function BillingPage() {
   }, [plan]);
 
   var isTrial = plan?.plan === 'trial' || plan?.plan === 'free';
-  var isPaid = plan && !isTrial && plan.plan !== 'starter' && plan.plan !== 'growth';
+  var isPaid = plan && !isTrial;
   var [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  // Plan switch modal state
+  var [switchModal, setSwitchModal] = useState<{
+    targetPlan: string;
+    targetName: string;
+    billing: string;
+    prorationFormatted: string;
+    nextInvoiceFormatted: string;
+    prorationAmount: number;
+  } | null>(null);
+  var [switchLoading, setSwitchLoading] = useState(false);
+  var [switchError, setSwitchError] = useState<string | null>(null);
+
+  function handlePlanAction(planId: string) {
+    if (!token) return;
+    // If user has no subscription (trial/free), go through checkout
+    if (isTrial) {
+      handleCheckout(planId);
+      return;
+    }
+    // If user is already paid, show proration preview then switch
+    handlePreviewSwitch(planId);
+  }
 
   function handleCheckout(planId: string) {
     if (!token) return;
@@ -335,6 +358,65 @@ export default function BillingPage() {
       .catch(function() {
         alert('Something went wrong. Please try again.');
         setCheckoutLoading(null);
+      });
+  }
+
+  function handlePreviewSwitch(planId: string) {
+    if (!token) return;
+    setCheckoutLoading(planId);
+    setSwitchError(null);
+    var billing = yearly ? 'yearly' : 'monthly';
+    var catalogEntry = PLAN_CATALOG.find(function(p) { return p.id === planId; });
+    fetch(API + '/api/stripe/preview-proration', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ plan: planId, billing: billing }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setCheckoutLoading(null);
+        if (data.error) {
+          setSwitchError(data.error);
+          return;
+        }
+        setSwitchModal({
+          targetPlan: planId,
+          targetName: catalogEntry?.name || planId,
+          billing: billing,
+          prorationFormatted: data.prorationFormatted || '$0.00',
+          nextInvoiceFormatted: data.nextInvoiceFormatted || '$0.00',
+          prorationAmount: data.prorationAmount || 0,
+        });
+      })
+      .catch(function() {
+        setCheckoutLoading(null);
+        setSwitchError('Failed to load pricing. Please try again.');
+      });
+  }
+
+  function confirmSwitch() {
+    if (!token || !switchModal) return;
+    setSwitchLoading(true);
+    setSwitchError(null);
+    fetch(API + '/api/stripe/switch-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ plan: switchModal.targetPlan, billing: switchModal.billing }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setSwitchLoading(false);
+        if (data.error) {
+          setSwitchError(data.error);
+          return;
+        }
+        setSwitchModal(null);
+        // Refresh plan data
+        fetchPlan();
+      })
+      .catch(function() {
+        setSwitchLoading(false);
+        setSwitchError('Failed to switch plan. Please try again.');
       });
   }
 
@@ -555,8 +637,15 @@ export default function BillingPage() {
                     })}
                   </ul>
                   {!isCurrentPlan && p.id !== 'free' && (
-                    <GhostButton onClick={function() { handleCheckout(p.id); }}>
-                      {checkoutLoading === p.id ? 'Loading...' : 'Choose ' + p.name}
+                    <GhostButton onClick={function() { handlePlanAction(p.id); }}>
+                      {checkoutLoading === p.id ? 'Loading...' : (
+                        isPaid ? (
+                          PLAN_CATALOG.findIndex(function(c) { return c.id === plan.plan; }) <
+                          PLAN_CATALOG.findIndex(function(c) { return c.id === p.id; })
+                            ? 'Upgrade to ' + p.name
+                            : 'Switch to ' + p.name
+                        ) : 'Choose ' + p.name
+                      )}
                     </GhostButton>
                   )}
                 </div>
@@ -581,6 +670,115 @@ export default function BillingPage() {
           )}
         </Card>
       </div>
+
+      {/* ── Plan Switch Confirmation Modal ── */}
+      {switchModal && (
+        <div
+          onClick={function() { if (!switchLoading) setSwitchModal(null); }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={function(e) { e.stopPropagation(); }}
+            style={{
+              background: C.ELEVATED,
+              border: '1px solid ' + C.BORDER,
+              borderRadius: 16,
+              padding: '28px 24px',
+              maxWidth: 440,
+              width: '100%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: C.TEXT }}>
+              Switch to {switchModal.targetName}
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
+              Your plan will change immediately. Stripe will automatically adjust your billing.
+            </p>
+
+            <div style={{
+              background: C.SURFACE,
+              border: '1px solid ' + C.BORDER,
+              borderRadius: 10,
+              padding: '16px 18px',
+              marginBottom: 20,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                <span style={{ fontSize: 13, color: C.TEXT_MUTED }}>Proration adjustment</span>
+                <span style={{
+                  fontSize: 14, fontWeight: 700,
+                  color: switchModal.prorationAmount >= 0 ? C.TEXT : '#0D7377',
+                }}>
+                  {switchModal.prorationFormatted}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: C.TEXT_MUTED }}>Next invoice total</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>
+                  {switchModal.nextInvoiceFormatted}
+                </span>
+              </div>
+            </div>
+
+            {switchModal.prorationAmount < 0 && (
+              <div style={{
+                background: 'rgba(13,115,119,0.06)',
+                border: '1px solid rgba(13,115,119,0.15)',
+                borderRadius: 8,
+                padding: '10px 14px',
+                marginBottom: 20,
+                fontSize: 13,
+                color: '#0D7377',
+                lineHeight: 1.5,
+              }}>
+                You&apos;ll receive a credit of {switchModal.prorationFormatted} for the unused time on your current plan.
+              </div>
+            )}
+
+            {switchError && (
+              <div style={{
+                background: '#fee',
+                border: '1px solid #fcc',
+                borderRadius: 8,
+                padding: '10px 14px',
+                marginBottom: 16,
+                fontSize: 13,
+                color: '#900',
+              }}>
+                {switchError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <GhostButton onClick={function() { setSwitchModal(null); }}>Cancel</GhostButton>
+              <PrimaryButton onClick={confirmSwitch}>
+                {switchLoading ? 'Switching...' : 'Confirm switch'}
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Switch Error Toast ── */}
+      {switchError && !switchModal && (
+        <div
+          onClick={function() { setSwitchError(null); }}
+          style={{
+            position: 'fixed', top: 16, right: 16, zIndex: 60,
+            background: '#fee', color: '#900',
+            padding: '10px 14px', borderRadius: 8,
+            fontSize: 13, cursor: 'pointer',
+            boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+          }}
+        >
+          {switchError}
+        </div>
+      )}
     </DashboardShell>
   );
 }
