@@ -398,85 +398,193 @@ function BlockCard({
         </div>
       </div>
 
-      {/* Answer options - ALWAYS visible and inline-editable for question blocks */}
-      {qb && (
-        <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {qb.options.map(function(opt, oi) {
-            return (
-              <div key={opt.id} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: selected ? '4px 4px 4px 10px' : '8px 12px',
-                borderRadius: 8,
-                background: '#FFFFFF', border: '1px solid ' + C.BORDER,
-                fontSize: 14, color: C.TEXT,
-                transition: 'border-color 0.15s',
-              }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: 6,
-                  background: selected ? C.ACCENT : '#E9ECEF',
-                  color: selected ? '#fff' : C.TEXT_MUTED,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, flexShrink: 0,
-                  transition: 'all 0.15s',
-                }}>
-                  {LETTERS[oi]}
-                </div>
-                {opt.imageUrl && (
-                  <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
-                    onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                )}
-                {selected ? (
-                  <input
-                    value={opt.text}
-                    onChange={function(e) { updateOptionText(oi, e.target.value); }}
-                    onClick={function(e) { e.stopPropagation(); }}
-                    placeholder={'Option ' + LETTERS[oi]}
-                    style={{
-                      flex: 1, fontSize: 14, fontWeight: 500, color: C.TEXT,
-                      fontFamily: C.FONT + ',system-ui,sans-serif',
-                      border: '1px solid ' + C.BORDER, borderRadius: 6,
-                      padding: '6px 10px', background: '#FAFAFA', outline: 'none',
-                    }}
-                    onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.background = '#FFF'; }}
-                    onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = '#FAFAFA'; }}
-                  />
-                ) : (
-                  <span style={{ flex: 1, fontWeight: 500, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
-                )}
-                {selected ? (
-                  <input
-                    type="number"
-                    min={0}
-                    max={10}
-                    value={opt.score || 0}
-                    onChange={function(e) { updateOptionScore(oi, parseInt(e.target.value) || 0); }}
-                    onClick={function(e) { e.stopPropagation(); }}
-                    title="Score points"
-                    style={{
-                      width: 52, fontSize: 13, fontWeight: 600, color: C.ACCENT,
-                      fontFamily: C.FONT + ',system-ui,sans-serif',
-                      border: '1px solid ' + C.BORDER, borderRadius: 6,
-                      padding: '6px 6px', background: '#FAFAFA', outline: 'none',
-                      textAlign: 'center',
-                    }}
-                    onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
-                    onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
-                  />
-                ) : (
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, flexShrink: 0,
-                    padding: '3px 8px', borderRadius: 6,
-                    background: (opt.score || 0) >= 3 ? 'rgba(13,115,119,0.12)' : 'rgba(0,0,0,0.04)',
-                    color: (opt.score || 0) >= 3 ? C.ACCENT : C.TEXT_MUTED,
-                    border: '1px solid ' + ((opt.score || 0) >= 3 ? 'rgba(13,115,119,0.2)' : 'rgba(0,0,0,0.06)'),
+      {/* Answer options - layout-aware rendering */}
+      {qb && (function() {
+        var layout = qb.answerLayout || 'list';
+
+        /* Shared score badge */
+        function scoreBadge(opt: any) {
+          return (
+            <span style={{
+              fontSize: 11, fontWeight: 600, flexShrink: 0,
+              padding: '3px 8px', borderRadius: 6,
+              background: (opt.score || 0) >= 3 ? 'rgba(13,115,119,0.12)' : 'rgba(0,0,0,0.04)',
+              color: (opt.score || 0) >= 3 ? C.ACCENT : C.TEXT_MUTED,
+              border: '1px solid ' + ((opt.score || 0) >= 3 ? 'rgba(13,115,119,0.2)' : 'rgba(0,0,0,0.06)'),
+            }}>
+              +{opt.score || 0}pts
+            </span>
+          );
+        }
+
+        /* ---- GRID layout ---- */
+        if (layout === 'grid') {
+          return (
+            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {qb.options.map(function(opt, oi) {
+                return (
+                  <div key={opt.id} style={{
+                    borderRadius: 10, overflow: 'hidden',
+                    border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
+                    background: '#fff', transition: 'border-color 0.15s',
                   }}>
-                    +{opt.score || 0}pts
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                    {opt.imageUrl ? (
+                      <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 70, objectFit: 'cover', display: 'block' }}
+                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : (
+                      <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                      </div>
+                    )}
+                    <div style={{ padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: 5, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
+                      {selected ? (
+                        <input value={opt.text} onChange={function(e) { updateOptionText(oi, e.target.value); }} onClick={function(e) { e.stopPropagation(); }} placeholder={'Option ' + LETTERS[oi]}
+                          style={{ flex: 1, fontSize: 12, fontWeight: 500, color: C.TEXT, fontFamily: C.FONT + ',system-ui,sans-serif', border: '1px solid ' + C.BORDER, borderRadius: 5, padding: '4px 6px', background: '#FAFAFA', outline: 'none', minWidth: 0 }}
+                          onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }} onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }} />
+                      ) : (
+                        <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: C.TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+                      )}
+                      {!selected && scoreBadge(opt)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        /* ---- FULL BACKGROUND layout ---- */
+        if (layout === 'fullBackground') {
+          return (
+            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {qb.options.map(function(opt, oi) {
+                return (
+                  <div key={opt.id} style={{
+                    position: 'relative', borderRadius: 10, overflow: 'hidden',
+                    border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
+                    minHeight: 80, display: 'flex', alignItems: 'flex-end',
+                  }}>
+                    {opt.imageUrl ? (
+                      <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : (
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                      </div>
+                    )}
+                    <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '6px 8px', background: opt.imageUrl ? 'linear-gradient(transparent, rgba(0,0,0,0.6))' : 'transparent' }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: opt.imageUrl ? '#fff' : C.TEXT }}>{LETTERS[oi]}. {opt.text || 'Option ' + LETTERS[oi]}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        /* ---- THUMBNAILS layout ---- */
+        if (layout === 'imageThumbnails') {
+          return (
+            <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {qb.options.map(function(opt, oi) {
+                return (
+                  <div key={opt.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: selected ? '4px 4px 4px 8px' : '8px 10px',
+                    borderRadius: 8, background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                  }}>
+                    {opt.imageUrl ? (
+                      <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
+                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : (
+                      <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                      </div>
+                    )}
+                    <div style={{ width: 20, height: 20, borderRadius: 5, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
+                    {selected ? (
+                      <input value={opt.text} onChange={function(e) { updateOptionText(oi, e.target.value); }} onClick={function(e) { e.stopPropagation(); }} placeholder={'Option ' + LETTERS[oi]}
+                        style={{ flex: 1, fontSize: 13, fontWeight: 500, color: C.TEXT, fontFamily: C.FONT + ',system-ui,sans-serif', border: '1px solid ' + C.BORDER, borderRadius: 6, padding: '6px 10px', background: '#FAFAFA', outline: 'none' }}
+                        onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }} onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }} />
+                    ) : (
+                      <span style={{ flex: 1, fontWeight: 500, fontSize: 13, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+                    )}
+                    {!selected && scoreBadge(opt)}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        /* ---- DEFAULT LIST layout ---- */
+        return (
+          <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {qb.options.map(function(opt, oi) {
+              return (
+                <div key={opt.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: selected ? '4px 4px 4px 10px' : '8px 12px',
+                  borderRadius: 8,
+                  background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                  fontSize: 14, color: C.TEXT,
+                  transition: 'border-color 0.15s',
+                }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: 6,
+                    background: selected ? C.ACCENT : '#E9ECEF',
+                    color: selected ? '#fff' : C.TEXT_MUTED,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700, flexShrink: 0,
+                    transition: 'all 0.15s',
+                  }}>
+                    {LETTERS[oi]}
+                  </div>
+                  {opt.imageUrl && (
+                    <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                      onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  )}
+                  {selected ? (
+                    <input
+                      value={opt.text}
+                      onChange={function(e) { updateOptionText(oi, e.target.value); }}
+                      onClick={function(e) { e.stopPropagation(); }}
+                      placeholder={'Option ' + LETTERS[oi]}
+                      style={{
+                        flex: 1, fontSize: 14, fontWeight: 500, color: C.TEXT,
+                        fontFamily: C.FONT + ',system-ui,sans-serif',
+                        border: '1px solid ' + C.BORDER, borderRadius: 6,
+                        padding: '6px 10px', background: '#FAFAFA', outline: 'none',
+                      }}
+                      onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.background = '#FFF'; }}
+                      onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = '#FAFAFA'; }}
+                    />
+                  ) : (
+                    <span style={{ flex: 1, fontWeight: 500, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+                  )}
+                  {selected ? (
+                    <input
+                      type="number" min={0} max={10}
+                      value={opt.score || 0}
+                      onChange={function(e) { updateOptionScore(oi, parseInt(e.target.value) || 0); }}
+                      onClick={function(e) { e.stopPropagation(); }}
+                      title="Score points"
+                      style={{
+                        width: 52, fontSize: 13, fontWeight: 600, color: C.ACCENT,
+                        fontFamily: C.FONT + ',system-ui,sans-serif',
+                        border: '1px solid ' + C.BORDER, borderRadius: 6,
+                        padding: '6px 6px', background: '#FAFAFA', outline: 'none',
+                        textAlign: 'center',
+                      }}
+                      onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                      onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
+                    />
+                  ) : scoreBadge(opt)}
+                </div>
+              );
+            })}
+          </div>
       )}
     </div>
   );
@@ -627,6 +735,7 @@ function MediaPicker({
 }) {
   var [tab, setTab] = useState<'content' | 'browse'>('content');
   var [uploading, setUploading] = useState(false);
+  var [uploadError, setUploadError] = useState('');
   var [searchQuery, setSearchQuery] = useState('');
   var [searchResults, setSearchResults] = useState<any[]>([]);
   var [searching, setSearching] = useState(false);
@@ -681,6 +790,7 @@ function MediaPicker({
     if (!file) return;
     var isVideo = file.type.startsWith('video/');
     setUploading(true);
+    setUploadError('');
     var reader = new FileReader();
     reader.onload = function() {
       var base64 = (reader.result as string).split(',')[1];
@@ -701,20 +811,29 @@ function MediaPicker({
   }
 
   function doUpload(base64: string, fileName: string, contentType: string, token: string, isVideo: boolean) {
+    setUploadError('');
     fetch(API_BASE + '/api/media/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
       body: JSON.stringify({ data: base64, fileName: fileName, contentType: contentType }),
     })
-    .then(function(res) { return res.json(); })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Upload failed (' + res.status + ')');
+      return res.json();
+    })
     .then(function(data) {
       if (data.url) {
         onChangeType(isVideo ? 'video' : 'image');
         onChangeUrl(data.url);
+      } else {
+        setUploadError(data.error || 'Upload succeeded but no URL was returned. Please try again.');
       }
       setUploading(false);
     })
-    .catch(function() { setUploading(false); });
+    .catch(function(err) {
+      setUploading(false);
+      setUploadError(err.message || 'Upload failed. Check your connection and try again.');
+    });
   }
 
   function handleSearch() {
@@ -831,6 +950,11 @@ function MediaPicker({
                 <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>
                   {mediaType === 'video' ? '30 minutes max' : '20 MB max'}
                 </div>
+                {uploadError && (
+                  <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.2)', fontSize: 11, color: '#ff3b30', lineHeight: 1.4 }}>
+                    {uploadError}
+                  </div>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -1011,22 +1135,9 @@ function BlockInspector({
               onChange={function(v) { updateField('questionType', v); }}
             />
           </div>
+          {/* Answer layout — single control for how answers appear */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 8 }}>Layout</div>
-            <ToggleGroup
-              options={[
-                { value: 'buttons', label: 'Buttons' },
-                { value: 'cards', label: 'Cards' },
-                { value: 'dropdown', label: 'List' },
-                { value: 'imageChoice', label: 'Image' },
-              ]}
-              value={qb.questionStyle}
-              onChange={function(v) { updateField('questionStyle', v); }}
-            />
-          </div>
-          {/* Answer layout — visual arrangement of options */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 8 }}>Answer layout</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {([
                 { value: 'list', label: 'List', icon: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01' },
@@ -1039,7 +1150,11 @@ function BlockInspector({
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={function() { updateField('answerLayout', opt.value); }}
+                    onClick={function() {
+                      // Set answerLayout and sync questionStyle for the embed renderer
+                      var style = opt.value === 'grid' ? 'cards' : opt.value === 'fullBackground' ? 'imageChoice' : opt.value === 'imageThumbnails' ? 'imageChoice' : 'buttons';
+                      onChange(Object.assign({}, block, { answerLayout: opt.value, questionStyle: style }));
+                    }}
                     style={{
                       padding: '10px 8px', borderRadius: 8,
                       border: '1.5px solid ' + (isActive ? C.ACCENT : C.BORDER),
