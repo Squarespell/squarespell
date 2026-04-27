@@ -22,6 +22,7 @@ import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { TopBanner } from './TopBanner';
 import { NotificationBell } from './NotificationBell';
 import { CommandPalette } from './CommandPalette';
+import { OnboardingTour } from './OnboardingTour';
 import { DASHBOARD_COLORS } from './dashboardColors';
 
 var C = DASHBOARD_COLORS;
@@ -548,6 +549,18 @@ export function DashboardShell({
                     <Link
                       key={item.href}
                       href={item.href}
+                      data-tour={
+                        item.href === '/dashboard' ? 'dashboard' :
+                        item.href === '/dashboard/quizzes' ? 'quizzes' :
+                        item.href === '/dashboard/editor' ? 'editor' :
+                        item.href === '/dashboard/leads' ? 'leads' :
+                        item.href === '/dashboard/analytics' ? 'analytics' :
+                        item.href === '/dashboard/integrations' ? 'integrations' :
+                        item.href === '/dashboard/embed' ? 'embed' :
+                        item.href === '/dashboard/emails' ? 'emails' :
+                        item.href === '/dashboard/billing' ? 'billing' :
+                        undefined
+                      }
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -743,6 +756,7 @@ export function DashboardShell({
 
       {sidebar}
       <CommandPalette />
+      <OnboardingTour />
 
       {/* Scrim for mobile drawer */}
       {isMobile && mobileOpen && (

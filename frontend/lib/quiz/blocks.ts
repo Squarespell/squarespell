@@ -255,6 +255,7 @@ export function legacyToBlocks(quiz: {
       text: q.text || q.title || '',
       subtitle: q.subtitle || undefined,
       questionStyle: q.questionStyle || (q.type === 'image_choice' ? 'imageChoice' : 'buttons'),
+      answerLayout: q.answerLayout || q.answer_layout || undefined,
       options: opts,
       required: true,
       branchRules: q.next_question_rules || undefined,
@@ -343,6 +344,7 @@ export function blocksToLegacy(blocks: QuizBlock[]): {
           return { id: opt.id, text: opt.text, score: opt.score || 0, imageUrl: opt.imageUrl, explanation: opt.explanation };
         }),
         next_question_rules: qb.branchRules || undefined,
+        answerLayout: qb.answerLayout || undefined,
         mediaUrl: qb.mediaUrl || undefined,
         mediaType: qb.mediaType || undefined,
         timeLimit: qb.timeLimit || undefined,

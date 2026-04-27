@@ -9,6 +9,8 @@ interface QuizOption {
   id: string;
   text: string;
   score?: number;
+  imageUrl?: string;
+  explanation?: string;
 }
 
 interface QuizQuestion {
@@ -17,6 +19,11 @@ interface QuizQuestion {
   question?: string;
   subtitle?: string;
   options: QuizOption[];
+  questionStyle?: string;
+  questionType?: string;
+  answerLayout?: string;
+  mediaUrl?: string;
+  mediaType?: string;
 }
 
 interface QuizOutcome {
@@ -386,6 +393,153 @@ export default function EmbedQuizClient({
           background: ${brandPrimary};
           color: ${brandBg};
         }
+        .sq-q-media {
+          width: 100%;
+          border-radius: 12px;
+          max-height: 320px;
+          object-fit: cover;
+          margin-bottom: 18px;
+        }
+        .sq-q-video {
+          width: 100%;
+          border-radius: 12px;
+          max-height: 320px;
+          margin-bottom: 18px;
+          background: #000;
+        }
+        .sq-opts-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+        .sq-opt-grid {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: 18px 14px;
+          background: ${brandBg};
+          border: 1.5px solid ${brandBorder};
+          border-radius: 12px;
+          font-family: ${brandFont};
+          font-size: 13px;
+          color: ${brandText};
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+          gap: 8px;
+        }
+        .sq-opt-grid:hover {
+          border-color: ${brandPrimary};
+          transform: translateY(-1px);
+        }
+        .sq-opt-grid.picked {
+          border-color: ${brandPrimary};
+          background: ${brandPrimary}14;
+        }
+        .sq-opt-img {
+          width: 100%;
+          height: 100px;
+          object-fit: cover;
+          border-radius: 8px;
+        }
+        .sq-opt-thumb {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          width: 100%;
+          text-align: left;
+          padding: 10px 14px;
+          background: ${brandBg};
+          border: 1.5px solid ${brandBorder};
+          border-radius: 12px;
+          font-family: ${brandFont};
+          font-size: 14px;
+          color: ${brandText};
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+        }
+        .sq-opt-thumb:hover {
+          border-color: ${brandPrimary};
+          transform: translateY(-1px);
+        }
+        .sq-opt-thumb.picked {
+          border-color: ${brandPrimary};
+          background: ${brandPrimary}14;
+        }
+        .sq-opt-thumb-img {
+          width: 48px;
+          height: 48px;
+          object-fit: cover;
+          border-radius: 8px;
+          flex-shrink: 0;
+        }
+        .sq-opt-full {
+          position: relative;
+          overflow: hidden;
+          border-radius: 12px;
+          min-height: 120px;
+          display: flex;
+          align-items: flex-end;
+          cursor: pointer;
+          border: 1.5px solid ${brandBorder};
+          transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+        }
+        .sq-opt-full:hover {
+          border-color: ${brandPrimary};
+          transform: translateY(-1px);
+        }
+        .sq-opt-full.picked {
+          border-color: ${brandPrimary};
+        }
+        .sq-opt-full-bg {
+          position: absolute;
+          inset: 0;
+          object-fit: cover;
+          width: 100%;
+          height: 100%;
+        }
+        .sq-opt-full-label {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          padding: 12px 14px;
+          background: linear-gradient(transparent, rgba(0,0,0,0.7));
+          color: #fff;
+          font-size: 14px;
+          font-weight: 600;
+          font-family: ${brandFont};
+        }
+        .sq-cards-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .sq-opt-card {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          width: 100%;
+          text-align: left;
+          padding: 16px 18px;
+          background: ${brandBg};
+          border: 1.5px solid ${brandBorder};
+          border-radius: 14px;
+          font-family: ${brandFont};
+          font-size: 14px;
+          color: ${brandText};
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .sq-opt-card:hover {
+          border-color: ${brandPrimary};
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+        .sq-opt-card.picked {
+          border-color: ${brandPrimary};
+          background: ${brandPrimary}14;
+        }
         .sq-back {
           margin-top: 16px;
           font-size: 12px;
@@ -643,20 +797,92 @@ export default function EmbedQuizClient({
 
                 <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
                 <div className="sq-q">{currentQ.text || currentQ.question}</div>
+                {currentQ.subtitle && <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 16, marginTop: -12, lineHeight: 1.5 }}>{currentQ.subtitle}</div>}
 
-                <div className="sq-opts">
-                  {currentQ.options.map((opt, oi) => (
-                    <button
-                      key={opt.id + oi}
-                      className={`sq-opt${answers[qIdx] === oi ? ' picked' : ''}`}
-                      onClick={() => pickOption(oi)}
-                      type="button"
-                    >
-                      <div className="sq-opt-letter">{LETTERS[oi]}</div>
-                      <div>{opt.text}</div>
-                    </button>
-                  ))}
-                </div>
+                {/* Question media (image or video) */}
+                {currentQ.mediaUrl && currentQ.mediaType === 'video' && (
+                  <video className="sq-q-video" src={currentQ.mediaUrl} controls playsInline />
+                )}
+                {currentQ.mediaUrl && currentQ.mediaType !== 'video' && (
+                  <img className="sq-q-media" src={currentQ.mediaUrl} alt="" />
+                )}
+
+                {/* Answer options — render based on answerLayout */}
+                {(() => {
+                  var layout = currentQ.answerLayout || 'list';
+                  var hasImages = currentQ.options.some(function(o) { return !!o.imageUrl; });
+
+                  /* Grid layout (2x2) */
+                  if (layout === 'grid') {
+                    return (
+                      <div className="sq-opts-grid">
+                        {currentQ.options.map((opt, oi) => (
+                          <button key={opt.id + oi} className={'sq-opt-grid' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
+                            {opt.imageUrl && <img className="sq-opt-img" src={opt.imageUrl} alt={opt.text} />}
+                            <div>{opt.text}</div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  /* Thumbnails layout — small image + text */
+                  if (layout === 'imageThumbnails') {
+                    return (
+                      <div className="sq-opts">
+                        {currentQ.options.map((opt, oi) => (
+                          <button key={opt.id + oi} className={'sq-opt-thumb' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
+                            {opt.imageUrl && <img className="sq-opt-thumb-img" src={opt.imageUrl} alt={opt.text} />}
+                            <div>{opt.text}</div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  /* Full background image layout */
+                  if (layout === 'fullBackground' && hasImages) {
+                    return (
+                      <div className="sq-opts-grid">
+                        {currentQ.options.map((opt, oi) => (
+                          <button key={opt.id + oi} className={'sq-opt-full' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
+                            {opt.imageUrl && <img className="sq-opt-full-bg" src={opt.imageUrl} alt={opt.text} />}
+                            <div className="sq-opt-full-label">{opt.text}</div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  /* Default list layout (buttons or cards style) */
+                  var style = currentQ.questionStyle || 'buttons';
+                  if (style === 'cards') {
+                    return (
+                      <div className="sq-cards-layout">
+                        {currentQ.options.map((opt, oi) => (
+                          <button key={opt.id + oi} className={'sq-opt-card' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
+                            {opt.imageUrl && <img style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} />}
+                            <div className="sq-opt-letter">{LETTERS[oi]}</div>
+                            <div>{opt.text}</div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  /* Default: list buttons */
+                  return (
+                    <div className="sq-opts">
+                      {currentQ.options.map((opt, oi) => (
+                        <button key={opt.id + oi} className={'sq-opt' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
+                          {opt.imageUrl && <img style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} />}
+                          <div className="sq-opt-letter">{LETTERS[oi]}</div>
+                          <div>{opt.text}</div>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
 
                 {qIdx > 0 && (
                   <span className="sq-back" onClick={goBack}>← Previous question</span>

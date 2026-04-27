@@ -1110,26 +1110,67 @@ function BlockInspector({
             onClear={function() { updateField('mediaType', undefined); updateField('mediaUrl', ''); }}
           />
 
-          {/* Image choice URLs per option */}
-          {qb.questionStyle === 'imageChoice' && (
+          {/* Answer images — shown for all layouts that support images */}
+          {(qb.answerLayout === 'grid' || qb.answerLayout === 'imageThumbnails' || qb.answerLayout === 'fullBackground' || qb.questionStyle === 'imageChoice') && (
             <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 8 }}>Answer images</div>
               {qb.options.map(function(opt, oi) {
                 return (
-                  <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, width: 16, textAlign: 'center' }}>{String.fromCharCode(65 + oi)}</span>
-                    <input
-                      value={opt.imageUrl || ''}
-                      onChange={function(e) {
-                        var newOpts = qb.options.slice();
-                        newOpts[oi] = Object.assign({}, opt, { imageUrl: e.target.value });
-                        updateField('options', newOpts);
-                      }}
-                      style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
-                      placeholder="Image URL..."
-                    />
+                  <div key={opt.id} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, width: 16, textAlign: 'center' }}>{String.fromCharCode(65 + oi)}</span>
+                      <input
+                        value={opt.imageUrl || ''}
+                        onChange={function(e) {
+                          var newOpts = qb.options.slice();
+                          newOpts[oi] = Object.assign({}, opt, { imageUrl: e.target.value });
+                          updateField('options', newOpts);
+                        }}
+                        style={Object.assign({}, inputStyle, { flex: 1, padding: '6px 8px', fontSize: 12 })}
+                        placeholder="Paste image URL or upload..."
+                      />
+                      <label style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 6, background: C.ACCENT, color: '#fff', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                        Upload
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={function(e) {
+                          var file = e.target.files?.[0];
+                          if (!file) return;
+                          var reader = new FileReader();
+                          reader.onload = function() {
+                            var base64 = (reader.result as string).split(',')[1];
+                            var token = '';
+                            var doUp = function(t: string) {
+                              fetch(API_BASE + '/api/media/upload', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: t ? 'Bearer ' + t : '' },
+                                body: JSON.stringify({ data: base64, fileName: file!.name, contentType: file!.type }),
+                              })
+                              .then(function(res) { return res.json(); })
+                              .then(function(data) {
+                                if (data.url) {
+                                  var newOpts = qb.options.slice();
+                                  newOpts[oi] = Object.assign({}, qb.options[oi], { imageUrl: data.url });
+                                  updateField('options', newOpts);
+                                }
+                              })
+                              .catch(function() {});
+                            };
+                            if (typeof window !== 'undefined' && (window as any).Clerk) {
+                              (window as any).Clerk.session?.getToken().then(function(t: string) { doUp(t || ''); }).catch(function() { doUp(''); });
+                            } else { doUp(''); }
+                          };
+                          reader.readAsDataURL(file);
+                        }} />
+                      </label>
+                      {opt.imageUrl && (
+                        <button onClick={function() {
+                          var newOpts = qb.options.slice();
+                          newOpts[oi] = Object.assign({}, opt, { imageUrl: '' });
+                          updateField('options', newOpts);
+                        }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d44', fontSize: 14, padding: 2, flexShrink: 0 }} title="Remove image">×</button>
+                      )}
+                    </div>
                     {opt.imageUrl && (
-                      <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                      <img src={opt.imageUrl} alt="" style={{ width: '100%', height: 48, borderRadius: 6, objectFit: 'cover', marginTop: 4, marginLeft: 22 }}
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     )}
                   </div>
@@ -1748,36 +1789,89 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                 <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10 }}>{qb.subtitle}</div>
               )}
 
-              {/* Render by style */}
-              {qb.questionStyle === 'imageChoice' ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {qb.options.map(function(opt, oi) {
+              {/* Render by answerLayout / questionStyle */}
+              {(function() {
+                var layout = qb.answerLayout || 'list';
+                var hasImages = qb.options.some(function(o) { return !!o.imageUrl; });
+
+                /* Grid layout or imageChoice */
+                if (layout === 'grid' || qb.questionStyle === 'imageChoice') {
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      {qb.options.map(function(opt, oi) {
+                        return (
+                          <div key={opt.id} style={{
+                            borderRadius: 10, overflow: 'hidden',
+                            border: '2px solid ' + C.BORDER, cursor: 'pointer',
+                            transition: 'border-color 0.15s ease',
+                            background: '#fff',
+                          }}>
+                            {opt.imageUrl ? (
+                              <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }}
+                                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            ) : (
+                              <div style={{ height: 80, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}>
+                                  <rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              </div>
+                            )}
+                            <div style={{ padding: '8px 10px', fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' }}>
+                              {opt.text || 'Option ' + String.fromCharCode(65 + oi)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                /* Thumbnails layout */
+                if (layout === 'imageThumbnails') {
+                  return qb.options.map(function(opt, oi) {
                     return (
                       <div key={opt.id} style={{
-                        borderRadius: 10, overflow: 'hidden',
-                        border: '2px solid ' + C.BORDER, cursor: 'pointer',
-                        transition: 'border-color 0.15s ease',
-                        background: '#fff',
+                        padding: '8px 12px', marginBottom: 4, borderRadius: 8,
+                        background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                        fontSize: 13, color: C.TEXT, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 10,
                       }}>
                         {opt.imageUrl ? (
-                          <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }}
+                          <img src={opt.imageUrl} alt={opt.text} style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
                             onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        ) : (
-                          <div style={{ height: 80, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}>
-                              <rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" />
-                            </svg>
-                          </div>
-                        )}
-                        <div style={{ padding: '8px 10px', fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' }}>
-                          {opt.text || 'Option ' + String.fromCharCode(65 + oi)}
-                        </div>
+                        ) : null}
+                        <span>{String.fromCharCode(65 + oi)}. {opt.text}</span>
+                        {opt.score ? <span style={{ marginLeft: 'auto', fontSize: 10, color: C.TEXT_SUBTLE, fontWeight: 600 }}>{opt.score > 0 ? '+' : ''}{opt.score} pts</span> : null}
                       </div>
                     );
-                  })}
-                </div>
-              ) : (
-                qb.options.map(function(opt, oi) {
+                  });
+                }
+
+                /* Full background */
+                if (layout === 'fullBackground' && hasImages) {
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      {qb.options.map(function(opt, oi) {
+                        return (
+                          <div key={opt.id} style={{
+                            position: 'relative', borderRadius: 10, overflow: 'hidden',
+                            border: '2px solid ' + C.BORDER, cursor: 'pointer', minHeight: 90,
+                            display: 'flex', alignItems: 'flex-end',
+                          }}>
+                            {opt.imageUrl && <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                              onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                            <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '8px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.65))', color: '#fff', fontSize: 12, fontWeight: 600 }}>
+                              {opt.text || 'Option ' + String.fromCharCode(65 + oi)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                /* Default list */
+                return qb.options.map(function(opt, oi) {
                   return (
                     <div key={opt.id} style={{
                       padding: '10px 14px', marginBottom: 4, borderRadius: 8,
@@ -1786,10 +1880,15 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                       display: 'flex', alignItems: 'center', gap: 10,
                       transition: 'border-color 0.15s ease, background 0.15s ease',
                     }}>
-                      <div style={{
-                        width: 22, height: 22, borderRadius: qb.questionType === 'multiple' ? 4 : 11,
-                        border: '2px solid ' + C.BORDER, flexShrink: 0,
-                      }} />
+                      {opt.imageUrl ? (
+                        <img src={opt.imageUrl} alt={opt.text} style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                          onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <div style={{
+                          width: 22, height: 22, borderRadius: qb.questionType === 'multiple' ? 4 : 11,
+                          border: '2px solid ' + C.BORDER, flexShrink: 0,
+                        }} />
+                      )}
                       <span>{String.fromCharCode(65 + oi)}. {opt.text}</span>
                       {opt.score ? (
                         <span style={{ marginLeft: 'auto', fontSize: 10, color: C.TEXT_SUBTLE, fontWeight: 600 }}>
@@ -1798,8 +1897,8 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                       ) : null}
                     </div>
                   );
-                })
-              )}
+                });
+              })()}
 
               {/* Branch indicators */}
               {qb.branchRules && qb.branchRules.length > 0 && (

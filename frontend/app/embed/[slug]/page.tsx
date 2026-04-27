@@ -27,6 +27,7 @@ interface QuizOption {
   id: string;
   text: string;
   score?: number;
+  imageUrl?: string;
 }
 
 interface QuizQuestion {
@@ -35,6 +36,11 @@ interface QuizQuestion {
   question?: string;
   subtitle?: string;
   options: QuizOption[];
+  questionStyle?: string;
+  questionType?: string;
+  answerLayout?: string;
+  mediaUrl?: string;
+  mediaType?: string;
 }
 
 interface QuizOutcome {
