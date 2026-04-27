@@ -2170,10 +2170,6 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
           {/* Answer options — clickable */}
           {(function() {
             var layout = qb.answerLayout || 'list';
-            if (!qb.answerLayout || qb.answerLayout === 'list') {
-              if (qb.questionStyle === 'cards') layout = 'grid';
-              else if (qb.questionStyle === 'imageChoice') layout = 'grid';
-            }
 
             function optStyle(oi: number, base: Record<string, any>) {
               var isSel = picks.indexOf(oi) >= 0;
@@ -2185,7 +2181,7 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
             }
 
             /* Grid preview: landscape 16:9 image + white text bar */
-            if (layout === 'grid' || qb.questionStyle === 'imageChoice') {
+            if (layout === 'grid') {
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {qb.options.map(function(opt, oi) {
