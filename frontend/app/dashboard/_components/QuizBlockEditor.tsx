@@ -621,6 +621,35 @@ function BlockCard({
           showTab('stock');
         }
 
+        /* ---- shared image overlay for Replace/Delete buttons ---- */
+        var imageOverlay = function(oi: number) {
+          return (
+            <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 2, display: 'flex', gap: 3 }}>
+              <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImagePicker(oi); }}
+                style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,0.55)', color: '#fff', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>Replace</span>
+              <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); setOptionImage(oi, ''); }}
+                style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(220,38,38,0.8)', color: '#fff', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>Delete</span>
+            </div>
+          );
+        };
+
+        /* ---- shared card bottom bar (letter badge + text + score) ---- */
+        var cardBottomBar = function(opt: any, oi: number) {
+          return (
+            <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 22, height: 22, borderRadius: 6, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
+              {selected ? (
+                <input value={opt.text} onChange={function(e) { updateOptionText(oi, e.target.value); }} onClick={function(e) { e.stopPropagation(); }} placeholder={'Option ' + LETTERS[oi]}
+                  style={{ flex: 1, fontSize: 12, fontWeight: 500, color: C.TEXT, fontFamily: C.FONT + ',system-ui,sans-serif', border: '1px solid ' + C.BORDER, borderRadius: 6, padding: '5px 8px', background: '#FAFAFA', outline: 'none', minWidth: 0 }}
+                  onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }} onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }} />
+              ) : (
+                <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: C.TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+              )}
+              {scoreBadge(opt)}
+            </div>
+          );
+        };
+
         /* ---- GRID layout ---- */
         if (layout === 'grid') {
           return (
@@ -636,14 +665,16 @@ function BlockCard({
                       <div onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}
                         style={{ cursor: selected ? 'pointer' : 'default' }}>
                         {opt.imageUrl ? (
-                          <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 70, objectFit: 'cover', display: 'block' }}
-                            onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
+                            <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                              onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          </div>
                         ) : (
-                          <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                          <div style={{ aspectRatio: '4/3', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {selected ? (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                                <span style={{ fontSize: 10, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
+                                <span style={{ fontSize: 11, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
                               </div>
                             ) : (
                               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
@@ -651,26 +682,9 @@ function BlockCard({
                           </div>
                         )}
                       </div>
-                      {opt.imageUrl && selected && (
-                        <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 3 }}>
-                          <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImagePicker(oi); }}
-                            style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', cursor: 'pointer' }}>Replace</span>
-                          <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); setOptionImage(oi, ''); }}
-                            style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(239,68,68,0.85)', color: '#fff', cursor: 'pointer' }}>Delete</span>
-                        </div>
-                      )}
+                      {opt.imageUrl && selected && imageOverlay(oi)}
                     </div>
-                    <div style={{ padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 20, height: 20, borderRadius: 5, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
-                      {selected ? (
-                        <input value={opt.text} onChange={function(e) { updateOptionText(oi, e.target.value); }} onClick={function(e) { e.stopPropagation(); }} placeholder={'Option ' + LETTERS[oi]}
-                          style={{ flex: 1, fontSize: 12, fontWeight: 500, color: C.TEXT, fontFamily: C.FONT + ',system-ui,sans-serif', border: '1px solid ' + C.BORDER, borderRadius: 5, padding: '4px 6px', background: '#FAFAFA', outline: 'none', minWidth: 0 }}
-                          onFocus={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }} onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }} />
-                      ) : (
-                        <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: C.TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
-                      )}
-                      {scoreBadge(opt)}
-                    </div>
+                    {cardBottomBar(opt, oi)}
                   </div>
                 );
               })}
@@ -687,7 +701,7 @@ function BlockCard({
                   <div key={opt.id} style={{
                     position: 'relative', borderRadius: 10, overflow: 'hidden',
                     border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
-                    minHeight: 80, display: 'flex', alignItems: 'flex-end',
+                    aspectRatio: '4/3', display: 'flex', alignItems: 'flex-end',
                     cursor: selected ? 'pointer' : 'default',
                   }}>
                     {opt.imageUrl ? (
@@ -695,31 +709,27 @@ function BlockCard({
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
                       <div onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}
-                        style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4, cursor: selected ? 'pointer' : 'default' }}>
+                        style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selected ? 'pointer' : 'default' }}>
                         {selected ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                            <span style={{ fontSize: 10, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
+                            <span style={{ fontSize: 11, color: C.ACCENT, fontWeight: 600 }}>Add Image</span>
                           </div>
                         ) : (
-                          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                         )}
                       </div>
                     )}
-                    {opt.imageUrl && selected && (
-                      <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 2, display: 'flex', gap: 3 }}>
-                        <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); openImagePicker(oi); }}
-                          style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,0.6)', color: '#fff', cursor: 'pointer' }}>Replace</span>
-                        <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); setOptionImage(oi, ''); }}
-                          style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'rgba(239,68,68,0.85)', color: '#fff', cursor: 'pointer' }}>Delete</span>
+                    {opt.imageUrl && selected && imageOverlay(oi)}
+                    <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '20px 10px 8px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(255,255,255,0.25)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0, backdropFilter: 'blur(4px)' }}>{LETTERS[oi]}</div>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
                       </div>
-                    )}
-                    <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '6px 8px', background: opt.imageUrl ? 'linear-gradient(transparent, rgba(0,0,0,0.6))' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: opt.imageUrl ? '#fff' : C.TEXT }}>{LETTERS[oi]}. {opt.text || 'Option ' + LETTERS[oi]}</span>
                       <span style={{
-                        fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
-                        background: opt.imageUrl ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.04)',
-                        color: opt.imageUrl ? '#fff' : C.TEXT_MUTED,
+                        fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 5,
+                        background: 'rgba(255,255,255,0.2)',
+                        color: '#fff', backdropFilter: 'blur(4px)',
                       }}>+{opt.score || 0}pts</span>
                     </div>
                   </div>
@@ -729,35 +739,36 @@ function BlockCard({
           );
         }
 
-        /* ---- THUMBNAILS layout ---- */
+        /* ---- LIST + IMAGE layout ---- */
         if (layout === 'imageThumbnails') {
           return (
-            <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               {qb.options.map(function(opt, oi) {
                 return (
                   <div key={opt.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: selected ? '4px 4px 4px 8px' : '8px 10px',
-                    borderRadius: 8, background: '#FFFFFF', border: '1px solid ' + C.BORDER,
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '6px 8px',
+                    borderRadius: 10, background: '#fff', border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
+                    transition: 'border-color 0.15s',
                   }}>
                     <div style={{ position: 'relative', flexShrink: 0 }}
                       onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}>
                       {opt.imageUrl ? (
-                        <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', display: 'block', cursor: selected ? 'pointer' : 'default' }}
+                        <img src={opt.imageUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: selected ? 'pointer' : 'default' }}
                           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       ) : (
-                        <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selected ? 'pointer' : 'default' }}>
-                          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={selected ? C.ACCENT : '#D0D5DD'} strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                        <div style={{ width: 48, height: 48, borderRadius: 8, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selected ? 'pointer' : 'default' }}>
+                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={selected ? C.ACCENT : '#D0D5DD'} strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                         </div>
                       )}
                       {opt.imageUrl && selected && (
                         <div style={{ position: 'absolute', top: -4, right: -4, zIndex: 2 }}>
                           <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); setOptionImage(oi, ''); }}
-                            style={{ fontSize: 8, fontWeight: 700, width: 14, height: 14, borderRadius: 7, background: '#EF4444', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', lineHeight: 1 }}>×</span>
+                            style={{ fontSize: 8, fontWeight: 700, width: 16, height: 16, borderRadius: 8, background: '#DC2626', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', lineHeight: 1 }}>×</span>
                         </div>
                       )}
                     </div>
-                    <div style={{ width: 20, height: 20, borderRadius: 5, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
+                    <div style={{ width: 22, height: 22, borderRadius: 6, background: selected ? C.ACCENT : '#E9ECEF', color: selected ? '#fff' : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{LETTERS[oi]}</div>
                     {selected ? (
                       <input value={opt.text} onChange={function(e) { updateOptionText(oi, e.target.value); }} onClick={function(e) { e.stopPropagation(); }} placeholder={'Option ' + LETTERS[oi]}
                         style={{ flex: 1, fontSize: 13, fontWeight: 500, color: C.TEXT, fontFamily: C.FONT + ',system-ui,sans-serif', border: '1px solid ' + C.BORDER, borderRadius: 6, padding: '6px 10px', background: '#FAFAFA', outline: 'none' }}
@@ -775,15 +786,14 @@ function BlockCard({
 
         /* ---- DEFAULT LIST layout ---- */
         return (
-          <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {qb.options.map(function(opt, oi) {
               return (
                 <div key={opt.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: selected ? '4px 4px 4px 10px' : '8px 12px',
-                  borderRadius: 8,
-                  background: '#FFFFFF', border: '1px solid ' + C.BORDER,
-                  fontSize: 14, color: C.TEXT,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '8px 10px',
+                  borderRadius: 10,
+                  background: '#fff', border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
                   transition: 'border-color 0.15s',
                 }}>
                   <div style={{
@@ -797,7 +807,7 @@ function BlockCard({
                     {LETTERS[oi]}
                   </div>
                   {opt.imageUrl && (
-                    <img src={opt.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                    <img src={opt.imageUrl} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
                       onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   )}
                   {selected ? (
@@ -807,7 +817,7 @@ function BlockCard({
                       onClick={function(e) { e.stopPropagation(); }}
                       placeholder={'Option ' + LETTERS[oi]}
                       style={{
-                        flex: 1, fontSize: 14, fontWeight: 500, color: C.TEXT,
+                        flex: 1, fontSize: 13, fontWeight: 500, color: C.TEXT,
                         fontFamily: C.FONT + ',system-ui,sans-serif',
                         border: '1px solid ' + C.BORDER, borderRadius: 6,
                         padding: '6px 10px', background: '#FAFAFA', outline: 'none',
@@ -816,7 +826,7 @@ function BlockCard({
                       onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.background = '#FAFAFA'; }}
                     />
                   ) : (
-                    <span style={{ flex: 1, fontWeight: 500, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
+                    <span style={{ flex: 1, fontWeight: 500, fontSize: 13, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
                   )}
                   {selected ? (
                     <input
@@ -2179,10 +2189,12 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                       <div key={opt.id} onClick={function() { handleSelectAnswer(oi); }}
                         style={optStyle(oi, { borderRadius: 10, overflow: 'hidden' })}>
                         {opt.imageUrl ? (
-                          <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }}
-                            onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
+                            <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                              onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          </div>
                         ) : (
-                          <div style={{ height: 80, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ aspectRatio: '4/3', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                           </div>
                         )}
@@ -2201,11 +2213,15 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
               return qb.options.map(function(opt, oi) {
                 return (
                   <div key={opt.id} onClick={function() { handleSelectAnswer(oi); }}
-                    style={optStyle(oi, { padding: '8px 12px', marginBottom: 4, borderRadius: 8, fontSize: 13, color: C.TEXT, display: 'flex', alignItems: 'center', gap: 10 })}>
+                    style={optStyle(oi, { padding: '8px 12px', marginBottom: 6, borderRadius: 10, fontSize: 13, color: C.TEXT, display: 'flex', alignItems: 'center', gap: 10 })}>
                     {opt.imageUrl ? (
-                      <img src={opt.imageUrl} alt={opt.text} style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
+                      <img src={opt.imageUrl} alt={opt.text} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    ) : null}
+                    ) : (
+                      <div style={{ width: 48, height: 48, borderRadius: 8, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                      </div>
+                    )}
                     <span style={{ flex: 1 }}>{String.fromCharCode(65 + oi)}. {opt.text}</span>
                     <span style={{ fontSize: 10, color: C.TEXT_SUBTLE, fontWeight: 600 }}>+{opt.score || 0}pts</span>
                   </div>
@@ -2223,12 +2239,13 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                         style={{
                           position: 'relative', borderRadius: 10, overflow: 'hidden',
                           border: '2px solid ' + (isSel ? C.ACCENT : C.BORDER), cursor: 'pointer',
-                          minHeight: 90, display: 'flex', alignItems: 'flex-end',
+                          aspectRatio: '4/3', display: 'flex', alignItems: 'flex-end',
                           transition: 'all 0.15s ease',
+                          background: opt.imageUrl ? 'transparent' : 'linear-gradient(135deg, #F3F4F6, #E5E7EB)',
                         }}>
                         {opt.imageUrl && <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />}
-                        <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '8px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.65))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '20px 10px 8px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ fontSize: 12, fontWeight: 600 }}>{opt.text || 'Option ' + String.fromCharCode(65 + oi)}</span>
                           <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.8 }}>+{opt.score || 0}pts</span>
                         </div>
@@ -2245,7 +2262,7 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
               return (
                 <div key={opt.id} onClick={function() { handleSelectAnswer(oi); }}
                   style={{
-                    padding: '10px 14px', marginBottom: 4, borderRadius: 8,
+                    padding: '10px 14px', marginBottom: 6, borderRadius: 10,
                     background: isSel ? C.ACCENT_LIGHT : '#FFFFFF',
                     border: '2px solid ' + (isSel ? C.ACCENT : C.BORDER),
                     fontSize: 13, color: C.TEXT, cursor: 'pointer',
@@ -2253,7 +2270,7 @@ function LivePreview({ blocks }: { blocks: QuizBlock[] }) {
                     transition: 'all 0.15s ease',
                   }}>
                   {opt.imageUrl ? (
-                    <img src={opt.imageUrl} alt={opt.text} style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                    <img src={opt.imageUrl} alt={opt.text} style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
                       onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   ) : (
                     <div style={{
