@@ -60,6 +60,18 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: PLATFORM_EMAIL_FROM
+        sync: false
+      - key: PEXELS_ACCESS_KEY
+        sync: false
+      - key: UNSPLASH_ACCESS_KEY
+        sync: false
+      - key: BACKEND_URL
+        sync: false
     healthCheckPath: /health
     autoDeploy: true
 
