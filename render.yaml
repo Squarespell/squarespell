@@ -100,3 +100,129 @@ services:
         sync: false
       - key: CRON_SECRET
         sync: false
+
+  # Cron job: lifecycle emails (onboarding, trial reminders, win-back) — daily at 9am UTC
+  - type: cron
+    name: squarespell-lifecycle-emails
+    runtime: node
+    region: oregon
+    plan: starter
+    schedule: "0 9 * * *"
+    rootDir: backend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: >
+      node -e "
+        const https = require('https');
+        const url = process.env.BACKEND_URL || 'https://squarespell-api.onrender.com';
+        const endpoints = ['/api/cron/trial-reminders', '/api/cron/lead-milestones'];
+        let done = 0;
+        endpoints.forEach(ep => {
+          const req = https.request(url + ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-cron-secret': process.env.CRON_SECRET || '' }
+          }, (res) => {
+            let body = '';
+            res.on('data', c => body += c);
+            res.on('end', () => {
+              console.log(ep, 'Status:', res.statusCode, body);
+              done++;
+              if (done === endpoints.length) process.exit(0);
+            });
+          });
+          req.on('error', (e) => { console.error(ep, e); done++; if (done === endpoints.length) process.exit(1); });
+          req.write('{}');
+          req.end();
+        });
+      "
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # Cron job: weekly digest — every Monday at 10am UTC
+  - type: cron
+    name: squarespell-weekly-digest
+    runtime: node
+    region: oregon
+    plan: starter
+    schedule: "0 10 * * 1"
+    rootDir: backend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: >
+      node -e "
+        const https = require('https');
+        const url = process.env.BACKEND_URL || 'https://squarespell-api.onrender.com';
+        const req = https.request(url + '/api/cron/weekly-digest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-cron-secret': process.env.CRON_SECRET || '' }
+        }, (res) => {
+          let body = '';
+          res.on('data', c => body += c);
+          res.on('end', () => { console.log('Status:', res.statusCode, body); process.exit(res.statusCode === 200 ? 0 : 1); });
+        });
+        req.on('error', (e) => { console.error(e); process.exit(1); });
+        req.write('{}');
+        req.end();
+      "
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # Cron job: monthly report — 1st of each month at 10am UTC
+  - type: cron
+    name: squarespell-monthly-report
+    runtime: node
+    region: oregon
+    plan: starter
+    schedule: "0 10 1 * *"
+    rootDir: backend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: >
+      node -e "
+        const https = require('https');
+        const url = process.env.BACKEND_URL || 'https://squarespell-api.onrender.com';
+        const req = https.request(url + '/api/cron/monthly-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-cron-secret': process.env.CRON_SECRET || '' }
+        }, (res) => {
+          let body = '';
+          res.on('data', c => body += c);
+          res.on('end', () => { console.log('Status:', res.statusCode, body); process.exit(res.statusCode === 200 ? 0 : 1); });
+        });
+        req.on('error', (e) => { console.error(e); process.exit(1); });
+        req.write('{}');
+        req.end();
+      "
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # Cron job: keep-alive ping every 10 minutes to prevent cold starts
+  - type: cron
+    name: squarespell-keep-alive
+    runtime: node
+    region: oregon
+    plan: starter
+    schedule: "*/10 * * * *"
+    rootDir: backend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: >
+      node -e "
+        const https = require('https');
+        const url = process.env.BACKEND_URL || 'https://squarespell-api.onrender.com';
+        const req = https.request(url + '/health', { method: 'GET' }, (res) => {
+          let body = '';
+          res.on('data', c => body += c);
+          res.on('end', () => { console.log('Health:', res.statusCode); process.exit(0); });
+        });
+        req.on('error', (e) => { console.error(e); process.exit(1); });
+        req.end();
+      "
+    envVars:
+      - key: BACKEND_URL
+        sync: false
