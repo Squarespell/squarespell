@@ -540,42 +540,53 @@ function BlockCard({
               content.innerHTML = '<div style="padding:12px 16px;border-bottom:1px solid #F2F4F7">'
                 + '<div style="display:flex;align-items:center;gap:8px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:0 12px">'
                 + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>'
-                + '<input id="stockSearch" type="text" placeholder="Search free stock images..." style="flex:1;border:none;outline:none;font-size:14px;padding:10px 0;background:transparent;font-family:Inter,system-ui,sans-serif" />'
+                + '<input id="stockSearch" type="text" placeholder="Search images..." style="flex:1;border:none;outline:none;font-size:14px;padding:10px 0;background:transparent;font-family:Inter,system-ui,sans-serif" />'
                 + '</div></div>'
-                + '<div id="stockResults" style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
-                + '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">Type to search stock images</div></div>';
+                + '<div id="stockResults" style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;overflow-y:auto;max-height:calc(82vh - 180px)">'
+                + '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">'
+                + '<div style="width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:#0D7377;border-radius:50%;margin:0 auto 8px;animation:spin 0.8s linear infinite"></div>'
+                + 'Loading images...</div></div>';
+
+              /* Add spinner animation */
+              var styleEl = document.createElement('style');
+              styleEl.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+              box.appendChild(styleEl);
 
               var searchInput = content.querySelector('#stockSearch') as HTMLInputElement;
               var resultsDiv = content.querySelector('#stockResults') as HTMLDivElement;
               var timer: any = null;
               searchInput.focus();
 
+              var renderResults = function(data: any) {
+                if (!data.results || data.results.length === 0) {
+                  resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">No images found. Try another term.</div>';
+                  return;
+                }
+                resultsDiv.innerHTML = '';
+                data.results.forEach(function(img: any) {
+                  var card = document.createElement('div');
+                  card.style.cssText = 'border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s;aspect-ratio:1';
+                  card.innerHTML = '<img src="' + (img.thumb || img.url) + '" style="width:100%;height:100%;object-fit:cover;display:block" />';
+                  card.addEventListener('mouseenter', function() { card.style.borderColor = '#0D7377'; });
+                  card.addEventListener('mouseleave', function() { card.style.borderColor = 'transparent'; });
+                  card.addEventListener('click', function() {
+                    setOptionImage(optIndex, img.url || img.thumb);
+                    close();
+                  });
+                  resultsDiv.appendChild(card);
+                });
+              };
+
               var doSearch = function(q: string) {
-                resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">Searching...</div>';
+                resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">'
+                  + '<div style="width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:#0D7377;border-radius:50%;margin:0 auto 8px;animation:spin 0.8s linear infinite"></div>'
+                  + 'Searching...</div>';
                 var fetchFn = function(token: string) {
                   fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(q) + '&page=1', {
                     headers: { Authorization: token ? 'Bearer ' + token : '' },
                   })
                   .then(function(res) { return res.json(); })
-                  .then(function(data) {
-                    if (!data.results || data.results.length === 0) {
-                      resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#98A2B3;font-size:13px">No images found. Try another term.</div>';
-                      return;
-                    }
-                    resultsDiv.innerHTML = '';
-                    data.results.forEach(function(img: any) {
-                      var card = document.createElement('div');
-                      card.style.cssText = 'border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s;aspect-ratio:1';
-                      card.innerHTML = '<img src="' + (img.thumb || img.url) + '" style="width:100%;height:100%;object-fit:cover;display:block" />';
-                      card.addEventListener('mouseenter', function() { card.style.borderColor = '#0D7377'; });
-                      card.addEventListener('mouseleave', function() { card.style.borderColor = 'transparent'; });
-                      card.addEventListener('click', function() {
-                        setOptionImage(optIndex, img.url || img.thumb);
-                        close();
-                      });
-                      resultsDiv.appendChild(card);
-                    });
-                  })
+                  .then(renderResults)
                   .catch(function() {
                     resultsDiv.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#EF4444;font-size:13px">Search failed. Check connection.</div>';
                   });
@@ -585,9 +596,13 @@ function BlockCard({
                 } else { fetchFn(''); }
               };
 
+              /* Auto-load popular images on open */
+              doSearch('nature');
+
               searchInput.addEventListener('input', function() {
                 clearTimeout(timer);
                 var val = searchInput.value.trim();
+                if (val.length === 0) { doSearch('nature'); return; }
                 if (val.length < 2) return;
                 timer = setTimeout(function() { doSearch(val); }, 400);
               });
@@ -602,8 +617,8 @@ function BlockCard({
             }
           }
 
-          /* Default to upload tab */
-          showTab('upload');
+          /* Default to stock images tab — show images immediately */
+          showTab('stock');
         }
 
         /* ---- GRID layout ---- */
