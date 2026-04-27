@@ -378,7 +378,45 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     <DashboardShell
       title={'Editing: ' + (quiz.title || 'Quiz')}
       topbarRight={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Save status indicator */}
+          <span style={{
+            fontSize: 12, fontWeight: 500, color: '#027A48',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Saved
+          </span>
+          {/* Divider */}
+          <div style={{ width: 1, height: 20, background: '#EAECF0' }} />
+          {/* Preview button */}
+          <button
+            type="button"
+            onClick={function() {
+              if (quiz?.id) {
+                window.open('/quiz/' + quiz.id + '/preview', '_blank');
+              }
+            }}
+            style={{
+              padding: '7px 14px', borderRadius: 8,
+              background: 'transparent', border: '1px solid #EAECF0',
+              color: '#344054', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: C.FONT,
+              display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'border-color 0.15s',
+            }}
+            onMouseEnter={function(e) { (e.currentTarget as HTMLElement).style.borderColor = '#D0D5DD'; }}
+            onMouseLeave={function(e) { (e.currentTarget as HTMLElement).style.borderColor = '#EAECF0'; }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx={12} cy={12} r={3} />
+            </svg>
+            Preview
+          </button>
+          {/* Publish button */}
           <button
             type="button"
             onClick={handlePublish}

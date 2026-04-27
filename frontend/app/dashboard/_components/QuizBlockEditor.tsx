@@ -348,22 +348,33 @@ function BlockCard({
             </div>
           ) : null}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{
-              fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED,
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              {qb ? (
-                <>
-                  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><circle cx={12} cy={12} r={10}/><circle cx={12} cy={12} r={3}/></svg>
-                  {qb.questionType === 'multiple' ? 'Multi select' : 'Single select'}
-                </>
-              ) : (
-                label
-              )}
-            </span>
+            {qb ? (
+              <select
+                value={qb.questionStyle}
+                onChange={function(e) {
+                  e.stopPropagation();
+                  onChange(Object.assign({}, block, { questionStyle: e.target.value }));
+                }}
+                onClick={function(e) { e.stopPropagation(); }}
+                style={{
+                  fontSize: 11, fontWeight: 600, color: C.TEXT_MUTED,
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  padding: '2px 0', appearance: 'auto' as const,
+                }}
+              >
+                <option value="buttons">Multiple Choice</option>
+                <option value="dropdown">Dropdown</option>
+                <option value="cards">Cards</option>
+                <option value="imageChoice">Image Choice</option>
+              </select>
+            ) : (
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED }}>
+                {label}
+              </span>
+            )}
             {qb && (
-              <span style={{ fontSize: 12, color: C.TEXT_SUBTLE }}>
-                {qb.options.length} options
+              <span style={{ fontSize: 11, color: C.TEXT_SUBTLE }}>
+                · {qb.options.length} options
               </span>
             )}
           </div>
@@ -1020,6 +1031,75 @@ function BlockInspector({
               onChange={function(v) { updateField('questionStyle', v); }}
             />
           </div>
+          {/* Shuffle Answers toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.TEXT_MUTED }}>Shuffle Answers</span>
+            <button type="button"
+              onClick={function() { updateField('shuffleAnswers', !qb.shuffleAnswers); }}
+              style={{
+                width: 44, height: 24, borderRadius: 12, border: 'none',
+                background: qb.shuffleAnswers ? C.ACCENT : C.GRAY_300,
+                cursor: 'pointer', position: 'relative' as const, transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 20, height: 20, borderRadius: 10, background: '#FFFFFF',
+                position: 'absolute' as const, top: 2,
+                left: qb.shuffleAnswers ? 22 : 2,
+                transition: 'left 0.2s', boxShadow: '0px 1px 2px rgba(16,24,40,0.05)',
+              }} />
+            </button>
+          </div>
+          {/* Allow Multiple Selection toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.TEXT_MUTED }}>Allow Multiple Selection</span>
+            <button type="button"
+              onClick={function() { updateField('questionType', qb.questionType === 'multiple' ? 'single' : 'multiple'); }}
+              style={{
+                width: 44, height: 24, borderRadius: 12, border: 'none',
+                background: qb.questionType === 'multiple' ? C.ACCENT : C.GRAY_300,
+                cursor: 'pointer', position: 'relative' as const, transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 20, height: 20, borderRadius: 10, background: '#FFFFFF',
+                position: 'absolute' as const, top: 2,
+                left: qb.questionType === 'multiple' ? 22 : 2,
+                transition: 'left 0.2s', boxShadow: '0px 1px 2px rgba(16,24,40,0.05)',
+              }} />
+            </button>
+          </div>
+          {/* Required toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid ' + C.BORDER }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.TEXT_MUTED }}>Required</span>
+            <button type="button"
+              onClick={function() { updateField('required', qb.required === false ? true : false); }}
+              style={{
+                width: 44, height: 24, borderRadius: 12, border: 'none',
+                background: qb.required !== false ? C.ACCENT : C.GRAY_300,
+                cursor: 'pointer', position: 'relative' as const, transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 20, height: 20, borderRadius: 10, background: '#FFFFFF',
+                position: 'absolute' as const, top: 2,
+                left: qb.required !== false ? 22 : 2,
+                transition: 'left 0.2s', boxShadow: '0px 1px 2px rgba(16,24,40,0.05)',
+              }} />
+            </button>
+          </div>
+          {/* Help Text */}
+          <InspectorField label="Help Text (optional)">
+            <input
+              value={qb.helpText || ''}
+              onChange={function(e) { updateField('helpText', e.target.value); }}
+              style={inputStyle}
+              placeholder="Add help text..."
+            />
+          </InspectorField>
           {/* Add / remove options */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
             <span style={{ fontSize: 14, color: C.TEXT_MUTED, fontWeight: 600 }}>{qb.options.length} options</span>
@@ -1300,31 +1380,6 @@ function BlockInspector({
           )}
         </SidebarSection>
 
-        {/* Hero image */}
-        <div style={{ marginBottom: 16, padding: '12px', background: C.SIDEBAR, border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
-          <label style={{
-            display: 'block', fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED,
-            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6,
-          }}>
-            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ verticalAlign: '-1px', marginRight: 4 }}>
-              <rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" />
-            </svg>
-            Result image
-          </label>
-          <input
-            value={ob.imageUrl || ''}
-            onChange={function(e) { updateField('imageUrl', e.target.value); }}
-            style={inputStyle}
-            placeholder="Image URL for result page..."
-          />
-          {ob.imageUrl && (
-            <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
-              <img src={ob.imageUrl} alt={ob.title} style={{ width: '100%', display: 'block', maxHeight: 140, objectFit: 'cover' }}
-                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            </div>
-          )}
-        </div>
-
         {/* Section: CTA & scoring */}
         <SidebarSection title="Action & scoring" defaultOpen={true}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1={10} y1={14} x2={21} y2={3} /></svg>}
@@ -1376,6 +1431,71 @@ function BlockInspector({
               </div>
             </div>
           )}
+        </SidebarSection>
+
+        {/* Section: Layout & Design — State 8 from mockup */}
+        <SidebarSection title="Layout & design" defaultOpen={true}
+          icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><line x1={3} y1={9} x2={21} y2={9} /><line x1={9} y1={21} x2={9} y2={9} /></svg>}
+        >
+          <InspectorField label="Illustration">
+            <select
+              value={ob.illustration || ''}
+              onChange={function(e) { updateField('illustration', e.target.value); }}
+              style={inputStyle}
+            >
+              <option value="">None</option>
+              <option value="confetti">Confetti</option>
+              <option value="trophy">Trophy</option>
+              <option value="star">Star</option>
+              <option value="heart">Heart</option>
+              <option value="checkmark">Checkmark</option>
+            </select>
+          </InspectorField>
+          <InspectorField label="Layout">
+            <select
+              value={ob.resultLayout || 'centered'}
+              onChange={function(e) { updateField('resultLayout', e.target.value); }}
+              style={inputStyle}
+            >
+              <option value="centered">Centered</option>
+              <option value="left">Left aligned</option>
+              <option value="right">Right aligned</option>
+            </select>
+          </InspectorField>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <InspectorField label="Background color">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="color"
+                  value={ob.bgColor || '#FFFFFF'}
+                  onChange={function(e) { updateField('bgColor', e.target.value); }}
+                  style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid ' + C.BORDER, padding: 0, cursor: 'pointer' }}
+                />
+                <input
+                  value={ob.bgColor || '#FFFFFF'}
+                  onChange={function(e) { updateField('bgColor', e.target.value); }}
+                  style={Object.assign({}, inputStyle, { fontFamily: 'monospace', fontSize: 11 })}
+                  placeholder="#FFFFFF"
+                />
+              </div>
+            </InspectorField>
+            <InspectorField label="Text color">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="color"
+                  value={ob.textColor || '#0F172A'}
+                  onChange={function(e) { updateField('textColor', e.target.value); }}
+                  style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid ' + C.BORDER, padding: 0, cursor: 'pointer' }}
+                />
+                <input
+                  value={ob.textColor || '#0F172A'}
+                  onChange={function(e) { updateField('textColor', e.target.value); }}
+                  style={Object.assign({}, inputStyle, { fontFamily: 'monospace', fontSize: 11 })}
+                  placeholder="#0F172A"
+                />
+              </div>
+            </InspectorField>
+          </div>
         </SidebarSection>
       </div>
     );
@@ -1865,6 +1985,8 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
   var [expandedInserter, setExpandedInserter] = useState<number | null>(null);
   var [dragSourceId, setDragSourceId] = useState<string | null>(null);
   var [dragOverId, setDragOverId] = useState<string | null>(null);
+  var [inspectorTab, setInspectorTab] = useState<'content' | 'logic' | 'design'>('content');
+  var [showAddModal, setShowAddModal] = useState(false);
   var containerRef = useRef<HTMLDivElement>(null);
 
   // Sync back to parent when blocks change
@@ -1890,8 +2012,8 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
     history.push(next);
   }
 
-  function addBlock(type: QuizBlockType, afterIndex: number) {
-    var newBlock = createDefaultQuizBlock(type);
+  function addBlock(type: QuizBlockType, afterIndex: number, preBuilt?: QuizBlock) {
+    var newBlock = preBuilt || createDefaultQuizBlock(type);
     var next = blocks.slice();
     next.splice(afterIndex + 1, 0, newBlock);
     commit(next);
@@ -2045,18 +2167,162 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
   // Count questions for numbering
   var questionCounter = 0;
 
+  // Question-only list for left sidebar
+  var questionBlocks: { block: QuizBlock; qNum: number }[] = [];
+  var outcomeBlocks: { block: QuizBlock }[] = [];
+  var qCounter = 0;
+  for (var bi = 0; bi < blocks.length; bi++) {
+    if (blocks[bi].type === 'question') {
+      qCounter++;
+      questionBlocks.push({ block: blocks[bi], qNum: qCounter });
+    } else if (blocks[bi].type === 'outcome') {
+      outcomeBlocks.push({ block: blocks[bi] });
+    }
+  }
+
   return (
     <div
       ref={containerRef}
       style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 380px',
+        gridTemplateColumns: '220px 1fr 340px',
         gap: 0,
         height: 'calc(100vh - 60px)',
         overflow: 'hidden',
       }}
     >
-      {/* Canvas — independently scrollable */}
+      {/* LEFT SIDEBAR — Question list */}
+      <div style={{
+        borderRight: '1px solid ' + C.BORDER,
+        background: C.SURFACE,
+        overflowY: 'auto', height: '100%',
+        scrollbarWidth: 'thin' as const, scrollbarColor: '#D0D5DD transparent',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{
+          padding: '18px 16px 12px', borderBottom: '1px solid ' + C.BORDER,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT, fontFamily: C.FONT }}>
+            Questions
+            <span style={{
+              marginLeft: 8, fontSize: 11, fontWeight: 600,
+              background: C.ACCENT + '14', color: C.ACCENT,
+              padding: '2px 8px', borderRadius: 10,
+            }}>
+              {questionBlocks.length}
+            </span>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
+          {questionBlocks.map(function(item) {
+            var qb = item.block as QuestionBlock;
+            var isSelected = selectedId === item.block.id;
+            return (
+              <button
+                key={item.block.id}
+                type="button"
+                onClick={function() { setSelectedId(item.block.id); setInspectorTab('content'); }}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                  width: '100%', textAlign: 'left',
+                  padding: '10px 10px', marginBottom: 4, borderRadius: 8,
+                  border: 'none', cursor: 'pointer',
+                  background: isSelected ? C.ACCENT + '0A' : 'transparent',
+                  borderLeft: isSelected ? '3px solid ' + C.ACCENT : '3px solid transparent',
+                  transition: 'background 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={function(e) { if (!isSelected) e.currentTarget.style.background = '#F9FAFB'; }}
+                onMouseLeave={function(e) { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: '#FFFFFF',
+                  background: isSelected ? C.ACCENT : '#98A2B3',
+                  borderRadius: 4, padding: '2px 6px', flexShrink: 0,
+                  marginTop: 1,
+                }}>Q{item.qNum}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 500, color: '#98A2B3',
+                    marginBottom: 2, textTransform: 'capitalize',
+                  }}>
+                    {qb.questionStyle === 'imageChoice' ? 'Image Choice' : qb.questionStyle === 'buttons' ? 'Multiple Choice' : qb.questionStyle === 'dropdown' ? 'Dropdown' : qb.questionStyle}
+                  </div>
+                  <div style={{
+                    fontSize: 12, fontWeight: 500, color: C.TEXT,
+                    overflow: 'hidden', textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap' as const, maxWidth: 130,
+                  }}>
+                    {qb.text || 'Untitled question'}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+          {outcomeBlocks.map(function(item) {
+            var ob = item.block as OutcomeBlock;
+            var isSelected = selectedId === item.block.id;
+            return (
+              <button
+                key={item.block.id}
+                type="button"
+                onClick={function() { setSelectedId(item.block.id); setInspectorTab('content'); }}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                  width: '100%', textAlign: 'left',
+                  padding: '10px 10px', marginBottom: 4, borderRadius: 8,
+                  border: 'none', cursor: 'pointer',
+                  background: isSelected ? '#10B98114' : 'transparent',
+                  borderLeft: isSelected ? '3px solid #10B981' : '3px solid transparent',
+                  transition: 'background 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={function(e) { if (!isSelected) e.currentTarget.style.background = '#F9FAFB'; }}
+                onMouseLeave={function(e) { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: '#FFFFFF',
+                  background: '#10B981', borderRadius: 4, padding: '2px 6px', flexShrink: 0,
+                  marginTop: 1,
+                }}>
+                  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+                <div style={{
+                  fontSize: 12, fontWeight: 500, color: C.TEXT,
+                  overflow: 'hidden', textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap' as const, maxWidth: 130,
+                }}>
+                  {ob.title || 'Result'}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ padding: '12px 8px', borderTop: '1px solid ' + C.BORDER }}>
+          <button
+            type="button"
+            onClick={function() { setShowAddModal(true); }}
+            style={{
+              width: '100%', padding: '10px 0', borderRadius: 8,
+              border: '1px dashed ' + C.BORDER, background: 'transparent',
+              color: C.TEXT_MUTED, fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: 6,
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+            onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.color = C.ACCENT; }}
+            onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.color = C.TEXT_MUTED; }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <line x1={12} y1={5} x2={12} y2={19} /><line x1={5} y1={12} x2={19} y2={12} />
+            </svg>
+            Add Question
+          </button>
+        </div>
+      </div>
+
+      {/* CENTER CANVAS — independently scrollable */}
       <div style={{
         padding: '24px 32px', overflowY: 'auto', height: '100%',
         scrollbarWidth: 'thin' as const, scrollbarColor: '#D0D5DD transparent',
@@ -2075,27 +2341,6 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button
-              type="button"
-              onClick={function() { setShowPreview(!showPreview); setSelectedId(null); }}
-              title={showPreview ? 'Hide preview' : 'Show live preview'}
-              style={{
-                height: 30, padding: '0 10px', borderRadius: 6,
-                background: showPreview ? C.ACCENT_LIGHT : 'transparent',
-                border: showPreview ? '1px solid ' + C.ACCENT + '30' : 'none',
-                color: showPreview ? C.ACCENT : C.TEXT_MUTED,
-                cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 5,
-                fontFamily: 'Inter,system-ui,sans-serif',
-                marginRight: 4,
-              }}
-            >
-              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx={12} cy={12} r={3} />
-              </svg>
-              Preview
-            </button>
             <button
               type="button"
               onClick={history.undo}
@@ -2178,18 +2423,46 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
 
           {blocks.length === 0 && (
             <div style={{
-              padding: '48px 20px', textAlign: 'center',
-              border: '1px dashed ' + C.BORDER, borderRadius: 14,
-              color: C.TEXT_MUTED, fontSize: 14,
+              padding: '80px 40px', textAlign: 'center',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
             }}>
-              <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_SUBTLE}
-                strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
-                style={{ margin: '0 auto 12px', display: 'block' }}>
-                <rect x={3} y={3} width={18} height={18} rx={2} ry={2} />
-                <line x1={12} y1={8} x2={12} y2={16} />
-                <line x1={8} y1={12} x2={16} y2={12} />
-              </svg>
-              Click the + button above to add your first block
+              <div style={{
+                width: 72, height: 72, borderRadius: 20,
+                background: C.ACCENT + '0C', color: C.ACCENT,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 20,
+              }}>
+                <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1={12} y1={18} x2={12} y2={12} />
+                  <line x1={9} y1={15} x2={15} y2={15} />
+                </svg>
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT, marginBottom: 8, fontFamily: C.FONT }}>
+                Your quiz is empty
+              </div>
+              <div style={{ fontSize: 14, color: C.TEXT_MUTED, marginBottom: 24, lineHeight: 1.5 }}>
+                Add your first question to get started.
+              </div>
+              <button
+                type="button"
+                onClick={function() { setShowAddModal(true); }}
+                style={{
+                  padding: '12px 28px', borderRadius: 8,
+                  background: C.ACCENT, color: '#FFFFFF', border: 'none',
+                  fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: C.FONT, display: 'flex', alignItems: 'center', gap: 8,
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={function(e) { e.currentTarget.style.background = '#0B6165'; }}
+                onMouseLeave={function(e) { e.currentTarget.style.background = C.ACCENT; }}
+              >
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1={12} y1={5} x2={12} y2={19} /><line x1={5} y1={12} x2={19} y2={12} />
+                </svg>
+                Add question
+              </button>
             </div>
           )}
         </div>
@@ -2258,13 +2531,232 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               </button>
             </div>
 
+            {/* Inspector tabs */}
+            <div style={{
+              display: 'flex', gap: 0, borderBottom: '1px solid ' + C.BORDER,
+              padding: '0 24px', background: C.SURFACE,
+              position: 'sticky', top: 73, zIndex: 4,
+            }}>
+              {(['content', 'logic', 'design'] as const).map(function(t) {
+                var isActive = inspectorTab === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={function() { setInspectorTab(t); }}
+                    style={{
+                      padding: '10px 16px', border: 'none', background: 'transparent',
+                      fontSize: 13, fontWeight: isActive ? 600 : 500,
+                      color: isActive ? C.ACCENT : C.TEXT_MUTED,
+                      borderBottom: isActive ? '2px solid ' + C.ACCENT : '2px solid transparent',
+                      cursor: 'pointer', textTransform: 'capitalize',
+                      fontFamily: C.FONT + ',system-ui,sans-serif',
+                      transition: 'color 0.15s, border-color 0.15s',
+                      marginBottom: -1,
+                    }}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Inspector content — sections handle own padding */}
-            <BlockInspector
-              block={selectedBlock}
-              allBlocks={blocks}
-              onChange={updateBlock}
-              onDeselect={function() { setSelectedId(null); }}
-            />
+            {inspectorTab === 'content' && (
+              <BlockInspector
+                block={selectedBlock}
+                allBlocks={blocks}
+                onChange={updateBlock}
+                onDeselect={function() { setSelectedId(null); }}
+              />
+            )}
+
+            {inspectorTab === 'logic' && (
+              <div style={{ padding: '24px' }}>
+                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 12,
+                    background: '#F5F3FF', color: '#7C3AED',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 14,
+                  }}>
+                    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="16 3 21 3 21 8" /><line x1={4} y1={20} x2={21} y2={3} />
+                      <polyline points="21 16 21 21 16 21" /><line x1={15} y1={15} x2={21} y2={21} />
+                      <line x1={4} y1={4} x2={9} y2={9} />
+                    </svg>
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 6 }}>
+                    Conditional Logic
+                  </div>
+                  <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5, marginBottom: 20 }}>
+                    Set up branching rules to send users to different questions based on their answers.
+                  </div>
+                </div>
+                {selectedBlock && selectedBlock.type === 'question' && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                      Branch Rules
+                    </div>
+                    <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 16 }}>
+                      If user selects an answer, go to:
+                    </div>
+                    {(selectedBlock as QuestionBlock).options.map(function(opt) {
+                      var qb = selectedBlock as QuestionBlock;
+                      var existingRule = qb.branchRules?.find(function(r) { return r.if_answer === opt.id; });
+                      return (
+                        <div key={opt.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 12px', background: '#F9FAFB', borderRadius: 8,
+                          marginBottom: 6, border: '1px solid ' + C.BORDER,
+                        }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, minWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                            {opt.text}
+                          </span>
+                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_SUBTLE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                            <line x1={5} y1={12} x2={19} y2={12} /><polyline points="12 5 19 12 12 19" />
+                          </svg>
+                          <select
+                            value={existingRule?.goto || ''}
+                            onChange={function(e) {
+                              var newRules = (qb.branchRules || []).filter(function(r) { return r.if_answer !== opt.id; });
+                              if (e.target.value) {
+                                newRules.push({ if_answer: opt.id, goto: e.target.value });
+                              }
+                              updateBlock(Object.assign({}, qb, { branchRules: newRules }));
+                            }}
+                            style={{
+                              flex: 1, fontSize: 12, padding: '6px 8px', borderRadius: 6,
+                              border: '1px solid ' + C.BORDER, background: '#FFFFFF', color: C.TEXT,
+                            }}
+                          >
+                            <option value="">Next question</option>
+                            {blocks.filter(function(b) { return b.id !== selectedBlock.id; }).map(function(b) {
+                              return <option key={b.id} value={b.id}>{blockLabel(b)}: {(b as any).text || (b as any).title || b.id}</option>;
+                            })}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {inspectorTab === 'design' && (
+              <div style={{ padding: '24px' }}>
+                {/* Theme color dots */}
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Theme</div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {[
+                      { color: '#1E293B', label: 'Dark' },
+                      { color: '#0D7377', label: 'Teal' },
+                      { color: '#2563EB', label: 'Blue' },
+                      { color: '#DC2626', label: 'Red' },
+                      { color: '#111827', label: 'Black' },
+                      { color: '#6B7280', label: 'Gray' },
+                    ].map(function(theme) {
+                      return (
+                        <button key={theme.color} type="button" title={theme.label} style={{
+                          width: 28, height: 28, borderRadius: 14,
+                          background: theme.color, border: '2px solid transparent',
+                          cursor: 'pointer', transition: 'transform 0.15s',
+                        }}
+                          onMouseEnter={function(e) { e.currentTarget.style.transform = 'scale(1.15)'; }}
+                          onMouseLeave={function(e) { e.currentTarget.style.transform = 'scale(1)'; }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Fonts */}
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Fonts</div>
+                  <div style={{ marginBottom: 10 }}>
+                    <label style={{ fontSize: 12, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Question Font</label>
+                    <select style={{
+                      width: '100%', padding: '8px 12px', borderRadius: 8,
+                      border: '1px solid ' + C.BORDER, fontSize: 13, color: C.TEXT,
+                      background: '#FFFFFF',
+                    }}>
+                      <option>Inter</option>
+                      <option>System UI</option>
+                      <option>Georgia</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Answer Font</label>
+                    <select style={{
+                      width: '100%', padding: '8px 12px', borderRadius: 8,
+                      border: '1px solid ' + C.BORDER, fontSize: 13, color: C.TEXT,
+                      background: '#FFFFFF',
+                    }}>
+                      <option>Inter</option>
+                      <option>System UI</option>
+                      <option>Georgia</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Button Style */}
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Button Style</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {['Rounded', 'Square'].map(function(s) {
+                      var isActive = s === 'Rounded';
+                      return (
+                        <button key={s} type="button" style={{
+                          flex: 1, padding: '8px 0', borderRadius: 8,
+                          border: '1px solid ' + (isActive ? C.ACCENT : C.BORDER),
+                          background: isActive ? C.ACCENT + '0C' : 'transparent',
+                          color: isActive ? C.ACCENT : C.TEXT_MUTED,
+                          fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                        }}>{s}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Background Color */}
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Background color</div>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8,
+                  }}>
+                    <div style={{ width: 24, height: 24, borderRadius: 6, background: '#F6F4FC', border: '1px solid ' + C.BORDER }} />
+                    <span style={{ fontSize: 13, color: C.TEXT, fontFamily: 'monospace' }}>#F6F4FC</span>
+                  </div>
+                </div>
+
+                {/* Progress Bar toggle */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT }}>Progress Bar</div>
+                  <button type="button"
+                    onClick={function() {
+                      if (onSettingsChange) {
+                        onSettingsChange(Object.assign({}, settings, { show_progress_bar: settings?.show_progress_bar === false ? true : false }));
+                      }
+                    }}
+                    style={{
+                      width: 44, height: 24, borderRadius: 12, border: 'none',
+                      background: settings?.show_progress_bar !== false ? C.ACCENT : '#D0D5DD',
+                      cursor: 'pointer', position: 'relative' as const, transition: 'background 0.2s',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 10, background: '#FFFFFF',
+                      position: 'absolute' as const, top: 2,
+                      left: settings?.show_progress_bar !== false ? 22 : 2,
+                      transition: 'left 0.2s', boxShadow: '0px 1px 2px rgba(16,24,40,0.05)',
+                    }} />
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           /* Default sidebar — quiz overview when nothing selected */
@@ -2390,41 +2882,102 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               </div>
             </div>
 
-            {/* Feature summary */}
-            <div style={{ background: '#F9FAFB', borderRadius: 14, padding: 20, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 12, letterSpacing: '-0.01em' }}>Features used</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).questionStyle === 'imageChoice'; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#F0FDF4', color: '#16A34A' }}>Image choices</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).mediaUrl; }) && (
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB' }}>Media</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).branchRules && (b as QuestionBlock).branchRules!.length > 0; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#F5F3FF', color: '#7C3AED' }}>Branching</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).timeLimit; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FEF2F2', color: '#EF4444' }}>Timers</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'outcome' && (b as OutcomeBlock).shareEnabled; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FFF7ED', color: '#EA580C' }}>Social sharing</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'outcome' && (b as OutcomeBlock).imageUrl; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#ECFDF5', color: '#059669' }}>Rich results</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'leadGate'; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FFF1F2', color: '#E11D48' }}>Lead capture</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).options.some(function(o) { return o.explanation; }); }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FEFCE8', color: '#CA8A04' }}>Explanations</span>
-                )}
-              </div>
-            </div>
-
             {showPreview && <LivePreview blocks={blocks} />}
           </div>
         )}
       </div>
+
+      {/* Add Question Modal — State 2 from mockup */}
+      {showAddModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onClick={function() { setShowAddModal(false); }}
+        >
+          <div
+            style={{
+              background: '#FFFFFF', borderRadius: 16, padding: '32px',
+              width: 480, maxWidth: '90vw',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+            onClick={function(e) { e.stopPropagation(); }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.TEXT, fontFamily: C.FONT, marginBottom: 4 }}>
+                Add new question
+              </div>
+              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
+                Choose a question type
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              {[
+                { type: 'question' as QuizBlockType, style: 'buttons', label: 'Multiple Choice', icon: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11' },
+                { type: 'question' as QuizBlockType, style: 'dropdown', label: 'Dropdown', icon: 'M6 9l6 6 6-6' },
+                { type: 'question' as QuizBlockType, style: 'cards', label: 'Yes / No', icon: 'M20 6L9 17l-5-5' },
+                { type: 'question' as QuizBlockType, style: 'imageChoice', label: 'Image Choice', icon: 'M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zM8.5 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3z' },
+                { type: 'outcome' as QuizBlockType, style: '', label: 'Result Page', icon: 'M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3.01' },
+                { type: 'leadGate' as QuizBlockType, style: '', label: 'Lead Gate', icon: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM22 8l-4 4-2-2' },
+                { type: 'heading' as QuizBlockType, style: '', label: 'Heading', icon: 'M6 4v16M18 4v16M6 12h12' },
+                { type: 'text' as QuizBlockType, style: '', label: 'Text Block', icon: 'M4 6h16M4 10h16M4 14h10' },
+                { type: 'divider' as QuizBlockType, style: '', label: 'Divider', icon: 'M3 12h18' },
+              ].map(function(item) {
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={function() {
+                      var newBlock = createDefaultQuizBlock(item.type);
+                      if (item.type === 'question' && item.style) {
+                        (newBlock as QuestionBlock).questionStyle = item.style as any;
+                      }
+                      addBlock(item.type, blocks.length - 1, newBlock);
+                      setShowAddModal(false);
+                      setSelectedId(newBlock.id);
+                    }}
+                    style={{
+                      padding: '20px 12px', borderRadius: 12,
+                      border: '1px solid ' + C.BORDER, background: '#FFFFFF',
+                      cursor: 'pointer', textAlign: 'center',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+                    }}
+                    onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.boxShadow = '0 2px 8px rgba(13,115,119,0.12)'; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.boxShadow = 'none'; }}
+                  >
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 10,
+                      background: C.ACCENT + '0C', color: C.ACCENT,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d={item.icon} />
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: C.TEXT }}>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <button
+                type="button"
+                onClick={function() { setShowAddModal(false); }}
+                style={{
+                  padding: '8px 24px', borderRadius: 8,
+                  border: '1px solid ' + C.BORDER, background: 'transparent',
+                  color: C.TEXT_MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

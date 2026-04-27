@@ -41,9 +41,12 @@ export interface QuestionBlock extends BaseQuizBlock {
   type: 'question';
   text: string;
   subtitle?: string;
+  description?: string;
   questionStyle: QuestionStyle;
   options: QuestionOption[];
   required?: boolean;
+  shuffleAnswers?: boolean;
+  helpText?: string;
   branchRules?: BranchRule[];
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
@@ -88,6 +91,10 @@ export interface OutcomeBlock extends BaseQuizBlock {
   imageUrl?: string;
   shareEnabled?: boolean;
   shareText?: string;
+  illustration?: string;
+  resultLayout?: 'centered' | 'left' | 'right';
+  bgColor?: string;
+  textColor?: string;
 }
 
 export interface LeadGateBlock extends BaseQuizBlock {
