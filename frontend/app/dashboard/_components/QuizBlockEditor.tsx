@@ -428,7 +428,10 @@ function BlockCard({
                 headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
                 body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
               })
-              .then(function(res) { if (!res.ok) throw new Error('Upload failed'); return res.json(); })
+              .then(function(res) {
+                if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Upload failed (' + res.status + ')'); });
+                return res.json();
+              })
               .then(function(data) {
                 if (data.url) {
                   var newOpts = qb!.options.slice();
@@ -436,13 +439,43 @@ function BlockCard({
                   onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
                 }
               })
-              .catch(function() {});
+              .catch(function(err) { console.error('Image upload error:', err); alert('Image upload failed: ' + (err.message || 'Unknown error')); });
             };
             if (typeof window !== 'undefined' && (window as any).Clerk) {
               (window as any).Clerk.session?.getToken().then(function(t: string) { doUp(t || ''); }).catch(function() { doUp(''); });
             } else { doUp(''); }
           };
           reader.readAsDataURL(file);
+        }
+
+        /* Set option image from URL (Pexels or paste) */
+        function setOptionImage(optIndex: number, url: string) {
+          var newOpts = qb!.options.slice();
+          newOpts[optIndex] = Object.assign({}, newOpts[optIndex], { imageUrl: url });
+          onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
+        }
+
+        /* Search Pexels for stock images */
+        function searchPexels(optIndex: number) {
+          var query = prompt('Search free stock images (Pexels):');
+          if (!query) return;
+          var doSearch = function(token: string) {
+            fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(query as string) + '&page=1', {
+              headers: { Authorization: token ? 'Bearer ' + token : '' },
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+              if (data.results && data.results.length > 0) {
+                setOptionImage(optIndex, data.results[0].url);
+              } else {
+                alert('No images found for "' + query + '". Try a different search term.');
+              }
+            })
+            .catch(function(err) { console.error('Pexels search error:', err); alert('Stock image search failed. Check your connection.'); });
+          };
+          if (typeof window !== 'undefined' && (window as any).Clerk) {
+            (window as any).Clerk.session?.getToken().then(function(t: string) { doSearch(t || ''); }).catch(function() { doSearch(''); });
+          } else { doSearch(''); }
         }
 
         /* ---- GRID layout ---- */
@@ -461,9 +494,10 @@ function BlockCard({
                         <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 70, objectFit: 'cover', display: 'block' }}
                           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       ) : (
-                        <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
-                          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                          {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Click to upload</span>}
+                        <div style={{ height: 70, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
+                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                          {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Upload</span>}
+                          {selected && <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); searchPexels(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>or Pexels</span>}
                         </div>
                       )}
                       <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
@@ -502,9 +536,10 @@ function BlockCard({
                       <img src={opt.imageUrl} alt={opt.text} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
-                        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                        {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Click to upload</span>}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #F3F4F6, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
+                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                        {selected && <span style={{ fontSize: 9, color: C.TEXT_SUBTLE, fontWeight: 500 }}>Upload</span>}
+                        {selected && <span onClick={function(e) { e.preventDefault(); e.stopPropagation(); searchPexels(oi); }} style={{ fontSize: 9, color: C.ACCENT, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>or Pexels</span>}
                       </div>
                     )}
                     <input type="file" accept="image/*" style={{ display: 'none' }} onClick={function(e) { e.stopPropagation(); }}
@@ -535,7 +570,7 @@ function BlockCard({
                         <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', display: 'block' }}
                           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       ) : (
-                        <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
                         </div>
                       )}
@@ -1149,7 +1184,7 @@ function BlockInspector({
   block: QuizBlock;
   allBlocks: QuizBlock[];
   onChange: (updated: QuizBlock) => void;
-  onChangeAllQuestions?: (key: string, value: any) => void;
+  onChangeAllQuestions?: (updates: Record<string, any>) => void;
   onDeselect?: () => void;
   userPlan?: UserPlan;
 }) {
@@ -1176,7 +1211,7 @@ function BlockInspector({
               ]}
               value={qb.questionType || 'single'}
               onChange={function(v) {
-                if (onChangeAllQuestions) { onChangeAllQuestions('questionType', v); }
+                if (onChangeAllQuestions) { onChangeAllQuestions({ questionType: v }); }
                 else { updateField('questionType', v); }
               }}
             />
@@ -1200,8 +1235,7 @@ function BlockInspector({
                       // Apply layout to ALL questions
                       var style = opt.value === 'grid' ? 'cards' : opt.value === 'fullBackground' ? 'imageChoice' : opt.value === 'imageThumbnails' ? 'imageChoice' : 'buttons';
                       if (onChangeAllQuestions) {
-                        onChangeAllQuestions('answerLayout', opt.value);
-                        onChangeAllQuestions('questionStyle', style);
+                        onChangeAllQuestions({ answerLayout: opt.value, questionStyle: style });
                       } else {
                         onChange(Object.assign({}, block, { answerLayout: opt.value, questionStyle: style }));
                       }
@@ -2706,6 +2740,8 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
           <strong style={{ color: C.TEXT_MUTED }}>Shortcuts:</strong>{' '}
           Cmd+N add question, Cmd+D duplicate, Alt+Arrow reorder, Delete remove, Cmd+Z undo, Escape deselect
         </div>
+
+        {showPreview && <LivePreview blocks={blocks} />}
       </div>
 
       {/* Sidebar — always visible, independently scrollable */}
@@ -2766,12 +2802,10 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               block={selectedBlock}
               allBlocks={blocks}
               onChange={updateBlock}
-              onChangeAllQuestions={function(key: string, value: any) {
+              onChangeAllQuestions={function(updates: Record<string, any>) {
                 var next = blocks.map(function(b) {
                   if (b.type === 'question') {
-                    var update: Record<string, any> = {};
-                    update[key] = value;
-                    return Object.assign({}, b, update);
+                    return Object.assign({}, b, updates);
                   }
                   return b;
                 });
@@ -3016,7 +3050,6 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               </div>
             </div>
 
-            {showPreview && <LivePreview blocks={blocks} />}
           </div>
         )}
       </div>
