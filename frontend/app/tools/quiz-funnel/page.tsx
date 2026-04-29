@@ -1,33 +1,19 @@
 'use client';
 
 /**
- * /tools/quiz-funnel - Public marketing landing page for Squarespell's
- * AI Quiz Funnel product. Lives inside the /tools hub.
+ * /tools/quiz-funnel - Public marketing landing page for Squarespell
  *
- * Standalone, shareable URL designed to be linked from the Squarespace
- * marketing site. Hosted at:
- *   - https://squarespell.com/tools/quiz-funnel
- *   - https://app.squarespell.com/tools/quiz-funnel
- *
- * Site structure:
- *   squarespell.com/                  main site (plugins, templates, services)
- *   squarespell.com/tools              tools hub
- *   squarespell.com/tools/quiz-funnel  this page
- *   quiz.squarespell.com               public quiz builder (Stage 1 → 6)
- *   app.squarespell.com/dashboard      authenticated dashboard
- *
- * Design direction (user-requested mix of Framer templates):
- *   1. Hero structure   → saasta-pro.framer.website/home-02
- *   2. Hero animation   → bombon.framer.website (floating tilted mockup)
- *   3. Analytics strip  → plat-form.framer.ai (gauges + response-time deltas)
- *   4. Pricing section  → najaf.framer.ai#pricing (clean 3-card grid)
- *
- * Color tokens kept consistent with the rest of the app:
- *   - bg:    #F7F7F5
- *   - panel: #FFFFFF
- *   - accent: #0D7377 (Squarespell teal)
- *   - text:  #1A1A1A
- *   - muted: #6B6B6B
+ * Design reference: Typeset-style clean layout
+ *   - White background, teal accent (#0D7377)
+ *   - Hero: left text + right quiz mockup with URL input
+ *   - How It Works: 3 numbered steps
+ *   - Features: left text list + right dashboard mockup
+ *   - Social proof: stats + logo bar
+ *   - Pricing: 3 cards with monthly/annual toggle
+ *   - Templates: category tabs + cards
+ *   - FAQ: accordion
+ *   - Final CTA: dark teal background
+ *   - Footer: multi-column links
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -36,13 +22,11 @@ import Link from 'next/link';
 import { QUIZ_BUILDER_PATH } from '@/lib/urls';
 import { QUIZ_TEMPLATE_CATALOG } from '@/lib/quiz/templates';
 
-const TRY_URL = QUIZ_BUILDER_PATH;
-const SIGN_IN_URL = '/sign-in';
-const TEMPLATE_SHOWCASE_COUNT = 6; // Show top 6 on landing page
+var TRY_URL = QUIZ_BUILDER_PATH;
+var SIGN_IN_URL = '/sign-in';
 
-/** Normalize a user-typed URL (tolerates "acme.com", "www.acme.com", etc.). */
 function normalizeUrl(raw: string): string {
-  let u = raw.trim();
+  var u = raw.trim();
   if (!u) return '';
   if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
   return u;
@@ -59,19 +43,17 @@ type Plan = {
   featured?: boolean;
 };
 
-const PLANS: Plan[] = [
+var PLANS: Plan[] = [
   {
     name: 'Starter',
     monthly: 19,
     yearly: 15,
-    desc: 'Perfect for coaches and consultants capturing their first leads.',
+    desc: 'Perfect for trying out Squarespell.',
     features: [
-      '5 live quizzes',
+      '1 website',
+      'Unlimited quizzes',
       '500 leads / month',
-      'AI quiz generation from your URL',
-      'Squarespace one-click embed',
-      'Lead dashboard + CSV export',
-      'Email notifications',
+      'Basic analytics',
     ],
     cta: 'Start free',
     href: TRY_URL,
@@ -80,14 +62,13 @@ const PLANS: Plan[] = [
     name: 'Pro',
     monthly: 39,
     yearly: 31,
-    desc: 'For growing businesses serious about turning visitors into clients.',
+    desc: 'Everything you need to grow.',
     features: [
-      '20 live quizzes',
-      '5,000 leads / month',
-      'Everything in Starter',
+      '3 websites',
+      'Unlimited quizzes',
+      'Unlimited leads',
+      'Advanced logic',
       'Remove Squarespell branding',
-      'Conversion insights + lead scoring',
-      'Zapier + webhooks',
       'Priority support',
     ],
     cta: 'Start free',
@@ -95,1714 +76,1123 @@ const PLANS: Plan[] = [
     featured: true,
   },
   {
-    name: 'Agency',
+    name: 'Business',
     monthly: 79,
     yearly: 63,
-    desc: 'For agencies managing quiz funnels across multiple clients.',
+    desc: 'For scaling teams and brands.',
     features: [
+      '10 websites',
       'Unlimited quizzes',
       'Unlimited leads',
-      'White-label (your brand)',
-      'Multi-site management',
-      'Client reporting dashboard',
-      'Dedicated account manager',
+      'Advanced analytics',
+      'Custom CSS',
+      'Priority support',
     ],
-    cta: 'Contact us',
-    href: 'mailto:hello@squarespell.com?subject=Agency%20plan',
+    cta: 'Start free',
+    href: TRY_URL,
   },
 ];
 
-const FAQS = [
+var FAQS = [
   {
-    q: 'Do I need to be a developer to embed a quiz?',
-    a: "No. You paste one snippet into a Squarespace Code Block. That's it. We handle layout, responsiveness, and styling automatically.",
+    q: 'How does Squarespell work with Squarespace?',
+    a: 'Squarespell is built specifically for Squarespace 7.1. You embed quizzes via code injection — one snippet in a Code Block. No plugins to install, no iframes. Your quiz loads natively inside your site.',
   },
   {
-    q: 'How does the AI generate the quiz?',
-    a: "Paste your Squarespace URL. Our AI reads your copy, offers, and positioning, then drafts a quiz that qualifies visitors based on what you actually sell. You edit anything you don't like.",
+    q: 'Do I need coding skills?',
+    a: 'No. Paste your URL, our AI generates a branded quiz. Edit anything in the visual editor. Copy one snippet to embed. The entire process takes under 5 minutes.',
   },
   {
-    q: 'Will it match my brand?',
-    a: "Yes. Colors, fonts, and tone are pulled from your site on generation. You can override everything in the editor - or just ship what the AI proposes.",
+    q: 'Can I customize the design?',
+    a: 'Yes. Colors, fonts, and tone are pulled from your site automatically. You can override everything in the brand kit — including separate light and dark mode palettes.',
   },
   {
-    q: 'What happens to leads I collect?',
-    a: "Leads land in your dashboard instantly. Export to CSV any time, or pipe them into Zapier on Pro+. Email notifications on every new lead are on by default.",
+    q: 'What about my leads and data?',
+    a: 'Leads land in your dashboard instantly. Export to CSV anytime, or connect Mailchimp, Klaviyo, ConvertKit, Google Sheets, Zapier, or custom webhooks. Your data is always yours.',
   },
   {
-    q: 'Can I try it without signing up?',
-    a: "Yes - the whole generator is free to use without an account. You only sign in if you want to save, publish, and start collecting leads.",
+    q: 'Can I change plans later?',
+    a: 'Yes. Upgrade, downgrade, or cancel anytime. All plans include a 14-day free trial. No credit card required to start.',
   },
 ];
+
+var TEMPLATE_CATEGORIES = ['All', 'Lead Generation', 'Recommendation', 'Survey', 'Assessment'];
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [scrollY, setScrollY] = useState(0);
-  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
-  const [heroUrl, setHeroUrl] = useState('');
-  const [heroSubmitting, setHeroSubmitting] = useState(false);
+  var router = useRouter();
+  var [openFaq, setOpenFaq] = useState<number | null>(null);
+  var [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
+  var [heroUrl, setHeroUrl] = useState('');
+  var [heroSubmitting, setHeroSubmitting] = useState(false);
+  var [activeTemplateCat, setActiveTemplateCat] = useState('All');
 
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const handleGenerate = (e: React.FormEvent) => {
+  var handleGenerate = function(e: React.FormEvent) {
     e.preventDefault();
-    const normalized = normalizeUrl(heroUrl);
+    var normalized = normalizeUrl(heroUrl);
     if (!normalized) return;
     setHeroSubmitting(true);
-    // Same-host client-side push - the builder lives at
-    // /tools/quiz-funnel/build on the same app.squarespell.com origin.
-    // TryFlowInner reads `?url=` and skips Stage 1 entirely, dropping the
-    // visitor straight onto the questions page.
-    router.push(`${QUIZ_BUILDER_PATH}?url=${encodeURIComponent(normalized)}`);
+    router.push(QUIZ_BUILDER_PATH + '?url=' + encodeURIComponent(normalized));
   };
 
-  // Parallax on the floating mockup
-  const mockupOffset = useMemo(() => Math.min(scrollY * 0.08, 40), [scrollY]);
+  var filteredTemplates = useMemo(function() {
+    var all = QUIZ_TEMPLATE_CATALOG || [];
+    if (activeTemplateCat === 'All') return all.slice(0, 4);
+    return all.filter(function(t: any) {
+      return t.category === activeTemplateCat;
+    }).slice(0, 4);
+  }, [activeTemplateCat]);
 
   return (
-    <div className="ssp-landing">
+    <div className="ss-landing">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      {/* ---------- NAV ---------- */}
-      <header className="ssp-nav">
-        <div className="ssp-nav-inner">
-          <Link href="/" className="ssp-logo">
-            <span className="ssp-logo-dot" />
+      {/* ========== NAV ========== */}
+      <header className="ss-nav">
+        <div className="ss-nav-inner">
+          <Link href="/" className="ss-logo">
+            <span className="ss-logo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="4" fill="#0D7377" />
+                <path d="M8 12.5l3 3 5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
             Squarespell
           </Link>
-          <nav className="ssp-nav-links">
-            <a href="#how">How it works</a>
+          <nav className="ss-nav-links">
             <a href="#features">Features</a>
-            <a href="#metrics">Results</a>
+            <Link href="/templates">Templates</Link>
             <a href="#pricing">Pricing</a>
-            <a href="#templates">Templates</a>
             <a href="#faq">FAQ</a>
           </nav>
-          <div className="ssp-nav-cta">
-            <Link href={SIGN_IN_URL} className="ssp-nav-link">Sign in</Link>
-            <Link href={TRY_URL} className="ssp-btn ssp-btn-primary ssp-btn-sm">
-              Try it free
+          <div className="ss-nav-right">
+            <Link href={SIGN_IN_URL} className="ss-nav-signin">Log in</Link>
+            <Link href={TRY_URL} className="ss-btn ss-btn-primary ss-btn-sm">
+              Get started
             </Link>
           </div>
         </div>
       </header>
 
-      {/* ---------- HERO ---------- */}
-      <section className="ssp-hero">
-        <div className="ssp-hero-glow" />
-        <div className="ssp-hero-inner">
-          <div className="ssp-hero-eyebrow">
-            <span className="ssp-hero-eyebrow-dot" />
-            AI QUIZ FUNNEL · BUILT FOR SQUARESPACE
-          </div>
-          <h1 className="ssp-hero-title">
-            Turn Squarespace visitors into
-            <br />
-            <span className="ssp-hero-title-accent">qualified leads.</span>
-          </h1>
-          <p className="ssp-hero-sub">
-            Paste your website URL. Squarespell generates a branded quiz in 30 seconds,
-            captures email, and drops leads straight into your dashboard. No designer.
-            No developer. No friction.
-          </p>
-
-          {/* Inline URL generator - mirrors the /try Stage 1 hook widget. */}
-          <form className="ssp-hero-gen" onSubmit={handleGenerate}>
-            <div className="ssp-hero-gen-field">
-              <span className="ssp-hero-gen-prefix">https://</span>
+      {/* ========== HERO ========== */}
+      <section className="ss-hero">
+        <div className="ss-hero-inner">
+          <div className="ss-hero-left">
+            <div className="ss-hero-badge">
+              <span className="ss-hero-badge-dot" />
+              Live quiz in minutes, not hours
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            </div>
+            <h1 className="ss-hero-title">
+              Turn Squarespace{'\n'}visitors into{'\n'}
+              <span className="ss-hero-accent">qualified leads.</span>
+            </h1>
+            <p className="ss-hero-sub">
+              Create beautiful, high-converting quizzes that engage your audience, capture the right leads, and grow your business &mdash; all from your Squarespace website.
+            </p>
+            <form className="ss-hero-form" onSubmit={handleGenerate}>
               <input
                 type="text"
                 inputMode="url"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="yoursite.com"
+                placeholder="Enter your website URL"
                 value={heroUrl}
-                onChange={(e) => setHeroUrl(e.target.value.replace(/^https?:\/\//i, ''))}
-                className="ssp-hero-gen-input"
+                onChange={function(e) { setHeroUrl(e.target.value.replace(/^https?:\/\//i, '')); }}
+                className="ss-hero-input"
                 disabled={heroSubmitting}
-                aria-label="Your website URL"
               />
               <button
                 type="submit"
-                className="ssp-hero-gen-btn"
+                className="ss-btn ss-btn-primary ss-hero-cta"
                 disabled={heroSubmitting || !heroUrl.trim()}
               >
-                {heroSubmitting ? 'Generating…' : 'Generate →'}
+                {heroSubmitting ? 'Creating...' : 'Create my quiz'}
               </button>
-            </div>
-            <div className="ssp-hero-gen-hint">
-              Drops into your Squarespace site as{' '}
-              <code>&lt;script src=&quot;/embed/squarespell-hook.js&quot;&gt;&lt;/script&gt;</code>
-            </div>
-          </form>
-
-          <div className="ssp-hero-trust">
-            <span className="ssp-hero-trust-check">✓</span> No credit card
-            <span className="ssp-hero-trust-dot" />
-            <span className="ssp-hero-trust-check">✓</span> Ready in 30 seconds
-            <span className="ssp-hero-trust-dot" />
-            <span className="ssp-hero-trust-check">✓</span> Free forever tier
-          </div>
-          <a href="#how" className="ssp-hero-secondary">See how it works ↓</a>
-        </div>
-
-        {/* Animated floating mockup (bombon-inspired) */}
-        <div
-          className="ssp-mockup-wrap"
-          style={{ transform: `translateY(${mockupOffset}px)` }}
-        >
-          <div className="ssp-mockup-orbit ssp-mockup-orbit-1" />
-          <div className="ssp-mockup-orbit ssp-mockup-orbit-2" />
-
-          <div className="ssp-mockup-card ssp-mockup-card-main">
-            <div className="ssp-mockup-browser">
-              <div className="ssp-mockup-browser-dots">
-                <span /><span /><span />
-              </div>
-              <div className="ssp-mockup-browser-url">squarespell.com/q/demo</div>
-            </div>
-            <div className="ssp-mockup-body">
-              <div className="ssp-mockup-q-label">Question 2 of 5</div>
-              <div className="ssp-mockup-q-text">
-                What's the biggest bottleneck in your sales funnel right now?
-              </div>
-              <div className="ssp-mockup-progress">
-                <div className="ssp-mockup-progress-fill" />
-              </div>
-              <div className="ssp-mockup-options">
-                <div className="ssp-mockup-option">
-                  <span className="ssp-mockup-radio" />
-                  Not enough qualified leads
-                </div>
-                <div className="ssp-mockup-option ssp-mockup-option-selected">
-                  <span className="ssp-mockup-radio ssp-mockup-radio-on" />
-                  Leads aren't the right fit
-                </div>
-                <div className="ssp-mockup-option">
-                  <span className="ssp-mockup-radio" />
-                  Conversion rate is low
-                </div>
-                <div className="ssp-mockup-option">
-                  <span className="ssp-mockup-radio" />
-                  Long sales cycle
-                </div>
-              </div>
-              <div className="ssp-mockup-next">Next →</div>
-            </div>
-          </div>
-
-          {/* Floating side cards */}
-          <div className="ssp-mockup-card ssp-mockup-card-float-1">
-            <div className="ssp-mockup-stat-label">New lead</div>
-            <div className="ssp-mockup-stat-value">sarah@acme.co</div>
-            <div className="ssp-mockup-stat-sub">Quiz: "Find your growth plan"</div>
-            <span className="ssp-mockup-pulse" />
-          </div>
-          <div className="ssp-mockup-card ssp-mockup-card-float-2">
-            <div className="ssp-mockup-stat-label">Conversion rate</div>
-            <div className="ssp-mockup-stat-value">
-              34% <span className="ssp-mockup-trend">↑ 18%</span>
-            </div>
-            <div className="ssp-mockup-stat-sub">vs. contact form</div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- LOGO STRIP ---------- */}
-      <section className="ssp-logos">
-        <div className="ssp-logos-label">Trusted by Squarespace creators building real funnels</div>
-        <div className="ssp-logos-row">
-          {['COACH CO', 'BRIGHT LABS', 'STUDIO NORTH', 'LUXE FIT', 'MONO AGENCY', 'FIELD & CO'].map((l) => (
-            <span key={l} className="ssp-logo-mark">{l}</span>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------- HOW IT WORKS ---------- */}
-      <section id="how" className="ssp-section">
-        <div className="ssp-section-header">
-          <div className="ssp-eyebrow">HOW IT WORKS</div>
-          <h2 className="ssp-h2">From URL to live quiz in three steps.</h2>
-          <p className="ssp-sub">
-            No templates to pick. No drag-and-drop maze. Just paste, tweak, embed.
-          </p>
-        </div>
-        <div className="ssp-steps">
-          {[
-            {
-              n: '01',
-              title: 'Paste your Squarespace URL',
-              body: 'Our AI reads your homepage copy, offers, and voice. Takes about 20 seconds.',
-            },
-            {
-              n: '02',
-              title: 'Review your generated quiz',
-              body: 'Rewrite any question, reorder answers, tweak the lead form. Everything inline.',
-            },
-            {
-              n: '03',
-              title: 'Paste one snippet on Squarespace',
-              body: 'Drop the embed in a Code Block. The quiz shows up on your site, matching your brand.',
-            },
-          ].map((s) => (
-            <div key={s.n} className="ssp-step">
-              <div className="ssp-step-n">{s.n}</div>
-              <div className="ssp-step-title">{s.title}</div>
-              <div className="ssp-step-body">{s.body}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------- FEATURES GRID ---------- */}
-      <section id="features" className="ssp-section">
-        <div className="ssp-section-header">
-          <div className="ssp-eyebrow">FEATURES</div>
-          <h2 className="ssp-h2">
-            Built for Squarespace. <span className="ssp-h2-muted">Not retrofitted for it.</span>
-          </h2>
-          <p className="ssp-sub">
-            Every decision - from the embed snippet to the brand-matching AI - was made
-            with Squarespace in mind. Not a generic form builder bolted on.
-          </p>
-        </div>
-        <div className="ssp-features">
-          <FeatureCard
-            span={2}
-            title="One-click Squarespace embed"
-            body="Drop a single Code Block on your page. Quiz inherits site fonts and spacing. No iframe weirdness, no style bleed."
-            visual={
-              <div className="ssp-feature-code">
-                <div className="ssp-feature-code-line"><span className="cm-tag">&lt;div</span> <span className="cm-attr">id</span>=<span className="cm-str">"squarespell"</span> <span className="cm-attr">data-quiz</span>=<span className="cm-str">"demo"</span><span className="cm-tag">&gt;&lt;/div&gt;</span></div>
-                <div className="ssp-feature-code-line"><span className="cm-tag">&lt;script</span> <span className="cm-attr">src</span>=<span className="cm-str">"https://squarespell.com/embed.js"</span><span className="cm-tag">&gt;&lt;/script&gt;</span></div>
-              </div>
-            }
-          />
-          <FeatureCard
-            title="Brand-matched, always"
-            body="Colors, type, and copy pulled from your site automatically. It looks like you built it."
-            visual={
-              <div className="ssp-feature-swatches">
-                <span className="ssp-swatch" style={{ background: '#0D7377' }} />
-                <span className="ssp-swatch" style={{ background: '#FFFFFF' }} />
-                <span className="ssp-swatch" style={{ background: '#6366f1' }} />
-                <span className="ssp-swatch" style={{ background: '#ec4899' }} />
-              </div>
-            }
-          />
-          <FeatureCard
-            title="Smart lead gate"
-            body="Collect email when intent is highest - after they've answered, before they see results."
-            visual={
-              <div className="ssp-feature-pill">
-                <span className="ssp-feature-pill-dot" />
-                email@company.com
-              </div>
-            }
-          />
-          <FeatureCard
-            title="Live lead dashboard"
-            body="Every new lead in real time. Filter by quiz, score, outcome. Export to CSV."
-            visual={
-              <div className="ssp-feature-rows">
-                <div className="ssp-feature-row"><span className="cm-cell">sarah@acme.co</span><span className="cm-cell-muted">Growth plan</span></div>
-                <div className="ssp-feature-row"><span className="cm-cell">mark@luxe.fit</span><span className="cm-cell-muted">Starter plan</span></div>
-                <div className="ssp-feature-row"><span className="cm-cell">jen@studio.co</span><span className="cm-cell-muted">Pro plan</span></div>
-              </div>
-            }
-          />
-          <FeatureCard
-            span={2}
-            title="No branding. No limits."
-            body="On Pro, every trace of Squarespell is gone. Looks like native product, because from your visitors' perspective - it is."
-            visual={
-              <div className="ssp-feature-toggle">
-                <div className="ssp-feature-toggle-track">
-                  <div className="ssp-feature-toggle-thumb" />
-                </div>
-                <span className="ssp-feature-toggle-label">Remove Squarespell badge</span>
-              </div>
-            }
-          />
-        </div>
-      </section>
-
-      {/* ---------- METRICS / ANALYTICS (plat-form inspired) ---------- */}
-      <section id="metrics" className="ssp-section ssp-metrics">
-        <div className="ssp-section-header">
-          <div className="ssp-eyebrow">RESULTS</div>
-          <h2 className="ssp-h2">The numbers our creators are seeing.</h2>
-          <p className="ssp-sub">
-            Quizzes beat static contact forms every time. Here's what that looks like
-            across real Squarespell accounts.
-          </p>
-        </div>
-
-        <div className="ssp-metrics-grid">
-          <div className="ssp-metrics-card ssp-metrics-card-gauge">
-            <div className="ssp-metrics-label">Visitor → Lead conversion</div>
-            <div className="ssp-gauge">
-              <svg viewBox="0 0 120 70" width="100%" height="100%">
-                <path d="M10 60 A50 50 0 0 1 110 60" stroke="rgba(0,0,0,0.08)" strokeWidth="10" fill="none" strokeLinecap="round" />
-                <path
-                  d="M10 60 A50 50 0 0 1 110 60"
-                  stroke="#0D7377"
-                  strokeWidth="10"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeDasharray="157"
-                  strokeDashoffset="52"
-                  className="ssp-gauge-arc"
-                />
-              </svg>
-              <div className="ssp-gauge-value">34%</div>
-            </div>
-            <div className="ssp-metrics-sub">
-              <span className="ssp-trend-up">↑ 2000%</span> vs. 2% contact form baseline
-            </div>
-          </div>
-
-          <div className="ssp-metrics-card ssp-metrics-card-line">
-            <div className="ssp-metrics-label">Average leads per month</div>
-            <div className="ssp-metrics-value">
-              412 <span className="ssp-trend-up">↑ 18%</span>
-            </div>
-            <div className="ssp-line-chart">
-              <svg viewBox="0 0 300 80" width="100%" height="80" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="lg1" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#0D7377" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#0D7377" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M0 65 L30 60 L60 55 L90 58 L120 45 L150 40 L180 32 L210 28 L240 18 L270 14 L300 8 L300 80 L0 80 Z"
-                  fill="url(#lg1)"
-                />
-                <path
-                  d="M0 65 L30 60 L60 55 L90 58 L120 45 L150 40 L180 32 L210 28 L240 18 L270 14 L300 8"
-                  stroke="#0D7377"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                  className="ssp-line-path"
-                />
-              </svg>
-            </div>
-            <div className="ssp-line-axis">
-              <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span><span>Sep</span><span>Nov</span>
-            </div>
-          </div>
-
-          <div className="ssp-metrics-card ssp-metrics-card-stat">
-            <div className="ssp-metrics-label">Time to live quiz</div>
-            <div className="ssp-stat-row">
-              <div className="ssp-stat-before">14 days</div>
-              <div className="ssp-stat-arrow">→</div>
-              <div className="ssp-stat-after">
-                <span className="ssp-stat-big">3</span>
-                <span className="ssp-stat-unit">min</span>
-              </div>
-            </div>
-            <div className="ssp-metrics-sub">Agency build time vs. Squarespell</div>
-          </div>
-
-          <div className="ssp-metrics-card ssp-metrics-card-bars">
-            <div className="ssp-metrics-label">Lead quality score</div>
-            <div className="ssp-bars">
-              <div className="ssp-bar"><span style={{ height: '35%' }} /><label>Contact form</label></div>
-              <div className="ssp-bar"><span style={{ height: '55%' }} /><label>Newsletter</label></div>
-              <div className="ssp-bar"><span style={{ height: '72%' }} /><label>Lead magnet</label></div>
-              <div className="ssp-bar ssp-bar-accent"><span style={{ height: '94%' }} /><label>Quiz</label></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- PRICING (najaf inspired) ---------- */}
-      <section id="pricing" className="ssp-section">
-        <div className="ssp-section-header">
-          <div className="ssp-eyebrow">PRICING</div>
-          <h2 className="ssp-h2">Affordable plans to help you launch faster.</h2>
-          <p className="ssp-sub">
-            Start free forever. Upgrade when you're ready to remove branding and scale.
-          </p>
-        </div>
-        <div className="ssp-billing-toggle">
-          <button
-            className={`ssp-toggle-btn ${billing === 'monthly' ? 'ssp-toggle-active' : ''}`}
-            onClick={() => setBilling('monthly')}
-            type="button"
-          >
-            Monthly
-          </button>
-          <button
-            className={`ssp-toggle-btn ${billing === 'yearly' ? 'ssp-toggle-active' : ''}`}
-            onClick={() => setBilling('yearly')}
-            type="button"
-          >
-            Yearly
-            <span className="ssp-toggle-save">Save 20%</span>
-          </button>
-        </div>
-        <div className="ssp-plans">
-          {PLANS.map((p) => {
-            const price = billing === 'yearly' ? p.yearly : p.monthly;
-            return (
-              <div key={p.name} className={`ssp-plan ${p.featured ? 'ssp-plan-featured' : ''}`}>
-                {p.featured && <div className="ssp-plan-badge">Most popular</div>}
-                <div className="ssp-plan-name">{p.name}</div>
-                <div className="ssp-plan-desc">{p.desc}</div>
-                <div className="ssp-plan-price">
-                  {billing === 'yearly' && (
-                    <span className="ssp-plan-price-old">${p.monthly}</span>
-                  )}
-                  <span className="ssp-plan-price-num">${price}</span>
-                  <span className="ssp-plan-price-per">/month</span>
-                </div>
-                {billing === 'yearly' && (
-                  <div className="ssp-plan-billed">Billed ${price * 12}/year</div>
-                )}
-                <ul className="ssp-plan-features">
-                  {p.features.map((f) => (
-                    <li key={f}>
-                      <span className="ssp-plan-check">✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={p.href}
-                  className={`ssp-btn ssp-plan-cta ${p.featured ? 'ssp-btn-primary' : 'ssp-btn-ghost'}`}
-                >
-                  {p.cta}
-                </Link>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ---------- TEMPLATES ---------- */}
-      <section id="templates" className="ssp-section">
-        <div className="ssp-section-header">
-          <div className="ssp-eyebrow">Templates</div>
-          <h2 className="ssp-h2">Start with a proven template</h2>
-          <p className="ssp-section-sub">
-            Every template is designed for real Squarespace businesses. Pick one, take it for a test drive, then customize it in minutes.
-          </p>
-        </div>
-        <div className="ssp-tpl-grid">
-          {QUIZ_TEMPLATE_CATALOG.slice(0, TEMPLATE_SHOWCASE_COUNT).map((tpl) => (
-            <Link
-              key={tpl.id}
-              href={'/templates/' + tpl.id + '/preview'}
-              className="ssp-tpl-card"
-            >
-              <div className="ssp-tpl-top">
-                <div className="ssp-tpl-icon-wrap">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={tpl.iconPath} />
-                  </svg>
-                </div>
-                <span className="ssp-tpl-cat">{tpl.category}</span>
-              </div>
-              <h3 className="ssp-tpl-name">{tpl.name}</h3>
-              <p className="ssp-tpl-desc">{tpl.description}</p>
-              <span className="ssp-tpl-try">
-                Try this quiz
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            </form>
+            <div className="ss-hero-trust">
+              <span className="ss-trust-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                No credit card required
               </span>
-            </Link>
-          ))}
-        </div>
-        <div style={{ textAlign: 'center', marginTop: 32 }}>
-          <Link href="/templates" className="ssp-btn ssp-btn-outline">
-            Browse all {QUIZ_TEMPLATE_CATALOG.length} templates
-          </Link>
+              <span className="ss-trust-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                Free forever plan
+              </span>
+            </div>
+            <div className="ss-hero-loved">
+              <div className="ss-hero-avatars">
+                <span className="ss-avatar" style={{ background: '#0D7377' }}>S</span>
+                <span className="ss-avatar" style={{ background: '#6366f1' }}>M</span>
+                <span className="ss-avatar" style={{ background: '#ec4899' }}>J</span>
+                <span className="ss-avatar" style={{ background: '#f59e0b' }}>A</span>
+                <span className="ss-avatar" style={{ background: '#10b981' }}>K</span>
+              </div>
+              <span className="ss-hero-loved-text">
+                Loved by <strong>2,000+</strong> creators and businesses
+              </span>
+              <span className="ss-hero-stars">★★★★★ 4.9/5</span>
+            </div>
+          </div>
+          <div className="ss-hero-right">
+            <div className="ss-mockup">
+              <div className="ss-mockup-browser">
+                <div className="ss-mockup-dots"><span /><span /><span /></div>
+              </div>
+              <div className="ss-mockup-body">
+                <div className="ss-mockup-q-label">
+                  <span className="ss-mockup-q-icon">Q</span>
+                  What&apos;s your biggest challenge right now?
+                </div>
+                <p className="ss-mockup-q-help">This helps us personalize your results.</p>
+                <div className="ss-mockup-options">
+                  <div className="ss-mockup-opt">
+                    <span className="ss-mockup-letter">A</span>
+                    Getting more leads
+                  </div>
+                  <div className="ss-mockup-opt ss-mockup-opt-selected">
+                    <span className="ss-mockup-letter ss-mockup-letter-active">B</span>
+                    Increasing sales
+                  </div>
+                  <div className="ss-mockup-opt">
+                    <span className="ss-mockup-letter">C</span>
+                    Building an audience
+                  </div>
+                  <div className="ss-mockup-opt">
+                    <span className="ss-mockup-letter">D</span>
+                    All of the above
+                  </div>
+                </div>
+                <button className="ss-mockup-next">Next →</button>
+              </div>
+              {/* Floating labels */}
+              <div className="ss-mockup-float ss-mockup-float-brand">
+                Beautiful<br />on-brand design
+              </div>
+              <div className="ss-mockup-float ss-mockup-float-logic">
+                Smart logic<br />better results
+              </div>
+              <div className="ss-mockup-float ss-mockup-float-powered">
+                Powered by Squarespell
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ---------- FAQ ---------- */}
-      <section id="faq" className="ssp-section">
-        <div className="ssp-section-header">
-          <div className="ssp-eyebrow">FAQ</div>
-          <h2 className="ssp-h2">Questions, answered.</h2>
+      {/* ========== HOW IT WORKS ========== */}
+      <section id="how" className="ss-section">
+        <div className="ss-container">
+          <div className="ss-section-label">HOW IT WORKS</div>
+          <h2 className="ss-h2">From URL to live quiz in three steps.</h2>
+          <div className="ss-steps">
+            <div className="ss-step">
+              <div className="ss-step-num">1</div>
+              <h3 className="ss-step-title">Add your URL</h3>
+              <p className="ss-step-body">Enter your Squarespace site URL and we&apos;ll import your branding automatically.</p>
+            </div>
+            <div className="ss-step">
+              <div className="ss-step-num">2</div>
+              <h3 className="ss-step-title">Build your quiz</h3>
+              <p className="ss-step-body">Use our no-code builder to create engaging questions and logic in minutes.</p>
+            </div>
+            <div className="ss-step">
+              <div className="ss-step-num">3</div>
+              <h3 className="ss-step-title">Publish &amp; grow</h3>
+              <p className="ss-step-body">Embed your quiz, start collecting leads, and get insights that help you grow.</p>
+            </div>
+          </div>
         </div>
-        <div className="ssp-faq">
-          {FAQS.map((f, i) => (
+      </section>
+
+      {/* ========== FEATURES ========== */}
+      <section id="features" className="ss-section ss-section-alt">
+        <div className="ss-container">
+          <div className="ss-features-layout">
+            <div className="ss-features-left">
+              <div className="ss-section-label">BUILT FOR SQUARESPACE. NOT RETROFITTED.</div>
+              <h2 className="ss-h2" style={{ textAlign: 'left' }}>Everything you need.<br />Designed to convert.</h2>
+              <div className="ss-feature-list">
+                <div className="ss-feat-item">
+                  <div className="ss-feat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg>
+                  </div>
+                  <div>
+                    <div className="ss-feat-title">Seamless integration</div>
+                    <div className="ss-feat-desc">Works beautifully inside your Squarespace site.</div>
+                  </div>
+                </div>
+                <div className="ss-feat-item">
+                  <div className="ss-feat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8 12l3 3 5-6" /></svg>
+                  </div>
+                  <div>
+                    <div className="ss-feat-title">Advanced logic jumps</div>
+                    <div className="ss-feat-desc">Show the right questions to the right people.</div>
+                  </div>
+                </div>
+                <div className="ss-feat-item">
+                  <div className="ss-feat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                  </div>
+                  <div>
+                    <div className="ss-feat-title">Lead capture that converts</div>
+                    <div className="ss-feat-desc">Collect emails with smart forms and incentives.</div>
+                  </div>
+                </div>
+                <div className="ss-feat-item">
+                  <div className="ss-feat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                  </div>
+                  <div>
+                    <div className="ss-feat-title">Actionable analytics</div>
+                    <div className="ss-feat-desc">See what&apos;s working and optimize for more leads.</div>
+                  </div>
+                </div>
+              </div>
+              <a href="#pricing" className="ss-link-arrow">
+                Explore all features →
+              </a>
+            </div>
+            <div className="ss-features-right">
+              <div className="ss-dash-mockup">
+                <div className="ss-dash-header">
+                  <div className="ss-dash-nav">
+                    <span className="ss-dash-nav-item ss-dash-nav-active">Overview</span>
+                    <span className="ss-dash-nav-item">Quizzes</span>
+                    <span className="ss-dash-nav-item">Leads</span>
+                    <span className="ss-dash-nav-item">Analytics</span>
+                    <span className="ss-dash-nav-item">Integrations</span>
+                    <span className="ss-dash-nav-item">Settings</span>
+                  </div>
+                </div>
+                <div className="ss-dash-stats">
+                  <div className="ss-dash-stat">
+                    <div className="ss-dash-stat-label">Total Leads</div>
+                    <div className="ss-dash-stat-value">2,847</div>
+                    <div className="ss-dash-stat-trend ss-trend-up">+24.9%</div>
+                  </div>
+                  <div className="ss-dash-stat">
+                    <div className="ss-dash-stat-label">Completion Rate</div>
+                    <div className="ss-dash-stat-value">67%</div>
+                    <div className="ss-dash-stat-trend ss-trend-up">+12.3%</div>
+                  </div>
+                  <div className="ss-dash-stat">
+                    <div className="ss-dash-stat-label">Engagement Score</div>
+                    <div className="ss-dash-stat-value">8.7/10</div>
+                    <div className="ss-dash-stat-trend ss-trend-up">+18.2%</div>
+                  </div>
+                </div>
+                <div className="ss-dash-chart">
+                  <div className="ss-dash-chart-title">Leads over time</div>
+                  <svg viewBox="0 0 400 120" width="100%" height="120" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="chartGrad" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="#0D7377" stopOpacity="0.15" />
+                        <stop offset="100%" stopColor="#0D7377" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0 100 L50 90 L100 85 L150 70 L200 60 L250 45 L300 35 L350 20 L400 10 L400 120 L0 120 Z" fill="url(#chartGrad)" />
+                    <path d="M0 100 L50 90 L100 85 L150 70 L200 60 L250 45 L300 35 L350 20 L400 10" stroke="#0D7377" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                    <circle cx="350" cy="20" r="4" fill="#0D7377" />
+                  </svg>
+                  <div className="ss-dash-chart-labels">
+                    <span>May 12</span><span>May 17</span><span>Jun 28</span>
+                  </div>
+                  <div className="ss-dash-chart-badge">412 leads</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== SOCIAL PROOF ========== */}
+      <section className="ss-social-proof">
+        <div className="ss-container">
+          <div className="ss-proof-label">TRUSTED BY CREATORS &amp; BUSINESSES WORLDWIDE</div>
+          <h2 className="ss-proof-title">Join thousands of people turning quizzes into growth.</h2>
+          <div className="ss-proof-stats">
+            <div className="ss-proof-stat">
+              <div className="ss-proof-stat-num">2,000+</div>
+              <div className="ss-proof-stat-label">Active users</div>
+            </div>
+            <div className="ss-proof-stat">
+              <div className="ss-proof-stat-num">15K+</div>
+              <div className="ss-proof-stat-label">Quizzes created</div>
+            </div>
+            <div className="ss-proof-stat">
+              <div className="ss-proof-stat-num">3.2M+</div>
+              <div className="ss-proof-stat-label">Leads generated</div>
+            </div>
+            <div className="ss-proof-stat">
+              <div className="ss-proof-stat-num">4.9/5</div>
+              <div className="ss-proof-stat-label">Average rating</div>
+            </div>
+          </div>
+          <div className="ss-proof-logos">
+            <span className="ss-proof-logo">Later</span>
+            <span className="ss-proof-logo ss-proof-logo-bold">INKED</span>
+            <span className="ss-proof-logo">CULTIVATE</span>
+            <span className="ss-proof-logo ss-proof-logo-bold">NICHE</span>
+            <span className="ss-proof-logo ss-proof-logo-script">studio milo.</span>
+            <span className="ss-proof-logo ss-proof-logo-serif">THE POSH PAPERIE</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== PRICING ========== */}
+      <section id="pricing" className="ss-section">
+        <div className="ss-container">
+          <h2 className="ss-h2">Simple pricing. Unbeatable value.</h2>
+          <div className="ss-billing-toggle">
             <button
-              key={f.q}
-              className={`ssp-faq-item ${openFaq === i ? 'ssp-faq-open' : ''}`}
-              onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              className={'ss-toggle-btn ' + (billing === 'monthly' ? 'ss-toggle-active' : '')}
+              onClick={function() { setBilling('monthly'); }}
               type="button"
             >
-              <div className="ssp-faq-q">
-                {f.q}
-                <span className="ssp-faq-icon">{openFaq === i ? '−' : '+'}</span>
-              </div>
-              {openFaq === i && <div className="ssp-faq-a">{f.a}</div>}
+              Monthly
             </button>
-          ))}
+            <button
+              className={'ss-toggle-btn ' + (billing === 'yearly' ? 'ss-toggle-active' : '')}
+              onClick={function() { setBilling('yearly'); }}
+              type="button"
+            >
+              Annual
+              <span className="ss-toggle-save">Save 20%</span>
+            </button>
+          </div>
+          <div className="ss-plans">
+            {PLANS.map(function(p) {
+              var price = billing === 'yearly' ? p.yearly : p.monthly;
+              return (
+                <div key={p.name} className={'ss-plan ' + (p.featured ? 'ss-plan-featured' : '')}>
+                  {p.featured && <div className="ss-plan-badge">Most popular</div>}
+                  <div className="ss-plan-name">{p.name}</div>
+                  <div className="ss-plan-desc">{p.desc}</div>
+                  <div className="ss-plan-price">
+                    <span className="ss-plan-amount">${price}</span>
+                    <span className="ss-plan-per">/month</span>
+                  </div>
+                  <div className="ss-plan-billed">
+                    {billing === 'yearly' ? 'Billed annually' : 'Billed monthly'}
+                  </div>
+                  <ul className="ss-plan-features">
+                    {p.features.map(function(f) {
+                      return (
+                        <li key={f}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                          {f}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <Link
+                    href={p.href}
+                    className={'ss-btn ss-plan-cta ' + (p.featured ? 'ss-btn-primary' : 'ss-btn-outline')}
+                  >
+                    {p.cta}
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+          <p className="ss-plans-note">All plans include a 14-day free trial. Cancel anytime.</p>
         </div>
       </section>
 
-      {/* ---------- FINAL CTA ---------- */}
-      <section className="ssp-final">
-        <div className="ssp-final-inner">
-          <h2 className="ssp-final-title">
-            Your next lead is one quiz away.
-          </h2>
-          <p className="ssp-final-sub">
-            Paste your URL. Squarespell does the rest. Ship before your coffee cools.
-          </p>
-          <Link href={TRY_URL} className="ssp-btn ssp-btn-primary ssp-btn-lg">
-            Generate my quiz free →
-          </Link>
-          <div className="ssp-hero-trust">
-            <span className="ssp-hero-trust-check">✓</span> No credit card
-            <span className="ssp-hero-trust-dot" />
-            <span className="ssp-hero-trust-check">✓</span> Free forever tier
+      {/* ========== TEMPLATES ========== */}
+      <section id="templates" className="ss-section ss-section-alt">
+        <div className="ss-container">
+          <h2 className="ss-h2">Start fast with proven templates.</h2>
+          <p className="ss-section-sub">Beautiful, high-converting quiz templates you can customize in minutes.</p>
+          <div className="ss-tpl-tabs">
+            {TEMPLATE_CATEGORIES.map(function(cat) {
+              return (
+                <button
+                  key={cat}
+                  className={'ss-tpl-tab ' + (activeTemplateCat === cat ? 'ss-tpl-tab-active' : '')}
+                  onClick={function() { setActiveTemplateCat(cat); }}
+                  type="button"
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+          <div className="ss-tpl-grid">
+            {filteredTemplates.map(function(tpl: any) {
+              return (
+                <Link
+                  key={tpl.id}
+                  href={'/templates/' + tpl.id + '/preview'}
+                  className="ss-tpl-card"
+                >
+                  <div className="ss-tpl-thumb">
+                    <div className="ss-tpl-thumb-inner" style={{ background: 'linear-gradient(135deg, #0D7377 0%, #0a5c5f 100%)' }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d={tpl.iconPath || 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'} />
+                      </svg>
+                    </div>
+                  </div>
+                  <h3 className="ss-tpl-name">{tpl.name}</h3>
+                  <p className="ss-tpl-desc">{tpl.description}</p>
+                  <span className="ss-tpl-preview">Preview →</span>
+                </Link>
+              );
+            })}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 32 }}>
+            <Link href="/templates" className="ss-link-arrow">
+              View all templates →
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ---------- FOOTER ---------- */}
-      <footer className="ssp-footer">
-        <div className="ssp-footer-inner">
-          <div className="ssp-footer-brand">
-            <div className="ssp-logo">
-              <span className="ssp-logo-dot" />
+      {/* ========== FAQ ========== */}
+      <section id="faq" className="ss-section">
+        <div className="ss-container ss-faq-container">
+          <div className="ss-faq-label">QUESTIONS? WE&apos;VE GOT ANSWERS.</div>
+          <h2 className="ss-h2">Frequently asked questions</h2>
+          <div className="ss-faq">
+            {FAQS.map(function(f, i) {
+              return (
+                <button
+                  key={f.q}
+                  className={'ss-faq-item ' + (openFaq === i ? 'ss-faq-open' : '')}
+                  onClick={function() { setOpenFaq(openFaq === i ? null : i); }}
+                  type="button"
+                >
+                  <div className="ss-faq-q">
+                    {f.q}
+                    <svg className="ss-faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                  </div>
+                  {openFaq === i && <div className="ss-faq-a">{f.a}</div>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ========== FINAL CTA ========== */}
+      <section className="ss-final">
+        <div className="ss-final-inner">
+          <h2 className="ss-final-title">Your next lead is one quiz away.</h2>
+          <p className="ss-final-sub">Join thousands of creators and businesses growing with Squarespell.</p>
+          <Link href={TRY_URL} className="ss-btn ss-btn-white ss-btn-lg">
+            Create my quiz free
+          </Link>
+          <div className="ss-final-note">No credit card required. Free forever plan.</div>
+        </div>
+      </section>
+
+      {/* ========== FOOTER ========== */}
+      <footer className="ss-footer">
+        <div className="ss-footer-inner">
+          <div className="ss-footer-brand">
+            <div className="ss-logo">
+              <span className="ss-logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="4" fill="#0D7377" />
+                  <path d="M8 12.5l3 3 5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
               Squarespell
             </div>
-            <div className="ssp-footer-tag">
-              The AI quiz funnel built for Squarespace.
+            <p className="ss-footer-tag">The leading quiz platform for Squarespace websites.</p>
+            <div className="ss-footer-social">
+              <a href="https://instagram.com/squarespell" aria-label="Instagram">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
+              </a>
+              <a href="https://youtube.com/@squarespell" aria-label="YouTube">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.43z" /><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" /></svg>
+              </a>
+              <a href="https://x.com/squarespell" aria-label="X">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+              </a>
             </div>
           </div>
-          <div className="ssp-footer-cols">
-            <div className="ssp-footer-col">
-              <div className="ssp-footer-col-title">Product</div>
-              <Link href={TRY_URL}>Try it free</Link>
+          <div className="ss-footer-cols">
+            <div className="ss-footer-col">
+              <div className="ss-footer-col-title">Product</div>
               <a href="#features">Features</a>
+              <Link href="/templates">Templates</Link>
               <a href="#pricing">Pricing</a>
-              <a href="#how">How it works</a>
+              <a href="#">Changelog</a>
             </div>
-            <div className="ssp-footer-col">
-              <div className="ssp-footer-col-title">Company</div>
+            <div className="ss-footer-col">
+              <div className="ss-footer-col-title">Resources</div>
+              <a href="#">Documentation</a>
+              <a href="#">Help center</a>
+              <a href="#">Blog</a>
+              <a href="#">Community</a>
+            </div>
+            <div className="ss-footer-col">
+              <div className="ss-footer-col-title">Company</div>
+              <a href="#">About</a>
+              <a href="#">Careers</a>
               <a href="mailto:hello@squarespell.com">Contact</a>
+              <a href="#">Partners</a>
+            </div>
+            <div className="ss-footer-col">
+              <div className="ss-footer-col-title">Legal</div>
               <a href="/privacy">Privacy</a>
               <a href="/terms">Terms</a>
-            </div>
-            <div className="ssp-footer-col">
-              <div className="ssp-footer-col-title">Get started</div>
-              <Link href={SIGN_IN_URL}>Sign in</Link>
-              <Link href={TRY_URL}>Create account</Link>
+              <a href="#">Cookies</a>
             </div>
           </div>
         </div>
-        <div className="ssp-footer-bottom">
-          © {new Date().getFullYear()} Squarespell. Not affiliated with Squarespace Inc.
+        <div className="ss-footer-bottom">
+          &copy; {new Date().getFullYear()} Squarespell. All rights reserved.
         </div>
       </footer>
     </div>
   );
 }
 
-/* ---------- small components ---------- */
+/* ========== INLINE CSS ========== */
 
-function FeatureCard({
-  title,
-  body,
-  visual,
-  span,
-}: {
-  title: string;
-  body: string;
-  visual: React.ReactNode;
-  span?: 1 | 2;
-}) {
-  return (
-    <div className={`ssp-feature ${span === 2 ? 'ssp-feature-wide' : ''}`}>
-      <div className="ssp-feature-visual">{visual}</div>
-      <div className="ssp-feature-title">{title}</div>
-      <div className="ssp-feature-body">{body}</div>
-    </div>
-  );
-}
-
-/* ---------- inline CSS ---------- */
-
-const CSS = `
-.ssp-landing {
-  --bg: #F7F7F5;
-  --panel: #FFFFFF;
-  --panel-2: #F5F5F3;
-  --border: rgba(0,0,0,0.08);
-  --border-strong: rgba(0,0,0,0.14);
-  --text: #1A1A1A;
-  --muted: #6B6B6B;
-  --dim: #9A9A9A;
+var CSS = `
+/* ---- Reset & Base ---- */
+.ss-landing {
   --accent: #0D7377;
-  --accent-dim: rgba(13,115,119,0.12);
+  --accent-light: rgba(13,115,119,0.08);
+  --accent-hover: #0a5c5f;
+  --bg: #FFFFFF;
+  --bg-alt: #F9FAFB;
+  --text: #101828;
+  --text-secondary: #475467;
+  --text-muted: #667085;
+  --border: #EAECF0;
+  --border-strong: #D0D5DD;
 
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-}
-
-.ssp-landing * { box-sizing: border-box; }
-.ssp-landing a { color: inherit; text-decoration: none; }
-
-/* ----- nav ----- */
-.ssp-nav {
-  position: sticky; top: 0; z-index: 50;
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  background: rgba(247,247,245,0.72);
-  border-bottom: 1px solid #E4E3E0;
-}
-.ssp-nav-inner {
-  max-width: 1200px; margin: 0 auto; padding: 16px 32px;
-  display: flex; align-items: center; justify-content: space-between; gap: 32px;
-}
-.ssp-logo {
-  display: inline-flex; align-items: center; gap: 10px;
-  font-weight: 700; font-size: 17px; letter-spacing: -0.01em;
-}
-.ssp-logo-dot {
-  width: 10px; height: 10px; border-radius: 3px;
-  background: var(--accent);
-  box-shadow: 0 0 16px rgba(13,115,119,0.6);
-}
-.ssp-nav-links {
-  display: flex; gap: 28px; font-size: 14px; color: var(--muted);
-}
-.ssp-nav-links a { transition: color 0.2s; }
-.ssp-nav-links a:hover { color: var(--text); }
-.ssp-nav-cta { display: flex; align-items: center; gap: 16px; }
-.ssp-nav-link { font-size: 14px; color: var(--muted); }
-.ssp-nav-link:hover { color: var(--text); }
-
-@media (max-width: 860px) {
-  .ssp-nav-links { display: none; }
-}
-
-/* ----- buttons ----- */
-.ssp-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  font-family: inherit; font-weight: 600; letter-spacing: -0.01em;
-  border-radius: 10px; cursor: pointer; transition: all 0.18s;
-  border: 1px solid transparent; white-space: nowrap;
-}
-.ssp-btn-sm { padding: 9px 16px; font-size: 13px; }
-.ssp-btn-lg { padding: 15px 26px; font-size: 15px; }
-.ssp-btn-primary {
-  background: var(--accent); color: #FFFFFF;
-  box-shadow: 0 8px 26px -10px rgba(13,115,119,0.6);
-}
-.ssp-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 30px -10px rgba(13,115,119,0.8);
-}
-.ssp-btn-ghost {
-  background: transparent; color: var(--text);
-  border-color: #E4E3E0;
-}
-.ssp-btn-ghost:hover {
-  background: rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0.12);
-}
-.ssp-btn-outline {
-  background: transparent; color: var(--accent);
-  border-color: var(--accent);
-}
-.ssp-btn-outline:hover {
-  background: rgba(13,115,119,0.06);
-}
-
-/* ----- hero ----- */
-.ssp-hero {
-  position: relative;
-  padding: 80px 32px 40px;
-  max-width: 1200px; margin: 0 auto;
-  text-align: center;
-}
-.ssp-hero-glow {
-  position: absolute; top: -100px; left: 50%;
-  width: 900px; height: 500px;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(13,115,119,0.08) 0%, rgba(13,115,119,0) 55%);
-  pointer-events: none;
-  filter: blur(20px);
-}
-.ssp-hero-inner {
-  position: relative; z-index: 2;
-  max-width: 820px; margin: 0 auto;
-}
-.ssp-hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 7px 14px; border-radius: 999px;
-  background: var(--accent-dim);
-  border: 1px solid rgba(13,115,119,0.28);
-  color: var(--accent);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.08em;
-  margin-bottom: 28px;
-}
-.ssp-hero-eyebrow-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
-  animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.7); }
-}
-.ssp-hero-title {
-  font-size: clamp(40px, 6.4vw, 74px);
-  line-height: 1.02;
-  letter-spacing: -0.035em;
-  font-weight: 700;
-  margin: 0 0 24px;
-}
-.ssp-hero-title-accent {
-  background: linear-gradient(180deg, #0D7377 0%, #0a5a5e 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-}
-.ssp-hero-sub {
-  font-size: 18px; line-height: 1.55;
-  color: var(--muted);
-  max-width: 640px; margin: 0 auto 36px;
-}
-.ssp-hero-ctas {
-  display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
-  margin-bottom: 28px;
-}
-
-/* Inline URL generator form (mirrors /try Stage 1 hook widget) */
-.ssp-hero-gen {
-  max-width: 620px;
-  margin: 0 auto 22px;
-}
-.ssp-hero-gen-field {
-  display: flex; align-items: center;
-  background: #FFFFFF;
-  border: 1px solid #E4E3E0;
-  border-radius: 14px;
-  padding: 8px 8px 8px 22px;
-  gap: 6px;
-  transition: all 0.22s;
-  box-shadow:
-    0 20px 50px -20px rgba(0,0,0,0.04),
-    0 0 0 0 rgba(13,115,119,0);
-}
-.ssp-hero-gen-field:focus-within {
-  border-color: rgba(13,115,119,0.45);
-  box-shadow:
-    0 20px 50px -20px rgba(0,0,0,0.04),
-    0 0 0 4px rgba(13,115,119,0.12);
-}
-.ssp-hero-gen-prefix {
-  color: var(--dim);
-  font-family: ui-monospace, 'SF Mono', monospace;
-  font-size: 15px;
-  user-select: none;
-  flex-shrink: 0;
-}
-.ssp-hero-gen-input {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: 0; outline: 0;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 500;
-  padding: 16px 10px;
-  letter-spacing: -0.005em;
-}
-.ssp-hero-gen-input::placeholder { color: var(--dim); }
-.ssp-hero-gen-input:disabled { opacity: 0.6; }
-.ssp-hero-gen-btn {
-  background: var(--accent);
-  color: #FFFFFF;
-  border: 0;
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: -0.005em;
-  padding: 14px 22px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.18s;
-  flex-shrink: 0;
-  box-shadow: 0 6px 18px -8px rgba(13,115,119,0.6);
-}
-.ssp-hero-gen-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px -8px rgba(13,115,119,0.8);
-}
-.ssp-hero-gen-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-.ssp-hero-gen-hint {
-  margin-top: 14px;
-  font-size: 12.5px;
-  color: var(--dim);
-  text-align: center;
-}
-.ssp-hero-gen-hint code {
-  background: rgba(0,0,0,0.04);
-  border: 1px solid #E4E3E0;
-  padding: 3px 8px;
-  border-radius: 6px;
-  color: var(--muted);
-  font-size: 11.5px;
-  font-family: ui-monospace, 'SF Mono', monospace;
-  margin-left: 4px;
-}
-.ssp-hero-secondary {
-  display: inline-block;
-  margin-top: 14px;
-  font-size: 13px;
-  color: var(--muted);
-  transition: color 0.2s;
-}
-.ssp-hero-secondary:hover { color: var(--accent); }
-
-@media (max-width: 640px) {
-  .ssp-hero-gen-field {
-    flex-wrap: wrap;
-    padding: 14px;
-  }
-  .ssp-hero-gen-prefix { padding-left: 8px; }
-  .ssp-hero-gen-input {
-    width: 100%;
-    padding: 10px 8px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .ssp-hero-gen-btn {
-    width: 100%;
-    margin-top: 10px;
-  }
-  .ssp-hero-gen-hint code {
-    display: block;
-    margin: 8px auto 0;
-    width: fit-content;
-    word-break: break-all;
-  }
-}
-
-.ssp-hero-trust {
-  display: flex; justify-content: center; align-items: center;
-  gap: 10px; flex-wrap: wrap;
-  font-size: 13px; color: var(--dim);
-}
-.ssp-hero-trust-check { color: var(--accent); font-weight: 700; margin-right: 4px; }
-.ssp-hero-trust-dot {
-  width: 3px; height: 3px; border-radius: 50%;
-  background: var(--dim); margin: 0 4px;
-}
-
-/* ----- mockup (bombon-inspired) ----- */
-.ssp-mockup-wrap {
-  position: relative;
-  max-width: 900px; margin: 70px auto 0;
-  perspective: 1800px;
-  transition: transform 0.1s linear;
-}
-.ssp-mockup-orbit {
-  position: absolute; left: 50%; top: 50%;
-  border-radius: 50%;
-  border: 1px dashed rgba(13,115,119,0.15);
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-.ssp-mockup-orbit-1 { width: 720px; height: 720px; animation: spin 60s linear infinite; }
-.ssp-mockup-orbit-2 { width: 520px; height: 520px; animation: spin 40s linear infinite reverse; border-color: rgba(13,115,119,0.08); }
-@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
-
-.ssp-mockup-card {
-  background: var(--panel);
-  border: 1px solid #E4E3E0;
-  border-radius: 16px;
-  box-shadow:
-    0 40px 80px -24px rgba(0,0,0,0.04),
-    0 0 0 1px rgba(0,0,0,0.04),
-    0 0 60px -20px rgba(13,115,119,0.08);
-  position: relative;
-}
-.ssp-mockup-card-main {
-  width: 560px; max-width: 100%;
-  margin: 0 auto;
-  transform: rotateX(8deg) rotateY(-4deg);
-  animation: float 7s ease-in-out infinite;
-}
-@keyframes float {
-  0%, 100% { transform: rotateX(8deg) rotateY(-4deg) translateY(0); }
-  50% { transform: rotateX(6deg) rotateY(-3deg) translateY(-10px); }
-}
-.ssp-mockup-browser {
-  display: flex; align-items: center; gap: 14px;
-  padding: 14px 18px; border-bottom: 1px solid #E4E3E0;
-}
-.ssp-mockup-browser-dots { display: flex; gap: 6px; }
-.ssp-mockup-browser-dots span {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: rgba(0,0,0,0.12);
-}
-.ssp-mockup-browser-dots span:first-child { background: #ff5f56; }
-.ssp-mockup-browser-dots span:nth-child(2) { background: #ffbd2e; }
-.ssp-mockup-browser-dots span:nth-child(3) { background: #27c93f; }
-.ssp-mockup-browser-url {
-  flex: 1; text-align: center; font-size: 12px;
-  color: var(--dim); font-family: ui-monospace, monospace;
-  background: rgba(0,0,0,0.25);
-  padding: 5px 12px; border-radius: 6px;
-}
-.ssp-mockup-body { padding: 28px 32px 26px; }
-.ssp-mockup-q-label {
-  font-size: 11px; color: var(--dim);
-  text-transform: uppercase; letter-spacing: 0.12em;
-  margin-bottom: 12px;
-}
-.ssp-mockup-q-text {
-  font-size: 19px; font-weight: 600;
-  letter-spacing: -0.01em; line-height: 1.3;
-  margin-bottom: 18px;
-}
-.ssp-mockup-progress {
-  height: 3px; background: rgba(0,0,0,0.08);
-  border-radius: 2px; margin-bottom: 22px; overflow: hidden;
-}
-.ssp-mockup-progress-fill {
-  height: 100%; width: 40%;
-  background: var(--accent);
-  border-radius: 2px;
-  animation: progress 4s ease-in-out infinite;
-}
-@keyframes progress {
-  0%, 100% { width: 40%; }
-  50% { width: 60%; }
-}
-.ssp-mockup-options { display: flex; flex-direction: column; gap: 10px; }
-.ssp-mockup-option {
-  display: flex; align-items: center; gap: 12px;
-  padding: 13px 16px; border-radius: 10px;
-  border: 1px solid #E4E3E0;
-  font-size: 14px; color: var(--muted);
-  transition: all 0.25s;
-}
-.ssp-mockup-option-selected {
-  border-color: rgba(13,115,119,0.5);
-  background: rgba(13,115,119,0.06);
-  color: var(--text);
-}
-.ssp-mockup-radio {
-  width: 16px; height: 16px; border-radius: 50%;
-  border: 1.5px solid var(--dim);
-  flex-shrink: 0;
-}
-.ssp-mockup-radio-on {
-  border-color: var(--accent);
-  background: var(--accent);
-  box-shadow: inset 0 0 0 3px #FFFFFF;
-}
-.ssp-mockup-next {
-  margin-top: 20px; padding: 12px 22px;
-  display: inline-block;
-  background: var(--accent); color: #FFFFFF;
-  border-radius: 8px; font-weight: 600; font-size: 13px;
-}
-
-/* Floating side cards */
-.ssp-mockup-card-float-1, .ssp-mockup-card-float-2 {
-  position: absolute;
-  padding: 16px 20px;
-  min-width: 200px;
-  background: var(--panel-2);
-  animation: float-side 6s ease-in-out infinite;
-}
-.ssp-mockup-card-float-1 {
-  top: 18%; left: -12px;
-  transform: rotate(-4deg);
-  animation-delay: 0.5s;
-}
-.ssp-mockup-card-float-2 {
-  bottom: 16%; right: -12px;
-  transform: rotate(3deg);
-  animation-delay: 1.5s;
-}
-@keyframes float-side {
-  0%, 100% { transform: translateY(0) rotate(-4deg); }
-  50% { transform: translateY(-14px) rotate(-4deg); }
-}
-.ssp-mockup-card-float-2 {
-  animation-name: float-side-2;
-}
-@keyframes float-side-2 {
-  0%, 100% { transform: translateY(0) rotate(3deg); }
-  50% { transform: translateY(-14px) rotate(3deg); }
-}
-.ssp-mockup-stat-label {
-  font-size: 10px; color: var(--dim);
-  text-transform: uppercase; letter-spacing: 0.1em;
-  margin-bottom: 6px;
-}
-.ssp-mockup-stat-value {
-  font-size: 18px; font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 4px;
-}
-.ssp-mockup-stat-sub { font-size: 12px; color: var(--muted); }
-.ssp-mockup-trend {
-  font-size: 12px; color: var(--accent); font-weight: 600;
-  margin-left: 6px;
-}
-.ssp-mockup-pulse {
-  position: absolute; top: 18px; right: 18px;
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 0 rgba(13,115,119,0.5);
-  animation: pulse-ring 2s infinite;
-}
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(13,115,119,0.6); }
-  70% { box-shadow: 0 0 0 10px rgba(13,115,119,0); }
-  100% { box-shadow: 0 0 0 0 rgba(13,115,119,0); }
-}
-
-@media (max-width: 720px) {
-  .ssp-hero { padding: 56px 20px 20px; }
-  .ssp-mockup-card-main { width: 92%; }
-  .ssp-mockup-card-float-1, .ssp-mockup-card-float-2 { display: none; }
-  .ssp-mockup-wrap { margin-top: 44px; }
-}
-
-/* ----- logos strip ----- */
-.ssp-logos {
-  max-width: 1100px; margin: 80px auto 0;
-  padding: 0 32px;
-  text-align: center;
-}
-.ssp-logos-label {
-  font-size: 12px; color: var(--dim);
-  text-transform: uppercase; letter-spacing: 0.12em;
-  margin-bottom: 26px;
-}
-.ssp-logos-row {
-  display: flex; justify-content: space-around;
-  flex-wrap: wrap; gap: 40px;
-  opacity: 0.55;
-}
-.ssp-logo-mark {
-  font-weight: 700; font-size: 14px;
-  letter-spacing: 0.18em; color: var(--muted);
-}
-
-/* ----- section scaffolding ----- */
-.ssp-section {
-  max-width: 1200px; margin: 0 auto;
-  padding: 120px 32px 0;
-}
-.ssp-section-header {
-  text-align: center; margin-bottom: 64px;
-  max-width: 720px; margin-left: auto; margin-right: auto;
-}
-.ssp-eyebrow {
-  display: inline-block;
-  padding: 6px 12px; border-radius: 999px;
-  background: rgba(0,0,0,0.04);
-  border: 1px solid #E4E3E0;
-  color: var(--accent);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.1em;
-  margin-bottom: 22px;
-}
-.ssp-h2 {
-  font-size: clamp(30px, 4vw, 46px);
-  line-height: 1.08;
-  letter-spacing: -0.025em;
-  font-weight: 700;
-  margin: 0 0 18px;
-}
-.ssp-h2-muted { color: var(--muted); font-weight: 700; }
-.ssp-sub {
-  font-size: 17px; color: var(--muted);
-  line-height: 1.55; margin: 0;
-}
-
-/* ----- how it works ----- */
-.ssp-steps {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-.ssp-step {
-  padding: 36px 28px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  transition: all 0.2s;
-}
-.ssp-step:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-3px);
-}
-.ssp-step-n {
-  font-size: 13px; font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.1em;
-  margin-bottom: 22px;
-}
-.ssp-step-title {
-  font-size: 21px; font-weight: 600;
-  letter-spacing: -0.015em;
-  margin-bottom: 10px;
-}
-.ssp-step-body {
-  font-size: 15px; color: var(--muted); line-height: 1.55;
-}
-@media (max-width: 820px) {
-  .ssp-steps { grid-template-columns: 1fr; }
-}
-
-/* ----- features grid ----- */
-.ssp-features {
-  display: grid; grid-template-columns: repeat(6, 1fr);
-  gap: 20px;
-}
-.ssp-feature {
-  grid-column: span 3;
-  padding: 32px 30px;
-  background: var(--panel);
-  border: 1px solid #E4E3E0;
-  border-radius: 18px;
-  transition: all 0.25s;
-  min-height: 280px;
-  display: flex; flex-direction: column;
-}
-.ssp-feature-wide { grid-column: span 6; }
-.ssp-feature:hover {
-  border-color: rgba(0,0,0,0.12);
-  transform: translateY(-3px);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-.ssp-feature-visual {
-  flex: 1; min-height: 120px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 22px;
-  background: rgba(0,0,0,0.02);
-  border-radius: 12px;
-  padding: 24px;
-}
-.ssp-feature-title {
-  font-size: 19px; font-weight: 600;
-  letter-spacing: -0.012em; margin-bottom: 8px;
-}
-.ssp-feature-body {
-  font-size: 14.5px; color: var(--muted); line-height: 1.55;
-}
-
-/* feature visuals */
-.ssp-feature-code {
-  font-family: ui-monospace, 'SF Mono', monospace;
-  font-size: 13px; line-height: 1.6;
-  text-align: left; width: 100%;
-}
-.ssp-feature-code-line { white-space: nowrap; overflow-x: auto; color: var(--muted); }
-.cm-tag { color: #ec4899; }
-.cm-attr { color: #6366f1; }
-.cm-str { color: var(--accent); }
-
-.ssp-feature-swatches { display: flex; gap: 14px; }
-.ssp-swatch {
-  width: 44px; height: 44px; border-radius: 12px;
-  border: 1px solid #E4E3E0;
-  animation: swatch-pop 3s ease-in-out infinite;
-}
-.ssp-swatch:nth-child(2) { animation-delay: 0.3s; }
-.ssp-swatch:nth-child(3) { animation-delay: 0.6s; }
-.ssp-swatch:nth-child(4) { animation-delay: 0.9s; }
-@keyframes swatch-pop {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-.ssp-feature-pill {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 14px 22px; border-radius: 10px;
-  background: rgba(0,0,0,0.03);
-  border: 1px solid #E4E3E0;
-  font-size: 15px; color: var(--text);
-}
-.ssp-feature-pill-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
-  animation: pulse 2s infinite;
-}
-
-.ssp-feature-rows { width: 100%; display: flex; flex-direction: column; gap: 8px; }
-.ssp-feature-row {
-  display: flex; justify-content: space-between;
-  padding: 10px 14px;
-  background: rgba(0,0,0,0.03);
-  border: 1px solid #E4E3E0;
-  border-radius: 8px;
-  font-size: 13px; font-family: ui-monospace, monospace;
-}
-.cm-cell { color: var(--text); }
-.cm-cell-muted { color: var(--dim); }
-
-.ssp-feature-toggle {
-  display: flex; align-items: center; gap: 14px;
-}
-.ssp-feature-toggle-track {
-  width: 48px; height: 26px;
-  background: var(--accent);
-  border-radius: 999px; position: relative;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
-}
-.ssp-feature-toggle-thumb {
-  position: absolute; top: 3px; right: 3px;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #FFFFFF;
-  animation: toggle 3s ease-in-out infinite;
-}
-@keyframes toggle {
-  0%, 100% { right: 3px; }
-  50% { right: 25px; }
-}
-.ssp-feature-toggle-label {
-  font-size: 14px; color: var(--muted);
-}
-
-@media (max-width: 900px) {
-  .ssp-features { grid-template-columns: 1fr; }
-  .ssp-feature, .ssp-feature-wide { grid-column: span 1; }
-}
-
-/* ----- metrics / analytics ----- */
-.ssp-metrics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 20px;
-  min-height: 460px;
-}
-.ssp-metrics-card {
-  padding: 28px 30px;
-  background: var(--panel);
-  border: 1px solid #E4E3E0;
-  border-radius: 18px;
-  display: flex; flex-direction: column;
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-.ssp-metrics-card:hover {
-  border-color: rgba(0,0,0,0.12);
-}
-.ssp-metrics-label {
-  font-size: 12px; color: var(--dim);
-  text-transform: uppercase; letter-spacing: 0.1em;
-  margin-bottom: 18px;
-}
-.ssp-metrics-value {
-  font-size: 36px; font-weight: 700;
-  letter-spacing: -0.025em;
-  margin-bottom: 18px;
-}
-.ssp-metrics-sub {
-  font-size: 13px; color: var(--muted);
-  margin-top: auto; padding-top: 16px;
-}
-.ssp-trend-up { color: var(--accent); font-weight: 600; font-size: 14px; }
-
-/* gauge card */
-.ssp-metrics-card-gauge {
-  grid-row: span 2;
-  align-items: center; text-align: center;
-  justify-content: center;
-}
-.ssp-gauge {
-  position: relative;
-  width: 240px; height: 140px;
-  margin: 20px 0;
-}
-.ssp-gauge-arc {
-  animation: gauge-draw 1.8s ease-out forwards;
-  transform-origin: center;
-}
-@keyframes gauge-draw {
-  from { stroke-dashoffset: 157; }
-  to { stroke-dashoffset: 52; }
-}
-.ssp-gauge-value {
-  position: absolute;
-  bottom: 8px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 48px; font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--accent);
-}
-
-/* line chart card */
-.ssp-line-chart {
-  width: 100%;
-  margin-top: auto;
-}
-.ssp-line-path {
-  stroke-dasharray: 600;
-  stroke-dashoffset: 600;
-  animation: line-draw 2.2s ease-out 0.3s forwards;
-}
-@keyframes line-draw {
-  to { stroke-dashoffset: 0; }
-}
-.ssp-line-axis {
-  display: flex; justify-content: space-between;
-  font-size: 11px; color: var(--dim);
-  margin-top: 8px;
-}
-
-/* stat card */
-.ssp-metrics-card-stat .ssp-stat-row {
-  display: flex; align-items: center; gap: 18px;
-  margin: 20px 0 auto;
-}
-.ssp-stat-before {
-  font-size: 18px; color: var(--dim);
-  text-decoration: line-through;
-}
-.ssp-stat-arrow { font-size: 20px; color: var(--muted); }
-.ssp-stat-after {
-  display: flex; align-items: baseline; gap: 6px;
-  color: var(--accent);
-}
-.ssp-stat-big { font-size: 56px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
-.ssp-stat-unit { font-size: 18px; font-weight: 600; }
-
-/* bar chart card */
-.ssp-bars {
-  display: flex; align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex: 1; margin-top: 14px;
-}
-.ssp-bar {
-  flex: 1;
-  display: flex; flex-direction: column;
-  align-items: center; gap: 10px;
-  height: 100%;
-}
-.ssp-bar span {
-  width: 100%;
-  background: rgba(0,0,0,0.08);
-  border-radius: 6px 6px 0 0;
-  min-height: 0;
-  transition: height 1.5s ease-out;
-}
-.ssp-bar-accent span {
-  background: var(--accent);
-  box-shadow: 0 0 20px -4px rgba(13,115,119,0.5);
-}
-.ssp-bar label {
-  font-size: 11px; color: var(--dim);
-  text-align: center;
-}
-
-@media (max-width: 900px) {
-  .ssp-metrics-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-  .ssp-metrics-card-gauge { grid-row: auto; }
-}
-
-/* ----- pricing (najaf style) ----- */
-.ssp-billing-toggle {
-  display: flex; justify-content: center; align-items: center; gap: 4px;
-  margin-bottom: 48px;
-  background: var(--panel); border: 1px solid #E4E3E0;
-  border-radius: 12px; padding: 4px; width: fit-content; margin-left: auto; margin-right: auto;
-}
-.ssp-toggle-btn {
-  padding: 10px 28px; border-radius: 9px; border: none;
-  font-size: 15px; font-weight: 600; cursor: pointer;
-  background: transparent; color: var(--muted);
-  transition: all 0.15s; display: flex; align-items: center; gap: 8px;
-  font-family: inherit;
-}
-.ssp-toggle-btn.ssp-toggle-active {
-  background: var(--accent); color: #FFFFFF;
-}
-.ssp-toggle-save {
-  background: rgba(74,222,128,0.15); color: #4ade80;
-  font-size: 11px; font-weight: 700; padding: 2px 8px;
-  border-radius: 100px; border: 1px solid rgba(74,222,128,0.3);
-}
-.ssp-plan-price-old {
-  font-size: 20px; color: var(--muted); text-decoration: line-through;
-  margin-right: 8px; font-weight: 500;
-}
-.ssp-plan-billed {
-  font-size: 13px; color: var(--muted); margin-top: -22px; margin-bottom: 24px;
-}
-.ssp-plans {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-.ssp-plan {
-  padding: 38px 32px 32px;
-  background: var(--panel);
-  border: 1px solid #E4E3E0;
-  border-radius: 18px;
-  display: flex; flex-direction: column;
-  position: relative;
-  transition: all 0.2s;
-}
-.ssp-plan:hover {
-  border-color: rgba(0,0,0,0.12);
-  transform: translateY(-3px);
-}
-.ssp-plan-featured {
-  border-color: rgba(13,115,119,0.45);
-  background: linear-gradient(180deg, rgba(13,115,119,0.04) 0%, var(--panel) 50%);
-  box-shadow: 0 26px 70px -30px rgba(13,115,119,0.12);
-}
-.ssp-plan-badge {
-  position: absolute; top: 18px; right: 18px;
-  padding: 5px 12px; border-radius: 999px;
-  background: var(--accent); color: #FFFFFF;
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.ssp-plan-name {
-  font-size: 14px; font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase; letter-spacing: 0.1em;
-  margin-bottom: 10px;
-}
-.ssp-plan-desc {
-  font-size: 14px; color: var(--muted);
-  line-height: 1.5; min-height: 42px;
-  margin-bottom: 24px;
-}
-.ssp-plan-price {
-  display: flex; align-items: baseline; gap: 4px;
-  margin-bottom: 30px;
-  padding-bottom: 30px;
-  border-bottom: 1px solid #E4E3E0;
-}
-.ssp-plan-price-num {
-  font-size: 52px; font-weight: 700;
-  letter-spacing: -0.03em; line-height: 1;
-}
-.ssp-plan-price-per {
-  font-size: 15px; color: var(--muted);
-}
-.ssp-plan-features {
-  list-style: none; padding: 0; margin: 0 0 30px;
-  display: flex; flex-direction: column; gap: 12px;
-  flex: 1;
-}
-.ssp-plan-features li {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 14px; color: var(--text);
-}
-.ssp-plan-check {
-  color: var(--accent); font-weight: 700;
-  width: 18px; height: 18px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  background: rgba(13,115,119,0.12);
-  font-size: 10px;
-  flex-shrink: 0;
-}
-.ssp-plan-cta {
-  width: 100%;
-  padding: 14px 20px; font-size: 14px;
-  border-radius: 10px;
-}
-
-@media (max-width: 900px) {
-  .ssp-plans { grid-template-columns: 1fr; }
-}
-
-/* ----- FAQ ----- */
-.ssp-faq {
-  max-width: 760px; margin: 0 auto;
-  display: flex; flex-direction: column; gap: 12px;
-}
-.ssp-faq-item {
-  background: var(--panel);
-  border: 1px solid #E4E3E0;
-  border-radius: 14px;
-  padding: 22px 26px;
-  text-align: left; cursor: pointer;
-  font-family: inherit; color: inherit;
-  transition: all 0.2s;
-}
-.ssp-faq-item:hover { border-color: rgba(0,0,0,0.12); }
-.ssp-faq-open { border-color: rgba(13,115,119,0.3); }
-.ssp-faq-q {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 16px; font-weight: 600;
-  letter-spacing: -0.01em;
-}
-.ssp-faq-icon {
-  font-size: 22px; color: var(--accent);
-  font-weight: 400; line-height: 1;
-}
-.ssp-faq-a {
-  margin-top: 14px;
-  font-size: 14.5px; color: var(--muted);
   line-height: 1.6;
 }
+.ss-landing * { box-sizing: border-box; }
+.ss-landing a { color: inherit; text-decoration: none; }
 
-/* ----- final CTA ----- */
-.ssp-final {
-  max-width: 1200px; margin: 140px auto 0;
-  padding: 0 32px;
+/* ---- Nav ---- */
+.ss-nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
 }
-.ssp-final-inner {
-  position: relative;
-  padding: 90px 40px;
-  background: radial-gradient(ellipse at top, rgba(13,115,119,0.06) 0%, var(--panel) 60%);
-  border: 1px solid rgba(13,115,119,0.2);
-  border-radius: 24px;
-  text-align: center;
-  overflow: hidden;
+.ss-nav-inner {
+  max-width: 1200px; margin: 0 auto; padding: 14px 32px;
+  display: flex; align-items: center; justify-content: space-between;
 }
-.ssp-final-inner::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(13,115,119,0.04), transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(13,115,119,0.02), transparent 50%);
-  pointer-events: none;
+.ss-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: var(--text);
 }
-.ssp-final-title {
-  position: relative;
-  font-size: clamp(32px, 4.6vw, 54px);
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  font-weight: 700;
-  margin: 0 0 18px;
+.ss-logo-icon { display: flex; align-items: center; }
+.ss-nav-links {
+  display: flex; gap: 32px; font-size: 14px; color: var(--text-secondary); font-weight: 500;
 }
-.ssp-final-sub {
-  position: relative;
-  font-size: 18px; color: var(--muted);
-  margin: 0 0 32px;
-}
-.ssp-final .ssp-btn { position: relative; margin-bottom: 20px; }
-.ssp-final .ssp-hero-trust { position: relative; }
+.ss-nav-links a:hover { color: var(--text); }
+.ss-nav-right { display: flex; align-items: center; gap: 16px; }
+.ss-nav-signin { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+.ss-nav-signin:hover { color: var(--text); }
 
-/* ----- footer ----- */
-.ssp-footer {
-  margin-top: 120px;
-  border-top: 1px solid #E4E3E0;
-  padding: 60px 32px 30px;
+@media (max-width: 768px) {
+  .ss-nav-links { display: none; }
+  .ss-nav-inner { padding: 12px 20px; }
 }
-.ssp-footer-inner {
+
+/* ---- Buttons ---- */
+.ss-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 14px; border-radius: 8px;
+  border: none; cursor: pointer; transition: all 0.2s;
+  text-decoration: none; white-space: nowrap;
+}
+.ss-btn-sm { padding: 8px 16px; font-size: 14px; }
+.ss-btn-lg { padding: 14px 28px; font-size: 16px; border-radius: 10px; }
+.ss-btn-primary {
+  background: var(--accent); color: #fff;
+}
+.ss-btn-primary:hover { background: var(--accent-hover); }
+.ss-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.ss-btn-outline {
+  background: #fff; color: var(--text); border: 1px solid var(--border-strong);
+}
+.ss-btn-outline:hover { background: var(--bg-alt); }
+.ss-btn-white {
+  background: #fff; color: var(--accent); font-weight: 600;
+}
+.ss-btn-white:hover { background: #f0fafa; }
+
+/* ---- Hero ---- */
+.ss-hero {
+  padding: 60px 32px 80px;
   max-width: 1200px; margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1.4fr 2fr;
-  gap: 60px;
 }
-.ssp-footer-brand { display: flex; flex-direction: column; gap: 14px; }
-.ssp-footer-tag {
-  font-size: 14px; color: var(--muted);
-  max-width: 280px; line-height: 1.5;
+.ss-hero-inner {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
 }
-.ssp-footer-cols {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
+.ss-hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent-light); color: var(--accent);
+  font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 20px;
+  margin-bottom: 24px;
 }
-.ssp-footer-col { display: flex; flex-direction: column; gap: 12px; }
-.ssp-footer-col-title {
-  font-size: 12px; color: var(--dim);
-  text-transform: uppercase; letter-spacing: 0.1em;
-  margin-bottom: 4px;
+.ss-hero-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  animation: pulse 2s infinite;
 }
-.ssp-footer-col a {
-  font-size: 14px; color: var(--muted);
-  transition: color 0.2s;
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.ss-hero-title {
+  font-size: 52px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em;
+  margin: 0 0 20px; white-space: pre-line;
 }
-.ssp-footer-col a:hover { color: var(--text); }
-.ssp-footer-bottom {
-  max-width: 1200px; margin: 50px auto 0;
-  padding-top: 24px;
-  border-top: 1px solid #E4E3E0;
-  font-size: 12px; color: var(--dim);
-  text-align: center;
+.ss-hero-accent { color: var(--accent); }
+.ss-hero-sub {
+  font-size: 17px; color: var(--text-secondary); line-height: 1.65; margin: 0 0 28px;
+  max-width: 480px;
 }
-@media (max-width: 820px) {
-  .ssp-footer-inner { grid-template-columns: 1fr; gap: 40px; }
-  .ssp-footer-cols { grid-template-columns: repeat(2, 1fr); gap: 30px; }
+.ss-hero-form {
+  display: flex; gap: 0; margin-bottom: 16px;
+  background: var(--bg-alt); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; max-width: 480px;
+}
+.ss-hero-input {
+  flex: 1; border: none; background: transparent; padding: 14px 16px;
+  font-size: 15px; color: var(--text); outline: none; min-width: 0;
+  font-family: inherit;
+}
+.ss-hero-input::placeholder { color: var(--text-muted); }
+.ss-hero-cta {
+  border-radius: 8px; margin: 4px; padding: 10px 20px;
+}
+.ss-hero-trust {
+  display: flex; gap: 20px; margin-bottom: 32px;
+}
+.ss-trust-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-muted);
+}
+.ss-hero-loved {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.ss-hero-avatars { display: flex; }
+.ss-avatar {
+  width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 11px; font-weight: 700; color: #fff;
+  margin-right: -6px; border: 2px solid #fff;
+}
+.ss-hero-loved-text { font-size: 13px; color: var(--text-secondary); }
+.ss-hero-stars { font-size: 13px; color: #f59e0b; }
+
+/* Hero Mockup */
+.ss-hero-right { position: relative; }
+.ss-mockup {
+  background: #fff; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+  position: relative;
+}
+.ss-mockup-browser {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+}
+.ss-mockup-dots { display: flex; gap: 6px; }
+.ss-mockup-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.ss-mockup-dots span:nth-child(1) { background: #FF5F57; }
+.ss-mockup-dots span:nth-child(2) { background: #FFBD2E; }
+.ss-mockup-dots span:nth-child(3) { background: #28CA42; }
+.ss-mockup-body { padding: 28px 24px; }
+.ss-mockup-q-label {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 600; font-size: 16px; margin-bottom: 6px;
+}
+.ss-mockup-q-icon {
+  width: 24px; height: 24px; border-radius: 6px; background: var(--accent);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.ss-mockup-q-help {
+  font-size: 13px; color: var(--text-muted); margin: 0 0 20px;
+}
+.ss-mockup-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.ss-mockup-opt {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 10px; font-size: 14px;
+  border: 1px solid var(--border); cursor: default; transition: all 0.15s;
+}
+.ss-mockup-opt-selected {
+  border-color: var(--accent); background: var(--accent-light);
+}
+.ss-mockup-letter {
+  width: 28px; height: 28px; border-radius: 7px; background: var(--bg-alt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.ss-mockup-letter-active {
+  background: var(--accent); color: #fff;
+}
+.ss-mockup-next {
+  background: var(--accent); color: #fff; border: none; border-radius: 8px;
+  padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: default;
+  display: inline-block;
+}
+.ss-mockup-float {
+  position: absolute; background: #fff; border-radius: 10px; padding: 10px 14px;
+  font-size: 11px; color: var(--text-secondary); line-height: 1.4;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 1px solid var(--border);
+  font-weight: 500;
+}
+.ss-mockup-float-brand { top: 80px; right: -30px; }
+.ss-mockup-float-logic { bottom: 60px; right: -30px; }
+.ss-mockup-float-powered { bottom: -10px; left: 20px; font-size: 10px; color: var(--text-muted); }
+
+@media (max-width: 860px) {
+  .ss-hero { padding: 40px 20px 60px; }
+  .ss-hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .ss-hero-title { font-size: 36px; }
+  .ss-hero-form { max-width: 100%; }
+  .ss-hero-right { max-width: 420px; margin: 0 auto; }
+  .ss-mockup-float { display: none; }
 }
 
-/* ----- template showcase ----- */
-.ssp-tpl-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  max-width: 1080px;
-  margin: 0 auto;
+/* ---- Sections ---- */
+.ss-section { padding: 80px 32px; }
+.ss-section-alt { background: var(--bg-alt); }
+.ss-container { max-width: 1100px; margin: 0 auto; }
+.ss-section-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--text-muted); text-transform: uppercase; text-align: center; margin-bottom: 12px;
 }
-.ssp-tpl-card {
-  display: flex; flex-direction: column;
-  background: #fff; border-radius: 16px; padding: 24px;
-  border: 1px solid #E4E3E0;
-  text-decoration: none; color: inherit;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+.ss-h2 {
+  font-size: 36px; font-weight: 700; letter-spacing: -0.02em;
+  text-align: center; margin: 0 0 16px; line-height: 1.2;
 }
-.ssp-tpl-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+.ss-section-sub {
+  font-size: 16px; color: var(--text-secondary); text-align: center;
+  max-width: 560px; margin: 0 auto 40px;
+}
+.ss-link-arrow {
+  font-size: 14px; font-weight: 600; color: var(--accent);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.ss-link-arrow:hover { text-decoration: underline; }
+
+/* ---- How It Works ---- */
+.ss-steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
+  margin-top: 48px;
+}
+.ss-step { text-align: center; }
+.ss-step-num {
+  width: 40px; height: 40px; border-radius: 10px; background: var(--bg-alt);
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: var(--text); margin: 0 auto 20px;
+}
+.ss-step-title {
+  font-size: 18px; font-weight: 600; margin: 0 0 8px;
+}
+.ss-step-body {
+  font-size: 14px; color: var(--text-secondary); line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .ss-steps { grid-template-columns: 1fr; gap: 32px; }
+}
+
+/* ---- Features ---- */
+.ss-features-layout {
+  display: grid; grid-template-columns: 1fr 1.2fr; gap: 60px; align-items: start;
+}
+.ss-features-left .ss-section-label { text-align: left; }
+.ss-features-left .ss-h2 { text-align: left; }
+.ss-feature-list { display: flex; flex-direction: column; gap: 24px; margin: 32px 0; }
+.ss-feat-item {
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.ss-feat-icon {
+  width: 40px; height: 40px; border-radius: 10px; background: var(--accent-light);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ss-feat-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+.ss-feat-desc { font-size: 13px; color: var(--text-secondary); }
+
+/* Dashboard Mockup */
+.ss-dash-mockup {
+  background: #fff; border-radius: 14px; border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06); overflow: hidden;
+}
+.ss-dash-header { border-bottom: 1px solid var(--border); padding: 0; }
+.ss-dash-nav {
+  display: flex; gap: 0; overflow-x: auto; padding: 0 8px;
+}
+.ss-dash-nav-item {
+  padding: 12px 14px; font-size: 12px; color: var(--text-muted); font-weight: 500;
+  white-space: nowrap; border-bottom: 2px solid transparent;
+}
+.ss-dash-nav-active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.ss-dash-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+  padding: 16px; border-bottom: 1px solid var(--border);
+}
+.ss-dash-stat { padding: 8px 12px; }
+.ss-dash-stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.ss-dash-stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.ss-dash-stat-trend { font-size: 11px; font-weight: 600; margin-top: 2px; }
+.ss-trend-up { color: #12B76A; }
+.ss-dash-chart { padding: 16px; position: relative; }
+.ss-dash-chart-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+.ss-dash-chart-labels {
+  display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted);
+  margin-top: 6px;
+}
+.ss-dash-chart-badge {
+  position: absolute; top: 16px; right: 16px;
+  background: var(--accent-light); color: var(--accent); font-size: 11px;
+  font-weight: 600; padding: 4px 10px; border-radius: 6px;
+}
+
+@media (max-width: 860px) {
+  .ss-features-layout { grid-template-columns: 1fr; gap: 40px; }
+  .ss-dash-mockup { max-width: 500px; margin: 0 auto; }
+}
+
+/* ---- Social Proof ---- */
+.ss-social-proof {
+  padding: 64px 32px; border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.ss-proof-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--text-muted); text-align: center; margin-bottom: 8px;
+}
+.ss-proof-title {
+  font-size: 24px; font-weight: 700; text-align: center; margin: 0 0 36px;
+  letter-spacing: -0.02em;
+}
+.ss-proof-stats {
+  display: flex; justify-content: center; gap: 60px; margin-bottom: 40px;
+}
+.ss-proof-stat { text-align: center; }
+.ss-proof-stat-num {
+  font-size: 32px; font-weight: 700; color: var(--accent); letter-spacing: -0.03em;
+}
+.ss-proof-stat-label { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.ss-proof-logos {
+  display: flex; justify-content: center; align-items: center;
+  gap: 48px; flex-wrap: wrap; opacity: 0.5;
+}
+.ss-proof-logo {
+  font-size: 16px; font-weight: 500; letter-spacing: 0.02em; color: var(--text);
+}
+.ss-proof-logo-bold { font-weight: 800; letter-spacing: 0.08em; }
+.ss-proof-logo-script { font-style: italic; font-weight: 400; }
+.ss-proof-logo-serif { font-family: Georgia, 'Times New Roman', serif; font-size: 13px; letter-spacing: 0.06em; }
+
+@media (max-width: 640px) {
+  .ss-proof-stats { gap: 24px; flex-wrap: wrap; }
+  .ss-proof-stat-num { font-size: 24px; }
+  .ss-proof-logos { gap: 24px; }
+}
+
+/* ---- Pricing ---- */
+.ss-billing-toggle {
+  display: flex; justify-content: center; gap: 4px; margin-bottom: 40px;
+  background: var(--bg-alt); border-radius: 10px; padding: 4px;
+  width: fit-content; margin-left: auto; margin-right: auto;
+  border: 1px solid var(--border);
+}
+.ss-toggle-btn {
+  padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 14px; font-weight: 500; background: transparent; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+  font-family: inherit;
+}
+.ss-toggle-active {
+  background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  font-weight: 600;
+}
+.ss-toggle-save {
+  background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+}
+.ss-plans {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  max-width: 960px; margin: 0 auto;
+}
+.ss-plan {
+  background: #fff; border: 1px solid var(--border); border-radius: 14px;
+  padding: 32px 28px; position: relative; display: flex; flex-direction: column;
+}
+.ss-plan-featured {
+  border-color: var(--accent); box-shadow: 0 4px 24px rgba(13,115,119,0.12);
+}
+.ss-plan-badge {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+  padding: 4px 14px; border-radius: 6px; white-space: nowrap;
+}
+.ss-plan-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.ss-plan-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.ss-plan-price { display: flex; align-items: baseline; gap: 2px; margin-bottom: 4px; }
+.ss-plan-amount { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; }
+.ss-plan-per { font-size: 14px; color: var(--text-muted); }
+.ss-plan-billed { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+.ss-plan-features {
+  list-style: none; padding: 0; margin: 0 0 28px; display: flex;
+  flex-direction: column; gap: 10px; flex: 1;
+}
+.ss-plan-features li {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--text-secondary);
+}
+.ss-plan-cta { width: 100%; padding: 12px; text-align: center; }
+.ss-plans-note {
+  text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .ss-plans { grid-template-columns: 1fr; max-width: 380px; }
+}
+
+/* ---- Templates ---- */
+.ss-tpl-tabs {
+  display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; flex-wrap: wrap;
+}
+.ss-tpl-tab {
+  padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border);
+  background: #fff; font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s; font-family: inherit;
+}
+.ss-tpl-tab:hover { border-color: var(--border-strong); }
+.ss-tpl-tab-active {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.ss-tpl-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+}
+.ss-tpl-card {
+  background: #fff; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; transition: all 0.2s; display: flex; flex-direction: column;
+}
+.ss-tpl-card:hover {
+  border-color: var(--border-strong); box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   transform: translateY(-2px);
 }
-.ssp-tpl-top {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+.ss-tpl-thumb { padding: 0; }
+.ss-tpl-thumb-inner {
+  height: 140px; display: flex; align-items: center; justify-content: center;
+  border-radius: 0;
 }
-.ssp-tpl-icon-wrap {
-  width: 36px; height: 36px; border-radius: 9px;
-  background: rgba(13,115,119,0.08);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--accent);
+.ss-tpl-name {
+  font-size: 15px; font-weight: 600; margin: 16px 16px 4px; line-height: 1.3;
 }
-.ssp-tpl-cat {
-  font-size: 11px; font-weight: 600;
-  color: var(--accent); background: rgba(13,115,119,0.06);
-  padding: 3px 8px; border-radius: 4px;
-  text-transform: uppercase; letter-spacing: 0.04em;
+.ss-tpl-desc {
+  font-size: 12px; color: var(--text-muted); margin: 0 16px 12px; line-height: 1.5;
+  flex: 1;
 }
-.ssp-tpl-name {
-  font-size: 16px; font-weight: 700; margin: 0 0 6px;
-  color: var(--fg);
-}
-.ssp-tpl-desc {
-  font-size: 13px; color: var(--muted); line-height: 1.5;
-  margin: 0 0 14px; flex: 1;
-}
-.ssp-tpl-try {
-  display: flex; align-items: center; gap: 5px;
+.ss-tpl-preview {
   font-size: 13px; font-weight: 600; color: var(--accent);
+  padding: 0 16px 16px; display: inline-flex; align-items: center; gap: 4px;
 }
-@media (max-width: 820px) {
-  .ssp-tpl-grid { grid-template-columns: 1fr 1fr; }
+
+@media (max-width: 860px) {
+  .ss-tpl-grid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 540px) {
-  .ssp-tpl-grid { grid-template-columns: 1fr; }
+@media (max-width: 480px) {
+  .ss-tpl-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- FAQ ---- */
+.ss-faq-container { max-width: 700px; }
+.ss-faq-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--text-muted); text-align: center; margin-bottom: 8px;
+}
+.ss-faq {
+  margin-top: 40px; display: flex; flex-direction: column;
+}
+.ss-faq-item {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  border-bottom: 1px solid var(--border); padding: 20px 0; cursor: pointer;
+  font-family: inherit;
+}
+.ss-faq-q {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 16px; font-weight: 500; color: var(--text); gap: 16px;
+}
+.ss-faq-chevron { flex-shrink: 0; transition: transform 0.2s; }
+.ss-faq-open .ss-faq-chevron { transform: rotate(180deg); }
+.ss-faq-a {
+  font-size: 14px; color: var(--text-secondary); line-height: 1.7;
+  margin-top: 12px; padding-right: 40px;
+}
+
+/* ---- Final CTA ---- */
+.ss-final {
+  background: var(--accent); color: #fff; padding: 80px 32px;
+  text-align: center; position: relative; overflow: hidden;
+}
+.ss-final-inner {
+  max-width: 600px; margin: 0 auto; position: relative; z-index: 1;
+}
+.ss-final-title {
+  font-size: 36px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 12px;
+}
+.ss-final-sub {
+  font-size: 16px; opacity: 0.85; margin: 0 0 28px;
+}
+.ss-final-note {
+  font-size: 13px; opacity: 0.7; margin-top: 16px;
+}
+
+/* ---- Footer ---- */
+.ss-footer {
+  background: #fff; border-top: 1px solid var(--border); padding: 0 32px;
+}
+.ss-footer-inner {
+  max-width: 1100px; margin: 0 auto; padding: 48px 0 32px;
+  display: grid; grid-template-columns: 1.2fr 2fr; gap: 60px;
+}
+.ss-footer-brand .ss-logo { margin-bottom: 12px; }
+.ss-footer-tag { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+.ss-footer-social { display: flex; gap: 12px; }
+.ss-footer-social a {
+  color: var(--text-muted); transition: color 0.15s;
+}
+.ss-footer-social a:hover { color: var(--text); }
+.ss-footer-cols {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;
+}
+.ss-footer-col {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ss-footer-col-title {
+  font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;
+}
+.ss-footer-col a {
+  font-size: 13px; color: var(--text-muted); transition: color 0.15s;
+}
+.ss-footer-col a:hover { color: var(--text); }
+.ss-footer-bottom {
+  max-width: 1100px; margin: 0 auto;
+  padding: 20px 0; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-muted); text-align: center;
+}
+
+@media (max-width: 768px) {
+  .ss-footer-inner { grid-template-columns: 1fr; gap: 32px; }
+  .ss-footer-cols { grid-template-columns: repeat(2, 1fr); }
+  .ss-section { padding: 60px 20px; }
+  .ss-h2 { font-size: 28px; }
 }
 `;

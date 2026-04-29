@@ -33,6 +33,7 @@ interface QuizQuestion {
   question?: string;
   subtitle?: string;
   options: QuizOption[];
+  timeLimit?: number;
 }
 interface QuizOutcome {
   id: string;
@@ -119,6 +120,7 @@ export default function QuizPage() {
   const [submitting, setSubmitting] = useState(false);
   const [leadError, setLeadError] = useState('');
   const [outcome, setOutcome] = useState<QuizOutcome | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const sessionIdRef = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   );
@@ -171,24 +173,31 @@ export default function QuizPage() {
     stage === 'question' ? Math.round(((qIdx + 1) / Math.max(totalQs, 1)) * 100) :
     stage === 'leadgate' ? 95 : 100;
 
-  const pickOption = useCallback(
-    (oi: number) => {
+  var pickOption = useCallback(
+    function(oi: number) {
       if (!quiz) return;
-      setAnswers((prev) => ({ ...prev, [qIdx]: oi }));
+      // Only record answer if oi >= 0 (oi = -1 means time ran out, skip)
+      if (oi >= 0) {
+        setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
+      }
       if (qIdx < (quiz.questions.length - 1)) {
         setQIdx(qIdx + 1);
       } else {
         if (requireEmail) {
           setStage('leadgate');
         } else {
-          const o = getOutcome(quiz, { ...answers, [qIdx]: oi });
+          var newAnswers = Object.assign({}, answers);
+          if (oi >= 0) {
+            newAnswers[qIdx] = oi;
+          }
+          var o = getOutcome(quiz, newAnswers);
           setOutcome(o);
           setStage('submitted');
-          fetch(`${API}/api/quiz/${slug}/event`, {
+          fetch(API + '/api/quiz/' + slug + '/event', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ event_type: 'complete', session_id: sessionIdRef.current, metadata: { outcome_id: o?.id } }),
-          }).catch(() => {});
+          }).catch(function() {});
           if (window.parent !== window) {
             window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
           }
@@ -197,6 +206,26 @@ export default function QuizPage() {
     },
     [quiz, qIdx, answers, requireEmail, slug]
   );
+
+  // Timer countdown for current question
+  useEffect(function() {
+    if (stage !== 'question' || !currentQ || !currentQ.timeLimit || currentQ.timeLimit <= 0) {
+      setTimeRemaining(null);
+      return;
+    }
+    setTimeRemaining(currentQ.timeLimit);
+    var interval = setInterval(function() {
+      setTimeRemaining(function(prev) {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          pickOption(-1);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return function() { clearInterval(interval); };
+  }, [qIdx, currentQ, stage, pickOption]);
 
   const goBack = () => { if (qIdx > 0) setQIdx(qIdx - 1); };
 
@@ -330,6 +359,7 @@ export default function QuizPage() {
           line-height: 1.55;
         }
         .sq-card {
+          position: relative;
           background: ${brandSurface};
           border: 1px solid ${brandBorder};
           border-radius: 18px;
@@ -426,6 +456,27 @@ export default function QuizPage() {
           display: inline-block;
         }
         .sq-back:hover { opacity: 0.9; }
+
+        .sq-timer {
+          position: absolute;
+          top: 22px;
+          right: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 56px;
+          height: 56px;
+          background: ${brandPrimary}14;
+          border-radius: 50%;
+          font-size: 18px;
+          font-weight: 700;
+          color: ${brandPrimary};
+          font-family: 'Inter', monospace;
+        }
+        .sq-timer.warning {
+          background: #ff6b5b26;
+          color: #ff6b5b;
+        }
 
         .sq-lead {
           text-align: center;
@@ -553,6 +604,9 @@ export default function QuizPage() {
               </div>
 
               <div className="sq-card">
+                {timeRemaining !== null && (
+                  <div className={'sq-timer' + (timeRemaining < 5 ? ' warning' : '')} aria-label={'Time remaining: ' + timeRemaining + ' seconds'}>{timeRemaining}s</div>
+                )}
                 <div className="sq-prog">
                   <span>Question {qIdx + 1} of {totalQs}</span>
                   <span>{progress}%</span>

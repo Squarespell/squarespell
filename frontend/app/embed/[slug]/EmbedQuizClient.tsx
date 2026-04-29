@@ -24,6 +24,7 @@ interface QuizQuestion {
   answerLayout?: string;
   mediaUrl?: string;
   mediaType?: string;
+  timeLimit?: number;
 }
 
 interface QuizOutcome {
@@ -94,6 +95,7 @@ export default function EmbedQuizClient({
   const [leadError, setLeadError] = useState('');
   const [outcome, setOutcome] = useState<QuizOutcome | null>(null);
   const [gdprConsent, setGdprConsent] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const sessionIdRef = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   );
@@ -160,6 +162,27 @@ export default function EmbedQuizClient({
     return () => ro.disconnect();
   }, [stage, qIdx]);
 
+  // Timer countdown for current question
+  useEffect(function() {
+    if (stage !== 'question' || !currentQ || !currentQ.timeLimit || currentQ.timeLimit <= 0) {
+      setTimeRemaining(null);
+      return;
+    }
+    setTimeRemaining(currentQ.timeLimit);
+    var interval = setInterval(function() {
+      setTimeRemaining(function(prev) {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          // Auto-advance when time runs out (pass -1 to skip)
+          pickOption(-1);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return function() { clearInterval(interval); };
+  }, [qIdx, currentQ, stage]);
+
   function getOutcome(answers: Record<number, number>): QuizOutcome | null {
     const outcomes = quiz.outcomes || quiz.results || [];
     if (outcomes.length === 0) return null;
@@ -175,23 +198,30 @@ export default function EmbedQuizClient({
     return matched || outcomes[0];
   }
 
-  const pickOption = useCallback(
-    (oi: number) => {
-      setAnswers((prev) => ({ ...prev, [qIdx]: oi }));
+  var pickOption = useCallback(
+    function(oi: number) {
+      // Only record answer if oi >= 0 (oi = -1 means time ran out, skip)
+      if (oi >= 0) {
+        setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
+      }
       if (qIdx < (quiz.questions.length - 1)) {
         setQIdx(qIdx + 1);
       } else {
         if (requireEmail) {
           setStage('leadgate');
         } else {
-          const o = getOutcome({ ...answers, [qIdx]: oi });
+          var newAnswers = Object.assign({}, answers);
+          if (oi >= 0) {
+            newAnswers[qIdx] = oi;
+          }
+          var o = getOutcome(newAnswers);
           setOutcome(o);
           setStage('result');
-          fetch(`${API}/api/quiz/${quiz.slug}/event`, {
+          fetch(API + '/api/quiz/' + quiz.slug + '/event', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ event_type: 'complete', session_id: sessionIdRef.current, metadata: { outcome_id: o?.id } }),
-          }).catch(() => {});
+          }).catch(function() {});
           if (window.parent !== window) {
             window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
           }
@@ -305,11 +335,32 @@ export default function EmbedQuizClient({
           line-height: 1.55;
         }
         .sq-card {
+          position: relative;
           background: ${brandSurface};
           border: 1px solid ${brandBorder};
           border-radius: 18px;
           padding: 26px 22px 26px;
           box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+        }
+        .sq-timer {
+          position: absolute;
+          top: 22px;
+          right: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 56px;
+          height: 56px;
+          background: ${brandPrimary}14;
+          border-radius: 50%;
+          font-size: 18px;
+          font-weight: 700;
+          color: ${brandPrimary};
+          font-family: 'Inter', monospace;
+        }
+        .sq-timer.warning {
+          background: #ff6b5b26;
+          color: #ff6b5b;
         }
         .sq-prog {
           display: flex;
@@ -789,6 +840,9 @@ export default function EmbedQuizClient({
               </div>
 
               <div className="sq-card">
+                {timeRemaining !== null && (
+                  <div className={'sq-timer' + (timeRemaining < 5 ? ' warning' : '')} aria-label={'Time remaining: ' + timeRemaining + ' seconds'}>{timeRemaining}s</div>
+                )}
                 <div className="sq-prog">
                   <span>Question {qIdx + 1} of {totalQs}</span>
                   <span>{progress}%</span>
