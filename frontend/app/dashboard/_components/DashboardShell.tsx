@@ -181,7 +181,7 @@ function isEditorRoute(pathname: string): boolean {
     '/dashboard/quizzes', '/dashboard/leads', '/dashboard/analytics',
     '/dashboard/integrations', '/dashboard/billing', '/dashboard/settings',
     '/dashboard/team', '/dashboard/emails', '/dashboard/segmentation',
-    '/dashboard/automations', '/dashboard/commerce',
+    '/dashboard/automations', '/dashboard/commerce', '/dashboard/templates',
     '/dashboard/brand-kit', '/dashboard/referrals', '/dashboard/embed',
     '/dashboard/admin', '/dashboard/trash',
   ];
@@ -217,6 +217,7 @@ var NAV_SECTIONS: NavSection[] = [
     label: 'Quizzes',
     items: [
       { href: '/dashboard/quizzes', label: 'All quizzes', icon: icons.quizzes, match: isQuizzesRoute },
+      { href: '/dashboard/templates', label: 'Templates', icon: icons.templates },
       { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
     ],
   },
