@@ -49,7 +49,7 @@ function photographyStyleBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'What moment matters most to you on your big day?',
       subtitle: 'This helps us understand your photography priorities.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -62,7 +62,7 @@ function photographyStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which editing style are you drawn to?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Light and airy', score: 4, imageUrl: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Bold and dramatic', score: 3, imageUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80&fit=crop' },
@@ -73,7 +73,7 @@ function photographyStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How would you describe the vibe of your event?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Intimate and romantic', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Grand and elegant', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=400&q=80&fit=crop' },
@@ -84,7 +84,7 @@ function photographyStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your photography budget?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Under $2,000', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&q=80&fit=crop' },
         { id: uid(), text: '$2,000 to $4,000', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=400&q=80&fit=crop' },
@@ -95,7 +95,7 @@ function photographyStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How important is having a second photographer?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Essential — I want every angle covered', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Nice to have but not required', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=400&q=80&fit=crop' },
@@ -105,7 +105,7 @@ function photographyStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'When is your event?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Within 3 months', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=400&q=80&fit=crop' },
         { id: uid(), text: '3 to 6 months from now', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=400&q=80&fit=crop' },
@@ -173,7 +173,7 @@ function restaurantMenuBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Any dietary preferences we should know about?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'multiple',
+      answerLayout: 'grid', questionType: 'multiple',
       options: [
         { id: uid(), text: 'No restrictions — I eat everything', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Vegetarian', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80&fit=crop' },
@@ -185,7 +185,7 @@ function restaurantMenuBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Pick the ingredient that excites you most right now.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Fresh seafood', score: 4, imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Grilled meats', score: 3, imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80&fit=crop' },
@@ -196,7 +196,7 @@ function restaurantMenuBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Are you dining solo, as a couple, or with a group?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Just me', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=400&q=80&fit=crop' },
         { id: uid(), text: 'A date night for two', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&q=80&fit=crop' },
@@ -207,7 +207,7 @@ function restaurantMenuBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How adventurous are you feeling tonight?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Keep it classic — I know what I like', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Open to something new', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80&fit=crop' },
@@ -261,7 +261,7 @@ function fitnessGoalBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'What is your primary fitness goal right now?',
       subtitle: 'Be honest — there are no wrong answers here.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'fullBackground',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -274,7 +274,7 @@ function fitnessGoalBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How many days per week can you realistically work out?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: '1 to 2 days', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80&fit=crop' },
         { id: uid(), text: '3 to 4 days', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1549576490-b0b4831ef60a?w=400&q=80&fit=crop' },
@@ -296,7 +296,7 @@ function fitnessGoalBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which workout environment do you prefer?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'At home with minimal equipment', score: 1, imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80&fit=crop' },
         { id: uid(), text: 'In a gym with full equipment', score: 2, imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80&fit=crop' },
@@ -307,7 +307,7 @@ function fitnessGoalBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What has held you back from reaching your goals before?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Lack of time or consistency', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Not knowing what to do', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80&fit=crop' },
@@ -362,7 +362,7 @@ function productFinderBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'Who are you shopping for today?',
       subtitle: 'We will personalize your recommendations based on this.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -375,7 +375,7 @@ function productFinderBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which style resonates with you?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Minimal and clean', score: 4, imageUrl: 'https://images.unsplash.com/photo-1605513524042-426bace35fc9?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Warm and natural', score: 3, imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80&fit=crop' },
@@ -386,7 +386,7 @@ function productFinderBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your budget range?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Under $50', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&q=80&fit=crop' },
         { id: uid(), text: '$50 to $100', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&q=80&fit=crop' },
@@ -397,7 +397,7 @@ function productFinderBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What matters most when choosing a product?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Quality and craftsmanship', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Unique and one-of-a-kind design', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80&fit=crop' },
@@ -408,7 +408,7 @@ function productFinderBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How soon do you need this?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'As soon as possible', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Within a week or two', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80&fit=crop' },
@@ -462,7 +462,7 @@ function weddingStyleBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'Close your eyes and picture your dream wedding. What do you see?',
       subtitle: 'Go with your gut — there are no wrong answers.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'fullBackground',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1519741196428-6a2175fa2557?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -475,7 +475,7 @@ function weddingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What color palette speaks to your soul?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Soft blush and sage greens', score: 4, imageUrl: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Bold jewel tones — emerald, burgundy, gold', score: 3, imageUrl: 'https://images.unsplash.com/photo-1550005809-91ad75fb315f?w=400&q=80&fit=crop' },
@@ -486,7 +486,7 @@ function weddingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How many guests are you expecting?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Under 30 — intimate', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80&fit=crop' },
         { id: uid(), text: '30 to 75', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&q=80&fit=crop' },
@@ -497,7 +497,7 @@ function weddingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which detail matters most to you?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Stunning florals and tablescapes', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Incredible food and drinks', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1563808599481-34a342e44508?w=400&q=80&fit=crop' },
@@ -508,7 +508,7 @@ function weddingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'When is the big day?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Within 6 months', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=400&q=80&fit=crop' },
         { id: uid(), text: '6 to 12 months', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&q=80&fit=crop' },
@@ -576,7 +576,7 @@ function coachingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How long have you been in business?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'I am just starting out', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=80&fit=crop' },
         { id: uid(), text: '1 to 2 years', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&q=80&fit=crop' },
@@ -587,7 +587,7 @@ function coachingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What does your current revenue look like?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Pre-revenue — still building', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Under $50K per year', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80&fit=crop' },
@@ -598,7 +598,7 @@ function coachingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How do you learn best?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'One-on-one coaching with personalized feedback', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Group programs with peer accountability', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&q=80&fit=crop' },
@@ -609,7 +609,7 @@ function coachingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What would a win look like for you in the next 90 days?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Filling my client roster consistently', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Launching a group program or course', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80&fit=crop' },
@@ -664,7 +664,7 @@ function homeStyleBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'Which room feels most like home to you?',
       subtitle: 'Where you spend the most time says a lot about your style.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -677,7 +677,7 @@ function homeStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Pick the material that draws you in.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Natural wood and rattan', score: 4, imageUrl: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Marble and brass', score: 3, imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80&fit=crop' },
@@ -688,7 +688,7 @@ function homeStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What best describes your ideal space?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Calm, airy, and minimal', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Warm, layered, and collected', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80&fit=crop' },
@@ -699,7 +699,7 @@ function homeStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your design budget for this project?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Under $5,000', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400&q=80&fit=crop' },
         { id: uid(), text: '$5,000 to $15,000', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1615874959474-d609969a20ed?w=400&q=80&fit=crop' },
@@ -710,7 +710,7 @@ function homeStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which room needs the most attention?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Living room', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Kitchen', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=400&q=80&fit=crop' },
@@ -778,7 +778,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your number one skin concern right now?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Breakouts and clogged pores', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Fine lines and loss of firmness', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&q=80&fit=crop' },
@@ -790,7 +790,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How would you describe your current skincare routine?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'What routine? I just use water', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Cleanser and moisturizer', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80&fit=crop' },
@@ -801,7 +801,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How much time are you willing to spend on skincare each day?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: '2 minutes — keep it simple', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1549576490-b0b4831ef60a?w=400&q=80&fit=crop' },
         { id: uid(), text: '5 to 10 minutes', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80&fit=crop' },
@@ -812,7 +812,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What ingredients do you prefer?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Natural and clean beauty only', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Science-backed actives like retinol and acids', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&q=80&fit=crop' },
@@ -867,7 +867,7 @@ function creativeArchetypeBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'When inspiration strikes, where does it usually find you?',
       subtitle: 'Think about your most recent creative breakthrough.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'fullBackground',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -880,7 +880,7 @@ function creativeArchetypeBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How do you feel about selling your work?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'I love it — it validates my art', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&q=80&fit=crop' },
         { id: uid(), text: 'I am learning to get comfortable with it', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&q=80&fit=crop' },
@@ -891,7 +891,7 @@ function creativeArchetypeBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What does success look like for your creative business?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Full-time income from my art', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Gallery shows and recognition', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=400&q=80&fit=crop' },
@@ -902,7 +902,7 @@ function creativeArchetypeBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which best describes your creative process?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Planned and intentional', score: 1, imageUrl: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Intuitive and flowing', score: 3, imageUrl: 'https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=400&q=80&fit=crop' },
@@ -913,7 +913,7 @@ function creativeArchetypeBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your biggest creative struggle?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Consistency — I create in bursts', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Visibility — no one sees my work', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80&fit=crop' },
@@ -981,7 +981,7 @@ function podcastPersonalityBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How often do you publish new content?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Multiple times per week', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1516156008625-3a9d6067fab5?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Once a week consistently', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&q=80&fit=crop' },
@@ -992,7 +992,7 @@ function podcastPersonalityBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your primary goal for your content?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Growing my audience and email list', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Selling my products or services', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=400&q=80&fit=crop' },
@@ -1003,7 +1003,7 @@ function podcastPersonalityBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How do you feel about showing your face on camera?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Love it — I am a natural on camera', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Comfortable enough — it gets easier', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=400&q=80&fit=crop' },
@@ -1014,7 +1014,7 @@ function podcastPersonalityBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your biggest content challenge?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Coming up with ideas consistently', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80&fit=crop' },
         { id: uid(), text: 'The technical side — editing, production', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1524758870432-af57e54afa26?w=400&q=80&fit=crop' },
@@ -1069,7 +1069,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'What is driving your home search right now?',
       subtitle: 'Understanding your motivation helps us find the right match.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -1082,7 +1082,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which neighborhood vibe suits you best?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Walkable urban with restaurants and shops', score: 4, imageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Quiet suburban with good schools', score: 3, imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80&fit=crop' },
@@ -1093,7 +1093,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your timeline for buying?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Actively looking — ready to move fast', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Within 3 to 6 months', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1449844908441-8829872d2607?w=400&q=80&fit=crop' },
@@ -1104,7 +1104,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your approximate budget?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Under $300K', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&q=80&fit=crop' },
         { id: uid(), text: '$300K to $500K', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80&fit=crop' },
@@ -1115,7 +1115,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What feature is a non-negotiable for you?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'A big backyard or outdoor space', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80&fit=crop' },
         { id: uid(), text: 'An updated kitchen', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=400&q=80&fit=crop' },
@@ -1171,7 +1171,7 @@ function travelStyleBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'What does your ideal vacation look like?',
       subtitle: 'Think about the trip you would book right now if money were no object.',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'fullBackground',
+      answerLayout: 'grid',
       mediaUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&q=80&fit=crop',
       mediaType: 'image',
       options: [
@@ -1184,7 +1184,7 @@ function travelStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Who are you traveling with?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Solo — just me', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80&fit=crop' },
         { id: uid(), text: 'With my partner', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&q=80&fit=crop' },
@@ -1195,7 +1195,7 @@ function travelStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your travel budget per person?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Under $1,000', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=400&q=80&fit=crop' },
         { id: uid(), text: '$1,000 to $3,000', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=400&q=80&fit=crop' },
@@ -1206,7 +1206,7 @@ function travelStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How do you feel about planning?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'I want every detail handled for me', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=400&q=80&fit=crop' },
         { id: uid(), text: 'A rough itinerary with room to explore', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=400&q=80&fit=crop' },
@@ -1217,7 +1217,7 @@ function travelStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What experience do you value most?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Local food and dining', score: 1, imageUrl: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Culture, history, and museums', score: 2, imageUrl: 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=400&q=80&fit=crop' },
@@ -1285,7 +1285,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How do you prefer to make an impact?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Donating — my money can do the work', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Volunteering my time and skills', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80&fit=crop' },
@@ -1296,7 +1296,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How much time can you give each month?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'A few minutes online', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80&fit=crop' },
         { id: uid(), text: '1 to 2 hours', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&fit=crop' },
@@ -1307,7 +1307,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What would make you feel most connected to the cause?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Seeing exactly where my donation goes', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Meeting the people I am helping', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&q=80&fit=crop' },
@@ -1318,7 +1318,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Have you supported a nonprofit before?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Yes — I am an active supporter', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Occasionally — when something moves me', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&q=80&fit=crop' },
@@ -1373,7 +1373,7 @@ function videoFitnessChallengeBlocks(): QuizBlock[] {
       id: uid(), type: 'question', text: 'Watch this warm-up clip — which style gets you most pumped?',
       subtitle: 'Pick the energy level that matches how you like to start a workout.',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       mediaUrl: 'https://videos.pexels.com/video-files/4057411/4057411-sd_640_360_25fps.mp4',
       mediaType: 'video',
       options: [
@@ -1413,7 +1413,7 @@ function videoFitnessChallengeBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Watch this recovery routine — how important is stretching and cooldown to you?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       mediaUrl: 'https://videos.pexels.com/video-files/4536236/4536236-sd_640_360_25fps.mp4',
       mediaType: 'video',
       options: [
@@ -1426,7 +1426,7 @@ function videoFitnessChallengeBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How many days per week can you commit to working out?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: '1 to 2 days', score: 1 , imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80&fit=crop' },
         { id: uid(), text: '3 to 4 days', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80&fit=crop' },
@@ -1494,7 +1494,7 @@ function videoCookingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Check out this plating technique — what matters most when you cook?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       mediaUrl: 'https://videos.pexels.com/video-files/3298572/3298572-sd_640_360_30fps.mp4',
       mediaType: 'video',
       options: [
@@ -1507,7 +1507,7 @@ function videoCookingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Which cuisine excites you the most?',
       questionStyle: 'imageChoice', questionType: 'single',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Italian — pasta, pizza, risotto', score: 1, imageUrl: 'https://images.unsplash.com/photo-1485637701894-09ad422f6de6?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Asian — stir-fry, sushi, curry', score: 3, imageUrl: 'https://images.unsplash.com/photo-1707127784732-254c78d1f953?w=400&q=80&fit=crop' },
@@ -1518,7 +1518,7 @@ function videoCookingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Watch this baking video — are you a baker or a cook?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       mediaUrl: 'https://videos.pexels.com/video-files/4253234/4253234-sd_640_360_25fps.mp4',
       mediaType: 'video',
       options: [
@@ -1531,7 +1531,7 @@ function videoCookingStyleBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How do you prefer to learn new recipes?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'Step-by-step video tutorials', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Written recipes with photos', score: 2 , imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&fit=crop' },
@@ -1601,7 +1601,7 @@ function videoBrandPersonalityBlocks(): QuizBlock[] {
       questionStyle: 'imageChoice', questionType: 'single',
       mediaUrl: 'https://videos.pexels.com/video-files/4065924/4065924-sd_640_360_25fps.mp4',
       mediaType: 'video',
-      answerLayout: 'imageThumbnails',
+      answerLayout: 'grid',
       options: [
         { id: uid(), text: 'Creative studio with color everywhere', score: 4, imageUrl: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&q=80&fit=crop' },
         { id: uid(), text: 'Minimalist desk with curated details', score: 1, imageUrl: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=400&q=80&fit=crop' },
@@ -1612,7 +1612,7 @@ function videoBrandPersonalityBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'How would your best client describe working with you?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       mediaUrl: 'https://videos.pexels.com/video-files/4063585/4063585-sd_640_360_25fps.mp4',
       mediaType: 'video',
       options: [
@@ -1625,7 +1625,7 @@ function videoBrandPersonalityBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'Watch this content creation clip — what type of content do you create most?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       mediaUrl: 'https://videos.pexels.com/video-files/5077422/5077422-sd_640_360_25fps.mp4',
       mediaType: 'video',
       options: [
@@ -1638,7 +1638,7 @@ function videoBrandPersonalityBlocks(): QuizBlock[] {
     {
       id: uid(), type: 'question', text: 'What is your superpower as a coach or consultant?',
       questionStyle: 'imageChoice',
-      answerLayout: 'imageThumbnails', questionType: 'single',
+      answerLayout: 'grid', questionType: 'single',
       options: [
         { id: uid(), text: 'I see the big picture others miss', score: 4 , imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&q=80&fit=crop' },
         { id: uid(), text: 'I create deep connection and trust', score: 3 , imageUrl: 'https://images.unsplash.com/photo-1524758870432-af57e54afa26?w=400&q=80&fit=crop' },
