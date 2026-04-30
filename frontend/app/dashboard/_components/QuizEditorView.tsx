@@ -21,6 +21,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 import { PublishModal } from "./Modals";
 import { QuizBlockEditor, QuizSettings } from './QuizBlockEditor';
 import { QuizBlock, legacyToBlocks, blocksToLegacy } from '@/lib/quiz/blocks';
+import { findTemplateData } from '@/lib/quiz/templates';
 
 interface DbQuiz {
   id: string;
@@ -149,9 +150,12 @@ export interface QuizEditorViewProps {
   /** Specific quiz id to load. If omitted, the most recently updated quiz
    *  belonging to the user is loaded. */
   quizId?: string;
+  /** Template catalog id. When set, creates a NEW quiz from this template
+   *  and opens it in the editor. */
+  templateId?: string;
 }
 
-export function QuizEditorView({ quizId }: QuizEditorViewProps) {
+export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
   const { getToken } = useAuth();
 
   // Wire Clerk token into the shared api client BEFORE any request fires.
@@ -231,6 +235,35 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
       setState('loading');
       setErrorMsg('');
       try {
+        // --- Template mode: create a new quiz from the template catalog ---
+        if (templateId) {
+          var tpl = findTemplateData(templateId);
+          if (!tpl) {
+            setErrorMsg('Template "' + templateId + '" not found in catalog.');
+            setState('error');
+            return;
+          }
+          var tplBlocks = tpl.blocks();
+          var legacy = blocksToLegacy(tplBlocks);
+          // Create a new quiz via the API with template content
+          var created: any = await api.createQuiz({
+            title: tpl.name,
+            description: tpl.description,
+            questions: legacy.questions,
+            outcomes: legacy.outcomes,
+            settings: {
+              editor_blocks: tplBlocks,
+              show_progress_bar: true,
+              transition_type: 'slide',
+            },
+          });
+          if (cancelled) return;
+          setQuiz(created);
+          setResolvedId(created.id);
+          setState('ready');
+          return;
+        }
+
         if (quizId) {
           const q: DbQuiz = await api.getQuiz(quizId);
           if (cancelled) return;
@@ -266,7 +299,7 @@ export function QuizEditorView({ quizId }: QuizEditorViewProps) {
     }
     load();
     return () => { cancelled = true; };
-  }, [quizId]);
+  }, [quizId, templateId]);
 
   // Fetch user plan for feature gating (branding toggle, etc.)
   useEffect(() => {

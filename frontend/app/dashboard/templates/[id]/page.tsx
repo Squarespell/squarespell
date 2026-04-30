@@ -18,9 +18,8 @@ import {
   getTemplateQuestionCount,
 } from '../../../../lib/quiz/templates';
 import type { QuizBlock } from '../../../../lib/quiz/blocks';
-import { DASHBOARD_COLORS } from '../../_components/dashboardColors';
+import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 
-var C = DASHBOARD_COLORS;
 var ACCENT = C.ACCENT || '#0F7377';
 var ACCENT_LIGHT = C.ACCENT_LIGHT || '#E8F5F5';
 var PAPER = '#F7F7F5';
@@ -120,15 +119,18 @@ export default function DashboardTemplateDetailPage() {
 
   if (!template) {
     return (
+      <DashboardShell title="Template not found">
       <div style={{ textAlign: 'center', padding: '80px 20px' }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: TEXT }}>Template not found</h1>
         <p style={{ fontSize: 14, color: MUTED, margin: '8px 0 20px' }}>This template does not exist or has been removed.</p>
         <Link href="/dashboard/templates" style={{ color: ACCENT, fontWeight: 600, textDecoration: 'none' }}>Browse all templates</Link>
       </div>
+      </DashboardShell>
     );
   }
 
   return (
+    <DashboardShell title={template.name}>
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: MUTED }}>
@@ -456,5 +458,6 @@ export default function DashboardTemplateDetailPage() {
         </div>
       </div>
     </div>
+    </DashboardShell>
   );
 }

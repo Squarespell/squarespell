@@ -17,9 +17,7 @@ import {
   getTemplateThumbnail,
   getTemplateQuestionCount,
 } from '../../../lib/quiz/templates';
-import { DASHBOARD_COLORS } from '../_components/dashboardColors';
-
-var C = DASHBOARD_COLORS;
+import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 
 var ACCENT = C.ACCENT || '#0F7377';
 var ACCENT_LIGHT = C.ACCENT_LIGHT || '#E8F5F5';
@@ -86,6 +84,7 @@ export default function DashboardTemplatesPage() {
   }, []);
 
   return (
+    <DashboardShell title="Templates">
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* Page header */}
@@ -271,5 +270,6 @@ export default function DashboardTemplatesPage() {
         </div>
       )}
     </div>
+    </DashboardShell>
   );
 }
