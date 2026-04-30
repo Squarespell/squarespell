@@ -19,8 +19,8 @@ type GateFeature = keyof PlanFeatures | 'quizLimit' | 'leadLimit' | 'emailLimit'
 
 export function useFeatureGate() {
   var { token } = useDashboardAuth();
-  var [plan, setPlan] = useState<string>('free');
-  var [limits, setLimits] = useState<{ quizzes: number; leads: number; emails: number }>({ quizzes: 1, leads: 50, emails: 50 });
+  var [plan, setPlan] = useState<string>('trial');
+  var [limits, setLimits] = useState<{ quizzes: number; leads: number; emails: number }>({ quizzes: Infinity, leads: 2000, emails: 2000 });
   var [quizCount, setQuizCount] = useState(0);
   var [gateOpen, setGateOpen] = useState(false);
   var [gateFeature, setGateFeature] = useState<GateFeature>('quizLimit');

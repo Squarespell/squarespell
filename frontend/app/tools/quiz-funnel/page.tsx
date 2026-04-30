@@ -51,7 +51,7 @@ var PLANS: Plan[] = [
       'Remove branding',
       'Standard analytics',
     ],
-    cta: 'Start free',
+    cta: 'Start 14-day trial',
     href: TRY_URL,
   },
   {
@@ -68,7 +68,7 @@ var PLANS: Plan[] = [
       'Email sequences',
       'Advanced analytics',
     ],
-    cta: 'Start free',
+    cta: 'Start 14-day trial',
     href: TRY_URL,
     featured: true,
   },
@@ -85,7 +85,7 @@ var PLANS: Plan[] = [
       'Priority support',
       'API access',
     ],
-    cta: 'Start free',
+    cta: 'Start 14-day trial',
     href: TRY_URL,
   },
 ];
@@ -158,7 +158,7 @@ export default function LandingPage() {
           </ul>
           <div className="rt">
             <Link href={SIGN_IN_URL} className="si">Log in</Link>
-            <Link href={TRY_URL} className="btn sm">Start free <span className="ar">&rarr;</span></Link>
+            <Link href={TRY_URL} className="btn sm">Start 14-day trial <span className="ar">&rarr;</span></Link>
           </div>
         </div>
       </nav>
@@ -852,7 +852,7 @@ export default function LandingPage() {
           <div className="sh center">
             <span className="eb"><span className="num">11</span> Pricing</span>
             <h2>Simple. <em>Honest.</em></h2>
-            <p>14-day Pro trial on every plan. Cancel anytime.</p>
+            <p>14-day Pro trial. No credit card. Cancel anytime.</p>
           </div>
 
           <div className="billing-toggle">
@@ -917,9 +917,9 @@ export default function LandingPage() {
         <div className="wrap">
           <div className="cta-inner">
             <h2>Your next lead is<br /><em>one quiz away.</em></h2>
-            <p>Start free in under sixty seconds. No credit card. No commitment.</p>
+            <p>Try everything free for 14 days. No credit card. No commitment.</p>
             <div className="cta-btns">
-              <Link href={TRY_URL} className="btn">Start free <span className="ar">&rarr;</span></Link>
+              <Link href={TRY_URL} className="btn">Start 14-day trial <span className="ar">&rarr;</span></Link>
               <Link href="#pricing" className="btn ghost">Talk to us</Link>
             </div>
             <div className="cta-meta">14-day Pro trial &middot; No card required</div>

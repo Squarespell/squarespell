@@ -107,7 +107,7 @@ const MATRIX = [
 
 const FAQS = [
   { q: 'Do I need a Squarespace subscription?', a: 'Yes, Squarespell works with any active Squarespace plan. You connect your site in one click through your dashboard. No code required.' },
-  { q: 'What happens when my 7-day trial ends?', a: 'You choose a plan to continue. Your quizzes stay live so visitors can still see them, but new lead capture pauses until you upgrade. You keep all leads collected during your trial.' },
+  { q: 'What happens when my 14-day trial ends?', a: 'You choose a paid plan to continue. Your quizzes stay visible to site visitors, but lead capture pauses until you subscribe. All leads collected during your trial are yours to keep.' },
   { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no cancellation fees. Cancel from your account settings in under 10 seconds. Your access continues until the end of your current billing period.' },
   { q: 'What exactly counts as a response?', a: 'A response is counted when someone completes your quiz. Partial completions and page views never count against your monthly limit.' },
   { q: 'What if I need more emails but not a higher plan?', a: 'You can purchase email add-on packs on any paid plan. Add 1,000 emails for $5/mo, 5,000 for $15/mo, or 10,000 for $29/mo. No need to upgrade your whole plan just for more email capacity.' },
@@ -294,9 +294,9 @@ function PricingInner() {
 
           {/* HERO */}
           <div className="hero">
-            <div className="badge">Built for Squarespace budgets</div>
+            <div className="badge">14-day Pro trial &middot; no credit card</div>
             <h1>Plans that fit your<br /><em>Squarespace budget.</em></h1>
-            <p>Start free. Upgrade from $9/mo. Add email packs as you grow.</p>
+            <p>Try everything free for 14 days. Then pick a plan from $9/mo.</p>
             <div className="trust">
               {['2,400+ Squarespace owners', 'No credit card required', 'Cancel anytime'].map(t => (
                 <span key={t}>
@@ -318,19 +318,16 @@ function PricingInner() {
             {billing === 'yearly' && <span className="saving">You save up to $120/year</span>}
           </div>
 
-          {/* FREE TIER */}
+          {/* TRIAL BANNER */}
           <div style={{ maxWidth: 1400, margin: '0 auto 28px', padding: '0 48px' }}>
-            <div style={{ background: '#FFFFFF', border: '1px solid #E4E3E0', borderRadius: 16, padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div style={{ background: 'rgba(13,115,119,0.06)', border: '1px solid rgba(13,115,119,0.20)', borderRadius: 16, padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Free</div>
-                <div style={{ fontSize: 15, color: 'rgba(26,26,26,0.60)', lineHeight: 1.55 }}>1 quiz, 50 responses/mo, 50 emails/mo - get started with no credit card</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#0D7377', marginBottom: 4 }}>14-day Pro trial</div>
+                <div style={{ fontSize: 15, color: 'rgba(26,26,26,0.60)', lineHeight: 1.55 }}>Full Pro features for 14 days. Unlimited quizzes, A/B testing, integrations, advanced analytics. No credit card required.</div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <span style={{ fontSize: 32, fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.04em' }}>$0</span>
-                <button className="cta s" style={{ width: 'auto', margin: 0, padding: '12px 28px' }} onClick={() => { if (!isSignedIn) router.push('/sign-up'); else router.push('/dashboard'); }}>
-                  {isSignedIn ? 'Go to dashboard' : 'Sign up free'}
-                </button>
-              </div>
+              <button className="cta p" style={{ width: 'auto', margin: 0, padding: '12px 28px' }} onClick={() => { if (!isSignedIn) router.push('/sign-up'); else router.push('/dashboard'); }}>
+                {isSignedIn ? 'Go to dashboard' : 'Start free trial'}
+              </button>
             </div>
           </div>
 
@@ -423,8 +420,8 @@ function PricingInner() {
           <div className="ctabox">
             <h2>Start capturing leads today.</h2>
             <div className="ctabox-right">
-              <button className="ctabtn" onClick={() => handleUpgrade('pro')}>Start my free trial</button>
-              <p className="ctanote">No credit card required · Cancel anytime.</p>
+              <button className="ctabtn" onClick={() => { if (!isSignedIn) router.push('/sign-up'); else router.push('/dashboard'); }}>Start my 14-day trial</button>
+              <p className="ctanote">Full Pro features for 14 days · No credit card required · Cancel anytime.</p>
             </div>
           </div>
 

@@ -25,7 +25,7 @@ import {
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type UserPlan = {
-  plan: 'free' | 'trial' | 'starter' | 'pro' | 'business';
+  plan: 'trial' | 'starter' | 'pro' | 'business';
   quiz_count: number;
   limits: { quizzes: number; leads: number; emails: number };
   trial_ends_at: string | null;
@@ -52,14 +52,6 @@ const PLAN_CATALOG: Array<{
   tagline: string;
   features: string[];
 }> = [
-  {
-    id: 'free',
-    name: 'Free',
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    tagline: 'Get started with Squarespell',
-    features: ['1 quiz', '50 responses / month', '50 emails / month', 'Basic analytics', 'Squarespell branding'],
-  },
   {
     id: 'starter',
     name: 'Starter',
@@ -141,10 +133,10 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 }
 
 function CurrentPlanBadge({ plan }: { plan: UserPlan }) {
-  var billingCycleText = plan.plan === 'free' || plan.plan === 'trial' ? 'No billing' : 'Monthly billing';
+  var billingCycleText = plan.plan === 'trial' ? 'No billing yet' : 'Monthly billing';
   if (plan.plan === 'trial' && plan.trial_ends_at) {
     var daysLeft = Math.max(0, Math.ceil((new Date(plan.trial_ends_at).getTime() - Date.now()) / 86400000));
-    billingCycleText = daysLeft + ' days left';
+    billingCycleText = daysLeft + ' days left in trial';
   }
 
   return (
@@ -164,8 +156,8 @@ function CurrentPlanBadge({ plan }: { plan: UserPlan }) {
             <span style={{ fontSize: 28, fontWeight: 800, color: C.ACCENT, textTransform: 'capitalize' }}>
               {plan.plan}
             </span>
-            <Pill variant={plan.plan === 'trial' || plan.plan === 'free' ? 'accent' : 'live'}>
-              {plan.plan === 'trial' || plan.plan === 'free' ? 'Trial' : 'Active'}
+            <Pill variant={plan.plan === 'trial' ? 'accent' : 'live'}>
+              {plan.plan === 'trial' ? '14-day Pro trial' : 'Active'}
             </Pill>
           </div>
           <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginTop: 8 }}>
@@ -310,7 +302,7 @@ export default function BillingPage() {
     return Math.max(0, Math.ceil(diff / 86400000));
   }, [plan]);
 
-  var isTrial = plan?.plan === 'trial' || plan?.plan === 'free';
+  var isTrial = plan?.plan === 'trial';
   var isPaid = plan && !isTrial;
   var [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
@@ -633,7 +625,7 @@ export default function BillingPage() {
                       );
                     })}
                   </ul>
-                  {!isCurrentPlan && p.id !== 'free' && (
+                  {!isCurrentPlan && (
                     <GhostButton onClick={function() { handlePlanAction(p.id); }}>
                       {checkoutLoading === p.id ? 'Loading...' : (
                         isPaid ? (

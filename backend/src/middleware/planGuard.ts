@@ -8,11 +8,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const TRIAL_DAYS = 7;
+const TRIAL_DAYS = 14;
 
 export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number; emails: number; removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string; branchingLogic: boolean; integrations: boolean; emailSequences: boolean; whiteLabel: boolean; customDomain: boolean; teamSeats: boolean }> = {
-  free:     { quizzes: 1,        leads: 50,       emails: 50,       removeBranding: false, abTesting: false, zapier: false, analytics: 'basic',    branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
-  trial:    { quizzes: 3,        leads: 500,      emails: 500,      removeBranding: false, abTesting: false, zapier: false, analytics: 'basic',    branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
+  free:     { quizzes: 0,        leads: 0,        emails: 0,        removeBranding: false, abTesting: false, zapier: false, analytics: 'basic',    branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
+  trial:    { quizzes: Infinity, leads: 2000,     emails: 2000,     removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: false, customDomain: false, teamSeats: false },
   starter:  { quizzes: 3,        leads: 500,      emails: 500,      removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
   pro:      { quizzes: Infinity, leads: 2000,     emails: 2000,     removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: false, customDomain: false, teamSeats: false },
   business: { quizzes: Infinity, leads: Infinity, emails: Infinity, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: true,  customDomain: true,  teamSeats: true },
@@ -62,7 +62,7 @@ export async function guardQuizCreation(
       if (!isTrialActive(user.created_at)) {
         return res.status(403).json({
           error: 'trial_expired',
-          message: 'Your 7-day free trial has ended. Please choose a plan to continue.',
+          message: 'Your 14-day trial has ended. Choose a plan to keep your quizzes running.',
           upgrade_url: `${process.env.FRONTEND_URL}/pricing`,
         });
       }
