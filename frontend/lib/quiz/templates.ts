@@ -1312,6 +1312,317 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
 }
 
 /* ------------------------------------------------------------------ */
+/*  14. VIDEO FITNESS CHALLENGE — Fitness (Video)                       */
+/* ------------------------------------------------------------------ */
+
+function videoFitnessChallengeBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'Watch this warm-up clip — which style gets you most pumped?',
+      subtitle: 'Pick the energy level that matches how you like to start a workout.',
+      questionStyle: 'buttons', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/4057411/4057411-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      options: [
+        { id: uid(), text: 'High-energy, jump-right-in', score: 4 },
+        { id: uid(), text: 'Gradual build with dynamic stretches', score: 3 },
+        { id: uid(), text: 'Slow and mindful — yoga-style', score: 2 },
+        { id: uid(), text: 'I usually skip warm-ups (be honest!)', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How do you feel about this HIIT sequence?',
+      subtitle: 'Watch the video and pick your honest reaction.',
+      questionStyle: 'cards', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/4057519/4057519-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      answerLayout: 'grid',
+      options: [
+        { id: uid(), text: 'Love it — bring on the intensity!', score: 4 },
+        { id: uid(), text: 'Looks tough but I would try it', score: 3 },
+        { id: uid(), text: 'I prefer something gentler', score: 2 },
+        { id: uid(), text: 'Hard pass — not my thing', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Check out this strength training form — which muscle group is your priority?',
+      questionStyle: 'imageChoice', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/4162451/4162451-sd_640_360_30fps.mp4',
+      mediaType: 'video',
+      answerLayout: 'grid',
+      options: [
+        { id: uid(), text: 'Upper body and arms', score: 4, imageUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Core and abs', score: 3, imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Legs and glutes', score: 2, imageUrl: 'https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Full body balance', score: 1, imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80&fit=crop' },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Watch this recovery routine — how important is stretching and cooldown to you?',
+      questionStyle: 'buttons', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/4536236/4536236-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      options: [
+        { id: uid(), text: 'Critical — I never skip it', score: 4 },
+        { id: uid(), text: 'I do it when I have time', score: 3 },
+        { id: uid(), text: 'Only when I am really sore', score: 2 },
+        { id: uid(), text: 'What cooldown?', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How many days per week can you commit to working out?',
+      questionStyle: 'dropdown', questionType: 'single',
+      options: [
+        { id: uid(), text: '1 to 2 days', score: 1 },
+        { id: uid(), text: '3 to 4 days', score: 2 },
+        { id: uid(), text: '5 to 6 days', score: 3 },
+        { id: uid(), text: 'Every day', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your custom workout plan is ready!',
+      subtext: 'Enter your email to get a free 7-day program tailored to your fitness style, plus weekly workout videos.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your first name' },
+      ],
+      buttonLabel: 'Get my free plan',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Power Athlete',
+      description: 'You thrive on intensity and love pushing your limits. Your ideal program combines HIIT, heavy lifting, and explosive movements. We recommend our Power Program — 4 days of structured training with video-guided form checks and progressive overload built in.',
+      ctaText: 'Start the Power Program', ctaUrl: '/programs/power',
+      imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80&fit=crop',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'I am a Power Athlete! Take the quiz to find your fitness style.',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Balanced Mover',
+      description: 'You want a well-rounded approach that builds strength, flexibility, and endurance without burning out. Our Balanced Body program alternates between strength days, cardio, and recovery — with video walkthroughs for every exercise.',
+      ctaText: 'Try Balanced Body free', ctaUrl: '/programs/balanced',
+      imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80&fit=crop',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'I am a Balanced Mover! Find your fitness type.',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Mindful Mover',
+      description: 'You believe fitness should feel good, not punishing. Your ideal program emphasizes yoga, pilates, mobility work, and mindful movement. Our Mindful Movement series uses guided video sessions to help you build strength gently while reducing stress.',
+      ctaText: 'Explore Mindful Movement', ctaUrl: '/programs/mindful',
+      imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80&fit=crop',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'I am a Mindful Mover! What is your fitness type?',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  15. VIDEO COOKING STYLE — Food (Video)                              */
+/* ------------------------------------------------------------------ */
+
+function videoCookingStyleBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'Watch this knife skills demo — how comfortable are you in the kitchen?',
+      subtitle: 'No judgment! We are matching you to recipes that fit YOUR level.',
+      questionStyle: 'cards', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/3195394/3195394-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      answerLayout: 'grid',
+      options: [
+        { id: uid(), text: 'Pro level — I could do that blindfolded', score: 4 },
+        { id: uid(), text: 'Comfortable — I cook most nights', score: 3 },
+        { id: uid(), text: 'Learning — I follow recipes closely', score: 2 },
+        { id: uid(), text: 'Beginner — I burn toast sometimes', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Check out this plating technique — what matters most when you cook?',
+      questionStyle: 'buttons', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/3298572/3298572-sd_640_360_30fps.mp4',
+      mediaType: 'video',
+      options: [
+        { id: uid(), text: 'Speed — I need meals in 30 minutes or less', score: 1 },
+        { id: uid(), text: 'Flavor — I will spend time for incredible taste', score: 3 },
+        { id: uid(), text: 'Health — nutrition is my priority', score: 2 },
+        { id: uid(), text: 'Presentation — I eat with my eyes first', score: 4 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Which cuisine excites you the most?',
+      questionStyle: 'imageChoice', questionType: 'single',
+      answerLayout: 'imageThumbnails',
+      options: [
+        { id: uid(), text: 'Italian — pasta, pizza, risotto', score: 1, imageUrl: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Asian — stir-fry, sushi, curry', score: 3, imageUrl: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Mediterranean — fresh and light', score: 2, imageUrl: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'American — comfort food classics', score: 1, imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80&fit=crop' },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Watch this baking video — are you a baker or a cook?',
+      questionStyle: 'buttons', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/4253234/4253234-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      options: [
+        { id: uid(), text: 'Definitely a cook — savory all the way', score: 2 },
+        { id: uid(), text: 'A baker at heart — pastries and bread', score: 4 },
+        { id: uid(), text: 'Both! I love it all', score: 3 },
+        { id: uid(), text: 'Neither yet — but I want to learn', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How do you prefer to learn new recipes?',
+      questionStyle: 'cards', questionType: 'single',
+      options: [
+        { id: uid(), text: 'Step-by-step video tutorials', score: 4 },
+        { id: uid(), text: 'Written recipes with photos', score: 2 },
+        { id: uid(), text: 'Live cooking classes', score: 3 },
+        { id: uid(), text: 'Experimenting on my own', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your recipe collection is ready!',
+      subtext: 'Get a curated recipe pack matched to your cooking style, plus weekly video tutorials delivered to your inbox.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your first name' },
+      ],
+      buttonLabel: 'Send me my recipes',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Creative Chef',
+      description: 'You treat cooking as an art form. You love experimenting with flavors, techniques, and plating. Our Advanced Recipe Series features video masterclasses on sauce-making, fermentation, and restaurant-level dishes you can make at home.',
+      ctaText: 'Browse masterclasses', ctaUrl: '/classes/advanced',
+      imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80&fit=crop',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'I am a Creative Chef! What is your cooking style?',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Confident Cook',
+      description: 'You are comfortable in the kitchen and ready to expand your repertoire. Our Weekly Recipe Plan delivers 5 new recipes each week with video walkthroughs, shopping lists, and prep guides — perfect for leveling up without overwhelm.',
+      ctaText: 'Get the weekly plan', ctaUrl: '/plans/weekly',
+      imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80&fit=crop',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'I am a Confident Cook! Find your cooking personality.',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Kitchen Starter',
+      description: 'Welcome to your cooking journey! Everyone starts somewhere, and we have the perfect beginner-friendly video course for you. Learn essential techniques, basic recipes, and kitchen confidence in our 30-Day Cooking Basics series — one short video lesson per day.',
+      ctaText: 'Start the 30-day course', ctaUrl: '/courses/basics',
+      imageUrl: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=800&q=80&fit=crop',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'Starting my cooking journey! Join me.',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  16. VIDEO BRAND PERSONALITY — Coaches (Video)                       */
+/* ------------------------------------------------------------------ */
+
+function videoBrandPersonalityBlocks(): QuizBlock[] {
+  return [
+    {
+      id: uid(), type: 'question', text: 'Watch this scenario — a potential client lands on your website. What do they see first?',
+      subtitle: 'This reveals your brand personality and how you connect with prospects.',
+      questionStyle: 'cards', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/5077066/5077066-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      answerLayout: 'grid',
+      options: [
+        { id: uid(), text: 'A bold statement that demands attention', score: 4 },
+        { id: uid(), text: 'A warm welcome video introducing myself', score: 3 },
+        { id: uid(), text: 'Client testimonials and social proof', score: 2 },
+        { id: uid(), text: 'A clean, minimal design with clear CTA', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Check out this workspace setup — which environment feels most like you?',
+      questionStyle: 'imageChoice', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/4065924/4065924-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      answerLayout: 'imageThumbnails',
+      options: [
+        { id: uid(), text: 'Creative studio with color everywhere', score: 4, imageUrl: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Minimalist desk with curated details', score: 1, imageUrl: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Cozy home office with plants', score: 3, imageUrl: 'https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=400&q=80&fit=crop' },
+        { id: uid(), text: 'Coffee shop — I work everywhere', score: 2, imageUrl: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=400&q=80&fit=crop' },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'How would your best client describe working with you?',
+      questionStyle: 'buttons', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/4063585/4063585-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      options: [
+        { id: uid(), text: 'Transformative — they completely changed my perspective', score: 4 },
+        { id: uid(), text: 'Supportive — they believed in me when I did not', score: 3 },
+        { id: uid(), text: 'Strategic — they gave me a clear roadmap', score: 2 },
+        { id: uid(), text: 'Efficient — they got results fast', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'Watch this content creation clip — what type of content do you create most?',
+      questionStyle: 'cards', questionType: 'single',
+      mediaUrl: 'https://videos.pexels.com/video-files/5077422/5077422-sd_640_360_25fps.mp4',
+      mediaType: 'video',
+      options: [
+        { id: uid(), text: 'Long-form video and podcasts', score: 4 },
+        { id: uid(), text: 'Blog posts and newsletters', score: 2 },
+        { id: uid(), text: 'Social media reels and stories', score: 3 },
+        { id: uid(), text: 'Courses and downloadable guides', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'question', text: 'What is your superpower as a coach or consultant?',
+      questionStyle: 'dropdown', questionType: 'single',
+      options: [
+        { id: uid(), text: 'I see the big picture others miss', score: 4 },
+        { id: uid(), text: 'I create deep connection and trust', score: 3 },
+        { id: uid(), text: 'I simplify the complex', score: 2 },
+        { id: uid(), text: 'I hold people accountable', score: 1 },
+      ],
+    },
+    {
+      id: uid(), type: 'leadGate', headline: 'Your brand personality report is ready!',
+      subtext: 'Get your personalized brand archetype with a visual mood board, messaging guide, and content strategy — free.',
+      fields: [
+        { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
+        { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your first name' },
+      ],
+      buttonLabel: 'Reveal my brand archetype',
+      placement: 'before_results',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Visionary Leader',
+      description: 'Your brand is bold, inspiring, and future-focused. You attract clients who want transformation, not just information. Your visual identity should use strong colors, confident typography, and aspirational imagery. Lead with big ideas and back them with proof.',
+      ctaText: 'Book a brand strategy session', ctaUrl: '/work-with-me',
+      imageUrl: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&q=80&fit=crop',
+      minScore: 14, maxScore: 20, shareEnabled: true,
+      shareText: 'I am a Visionary Leader brand! Discover your brand personality.',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Trusted Guide',
+      description: 'Your brand is warm, approachable, and deeply trustworthy. Clients choose you because they feel safe and seen. Your visual identity should use soft, warm tones, friendly photography, and conversational copy. Lead with empathy and follow with expertise.',
+      ctaText: 'Explore coaching packages', ctaUrl: '/services',
+      imageUrl: 'https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=800&q=80&fit=crop',
+      minScore: 8, maxScore: 13, shareEnabled: true,
+      shareText: 'I am a Trusted Guide brand! What is yours?',
+    },
+    {
+      id: uid(), type: 'outcome', title: 'The Strategic Expert',
+      description: 'Your brand is polished, precise, and results-driven. Clients come to you for clarity and a proven system. Your visual identity should be clean and professional with structured layouts, data-backed content, and case studies. Lead with results and let the numbers speak.',
+      ctaText: 'See client case studies', ctaUrl: '/results',
+      imageUrl: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=800&q=80&fit=crop',
+      minScore: 0, maxScore: 7, shareEnabled: true,
+      shareText: 'I am a Strategic Expert brand! Take the quiz.',
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
 /*  Template catalog                                                   */
 /* ------------------------------------------------------------------ */
 
@@ -1458,6 +1769,39 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
     tags: ['nonprofit', 'charity', 'volunteer', 'donation', 'cause'],
     blocks: nonprofitEngagementBlocks,
+  },
+  {
+    id: 'video_fitness_challenge',
+    category: 'Fitness & Wellness',
+    name: 'Video Fitness Challenge Quiz',
+    description: 'Engage your audience with video-driven fitness questions. Show exercise demos, form checks, and workout clips — then match visitors to their ideal program. Video questions boost completion rates by 40%.',
+    audience: 'Personal trainers, fitness studios, yoga instructors, online coaches',
+    whyItWorks: 'Video questions show your expertise and build instant trust. Visitors see real workouts before signing up, which dramatically increases conversion to paid programs.',
+    iconPath: 'M23 7l-7 5 7 5V7zM14 5H3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2z',
+    tags: ['video', 'fitness', 'workout', 'exercise', 'training', 'challenge'],
+    blocks: videoFitnessChallengeBlocks,
+  },
+  {
+    id: 'video_cooking_style',
+    category: 'Food & Dining',
+    name: 'Video Cooking Style Quiz',
+    description: 'Use cooking clips and recipe videos to match visitors to their culinary personality. Video-based questions create an immersive experience that drives cookbook sales, class signups, and meal plan subscriptions.',
+    audience: 'Food bloggers, cooking instructors, meal kit services, recipe sites',
+    whyItWorks: 'Showing food being prepared is infinitely more engaging than static photos. Video questions keep people watching and answering — completion rates are 2x higher than image-only quizzes.',
+    iconPath: 'M23 7l-7 5 7 5V7zM14 5H3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2z',
+    tags: ['video', 'cooking', 'food', 'recipe', 'culinary', 'chef'],
+    blocks: videoCookingStyleBlocks,
+  },
+  {
+    id: 'video_brand_personality',
+    category: 'Coaches & Consultants',
+    name: 'Video Brand Personality Quiz',
+    description: 'Use short video clips to reveal your brand personality and coaching style. Each question features a video scenario that visitors react to — creating a deeply engaging, memorable experience.',
+    audience: 'Brand strategists, business coaches, marketing consultants, course creators',
+    whyItWorks: 'Video quizzes feel premium and personal. Prospects see your face, hear your voice, and connect with your brand before the first call — shortening the sales cycle dramatically.',
+    iconPath: 'M23 7l-7 5 7 5V7zM14 5H3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2z',
+    tags: ['video', 'brand', 'personality', 'coaching', 'consulting'],
+    blocks: videoBrandPersonalityBlocks,
   },
 ];
 

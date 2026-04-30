@@ -235,7 +235,10 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
       setState('loading');
       setErrorMsg('');
       try {
-        // --- Template mode: create a new quiz from the template catalog ---
+        // --- Template mode: load blocks directly from catalog ---
+        // We avoid api.createQuiz() here because it may fail if the user's
+        // plan is expired.  Instead we populate the editor with template
+        // blocks and defer quiz creation to the first auto-save.
         if (templateId) {
           var tpl = findTemplateData(templateId);
           if (!tpl) {
@@ -245,8 +248,9 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
           }
           var tplBlocks = tpl.blocks();
           var legacy = blocksToLegacy(tplBlocks);
-          // Create a new quiz via the API with template content
-          var created: any = await api.createQuiz({
+          // Build a local-only quiz object (no id yet — will be created on first save)
+          var localQuiz: DbQuiz = {
+            id: '',
             title: tpl.name,
             description: tpl.description,
             questions: legacy.questions,
@@ -256,10 +260,11 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
               show_progress_bar: true,
               transition_type: 'slide',
             },
-          });
+          };
           if (cancelled) return;
-          setQuiz(created);
-          setResolvedId(created.id);
+          setQuiz(localQuiz);
+          // resolvedId stays '' — auto-save will create the quiz
+          setResolvedId('');
           setState('ready');
           return;
         }
@@ -377,21 +382,38 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
     }, 800);
   }, [resolvedId, quiz, editorBlocks]);
 
-  // Auto-save block changes with debounce
+  // Auto-save block changes with debounce.
+  // When resolvedId is empty (template loaded locally), create the quiz
+  // first via api.createQuiz, then use api.updateQuiz for subsequent saves.
   var handleBlocksChange = useCallback(function(blocks: QuizBlock[]) {
     setEditorBlocks(blocks);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(function() {
-      if (!resolvedId) return;
       var legacy = blocksToLegacy(blocks);
-      // Save legacy format (questions, outcomes) for backward compat with
-      // quiz-taking, analytics, and publishing.  Also save the raw blocks
-      // array inside settings.editor_blocks so ALL block types and properties
-      // survive the round-trip (headings, text, images, dividers, logic,
-      // lead gate, questionStyle, etc.).
       var mergedSettings = Object.assign({}, quiz?.settings || {}, quizSettings, {
         editor_blocks: blocks,
       });
+
+      if (!resolvedId) {
+        // First save — create the quiz in the database
+        api.createQuiz({
+          title: quiz?.title || 'Untitled Quiz',
+          description: quiz?.description || '',
+          questions: legacy.questions,
+          outcomes: legacy.outcomes,
+          settings: mergedSettings,
+        }).then(function(created: any) {
+          setResolvedId(created.id);
+          setQuiz(function(prev) {
+            if (!prev) return prev;
+            return Object.assign({}, prev, { id: created.id });
+          });
+        }).catch(function(err: any) {
+          console.error('[block-editor] Create quiz failed:', err);
+        });
+        return;
+      }
+
       api.updateQuiz(resolvedId, {
         questions: legacy.questions,
         outcomes: legacy.outcomes,

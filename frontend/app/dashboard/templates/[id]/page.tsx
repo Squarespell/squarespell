@@ -312,10 +312,14 @@ export default function DashboardTemplateDetailPage() {
                 var selectedId = answers[q.id] ? answers[q.id].text : null;
                 return (
                   <div>
-                    {/* Question media */}
-                    {q.mediaUrl && currentStep === 0 && (
+                    {/* Question media — image or video */}
+                    {q.mediaUrl && (
                       <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20, height: 160 }}>
-                        <img src={q.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {q.mediaType === 'video' ? (
+                          <video src={q.mediaUrl} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <img src={q.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )}
                       </div>
                     )}
                     <div style={{ fontSize: 12, fontWeight: 600, color: ACCENT, marginBottom: 6 }}>
@@ -326,6 +330,28 @@ export default function DashboardTemplateDetailPage() {
                     {!q.subtitle && <div style={{ height: 14 }} />}
 
                     {/* Options */}
+                    {q.questionStyle === 'dropdown' ? (
+                      <select
+                        value={selectedId || ''}
+                        onChange={function(e) {
+                          var val = e.target.value;
+                          var matched = (q.options || []).find(function(o: any) { return o.text === val; });
+                          if (matched) selectAnswer(q.id, matched.text, matched.score || 0);
+                        }}
+                        style={{
+                          width: '100%', padding: '12px 16px', fontSize: 14,
+                          border: '1.5px solid #e0e0e0', borderRadius: 10, background: '#fff',
+                          color: selectedId ? '#333' : '#999', cursor: 'pointer', appearance: 'none' as const,
+                          backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23999\' stroke-width=\'2\'%3E%3Cpath d=\'M6 9l6 6 6-6\'/%3E%3C/svg%3E")',
+                          backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
+                        }}
+                      >
+                        <option value="" disabled>Select an option...</option>
+                        {(q.options || []).map(function(opt: any) {
+                          return <option key={opt.id} value={opt.text}>{opt.text}</option>;
+                        })}
+                      </select>
+                    ) : (
                     <div style={{
                       display: q.questionStyle === 'imageChoice' ? 'grid' : 'flex',
                       gridTemplateColumns: q.questionStyle === 'imageChoice' ? '1fr 1fr' : undefined,
@@ -372,6 +398,7 @@ export default function DashboardTemplateDetailPage() {
                         );
                       })}
                     </div>
+                    )}
                   </div>
                 );
               })()}
