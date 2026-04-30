@@ -368,6 +368,22 @@ function BlockCard({
                 {qb.options.length} options
               </span>
             )}
+            {qb && qb.questionStyle && qb.questionStyle !== 'buttons' && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
+                background: C.ACCENT + '12', color: C.ACCENT,
+              }}>
+                {qb.questionStyle === 'imageChoice' ? 'Images' : qb.questionStyle === 'dropdown' ? 'Dropdown' : qb.questionStyle === 'cards' ? 'Cards' : qb.questionStyle}
+              </span>
+            )}
+            {qb && (qb as any).mediaUrl && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
+                background: '#F5F3FF', color: '#7C3AED',
+              }}>
+                {(qb as any).mediaType === 'video' ? 'Video' : 'Media'}
+              </span>
+            )}
           </div>
         </div>
 
@@ -397,6 +413,25 @@ function BlockCard({
           </button>
         </div>
       </div>
+
+      {/* Question media preview strip */}
+      {qb && (qb as any).mediaUrl && (
+        <div style={{ padding: '0 20px 8px 74px' }}>
+          <div style={{ borderRadius: 8, overflow: 'hidden', height: 80, position: 'relative', background: '#f0f0f0' }}>
+            {(qb as any).mediaType === 'video' ? (
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1D2939, #344054)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginLeft: 6, fontWeight: 600 }}>Video</span>
+              </div>
+            ) : (
+              <img src={(qb as any).mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Answer options - layout-aware rendering */}
       {qb && (function() {
@@ -2354,6 +2389,8 @@ export interface QuizBlockEditorProps {
   settings?: QuizSettings;
   onSettingsChange?: (settings: QuizSettings) => void;
   userPlan?: UserPlan;
+  /** Override the back-arrow destination (default: /dashboard/quizzes) */
+  backUrl?: string;
 }
 
 /** Plan badge shown inline next to gated features */
@@ -2383,7 +2420,7 @@ function hasPlanAccess(userPlan: UserPlan | undefined, required: 'starter' | 'pr
   return userTier >= requiredTier;
 }
 
-export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange, userPlan }: QuizBlockEditorProps) {
+export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange, userPlan, backUrl }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
   var [selectedId, setSelectedId] = useState<string | null>(null);
@@ -2595,7 +2632,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
         fontFamily: C.FONT + ',system-ui,sans-serif',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <a href="/dashboard/quizzes" style={{ display: 'flex', alignItems: 'center', color: C.TEXT_MUTED, textDecoration: 'none' }}>
+          <a href={backUrl || '/dashboard/quizzes'} style={{ display: 'flex', alignItems: 'center', color: C.TEXT_MUTED, textDecoration: 'none' }}>
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
