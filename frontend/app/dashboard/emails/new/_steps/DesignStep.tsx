@@ -2,18 +2,10 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 import { Pill, GhostButton, PrimaryButton } from '../../../_components/PageShell';
-import { EMAIL_TEMPLATES as BLOCK_TEMPLATES, CATEGORY_LABELS } from '../../../../../lib/email/templates';
-import { DEFAULT_BRAND_KIT } from '../../../../../lib/email/brandKit';
-import { SAMPLE_CONTEXT } from '../../../../../lib/email/mergeContext';
-import { renderBlocks } from '../../../../../lib/email/renderBlocks';
-import { V2_TEMPLATES } from '../../../../../lib/email/v2/templates';
-import { renderTemplateV2, SAMPLE_DATA } from '../../../../../lib/email/v2/renderer';
-import type { EmailTemplateV2 } from '../../../../../lib/email/v2/schema';
-import { autoDesignTemplate, buildDesignFromLlm, applyBrandKit } from '../../../../../lib/email/v2/autoDesign';
-import type { AutoDesignResult, BrandKitFromAPI, QuizData, LlmDesignContent } from '../../../../../lib/email/v2/autoDesign';
 import { CANVA_TEMPLATES, CANVA_CATEGORIES } from '../../../../../lib/email/canvaTemplates';
+import { autoDesignTemplate, applyBrandKit } from '../../../../../lib/email/v2/autoDesign';
+import type { AutoDesignResult, BrandKitFromAPI, QuizData } from '../../../../../lib/email/v2/autoDesign';
 import { api } from '../../../../../lib/api';
-import { aiDesignCampaign } from '../../../../../lib/emails';
 
 export type DesignState = {
   templateId: string;
@@ -43,7 +35,6 @@ interface TemplateItem {
 
 function buildItems(): TemplateItem[] {
   var items: TemplateItem[] = [];
-  // Canva templates (primary - professional designs)
   for (var k = 0; k < CANVA_TEMPLATES.length; k++) {
     var ct = CANVA_TEMPLATES[k];
     items.push({
@@ -80,19 +71,16 @@ export function DesignStep({
   var allItems = useMemo(buildItems, []);
   var [filter, setFilter] = useState('all');
   var [search, setSearch] = useState('');
-  var editorRef = useRef<HTMLIFrameElement>(null);
-  var [editorReady, setEditorReady] = useState(false);
   var [previewItem, setPreviewItem] = useState<TemplateItem | null>(null);
-  var [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
-  var [editorDevice, setEditorDevice] = useState<'desktop' | 'mobile'>('desktop');
+  var [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
 
-  // AI design: fetch quiz data + brand kit, then compute
+  // AI design: auto-pick best template + apply brand
   var [aiDesign, setAiDesign] = useState<AutoDesignResult | null>(function() {
-    // Instant fallback with no data (template still picked, just no brand/content)
     return autoDesignTemplate(null, null);
   });
+  var [aiBrandKit, setAiBrandKit] = useState<BrandKitFromAPI | null>(null);
 
-  // Fetch quiz and brand data, then re-compute aiDesign with real data
+  // Fetch quiz and brand data on mount
   var aiDataFetched = useRef(false);
   useEffect(function() {
     if (aiDataFetched.current) return;
@@ -107,10 +95,8 @@ export function DesignStep({
       var brandKit: BrandKitFromAPI | null = results[0];
       var quizRaw: any = results[1];
 
-      // Fallback 1: if no saved brand kit, use quiz-level branding (saved at quiz creation)
       if (!brandKit && quizRaw && quizRaw.branding) {
         var qb = quizRaw.branding;
-        // Only use if branding actually has content (not empty {})
         if (qb.colors || qb.font_family || qb.site_name) {
           brandKit = {
             colors: qb.colors || undefined,
@@ -122,7 +108,6 @@ export function DesignStep({
         }
       }
 
-      // Map quiz API response to QuizData shape
       var quizData: QuizData | null = null;
       if (quizRaw) {
         quizData = {
@@ -135,15 +120,11 @@ export function DesignStep({
         };
       }
 
-      // If still no brand, try scraping from quiz source URL as last resort
       var websiteUrl = quizRaw && quizRaw.settings && quizRaw.settings.website_url;
       if (!brandKit && websiteUrl) {
-        // Show unbranded design immediately while scrape runs
         setAiBrandKit(null);
         var unbrandedResult = autoDesignTemplate(null, quizData);
         setAiDesign(unbrandedResult);
-
-        // Scrape brand in background, then re-apply
         api.scrapeBrand(websiteUrl).then(function(scraped: any) {
           if (!scraped || !scraped.colors) return;
           var scrapedKit: BrandKitFromAPI = {
@@ -155,7 +136,6 @@ export function DesignStep({
           setAiBrandKit(scrapedKit);
           var brandedResult = autoDesignTemplate(scrapedKit, quizData);
           setAiDesign(brandedResult);
-          // Also save for future use so this doesn't repeat
           api.saveBrandKit(scrapedKit).catch(function() {});
         }).catch(function() {});
         return;
@@ -167,52 +147,7 @@ export function DesignStep({
     });
   }, [quizId]);
 
-  // AI prompt: let user describe what they want
-  var [aiPrompt, setAiPrompt] = useState('');
-  var [aiGenerating, setAiGenerating] = useState(false);
-  var [aiBrandKit, setAiBrandKit] = useState<BrandKitFromAPI | null>(null);
-
-  // Generate AI design from user prompt
-  var handleAiGenerate = useCallback(function() {
-    if (aiGenerating) return;
-    setAiGenerating(true);
-
-    var templateMeta = CANVA_TEMPLATES.map(function(t) {
-      return { id: t.id, name: t.name, category: t.category, description: t.description };
-    });
-
-    aiDesignCampaign({
-      userPrompt: aiPrompt || undefined,
-      quizId: quizId || undefined,
-      templates: templateMeta,
-    }).then(function(result) {
-      // Build full design from LLM response
-      var design = buildDesignFromLlm(result as LlmDesignContent, aiBrandKit);
-      setAiDesign(design);
-      // Auto-select if user hasn't manually picked
-      if (!userManuallySelected.current) {
-        setState({
-          templateId: design.templateId,
-          subject: design.subject,
-          preheader: design.preheader,
-          html: design.html,
-        });
-      }
-      setAiGenerating(false);
-    }).catch(function() {
-      setAiGenerating(false);
-    });
-  }, [aiPrompt, quizId, aiBrandKit, aiGenerating, setState]);
-
   useEffect(function() { injectDesignFocusStyles(); }, []);
-
-  // Lock body scroll when editor phase is active (prevents grey bar bleed-through)
-  useEffect(function() {
-    if (phase === 'editor') {
-      document.body.style.overflow = 'hidden';
-      return function() { document.body.style.overflow = ''; };
-    }
-  }, [phase]);
 
   // Categories
   var categories = useMemo(function() {
@@ -248,13 +183,11 @@ export function DesignStep({
     return allItems.length > 0 ? allItems[0].id : '';
   }, [allItems, quizCategory]);
 
-  // Auto-select AI design on mount and when real data arrives
+  // Auto-select AI design on mount
   var didAutoSelect = useRef(false);
   var userManuallySelected = useRef(false);
   useEffect(function() {
-    // If user manually picked a template, don't override
     if (userManuallySelected.current) return;
-    // First run: auto-select if nothing selected yet
     if (!didAutoSelect.current) {
       didAutoSelect.current = true;
       if (state.templateId && state.templateId !== '__ai_designed__') return;
@@ -269,15 +202,12 @@ export function DesignStep({
     }
   }, [aiDesign]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Re-apply brand when brandKit loads after user already selected a template
+  // Re-apply brand when brandKit loads
   var prevBrandRef = useRef<BrandKitFromAPI | null>(null);
   useEffect(function() {
-    // Only act when brand transitions from null to a value
     if (!aiBrandKit || prevBrandRef.current === aiBrandKit) return;
     prevBrandRef.current = aiBrandKit;
-    // If user manually selected a template, re-brand their current HTML
     if (userManuallySelected.current && state.templateId && state.html) {
-      // Find the original raw template to re-apply brand cleanly
       var rawHtml = state.html;
       for (var ti = 0; ti < CANVA_TEMPLATES.length; ti++) {
         if (CANVA_TEMPLATES[ti].id === state.templateId) {
@@ -290,59 +220,7 @@ export function DesignStep({
     }
   }, [aiBrandKit]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Listen for messages from editor iframe
-  useEffect(function() {
-    function handleMessage(e: MessageEvent) {
-      if (e.data && e.data.type === 'sq-editor-ready') {
-        setEditorReady(true);
-      }
-      if (e.data && e.data.type === 'sq-editor-html') {
-        setState({ html: e.data.html });
-      }
-    }
-    window.addEventListener('message', handleMessage);
-    return function() { window.removeEventListener('message', handleMessage); };
-  }, [setState]);
-
-  // Keep a ref to the latest HTML so the editor-ready effect always has the current value
-  var latestHtmlRef = useRef(state.html);
-  latestHtmlRef.current = state.html;
-
-  // Keep a ref to the latest brand kit so the editor-ready effect has it
-  var latestBrandRef = useRef<BrandKitFromAPI | null>(aiBrandKit);
-  latestBrandRef.current = aiBrandKit;
-
-  // When editor becomes ready, send the current template HTML once
-  var didSendInitial = useRef(false);
-  useEffect(function() {
-    if (!editorReady) { didSendInitial.current = false; return; }
-    if (didSendInitial.current) return;
-    if (!editorRef.current || !editorRef.current.contentWindow) return;
-    didSendInitial.current = true;
-    var win = editorRef.current.contentWindow;
-    // Hide the template picker and topbar in the iframe (parent provides unified bar)
-    win.postMessage({ type: 'sq-hide-templates' }, '*');
-    win.postMessage({ type: 'sq-hide-topbar' }, '*');
-    // Send brand kit to editor so its global colors/font/logo match the brand
-    var bk = latestBrandRef.current;
-    if (bk) {
-      win.postMessage({
-        type: 'sq-set-brand',
-        colors: bk.colors || null,
-        font: bk.font_family || null,
-        logo: bk.logo_url || bk.favicon_url || null,
-        siteName: bk.site_name || null,
-      }, '*');
-    }
-    if (latestHtmlRef.current) {
-      win.postMessage({
-        type: 'sq-load-template',
-        html: latestHtmlRef.current,
-      }, '*');
-    }
-  }, [editorReady]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Select template from gallery (applies brand kit if available)
+  // Select template from gallery
   var handleSelectTemplate = useCallback(function(item: TemplateItem) {
     userManuallySelected.current = true;
     var brandedHtml = applyBrandKit(item.html, aiBrandKit);
@@ -354,60 +232,11 @@ export function DesignStep({
     });
   }, [setState, aiBrandKit]);
 
-  // Stable cache-bust value: only changes when entering editor phase
-  var [editorCacheBust, setEditorCacheBust] = useState(Date.now);
-
-  // Enter editor phase
-  var handleEditTemplate = useCallback(function() {
-    setEditorReady(false);
-    setEditorCacheBust(Date.now());
-    setPhase('editor');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [setPhase]);
-
-  var handleStartFromScratch = useCallback(function() {
-    var blankHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tbody><tr><td style="padding:32px;text-align:center;color:#9CA3AF;font-size:14px;font-family:sans-serif;">Start adding blocks to build your email</td></tr></tbody></table></body></html>';
-    setState({
-      templateId: '__scratch__',
-      subject: '',
-      preheader: '',
-      html: blankHtml,
-    });
-    setEditorReady(false);
-    setPhase('editor');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [setState, setPhase]);
-
-  // Send commands to editor iframe
-  var sendToEditor = useCallback(function(msg: Record<string, any>) {
-    if (editorRef.current && editorRef.current.contentWindow) {
-      editorRef.current.contentWindow.postMessage(msg, '*');
-    }
-  }, []);
-
-  var handleEditorUndo = useCallback(function() { sendToEditor({ type: 'sq-undo' }); }, [sendToEditor]);
-  var handleEditorRedo = useCallback(function() { sendToEditor({ type: 'sq-redo' }); }, [sendToEditor]);
-  var handleEditorSave = useCallback(function() { sendToEditor({ type: 'sq-save' }); }, [sendToEditor]);
-  var handleSetEditorMode = useCallback(function(mode: 'edit' | 'preview') {
-    setEditorMode(mode);
-    sendToEditor({ type: 'sq-set-mode', mode: mode });
-  }, [sendToEditor]);
-  var handleSetEditorDevice = useCallback(function(device: 'desktop' | 'mobile') {
-    setEditorDevice(device);
-    sendToEditor({ type: 'sq-set-device', device: device });
-  }, [sendToEditor]);
-
-  var selectedItem = state.templateId === '__ai_designed__' && aiDesign
-    ? { id: '__ai_designed__', title: aiDesign.title, description: aiDesign.description, category: 'ai', isV2: true, html: aiDesign.html, subject: aiDesign.subject, preheader: aiDesign.preheader } as TemplateItem
-    : allItems.find(function(t) { return t.id === state.templateId; });
-
   var aiSourceId = aiDesign ? aiDesign.sourceCanvaId : '';
-  // Reorder items: recommended first, then rest; exclude the AI-picked template to avoid duplicate
   var orderedItems = useMemo(function() {
     var rec: TemplateItem[] = [];
     var rest: TemplateItem[] = [];
     for (var i = 0; i < visible.length; i++) {
-      // Skip the template already shown as AI Recommendation card
       if (aiSourceId && visible[i].id === aiSourceId) continue;
       if (visible[i].id === recommendedId) {
         rec.push(visible[i]);
@@ -418,219 +247,205 @@ export function DesignStep({
     return rec.concat(rest);
   }, [visible, recommendedId, aiSourceId]);
 
-  // ==============================
-  // PHASE 1: Full-width template gallery
-  // ==============================
-  if (phase === 'gallery') {
-    return (
-      <div style={{ position: 'relative' }}>
-        <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, padding: 28 }}>
-          <h2 style={{ margin: '0 0 4px', fontSize: 20, color: C.TEXT, fontWeight: 700 }}>Choose a template</h2>
-          <p style={{ margin: '0 0 20px', color: C.TEXT_SUBTLE, fontSize: 13 }}>
-            Pick a starting point, then customize it in the visual editor.
-          </p>
+  var selectedItem = allItems.find(function(t) { return t.id === state.templateId; });
 
-          {/* Search + filters */}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', width: 260 }}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                className="sq-dinput"
-                value={search}
-                onChange={function(e) { setSearch(e.target.value); }}
-                placeholder="Search templates..."
-                style={{
-                  width: '100%', padding: '9px 12px 9px 32px', borderRadius: 10,
-                  border: '1px solid ' + C.BORDER, fontSize: 13, color: C.TEXT,
-                  background: C.ELEVATED, outline: 'none', boxSizing: 'border-box',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {categories.map(function(cat) {
-                var active = cat === filter;
-                var label = cat === 'all' ? 'All' : (V2_LABELS[cat] || CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] || cat);
-                return (
-                  <button
-                    key={cat}
-                    onClick={function() { setFilter(cat); }}
-                    style={{
-                      padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
-                      cursor: 'pointer',
-                      background: active ? C.ACCENT : 'transparent',
-                      color: active ? '#FFFFFF' : C.TEXT_MUTED,
-                      border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 16, padding: 28 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, color: C.TEXT, fontWeight: 700 }}>Choose a template</h2>
+        <p style={{ margin: '0 0 20px', color: C.TEXT_SUBTLE, fontSize: 13 }}>
+          Pick a professionally designed template. Your brand colors and logo are applied automatically.
+        </p>
 
-          {/* AI Prompt Section */}
-          <div style={{
-            background: 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 50%, #F7F7F5 100%)',
-            border: '1.5px solid rgba(13,115,119,0.2)',
-            borderRadius: 14, padding: '18px 20px', marginBottom: 20,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 8,
-                background: 'linear-gradient(135deg, #0D7377, #059669)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>AI Email Designer</div>
-                <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>Describe what you want and AI will pick the perfect template and write the content</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-              <div style={{ flex: 1 }}>
-                <textarea
-                  value={aiPrompt}
-                  onChange={function(e) { setAiPrompt(e.target.value); }}
-                  placeholder="e.g. &quot;A warm welcome email for my skincare quiz that feels luxurious and inviting&quot; or &quot;Professional results email for my fitness assessment with a strong CTA&quot;"
-                  className="sq-dinput"
-                  rows={2}
-                  style={{
-                    width: '100%', padding: '10px 14px', background: '#FFFFFF',
-                    border: '1px solid ' + C.BORDER, borderRadius: 10, color: C.TEXT, fontSize: 13,
-                    resize: 'none' as any, lineHeight: 1.5, boxSizing: 'border-box' as any,
-                    transition: 'border-color 0.15s, box-shadow 0.15s',
-                  }}
-                />
-              </div>
-              <button
-                onClick={handleAiGenerate}
-                disabled={aiGenerating}
-                style={{
-                  padding: '10px 20px', borderRadius: 10, border: 'none', cursor: aiGenerating ? 'wait' : 'pointer',
-                  background: aiGenerating
-                    ? 'linear-gradient(135deg, #9CA3AF, #6B7280)'
-                    : 'linear-gradient(135deg, #0D7377, #059669)',
-                  color: '#FFFFFF', fontSize: 13, fontWeight: 700, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', gap: 6, height: 40,
-                  transition: 'all 0.2s', opacity: aiGenerating ? 0.8 : 1,
-                  boxShadow: aiGenerating ? 'none' : '0 2px 8px rgba(13,115,119,0.3)',
-                }}
-              >
-                {aiGenerating ? (
-                  <>
-                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                    </svg>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-                    </svg>
-                    Generate
-                  </>
-                )}
-              </button>
-            </div>
-            {!aiPrompt && (
-              <div style={{ marginTop: 8, fontSize: 11, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
-                Leave empty to auto-generate based on your quiz type and brand. Or describe your vision for a tailored result.
-              </div>
-            )}
-          </div>
-
-          {/* Template grid - 3 columns */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            {/* Start from scratch card */}
-            <button
-              onClick={handleStartFromScratch}
+        {/* Search + filters */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: 260 }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              className="sq-dinput"
+              value={search}
+              onChange={function(e) { setSearch(e.target.value); }}
+              placeholder="Search templates..."
               style={{
-                textAlign: 'center' as any, padding: 0, overflow: 'hidden',
-                borderRadius: 14, cursor: 'pointer',
-                border: '2px dashed ' + C.BORDER,
-                background: C.SURFACE,
-                transition: 'all 0.15s',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                minHeight: 270,
+                width: '100%', padding: '9px 12px 9px 32px', borderRadius: 10,
+                border: '1px solid ' + C.BORDER, fontSize: 13, color: C.TEXT,
+                background: C.ELEVATED, outline: 'none', boxSizing: 'border-box',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
               }}
-              onMouseOver={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; }}
-              onMouseOut={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.BORDER; }}
-            >
-              <div style={{
-                width: 48, height: 48, borderRadius: 14, background: C.ACCENT_LIGHT,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-              }}>
-                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>Start from scratch</div>
-              <div style={{ fontSize: 12, color: C.TEXT_MUTED, maxWidth: 180, lineHeight: 1.4 }}>Build your email from a blank canvas using the block editor</div>
-            </button>
-
-            {/* AI Auto-Designed template card */}
-            {aiDesign && (
-              <div style={{ position: 'relative' }} className="sq-tpl-card">
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {categories.map(function(cat) {
+              var active = cat === filter;
+              var label = cat === 'all' ? 'All' : (V2_LABELS[cat] || cat);
+              return (
                 <button
-                  onClick={function() {
-                    userManuallySelected.current = true;
-                    setState({
-                      templateId: aiDesign.templateId,
-                      subject: aiDesign.subject,
-                      preheader: aiDesign.preheader,
-                      html: aiDesign.html,
-                    });
-                  }}
+                  key={cat}
+                  onClick={function() { setFilter(cat); }}
                   style={{
-                    textAlign: 'left' as any, padding: 0, overflow: 'hidden',
-                    borderRadius: 14, cursor: 'pointer', width: '100%',
-                    border: '2px solid ' + (state.templateId === '__ai_designed__' ? C.ACCENT : C.BORDER),
-                    background: 'linear-gradient(135deg, #F0FDFA 0%, #F7F7F5 100%)',
+                    padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    cursor: 'pointer',
+                    background: active ? C.ACCENT : 'transparent',
+                    color: active ? '#FFFFFF' : C.TEXT_MUTED,
+                    border: '1px solid ' + (active ? C.ACCENT : C.BORDER),
                     transition: 'all 0.15s',
                   }}
                 >
-                  {/* Thumbnail */}
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Template grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+
+          {/* AI Auto-Designed template card */}
+          {aiDesign && (
+            <div style={{ position: 'relative' }} className="sq-tpl-card">
+              <button
+                onClick={function() {
+                  userManuallySelected.current = true;
+                  setState({
+                    templateId: aiDesign!.templateId,
+                    subject: aiDesign!.subject,
+                    preheader: aiDesign!.preheader,
+                    html: aiDesign!.html,
+                  });
+                }}
+                style={{
+                  textAlign: 'left' as any, padding: 0, overflow: 'hidden',
+                  borderRadius: 14, cursor: 'pointer', width: '100%',
+                  border: '2px solid ' + (state.templateId === aiDesign.templateId ? C.ACCENT : C.BORDER),
+                  background: 'linear-gradient(135deg, #F0FDFA 0%, #F7F7F5 100%)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <div style={{
+                  height: 200, overflow: 'hidden', background: '#F7F7F5',
+                  position: 'relative', borderBottom: '1px solid ' + C.BORDER,
+                }}>
+                  <iframe
+                    title="AI designed preview"
+                    srcDoc={aiDesign.html}
+                    style={{
+                      width: '200%', height: '400px', border: 0,
+                      transform: 'scale(0.5)', transformOrigin: 'top left',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute', top: 8, left: 8,
+                    padding: '5px 12px', borderRadius: 20,
+                    background: 'linear-gradient(135deg, #0D7377 0%, #059669 100%)',
+                    color: '#FFFFFF', fontSize: 11, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
+                  }}>
+                    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                    </svg>
+                    AI Recommendation
+                  </div>
+                  {state.templateId === aiDesign.templateId && (
+                    <div style={{
+                      position: 'absolute', top: 8, right: 8,
+                      width: 26, height: 26, borderRadius: 13,
+                      background: C.ACCENT, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                  )}
+                  <button
+                    onClick={function(e) {
+                      e.stopPropagation();
+                      setPreviewItem({
+                        id: aiDesign!.templateId,
+                        title: aiDesign!.title,
+                        description: aiDesign!.description,
+                        category: 'ai',
+                        isV2: true,
+                        html: aiDesign!.html,
+                        subject: aiDesign!.subject,
+                        preheader: aiDesign!.preheader,
+                      });
+                    }}
+                    title="Preview template"
+                    className="sq-tpl-eye"
+                    style={eyeBtnStyle}
+                  >
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
+                <div style={{ padding: '12px 16px' }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{aiDesign.title}</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {aiDesign.brandApplied && (
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 4 }}>Brand applied</span>
+                    )}
+                    {aiDesign.quizContentApplied && (
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#0D7377', background: '#F0FDFA', padding: '2px 8px', borderRadius: 4 }}>Quiz content</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {orderedItems.map(function(t) {
+            var selected = t.id === state.templateId;
+            var isRecommended = t.id === recommendedId;
+            return (
+              <div key={t.id} style={{ position: 'relative' }} className="sq-tpl-card">
+                <button
+                  onClick={function() { handleSelectTemplate(t); }}
+                  style={{
+                    textAlign: 'left' as any, padding: 0, overflow: 'hidden',
+                    borderRadius: 14, cursor: 'pointer', width: '100%',
+                    border: '2px solid ' + (selected ? C.ACCENT : C.BORDER),
+                    background: C.SURFACE,
+                    transition: 'all 0.15s',
+                  }}
+                >
                   <div style={{
                     height: 200, overflow: 'hidden', background: '#F7F7F5',
                     position: 'relative', borderBottom: '1px solid ' + C.BORDER,
                   }}>
                     <iframe
-                      title="AI designed preview"
-                      srcDoc={aiDesign.html}
+                      title={t.title + ' preview'}
+                      srcDoc={t.html}
                       style={{
                         width: '200%', height: '400px', border: 0,
                         transform: 'scale(0.5)', transformOrigin: 'top left',
                         pointerEvents: 'none',
                       }}
                     />
-                    {/* AI Designed badge - single clean pill */}
-                    <div style={{
-                      position: 'absolute', top: 8, left: 8,
-                      padding: '5px 12px', borderRadius: 20,
-                      background: 'linear-gradient(135deg, #0D7377 0%, #059669 100%)',
-                      color: '#FFFFFF', fontSize: 11, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
-                    }}>
-                      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                        <path d="M2 17l10 5 10-5" />
-                        <path d="M2 12l10 5 10-5" />
-                      </svg>
-                      AI Recommendation
-                    </div>
-                    {/* Selected check */}
-                    {state.templateId === '__ai_designed__' && (
+                    {isRecommended && !aiDesign && (
+                      <div style={{
+                        position: 'absolute', top: 8, left: 8,
+                        padding: '4px 10px', borderRadius: 20,
+                        background: C.ACCENT, color: '#FFFFFF',
+                        fontSize: 11, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      }}>
+                        <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        Recommended
+                      </div>
+                    )}
+                    {selected && (
                       <div style={{
                         position: 'absolute', top: 8, right: 8,
                         width: 26, height: 26, borderRadius: 13,
@@ -643,183 +458,78 @@ export function DesignStep({
                         </svg>
                       </div>
                     )}
-                    {/* Preview eye */}
                     <button
-                      onClick={function(e) {
-                        e.stopPropagation();
-                        setPreviewItem({
-                          id: '__ai_designed__',
-                          title: aiDesign!.title,
-                          description: aiDesign!.description,
-                          category: 'ai',
-                          isV2: true,
-                          html: aiDesign!.html,
-                          subject: aiDesign!.subject,
-                          preheader: aiDesign!.preheader,
-                        });
-                      }}
+                      onClick={function(e) { e.stopPropagation(); setPreviewItem(t); }}
                       title="Preview template"
                       className="sq-tpl-eye"
-                      style={{
-                        position: 'absolute', bottom: 8, right: 8,
-                        width: 30, height: 30, borderRadius: 8,
-                        background: 'rgba(255,255,255,0.92)', border: '1px solid ' + C.BORDER,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.2s',
-                        zIndex: 5, backdropFilter: 'blur(4px)',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                        opacity: 1, pointerEvents: 'auto',
-                      }}
+                      style={eyeBtnStyle}
                     >
                       <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
                       </svg>
                     </button>
                   </div>
-                  {/* Info */}
-                  <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{aiDesign.title}</div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {aiDesign.brandApplied && (
-                        <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 4 }}>Brand applied</span>
-                      )}
-                      {aiDesign.quizContentApplied && (
-                        <span style={{ fontSize: 10, fontWeight: 600, color: '#0D7377', background: '#F0FDFA', padding: '2px 8px', borderRadius: 4 }}>Quiz content</span>
-                      )}
+                  <div style={{ padding: '12px 14px', height: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as any}>
+                      {t.description}
                     </div>
                   </div>
                 </button>
               </div>
-            )}
+            );
+          })}
+          {orderedItems.length === 0 && (
+            <div style={{ gridColumn: '1 / -1', padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>
+              No templates match your search
+            </div>
+          )}
+        </div>
 
-
-            {orderedItems.map(function(t) {
-              var selected = t.id === state.templateId;
-              var isRecommended = t.id === recommendedId;
-              return (
-                <div key={t.id} style={{ position: 'relative' }}
-                  className="sq-tpl-card"
-                >
-                  <button
-                    onClick={function() { handleSelectTemplate(t); }}
-                    style={{
-                      textAlign: 'left' as any, padding: 0, overflow: 'hidden',
-                      borderRadius: 14, cursor: 'pointer', width: '100%',
-                      border: '2px solid ' + (selected ? C.ACCENT : C.BORDER),
-                      background: C.SURFACE,
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {/* Thumbnail */}
-                    <div style={{
-                      height: 200, overflow: 'hidden', background: '#F7F7F5',
-                      position: 'relative', borderBottom: '1px solid ' + C.BORDER,
-                    }}>
-                      <iframe
-                        title={t.title + ' preview'}
-                        srcDoc={t.html}
-                        style={{
-                          width: '200%', height: '400px', border: 0,
-                          transform: 'scale(0.5)', transformOrigin: 'top left',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      {/* Badges */}
-                      <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4 }}>
-                        {isRecommended && !aiDesign && (
-                          <div style={{
-                            padding: '4px 10px', borderRadius: 20,
-                            background: C.ACCENT, color: '#FFFFFF',
-                            fontSize: 11, fontWeight: 700,
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                          }}>
-                            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
-                            AI Recommendation
-                          </div>
-                        )}
-                      </div>
-                      {/* Selected check */}
-                      {selected && (
-                        <div style={{
-                          position: 'absolute', top: 8, right: 8,
-                          width: 26, height: 26, borderRadius: 13,
-                          background: C.ACCENT, display: 'flex',
-                          alignItems: 'center', justifyContent: 'center',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </div>
-                      )}
-                      {/* Preview eye button - inside thumbnail, bottom-right, hover-only */}
-                      <button
-                        onClick={function(e) { e.stopPropagation(); setPreviewItem(t); }}
-                        title="Preview template"
-                        className="sq-tpl-eye"
-                        style={{
-                          position: 'absolute', bottom: 8, right: 8,
-                          width: 30, height: 30, borderRadius: 8,
-                          background: 'rgba(255,255,255,0.92)', border: '1px solid ' + C.BORDER,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.2s',
-                          zIndex: 5, backdropFilter: 'blur(4px)',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                          opacity: 1, pointerEvents: 'auto',
-                        }}
-                      >
-                        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    </div>
-                    {/* Info */}
-                    <div style={{ padding: '12px 14px', height: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
-                      <div style={{ fontSize: 12, color: C.TEXT_MUTED, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as any}>
-                        {t.description}
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-            {orderedItems.length === 0 && (
-              <div style={{ gridColumn: '1 / -1', padding: 40, textAlign: 'center', color: C.TEXT_MUTED, fontSize: 13 }}>
-                No templates match your search
-              </div>
-            )}
-          </div>
-
-          {/* Template preview modal */}
-          {previewItem && (
+        {/* Template preview modal */}
+        {previewItem && (
+          <div
+            onClick={function() { setPreviewItem(null); }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+              zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(2px)',
+            }}
+          >
             <div
-              onClick={function() { setPreviewItem(null); }}
+              onClick={function(e) { e.stopPropagation(); }}
               style={{
-                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-                zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(2px)',
+                background: C.SURFACE, borderRadius: 16, width: 680, maxHeight: '90vh',
+                overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
               }}
             >
-              <div
-                onClick={function(e) { e.stopPropagation(); }}
-                style={{
-                  background: C.SURFACE, borderRadius: 16, width: 680, maxHeight: '90vh',
-                  overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                  boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
-                }}
-              >
-                {/* Header */}
-                <div style={{
-                  padding: '16px 20px', borderBottom: '1px solid ' + C.BORDER,
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT }}>{previewItem.title}</div>
-                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>{previewItem.description}</div>
+              <div style={{
+                padding: '16px 20px', borderBottom: '1px solid ' + C.BORDER,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT }}>{previewItem.title}</div>
+                  <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>{previewItem.description}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* Desktop/Mobile toggle */}
+                  <div style={{ display: 'flex', borderRadius: 7, border: '1px solid ' + C.BORDER, overflow: 'hidden' }}>
+                    <button onClick={function() { setPreviewDevice('desktop'); }} style={{
+                      padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none',
+                      background: previewDevice === 'desktop' ? C.ACCENT : '#FFFFFF',
+                      color: previewDevice === 'desktop' ? '#FFFFFF' : C.TEXT_MUTED,
+                    }}>
+                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+                    </button>
+                    <button onClick={function() { setPreviewDevice('mobile'); }} style={{
+                      padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none',
+                      borderLeft: '1px solid ' + C.BORDER,
+                      background: previewDevice === 'mobile' ? C.ACCENT : '#FFFFFF',
+                      color: previewDevice === 'mobile' ? '#FFFFFF' : C.TEXT_MUTED,
+                    }}>
+                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>
+                    </button>
                   </div>
                   <button
                     onClick={function() { setPreviewItem(null); }}
@@ -827,7 +537,6 @@ export function DesignStep({
                       width: 32, height: 32, borderRadius: 8, border: 'none',
                       background: C.ELEVATED, cursor: 'pointer', display: 'flex',
                       alignItems: 'center', justifyContent: 'center', color: C.TEXT_MUTED,
-                      flexShrink: 0,
                     }}
                   >
                     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -835,420 +544,309 @@ export function DesignStep({
                     </svg>
                   </button>
                 </div>
-                {/* Preview iframe */}
-                <div style={{ flex: 1, overflow: 'auto' }}>
-                  <iframe
-                    title="Template preview"
-                    srcDoc={previewItem.html.replace(/<a[^>]*>[\s]*<img[^>]*src=["']?["']?[^>]*alt=["']?Logo["']?[^>]*\/?>[\s]*<\/a>/gi, '').replace(/<img[^>]*src=["']?["']?[^>]*alt=["']?Logo["']?[^>]*\/?>/gi, '').replace(/<div[^>]*>[\s]*<\/div>/g, '')}
-                    style={{ width: '100%', height: 600, border: 'none' }}
-                  />
-                </div>
-                {/* Footer actions */}
-                <div style={{
-                  padding: '14px 20px', borderTop: '1px solid ' + C.BORDER,
-                  display: 'flex', justifyContent: 'flex-end', gap: 10,
-                }}>
-                  <GhostButton onClick={function() { setPreviewItem(null); }}>Close</GhostButton>
-                  <PrimaryButton onClick={function() {
-                    handleSelectTemplate(previewItem!);
-                    setPreviewItem(null);
-                  }}>
-                    Use this template
-                  </PrimaryButton>
-                </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sticky bottom action bar - appears when a template is selected */}
-        {state.templateId && (
-          <div style={{
-            position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 20,
-            background: '#FFFFFF', borderTop: '1px solid ' + C.BORDER,
-            borderRadius: '0 0 16px 16px',
-            padding: '14px 28px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            boxShadow: '0 -4px 16px rgba(0,0,0,0.06)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <GhostButton onClick={onBack}>
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: 'middle' }}><polyline points="15 18 9 12 15 6" /></svg>
-                Back
-              </GhostButton>
-              {selectedItem && (
-                <div style={{ color: C.TEXT_SUBTLE, fontSize: 13 }}>
-                  Selected: <span style={{ fontWeight: 600, color: C.TEXT }}>{selectedItem.title}</span>
-                </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <PrimaryButton onClick={handleEditTemplate}>
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, verticalAlign: 'middle' }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Edit template
-              </PrimaryButton>
-              <PrimaryButton onClick={onNext} disabled={!state.subject}>
-                Continue to send
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6, verticalAlign: 'middle' }}><polyline points="9 18 15 12 9 6" /></svg>
-              </PrimaryButton>
-            </div>
-          </div>
-        )}
-
-        {/* Non-sticky back if no template selected */}
-        {!state.templateId && (
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid ' + C.BORDER }}>
-            <GhostButton onClick={onBack}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: 'middle' }}><polyline points="15 18 9 12 15 6" /></svg>
-              Back
-            </GhostButton>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // ==============================
-  // PHASE 2: Full-screen editor with campaign sidebar
-  // Layout: Top bar | Editor (left) + Campaign sidebar (right)
-  // ==============================
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#FFFFFF', display: 'flex', flexDirection: 'column' }}>
-      {/* === SLIM TOP BAR: Navigation + Editor controls === */}
-      <div style={{
-        padding: '0 12px 0 16px', height: 48, borderBottom: '1px solid ' + C.BORDER,
-        display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
-        background: '#FFFFFF',
-      }}>
-        {/* Back to templates */}
-        <button
-          onClick={function() { setPhase('gallery'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          title="Back to templates"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 32, height: 32, borderRadius: 8, border: '1px solid ' + C.BORDER,
-            background: 'transparent', cursor: 'pointer', color: C.TEXT, flexShrink: 0,
-          }}
-        >
-          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-        </button>
-
-        <div style={{ width: 1, height: 20, background: C.BORDER, flexShrink: 0 }} />
-
-        {/* Edit / Preview toggle */}
-        <div style={{ display: 'flex', borderRadius: 7, border: '1px solid ' + C.BORDER, overflow: 'hidden', flexShrink: 0 }}>
-          <button onClick={function() { handleSetEditorMode('edit'); }} style={{
-            padding: '5px 0', minWidth: 64, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
-            background: editorMode === 'edit' ? C.ACCENT : '#FFFFFF',
-            color: editorMode === 'edit' ? '#FFFFFF' : C.TEXT_MUTED,
-            transition: 'all 0.15s', textAlign: 'center' as any,
-          }}>Edit</button>
-          <button onClick={function() { handleSetEditorMode('preview'); }} style={{
-            padding: '5px 0', minWidth: 64, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
-            borderLeft: '1px solid ' + C.BORDER,
-            background: editorMode === 'preview' ? C.ACCENT : '#FFFFFF',
-            color: editorMode === 'preview' ? '#FFFFFF' : C.TEXT_MUTED,
-            transition: 'all 0.15s', textAlign: 'center' as any,
-          }}>Preview</button>
-        </div>
-
-        {/* Undo / Redo */}
-        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <button onClick={handleEditorUndo} title="Undo" style={iconBtnStyle}>
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
-          </button>
-          <button onClick={handleEditorRedo} title="Redo" style={iconBtnStyle}>
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10" /></svg>
-          </button>
-        </div>
-
-        {/* Device toggle */}
-        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <button onClick={function() { handleSetEditorDevice('desktop'); }} title="Desktop" style={{
-            ...iconBtnStyle,
-            background: editorDevice === 'desktop' ? C.ELEVATED : 'transparent',
-            color: editorDevice === 'desktop' ? C.TEXT : C.TEXT_MUTED,
-          }}>
-            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-          </button>
-          <button onClick={function() { handleSetEditorDevice('mobile'); }} title="Mobile" style={{
-            ...iconBtnStyle,
-            background: editorDevice === 'mobile' ? C.ELEVATED : 'transparent',
-            color: editorDevice === 'mobile' ? C.TEXT : C.TEXT_MUTED,
-          }}>
-            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>
-          </button>
-        </div>
-
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
-
-        {/* Save */}
-        <button onClick={handleEditorSave} style={{
-          padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-          cursor: 'pointer', border: '1px solid ' + C.BORDER, background: '#FFFFFF',
-          color: C.TEXT, transition: 'all 0.15s', flexShrink: 0,
-          height: 36, display: 'inline-flex', alignItems: 'center',
-        }}>Save</button>
-
-        {/* Continue */}
-        <button onClick={onNext} disabled={!state.templateId || !state.subject} style={{
-          padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-          cursor: (!state.templateId || !state.subject) ? 'default' : 'pointer',
-          border: 'none', flexShrink: 0,
-          background: (!state.templateId || !state.subject) ? 'rgba(13,115,119,0.4)' : C.ACCENT,
-          color: '#FFFFFF', transition: 'all 0.15s',
-          height: 36, display: 'inline-flex', alignItems: 'center', gap: 4,
-        }}>
-          Continue
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-        </button>
-      </div>
-
-      {/* === MAIN AREA: Campaign Sidebar (left) + Editor (right) === */}
-      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-
-        {/* === CAMPAIGN SIDEBAR - Always visible (left) === */}
-        <div style={{
-          width: 320, flexShrink: 0, background: '#FFFFFF', borderRight: '1px solid ' + C.BORDER,
-          display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        }}>
-          {/* Sidebar header */}
-          <div style={{
-            padding: '16px 20px 12px', borderBottom: '1px solid ' + C.BORDER,
-          }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.TEXT }}>Campaign Settings</div>
-            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Subject, preview text & split testing</div>
-          </div>
-
-          {/* Sidebar content - scrollable */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-
-            {/* Inbox Preview Mockup */}
-            <div style={{
-              background: '#F8F9FA', borderRadius: 10, padding: 14, marginBottom: 18,
-              border: '1px solid ' + C.BORDER,
-            }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, textTransform: 'uppercase' as any, letterSpacing: 0.8, marginBottom: 8 }}>
-                Inbox preview
+              <div style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', background: '#F3F4F6', padding: previewDevice === 'mobile' ? '20px 0' : 0 }}>
+                <iframe
+                  title="Template preview"
+                  srcDoc={previewItem.html}
+                  style={{
+                    width: previewDevice === 'mobile' ? 375 : '100%',
+                    height: 600,
+                    border: previewDevice === 'mobile' ? '1px solid ' + C.BORDER : 'none',
+                    borderRadius: previewDevice === 'mobile' ? 12 : 0,
+                    background: '#FFFFFF',
+                  }}
+                />
               </div>
               <div style={{
-                background: '#FFFFFF', borderRadius: 8, padding: '12px 14px',
-                border: '1px solid ' + C.BORDER, boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                padding: '14px 20px', borderTop: '1px solid ' + C.BORDER,
+                display: 'flex', justifyContent: 'flex-end', gap: 10,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 14, background: C.ACCENT,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#FFFFFF', fontSize: 11, fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {(state.fromName || 'B').charAt(0).toUpperCase()}
+                <GhostButton onClick={function() { setPreviewItem(null); }}>Close</GhostButton>
+                <PrimaryButton onClick={function() {
+                  handleSelectTemplate(previewItem!);
+                  setPreviewItem(null);
+                }}>
+                  Use this template
+                </PrimaryButton>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================= */}
+        {/* Customize section — shown when template selected */}
+        {/* ============================================= */}
+        {state.templateId && (
+          <div style={{ marginTop: 24, borderTop: '1px solid ' + C.BORDER, paddingTop: 24 }}>
+            <div style={{ display: 'flex', gap: 24 }}>
+              {/* Left: form fields */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 700, color: C.TEXT }}>Customize your email</h3>
+                <p style={{ margin: '0 0 20px', color: C.TEXT_SUBTLE, fontSize: 13 }}>
+                  Edit the subject line and preview text. Your brand colors are already applied.
+                </p>
+
+                {/* Inbox Preview Mockup */}
+                <div style={{
+                  background: '#F8F9FA', borderRadius: 10, padding: 14, marginBottom: 20,
+                  border: '1px solid ' + C.BORDER,
+                }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, textTransform: 'uppercase' as any, letterSpacing: 0.8, marginBottom: 8 }}>
+                    Inbox preview
                   </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {state.fromName || 'Your Brand'}
+                  <div style={{
+                    background: '#FFFFFF', borderRadius: 8, padding: '12px 14px',
+                    border: '1px solid ' + C.BORDER, boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: 14, background: C.ACCENT,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#FFFFFF', fontSize: 11, fontWeight: 700, flexShrink: 0,
+                      }}>
+                        {(state.fromName || 'B').charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {state.fromName || 'Your Brand'}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11, color: C.TEXT_MUTED, flexShrink: 0 }}>now</div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
+                      {state.subject || 'Your subject line appears here'}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.TEXT_MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {state.preheader || 'Preview text appears after the subject...'}
                     </div>
                   </div>
-                  <div style={{ fontSize: 11, color: C.TEXT_MUTED, flexShrink: 0 }}>now</div>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
-                  {state.subject || 'Your subject line appears here'}
-                </div>
-                <div style={{ fontSize: 12, color: C.TEXT_MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {state.preheader || 'Preview text appears after the subject...'}
-                </div>
-              </div>
-            </div>
 
-            {/* Subject Line A */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: C.TEXT, textTransform: 'uppercase' as any, letterSpacing: 0.5, marginBottom: 6 }}>
-                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
-                </svg>
-                Subject Line {state.abEnabled ? '(A)' : ''}
-              </label>
-              <input
-                value={state.subject}
-                onChange={function(e) { setState({ subject: e.target.value }); }}
-                placeholder="What will they see in their inbox?"
-                className="sq-dinput"
-                style={sidebarInputStyle}
-              />
-            </div>
-
-            {/* Preview Text */}
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: C.TEXT, textTransform: 'uppercase' as any, letterSpacing: 0.5, marginBottom: 6 }}>
-                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                </svg>
-                Preview Text
-              </label>
-              <input
-                value={state.preheader || ''}
-                onChange={function(e) { setState({ preheader: e.target.value }); }}
-                placeholder="Shown after subject in inbox..."
-                className="sq-dinput"
-                style={sidebarInputStyle}
-              />
-            </div>
-
-            {/* Divider */}
-            <div style={{ height: 1, background: C.BORDER, marginBottom: 20 }} />
-
-            {/* === A/B SPLIT TEST SECTION === */}
-            <div style={{
-              background: state.abEnabled
-                ? 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%)'
-                : '#FAFAF8',
-              border: '1.5px solid ' + (state.abEnabled ? '#0D7377' : C.BORDER),
-              borderRadius: 12, padding: 16, marginBottom: 20,
-              transition: 'all 0.2s',
-            }}>
-              {/* A/B Header with toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: state.abEnabled ? 16 : 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: state.abEnabled ? 'linear-gradient(135deg, #0D7377, #059669)' : C.ELEVATED,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.2s',
-                  }}>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={state.abEnabled ? '#FFFFFF' : C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 3h5v5" /><path d="M8 3H3v5" /><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" /><path d="m15 9 6-6" />
+                {/* Subject Line */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: C.TEXT, marginBottom: 6 }}>
+                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
                     </svg>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>A/B Split Test</div>
-                    <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Test two subject lines</div>
-                  </div>
+                    Subject Line {state.abEnabled ? '(A)' : ''}
+                  </label>
+                  <input
+                    value={state.subject}
+                    onChange={function(e) { setState({ subject: e.target.value }); }}
+                    placeholder="What will they see in their inbox?"
+                    className="sq-dinput"
+                    style={fieldInputStyle}
+                  />
                 </div>
-                {/* Toggle switch */}
-                <button
-                  onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
-                  style={{
-                    width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                    background: state.abEnabled ? '#0D7377' : '#D1D5DB',
-                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                  }}
-                >
-                  <div style={{
-                    width: 18, height: 18, borderRadius: 9, background: '#FFFFFF',
-                    position: 'absolute', top: 3,
-                    left: state.abEnabled ? 23 : 3,
-                    transition: 'left 0.2s',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                  }} />
-                </button>
+
+                {/* Preview Text */}
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: C.TEXT, marginBottom: 6 }}>
+                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Preview Text
+                  </label>
+                  <input
+                    value={state.preheader || ''}
+                    onChange={function(e) { setState({ preheader: e.target.value }); }}
+                    placeholder="Shown after subject in inbox..."
+                    className="sq-dinput"
+                    style={fieldInputStyle}
+                  />
+                </div>
+
+                {/* A/B Split Test */}
+                <div style={{
+                  background: state.abEnabled
+                    ? 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%)'
+                    : '#FAFAF8',
+                  border: '1.5px solid ' + (state.abEnabled ? '#0D7377' : C.BORDER),
+                  borderRadius: 12, padding: 16,
+                  transition: 'all 0.2s',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: state.abEnabled ? 16 : 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: state.abEnabled ? 'linear-gradient(135deg, #0D7377, #059669)' : C.ELEVATED,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.2s',
+                      }}>
+                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={state.abEnabled ? '#FFFFFF' : C.TEXT_MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M16 3h5v5" /><path d="M8 3H3v5" /><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" /><path d="m15 9 6-6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>A/B Split Test</div>
+                        <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>Test two subject lines</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
+                      style={{
+                        width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                        background: state.abEnabled ? '#0D7377' : '#D1D5DB',
+                        position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                      }}
+                    >
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 9, background: '#FFFFFF',
+                        position: 'absolute', top: 3,
+                        left: state.abEnabled ? 23 : 3,
+                        transition: 'left 0.2s',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      }} />
+                    </button>
+                  </div>
+
+                  {state.abEnabled && (
+                    <div>
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#0D7377', marginBottom: 6 }}>
+                          <div style={{
+                            width: 18, height: 18, borderRadius: 4,
+                            background: 'linear-gradient(135deg, #0D7377, #059669)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, fontWeight: 800, color: '#FFFFFF',
+                          }}>B</div>
+                          SUBJECT LINE B
+                        </label>
+                        <input
+                          value={state.subjectB || ''}
+                          onChange={function(e) { setState({ subjectB: e.target.value }); }}
+                          placeholder="Try a different angle..."
+                          className="sq-dinput"
+                          style={fieldInputStyle}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Test size</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <input type="number" min={10} max={50} value={state.abTestPercent || 20}
+                              onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
+                              style={{ width: '100%', padding: '6px 8px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
+                            <span style={{ color: C.TEXT_MUTED, fontSize: 12, flexShrink: 0 }}>%</span>
+                          </div>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Wait time</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <input type="number" min={1} max={48} value={state.abWaitHours || 4}
+                              onChange={function(e) { setState({ abWaitHours: Math.min(48, Math.max(1, Number(e.target.value))) }); }}
+                              style={{ width: '100%', padding: '6px 8px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
+                            <span style={{ color: C.TEXT_MUTED, fontSize: 12, flexShrink: 0 }}>hrs</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{
+                        marginTop: 14, padding: '10px 12px', background: 'rgba(255,255,255,0.7)',
+                        borderRadius: 8, border: '1px solid rgba(13,115,119,0.15)',
+                      }}>
+                        <div style={{ fontSize: 11, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
+                          {state.abTestPercent || 20}% of your audience gets Subject A, {state.abTestPercent || 20}% gets Subject B. After {state.abWaitHours || 4} hours, the winning subject is sent to the remaining {100 - ((state.abTestPercent || 20) * 2)}%.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!state.abEnabled && (
+                    <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginTop: 8, lineHeight: 1.5 }}>
+                      Enable to test two subject lines. The winner gets sent to the rest automatically.
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* A/B Content - shown when enabled */}
-              {state.abEnabled && (
-                <div>
-                  {/* Subject B */}
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#0D7377', marginBottom: 6 }}>
-                      <div style={{
-                        width: 18, height: 18, borderRadius: 4,
-                        background: 'linear-gradient(135deg, #0D7377, #059669)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 800, color: '#FFFFFF',
-                      }}>B</div>
-                      SUBJECT LINE B
-                    </label>
-                    <input
-                      value={state.subjectB || ''}
-                      onChange={function(e) { setState({ subjectB: e.target.value }); }}
-                      placeholder="Try a different angle..."
-                      className="sq-dinput"
-                      style={sidebarInputStyle}
+              {/* Right: template preview */}
+              <div style={{ width: 320, flexShrink: 0 }}>
+                <div style={{
+                  border: '1px solid ' + C.BORDER, borderRadius: 12, overflow: 'hidden',
+                  background: '#F7F7F5',
+                }}>
+                  <div style={{ padding: '10px 14px', borderBottom: '1px solid ' + C.BORDER, background: '#FFFFFF' }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT }}>
+                      {selectedItem ? selectedItem.title : 'Template preview'}
+                    </div>
+                  </div>
+                  <div style={{ height: 400, overflow: 'hidden' }}>
+                    <iframe
+                      title="Selected template preview"
+                      srcDoc={state.html || '<div style="padding:40px;text-align:center;color:#9CA3AF">Select a template</div>'}
+                      style={{
+                        width: '200%', height: '800px', border: 0,
+                        transform: 'scale(0.5)', transformOrigin: 'top left',
+                        pointerEvents: 'none',
+                      }}
                     />
                   </div>
-
-                  {/* Split visualization */}
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Test Split</div>
-                    <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', height: 8, background: '#E5E7EB' }}>
-                      <div style={{ width: (state.abTestPercent || 20) + '%', background: '#0D7377', transition: 'width 0.3s' }} />
-                      <div style={{ width: (state.abTestPercent || 20) + '%', background: '#059669', transition: 'width 0.3s' }} />
-                      <div style={{ flex: 1, background: '#D1D5DB' }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                      <span style={{ fontSize: 10, color: '#0D7377', fontWeight: 600 }}>{state.abTestPercent || 20}% A</span>
-                      <span style={{ fontSize: 10, color: '#059669', fontWeight: 600 }}>{state.abTestPercent || 20}% B</span>
-                      <span style={{ fontSize: 10, color: C.TEXT_MUTED, fontWeight: 600 }}>{100 - ((state.abTestPercent || 20) * 2)}% Winner</span>
-                    </div>
-                  </div>
-
-                  {/* Settings */}
-                  <div style={{ display: 'flex', gap: 12 }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Test size</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <input type="number" min={10} max={50} value={state.abTestPercent || 20}
-                          onChange={function(e) { setState({ abTestPercent: Math.min(50, Math.max(10, Number(e.target.value))) }); }}
-                          style={{ width: '100%', padding: '6px 8px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
-                        <span style={{ color: C.TEXT_MUTED, fontSize: 12, flexShrink: 0 }}>%</span>
-                      </div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: C.TEXT_MUTED, display: 'block', marginBottom: 4 }}>Wait time</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <input type="number" min={1} max={48} value={state.abWaitHours || 4}
-                          onChange={function(e) { setState({ abWaitHours: Math.min(48, Math.max(1, Number(e.target.value))) }); }}
-                          style={{ width: '100%', padding: '6px 8px', background: '#FFFFFF', border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 13, textAlign: 'center' as any, boxSizing: 'border-box' }} />
-                        <span style={{ color: C.TEXT_MUTED, fontSize: 12, flexShrink: 0 }}>hrs</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* How it works */}
-                  <div style={{
-                    marginTop: 14, padding: '10px 12px', background: 'rgba(255,255,255,0.7)',
-                    borderRadius: 8, border: '1px solid rgba(13,115,119,0.15)',
-                  }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#0D7377', marginBottom: 4 }}>How it works</div>
-                    <div style={{ fontSize: 11, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
-                      {state.abTestPercent || 20}% of your audience gets Subject A, {state.abTestPercent || 20}% gets Subject B. After {state.abWaitHours || 4} hours, the winning subject (by open rate) is sent to the remaining {100 - ((state.abTestPercent || 20) * 2)}%.
-                    </div>
-                  </div>
                 </div>
-              )}
-
-              {/* When disabled - show benefit */}
-              {!state.abEnabled && (
-                <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginTop: 8, lineHeight: 1.5 }}>
-                  Enable to test two subject lines. The winner gets sent to the rest of your audience automatically.
-                </div>
-              )}
+                <button
+                  onClick={function() {
+                    if (selectedItem) {
+                      setPreviewItem(selectedItem);
+                    }
+                  }}
+                  style={{
+                    width: '100%', marginTop: 10, padding: '10px 16px',
+                    borderRadius: 10, border: '1px solid ' + C.BORDER,
+                    background: '#FFFFFF', cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600, color: C.TEXT,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    transition: 'border-color 0.15s',
+                  }}
+                  onMouseOver={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.ACCENT; }}
+                  onMouseOut={function(e) { (e.currentTarget as HTMLElement).style.borderColor = C.BORDER; }}
+                >
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                  </svg>
+                  Full-size preview
+                </button>
+              </div>
             </div>
-
           </div>
-        </div>
-
-        {/* Editor iframe (right) */}
-        <iframe
-          ref={editorRef}
-          title="Email editor"
-          src={'/email-editor.html?v=' + editorCacheBust}
-          style={{ flex: 1, border: 'none', minWidth: 0 }}
-        />
+        )}
       </div>
+
+      {/* Sticky bottom action bar */}
+      {state.templateId && (
+        <div style={{
+          position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 20,
+          background: '#FFFFFF', borderTop: '1px solid ' + C.BORDER,
+          borderRadius: '0 0 16px 16px',
+          padding: '14px 28px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          boxShadow: '0 -4px 16px rgba(0,0,0,0.06)',
+        }}>
+          <GhostButton onClick={onBack}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: 'middle' }}><polyline points="15 18 9 12 15 6" /></svg>
+            Back
+          </GhostButton>
+          <PrimaryButton onClick={onNext} disabled={!state.subject}>
+            Continue to send
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6, verticalAlign: 'middle' }}><polyline points="9 18 15 12 9 6" /></svg>
+          </PrimaryButton>
+        </div>
+      )}
+
+      {/* Non-sticky back if no template selected */}
+      {!state.templateId && (
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid ' + C.BORDER }}>
+          <GhostButton onClick={onBack}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: 'middle' }}><polyline points="15 18 9 12 15 6" /></svg>
+            Back
+          </GhostButton>
+        </div>
+      )}
     </div>
   );
 }
 
-var Field = function({ label, children }: any) {
-  return (
-    <div style={{ marginBottom: 0 }}>
-      <div style={{ color: C.TEXT_MUTED, fontSize: 10, textTransform: 'uppercase' as any, letterSpacing: 1, marginBottom: 4 }}>{label}</div>
-      {children}
-    </div>
-  );
-};
+/* ---- Styles ---- */
 
-/* ---- Focus-highlight style injected once ---- */
 var FOCUS_STYLE_ID = 'sq-design-focus';
 function injectDesignFocusStyles() {
   if (typeof document === 'undefined') return;
@@ -1257,36 +855,22 @@ function injectDesignFocusStyles() {
   style.id = FOCUS_STYLE_ID;
   style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }' +
     ' .sq-tpl-eye:hover { border-color: ' + C.ACCENT + ' !important; color: ' + C.ACCENT + ' !important; background: #FFFFFF !important; transform: scale(1.08); }' +
-    ' @keyframes spin { to { transform: rotate(360deg); } }' +
-    ' ::-webkit-scrollbar { width: 3px; height: 3px; }' +
-    ' ::-webkit-scrollbar-track { background: transparent; }' +
-    ' ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }' +
-    ' ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }' +
-    ' * { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.15) transparent; }';
+    ' @keyframes spin { to { transform: rotate(360deg); } }';
   document.head.appendChild(style);
 }
 
-var inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', background: C.ELEVATED,
-  border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13,
+var fieldInputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 14px', background: C.ELEVATED,
+  border: '1px solid ' + C.BORDER, borderRadius: 10, color: C.TEXT, fontSize: 14,
   boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
 };
 
-var subjectInputStyle: React.CSSProperties = {
-  width: '100%', padding: '7px 10px', background: '#FFFFFF',
-  border: '1px solid ' + C.BORDER, borderRadius: 6, color: C.TEXT, fontSize: 13,
-  boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
-};
-
-var iconBtnStyle: React.CSSProperties = {
+var eyeBtnStyle: React.CSSProperties = {
+  position: 'absolute', bottom: 8, right: 8,
+  width: 30, height: 30, borderRadius: 8,
+  background: 'rgba(255,255,255,0.92)', border: '1px solid ' + C.BORDER,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  width: 32, height: 32, borderRadius: 6, border: 'none',
-  background: 'transparent', cursor: 'pointer', color: C.TEXT_MUTED,
-  transition: 'all 0.12s',
-};
-
-var sidebarInputStyle: React.CSSProperties = {
-  width: '100%', padding: '9px 12px', background: C.ELEVATED,
-  border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.TEXT, fontSize: 13,
-  boxSizing: 'border-box', transition: 'border-color 0.15s, box-shadow 0.15s',
+  cursor: 'pointer', color: C.TEXT_MUTED, transition: 'all 0.2s',
+  zIndex: 5, backdropFilter: 'blur(4px)',
+  boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
 };

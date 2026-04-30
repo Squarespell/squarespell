@@ -7,7 +7,7 @@ export type StepKey = 'setup' | 'audience' | 'design' | 'review';
 var STEPS: { key: StepKey; label: string; hint: string }[] = [
   { key: 'setup',    label: 'Setup',    hint: 'Name your campaign' },
   { key: 'audience', label: 'Audience', hint: 'Who gets this email' },
-  { key: 'design',   label: 'Design',   hint: 'Pick and edit your email' },
+  { key: 'design',   label: 'Design',   hint: 'Choose your template' },
   { key: 'review',   label: 'Send',     hint: 'Preview and send' },
 ];
 
