@@ -96,19 +96,19 @@ function templateSubtitle(tpl: QuizTemplateData, businessType: string): string {
   var biz = (businessType || '').toLowerCase();
   // Map template categories to contextual descriptions
   var contextMap: Record<string, string> = {
-    'product_recommendation': 'Help visitors find the right ' + (biz || 'product') + ' for their needs',
-    'personalized_skincare': 'Build a custom skincare routine for each visitor',
-    'customer_feedback': 'Collect post-purchase feedback in a conversational format',
-    'product_research': 'Understand how your audience finds and evaluates your product',
-    'lead_generation': 'Qualify leads automatically by business size and readiness',
-    'product_feedback': 'Gather actionable feedback on features and usability',
-    'event_feedback': 'Capture attendee satisfaction while the experience is fresh',
-    'employee_satisfaction': 'Anonymous pulse survey for workplace culture insights',
-    'custom_apparel': 'Guided custom apparel ordering with visual style selection',
-    'subscription_renewal': 'Streamline renewals with personalized upgrade offers',
-    'data_capture': 'Capture contact info through an engaging conversational flow',
-    'ecommerce_lead_gen': 'Convert browsers into subscribers with visual style preferences',
-    'trivia_challenge': 'Test audience knowledge and build authority with scored quizzes',
+    'photography_style': 'Match clients to the right photography package for their style',
+    'restaurant_menu': 'Guide diners to their perfect dish and boost reservations',
+    'fitness_goal': 'Match visitors to the right fitness program for their goals',
+    'product_finder': 'Help visitors find the right ' + (biz || 'product') + ' for their needs',
+    'wedding_style': 'Help couples discover their wedding aesthetic and book a consultation',
+    'coaching_style': 'Segment prospects by business stage and route to the right offer',
+    'home_style': 'Help clients discover their interior design style with visuals',
+    'skincare_routine': 'Build a custom skincare routine for each visitor',
+    'creative_archetype': 'Help creatives discover their artistic identity and grow their brand',
+    'podcast_personality': 'Match creators to their content style and grow your email list',
+    'real_estate_buyer': 'Qualify buyers by budget, timeline, and neighborhood preferences',
+    'travel_style': 'Match travelers to their ideal trip type and capture leads',
+    'nonprofit_engagement': 'Route supporters to donate, volunteer, or advocate based on fit',
   };
   if (contextMap[tpl.id]) return contextMap[tpl.id];
   // fallback: use "Popular for [audience]" if we matched on audience
