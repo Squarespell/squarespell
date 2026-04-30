@@ -2391,6 +2391,8 @@ export interface QuizBlockEditorProps {
   userPlan?: UserPlan;
   /** Override the back-arrow destination (default: /dashboard/quizzes) */
   backUrl?: string;
+  /** Quiz ID — used for linking to A/B testing, analytics, etc. */
+  quizId?: string;
 }
 
 /** Plan badge shown inline next to gated features */
@@ -2420,7 +2422,7 @@ function hasPlanAccess(userPlan: UserPlan | undefined, required: 'starter' | 'pr
   return userTier >= requiredTier;
 }
 
-export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange, userPlan, backUrl }: QuizBlockEditorProps) {
+export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange, userPlan, backUrl, quizId }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
   var [selectedId, setSelectedId] = useState<string | null>(null);
@@ -3287,6 +3289,41 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
                 />
               </div>
             </div>
+
+            {/* A/B Testing */}
+            {quizId && (
+              <a
+                href={'/dashboard/quiz/' + quizId + '/ab-testing'}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '16px 20px', background: '#F9FAFB', borderRadius: 14,
+                  border: '1px solid ' + C.BORDER, marginBottom: 20,
+                  textDecoration: 'none', color: C.TEXT,
+                  transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
+              >
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: 'rgba(13,115,119,0.08)', color: C.ACCENT,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+                  </svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                    A/B Testing{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>
+                    Test quiz variants and compare conversion rates
+                  </div>
+                </div>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+              </a>
+            )}
 
             {/* Feature summary */}
             <div style={{ background: '#F9FAFB', borderRadius: 14, padding: 20, marginBottom: 20 }}>
