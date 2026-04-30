@@ -1758,7 +1758,14 @@ userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const PRICE_IDS: Record<string,Record<string,string>> = { growth: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! }, pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! }, agency: { monthly: process.env.STRIPE_AGENCY_PRICE_ID!, yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID! } };
+const PRICE_IDS: Record<string,Record<string,string>> = {
+  starter: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! },
+  pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! },
+  business: { monthly: process.env.STRIPE_BUSINESS_PRICE_ID!, yearly: process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID! },
+  // Legacy aliases for existing subscribers
+  growth: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! },
+  agency: { monthly: process.env.STRIPE_BUSINESS_PRICE_ID!, yearly: process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID! },
+};
 
 // Reverse lookup: Stripe price ID → our plan name
 function priceIdToPlan(priceId: string): string | null {

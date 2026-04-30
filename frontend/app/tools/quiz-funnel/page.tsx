@@ -40,32 +40,33 @@ type Plan = {
 var PLANS: Plan[] = [
   {
     name: 'Starter',
-    monthly: 19,
-    yearly: 15,
-    desc: 'Perfect for trying Squarespell.',
+    monthly: 12,
+    yearly: 9,
+    desc: 'Remove branding and grow your list.',
     features: [
-      '3 active quizzes',
-      '500 leads / month',
-      'Unlimited responses',
-      'Basic analytics',
-      'Standard templates',
+      '3 quizzes',
+      '500 responses / month',
+      '500 emails / month',
+      'AI quiz generation',
+      'Remove branding',
+      'Standard analytics',
     ],
     cta: 'Start free',
     href: TRY_URL,
   },
   {
     name: 'Pro',
-    monthly: 39,
-    yearly: 31,
-    desc: 'Everything you need to scale.',
+    monthly: 25,
+    yearly: 19,
+    desc: 'Full power for serious lead gen.',
     features: [
       'Unlimited quizzes',
-      '5,000 leads / month',
-      'AI quiz generation',
-      'Logic branching & A/B',
-      'Advanced analytics',
+      '2,000 responses / month',
+      '2,000 emails / month',
+      'A/B testing & branching logic',
       'All integrations & webhooks',
-      'Custom domain & CSS',
+      'Email sequences',
+      'Advanced analytics',
     ],
     cta: 'Start free',
     href: TRY_URL,
@@ -73,14 +74,14 @@ var PLANS: Plan[] = [
   },
   {
     name: 'Business',
-    monthly: 79,
-    yearly: 63,
-    desc: 'For teams & multi-client work.',
+    monthly: 49,
+    yearly: 39,
+    desc: 'For agencies and power users.',
     features: [
       'Everything in Pro',
-      'Unlimited leads',
-      'White-label & team seats',
-      'Client workspaces (10)',
+      'Unlimited responses & emails',
+      'White-label & custom domain',
+      'Team seats',
       'Priority support',
       'API access',
     ],
@@ -880,7 +881,7 @@ export default function LandingPage() {
               );
             })}
           </div>
-          <div className="pricing-foot">All plans include unlimited responses &middot; cancel anytime</div>
+          <div className="pricing-foot">Need more emails? Add packs from $5/mo on any paid plan &middot; Cancel anytime</div>
         </div>
       </section>
 

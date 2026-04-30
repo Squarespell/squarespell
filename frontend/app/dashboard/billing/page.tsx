@@ -25,7 +25,7 @@ import {
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type UserPlan = {
-  plan: 'free' | 'trial' | 'starter' | 'growth' | 'pro' | 'agency';
+  plan: 'free' | 'trial' | 'starter' | 'pro' | 'business';
   quiz_count: number;
   limits: { quizzes: number; leads: number; emails: number };
   trial_ends_at: string | null;
@@ -58,31 +58,31 @@ const PLAN_CATALOG: Array<{
     monthlyPrice: 0,
     yearlyPrice: 0,
     tagline: 'Get started with Squarespell',
-    features: ['1 quiz', '100 leads / month', '50 emails / month', 'Basic analytics'],
+    features: ['1 quiz', '50 responses / month', '50 emails / month', 'Basic analytics', 'Squarespell branding'],
   },
   {
-    id: 'growth',
+    id: 'starter',
     name: 'Starter',
-    monthlyPrice: 19,
-    yearlyPrice: 180,
-    tagline: 'For coaches and consultants scaling their leads',
-    features: ['5 quizzes', '500 leads / month', 'AI quiz generation', 'Squarespace embed', 'Remove branding'],
+    monthlyPrice: 12,
+    yearlyPrice: 108,
+    tagline: 'Remove branding and grow your list',
+    features: ['3 quizzes', '500 responses / month', '500 emails / month', 'AI quiz generation', 'Remove branding', 'Standard analytics'],
   },
   {
     id: 'pro',
     name: 'Pro',
-    monthlyPrice: 39,
-    yearlyPrice: 372,
-    tagline: 'For growing businesses serious about leads',
-    features: ['20 quizzes', '5,000 leads / month', 'Conversion insights', 'Zapier + webhooks', 'Priority support'],
+    monthlyPrice: 25,
+    yearlyPrice: 228,
+    tagline: 'Full power for serious lead generation',
+    features: ['Unlimited quizzes', '2,000 responses / month', '2,000 emails / month', 'A/B testing', 'Branching logic', 'All integrations & webhooks', 'Email sequences', 'Advanced analytics'],
   },
   {
-    id: 'agency',
-    name: 'Agency',
-    monthlyPrice: 79,
-    yearlyPrice: 756,
-    tagline: 'White-label for client work',
-    features: ['Unlimited quizzes', 'Unlimited leads', 'White-label branding', 'Multi-site management', 'Dedicated support'],
+    id: 'business',
+    name: 'Business',
+    monthlyPrice: 49,
+    yearlyPrice: 468,
+    tagline: 'For agencies and power users',
+    features: ['Everything in Pro', 'Unlimited responses', 'Unlimited emails', 'White-label branding', 'Custom domain', 'Team seats', 'Priority support'],
   },
 ];
 
@@ -162,7 +162,7 @@ function CurrentPlanBadge({ plan }: { plan: UserPlan }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 28, fontWeight: 800, color: C.ACCENT, textTransform: 'capitalize' }}>
-              {plan.plan === 'growth' ? 'Starter' : plan.plan}
+              {plan.plan}
             </span>
             <Pill variant={plan.plan === 'trial' || plan.plan === 'free' ? 'accent' : 'live'}>
               {plan.plan === 'trial' || plan.plan === 'free' ? 'Trial' : 'Active'}
@@ -275,7 +275,7 @@ export default function BillingPage() {
   var { token, status: authStatus } = useDashboardAuth();
   var [plan, setPlan] = useState<UserPlan | null>(null);
   var [loading, setLoading] = useState(true);
-  var [yearly, setYearly] = useState(false);
+  var [yearly, setYearly] = useState(true);
   var [error, setError] = useState(false);
 
   function fetchPlan() {
@@ -475,7 +475,7 @@ export default function BillingPage() {
     );
   }
 
-  var displayPlanName = plan.plan === 'growth' ? 'Starter' : plan.plan;
+  var displayPlanName = plan.plan;
 
   return (
     <DashboardShell title="Billing & plan">
@@ -576,10 +576,7 @@ export default function BillingPage() {
               var billedNote = yearly
                 ? 'Billed $' + p.yearlyPrice + '/year'
                 : null;
-              var isCurrentPlan = (p.id === 'free' && plan.plan === 'free') ||
-                                 (p.id === 'growth' && plan.plan === 'growth') ||
-                                 (p.id === 'pro' && plan.plan === 'pro') ||
-                                 (p.id === 'agency' && plan.plan === 'agency');
+              var isCurrentPlan = plan.plan === p.id;
               return (
                 <div
                   key={p.id}

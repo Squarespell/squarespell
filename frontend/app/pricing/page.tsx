@@ -9,93 +9,99 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender
 type Billing = 'monthly' | 'yearly';
 
 const PLANS = {
-  growth: {
-    name: 'Growth',
-    desc: 'For coaches and consultants ready to capture leads at scale',
-    monthly: 29, yearly: 23, cta: 'Start free trial', featured: false,
+  starter: {
+    name: 'Starter',
+    desc: 'Perfect for Squarespace owners getting started with quizzes',
+    monthly: 12, yearly: 9, cta: 'Start free trial', featured: false,
     features: [
-      { text: '10 live quizzes', included: true },
-      { text: '2,500 leads per month', included: true },
-      { text: '2,500 emails per month', included: true },
+      { text: '3 live quizzes', included: true },
+      { text: '500 responses per month', included: true },
+      { text: '500 emails per month', included: true },
       { text: 'AI quiz generation from your website', included: true },
       { text: 'Squarespace one-click connect', included: true },
       { text: 'Remove Squarespell branding', included: true },
-      { text: 'Zapier and webhook integration', included: true },
       { text: 'Standard analytics', included: true },
       { text: 'A/B test quiz versions', included: false },
-      { text: 'Advanced analytics dashboard', included: false },
+      { text: 'Branching logic', included: false },
+      { text: 'Integrations & webhooks', included: false },
       { text: 'Priority support', included: false },
     ],
   },
   pro: {
     name: 'Pro',
-    desc: 'For growing businesses serious about turning visitors into clients',
-    monthly: 79, yearly: 63, cta: 'Start free trial', featured: true,
+    desc: 'Full power for serious lead generation and conversion',
+    monthly: 25, yearly: 19, cta: 'Start free trial', featured: true,
     features: [
-      { text: '50 live quizzes', included: true },
-      { text: '10,000 leads per month', included: true },
-      { text: '10,000 emails per month', included: true },
-      { text: 'Everything in Growth', included: true },
+      { text: 'Unlimited quizzes', included: true },
+      { text: '2,000 responses per month', included: true },
+      { text: '2,000 emails per month', included: true },
+      { text: 'Everything in Starter', included: true },
       { text: 'A/B test quiz versions', included: true },
-      { text: 'Conversion insights and lead scoring', included: true },
-      { text: 'Advanced analytics dashboard', included: true },
-      { text: 'Priority email support', included: true },
-      { text: 'White-label (your brand)', included: false },
-      { text: 'Client reporting dashboard', included: false },
+      { text: 'Branching logic & scoring', included: true },
+      { text: 'All integrations & webhooks', included: true },
+      { text: 'Email sequences', included: true },
+      { text: 'Advanced analytics', included: true },
+      { text: 'Custom CSS & scheduling', included: true },
+      { text: 'White-label & custom domain', included: false },
     ],
   },
-  agency: {
-    name: 'Agency',
-    desc: 'For agencies managing quiz funnels across multiple Squarespace clients',
-    monthly: 199, yearly: 159, cta: 'Start free trial', featured: false,
+  business: {
+    name: 'Business',
+    desc: 'For agencies and power users who need everything unlimited',
+    monthly: 49, yearly: 39, cta: 'Start free trial', featured: false,
     features: [
-      { text: 'Unlimited live quizzes', included: true },
-      { text: 'Unlimited leads', included: true },
-      { text: '25,000 emails per month', included: true },
+      { text: 'Unlimited quizzes', included: true },
+      { text: 'Unlimited responses', included: true },
+      { text: 'Unlimited emails', included: true },
       { text: 'Everything in Pro', included: true },
       { text: 'White-label (your brand)', included: true },
-      { text: 'Multi-site management', included: true },
-      { text: 'Client reporting dashboard', included: true },
-      { text: 'Custom onboarding call', included: true },
-      { text: 'Dedicated account manager', included: true },
-      { text: 'SLA-backed support', included: true },
-      { text: 'Team seats (coming soon)', included: true },
+      { text: 'Custom domain for quizzes', included: true },
+      { text: 'Team seats', included: true },
+      { text: 'Priority support', included: true },
+      { text: 'API access', included: true },
     ],
   },
 };
 
 const MATRIX = [
   { category: 'Core', rows: [
-    { label: 'Live quizzes', growth: '10', pro: '50', agency: 'Unlimited' },
-    { label: 'Leads per month', growth: '2,500', pro: '10,000', agency: 'Unlimited' },
-    { label: 'Emails per month', growth: '2,500', pro: '10,000', agency: '25,000' },
-    { label: 'AI quiz generation', growth: true, pro: true, agency: true },
-    { label: 'Squarespace one-click connect', growth: true, pro: true, agency: true },
-    { label: 'Lead dashboard and CSV export', growth: true, pro: true, agency: true },
-    { label: 'Email notifications', growth: true, pro: true, agency: true },
+    { label: 'Live quizzes', starter: '3', pro: 'Unlimited', business: 'Unlimited' },
+    { label: 'Responses per month', starter: '500', pro: '2,000', business: 'Unlimited' },
+    { label: 'Emails per month', starter: '500', pro: '2,000', business: 'Unlimited' },
+    { label: 'AI quiz generation', starter: true, pro: true, business: true },
+    { label: 'Squarespace one-click connect', starter: true, pro: true, business: true },
+    { label: 'Lead dashboard and CSV export', starter: true, pro: true, business: true },
+    { label: 'Email add-on packs', starter: true, pro: true, business: true },
   ]},
-  { category: 'Branding', rows: [
-    { label: 'Custom brand colors', growth: true, pro: true, agency: true },
-    { label: 'Remove Squarespell logo', growth: true, pro: true, agency: true },
-    { label: 'White-label (your brand)', growth: false, pro: false, agency: true },
+  { category: 'Branding & Design', rows: [
+    { label: 'Custom brand colors', starter: true, pro: true, business: true },
+    { label: 'Remove Squarespell logo', starter: true, pro: true, business: true },
+    { label: 'Custom CSS', starter: false, pro: true, business: true },
+    { label: 'White-label (your brand)', starter: false, pro: false, business: true },
+    { label: 'Custom domain for quizzes', starter: false, pro: false, business: true },
   ]},
   { category: 'Analytics & Growth', rows: [
-    { label: 'Standard analytics', growth: true, pro: true, agency: true },
-    { label: 'Conversion insights and lead scoring', growth: false, pro: true, agency: true },
-    { label: 'A/B test quiz versions', growth: false, pro: true, agency: true },
-    { label: 'Zapier and webhook integration', growth: true, pro: true, agency: true },
-    { label: 'Advanced analytics dashboard', growth: false, pro: true, agency: true },
+    { label: 'Standard analytics', starter: true, pro: true, business: true },
+    { label: 'Advanced analytics', starter: false, pro: true, business: true },
+    { label: 'A/B test quiz versions', starter: false, pro: true, business: true },
+    { label: 'Per-question drop-off', starter: false, pro: true, business: true },
   ]},
-  { category: 'Agency', rows: [
-    { label: 'Multi-site management', growth: false, pro: false, agency: true },
-    { label: 'Client reporting dashboard', growth: false, pro: false, agency: true },
-    { label: 'Custom onboarding call', growth: false, pro: false, agency: true },
-    { label: 'Dedicated account manager', growth: false, pro: false, agency: true },
+  { category: 'Logic & Automation', rows: [
+    { label: 'Branching logic', starter: false, pro: true, business: true },
+    { label: 'Weighted scoring', starter: false, pro: true, business: true },
+    { label: 'Email sequences', starter: false, pro: true, business: true },
+    { label: 'Quiz scheduling', starter: false, pro: true, business: true },
   ]},
-  { category: 'Support', rows: [
-    { label: 'Email support', growth: true, pro: true, agency: true },
-    { label: 'Priority support', growth: false, pro: true, agency: true },
-    { label: 'Dedicated account manager', growth: false, pro: false, agency: true },
+  { category: 'Integrations', rows: [
+    { label: 'Zapier & webhooks', starter: false, pro: true, business: true },
+    { label: 'Mailchimp, Klaviyo, ConvertKit', starter: false, pro: true, business: true },
+    { label: 'Google Sheets', starter: false, pro: true, business: true },
+    { label: 'HubSpot', starter: false, pro: true, business: true },
+  ]},
+  { category: 'Business', rows: [
+    { label: 'Team seats', starter: false, pro: false, business: true },
+    { label: 'API access', starter: false, pro: false, business: true },
+    { label: 'Priority support', starter: false, pro: true, business: true },
   ]},
 ];
 
@@ -103,9 +109,10 @@ const FAQS = [
   { q: 'Do I need a Squarespace subscription?', a: 'Yes, Squarespell works with any active Squarespace plan. You connect your site in one click through your dashboard. No code required.' },
   { q: 'What happens when my 7-day trial ends?', a: 'You choose a plan to continue. Your quizzes stay live so visitors can still see them, but new lead capture pauses until you upgrade. You keep all leads collected during your trial.' },
   { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no cancellation fees. Cancel from your account settings in under 10 seconds. Your access continues until the end of your current billing period.' },
-  { q: 'What exactly counts as a lead?', a: 'A lead is counted when someone completes your quiz and submits their email address. Partial completions and views never count against your monthly limit.' },
-  { q: 'How is Squarespell different from other tools?', a: 'Other tools charge $199+ per month for lead gen features. Squarespell has a generous free tier and paid plans starting at $29/mo, built specifically for Squarespace owners. Our AI generates a fully branded quiz from your website URL in under 60 seconds.' },
-  { q: 'I run an agency. Can I manage multiple client sites?', a: 'Yes. The Agency plan covers unlimited quizzes across unlimited sites, white-label branding so your clients see your brand, a client reporting dashboard, and a dedicated account manager.' },
+  { q: 'What exactly counts as a response?', a: 'A response is counted when someone completes your quiz. Partial completions and page views never count against your monthly limit.' },
+  { q: 'What if I need more emails but not a higher plan?', a: 'You can purchase email add-on packs on any paid plan. Add 1,000 emails for $5/mo, 5,000 for $15/mo, or 10,000 for $29/mo. No need to upgrade your whole plan just for more email capacity.' },
+  { q: 'How is Squarespell different from other tools?', a: 'Other quiz tools charge $99-299 per month. Squarespell starts at $9/mo (annual) with plans designed specifically for Squarespace owners. Our AI generates a fully branded quiz from your website URL in under 60 seconds.' },
+  { q: 'I run an agency. Can I manage multiple client sites?', a: 'Yes. The Business plan covers unlimited quizzes with unlimited responses, white-label branding so your clients see your brand, custom domains, and team seats.' },
 ];
 
 function Check({ color }: { color?: string }) {
@@ -135,7 +142,7 @@ export default function PricingPage() {
 function PricingInner() {
   const searchParams = useSearchParams();
   const initialInterval = searchParams.get('interval') === 'yearly' ? 'yearly' : 'monthly';
-  const [billing, setBilling] = useState<Billing>(initialInterval);
+  const [billing, setBilling] = useState<Billing>(initialInterval === 'monthly' ? 'monthly' : 'yearly');
   const [loading, setLoading] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { getToken, isSignedIn } = useAuth();
@@ -271,7 +278,7 @@ function PricingInner() {
           .trust { gap:16px; }
           .trust span { font-size:13px; }
         }
-        @media(max-width:600px){ .mtbl-wrap { padding:0; } .tscroll { background:transparent; border:none; border-radius:0; } .mtbl { min-width:0; width:100%; } .mtbl thead { display:none; } .mtbl,.mtbl tbody { display:block; width:100%; } .mtbl tr.cat { display:block; } .mtbl tr.dr { display:block; background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:10px; overflow:hidden; } .mtbl tr.dr td { display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-top:1px solid rgba(0,0,0,.05); font-size:15px; } .mtbl tr.dr td:first-child { font-weight:600; color:var(--t1); background:rgba(0,0,0,.03); border-top:none; display:block; } .mtbl tr.dr td:nth-child(2)::before { content:"Growth · "; color:var(--t4); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl tr.dr td:nth-child(3) { background:rgba(13,115,119,.06); } .mtbl tr.dr td:nth-child(3)::before { content:"Pro · "; color:var(--acc); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl tr.dr td:nth-child(4)::before { content:"Agency · "; color:var(--t4); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl th:nth-child(2),.mtbl td:nth-child(2),.mtbl th:nth-child(4),.mtbl td:nth-child(4) { display:none; } .mtbl th:first-child { width:60%; } .ctabox { flex-direction:column; padding:48px 20px; text-align:center; } .ctabox-right { align-items:center; width:100%; } .ctabtn { width:100%; }
+        @media(max-width:600px){ .mtbl-wrap { padding:0; } .tscroll { background:transparent; border:none; border-radius:0; } .mtbl { min-width:0; width:100%; } .mtbl thead { display:none; } .mtbl,.mtbl tbody { display:block; width:100%; } .mtbl tr.cat { display:block; } .mtbl tr.dr { display:block; background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:10px; overflow:hidden; } .mtbl tr.dr td { display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-top:1px solid rgba(0,0,0,.05); font-size:15px; } .mtbl tr.dr td:first-child { font-weight:600; color:var(--t1); background:rgba(0,0,0,.03); border-top:none; display:block; } .mtbl tr.dr td:nth-child(2)::before { content:"Starter · "; color:var(--t4); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl tr.dr td:nth-child(3) { background:rgba(13,115,119,.06); } .mtbl tr.dr td:nth-child(3)::before { content:"Pro · "; color:var(--acc); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl tr.dr td:nth-child(4)::before { content:"Business · "; color:var(--t4); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .mtbl th:nth-child(2),.mtbl td:nth-child(2),.mtbl th:nth-child(4),.mtbl td:nth-child(4) { display:none; } .mtbl th:first-child { width:60%; } .ctabox { flex-direction:column; padding:48px 20px; text-align:center; } .ctabox-right { align-items:center; width:100%; } .ctabtn { width:100%; }
           .toggle-wrap { flex-direction:column; gap:8px; }
           .pnum { font-size:28px; }
           .ctabox { border-radius:16px; padding:36px 20px; }
@@ -287,9 +294,9 @@ function PricingInner() {
 
           {/* HERO */}
           <div className="hero">
-            <div className="badge">10× cheaper than alternatives</div>
-            <h1>One quiz. More clients.<br /><em>No Squarespace expertise needed.</em></h1>
-            <p>Start free forever. Upgrade when you are ready. No credit card required.</p>
+            <div className="badge">Built for Squarespace budgets</div>
+            <h1>Plans that fit your<br /><em>Squarespace budget.</em></h1>
+            <p>Start free. Upgrade from $9/mo. Add email packs as you grow.</p>
             <div className="trust">
               {['2,400+ Squarespace owners', 'No credit card required', 'Cancel anytime'].map(t => (
                 <span key={t}>
@@ -308,7 +315,7 @@ function PricingInner() {
                 Yearly <span className="sbadge">Save 20%</span>
               </button>
             </div>
-            {billing === 'yearly' && <span className="saving">You save up to $480/year</span>}
+            {billing === 'yearly' && <span className="saving">You save up to $120/year</span>}
           </div>
 
           {/* FREE TIER */}
@@ -316,7 +323,7 @@ function PricingInner() {
             <div style={{ background: '#FFFFFF', border: '1px solid #E4E3E0', borderRadius: 16, padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Free</div>
-                <div style={{ fontSize: 15, color: 'rgba(26,26,26,0.60)', lineHeight: 1.55 }}>1 quiz, 100 leads/mo, 50 emails/mo - get started with no credit card</div>
+                <div style={{ fontSize: 15, color: 'rgba(26,26,26,0.60)', lineHeight: 1.55 }}>1 quiz, 50 responses/mo, 50 emails/mo - get started with no credit card</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontSize: 32, fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.04em' }}>$0</span>
@@ -365,9 +372,9 @@ function PricingInner() {
                 <thead>
                   <tr>
                     <th>Feature</th>
-                    <th className="to">Growth</th>
+                    <th className="to">Starter</th>
                     <th className="tp">Pro</th>
-                    <th className="to">Agency</th>
+                    <th className="to">Business</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -377,7 +384,7 @@ function PricingInner() {
                       {section.rows.map((row, ri) => (
                         <tr key={ri} className="dr">
                           <td>{row.label}</td>
-                          {(['growth', 'pro', 'agency'] as const).map(p => (
+                          {(['starter', 'pro', 'business'] as const).map(p => (
                             <td key={p} style={p === 'pro' ? {background:'rgba(13,115,119,0.05)',borderLeft:'1px solid rgba(13,115,119,0.12)',borderRight:'1px solid rgba(13,115,119,0.12)'} : {}}>
                               {typeof row[p] === 'boolean'
                                 ? (row[p] ? <Check color={p === 'pro' ? acc : '#4ade80'} /> : <Cross />)

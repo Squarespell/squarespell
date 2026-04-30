@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import styles from './UpgradePrompt.module.css';
 const MESSAGES = { quiz_limit: { icon: '✦', title: "You've hit your quiz limit", sub: "Upgrade to create more quizzes and capture more leads." }, lead_limit: { icon: '📬', title: "You've hit your lead limit this month", sub: "Upgrade to keep collecting leads without interruption." } };
-const UPGRADE_PLANS: Record<string,{id:string;name:string;price:number}[]> = { free:[{id:'starter',name:'Starter',price:19},{id:'pro',name:'Pro',price:39}], starter:[{id:'pro',name:'Pro',price:39},{id:'agency',name:'Agency',price:79}], pro:[{id:'agency',name:'Agency',price:79}], agency:[] };
+const UPGRADE_PLANS: Record<string,{id:string;name:string;price:number}[]> = { free:[{id:'starter',name:'Starter',price:9},{id:'pro',name:'Pro',price:19}], trial:[{id:'starter',name:'Starter',price:9},{id:'pro',name:'Pro',price:19}], starter:[{id:'pro',name:'Pro',price:19},{id:'business',name:'Business',price:39}], pro:[{id:'business',name:'Business',price:39}], business:[] };
 export default function UpgradePrompt({ reason, currentPlan, onDismiss }: { reason: 'quiz_limit'|'lead_limit'; currentPlan: string; onDismiss?: () => void }) {
   const [loading, setLoading] = useState<string|null>(null);
   const msg = MESSAGES[reason]; const plans = UPGRADE_PLANS[currentPlan] ?? [];

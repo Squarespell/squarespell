@@ -10,13 +10,15 @@ const supabase = createClient(
 
 const TRIAL_DAYS = 7;
 
-export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number; emails: number; removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string }> = {
-  free:    { quizzes: 1,        leads: 100,      emails: 50,    removeBranding: false, abTesting: false, zapier: false, analytics: 'basic' },
-  trial:   { quizzes: 3,        leads: 500,      emails: 200,   removeBranding: false, abTesting: false, zapier: false, analytics: 'basic' },
-  starter: { quizzes: 5,        leads: 500,      emails: 500,   removeBranding: false, abTesting: false, zapier: false, analytics: 'basic' },
-  growth:  { quizzes: 10,       leads: 2500,     emails: 2500,  removeBranding: true,  abTesting: false, zapier: true,  analytics: 'standard' },
-  pro:     { quizzes: 50,       leads: 10000,    emails: 10000, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced' },
-  agency:  { quizzes: Infinity, leads: Infinity, emails: 25000, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced' },
+export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number; emails: number; removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string; branchingLogic: boolean; integrations: boolean; emailSequences: boolean; whiteLabel: boolean; customDomain: boolean; teamSeats: boolean }> = {
+  free:     { quizzes: 1,        leads: 50,       emails: 50,       removeBranding: false, abTesting: false, zapier: false, analytics: 'basic',    branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
+  trial:    { quizzes: 3,        leads: 500,      emails: 500,      removeBranding: false, abTesting: false, zapier: false, analytics: 'basic',    branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
+  starter:  { quizzes: 3,        leads: 500,      emails: 500,      removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
+  pro:      { quizzes: Infinity, leads: 2000,     emails: 2000,     removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: false, customDomain: false, teamSeats: false },
+  business: { quizzes: Infinity, leads: Infinity, emails: Infinity, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: true,  customDomain: true,  teamSeats: true },
+  // Legacy aliases — map old plan names to new ones
+  growth:   { quizzes: 3,        leads: 500,      emails: 500,      removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
+  agency:   { quizzes: Infinity, leads: Infinity, emails: Infinity, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: true,  customDomain: true,  teamSeats: true },
 };
 
 export function getPlanLimits(plan: string) {
