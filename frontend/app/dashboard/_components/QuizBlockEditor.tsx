@@ -167,11 +167,13 @@ function IconRail({
   selectedId,
   onSelect,
   onAddQuestion,
+  onAddBlock,
 }: {
   blocks: QuizBlock[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onAddQuestion: () => void;
+  onAddBlock: (type: QuizBlockType) => void;
 }) {
   var questionBlocks = blocks.filter(function(b) { return b.type === 'question'; });
   var outcomeBlocks = blocks.filter(function(b) { return b.type === 'outcome'; });
@@ -192,15 +194,14 @@ function IconRail({
             onClick={function() { onSelect(qb.id); }}
             title={'Question ' + (qi + 1) + ': ' + ((qb as QuestionBlock).text || 'Untitled').slice(0, 40)}
             style={{
-              width: 40, height: 40, borderRadius: '50%',
+              width: 40, height: 36, borderRadius: 10,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', fontSize: 14, fontWeight: 700, border: 'none',
+              cursor: 'pointer', fontSize: 13, fontWeight: 700,
               transition: 'all 0.15s',
               background: isSelected ? C.ACCENT : 'transparent',
               color: isSelected ? '#fff' : C.TEXT_MUTED,
               boxShadow: isSelected ? '0 2px 8px rgba(13,115,119,0.3)' : 'none',
-              outline: isSelected ? 'none' : '2px solid ' + C.BORDER,
-              outlineOffset: -2,
+              border: isSelected ? 'none' : '1.5px solid ' + C.BORDER,
               fontFamily: C.FONT,
             }}
           >
@@ -220,13 +221,12 @@ function IconRail({
           onClick={function() { onSelect(leadGateBlock!.id); }}
           title="Lead Gate"
           style={{
-            width: 40, height: 40, borderRadius: '50%',
+            width: 40, height: 36, borderRadius: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', border: 'none', transition: 'all 0.15s',
+            cursor: 'pointer', transition: 'all 0.15s',
             background: selectedId === leadGateBlock.id ? '#ff9500' : 'transparent',
             color: selectedId === leadGateBlock.id ? '#fff' : C.TEXT_MUTED,
-            outline: selectedId === leadGateBlock.id ? 'none' : '2px solid ' + C.BORDER,
-            outlineOffset: -2,
+            border: selectedId === leadGateBlock.id ? 'none' : '1.5px solid ' + C.BORDER,
           }}
         >
           <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -244,13 +244,12 @@ function IconRail({
             onClick={function() { onSelect(ob.id); }}
             title={'Outcome: ' + ((ob as OutcomeBlock).title || 'Untitled')}
             style={{
-              width: 40, height: 40, borderRadius: '50%',
+              width: 40, height: 36, borderRadius: 10,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', border: 'none', transition: 'all 0.15s',
+              cursor: 'pointer', transition: 'all 0.15s',
               background: isSelected ? '#4cd964' : 'transparent',
               color: isSelected ? '#fff' : C.TEXT_MUTED,
-              outline: isSelected ? 'none' : '2px solid ' + C.BORDER,
-              outlineOffset: -2,
+              border: isSelected ? 'none' : '1.5px solid ' + C.BORDER,
             }}
           >
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -267,7 +266,7 @@ function IconRail({
       {/* Add question button */}
       <button type="button" onClick={onAddQuestion} title="Add question (Cmd+N)"
         style={{
-          width: 40, height: 40, borderRadius: '50%',
+          width: 40, height: 36, borderRadius: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', border: 'none',
           background: C.ACCENT, color: '#fff',
@@ -282,7 +281,7 @@ function IconRail({
       </button>
 
       {/* Add block dropdown */}
-      <AddBlockMenu onAdd={function() {}} />
+      <AddBlockMenu onAdd={onAddBlock} />
     </div>
   );
 }
@@ -686,15 +685,21 @@ function QuestionCanvas({
           <div style={{ fontSize: 11, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
             Question {String(questionNum).padStart(2, '0')}
           </div>
-          <textarea value={block.text || ''} onChange={function(e) { onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock); }}
+          <textarea value={block.text || ''} onChange={function(e) {
+              onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
             placeholder="Your question..."
             onClick={function(e) { e.stopPropagation(); }}
+            ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
             style={{
               fontSize: 22, fontWeight: 700, color: C.TEXT, border: 'none', outline: 'none',
               background: 'transparent', resize: 'none', fontFamily: C.FONT,
               lineHeight: 1.3, marginBottom: 20, width: '100%',
+              overflow: 'hidden', minHeight: 36,
             }}
-            rows={3}
+            rows={1}
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
             {block.options.map(function(opt, oi) {
@@ -730,7 +735,7 @@ function QuestionCanvas({
       maxWidth: 720, width: '100%', background: '#fff', borderRadius: 16,
       overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     }}>
-      {/* Hero media (video or image) */}
+      {/* Hero media (video or image) with delete overlay */}
       {hasMedia && (
         <div style={{
           width: '100%',
@@ -744,6 +749,17 @@ function QuestionCanvas({
             <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
               onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
           )}
+          {/* Remove media button */}
+          <button type="button"
+            onClick={function(e) { e.stopPropagation(); onChange(Object.assign({}, block, { mediaUrl: undefined, mediaType: undefined }) as QuestionBlock); }}
+            title="Remove media"
+            style={{
+              position: 'absolute', top: 8, right: 8, width: 30, height: 30,
+              borderRadius: 8, background: 'rgba(0,0,0,0.6)', border: 'none',
+              color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+          </button>
         </div>
       )}
 
@@ -754,15 +770,22 @@ function QuestionCanvas({
         </div>
         <textarea
           value={block.text || ''}
-          onChange={function(e) { onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock); }}
+          onChange={function(e) {
+            onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
+            e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight + 'px';
+          }}
           onClick={function(e) { e.stopPropagation(); }}
+          onFocus={function(e) { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+          ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
           placeholder="Enter your question here..."
           style={{
             width: '100%', fontSize: 26, fontWeight: 700, color: C.TEXT,
             border: 'none', outline: 'none', background: 'transparent',
             resize: 'none', fontFamily: C.FONT, lineHeight: 1.3,
+            overflow: 'hidden', minHeight: 40,
           }}
-          rows={2}
+          rows={1}
         />
         {block.subtitle && (
           <div style={{ fontSize: 14, color: C.TEXT_MUTED, marginTop: -4, marginBottom: 8 }}>{block.subtitle}</div>
@@ -1065,6 +1088,25 @@ function FloatingToolbar({
   var [mediaUrl, setMediaUrl] = useState('');
   var [timerVal, setTimerVal] = useState(String(block.timeLimit || ''));
   var fileRef = useRef<HTMLInputElement>(null);
+  var [pexelsQuery, setPexelsQuery] = useState('');
+  var [pexelsResults, setPexelsResults] = useState<{ id: string; thumb: string; regular: string; alt: string; credit: string }[]>([]);
+  var [pexelsLoading, setPexelsLoading] = useState(false);
+
+  function searchPexels(query: string) {
+    if (!query.trim()) return;
+    setPexelsLoading(true);
+    getClerkToken().then(function(token) {
+      fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(query), {
+        headers: token ? { Authorization: 'Bearer ' + token } : {},
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setPexelsResults(data.results || []);
+        setPexelsLoading(false);
+      })
+      .catch(function() { setPexelsLoading(false); });
+    });
+  }
 
   var layouts: { value: AnswerLayout; label: string }[] = [
     { value: 'list', label: 'List' },
@@ -1190,22 +1232,69 @@ function FloatingToolbar({
           Media
         </button>
         {activePopover === 'media' && (
-          <div style={{ position: 'absolute', bottom: 48, left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 16, minWidth: 240, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50 }}>
+          <div style={{ position: 'absolute', bottom: 48, left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 16, minWidth: 360, maxWidth: 420, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 10 }}>Add Media</div>
+
+            {/* Current media preview + remove */}
+            {block.mediaUrl && (
+              <div style={{ position: 'relative', marginBottom: 10, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
+                <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }}
+                  onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <button type="button" onClick={function() { onClearMedia(); }}
+                  style={{ position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 6, background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}
+                  title="Remove media">
+                  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+                </button>
+              </div>
+            )}
+
+            {/* Upload */}
             <button type="button" onClick={function() { fileRef.current?.click(); }}
-              style={{ width: '100%', padding: '12px', borderRadius: 8, border: '2px dashed ' + C.BORDER, background: '#FAFAFA', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.TEXT, fontFamily: C.FONT, marginBottom: 8 }}>
+              style={{ width: '100%', padding: '10px', borderRadius: 8, border: '2px dashed ' + C.BORDER, background: '#FAFAFA', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.TEXT, fontFamily: C.FONT, marginBottom: 8 }}>
               Upload image or video
             </button>
             <input ref={fileRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
-            <div style={{ display: 'flex', gap: 6 }}>
+
+            {/* Paste URL */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
               <input type="text" value={mediaUrl} onChange={function(e) { setMediaUrl(e.target.value); }}
-                placeholder="Paste URL..." onKeyDown={function(e) { if (e.key === 'Enter' && mediaUrl) { onChangeMedia(mediaUrl, mediaUrl.includes('youtube') || mediaUrl.includes('vimeo') ? 'video' : 'image'); setMediaUrl(''); setActivePopover(null); } }}
+                placeholder="Paste image URL..."
+                onKeyDown={function(e) { if (e.key === 'Enter' && mediaUrl) { onChangeMedia(mediaUrl, mediaUrl.includes('youtube') || mediaUrl.includes('vimeo') ? 'video' : 'image'); setMediaUrl(''); setActivePopover(null); } }}
                 style={{ flex: 1, padding: '8px 10px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
             </div>
-            {block.mediaUrl && (
-              <button type="button" onClick={function() { onClearMedia(); setActivePopover(null); }}
-                style={{ marginTop: 8, fontSize: 11, color: '#DC2626', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: C.FONT }}>Remove media</button>
-            )}
+
+            {/* Pexels search */}
+            <div style={{ borderTop: '1px solid ' + C.BORDER, paddingTop: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx={11} cy={11} r={8} /><line x1={21} y1={21} x2={16.65} y2={16.65} /></svg>
+                Search Pexels
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input type="text" value={pexelsQuery} onChange={function(e) { setPexelsQuery(e.target.value); }}
+                  placeholder="Search free photos..."
+                  onKeyDown={function(e) { if (e.key === 'Enter') searchPexels(pexelsQuery); }}
+                  style={{ flex: 1, padding: '8px 10px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+                <button type="button" onClick={function() { searchPexels(pexelsQuery); }}
+                  style={{ padding: '8px 12px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: C.FONT }}>
+                  {pexelsLoading ? '...' : 'Search'}
+                </button>
+              </div>
+              {pexelsResults.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 8, maxHeight: 180, overflowY: 'auto' }}>
+                  {pexelsResults.map(function(img) {
+                    return (
+                      <button key={img.id} type="button"
+                        onClick={function() { onChangeMedia(img.regular, 'image'); setActivePopover(null); setPexelsResults([]); setPexelsQuery(''); }}
+                        style={{ padding: 0, border: '2px solid transparent', borderRadius: 6, overflow: 'hidden', cursor: 'pointer', background: 'transparent', transition: 'border-color 0.1s' }}
+                        onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                        onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}>
+                        <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 64, objectFit: 'cover', display: 'block', borderRadius: 4 }} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1630,6 +1719,7 @@ export function QuizBlockEditor({
         selectedId={selectedId}
         onSelect={function(id) { setSelectedId(id); }}
         onAddQuestion={function() { addBlock('question'); }}
+        onAddBlock={function(type) { addBlock(type); }}
       />
 
       {/* Main area */}
