@@ -597,6 +597,173 @@ function AnswerRow({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Answer Image Picker — mini picker for answer option images          */
+/*  Shows Upload + Browse (Pexels) tabs, positioned near click point   */
+/* ------------------------------------------------------------------ */
+
+function AnswerImagePicker({
+  onSelect,
+  onClose,
+  anchorEl,
+}: {
+  onSelect: (url: string) => void;
+  onClose: () => void;
+  anchorEl: HTMLElement | null;
+}) {
+  var [tab, setTab] = useState<'upload' | 'browse'>('browse');
+  var [pexelsQuery, setPexelsQuery] = useState('');
+  var [pexelsResults, setPexelsResults] = useState<{ id: string; thumb: string; regular: string; alt: string }[]>([]);
+  var [pexelsLoading, setPexelsLoading] = useState(false);
+  var [uploading, setUploading] = useState(false);
+  var fileRef = useRef<HTMLInputElement>(null);
+  var [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  useEffect(function() {
+    var pickerWidth = 360;
+    var pickerHeight = 340;
+    if (anchorEl) {
+      var rect = anchorEl.getBoundingClientRect();
+      var leftPos = rect.left + rect.width / 2 - pickerWidth / 2;
+      if (leftPos < 16) leftPos = 16;
+      if (leftPos + pickerWidth > window.innerWidth - 16) leftPos = window.innerWidth - pickerWidth - 16;
+      var topPos = rect.bottom + 8;
+      if (topPos + pickerHeight > window.innerHeight - 16) topPos = rect.top - pickerHeight - 8;
+      if (topPos < 16) topPos = 16;
+      setPos({ top: topPos, left: leftPos });
+    } else {
+      setPos({
+        top: Math.max(16, (window.innerHeight - pickerHeight) / 2),
+        left: Math.max(16, (window.innerWidth - pickerWidth) / 2),
+      });
+    }
+  }, []);
+
+  useEffect(function() { searchPexels('abstract'); }, []);
+
+  function searchPexels(query: string) {
+    if (!query.trim()) return;
+    setPexelsLoading(true);
+    getClerkToken().then(function(token) {
+      fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(query), {
+        headers: token ? { Authorization: 'Bearer ' + token } : {},
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setPexelsResults(data.results || []); setPexelsLoading(false); })
+      .catch(function() { setPexelsLoading(false); });
+    });
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    var file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { alert('File too large. Max 20MB.'); return; }
+    setUploading(true);
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = (reader.result as string).split(',')[1];
+      getClerkToken().then(function(token) {
+        fetch(API_BASE + '/api/media/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
+          body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) { setUploading(false); if (data.url) { onSelect(data.url); onClose(); } })
+        .catch(function(err) { setUploading(false); console.error('Upload error:', err); });
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 45 }} onClick={onClose} />
+      <div style={{
+        position: 'fixed', top: pos.top, left: pos.left,
+        background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
+        width: 360, padding: 14, boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+        zIndex: 50,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>Choose image</div>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: 0, marginBottom: 12, background: '#F2F4F7', borderRadius: 9, padding: 3 }}>
+          {(['upload', 'browse'] as const).map(function(t) {
+            var active = tab === t;
+            var label = t === 'upload' ? 'Upload' : 'Browse images';
+            return (
+              <button key={t} type="button" onClick={function() { setTab(t); }}
+                style={{
+                  flex: 1, padding: '6px 6px', borderRadius: 7, border: 'none',
+                  background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#667085',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
+                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                }}>
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {tab === 'upload' && (
+          <>
+            <button type="button" onClick={function() { fileRef.current?.click(); }}
+              style={{
+                width: '100%', padding: '22px 12px', borderRadius: 10,
+                border: '2px dashed #D0D5DD', background: '#FAFBFC',
+                cursor: uploading ? 'default' : 'pointer',
+                fontSize: 12, fontWeight: 600, color: '#344054', fontFamily: C.FONT,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                opacity: uploading ? 0.6 : 1,
+              }}>
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+              {uploading ? 'Uploading...' : 'Click to upload'}
+              <span style={{ fontSize: 10, color: '#98A2B3', fontWeight: 400 }}>PNG, JPG, GIF up to 20MB</span>
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+          </>
+        )}
+        {tab === 'browse' && (
+          <>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              <input type="text" value={pexelsQuery} onChange={function(e) { setPexelsQuery(e.target.value); }}
+                placeholder="Search free photos..."
+                onKeyDown={function(e) { if (e.key === 'Enter') searchPexels(pexelsQuery); }}
+                style={{ flex: 1, padding: '8px 10px', border: '1px solid #D0D5DD', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+              <button type="button" onClick={function() { searchPexels(pexelsQuery); }}
+                style={{ padding: '8px 12px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
+                {pexelsLoading ? '...' : 'Search'}
+              </button>
+            </div>
+            {pexelsResults.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5, maxHeight: 200, overflowY: 'auto', borderRadius: 6 }}>
+                {pexelsResults.map(function(img) {
+                  return (
+                    <button key={img.id} type="button" onClick={function() { onSelect(img.regular); onClose(); }}
+                      style={{ padding: 0, border: '2px solid transparent', borderRadius: 6, overflow: 'hidden', cursor: 'pointer', background: '#F2F4F7', transition: 'border-color 0.1s' }}
+                      onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                      onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}>
+                      <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 65, objectFit: 'cover', display: 'block' }} />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#98A2B3', fontSize: 12 }}>
+                {pexelsLoading ? 'Loading...' : 'Search for free stock photos'}
+              </div>
+            )}
+            <div style={{ marginTop: 6, fontSize: 10, color: '#98A2B3', textAlign: 'center' }}>Photos provided by Pexels</div>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Grid Answer Card (for grid / fullBackground layouts)               */
 /* ------------------------------------------------------------------ */
 
@@ -623,6 +790,7 @@ function GridAnswerCard({
 }) {
   var [hover, setHover] = useState(false);
   var [showPicker, setShowPicker] = useState(false);
+  var cardRef = useRef<HTMLDivElement>(null);
   var fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -648,22 +816,33 @@ function GridAnswerCard({
 
   return (
     <div
+      ref={cardRef}
       onMouseEnter={function() { setHover(true); }}
       onMouseLeave={function() { setHover(false); }}
       style={{
-        position: 'relative', borderRadius: 12, overflow: 'hidden',
+        position: 'relative', borderRadius: 12, overflow: 'visible',
         border: '1px solid ' + C.BORDER, background: '#fff',
         transition: 'all 0.15s',
         boxShadow: hover ? '0 4px 12px rgba(0,0,0,0.08)' : 'none',
       }}
     >
+      {/* Answer image picker modal */}
+      {showPicker && (
+        <AnswerImagePicker
+          anchorEl={cardRef.current}
+          onSelect={function(url) { onChangeImage(url); setShowPicker(false); }}
+          onClose={function() { setShowPicker(false); }}
+        />
+      )}
+
       {/* Image area */}
       <div style={{
         height: isFullBg ? 160 : 120, background: opt.imageUrl ? 'transparent' : '#F2F4F7',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', cursor: opt.imageUrl ? 'default' : 'pointer',
+        borderRadius: '12px 12px 0 0', overflow: 'hidden',
       }}
-        onClick={function() { if (!opt.imageUrl) { fileInputRef.current?.click(); } }}
+        onClick={function() { if (!opt.imageUrl) { setShowPicker(true); } }}
       >
         {opt.imageUrl ? (
           <img src={opt.imageUrl} alt={opt.text || ''} style={{
@@ -697,7 +876,7 @@ function GridAnswerCard({
             background: 'rgba(0,0,0,0.45)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            <button type="button" onClick={function(e) { e.stopPropagation(); fileInputRef.current?.click(); }}
+            <button type="button" onClick={function(e) { e.stopPropagation(); setShowPicker(true); }}
               style={{
                 padding: '5px 10px', borderRadius: 6,
                 background: 'rgba(255,255,255,0.92)', border: 'none',
@@ -786,28 +965,8 @@ function ThumbnailAnswerRow({
 }) {
   var [hover, setHover] = useState(false);
   var [thumbHover, setThumbHover] = useState(false);
-  var fileRef = useRef<HTMLInputElement>(null);
-
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    var file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { alert('File too large. Max 20MB.'); return; }
-    var reader = new FileReader();
-    reader.onload = function() {
-      var base64 = (reader.result as string).split(',')[1];
-      getClerkToken().then(function(token) {
-        fetch(API_BASE + '/api/media/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
-          body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) { if (data.url) onChangeImage(data.url); })
-        .catch(function(err) { console.error('Upload error:', err); });
-      });
-    };
-    reader.readAsDataURL(file);
-  }
+  var [showPicker, setShowPicker] = useState(false);
+  var thumbRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
@@ -821,8 +980,18 @@ function ThumbnailAnswerRow({
         transition: 'all 0.12s',
       }}
     >
+      {/* Answer image picker */}
+      {showPicker && (
+        <AnswerImagePicker
+          anchorEl={thumbRef.current}
+          onSelect={function(url) { onChangeImage(url); setShowPicker(false); }}
+          onClose={function() { setShowPicker(false); }}
+        />
+      )}
+
       {/* Thumbnail with hover overlay */}
       <div
+        ref={thumbRef}
         style={{
           width: 56, height: 56, borderRadius: 8, overflow: 'hidden',
           background: '#F2F4F7', flexShrink: 0, position: 'relative',
@@ -830,7 +999,7 @@ function ThumbnailAnswerRow({
         }}
         onMouseEnter={function() { setThumbHover(true); }}
         onMouseLeave={function() { setThumbHover(false); }}
-        onClick={function() { fileRef.current?.click(); }}
+        onClick={function() { setShowPicker(true); }}
       >
         {opt.imageUrl ? (
           <img src={opt.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -847,7 +1016,7 @@ function ThumbnailAnswerRow({
             position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2,
           }}>
-            <button type="button" onClick={function(e) { e.stopPropagation(); fileRef.current?.click(); }}
+            <button type="button" onClick={function(e) { e.stopPropagation(); setShowPicker(true); }}
               title="Replace"
               style={{ width: 22, height: 22, borderRadius: 4, background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#344054' }}>
               <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
@@ -859,7 +1028,6 @@ function ThumbnailAnswerRow({
             </button>
           </div>
         )}
-        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
       </div>
 
       {/* Text */}
@@ -1247,16 +1415,29 @@ function ImagePicker({
   var pickerRef = useRef<HTMLDivElement>(null);
   var [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-  /* Position near the anchor button */
+  /* Position near the anchor button, or center on screen if anchor is not visible */
   useEffect(function() {
+    var pickerWidth = 400;
+    var pickerHeight = 380;
     if (anchorRef.current) {
       var rect = anchorRef.current.getBoundingClientRect();
-      var pickerWidth = 400;
-      var leftPos = rect.left + rect.width / 2 - pickerWidth / 2;
-      if (leftPos < 16) leftPos = 16;
-      if (leftPos + pickerWidth > window.innerWidth - 16) leftPos = window.innerWidth - pickerWidth - 16;
-      setPos({ top: rect.bottom + 8, left: leftPos });
+      var inViewport = rect.top >= 0 && rect.bottom <= window.innerHeight && rect.left >= 0 && rect.right <= window.innerWidth;
+      if (inViewport) {
+        var leftPos = rect.left + rect.width / 2 - pickerWidth / 2;
+        if (leftPos < 16) leftPos = 16;
+        if (leftPos + pickerWidth > window.innerWidth - 16) leftPos = window.innerWidth - pickerWidth - 16;
+        var topPos = rect.bottom + 8;
+        if (topPos + pickerHeight > window.innerHeight - 16) topPos = rect.top - pickerHeight - 8;
+        if (topPos < 16) topPos = 16;
+        setPos({ top: topPos, left: leftPos });
+        return;
+      }
     }
+    /* Fallback: center on screen */
+    setPos({
+      top: Math.max(16, (window.innerHeight - pickerHeight) / 2),
+      left: Math.max(16, (window.innerWidth - pickerWidth) / 2),
+    });
   }, []);
 
   /* Auto-load Pexels on mount */
@@ -1420,16 +1601,29 @@ function VideoPicker({
   var fileRef = useRef<HTMLInputElement>(null);
   var [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-  /* Position near the anchor button */
+  /* Position near the anchor button, or center on screen if anchor is not visible */
   useEffect(function() {
+    var pickerWidth = 400;
+    var pickerHeight = 300;
     if (anchorRef.current) {
       var rect = anchorRef.current.getBoundingClientRect();
-      var pickerWidth = 400;
-      var leftPos = rect.left + rect.width / 2 - pickerWidth / 2;
-      if (leftPos < 16) leftPos = 16;
-      if (leftPos + pickerWidth > window.innerWidth - 16) leftPos = window.innerWidth - pickerWidth - 16;
-      setPos({ top: rect.bottom + 8, left: leftPos });
+      var inViewport = rect.top >= 0 && rect.bottom <= window.innerHeight && rect.left >= 0 && rect.right <= window.innerWidth;
+      if (inViewport) {
+        var leftPos = rect.left + rect.width / 2 - pickerWidth / 2;
+        if (leftPos < 16) leftPos = 16;
+        if (leftPos + pickerWidth > window.innerWidth - 16) leftPos = window.innerWidth - pickerWidth - 16;
+        var topPos = rect.bottom + 8;
+        if (topPos + pickerHeight > window.innerHeight - 16) topPos = rect.top - pickerHeight - 8;
+        if (topPos < 16) topPos = 16;
+        setPos({ top: topPos, left: leftPos });
+        return;
+      }
     }
+    /* Fallback: center on screen */
+    setPos({
+      top: Math.max(16, (window.innerHeight - pickerHeight) / 2),
+      left: Math.max(16, (window.innerWidth - pickerWidth) / 2),
+    });
   }, []);
 
   function handleUrlSubmit() {
