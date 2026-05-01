@@ -333,6 +333,16 @@ export function legacyToBlocks(quiz: {
       imageUrl: o.imageUrl || o.image_url || undefined,
       shareEnabled: o.shareEnabled || undefined,
       shareText: o.shareText || o.share_text || undefined,
+      tips: o.tips || undefined,
+      couponCode: o.couponCode || o.coupon_code || undefined,
+      couponLabel: o.couponLabel || o.coupon_label || undefined,
+      products: o.products || undefined,
+      bookingUrl: o.bookingUrl || o.booking_url || undefined,
+      bookingText: o.bookingText || o.booking_text || undefined,
+      testimonialQuote: o.testimonialQuote || o.testimonial_quote || undefined,
+      testimonialAuthor: o.testimonialAuthor || o.testimonial_author || undefined,
+      beforeText: o.beforeText || o.before_text || undefined,
+      afterText: o.afterText || o.after_text || undefined,
     } as OutcomeBlock);
   }
 
@@ -385,6 +395,16 @@ export function blocksToLegacy(blocks: QuizBlock[]): {
         imageUrl: ob.imageUrl || undefined,
         shareEnabled: ob.shareEnabled || undefined,
         shareText: ob.shareText || undefined,
+        tips: ob.tips && ob.tips.length > 0 ? ob.tips : undefined,
+        couponCode: ob.couponCode || undefined,
+        couponLabel: ob.couponLabel || undefined,
+        products: ob.products && ob.products.length > 0 ? ob.products : undefined,
+        bookingUrl: ob.bookingUrl || undefined,
+        bookingText: ob.bookingText || undefined,
+        testimonialQuote: ob.testimonialQuote || undefined,
+        testimonialAuthor: ob.testimonialAuthor || undefined,
+        beforeText: ob.beforeText || undefined,
+        afterText: ob.afterText || undefined,
       });
     } else if (block.type === 'leadGate') {
       var lgb = block as LeadGateBlock;
