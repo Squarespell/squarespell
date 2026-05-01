@@ -51,6 +51,7 @@ export interface QuizBlockEditorProps {
   userPlan?: UserPlan;
   backUrl?: string;
   quizId?: string;
+  quizSlug?: string;
   saveState?: SaveState;
 }
 
@@ -2650,6 +2651,7 @@ export function QuizBlockEditor({
   userPlan,
   backUrl,
   quizId,
+  quizSlug,
   saveState,
 }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
@@ -2834,8 +2836,10 @@ export function QuizBlockEditor({
 
             {/* Preview */}
             <button type="button" onClick={function() {
-              if (quizId) {
-                window.open('/quiz/' + quizId + '/preview', '_blank');
+              if (quizSlug) {
+                window.open('/quiz/' + quizSlug, '_blank');
+              } else if (quizId) {
+                window.open('/quiz/' + quizId, '_blank');
               }
             }} title="Preview quiz"
               style={{

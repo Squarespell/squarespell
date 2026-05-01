@@ -472,6 +472,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
         saveState={saveState}
         backUrl={templateId ? '/dashboard/templates' : undefined}
         quizId={(quiz as any)?.id || quizId || undefined}
+        quizSlug={(quiz as any)?.slug || undefined}
       />
       {publishError && (
         <div style={{position:"fixed",top:16,right:16,zIndex:60,background:"#fee",color:"#900",padding:"10px 14px",borderRadius:8,fontSize:13,boxShadow:"0 6px 18px rgba(0,0,0,0.18)"}}>{publishError}</div>
