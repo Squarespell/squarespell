@@ -511,6 +511,7 @@ function AnswerRow({
   onChangeText,
   onChangeScore,
   onChangeImage,
+  onClearImage,
   onDelete,
   onMoveUp,
   onMoveDown,
@@ -521,11 +522,15 @@ function AnswerRow({
   onChangeText: (t: string) => void;
   onChangeScore: (s: number) => void;
   onChangeImage?: (url: string) => void;
+  onClearImage?: () => void;
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
   var [hover, setHover] = useState(false);
+  var [showPicker, setShowPicker] = useState(false);
+  var [thumbHover, setThumbHover] = useState(false);
+  var thumbRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
@@ -538,6 +543,7 @@ function AnswerRow({
         background: hover ? '#F9FAFB' : '#fff',
         border: '1px solid ' + C.BORDER,
         transition: 'all 0.12s',
+        position: 'relative',
       }}
     >
       {/* Letter badge */}
@@ -550,11 +556,56 @@ function AnswerRow({
         {LETTERS[index] || String(index + 1)}
       </span>
 
-      {/* Thumbnail if has image */}
-      {opt.imageUrl && (
-        <img src={opt.imageUrl} alt="" style={{
-          width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0,
-        }} onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      {/* Thumbnail with hover overlay for replace/remove, or add-image button */}
+      {opt.imageUrl ? (
+        <div ref={thumbRef} style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}
+          onMouseEnter={function() { setThumbHover(true); }}
+          onMouseLeave={function() { setThumbHover(false); }}>
+          <img src={opt.imageUrl} alt="" style={{
+            width: 36, height: 36, borderRadius: 6, objectFit: 'cover', display: 'block',
+          }} onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          {thumbHover && (
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: 6,
+              background: 'rgba(0,0,0,0.55)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: 2,
+            }}>
+              <button type="button" title="Replace" onClick={function(e) { e.stopPropagation(); setShowPicker(true); }}
+                style={{ width: 16, height: 16, padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+              </button>
+              {onClearImage && (
+                <button type="button" title="Remove" onClick={function(e) { e.stopPropagation(); onClearImage(); }}
+                  style={{ width: 16, height: 16, padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      ) : onChangeImage ? (
+        <button ref={thumbRef as any} type="button" title="Add image" onClick={function(e) { e.stopPropagation(); setShowPicker(true); }}
+          style={{
+            width: 36, height: 36, borderRadius: 6, flexShrink: 0,
+            border: '1px dashed ' + C.BORDER, background: 'transparent',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: C.TEXT_MUTED, transition: 'border-color 0.12s',
+          }}
+          onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.color = C.ACCENT; }}
+          onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.color = C.TEXT_MUTED; }}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <rect x={3} y={3} width={18} height={18} rx={2} ry={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" />
+          </svg>
+        </button>
+      ) : null}
+
+      {/* Answer image picker */}
+      {showPicker && onChangeImage && (
+        <AnswerImagePicker
+          anchorEl={thumbRef.current}
+          onSelect={function(url) { onChangeImage(url); setShowPicker(false); }}
+          onClose={function() { setShowPicker(false); }}
+        />
       )}
 
       {/* Editable text */}
@@ -1881,6 +1932,8 @@ function QuestionCanvas({
                 <AnswerRow key={opt.id} opt={opt} index={oi} total={block.options.length}
                   onChangeText={function(t) { updateOptionText(oi, t); }}
                   onChangeScore={function(s) { updateOptionScore(oi, s); }}
+                  onChangeImage={function(url) { updateOptionImage(oi, url); }}
+                  onClearImage={function() { clearOptionImage(oi); }}
                   onDelete={function() { deleteOption(oi); }}
                   onMoveUp={function() { moveOption(oi, -1); }}
                   onMoveDown={function() { moveOption(oi, 1); }}
@@ -2002,6 +2055,8 @@ function QuestionCanvas({
                 <AnswerRow key={opt.id} opt={opt} index={oi} total={block.options.length}
                   onChangeText={function(t) { updateOptionText(oi, t); }}
                   onChangeScore={function(s) { updateOptionScore(oi, s); }}
+                  onChangeImage={function(url) { updateOptionImage(oi, url); }}
+                  onClearImage={function() { clearOptionImage(oi); }}
                   onDelete={function() { deleteOption(oi); }}
                   onMoveUp={function() { moveOption(oi, -1); }}
                   onMoveDown={function() { moveOption(oi, 1); }}
