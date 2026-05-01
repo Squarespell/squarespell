@@ -895,19 +895,20 @@ function InlineMediaPreview({
       style={{
         margin: '12px 36px 0', borderRadius: 12, overflow: 'hidden',
         position: 'relative', background: isVideo ? '#000' : '#F2F4F7',
-        maxHeight: isVideo ? 200 : 220,
       }}
       onMouseEnter={function() { setHovered(true); }}
       onMouseLeave={function() { setHovered(false); }}
     >
       {isVideo ? (
-        embedUrl ? (
-          <iframe src={embedUrl} style={{ width: '100%', height: 200, border: 'none', display: 'block' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-        ) : (
-          <video src={block.mediaUrl} controls playsInline style={{ width: '100%', maxHeight: 200, display: 'block', objectFit: 'contain' }} />
-        )
+        <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%' }}>
+          {embedUrl ? (
+            <iframe src={embedUrl} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+          ) : (
+            <video src={block.mediaUrl} controls playsInline style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+          )}
+        </div>
       ) : (
-        <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
+        <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }}
           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
       )}
 
@@ -1163,26 +1164,33 @@ function VideoPicker({
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     var file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 100 * 1024 * 1024) { alert('File too large. Max 100MB for video.'); return; }
+    if (file.size > 20 * 1024 * 1024) { alert('Video too large. Max 20MB. Try uploading to YouTube and pasting the link instead.'); return; }
     setUploading(true);
     var reader = new FileReader();
+    reader.onerror = function() { setUploading(false); alert('Failed to read video file.'); };
     reader.onload = function() {
-      var base64 = (reader.result as string).split(',')[1];
+      var result = reader.result as string;
+      var base64 = result.indexOf(',') >= 0 ? result.split(',')[1] : result;
       getClerkToken().then(function(token) {
         fetch(API_BASE + '/api/media/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
           body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
         })
-        .then(function(res) { return res.json(); })
+        .then(function(res) {
+          if (!res.ok) throw new Error('Upload returned ' + res.status);
+          return res.json();
+        })
         .then(function(data) {
           setUploading(false);
           if (data.url) {
             onSelect(data.url, 'video');
             onClose();
+          } else {
+            alert('Upload failed: ' + (data.error || 'No URL returned'));
           }
         })
-        .catch(function(err) { setUploading(false); console.error('Upload error:', err); });
+        .catch(function(err) { setUploading(false); alert('Video upload failed: ' + err.message); console.error('Upload error:', err); });
       });
     };
     reader.readAsDataURL(file);
@@ -1254,7 +1262,7 @@ function VideoPicker({
             }}>
             <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
             {uploading ? 'Uploading video...' : 'Click to upload video'}
-            <span style={{ fontSize: 11, color: '#98A2B3', fontWeight: 400 }}>MP4, MOV, WebM up to 100MB</span>
+            <span style={{ fontSize: 11, color: '#98A2B3', fontWeight: 400 }}>MP4, MOV, WebM up to 20MB</span>
           </button>
           <input ref={fileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
         </>
@@ -1608,20 +1616,20 @@ function FloatingToolbar({
   ];
 
   var btnStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 6,
-    padding: '8px 14px', background: 'transparent', border: 'none',
-    cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.TEXT,
-    borderRadius: 8, transition: 'all 0.12s', fontFamily: C.FONT,
+    display: 'flex', alignItems: 'center', gap: 7,
+    padding: '10px 18px', background: 'transparent', border: 'none',
+    cursor: 'pointer', fontSize: 14, fontWeight: 600, color: C.TEXT,
+    borderRadius: 10, transition: 'all 0.12s', fontFamily: C.FONT,
     whiteSpace: 'nowrap' as const,
   };
 
   return (
     <div style={{
-      position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+      position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', gap: 0,
-      background: '#fff', border: '1px solid ' + C.BORDER,
-      borderRadius: 20, padding: '4px 8px',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+      background: '#fff', border: '1px solid #D0D5DD',
+      borderRadius: 24, padding: '6px 12px',
+      boxShadow: '0 6px 24px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)',
       zIndex: 40,
     }}>
       {/* + Option */}
@@ -1629,11 +1637,11 @@ function FloatingToolbar({
         onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_LIGHT; e.currentTarget.style.color = C.ACCENT; }}
         onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.TEXT; }}
       >
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={12} y1={5} x2={12} y2={19} /><line x1={5} y1={12} x2={19} y2={12} /></svg>
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={12} y1={5} x2={12} y2={19} /><line x1={5} y1={12} x2={19} y2={12} /></svg>
         Option
       </button>
 
-      <div style={{ width: 1, height: 20, background: C.BORDER }} />
+      <div style={{ width: 1, height: 24, background: '#E4E7EC' }} />
 
       {/* Timer */}
       <div style={{ position: 'relative' }}>
@@ -1642,13 +1650,13 @@ function FloatingToolbar({
           onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_LIGHT; }}
           onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
         >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <circle cx={12} cy={12} r={10} /><polyline points="12 6 12 12 16 14" />
           </svg>
           Timer{block.timeLimit ? ' (' + block.timeLimit + 's)' : ''}
         </button>
         {activePopover === 'timer' && (
-          <div style={{ position: 'absolute', bottom: 48, left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 16, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50 }}>
+          <div style={{ position: 'absolute', bottom: 52, left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 16, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 8 }}>Timer (seconds)</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input type="number" value={timerVal} onChange={function(e) { setTimerVal(e.target.value); }}
@@ -1665,7 +1673,7 @@ function FloatingToolbar({
         )}
       </div>
 
-      <div style={{ width: 1, height: 20, background: C.BORDER }} />
+      <div style={{ width: 1, height: 24, background: '#E4E7EC' }} />
 
       {/* Branch */}
       <button type="button" style={Object.assign({}, btnStyle, (block.branchRules && block.branchRules.length > 0) ? { color: '#7C3AED' } : {})}
@@ -1673,13 +1681,13 @@ function FloatingToolbar({
         onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_LIGHT; }}
         onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
       >
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
         </svg>
         Branch
       </button>
 
-      <div style={{ width: 1, height: 20, background: C.BORDER }} />
+      <div style={{ width: 1, height: 24, background: '#E4E7EC' }} />
 
       {/* Layout */}
       <div style={{ position: 'relative' }}>
@@ -1688,14 +1696,14 @@ function FloatingToolbar({
           onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_LIGHT; }}
           onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
         >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <rect x={3} y={3} width={7} height={7} /><rect x={14} y={3} width={7} height={7} />
             <rect x={14} y={14} width={7} height={7} /><rect x={3} y={14} width={7} height={7} />
           </svg>
           Layout
         </button>
         {activePopover === 'layout' && (
-          <div style={{ position: 'absolute', bottom: 48, right: 0, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 12, minWidth: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50 }}>
+          <div style={{ position: 'absolute', bottom: 52, right: 0, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 12, minWidth: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 8 }}>Answer Layout</div>
             {layouts.map(function(l) {
               var isActive = (block.answerLayout || 'list') === l.value;
@@ -2357,6 +2365,28 @@ export function QuizBlockEditor({
             )}
 
             <div style={{ width: 1, height: 20, background: C.BORDER, margin: '0 4px' }} />
+
+            {/* Preview */}
+            <button type="button" onClick={function() {
+              if (quizId) {
+                window.open('/quiz/' + quizId + '/preview', '_blank');
+              }
+            }} title="Preview quiz"
+              style={{
+                height: 34, padding: '0 12px', borderRadius: 8,
+                background: C.ACCENT, border: 'none',
+                color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
+                transition: 'all 0.12s',
+              }}
+              onMouseEnter={function(e) { e.currentTarget.style.opacity = '0.9'; }}
+              onMouseLeave={function(e) { e.currentTarget.style.opacity = '1'; }}
+            >
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              Preview
+            </button>
 
             {/* Settings gear */}
             <button type="button" onClick={function() { setSettingsOpen(!settingsOpen); }} title="Quiz settings"
