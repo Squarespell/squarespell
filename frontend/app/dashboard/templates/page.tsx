@@ -178,6 +178,7 @@ export default function DashboardTemplatesPage() {
                     <img
                       src={meta.thumb}
                       alt={t.name}
+                      onError={function(e: any) { e.currentTarget.style.display = 'none'; }}
                       style={{
                         width: '100%', height: '100%', objectFit: 'cover',
                         transition: 'transform 0.3s',

@@ -147,7 +147,7 @@ export default function DashboardTemplateDetailPage() {
           {/* Hero image */}
           {thumb && (
             <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20, height: 220, background: '#f0f0f0' }}>
-              <img src={thumb} alt={template.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={thumb} alt={template.name} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           )}
 
@@ -224,7 +224,7 @@ export default function DashboardTemplateDetailPage() {
                       border: '1px solid ' + BORDER, background: '#fff', textDecoration: 'none',
                     }}>
                       {relThumb && (
-                        <img src={relThumb} alt={rel.name} style={{ width: 56, height: 40, objectFit: 'cover', borderRadius: 6 }} />
+                        <img src={relThumb} alt={rel.name} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: 56, height: 40, objectFit: 'cover', borderRadius: 6 }} />
                       )}
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{rel.name}</div>
@@ -318,7 +318,7 @@ export default function DashboardTemplateDetailPage() {
                         {q.mediaType === 'video' ? (
                           <video src={q.mediaUrl} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <img src={q.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={q.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         )}
                       </div>
                     )}
@@ -372,7 +372,7 @@ export default function DashboardTemplateDetailPage() {
                                 transition: 'all 0.15s',
                               }}
                             >
-                              <img src={opt.imageUrl} alt={opt.text} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
+                              <img src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
                               <div style={{
                                 padding: '8px 10px', fontSize: 13, fontWeight: 600,
                                 color: isSelected ? ACCENT : '#333',
@@ -455,7 +455,7 @@ export default function DashboardTemplateDetailPage() {
                   <div style={{ textAlign: 'center' as const }}>
                     {o.imageUrl && (
                       <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20, height: 180 }}>
-                        <img src={o.imageUrl} alt={o.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={o.imageUrl} alt={o.title} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     )}
                     <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1a1a1a', margin: '0 0 10px' }}>{o.title}</h2>

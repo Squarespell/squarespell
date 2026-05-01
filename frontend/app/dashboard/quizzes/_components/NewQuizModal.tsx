@@ -531,14 +531,14 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                       var isSelected = selectedTemplate === tpl.id;
                       var previewBlocks = tpl.blocks();
                       var firstQ = previewBlocks.find(function(b: any) { return b.type === 'question'; }) as any;
-                      var previewImg = (firstQ && firstQ.mediaUrl) || (firstQ && firstQ.options && firstQ.options[0] && firstQ.options[0].imageUrl) || '';
+                      var previewImg = (firstQ && firstQ.mediaUrl && firstQ.mediaType !== 'video' ? firstQ.mediaUrl : '') || (firstQ && firstQ.options && firstQ.options[0] && firstQ.options[0].imageUrl) || '';
                       var questionCount = previewBlocks.filter(function(b: any) { return b.type === 'question'; }).length;
                       var outcomeCount = previewBlocks.filter(function(b: any) { return b.type === 'outcome'; }).length;
                       return (
                         <button key={tpl.id} type="button" className={'sq-tpl-card' + (isSelected ? ' is-selected' : '')} onClick={function() { setSelectedTemplate(isSelected ? null : tpl.id); }}>
                           {previewImg ? (
                             <div className="sq-tpl-img">
-                              <img src={previewImg} alt={tpl.name} loading="lazy" />
+                              <img src={previewImg} alt={tpl.name} loading="lazy" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                             </div>
                           ) : (
                             <div className="sq-tpl-icon">

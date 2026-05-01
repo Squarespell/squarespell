@@ -1092,15 +1092,17 @@ function SidebarSection({
   icon,
   defaultOpen,
   children,
+  style: extraStyle,
 }: {
   title: React.ReactNode;
   icon?: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
+  style?: React.CSSProperties;
 }) {
   var [open, setOpen] = useState(defaultOpen !== false);
   return (
-    <div style={{ borderBottom: '1px solid ' + C.BORDER }}>
+    <div style={Object.assign({ borderBottom: '1px solid ' + C.BORDER }, extraStyle || {})}>
       <button
         type="button"
         onClick={function() { setOpen(!open); }}
@@ -1674,6 +1676,7 @@ function BlockInspector({
         {/* Section 4: Branching — collapsed by default */}
         <SidebarSection title={<>Branching{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}</>} defaultOpen={!!(qb.branchRules && qb.branchRules.length > 0)}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>}
+          style={!hasPlanAccess(userPlan, 'starter') ? { opacity: 0.45, pointerEvents: 'none' as const } : undefined}
         >
           <div style={{ fontSize: 13, color: C.TEXT_MUTED, marginBottom: 14, lineHeight: 1.5 }}>
             Send users to different questions based on their answer.
@@ -1709,6 +1712,7 @@ function BlockInspector({
         {/* Section 5: Advanced — collapsed */}
         <SidebarSection title={<>Advanced{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}</>} defaultOpen={false}
           icon={<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={C.TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={12} cy={12} r={3} /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>}
+          style={!hasPlanAccess(userPlan, 'starter') ? { opacity: 0.45, pointerEvents: 'none' as const } : undefined}
         >
           {/* Timer */}
           <InspectorField label="Time limit (seconds)">
@@ -2549,9 +2553,11 @@ function PlanBadge({ requiredPlan }: { requiredPlan: 'starter' | 'pro' | 'agency
 
 /** Check if user's plan includes the required tier */
 function hasPlanAccess(userPlan: UserPlan | undefined, required: 'starter' | 'pro' | 'agency'): boolean {
-  var tiers: Record<string, number> = { free: 0, trial: 0, starter: 1, pro: 2, agency: 3 };
-  var userTier = tiers[userPlan || 'free'] || 0;
-  var requiredTier = tiers[required] || 0;
+  // Trial users should NOT have access to paid features in the editor —
+  // badges must be locked. Only paid plans unlock features.
+  var tiers: Record<string, number> = { free: 0, trial: 0, starter: 1, pro: 2, business: 3, agency: 3 };
+  var userTier = tiers[userPlan || 'free'] ?? 0;
+  var requiredTier = tiers[required] ?? 0;
   return userTier >= requiredTier;
 }
 
@@ -3052,17 +3058,18 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <button
               type="button"
-              onClick={function() { setShowSkipLogicModal(true); }}
+              onClick={function() { if (hasPlanAccess(userPlan, 'starter')) setShowSkipLogicModal(true); }}
               title="Skip logic overview"
               style={{
                 height: 30, padding: '0 10px', borderRadius: 6,
                 background: showSkipLogicModal ? C.ACCENT_LIGHT : 'transparent',
                 border: showSkipLogicModal ? '1px solid ' + C.ACCENT + '30' : 'none',
                 color: showSkipLogicModal ? C.ACCENT : C.TEXT_MUTED,
-                cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                cursor: hasPlanAccess(userPlan, 'starter') ? 'pointer' : 'default', fontSize: 11, fontWeight: 600,
                 display: 'flex', alignItems: 'center', gap: 5,
                 fontFamily: 'Inter,system-ui,sans-serif',
                 marginRight: 4,
+                opacity: hasPlanAccess(userPlan, 'starter') ? 1 : 0.45,
               }}
             >
               <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -3376,21 +3383,24 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               </div>
 
               {/* Remove Squarespell branding — Pro */}
-              <label style={{
-                display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'pro') ? 'pointer' : 'not-allowed',
-                padding: '14px 16px', background: C.SURFACE, borderRadius: 12,
+              <div
+                onClick={function() {
+                  if (hasPlanAccess(userPlan, 'pro') && onSettingsChange) {
+                    onSettingsChange(Object.assign({}, settings, { remove_branding: !(settings?.remove_branding || false) }));
+                  }
+                }}
+                style={{
+                display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'pro') ? 'pointer' : 'default',
+                padding: '14px 16px', background: hasPlanAccess(userPlan, 'pro') ? C.SURFACE : '#f9fafb', borderRadius: 12,
                 border: '1px solid ' + C.BORDER, marginTop: 10,
-                opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.6,
+                opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.45,
+                pointerEvents: hasPlanAccess(userPlan, 'pro') ? 'auto' as const : 'none' as const,
               }}>
                 <input
                   type="checkbox"
                   checked={settings?.remove_branding || false}
                   disabled={!hasPlanAccess(userPlan, 'pro')}
-                  onChange={function() {
-                    if (onSettingsChange && hasPlanAccess(userPlan, 'pro')) {
-                      onSettingsChange(Object.assign({}, settings, { remove_branding: !(settings?.remove_branding || false) }));
-                    }
-                  }}
+                  readOnly
                   style={{ accentColor: C.ACCENT, width: 18, height: 18 }}
                 />
                 <div style={{ flex: 1 }}>
@@ -3399,24 +3409,27 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
                   </div>
                   <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Hide &quot;Powered by Squarespell&quot; watermark</div>
                 </div>
-              </label>
+              </div>
 
               {/* reCAPTCHA — Starter */}
-              <label style={{
-                display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'starter') ? 'pointer' : 'not-allowed',
-                padding: '14px 16px', background: C.SURFACE, borderRadius: 12,
+              <div
+                onClick={function() {
+                  if (hasPlanAccess(userPlan, 'starter') && onSettingsChange) {
+                    onSettingsChange(Object.assign({}, settings, { enable_recaptcha: !(settings?.enable_recaptcha || false) }));
+                  }
+                }}
+                style={{
+                display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'starter') ? 'pointer' : 'default',
+                padding: '14px 16px', background: hasPlanAccess(userPlan, 'starter') ? C.SURFACE : '#f9fafb', borderRadius: 12,
                 border: '1px solid ' + C.BORDER, marginTop: 10,
-                opacity: hasPlanAccess(userPlan, 'starter') ? 1 : 0.6,
+                opacity: hasPlanAccess(userPlan, 'starter') ? 1 : 0.45,
+                pointerEvents: hasPlanAccess(userPlan, 'starter') ? 'auto' as const : 'none' as const,
               }}>
                 <input
                   type="checkbox"
                   checked={settings?.enable_recaptcha || false}
                   disabled={!hasPlanAccess(userPlan, 'starter')}
-                  onChange={function() {
-                    if (onSettingsChange && hasPlanAccess(userPlan, 'starter')) {
-                      onSettingsChange(Object.assign({}, settings, { enable_recaptcha: !(settings?.enable_recaptcha || false) }));
-                    }
-                  }}
+                  readOnly
                   style={{ accentColor: C.ACCENT, width: 18, height: 18 }}
                 />
                 <div style={{ flex: 1 }}>
@@ -3425,13 +3438,14 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
                   </div>
                   <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Block spam submissions with Google reCAPTCHA</div>
                 </div>
-              </label>
+              </div>
 
               {/* Custom CSS — Pro */}
               <div style={{
-                padding: '14px 16px', background: C.SURFACE, borderRadius: 12,
+                padding: '14px 16px', background: hasPlanAccess(userPlan, 'pro') ? C.SURFACE : '#f9fafb', borderRadius: 12,
                 border: '1px solid ' + C.BORDER, marginTop: 10,
-                opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.6,
+                opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.45,
+                pointerEvents: hasPlanAccess(userPlan, 'pro') ? 'auto' as const : 'none' as const,
               }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 6, display: 'flex', alignItems: 'center' }}>
                   Custom CSS{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}
@@ -3459,15 +3473,19 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
             {/* A/B Testing */}
             {quizId && (
               <a
-                href={'/dashboard/quiz/' + quizId + '/ab-testing'}
+                href={hasPlanAccess(userPlan, 'pro') ? '/dashboard/quiz/' + quizId + '/ab-testing' : undefined}
+                onClick={function(e) { if (!hasPlanAccess(userPlan, 'pro')) e.preventDefault(); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '16px 20px', background: '#F9FAFB', borderRadius: 14,
                   border: '1px solid ' + C.BORDER, marginBottom: 20,
                   textDecoration: 'none', color: C.TEXT,
                   transition: 'border-color 0.15s',
+                  opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.45,
+                  pointerEvents: hasPlanAccess(userPlan, 'pro') ? 'auto' as const : 'none' as const,
+                  cursor: hasPlanAccess(userPlan, 'pro') ? 'pointer' : 'default',
                 }}
-                onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                onMouseEnter={function(e) { if (hasPlanAccess(userPlan, 'pro')) e.currentTarget.style.borderColor = C.ACCENT; }}
                 onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
               >
                 <div style={{
