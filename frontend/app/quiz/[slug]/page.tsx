@@ -6,10 +6,15 @@
  * This is what visitors see when they land on squarespell.com/q/{slug} OR when
  * the <script src="/embed.js"> embed iframes this URL into a Squarespace page.
  *
- * Per the prototype-v4 restoration decision, this page mirrors the Stage 4
- * visitor preview from /try: brand colors, brand font, light aesthetic, and a
- * score-based outcome matcher (minScore/maxScore) - NOT the old dark
- * Squarespell-branded theme.
+ * Supports all editor features:
+ * - Question media (images, videos, YouTube/Vimeo embeds)
+ * - Subtitle / help text
+ * - Answer option images
+ * - Answer layouts: list, grid, fullBackground, imageThumbnails, splitLayout
+ * - Timer countdown
+ * - Score-based outcome matching
+ * - Lead gate
+ * - Brand colors & font
  *
  * Container queries (@container) make the layout responsive to the iframe
  * width, not the device viewport, so the embed looks right at any width.
@@ -20,12 +25,14 @@ import { useParams } from 'next/navigation';
 
 import { addUtmParams, quizUtm } from '@/lib/urls';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 interface QuizOption {
   id: string;
   text: string;
   score?: number;
+  imageUrl?: string;
+  image_url?: string;
 }
 interface QuizQuestion {
   id: string;
@@ -34,6 +41,13 @@ interface QuizQuestion {
   subtitle?: string;
   options: QuizOption[];
   timeLimit?: number;
+  time_limit?: number;
+  mediaUrl?: string;
+  media_url?: string;
+  mediaType?: 'image' | 'video';
+  media_type?: string;
+  answerLayout?: string;
+  answer_layout?: string;
 }
 interface QuizOutcome {
   id: string;
@@ -41,18 +55,22 @@ interface QuizOutcome {
   description: string;
   ctaText?: string;
   ctaUrl?: string;
-  cta_url?: string;     // snake_case from builder
+  cta_url?: string;
   cta_text?: string;
   cta_type?: string;
   minScore?: number;
   maxScore?: number;
+  min_score?: number;
+  max_score?: number;
+  imageUrl?: string;
+  image_url?: string;
 }
 
 /** Prefill scheduling URLs with lead name and email */
 function prefillSchedulingUrl(url: string, ctaType: string | undefined, name: string, email: string): string {
   if (!url || !ctaType) return url;
   try {
-    const u = new URL(url);
+    var u = new URL(url);
     if (ctaType === 'scheduling' || ctaType === 'acuity') {
       if (name) u.searchParams.set('firstName', name.split(' ')[0]);
       if (name.includes(' ')) u.searchParams.set('lastName', name.split(' ').slice(1).join(' '));
@@ -76,7 +94,7 @@ interface Quiz {
   description?: string;
   questions: QuizQuestion[];
   outcomes?: QuizOutcome[];
-  results?: QuizOutcome[]; // backward compat
+  results?: QuizOutcome[];
   branding?: QuizBranding;
   settings?: {
     primary_color?: string;
@@ -92,58 +110,114 @@ interface Quiz {
 type Stage = 'loading' | 'error' | 'question' | 'leadgate' | 'submitted' | 'result';
 
 function getOutcome(quiz: Quiz, answers: Record<number, number>): QuizOutcome | null {
-  const outcomes = quiz.outcomes || quiz.results || [];
+  var outcomes = quiz.outcomes || quiz.results || [];
   if (outcomes.length === 0) return null;
-  let total = 0;
-  Object.entries(answers).forEach(([qi, oi]) => {
-    const q = quiz.questions[Number(qi)];
-    const opt = q?.options?.[Number(oi)];
+  var total = 0;
+  Object.entries(answers).forEach(function(entry) {
+    var qi = entry[0];
+    var oi = entry[1];
+    var q = quiz.questions[Number(qi)];
+    var opt = q?.options?.[Number(oi)];
     if (opt?.score !== undefined) total += Number(opt.score);
   });
-  const matched = outcomes.find(
-    (o) => o.minScore !== undefined && o.maxScore !== undefined && total >= o.minScore && total <= o.maxScore
-  );
+  var matched = outcomes.find(function(o) {
+    var min = o.minScore !== undefined ? o.minScore : o.min_score;
+    var max = o.maxScore !== undefined ? o.maxScore : o.max_score;
+    return min !== undefined && max !== undefined && total >= min && total <= max;
+  });
   return matched || outcomes[0];
 }
 
-export default function QuizPage() {
-  const params = useParams();
-  const slug = params?.slug as string;
+/* ------------------------------------------------------------------ */
+/*  Media helpers                                                      */
+/* ------------------------------------------------------------------ */
 
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [stage, setStage] = useState<Stage>('loading');
-  const [error, setError] = useState('');
-  const [qIdx, setQIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [leadError, setLeadError] = useState('');
-  const [outcome, setOutcome] = useState<QuizOutcome | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const sessionIdRef = useRef<string>(
+function getMediaUrl(q: QuizQuestion): string | undefined {
+  return q.mediaUrl || q.media_url || undefined;
+}
+
+function getMediaType(q: QuizQuestion): string | undefined {
+  return q.mediaType || q.media_type || undefined;
+}
+
+function getAnswerLayout(q: QuizQuestion): string {
+  return q.answerLayout || q.answer_layout || 'list';
+}
+
+function getOptionImage(opt: QuizOption): string | undefined {
+  return opt.imageUrl || opt.image_url || undefined;
+}
+
+function getTimeLimit(q: QuizQuestion): number | undefined {
+  return q.timeLimit || q.time_limit || undefined;
+}
+
+/** Render question media — image or video (with YouTube/Vimeo embed support) */
+function QuestionMedia({ mediaUrl, mediaType, brandPrimary }: { mediaUrl: string; mediaType: string; brandPrimary: string }) {
+  if (mediaType === 'video') {
+    var ytMatch = mediaUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+    var vimeoMatch = mediaUrl.match(/(?:vimeo\.com\/)(\d+)/);
+    var embedUrl = ytMatch ? 'https://www.youtube.com/embed/' + ytMatch[1] : vimeoMatch ? 'https://player.vimeo.com/video/' + vimeoMatch[1] : '';
+
+    return (
+      <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', borderRadius: 12, overflow: 'hidden', marginBottom: 20, background: '#000' }}>
+        {embedUrl ? (
+          <iframe src={embedUrl} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        ) : (
+          <video src={mediaUrl} controls playsInline style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+        )}
+      </div>
+    );
+  }
+
+  // Image
+  return (
+    <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
+      <img src={mediaUrl} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'cover', display: 'block' }} />
+    </div>
+  );
+}
+
+
+export default function QuizPage() {
+  var params = useParams();
+  var slug = params?.slug as string;
+
+  var [quiz, setQuiz] = useState<Quiz | null>(null);
+  var [stage, setStage] = useState<Stage>('loading');
+  var [error, setError] = useState('');
+  var [qIdx, setQIdx] = useState(0);
+  var [answers, setAnswers] = useState<Record<number, number>>({});
+  var [email, setEmail] = useState('');
+  var [firstName, setFirstName] = useState('');
+  var [submitting, setSubmitting] = useState(false);
+  var [leadError, setLeadError] = useState('');
+  var [outcome, setOutcome] = useState<QuizOutcome | null>(null);
+  var [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  var [hoverOpt, setHoverOpt] = useState<number | null>(null);
+  var sessionIdRef = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   );
 
   // Notify embed parent of height changes
-  useEffect(() => {
+  useEffect(function() {
     if (typeof window === 'undefined' || window.parent === window) return;
-    const notify = () => {
-      const h = document.documentElement.scrollHeight;
+    var notify = function() {
+      var h = document.documentElement.scrollHeight;
       window.parent.postMessage({ source: 'squarespell', type: 'resize', height: h }, '*');
     };
-    const ro = new ResizeObserver(notify);
+    var ro = new ResizeObserver(notify);
     ro.observe(document.body);
     notify();
-    return () => ro.disconnect();
+    return function() { ro.disconnect(); };
   }, [stage, qIdx]);
 
   // Load quiz
-  useEffect(() => {
+  useEffect(function() {
     if (!slug) return;
-    fetch(`${API}/api/quiz/${slug}`)
-      .then((r) => r.json())
-      .then((data) => {
+    fetch(API + '/api/quiz/' + slug)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
         if (data.error) {
           setError(data.error);
           setStage('error');
@@ -154,29 +228,28 @@ export default function QuizPage() {
         if (window.parent !== window) {
           window.parent.postMessage({ source: 'squarespell', type: 'start' }, '*');
         }
-        fetch(`${API}/api/quiz/${slug}/event`, {
+        fetch(API + '/api/quiz/' + slug + '/event', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ event_type: 'view', session_id: sessionIdRef.current }),
-        }).catch(() => {});
+        }).catch(function() {});
       })
-      .catch(() => {
+      .catch(function() {
         setError('Failed to load quiz.');
         setStage('error');
       });
   }, [slug]);
 
-  const totalQs = quiz?.questions.length || 0;
-  const currentQ = quiz?.questions[qIdx];
-  const requireEmail = quiz?.settings?.requireEmail !== false;
-  const progress =
+  var totalQs = quiz?.questions.length || 0;
+  var currentQ = quiz?.questions[qIdx];
+  var requireEmail = quiz?.settings?.requireEmail !== false;
+  var progress =
     stage === 'question' ? Math.round(((qIdx + 1) / Math.max(totalQs, 1)) * 100) :
     stage === 'leadgate' ? 95 : 100;
 
   var pickOption = useCallback(
     function(oi: number) {
       if (!quiz) return;
-      // Only record answer if oi >= 0 (oi = -1 means time ran out, skip)
       if (oi >= 0) {
         setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
       }
@@ -209,11 +282,12 @@ export default function QuizPage() {
 
   // Timer countdown for current question
   useEffect(function() {
-    if (stage !== 'question' || !currentQ || !currentQ.timeLimit || currentQ.timeLimit <= 0) {
+    var tl = currentQ ? getTimeLimit(currentQ) : undefined;
+    if (stage !== 'question' || !currentQ || !tl || tl <= 0) {
       setTimeRemaining(null);
       return;
     }
-    setTimeRemaining(currentQ.timeLimit);
+    setTimeRemaining(tl);
     var interval = setInterval(function() {
       setTimeRemaining(function(prev) {
         if (prev === null || prev <= 1) {
@@ -227,9 +301,9 @@ export default function QuizPage() {
     return function() { clearInterval(interval); };
   }, [qIdx, currentQ, stage, pickOption]);
 
-  const goBack = () => { if (qIdx > 0) setQIdx(qIdx - 1); };
+  var goBack = function() { if (qIdx > 0) setQIdx(qIdx - 1); };
 
-  const submitLead = useCallback(async () => {
+  var submitLead = useCallback(function() {
     if (!quiz) return;
     if (!email.trim() || !email.includes('@')) {
       setLeadError('Please enter a valid email');
@@ -237,22 +311,21 @@ export default function QuizPage() {
     }
     setSubmitting(true);
     setLeadError('');
-    const o = getOutcome(quiz, answers);
-    try {
-      await fetch(`${API}/api/quiz/${slug}/lead`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: firstName,
-          email,
-          answers,
-          outcome_id: o?.id,
-          session_id: sessionIdRef.current,
-        }),
-      });
+    var o = getOutcome(quiz, answers);
+    fetch(API + '/api/quiz/' + slug + '/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: firstName,
+        email: email,
+        answers: answers,
+        outcome_id: o?.id,
+        session_id: sessionIdRef.current,
+      }),
+    }).then(function() {
       setOutcome(o);
       setStage('result');
-      fetch(`${API}/api/quiz/${slug}/event`, {
+      fetch(API + '/api/quiz/' + slug + '/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -260,32 +333,41 @@ export default function QuizPage() {
           session_id: sessionIdRef.current,
           metadata: { outcome_id: o?.id },
         }),
-      }).catch(() => {});
+      }).catch(function() {});
       if (window.parent !== window) {
         window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
       }
-    } catch {
+    }).catch(function() {
       setLeadError('Something went wrong. Please try again.');
-    } finally {
+    }).finally(function() {
       setSubmitting(false);
-    }
+    });
   }, [quiz, slug, email, firstName, answers]);
 
-  /* ---------- brand derivation (matches try/page Stage 4) ---------- */
-  const brand = quiz?.branding;
-  const brandBg = brand?.colors?.background || '#ffffff';
-  const brandSurface = brand?.colors?.surface || brandBg;
-  const brandText = brand?.colors?.text || '#1a1a1a';
-  const brandPrimary =
+  /* ---------- brand derivation ---------- */
+  var brand = quiz?.branding;
+  var brandBg = brand?.colors?.background || '#ffffff';
+  var brandSurface = brand?.colors?.surface || brandBg;
+  var brandText = brand?.colors?.text || '#1a1a1a';
+  var brandPrimary =
     brand?.colors?.primary || quiz?.settings?.primary_color || quiz?.settings?.primaryColor || '#0a0a0a';
-  const brandBorder = 'rgba(0,0,0,0.10)';
-  const brandFont =
+  var brandBorder = 'rgba(0,0,0,0.10)';
+  var brandFont =
     brand?.font_family && brand.font_family !== 'sans-serif'
-      ? `'${brand.font_family}', system-ui, sans-serif`
+      ? "'" + brand.font_family + "', system-ui, sans-serif"
       : "'Inter', system-ui, sans-serif";
-  const brandName = brand?.site_name || '';
-  const showBranding = quiz?.settings?.show_branding !== false;
-  const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+  var brandName = brand?.site_name || '';
+  var showBranding = quiz?.settings?.show_branding !== false;
+  var LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+  /* ---------- current question helpers ---------- */
+  var layout = currentQ ? getAnswerLayout(currentQ) : 'list';
+  var isSplit = layout === 'splitLayout';
+  var isGrid = layout === 'grid' || layout === 'fullBackground';
+  var isFullBg = layout === 'fullBackground';
+  var isThumbnail = layout === 'imageThumbnails';
+  var qMediaUrl = currentQ ? getMediaUrl(currentQ) : undefined;
+  var qMediaType = currentQ ? getMediaType(currentQ) : undefined;
 
   /* ---------- render ---------- */
   if (stage === 'loading') {
@@ -309,416 +391,454 @@ export default function QuizPage() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        html, body { height: 100%; }
-        body {
-          font-family: ${brandFont};
-          background: ${brandBg};
-          color: ${brandText};
-        }
-        .sq-root {
-          container-type: inline-size;
-          min-height: 100svh;
-          background: ${brandBg};
-          color: ${brandText};
-          padding: 28px 20px 40px;
-          font-family: ${brandFont};
-        }
-        .sq-inner {
-          max-width: 720px;
-          margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          gap: 22px;
-        }
-        .sq-head {
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          padding-bottom: 4px;
-        }
-        .sq-eyebrow {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: ${brandPrimary};
-        }
-        .sq-title {
-          font-size: 26px;
-          font-weight: 800;
-          letter-spacing: -0.03em;
-          line-height: 1.15;
-        }
-        .sq-sub {
-          font-size: 14px;
-          opacity: 0.64;
-          line-height: 1.55;
-        }
-        .sq-card {
-          position: relative;
-          background: ${brandSurface};
-          border: 1px solid ${brandBorder};
-          border-radius: 18px;
-          padding: 26px 22px 26px;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-        }
-        .sq-prog {
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          font-weight: 600;
-          opacity: 0.55;
-          margin-bottom: 10px;
-          letter-spacing: 0.02em;
-        }
-        .sq-bar {
-          height: 4px;
-          background: ${brandBorder};
-          border-radius: 100px;
-          overflow: hidden;
-          margin-bottom: 22px;
-        }
-        .sq-bar-fill {
-          height: 100%;
-          background: ${brandPrimary};
-          border-radius: 100px;
-          transition: width 0.45s cubic-bezier(0.16,1,0.3,1);
-        }
-        .sq-qlabel {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: ${brandPrimary};
-          margin-bottom: 8px;
-        }
-        .sq-q {
-          font-size: 22px;
-          font-weight: 800;
-          letter-spacing: -0.025em;
-          line-height: 1.22;
-          margin-bottom: 20px;
-        }
-        .sq-opts {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        .sq-opt {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          width: 100%;
-          text-align: left;
-          padding: 14px 16px;
-          background: ${brandBg};
-          border: 1.5px solid ${brandBorder};
-          border-radius: 12px;
-          font-family: ${brandFont};
-          font-size: 14px;
-          color: ${brandText};
-          cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
-        }
-        .sq-opt:hover {
-          border-color: ${brandPrimary};
-          transform: translateY(-1px);
-        }
-        .sq-opt.picked {
-          border-color: ${brandPrimary};
-          background: ${brandPrimary}14;
-        }
-        .sq-opt-letter {
-          width: 26px;
-          height: 26px;
-          border-radius: 7px;
-          background: ${brandBorder};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-        .sq-opt.picked .sq-opt-letter {
-          background: ${brandPrimary};
-          color: ${brandBg};
-        }
-        .sq-back {
-          margin-top: 16px;
-          font-size: 12px;
-          opacity: 0.5;
-          cursor: pointer;
-          display: inline-block;
-        }
-        .sq-back:hover { opacity: 0.9; }
+      <style dangerouslySetInnerHTML={{ __html: "\n@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');\n*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }\nhtml, body { height: 100%; }\nbody {\n  font-family: " + brandFont + ";\n  background: " + brandBg + ";\n  color: " + brandText + ";\n}\n*:focus-visible { outline: 2px solid " + brandPrimary + "; outline-offset: 2px; }\n" }} />
 
-        .sq-timer {
-          position: absolute;
-          top: 22px;
-          right: 22px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 56px;
-          height: 56px;
-          background: ${brandPrimary}14;
-          border-radius: 50%;
-          font-size: 18px;
-          font-weight: 700;
-          color: ${brandPrimary};
-          font-family: 'Inter', monospace;
-        }
-        .sq-timer.warning {
-          background: #ff6b5b26;
-          color: #ff6b5b;
-        }
+      <div style={{
+        containerType: 'inline-size' as any,
+        minHeight: '100svh',
+        background: brandBg,
+        color: brandText,
+        padding: '28px 20px 40px',
+        fontFamily: brandFont,
+      }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
-        .sq-lead {
-          text-align: center;
-        }
-        .sq-lead-title {
-          font-size: 24px;
-          font-weight: 800;
-          letter-spacing: -0.025em;
-          margin-bottom: 8px;
-        }
-        .sq-lead-sub {
-          font-size: 14px;
-          opacity: 0.64;
-          margin-bottom: 22px;
-        }
-        .sq-field {
-          text-align: left;
-          margin-bottom: 12px;
-        }
-        .sq-field label {
-          display: block;
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          opacity: 0.6;
-          margin-bottom: 6px;
-        }
-        .sq-input {
-          width: 100%;
-          padding: 13px 14px;
-          background: ${brandBg};
-          border: 1.5px solid ${brandBorder};
-          border-radius: 12px;
-          font-family: ${brandFont};
-          font-size: 14px;
-          color: ${brandText};
-          outline: none;
-        }
-        .sq-input:focus { border-color: ${brandPrimary}; outline: 2px solid ${brandPrimary}; outline-offset: 1px; }
-        *:focus-visible { outline: 2px solid ${brandPrimary}; outline-offset: 2px; }
-        .sq-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          width: 100%;
-          padding: 14px 22px;
-          background: ${brandPrimary};
-          color: ${brandBg};
-          border: 0;
-          border-radius: 100px;
-          font-family: ${brandFont};
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
-        }
-        .sq-btn:hover { transform: translateY(-1px); }
-        .sq-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        .sq-result {
-          text-align: center;
-        }
-        .sq-result-badge {
-          display: inline-block;
-          padding: 6px 12px;
-          background: ${brandPrimary}1a;
-          color: ${brandPrimary};
-          border-radius: 100px;
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          margin-bottom: 12px;
-        }
-        .sq-result-title {
-          font-size: 28px;
-          font-weight: 800;
-          letter-spacing: -0.03em;
-          margin-bottom: 10px;
-        }
-        .sq-result-desc {
-          font-size: 15px;
-          opacity: 0.72;
-          line-height: 1.6;
-          margin-bottom: 20px;
-        }
-        .sq-err {
-          font-size: 12px;
-          color: #d44;
-          margin-top: 8px;
-          text-align: center;
-        }
-        .sq-brand-foot {
-          text-align: center;
-          margin-top: 22px;
-          font-size: 11px;
-          opacity: 0.45;
-        }
-        .sq-brand-foot a { color: inherit; text-decoration: none; }
-
-        @container (max-width: 540px) {
-          .sq-root { padding: 20px 14px 32px; }
-          .sq-card { padding: 22px 18px; border-radius: 14px; }
-          .sq-title { font-size: 22px; }
-          .sq-q { font-size: 19px; }
-          .sq-result-title { font-size: 24px; }
-        }
-        @container (max-width: 420px) {
-          .sq-opt { padding: 12px 13px; font-size: 13px; }
-          .sq-q { font-size: 18px; }
-          .sq-title { font-size: 20px; }
-        }
-      ` }} />
-
-      <div className="sq-root">
-        <div className="sq-inner">
+          {/* ============= QUESTION STAGE ============= */}
           {stage === 'question' && currentQ && (
             <>
-              <div className="sq-head">
-                {brandName && <div className="sq-eyebrow">{brandName} · Free quiz</div>}
-                <div className="sq-title">{quiz.title}</div>
-                {quiz.description && <div className="sq-sub">{quiz.description}</div>}
+              {/* Header */}
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
+                {brandName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary }}>{brandName}</div>}
+                <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15 }}>{quiz.title}</div>
+                {quiz.description && <div style={{ fontSize: 14, opacity: 0.64, lineHeight: 1.55 }}>{quiz.description}</div>}
               </div>
 
-              <div className="sq-card">
-                {timeRemaining !== null && (
-                  <div className={'sq-timer' + (timeRemaining < 5 ? ' warning' : '')} aria-label={'Time remaining: ' + timeRemaining + ' seconds'}>{timeRemaining}s</div>
-                )}
-                <div className="sq-prog">
-                  <span>Question {qIdx + 1} of {totalQs}</span>
-                  <span>{progress}%</span>
+              {/* Question card */}
+              {isSplit ? (
+                /* ---- SPLIT LAYOUT ---- */
+                <div style={{
+                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
+                  overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                  display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 400,
+                }}>
+                  {/* Left: media */}
+                  <div style={{
+                    background: qMediaUrl ? 'transparent' : 'linear-gradient(135deg, #1D2939, #344054)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    position: 'relative', overflow: 'hidden',
+                  }}>
+                    {qMediaUrl && qMediaType === 'video' ? (function() {
+                      var ytM = qMediaUrl!.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+                      var viM = qMediaUrl!.match(/(?:vimeo\.com\/)(\d+)/);
+                      var eUrl = ytM ? 'https://www.youtube.com/embed/' + ytM[1] : viM ? 'https://player.vimeo.com/video/' + viM[1] : '';
+                      return eUrl
+                        ? <iframe src={eUrl} style={{ width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                        : <video src={qMediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+                    })() : qMediaUrl ? (
+                      <img src={qMediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+                        <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                      </div>
+                    )}
+                  </div>
+                  {/* Right: question + answers */}
+                  <div style={{ padding: '28px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    {timeRemaining !== null && (
+                      <div style={{
+                        position: 'absolute', top: 22, right: 22,
+                        width: 56, height: 56, borderRadius: '50%',
+                        background: timeRemaining < 5 ? '#ff6b5b26' : brandPrimary + '14',
+                        color: timeRemaining < 5 ? '#ff6b5b' : brandPrimary,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, fontWeight: 700,
+                      }}>{timeRemaining}s</div>
+                    )}
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary, marginBottom: 8 }}>
+                      Question {String(qIdx + 1).padStart(2, '0')}
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.22, marginBottom: 6 }}>
+                      {currentQ.text || currentQ.question}
+                    </div>
+                    {currentQ.subtitle && (
+                      <div style={{ fontSize: 13, opacity: 0.6, marginBottom: 16, lineHeight: 1.5 }}>{currentQ.subtitle}</div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+                      {currentQ.options.map(function(opt, oi) {
+                        var optImg = getOptionImage(opt);
+                        var picked = answers[qIdx] === oi;
+                        return (
+                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
+                            onMouseEnter={function() { setHoverOpt(oi); }}
+                            onMouseLeave={function() { setHoverOpt(null); }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+                              padding: '12px 14px', background: picked ? brandPrimary + '14' : brandBg,
+                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
+                              borderRadius: 12, fontFamily: brandFont, fontSize: 14, color: brandText,
+                              cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                              transform: hoverOpt === oi ? 'translateY(-1px)' : 'none',
+                            }}>
+                            <div style={{
+                              width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                              background: picked ? brandPrimary : brandBorder,
+                              color: picked ? brandBg : brandText,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 11, fontWeight: 700,
+                            }}>{LETTERS[oi]}</div>
+                            {optImg && <img src={optImg} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />}
+                            <div style={{ flex: 1 }}>{opt.text}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {qIdx > 0 && (
+                      <button type="button" onClick={goBack} style={{ marginTop: 16, fontSize: 12, opacity: 0.5, cursor: 'pointer', background: 'none', border: 'none', fontFamily: brandFont, color: brandText }}>
+                        ← Previous question
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="sq-bar" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Quiz progress: ${progress}%`}><div className="sq-bar-fill" style={{ width: `${progress}%` }} /></div>
+              ) : (
+                /* ---- ALL OTHER LAYOUTS ---- */
+                <div style={{
+                  position: 'relative', background: brandSurface,
+                  border: '1px solid ' + brandBorder, borderRadius: 18,
+                  padding: '26px 22px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                }}>
+                  {timeRemaining !== null && (
+                    <div style={{
+                      position: 'absolute', top: 22, right: 22,
+                      width: 56, height: 56, borderRadius: '50%',
+                      background: timeRemaining < 5 ? '#ff6b5b26' : brandPrimary + '14',
+                      color: timeRemaining < 5 ? '#ff6b5b' : brandPrimary,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 18, fontWeight: 700, fontFamily: "'Inter', monospace",
+                    }}>{timeRemaining}s</div>
+                  )}
 
-                <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
-                <div className="sq-q">{currentQ.text || currentQ.question}</div>
+                  {/* Progress */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, opacity: 0.55, marginBottom: 10, letterSpacing: '0.02em' }}>
+                    <span>Question {qIdx + 1} of {totalQs}</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div style={{ height: 4, background: brandBorder, borderRadius: 100, overflow: 'hidden', marginBottom: 22 }}>
+                    <div style={{ height: '100%', background: brandPrimary, borderRadius: 100, transition: 'width 0.45s cubic-bezier(0.16,1,0.3,1)', width: progress + '%' }} />
+                  </div>
 
-                <div className="sq-opts">
-                  {currentQ.options.map((opt, oi) => (
-                    <button
-                      key={opt.id + oi}
-                      className={`sq-opt${answers[qIdx] === oi ? ' picked' : ''}`}
-                      onClick={() => pickOption(oi)}
-                      type="button"
-                    >
-                      <div className="sq-opt-letter">{LETTERS[oi]}</div>
-                      <div>{opt.text}</div>
+                  {/* Question label + text */}
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary, marginBottom: 8 }}>
+                    Question {String(qIdx + 1).padStart(2, '0')}
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.22, marginBottom: currentQ.subtitle ? 6 : 20 }}>
+                    {currentQ.text || currentQ.question}
+                  </div>
+                  {currentQ.subtitle && (
+                    <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 20, lineHeight: 1.5 }}>{currentQ.subtitle}</div>
+                  )}
+
+                  {/* Question media */}
+                  {qMediaUrl && qMediaType && (
+                    <QuestionMedia mediaUrl={qMediaUrl} mediaType={qMediaType} brandPrimary={brandPrimary} />
+                  )}
+
+                  {/* Answer options — layout-aware */}
+                  {isGrid ? (
+                    /* Grid / Full-background layout */
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      {currentQ.options.map(function(opt, oi) {
+                        var optImg = getOptionImage(opt);
+                        var picked = answers[qIdx] === oi;
+                        return (
+                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
+                            onMouseEnter={function() { setHoverOpt(oi); }}
+                            onMouseLeave={function() { setHoverOpt(null); }}
+                            style={{
+                              display: 'flex', flexDirection: 'column', alignItems: 'center',
+                              padding: 0, background: picked ? brandPrimary + '14' : brandBg,
+                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
+                              borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                              fontFamily: brandFont, color: brandText,
+                              transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                              transform: hoverOpt === oi ? 'translateY(-2px)' : 'none',
+                              boxShadow: hoverOpt === oi ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                              textAlign: 'center',
+                            }}>
+                            {/* Image area */}
+                            <div style={{
+                              width: '100%', height: isFullBg ? 160 : 120,
+                              background: optImg ? 'transparent' : '#F2F4F7',
+                              position: 'relative', overflow: 'hidden',
+                            }}>
+                              {optImg ? (
+                                <img src={optImg} alt={opt.text || ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                              ) : (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#98A2B3' }}>
+                                  <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                                </div>
+                              )}
+                              {isFullBg && optImg && (
+                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.55))' }} />
+                              )}
+                              {isFullBg && optImg && (
+                                <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, color: '#fff', fontSize: 13, fontWeight: 700, textAlign: 'center', padding: '0 8px', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                                  {opt.text}
+                                </div>
+                              )}
+                            </div>
+                            {/* Text below image (unless fullBg which shows text over image) */}
+                            {!isFullBg && (
+                              <div style={{ padding: '10px 12px', width: '100%', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{
+                                  width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+                                  background: picked ? brandPrimary : brandBorder,
+                                  color: picked ? brandBg : brandText,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: 10, fontWeight: 700,
+                                }}>{LETTERS[oi]}</div>
+                                <div style={{ fontSize: 13, fontWeight: 600, textAlign: 'left' }}>{opt.text}</div>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : isThumbnail ? (
+                    /* Thumbnail layout — image + text row */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {currentQ.options.map(function(opt, oi) {
+                        var optImg = getOptionImage(opt);
+                        var picked = answers[qIdx] === oi;
+                        return (
+                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
+                            onMouseEnter={function() { setHoverOpt(oi); }}
+                            onMouseLeave={function() { setHoverOpt(null); }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+                              padding: '10px 14px', background: picked ? brandPrimary + '14' : brandBg,
+                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
+                              borderRadius: 12, fontFamily: brandFont, fontSize: 14, color: brandText,
+                              cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                              transform: hoverOpt === oi ? 'translateY(-1px)' : 'none',
+                            }}>
+                            {/* Thumbnail */}
+                            <div style={{
+                              width: 52, height: 52, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+                              background: optImg ? 'transparent' : '#F2F4F7',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {optImg ? (
+                                <img src={optImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#98A2B3" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+                              )}
+                            </div>
+                            <div style={{
+                              width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                              background: picked ? brandPrimary : brandBorder,
+                              color: picked ? brandBg : brandText,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 11, fontWeight: 700,
+                            }}>{LETTERS[oi]}</div>
+                            <div style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{opt.text}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* Default list layout */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {currentQ.options.map(function(opt, oi) {
+                        var optImg = getOptionImage(opt);
+                        var picked = answers[qIdx] === oi;
+                        return (
+                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
+                            onMouseEnter={function() { setHoverOpt(oi); }}
+                            onMouseLeave={function() { setHoverOpt(null); }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+                              padding: '14px 16px', background: picked ? brandPrimary + '14' : brandBg,
+                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
+                              borderRadius: 12, fontFamily: brandFont, fontSize: 14, color: brandText,
+                              cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                              transform: hoverOpt === oi ? 'translateY(-1px)' : 'none',
+                            }}>
+                            <div style={{
+                              width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                              background: picked ? brandPrimary : brandBorder,
+                              color: picked ? brandBg : brandText,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 11, fontWeight: 700,
+                            }}>{LETTERS[oi]}</div>
+                            {optImg && <img src={optImg} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />}
+                            <div style={{ flex: 1 }}>{opt.text}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Previous button */}
+                  {qIdx > 0 && (
+                    <button type="button" onClick={goBack} style={{
+                      marginTop: 16, fontSize: 12, opacity: 0.5, cursor: 'pointer',
+                      background: 'none', border: 'none', fontFamily: brandFont, color: brandText,
+                    }}>
+                      ← Previous question
                     </button>
-                  ))}
+                  )}
                 </div>
-
-                {qIdx > 0 && (
-                  <button type="button" className="sq-back" onClick={goBack} style={{ background: 'none', border: 'none', fontFamily: brandFont, color: brandText, cursor: 'pointer' }}>Previous question</button>
-                )}
-              </div>
+              )}
             </>
           )}
 
+          {/* ============= LEAD GATE ============= */}
           {stage === 'leadgate' && (
-            <div className="sq-card sq-lead">
-              <div className="sq-lead-title">{quiz.leadGate?.headline || 'Your result is ready'}</div>
-              <div className="sq-lead-sub">{quiz.leadGate?.subtext || 'Enter your email to see it'}</div>
-
-              <div className="sq-field">
-                <label>First name <span style={{ opacity: 0.5, fontWeight: 500 }}>(optional)</span></label>
-                <input className="sq-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            <div style={{
+              background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
+              padding: '40px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.025em', marginBottom: 8 }}>
+                {quiz.leadGate?.headline || 'Your result is ready'}
               </div>
-              <div className="sq-field">
-                <label>Email</label>
-                <input
-                  className="sq-input"
-                  type="email"
-                  value={email}
-                  placeholder="you@yoursite.com"
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') submitLead(); }}
-                />
+              <div style={{ fontSize: 14, opacity: 0.64, marginBottom: 22 }}>
+                {quiz.leadGate?.subtext || 'Enter your email to see it'}
               </div>
 
-              <button className="sq-btn" onClick={submitLead} disabled={submitting || !email.trim()} type="button" style={{ marginTop: 10 }}>
-                {submitting ? 'Loading…' : (quiz.leadGate?.buttonText || 'Show my result')}
+              <div style={{ textAlign: 'left', marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 6 }}>
+                  First name <span style={{ opacity: 0.5, fontWeight: 500 }}>(optional)</span>
+                </label>
+                <input value={firstName} onChange={function(e) { setFirstName(e.target.value); }}
+                  style={{
+                    width: '100%', padding: '13px 14px', background: brandBg,
+                    border: '1.5px solid ' + brandBorder, borderRadius: 12,
+                    fontFamily: brandFont, fontSize: 14, color: brandText, outline: 'none',
+                  }} />
+              </div>
+              <div style={{ textAlign: 'left', marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 6 }}>
+                  Email
+                </label>
+                <input type="email" value={email} placeholder="you@yoursite.com"
+                  onChange={function(e) { setEmail(e.target.value); }}
+                  onKeyDown={function(e) { if (e.key === 'Enter') submitLead(); }}
+                  style={{
+                    width: '100%', padding: '13px 14px', background: brandBg,
+                    border: '1.5px solid ' + brandBorder, borderRadius: 12,
+                    fontFamily: brandFont, fontSize: 14, color: brandText, outline: 'none',
+                  }} />
+              </div>
+
+              <button type="button" onClick={submitLead} disabled={submitting || !email.trim()}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  width: '100%', padding: '14px 22px', marginTop: 10,
+                  background: brandPrimary, color: brandBg, border: 0, borderRadius: 100,
+                  fontFamily: brandFont, fontSize: 14, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
+                  transition: 'transform 0.2s', opacity: submitting || !email.trim() ? 0.5 : 1,
+                }}>
+                {submitting ? 'Loading...' : (quiz.leadGate?.buttonText || 'Show my result')}
               </button>
-              {leadError && <div className="sq-err">{leadError}</div>}
+              {leadError && <div style={{ fontSize: 12, color: '#d44', marginTop: 8, textAlign: 'center' }}>{leadError}</div>}
             </div>
           )}
 
+          {/* ============= SUBMITTED (check inbox) ============= */}
           {stage === 'submitted' && (
-        <div className="sq-card sq-submitted" style={{textAlign:'center',padding:'40px 28px'}}>
-          <div style={{fontSize:48,lineHeight:1,marginBottom:16}}>✉️</div>
-          <h2 style={{margin:'0 0 8px',fontSize:24}}>Check your inbox</h2>
-          <p style={{margin:'0 0 6px',color:'#444'}}>
-            We just emailed your personalized report to <strong>{email}</strong>.
-          </p>
-          <p style={{margin:'0 0 24px',color:'#777',fontSize:14}}>
-            Don’t see it in a minute? Check <strong>Promotions</strong> or <strong>Spam</strong>  - 
-            mark it as <em>Not Spam</em> so future emails land in your Inbox.
-          </p>
-          <button
-            type="button"
-            className="sq-btn sq-btn-secondary"
-            onClick={() => setStage('result')}
-            style={{padding:'10px 18px'}}
-          >
-            View results now →
-          </button>
-        </div>
-      )}
+            <div style={{
+              background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
+              padding: '40px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 16 }}>✉️</div>
+              <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800 }}>Check your inbox</h2>
+              <p style={{ margin: '0 0 6px', color: '#444', fontSize: 14 }}>
+                We just emailed your personalized report to <strong>{email}</strong>.
+              </p>
+              <p style={{ margin: '0 0 24px', color: '#777', fontSize: 14 }}>
+                Don't see it in a minute? Check <strong>Promotions</strong> or <strong>Spam</strong>.
+              </p>
+              <button type="button" onClick={function() { setStage('result'); }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '10px 18px', background: brandPrimary, color: brandBg,
+                  border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
+                  cursor: 'pointer',
+                }}>
+                View results now →
+              </button>
+            </div>
+          )}
 
-      {stage === 'result' && outcome && (
-            <div className="sq-card sq-result">
-              <div className="sq-result-badge">Your result</div>
-              <div className="sq-result-title">{outcome.title}</div>
-              <div className="sq-result-desc">{outcome.description}</div>
+          {/* ============= RESULT ============= */}
+          {stage === 'result' && outcome && (
+            <div style={{
+              background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
+              padding: '36px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
+            }}>
+              <div style={{
+                display: 'inline-block', padding: '6px 12px',
+                background: brandPrimary + '1a', color: brandPrimary,
+                borderRadius: 100, fontSize: 11, fontWeight: 700,
+                letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
+              }}>Your result</div>
+
+              {/* Outcome image */}
+              {(outcome.imageUrl || outcome.image_url) && (
+                <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 16, maxWidth: 400, margin: '0 auto 16px' }}>
+                  <img src={outcome.imageUrl || outcome.image_url} alt="" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', display: 'block' }} />
+                </div>
+              )}
+
+              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>
+                {outcome.title}
+              </div>
+              <div style={{ fontSize: 15, opacity: 0.72, lineHeight: 1.6, marginBottom: 20 }}>
+                {outcome.description}
+              </div>
 
               {(outcome.ctaUrl || outcome.cta_url) ? (
                 <a href={addUtmParams(
                   prefillSchedulingUrl(outcome.ctaUrl || outcome.cta_url || '', outcome.cta_type, firstName, email),
                   quizUtm(slug, outcome.title)
                 )} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <button className="sq-btn" type="button">
+                  <button type="button" style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                    border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
+                    cursor: 'pointer',
+                  }}>
                     {outcome.ctaText || outcome.cta_text || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
                 </a>
               ) : quiz.settings?.cta_url ? (
                 <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <button className="sq-btn" type="button">
+                  <button type="button" style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                    border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
+                    cursor: 'pointer',
+                  }}>
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
                 </a>
               ) : (
-                <button className="sq-btn" type="button">
+                <button type="button" style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                  border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
+                  cursor: 'pointer',
+                }}>
                   {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                 </button>
               )}
             </div>
           )}
 
+          {/* Branding footer */}
           {showBranding && (
-            <div className="sq-brand-foot">
-              <a href="https://squarespell.com" target="_top" rel="noopener noreferrer">
+            <div style={{ textAlign: 'center', marginTop: 22, fontSize: 11, opacity: 0.45 }}>
+              <a href="https://squarespell.com" target="_top" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
                 Powered by Squarespell
               </a>
             </div>
