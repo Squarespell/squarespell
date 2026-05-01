@@ -103,6 +103,12 @@ interface Quiz {
     cta_url?: string;
     show_branding?: boolean;
     requireEmail?: boolean;
+    show_progress_bar?: boolean;
+    shuffle_questions?: boolean;
+    transition_type?: 'slide' | 'fade' | 'none';
+    custom_css?: string;
+    remove_branding?: boolean;
+    enable_recaptcha?: boolean;
   };
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
@@ -198,6 +204,25 @@ export default function QuizPage() {
   var sessionIdRef = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   );
+  var [prevQIdx, setPrevQIdx] = useState(0);
+  var [transitioning, setTransitioning] = useState(false);
+  var transDir = useRef<'forward' | 'back'>('forward');
+
+  // Shuffle questions once on load if setting is enabled
+  useEffect(function() {
+    if (!quiz) return;
+    if (quiz.settings?.shuffle_questions) {
+      var shuffled = quiz.questions.slice();
+      for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = tmp;
+      }
+      setQuiz(Object.assign({}, quiz, { questions: shuffled }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz?.id]);
 
   // Notify embed parent of height changes
   useEffect(function() {
@@ -254,6 +279,9 @@ export default function QuizPage() {
         setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
       }
       if (qIdx < (quiz.questions.length - 1)) {
+        transDir.current = 'forward';
+        setPrevQIdx(qIdx);
+        setTransitioning(true);
         setQIdx(qIdx + 1);
       } else {
         if (requireEmail) {
@@ -301,7 +329,21 @@ export default function QuizPage() {
     return function() { clearInterval(interval); };
   }, [qIdx, currentQ, stage, pickOption]);
 
-  var goBack = function() { if (qIdx > 0) setQIdx(qIdx - 1); };
+  var goBack = function() {
+    if (qIdx > 0) {
+      transDir.current = 'back';
+      setPrevQIdx(qIdx);
+      setTransitioning(true);
+      setQIdx(qIdx - 1);
+    }
+  };
+
+  // Transition effect between questions
+  useEffect(function() {
+    if (!transitioning) return;
+    var t = setTimeout(function() { setTransitioning(false); }, 350);
+    return function() { clearTimeout(t); };
+  }, [transitioning]);
 
   var submitLead = useCallback(function() {
     if (!quiz) return;
@@ -357,7 +399,10 @@ export default function QuizPage() {
       ? "'" + brand.font_family + "', system-ui, sans-serif"
       : "'Inter', system-ui, sans-serif";
   var brandName = brand?.site_name || '';
-  var showBranding = quiz?.settings?.show_branding !== false;
+  var showBranding = quiz?.settings?.show_branding !== false && !quiz?.settings?.remove_branding;
+  var showProgressBar = quiz?.settings?.show_progress_bar !== false;
+  var transitionType = quiz?.settings?.transition_type || 'slide';
+  var customCss = quiz?.settings?.custom_css || '';
   var LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
   /* ---------- current question helpers ---------- */
@@ -391,7 +436,7 @@ export default function QuizPage() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: "\n@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');\n*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }\nhtml, body { height: 100%; }\nbody {\n  font-family: " + brandFont + ";\n  background: " + brandBg + ";\n  color: " + brandText + ";\n}\n*:focus-visible { outline: 2px solid " + brandPrimary + "; outline-offset: 2px; }\n" }} />
+      <style dangerouslySetInnerHTML={{ __html: "\n@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');\n*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }\nhtml, body { height: 100%; }\nbody {\n  font-family: " + brandFont + ";\n  background: " + brandBg + ";\n  color: " + brandText + ";\n}\n*:focus-visible { outline: 2px solid " + brandPrimary + "; outline-offset: 2px; }\n@keyframes sq-slide-in-fwd { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-slide-in-back { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-fade-in { from { opacity: 0; } to { opacity: 1; } }\n" + customCss + "\n" }} />
 
       <div style={{
         containerType: 'inline-size' as any,
@@ -405,7 +450,11 @@ export default function QuizPage() {
 
           {/* ============= QUESTION STAGE ============= */}
           {stage === 'question' && currentQ && (
-            <>
+            <div key={'q-' + qIdx} style={{
+              animation: transitionType === 'none' ? 'none' :
+                transitionType === 'fade' ? 'sq-fade-in 0.35s ease-out' :
+                transDir.current === 'forward' ? 'sq-slide-in-fwd 0.35s ease-out' : 'sq-slide-in-back 0.35s ease-out',
+            }}>
               {/* Header */}
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
                 {brandName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary }}>{brandName}</div>}
@@ -518,13 +567,17 @@ export default function QuizPage() {
                   )}
 
                   {/* Progress */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, opacity: 0.55, marginBottom: 10, letterSpacing: '0.02em' }}>
-                    <span>Question {qIdx + 1} of {totalQs}</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <div style={{ height: 4, background: brandBorder, borderRadius: 100, overflow: 'hidden', marginBottom: 22 }}>
-                    <div style={{ height: '100%', background: brandPrimary, borderRadius: 100, transition: 'width 0.45s cubic-bezier(0.16,1,0.3,1)', width: progress + '%' }} />
-                  </div>
+                  {showProgressBar && (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, opacity: 0.55, marginBottom: 10, letterSpacing: '0.02em' }}>
+                        <span>Question {qIdx + 1} of {totalQs}</span>
+                        <span>{progress}%</span>
+                      </div>
+                      <div style={{ height: 4, background: brandBorder, borderRadius: 100, overflow: 'hidden', marginBottom: 22 }}>
+                        <div style={{ height: '100%', background: brandPrimary, borderRadius: 100, transition: 'width 0.45s cubic-bezier(0.16,1,0.3,1)', width: progress + '%' }} />
+                      </div>
+                    </>
+                  )}
 
                   {/* Question label + text */}
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary, marginBottom: 8 }}>
@@ -689,7 +742,7 @@ export default function QuizPage() {
                   )}
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {/* ============= LEAD GATE ============= */}
