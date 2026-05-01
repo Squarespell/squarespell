@@ -83,6 +83,13 @@ export interface DividerBlock extends BaseQuizBlock {
   style?: 'solid' | 'dashed' | 'dotted';
 }
 
+export interface OutcomeProduct {
+  title: string;
+  imageUrl?: string;
+  price?: string;
+  url: string;
+}
+
 export interface OutcomeBlock extends BaseQuizBlock {
   type: 'outcome';
   title: string;
@@ -94,6 +101,22 @@ export interface OutcomeBlock extends BaseQuizBlock {
   imageUrl?: string;
   shareEnabled?: boolean;
   shareText?: string;
+  /** Actionable tips shown below description */
+  tips?: string[];
+  /** Coupon/discount code */
+  couponCode?: string;
+  couponLabel?: string;
+  /** Product recommendations */
+  products?: OutcomeProduct[];
+  /** Booking / schedule URL */
+  bookingUrl?: string;
+  bookingText?: string;
+  /** Testimonial / social proof */
+  testimonialQuote?: string;
+  testimonialAuthor?: string;
+  /** Before/after comparison */
+  beforeText?: string;
+  afterText?: string;
 }
 
 export interface LeadGateBlock extends BaseQuizBlock {

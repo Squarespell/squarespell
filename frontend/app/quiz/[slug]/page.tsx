@@ -49,6 +49,14 @@ interface QuizQuestion {
   answerLayout?: string;
   answer_layout?: string;
 }
+interface OutcomeProduct {
+  title: string;
+  imageUrl?: string;
+  image_url?: string;
+  price?: string;
+  url: string;
+}
+
 interface QuizOutcome {
   id: string;
   title: string;
@@ -64,6 +72,28 @@ interface QuizOutcome {
   max_score?: number;
   imageUrl?: string;
   image_url?: string;
+  tips?: string[];
+  couponCode?: string;
+  coupon_code?: string;
+  couponLabel?: string;
+  coupon_label?: string;
+  products?: OutcomeProduct[];
+  bookingUrl?: string;
+  booking_url?: string;
+  bookingText?: string;
+  booking_text?: string;
+  testimonialQuote?: string;
+  testimonial_quote?: string;
+  testimonialAuthor?: string;
+  testimonial_author?: string;
+  beforeText?: string;
+  before_text?: string;
+  afterText?: string;
+  after_text?: string;
+  shareEnabled?: boolean;
+  share_enabled?: boolean;
+  shareText?: string;
+  share_text?: string;
 }
 
 /** Prefill scheduling URLs with lead name and email */
@@ -116,6 +146,16 @@ interface Quiz {
     privacy_policy_url?: string;
     webhook_url?: string;
     meta_description?: string;
+    show_social_sharing?: boolean;
+    show_score_breakdown?: boolean;
+    show_email_results?: boolean;
+    show_countdown_timer?: boolean;
+    show_coupon?: boolean;
+    show_products?: boolean;
+    show_booking?: boolean;
+    show_testimonial?: boolean;
+    show_before_after?: boolean;
+    show_pdf_download?: boolean;
   };
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
@@ -205,6 +245,12 @@ export default function QuizPage() {
   var [firstName, setFirstName] = useState('');
   var [submitting, setSubmitting] = useState(false);
   var [consentGiven, setConsentGiven] = useState(false);
+  var [countdown, setCountdown] = useState(-1);
+  var [couponCopied, setCouponCopied] = useState(false);
+  var [resultEmail, setResultEmail] = useState('');
+  var [resultEmailSent, setResultEmailSent] = useState(false);
+  var [linkCopied, setLinkCopied] = useState(false);
+  var [totalScore, setTotalScore] = useState(0);
   var [leadError, setLeadError] = useState('');
   var [outcome, setOutcome] = useState<QuizOutcome | null>(null);
   var [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -353,13 +399,35 @@ export default function QuizPage() {
     return function() { clearTimeout(t); };
   }, [transitioning]);
 
-  // Redirect after result is shown (if redirect_url is set)
+  // Countdown + redirect after result is shown
+  var countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(function() {
     if (stage !== 'result' || !redirectUrl) return;
-    var delay = (redirectDelay || 5) * 1000;
-    var t = setTimeout(function() { window.location.href = redirectUrl; }, delay);
-    return function() { clearTimeout(t); };
+    var secs = redirectDelay || 5;
+    setCountdown(secs);
+    countdownRef.current = setInterval(function() {
+      setCountdown(function(prev) {
+        if (prev <= 1) { if (countdownRef.current) clearInterval(countdownRef.current); window.location.href = redirectUrl; return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return function() { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, [stage, redirectUrl, redirectDelay]);
+
+  // Calculate total score when result is shown
+  useEffect(function() {
+    if (stage !== 'result' || !quiz) return;
+    var questions = quiz.questions || [];
+    var score = 0;
+    Object.keys(answers).forEach(function(k) {
+      var qIdx = parseInt(k);
+      var q = questions[qIdx];
+      if (q && q.options && q.options[answers[qIdx]]) {
+        score += (q.options[answers[qIdx]].score || 0);
+      }
+    });
+    setTotalScore(score);
+  }, [stage, quiz, answers]);
 
   // Fire webhook on quiz completion
   useEffect(function() {
@@ -433,6 +501,16 @@ export default function QuizPage() {
   var privacyPolicyUrl = quiz?.settings?.privacy_policy_url || '';
   var webhookUrl = quiz?.settings?.webhook_url || '';
   var metaDescription = quiz?.settings?.meta_description || '';
+  var showSocialSharing = quiz?.settings?.show_social_sharing !== false;
+  var showScoreBreakdown = quiz?.settings?.show_score_breakdown !== false;
+  var showEmailResults = quiz?.settings?.show_email_results !== false;
+  var showCountdownTimer = quiz?.settings?.show_countdown_timer !== false;
+  var showCoupon = quiz?.settings?.show_coupon || false;
+  var showProducts = quiz?.settings?.show_products || false;
+  var showBooking = quiz?.settings?.show_booking || false;
+  var showTestimonial = quiz?.settings?.show_testimonial || false;
+  var showBeforeAfter = quiz?.settings?.show_before_after || false;
+  var showPdfDownload = quiz?.settings?.show_pdf_download || false;
   var LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
   /* ---------- current question helpers ---------- */
@@ -870,47 +948,88 @@ export default function QuizPage() {
 
           {/* ============= RESULT ============= */}
           {stage === 'result' && outcome && (
-            <div style={{
-              background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
-              padding: '36px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
-            }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Main outcome card */}
               <div style={{
-                display: 'inline-block', padding: '6px 12px',
-                background: brandPrimary + '1a', color: brandPrimary,
-                borderRadius: 100, fontSize: 11, fontWeight: 700,
-                letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
-              }}>Your result</div>
+                background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
+                padding: '36px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
+              }}>
+                <div style={{
+                  display: 'inline-block', padding: '6px 12px',
+                  background: brandPrimary + '1a', color: brandPrimary,
+                  borderRadius: 100, fontSize: 11, fontWeight: 700,
+                  letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
+                }}>Your result</div>
 
-              {/* Outcome image */}
-              {(outcome.imageUrl || outcome.image_url) && (
-                <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 16, maxWidth: 400, margin: '0 auto 16px' }}>
-                  <img src={outcome.imageUrl || outcome.image_url} alt="" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', display: 'block' }} />
+                {/* Outcome image */}
+                {(outcome.imageUrl || outcome.image_url) && (
+                  <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 16, maxWidth: 400, margin: '0 auto 16px' }}>
+                    <img src={outcome.imageUrl || outcome.image_url} alt="" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', display: 'block' }} />
+                  </div>
+                )}
+
+                <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>
+                  {outcome.title}
                 </div>
-              )}
+                <div style={{ fontSize: 15, opacity: 0.72, lineHeight: 1.6, marginBottom: 20 }}>
+                  {outcome.description}
+                </div>
 
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>
-                {outcome.title}
-              </div>
-              <div style={{ fontSize: 15, opacity: 0.72, lineHeight: 1.6, marginBottom: 20 }}>
-                {outcome.description}
-              </div>
+                {/* Actionable tips — always on */}
+                {outcome.tips && outcome.tips.length > 0 && outcome.tips.some(function(t) { return t.trim(); }) && (
+                  <div style={{ textAlign: 'left', background: brandPrimary + '08', borderRadius: 12, padding: '18px 22px', marginBottom: 20 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: brandPrimary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Based on your answers, we recommend</div>
+                    {outcome.tips.filter(function(t) { return t.trim(); }).map(function(tip, i) {
+                      return (
+                        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < (outcome.tips || []).length - 1 ? 8 : 0 }}>
+                          <span style={{ fontSize: 14, color: brandPrimary, fontWeight: 700, marginTop: 1 }}>✓</span>
+                          <span style={{ fontSize: 14, lineHeight: 1.5, color: brandText }}>{tip}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
-              {(outcome.ctaUrl || outcome.cta_url) ? (
-                <a href={addUtmParams(
-                  prefillSchedulingUrl(outcome.ctaUrl || outcome.cta_url || '', outcome.cta_type, firstName, email),
-                  quizUtm(slug, outcome.title)
-                )} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <button type="button" style={{
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
-                    border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
-                    cursor: 'pointer',
-                  }}>
-                    {outcome.ctaText || outcome.cta_text || quiz.settings?.cta_text || 'Get my plan'} →
-                  </button>
-                </a>
-              ) : quiz.settings?.cta_url ? (
-                <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                {/* Score breakdown */}
+                {showScoreBreakdown && totalScore > 0 && (
+                  <div style={{ background: '#F9FAFB', borderRadius: 10, padding: '14px 18px', marginBottom: 20, textAlign: 'left' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: brandText, opacity: 0.6 }}>Your score</span>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: brandPrimary }}>{totalScore} pts</span>
+                    </div>
+                    <div style={{ height: 8, background: '#E5E7EB', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: brandPrimary, borderRadius: 4, width: Math.min(100, (totalScore / Math.max(1, (quiz.questions || []).length * 10)) * 100) + '%', transition: 'width 0.8s ease' }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA button */}
+                {(outcome.ctaUrl || outcome.cta_url) ? (
+                  <a href={addUtmParams(
+                    prefillSchedulingUrl(outcome.ctaUrl || outcome.cta_url || '', outcome.cta_type, firstName, email),
+                    quizUtm(slug, outcome.title)
+                  )} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <button type="button" style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                      border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
+                      cursor: 'pointer',
+                    }}>
+                      {outcome.ctaText || outcome.cta_text || quiz.settings?.cta_text || 'Get my plan'} →
+                    </button>
+                  </a>
+                ) : quiz.settings?.cta_url ? (
+                  <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <button type="button" style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                      border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
+                      cursor: 'pointer',
+                    }}>
+                      {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
+                    </button>
+                  </a>
+                ) : (
                   <button type="button" style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
@@ -919,16 +1038,209 @@ export default function QuizPage() {
                   }}>
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
-                </a>
-              ) : (
-                <button type="button" style={{
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
-                  border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
-                  cursor: 'pointer',
+                )}
+
+                {/* Booking CTA */}
+                {showBooking && (outcome.bookingUrl || outcome.booking_url) && (
+                  <a href={outcome.bookingUrl || outcome.booking_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', marginTop: 10 }}>
+                    <button type="button" style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      width: '100%', padding: '12px 20px', background: 'transparent', color: brandPrimary,
+                      border: '2px solid ' + brandPrimary, borderRadius: 100, fontFamily: brandFont, fontSize: 13, fontWeight: 700,
+                      cursor: 'pointer',
+                    }}>
+                      {outcome.bookingText || outcome.booking_text || 'Book a free call'} →
+                    </button>
+                  </a>
+                )}
+
+                {/* Social sharing */}
+                {showSocialSharing && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
+                    {[
+                      { name: 'Twitter', icon: '𝕏', getUrl: function() { return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent('I got "' + outcome.title + '"! Take the quiz: ' + window.location.href); } },
+                      { name: 'Facebook', icon: 'f', getUrl: function() { return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href); } },
+                      { name: 'LinkedIn', icon: 'in', getUrl: function() { return 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(window.location.href); } },
+                    ].map(function(s) {
+                      return (
+                        <a key={s.name} href={s.getUrl()} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                          <button type="button" style={{
+                            width: 38, height: 38, borderRadius: '50%', border: '1px solid ' + brandBorder, background: brandSurface,
+                            color: brandText, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }} title={'Share on ' + s.name}>{s.icon}</button>
+                        </a>
+                      );
+                    })}
+                    <button type="button" onClick={function() {
+                      var ta = document.createElement('textarea');
+                      ta.value = window.location.href;
+                      document.body.appendChild(ta);
+                      ta.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(ta);
+                      setLinkCopied(true);
+                      setTimeout(function() { setLinkCopied(false); }, 2000);
+                    }} style={{
+                      height: 38, borderRadius: 100, border: '1px solid ' + brandBorder, background: linkCopied ? brandPrimary + '1a' : brandSurface,
+                      color: linkCopied ? brandPrimary : brandText, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: '0 14px',
+                    }}>
+                      {linkCopied ? 'Copied!' : 'Copy link'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Coupon code card */}
+              {showCoupon && (outcome.couponCode || outcome.coupon_code) && (
+                <div style={{
+                  background: brandPrimary + '0d', border: '2px dashed ' + brandPrimary + '40', borderRadius: 14,
+                  padding: '22px 24px', textAlign: 'center',
                 }}>
-                  {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
-                </button>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: brandText, opacity: 0.7, marginBottom: 6 }}>
+                    {outcome.couponLabel || outcome.coupon_label || 'Special offer for you'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 22, fontWeight: 800, color: brandPrimary, letterSpacing: '0.08em', fontFamily: 'monospace' }}>
+                      {outcome.couponCode || outcome.coupon_code}
+                    </span>
+                    <button type="button" onClick={function() {
+                      var ta = document.createElement('textarea');
+                      ta.value = outcome.couponCode || outcome.coupon_code || '';
+                      document.body.appendChild(ta);
+                      ta.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(ta);
+                      setCouponCopied(true);
+                      setTimeout(function() { setCouponCopied(false); }, 2000);
+                    }} style={{
+                      padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                      background: couponCopied ? brandPrimary : brandSurface, color: couponCopied ? brandBg : brandPrimary,
+                      border: '1px solid ' + brandPrimary, cursor: 'pointer', transition: 'all 0.2s',
+                    }}>
+                      {couponCopied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Product recommendations */}
+              {showProducts && outcome.products && outcome.products.length > 0 && (
+                <div style={{
+                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 14,
+                  padding: '22px 24px',
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: brandText, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Recommended for you</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {outcome.products.map(function(p, i) {
+                      var imgUrl = p.imageUrl || p.image_url;
+                      return (
+                        <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <div style={{
+                            display: 'flex', gap: 14, alignItems: 'center', padding: '12px 14px',
+                            border: '1px solid ' + brandBorder, borderRadius: 10, cursor: 'pointer',
+                            transition: 'box-shadow 0.2s',
+                          }}>
+                            {imgUrl && <img src={imgUrl} alt="" style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />}
+                            <div style={{ flex: 1, textAlign: 'left' }}>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: brandText }}>{p.title}</div>
+                              {p.price && <div style={{ fontSize: 15, fontWeight: 800, color: brandPrimary, marginTop: 2 }}>{p.price}</div>}
+                            </div>
+                            <span style={{ fontSize: 18, color: brandPrimary }}>→</span>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Testimonial */}
+              {showTestimonial && (outcome.testimonialQuote || outcome.testimonial_quote) && (
+                <div style={{
+                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 14,
+                  padding: '24px 28px', textAlign: 'center', fontStyle: 'italic',
+                }}>
+                  <div style={{ fontSize: 36, lineHeight: 1, color: brandPrimary, opacity: 0.3, marginBottom: 8 }}>"</div>
+                  <div style={{ fontSize: 15, lineHeight: 1.6, color: brandText, marginBottom: 12 }}>
+                    {outcome.testimonialQuote || outcome.testimonial_quote}
+                  </div>
+                  {(outcome.testimonialAuthor || outcome.testimonial_author) && (
+                    <div style={{ fontSize: 12, fontWeight: 600, color: brandText, opacity: 0.5, fontStyle: 'normal' }}>
+                      — {outcome.testimonialAuthor || outcome.testimonial_author}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Before / After comparison */}
+              {showBeforeAfter && (outcome.beforeText || outcome.before_text) && (outcome.afterText || outcome.after_text) && (
+                <div style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
+                }}>
+                  <div style={{
+                    background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 14,
+                    padding: '20px 18px', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Where you are now</div>
+                    <div style={{ fontSize: 14, lineHeight: 1.5, color: '#7F1D1D' }}>{outcome.beforeText || outcome.before_text}</div>
+                  </div>
+                  <div style={{
+                    background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 14,
+                    padding: '20px 18px', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Where you could be</div>
+                    <div style={{ fontSize: 14, lineHeight: 1.5, color: '#14532D' }}>{outcome.afterText || outcome.after_text}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Email me my results */}
+              {showEmailResults && !email && !resultEmailSent && (
+                <div style={{
+                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 14,
+                  padding: '20px 24px', textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: brandText, marginBottom: 10 }}>Want a copy of your results?</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input type="email" placeholder="your@email.com" value={resultEmail}
+                      onChange={function(e) { setResultEmail(e.target.value); }}
+                      style={{
+                        flex: 1, padding: '10px 14px', border: '1px solid ' + brandBorder, borderRadius: 8,
+                        fontSize: 14, fontFamily: brandFont, color: brandText, outline: 'none',
+                      }} />
+                    <button type="button" onClick={function() {
+                      if (!resultEmail.trim() || !resultEmail.includes('@') || !quiz) return;
+                      fetch(API + '/api/quiz/' + slug + '/lead', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: resultEmail, first_name: '', outcome_id: outcome?.id }),
+                      }).catch(function() {});
+                      setResultEmailSent(true);
+                    }} style={{
+                      padding: '10px 20px', background: brandPrimary, color: brandBg, border: 0,
+                      borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: brandFont,
+                    }}>Send</button>
+                  </div>
+                </div>
+              )}
+              {showEmailResults && resultEmailSent && (
+                <div style={{
+                  background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 14,
+                  padding: '14px 24px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#16A34A',
+                }}>
+                  Results sent to {resultEmail || email}!
+                </div>
+              )}
+
+              {/* Countdown timer before redirect */}
+              {showCountdownTimer && redirectUrl && countdown > 0 && (
+                <div style={{
+                  textAlign: 'center', fontSize: 12, color: brandText, opacity: 0.5,
+                  padding: '8px 0',
+                }}>
+                  Redirecting in {countdown}s... <button type="button" onClick={function() { if (countdownRef.current) clearInterval(countdownRef.current); setCountdown(-1); }}
+                    style={{ background: 'none', border: 'none', color: brandPrimary, cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>Cancel</button>
+                </div>
               )}
             </div>
           )}

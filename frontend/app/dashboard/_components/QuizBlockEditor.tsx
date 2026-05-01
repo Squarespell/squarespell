@@ -46,6 +46,16 @@ export interface QuizSettings {
   privacy_policy_url?: string;
   webhook_url?: string;
   meta_description?: string;
+  show_social_sharing?: boolean;
+  show_score_breakdown?: boolean;
+  show_email_results?: boolean;
+  show_countdown_timer?: boolean;
+  show_coupon?: boolean;
+  show_products?: boolean;
+  show_booking?: boolean;
+  show_testimonial?: boolean;
+  show_before_after?: boolean;
+  show_pdf_download?: boolean;
 }
 
 export type UserPlan = 'free' | 'trial' | 'starter' | 'pro' | 'agency';
@@ -1134,6 +1144,42 @@ function OutcomeCanvas({ block, onChange }: { block: OutcomeBlock; onChange: (b:
     border: '1px solid ' + C.BORDER, borderRadius: 8,
     color: C.TEXT, fontFamily: C.FONT, outline: 'none', marginBottom: 16,
   };
+  var sectionLabel: React.CSSProperties = {
+    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, marginTop: 24, color: C.TEXT_MUTED, borderTop: '1px solid ' + C.BORDER, paddingTop: 20,
+  };
+  var smallLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 6 };
+
+  function updateTip(idx: number, val: string) {
+    var tips = (block.tips || []).slice();
+    tips[idx] = val;
+    onChange(Object.assign({}, block, { tips: tips }) as OutcomeBlock);
+  }
+  function addTip() {
+    var tips = (block.tips || []).slice();
+    tips.push('');
+    onChange(Object.assign({}, block, { tips: tips }) as OutcomeBlock);
+  }
+  function removeTip(idx: number) {
+    var tips = (block.tips || []).slice();
+    tips.splice(idx, 1);
+    onChange(Object.assign({}, block, { tips: tips }) as OutcomeBlock);
+  }
+
+  function updateProduct(idx: number, field: string, val: string) {
+    var products = (block.products || []).slice();
+    products[idx] = Object.assign({}, products[idx], { [field]: val });
+    onChange(Object.assign({}, block, { products: products }) as OutcomeBlock);
+  }
+  function addProduct() {
+    var products = (block.products || []).slice();
+    products.push({ title: '', url: '' });
+    onChange(Object.assign({}, block, { products: products }) as OutcomeBlock);
+  }
+  function removeProduct(idx: number) {
+    var products = (block.products || []).slice();
+    products.splice(idx, 1);
+    onChange(Object.assign({}, block, { products: products }) as OutcomeBlock);
+  }
 
   return (
     <div style={{ maxWidth: 720, width: '100%', background: '#fff', borderRadius: 16, padding: '36px 32px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
@@ -1149,33 +1195,151 @@ function OutcomeCanvas({ block, onChange }: { block: OutcomeBlock; onChange: (b:
         onChange={function(e) { onChange(Object.assign({}, block, { description: e.target.value }) as OutcomeBlock); }}
         style={Object.assign({}, fieldStyle, { minHeight: 80, resize: 'vertical' as const })} rows={3} />
 
+      {/* CTA */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 6 }}>CTA Text</div>
+          <div style={smallLabel}>CTA Text</div>
           <input type="text" value={block.ctaText || ''} placeholder="Learn more"
             onChange={function(e) { onChange(Object.assign({}, block, { ctaText: e.target.value }) as OutcomeBlock); }}
             style={fieldStyle} />
         </div>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 6 }}>CTA URL</div>
+          <div style={smallLabel}>CTA URL</div>
           <input type="text" value={block.ctaUrl || ''} placeholder="https://..."
             onChange={function(e) { onChange(Object.assign({}, block, { ctaUrl: e.target.value }) as OutcomeBlock); }}
             style={fieldStyle} />
         </div>
       </div>
 
+      {/* Score range */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 6 }}>Min Score</div>
+          <div style={smallLabel}>Min Score</div>
           <input type="number" value={block.minScore ?? ''} placeholder="0"
             onChange={function(e) { onChange(Object.assign({}, block, { minScore: e.target.value ? parseInt(e.target.value) : undefined }) as OutcomeBlock); }}
             style={fieldStyle} />
         </div>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, marginBottom: 6 }}>Max Score</div>
+          <div style={smallLabel}>Max Score</div>
           <input type="number" value={block.maxScore ?? ''} placeholder="100"
             onChange={function(e) { onChange(Object.assign({}, block, { maxScore: e.target.value ? parseInt(e.target.value) : undefined }) as OutcomeBlock); }}
             style={fieldStyle} />
+        </div>
+      </div>
+
+      {/* ---- Actionable Tips ---- */}
+      <div style={sectionLabel}>Actionable Tips</div>
+      <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10 }}>Personalized recommendations shown below the result</div>
+      {(block.tips || []).map(function(tip, i) {
+        return (
+          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input type="text" value={tip} placeholder={'Tip ' + (i + 1) + '...'}
+              onChange={function(e) { updateTip(i, e.target.value); }}
+              style={Object.assign({}, fieldStyle, { marginBottom: 0, flex: 1 })} />
+            <button type="button" onClick={function() { removeTip(i); }}
+              style={{ padding: '0 10px', background: 'none', border: '1px solid ' + C.BORDER, borderRadius: 6, color: '#d44', cursor: 'pointer', fontSize: 16 }}>&times;</button>
+          </div>
+        );
+      })}
+      <button type="button" onClick={addTip}
+        style={{ padding: '8px 14px', background: 'none', border: '1px dashed ' + C.BORDER, borderRadius: 8, color: C.TEXT_MUTED, cursor: 'pointer', fontSize: 13, width: '100%' }}>+ Add tip</button>
+
+      {/* ---- Coupon Code ---- */}
+      <div style={sectionLabel}>Coupon / Discount Code</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <div style={smallLabel}>Code</div>
+          <input type="text" value={block.couponCode || ''} placeholder="SAVE20"
+            onChange={function(e) { onChange(Object.assign({}, block, { couponCode: e.target.value }) as OutcomeBlock); }}
+            style={fieldStyle} />
+        </div>
+        <div>
+          <div style={smallLabel}>Label</div>
+          <input type="text" value={block.couponLabel || ''} placeholder="20% off your first order"
+            onChange={function(e) { onChange(Object.assign({}, block, { couponLabel: e.target.value }) as OutcomeBlock); }}
+            style={fieldStyle} />
+        </div>
+      </div>
+
+      {/* ---- Product Recommendations ---- */}
+      <div style={sectionLabel}>Product Recommendations</div>
+      <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10 }}>Add up to 3 products to recommend based on this outcome</div>
+      {(block.products || []).map(function(p, i) {
+        return (
+          <div key={i} style={{ border: '1px solid ' + C.BORDER, borderRadius: 10, padding: 14, marginBottom: 10, position: 'relative' }}>
+            <button type="button" onClick={function() { removeProduct(i); }}
+              style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', color: '#d44', cursor: 'pointer', fontSize: 16 }}>&times;</button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <div>
+                <div style={smallLabel}>Title</div>
+                <input type="text" value={p.title || ''} placeholder="Product name"
+                  onChange={function(e) { updateProduct(i, 'title', e.target.value); }}
+                  style={Object.assign({}, fieldStyle, { marginBottom: 0 })} />
+              </div>
+              <div>
+                <div style={smallLabel}>Price</div>
+                <input type="text" value={p.price || ''} placeholder="$49"
+                  onChange={function(e) { updateProduct(i, 'price', e.target.value); }}
+                  style={Object.assign({}, fieldStyle, { marginBottom: 0 })} />
+              </div>
+            </div>
+            <div style={smallLabel}>URL</div>
+            <input type="text" value={p.url || ''} placeholder="https://..."
+              onChange={function(e) { updateProduct(i, 'url', e.target.value); }}
+              style={Object.assign({}, fieldStyle, { marginBottom: 8 })} />
+            <div style={smallLabel}>Image URL</div>
+            <input type="text" value={p.imageUrl || ''} placeholder="https://...image.jpg"
+              onChange={function(e) { updateProduct(i, 'imageUrl', e.target.value); }}
+              style={Object.assign({}, fieldStyle, { marginBottom: 0 })} />
+          </div>
+        );
+      })}
+      {(block.products || []).length < 3 && (
+        <button type="button" onClick={addProduct}
+          style={{ padding: '8px 14px', background: 'none', border: '1px dashed ' + C.BORDER, borderRadius: 8, color: C.TEXT_MUTED, cursor: 'pointer', fontSize: 13, width: '100%' }}>+ Add product</button>
+      )}
+
+      {/* ---- Booking / Schedule ---- */}
+      <div style={sectionLabel}>Book a Call</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <div style={smallLabel}>Button text</div>
+          <input type="text" value={block.bookingText || ''} placeholder="Book a free call"
+            onChange={function(e) { onChange(Object.assign({}, block, { bookingText: e.target.value }) as OutcomeBlock); }}
+            style={fieldStyle} />
+        </div>
+        <div>
+          <div style={smallLabel}>Booking URL</div>
+          <input type="text" value={block.bookingUrl || ''} placeholder="https://calendly.com/..."
+            onChange={function(e) { onChange(Object.assign({}, block, { bookingUrl: e.target.value }) as OutcomeBlock); }}
+            style={fieldStyle} />
+        </div>
+      </div>
+
+      {/* ---- Testimonial ---- */}
+      <div style={sectionLabel}>Testimonial / Social Proof</div>
+      <textarea value={block.testimonialQuote || ''} placeholder="What a happy customer said..."
+        onChange={function(e) { onChange(Object.assign({}, block, { testimonialQuote: e.target.value }) as OutcomeBlock); }}
+        style={Object.assign({}, fieldStyle, { minHeight: 60, resize: 'vertical' as const })} rows={2} />
+      <div style={smallLabel}>Author</div>
+      <input type="text" value={block.testimonialAuthor || ''} placeholder="Jane D., Business Owner"
+        onChange={function(e) { onChange(Object.assign({}, block, { testimonialAuthor: e.target.value }) as OutcomeBlock); }}
+        style={fieldStyle} />
+
+      {/* ---- Before / After ---- */}
+      <div style={sectionLabel}>Before / After Comparison</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <div style={smallLabel}>Where you are now</div>
+          <textarea value={block.beforeText || ''} placeholder="Current state..."
+            onChange={function(e) { onChange(Object.assign({}, block, { beforeText: e.target.value }) as OutcomeBlock); }}
+            style={Object.assign({}, fieldStyle, { minHeight: 60, resize: 'vertical' as const })} rows={2} />
+        </div>
+        <div>
+          <div style={smallLabel}>Where you could be</div>
+          <textarea value={block.afterText || ''} placeholder="Desired state..."
+            onChange={function(e) { onChange(Object.assign({}, block, { afterText: e.target.value }) as OutcomeBlock); }}
+            style={Object.assign({}, fieldStyle, { minHeight: 60, resize: 'vertical' as const })} rows={2} />
         </div>
       </div>
     </div>
@@ -2384,6 +2548,35 @@ function SettingsPanel({
                 onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { privacy_policy_url: e.target.value })); }}
                 style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
             </div>
+
+            {/* Result Page Features */}
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14, marginTop: 28 }}>Result Page</div>
+            {([
+              { key: 'show_social_sharing', label: 'Social sharing buttons', defaultOn: true },
+              { key: 'show_score_breakdown', label: 'Score breakdown', defaultOn: true },
+              { key: 'show_email_results', label: 'Email me my results', defaultOn: true },
+              { key: 'show_countdown_timer', label: 'Countdown before redirect', defaultOn: true },
+              { key: 'show_coupon', label: 'Coupon / discount code', defaultOn: false },
+              { key: 'show_products', label: 'Product recommendations', defaultOn: false },
+              { key: 'show_booking', label: 'Book a call button', defaultOn: false },
+              { key: 'show_testimonial', label: 'Testimonial / social proof', defaultOn: false },
+              { key: 'show_before_after', label: 'Before / after comparison', defaultOn: false },
+              { key: 'show_pdf_download', label: 'PDF report download', defaultOn: false, badge: 'PRO' },
+            ] as { key: string; label: string; defaultOn: boolean; badge?: string }[]).map(function(item) {
+              var isOn = (settings as any)?.[item.key] !== undefined ? !!(settings as any)[item.key] : item.defaultOn;
+              return (
+                <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #F2F4F7' }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>
+                    {item.label}
+                    {item.badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F0F9FF', color: '#0284C7', textTransform: 'uppercase' as const, marginLeft: 6 }}>{item.badge}</span>}
+                  </span>
+                  <button type="button" onClick={function() { if (onSettingsChange) { var update: any = Object.assign({}, settings); update[item.key] = !isOn; onSettingsChange(update); } }}
+                    style={{ width: 40, height: 22, borderRadius: 11, background: isOn ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' as const }}>
+                    <span style={{ position: 'absolute' as const, top: 2, left: isOn ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 
