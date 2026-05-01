@@ -2378,10 +2378,33 @@ function SettingsPanel({
               </div>
               <button type="button" onClick={function() {
                 var code = '<iframe src="https://quiz.squarespell.com/embed/' + (quizId || 'your-slug') + '" width="100%" height="600"></iframe>';
-                navigator.clipboard.writeText(code).then(function() {
+                var onSuccess = function() {
                   setCopied(true);
                   setTimeout(function() { setCopied(false); }, 2000);
-                });
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  navigator.clipboard.writeText(code).then(onSuccess).catch(function() {
+                    var ta = document.createElement('textarea');
+                    ta.value = code;
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    onSuccess();
+                  });
+                } else {
+                  var ta = document.createElement('textarea');
+                  ta.value = code;
+                  ta.style.position = 'fixed';
+                  ta.style.left = '-9999px';
+                  document.body.appendChild(ta);
+                  ta.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(ta);
+                  onSuccess();
+                }
               }}
                 style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid ' + (copied ? '#16A34A' : C.ACCENT), background: copied ? '#F0FDF4' : C.ACCENT_LIGHT, fontSize: 12, fontWeight: 600, color: copied ? '#16A34A' : C.ACCENT, cursor: 'pointer', fontFamily: C.FONT, transition: 'all 0.2s' }}>
                 {copied ? 'Copied!' : 'Copy embed code'}
