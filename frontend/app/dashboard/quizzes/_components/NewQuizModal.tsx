@@ -499,7 +499,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                       <div className="sq-goal-top">
                         <span className="sq-goal-label">Start from a template</span>
                       </div>
-                      <div className="sq-goal-hint">Pick from 8 proven quiz templates designed for Squarespace businesses. Customize questions, outcomes, and branding.</div>
+                      <div className="sq-goal-hint">Pick from {QUIZ_TEMPLATE_CATALOG.length} proven quiz templates designed for Squarespace businesses. Customize questions, outcomes, and branding.</div>
                     </button>
                     <button type="button" className="sq-goal" onClick={() => setStage("site")}>
                       <span className="sq-goal-icon" aria-hidden="true">
@@ -529,15 +529,26 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                   <div className="sq-tpl-grid">
                     {QUIZ_TEMPLATE_CATALOG.filter(function(t) { return templateFilter === 'All' || t.category === templateFilter; }).map(function(tpl) {
                       var isSelected = selectedTemplate === tpl.id;
+                      var previewBlocks = tpl.blocks();
+                      var firstQ = previewBlocks.find(function(b: any) { return b.type === 'question'; }) as any;
+                      var previewImg = (firstQ && firstQ.mediaUrl) || (firstQ && firstQ.options && firstQ.options[0] && firstQ.options[0].imageUrl) || '';
+                      var questionCount = previewBlocks.filter(function(b: any) { return b.type === 'question'; }).length;
+                      var outcomeCount = previewBlocks.filter(function(b: any) { return b.type === 'outcome'; }).length;
                       return (
                         <button key={tpl.id} type="button" className={'sq-tpl-card' + (isSelected ? ' is-selected' : '')} onClick={function() { setSelectedTemplate(isSelected ? null : tpl.id); }}>
-                          <div className="sq-tpl-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d={tpl.iconPath}/></svg>
-                          </div>
+                          {previewImg ? (
+                            <div className="sq-tpl-img">
+                              <img src={previewImg} alt={tpl.name} loading="lazy" />
+                            </div>
+                          ) : (
+                            <div className="sq-tpl-icon">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d={tpl.iconPath}/></svg>
+                            </div>
+                          )}
                           <div className="sq-tpl-cat">{tpl.category}</div>
                           <div className="sq-tpl-name">{tpl.name}</div>
-                          <div className="sq-tpl-desc">{tpl.description}</div>
-                          <div className="sq-tpl-audience">{tpl.audience}</div>
+                          <div className="sq-tpl-desc">{tpl.description.length > 120 ? tpl.description.slice(0, 120) + '...' : tpl.description}</div>
+                          <div className="sq-tpl-meta">{questionCount} questions · {outcomeCount} outcomes</div>
                         </button>
                       );
                     })}
@@ -1253,6 +1264,19 @@ const styles = `
 .sq-tpl-name { font-size: 15px; font-weight: 700; color: #1A1A1A; letter-spacing: -0.01em; }
 .sq-tpl-desc { font-size: 13px; color: #6B6B6B; line-height: 1.5; }
 .sq-tpl-audience { font-size: 11.5px; color: #9B9B9B; font-style: italic; margin-top: 2px; }
+.sq-tpl-img {
+  width: 100%; height: 100px; border-radius: 10px; overflow: hidden; margin-bottom: 4px;
+  background: #F7F7F5;
+}
+.sq-tpl-img img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform 0.2s ease;
+}
+.sq-tpl-card:hover .sq-tpl-img img { transform: scale(1.03); }
+.sq-tpl-meta {
+  font-size: 11px; color: #9B9B9B; font-weight: 500; margin-top: 4px;
+  display: flex; align-items: center; gap: 4px;
+}
 .sq-tpl-detail {
   margin-top: 14px; padding: 14px 16px;
   background: rgba(13,115,119,0.04); border: 1px solid rgba(13,115,119,0.15);
