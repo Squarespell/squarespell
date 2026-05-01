@@ -3,7 +3,7 @@
 /**
  * QuizBlockEditor — immersive fullscreen quiz editor.
  *
- * Layout: Icon rail (64px) | Immersive canvas | Slide-out settings panel
+ * Layout: Icon rail (64px) | Immersive canvas | Inline settings panel (380px)
  * Floating toolbar at bottom for quick actions.
  * Shows one question at a time in a beautiful, embed-accurate rendering.
  */
@@ -591,303 +591,6 @@ function GridAnswerCard({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Immersive Question Canvas                                          */
-/* ------------------------------------------------------------------ */
-
-function QuestionCanvas({
-  block,
-  questionNum,
-  totalQuestions,
-  onChange,
-}: {
-  block: QuestionBlock;
-  questionNum: number;
-  totalQuestions: number;
-  onChange: (updated: QuestionBlock) => void;
-}) {
-  var layout = block.answerLayout || 'list';
-  var hasMedia = !!block.mediaUrl;
-  var isVideo = block.mediaType === 'video';
-  var isSplit = layout === 'splitLayout';
-  var isGrid = layout === 'grid' || layout === 'fullBackground';
-  var isFullBg = layout === 'fullBackground';
-
-  function updateOptionText(idx: number, text: string) {
-    var newOpts = block.options.map(function(o, i) {
-      return i === idx ? Object.assign({}, o, { text: text }) : o;
-    });
-    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
-  }
-
-  function updateOptionScore(idx: number, score: number) {
-    var newOpts = block.options.map(function(o, i) {
-      return i === idx ? Object.assign({}, o, { score: score }) : o;
-    });
-    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
-  }
-
-  function deleteOption(idx: number) {
-    if (block.options.length <= 2) return;
-    var newOpts = block.options.filter(function(_, i) { return i !== idx; });
-    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
-  }
-
-  function moveOption(idx: number, dir: number) {
-    var target = idx + dir;
-    if (target < 0 || target >= block.options.length) return;
-    var newOpts = block.options.slice();
-    var temp = newOpts[idx];
-    newOpts[idx] = newOpts[target];
-    newOpts[target] = temp;
-    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
-  }
-
-  function addOption() {
-    if (block.options.length >= 8) return;
-    var newOpts = block.options.slice();
-    newOpts.push({ id: uid(), text: '', score: 0 });
-    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
-  }
-
-  /* ---- SPLIT LAYOUT ---- */
-  if (isSplit) {
-    return (
-      <div style={{
-        maxWidth: 820, width: '100%', background: '#fff', borderRadius: 16,
-        overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-        display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 400,
-      }}>
-        {/* Left: media */}
-        <div style={{
-          background: hasMedia ? 'transparent' : 'linear-gradient(135deg, #1D2939, #344054)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          position: 'relative', overflow: 'hidden',
-        }}>
-          {hasMedia && isVideo ? (
-            <video src={block.mediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : hasMedia ? (
-            <img src={block.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          ) : (
-            <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-              <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 8px' }}>
-                <rect x={3} y={3} width={18} height={18} rx={2} />
-                <circle cx={8.5} cy={8.5} r={1.5} />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-              <div style={{ fontSize: 12, fontWeight: 600 }}>Add media via toolbar</div>
-            </div>
-          )}
-        </div>
-
-        {/* Right: question + answers */}
-        <div style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-            Question {String(questionNum).padStart(2, '0')}
-          </div>
-          <textarea value={block.text || ''} onChange={function(e) {
-              onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
-              e.target.style.height = 'auto';
-              e.target.style.height = e.target.scrollHeight + 'px';
-            }}
-            placeholder="Your question..."
-            onClick={function(e) { e.stopPropagation(); }}
-            ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
-            style={{
-              fontSize: 22, fontWeight: 700, color: C.TEXT, border: 'none', outline: 'none',
-              background: 'transparent', resize: 'none', fontFamily: C.FONT,
-              lineHeight: 1.3, marginBottom: 20, width: '100%',
-              overflow: 'hidden', minHeight: 36,
-            }}
-            rows={1}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-            {block.options.map(function(opt, oi) {
-              return (
-                <AnswerRow key={opt.id} opt={opt} index={oi} total={block.options.length}
-                  onChangeText={function(t) { updateOptionText(oi, t); }}
-                  onChangeScore={function(s) { updateOptionScore(oi, s); }}
-                  onDelete={function() { deleteOption(oi); }}
-                  onMoveUp={function() { moveOption(oi, -1); }}
-                  onMoveDown={function() { moveOption(oi, 1); }}
-                />
-              );
-            })}
-          </div>
-          <button type="button" onClick={addOption} disabled={block.options.length >= 8}
-            style={{
-              marginTop: 12, padding: '10px 0', borderRadius: 8,
-              border: '1px dashed ' + C.BORDER, background: 'transparent',
-              color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
-              cursor: block.options.length >= 8 ? 'default' : 'pointer',
-              fontFamily: C.FONT, transition: 'all 0.15s',
-            }}>
-            + Add option{block.options.length >= 7 ? ' (max 8)' : ''}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* ---- DEFAULT / ALL OTHER LAYOUTS ---- */
-  return (
-    <div style={{
-      maxWidth: 720, width: '100%', background: '#fff', borderRadius: 16,
-      overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-    }}>
-      {/* Hero media (video or image) with delete overlay */}
-      {hasMedia && (
-        <div style={{
-          width: '100%',
-          height: isVideo ? 'auto' : 220,
-          background: isVideo ? '#000' : '#F2F4F7',
-          position: 'relative', overflow: 'hidden',
-        }}>
-          {isVideo ? (
-            <video src={block.mediaUrl} controls playsInline style={{ width: '100%', display: 'block' }} />
-          ) : (
-            <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
-              onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          )}
-          {/* Remove media button */}
-          <button type="button"
-            onClick={function(e) { e.stopPropagation(); onChange(Object.assign({}, block, { mediaUrl: undefined, mediaType: undefined }) as QuestionBlock); }}
-            title="Remove media"
-            style={{
-              position: 'absolute', top: 8, right: 8, width: 30, height: 30,
-              borderRadius: 8, background: 'rgba(0,0,0,0.6)', border: 'none',
-              color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
-          </button>
-        </div>
-      )}
-
-      {/* Question text area */}
-      <div style={{ padding: '28px 32px 0' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-          Question {String(questionNum).padStart(2, '0')} of {totalQuestions}
-        </div>
-        <textarea
-          value={block.text || ''}
-          onChange={function(e) {
-            onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
-            e.target.style.height = 'auto';
-            e.target.style.height = e.target.scrollHeight + 'px';
-          }}
-          onClick={function(e) { e.stopPropagation(); }}
-          onFocus={function(e) { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-          ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
-          placeholder="Enter your question here..."
-          style={{
-            width: '100%', fontSize: 26, fontWeight: 700, color: C.TEXT,
-            border: 'none', outline: 'none', background: 'transparent',
-            resize: 'none', fontFamily: C.FONT, lineHeight: 1.3,
-            overflow: 'hidden', minHeight: 40,
-          }}
-          rows={1}
-        />
-        {block.subtitle && (
-          <div style={{ fontSize: 14, color: C.TEXT_MUTED, marginTop: -4, marginBottom: 8 }}>{block.subtitle}</div>
-        )}
-      </div>
-
-      {/* Answer options — layout-aware rendering */}
-      <div style={{ padding: '16px 32px 28px' }}>
-        {isGrid ? (
-          /* Grid / Full-background layout */
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {block.options.map(function(opt, oi) {
-              return (
-                <GridAnswerCard key={opt.id} opt={opt} index={oi} total={block.options.length}
-                  isFullBg={isFullBg}
-                  onChangeText={function(t) { updateOptionText(oi, t); }}
-                  onChangeScore={function(s) { updateOptionScore(oi, s); }}
-                  onDelete={function() { deleteOption(oi); }}
-                />
-              );
-            })}
-          </div>
-        ) : layout === 'imageThumbnails' ? (
-          /* Thumbnail layout — image + text + description row */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {block.options.map(function(opt, oi) {
-              return (
-                <div key={opt.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: '14px 16px', borderRadius: 10,
-                  border: '1px solid ' + C.BORDER, background: '#fff',
-                  transition: 'all 0.12s',
-                }}>
-                  {/* Thumbnail */}
-                  <div style={{
-                    width: 56, height: 56, borderRadius: 8, overflow: 'hidden',
-                    background: '#F2F4F7', flexShrink: 0,
-                  }}>
-                    {opt.imageUrl ? (
-                      <img src={opt.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.TEXT_SUBTLE }}>
-                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /></svg>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Text + optional description */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <input type="text" value={opt.text || ''} onChange={function(e) { updateOptionText(oi, e.target.value); }}
-                      onClick={function(e) { e.stopPropagation(); }}
-                      placeholder="Answer..."
-                      style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT }} />
-                    {opt.explanation && (
-                      <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>{opt.explanation}</div>
-                    )}
-                  </div>
-
-                  {/* Score */}
-                  <ScoreBadge score={opt.score || 0} onChange={function(s) { updateOptionScore(oi, s); }} />
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          /* Default list layout */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {block.options.map(function(opt, oi) {
-              return (
-                <AnswerRow key={opt.id} opt={opt} index={oi} total={block.options.length}
-                  onChangeText={function(t) { updateOptionText(oi, t); }}
-                  onChangeScore={function(s) { updateOptionScore(oi, s); }}
-                  onDelete={function() { deleteOption(oi); }}
-                  onMoveUp={function() { moveOption(oi, -1); }}
-                  onMoveDown={function() { moveOption(oi, 1); }}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Add option */}
-        <button type="button" onClick={addOption} disabled={block.options.length >= 8}
-          style={{
-            width: '100%', marginTop: 12, padding: '10px 0', borderRadius: 8,
-            border: '1px dashed ' + C.BORDER, background: 'transparent',
-            color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
-            cursor: block.options.length >= 8 ? 'default' : 'pointer',
-            fontFamily: C.FONT, transition: 'all 0.15s',
-          }}
-          onMouseEnter={function(e) { if (block.options.length < 8) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.color = C.ACCENT; } }}
-          onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.color = C.TEXT_MUTED; }}
-        >
-          + Add option{block.options.length >= 7 ? ' (max 8)' : ''}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Outcome Canvas                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -1062,35 +765,128 @@ function GenericBlockCanvas({ block, onChange }: { block: QuizBlock; onChange: (
 }
 
 /* ------------------------------------------------------------------ */
-/*  Floating Toolbar                                                   */
+/*  Question Toolbar — buttons for image/video/help                    */
 /* ------------------------------------------------------------------ */
 
-function FloatingToolbar({
+function QuestionToolbar({
   block,
-  allBlocks,
-  onAddOption,
-  onChangeLayout,
-  onChangeMedia,
-  onClearMedia,
-  onChangeTimer,
-  onShowBranch,
+  onAddImage,
+  onAddVideo,
+  onAddHelp,
 }: {
   block: QuestionBlock;
-  allBlocks: QuizBlock[];
-  onAddOption: () => void;
-  onChangeLayout: (layout: AnswerLayout) => void;
-  onChangeMedia: (url: string, type: 'image' | 'video') => void;
-  onClearMedia: () => void;
-  onChangeTimer: (seconds: number | undefined) => void;
-  onShowBranch: () => void;
+  onAddImage: () => void;
+  onAddVideo: () => void;
+  onAddHelp: () => void;
 }) {
-  var [activePopover, setActivePopover] = useState<string | null>(null);
-  var [mediaUrl, setMediaUrl] = useState('');
-  var [timerVal, setTimerVal] = useState(String(block.timeLimit || ''));
-  var fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 2,
+      padding: '8px 0 0', margin: '8px 36px 0',
+      borderTop: '1px solid #F2F4F7',
+    }}>
+      <button type="button" onClick={onAddImage}
+        title="Add image to this question"
+        style={{
+          height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
+          background: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT_LIGHT : 'transparent',
+          fontSize: 11, fontWeight: 600,
+          color: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT : '#98A2B3',
+          cursor: 'pointer', fontFamily: C.FONT,
+          display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
+        }}
+      >
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+        Image
+      </button>
+      <button type="button" onClick={onAddVideo}
+        title="Add video to this question"
+        style={{
+          height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
+          background: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT_LIGHT : 'transparent',
+          fontSize: 11, fontWeight: 600,
+          color: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT : '#98A2B3',
+          cursor: 'pointer', fontFamily: C.FONT,
+          display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
+        }}
+      >
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x={1} y={5} width={15} height={14} rx={2} /></svg>
+        Video
+      </button>
+      <div style={{ width: 1, height: 18, background: C.BORDER, margin: '0 4px' }} />
+      <button type="button" onClick={onAddHelp}
+        title="Add subtitle / help text"
+        style={{
+          height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
+          background: 'transparent', fontSize: 11, fontWeight: 600,
+          color: '#98A2B3', cursor: 'pointer', fontFamily: C.FONT,
+          display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
+        }}
+      >
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+        Help text
+      </button>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Inline Media Preview — shows image/video with overlay controls     */
+/* ------------------------------------------------------------------ */
+
+function InlineMediaPreview({
+  block,
+  onClearMedia,
+}: {
+  block: QuestionBlock;
+  onClearMedia: () => void;
+}) {
+  if (!block.mediaUrl) return null;
+
+  var isVideo = block.mediaType === 'video';
+
+  return (
+    <div style={{
+      margin: '12px 36px 0', borderRadius: 12, overflow: 'hidden',
+      position: 'relative', background: isVideo ? '#000' : '#F2F4F7',
+      height: isVideo ? 'auto' : 240,
+    }}>
+      {isVideo ? (
+        <video src={block.mediaUrl} controls playsInline style={{ width: '100%', display: 'block' }} />
+      ) : (
+        <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 240, objectFit: 'cover', display: 'block' }}
+          onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      )}
+      <button type="button" onClick={onClearMedia}
+        style={{
+          position: 'absolute', top: 8, right: 8, width: 30, height: 30,
+          borderRadius: 8, background: 'rgba(0,0,0,0.6)', border: 'none',
+          color: '#fff', cursor: 'pointer', display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+      </button>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Image Picker Dropdown — 420px wide with 3 tabs                     */
+/* ------------------------------------------------------------------ */
+
+function ImagePicker({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (url: string) => void;
+  onClose: () => void;
+}) {
+  var [tab, setTab] = useState<'upload' | 'url' | 'pexels'>('upload');
+  var [urlInput, setUrlInput] = useState('');
   var [pexelsQuery, setPexelsQuery] = useState('');
-  var [pexelsResults, setPexelsResults] = useState<{ id: string; thumb: string; regular: string; alt: string; credit: string }[]>([]);
+  var [pexelsResults, setPexelsResults] = useState<{ id: string; thumb: string; regular: string; alt: string }[]>([]);
   var [pexelsLoading, setPexelsLoading] = useState(false);
+  var fileRef = useRef<HTMLInputElement>(null);
 
   function searchPexels(query: string) {
     if (!query.trim()) return;
@@ -1108,6 +904,472 @@ function FloatingToolbar({
     });
   }
 
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    var file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { alert('File too large. Max 20MB.'); return; }
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = (reader.result as string).split(',')[1];
+      getClerkToken().then(function(token) {
+        fetch(API_BASE + '/api/media/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
+          body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.url) {
+            onSelect(data.url);
+            onClose();
+          }
+        })
+        .catch(function(err) { console.error('Upload error:', err); });
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)',
+      background: '#fff', borderRadius: 16, border: '1px solid ' + C.BORDER,
+      width: 420, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+      zIndex: 50,
+    }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, background: '#F2F4F7', borderRadius: 10, padding: 3 }}>
+        {(['upload', 'url', 'pexels'] as const).map(function(t) {
+          var active = tab === t;
+          var label = t === 'upload' ? 'Upload' : t === 'url' ? 'URL' : 'Pexels';
+          return (
+            <button key={t} type="button" onClick={function() { setTab(t); }}
+              style={{
+                flex: 1, padding: '8px 6px', borderRadius: 8, border: 'none',
+                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : C.TEXT_MUTED,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
+                boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}>
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === 'upload' && (
+        <>
+          <button type="button" onClick={function() { fileRef.current?.click(); }}
+            style={{ width: '100%', padding: '16px', borderRadius: 8, border: '2px dashed ' + C.BORDER, background: '#FAFAFA', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.TEXT, fontFamily: C.FONT, marginBottom: 16 }}>
+            Click to upload
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+        </>
+      )}
+
+      {tab === 'url' && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input type="text" value={urlInput} onChange={function(e) { setUrlInput(e.target.value); }}
+            placeholder="Paste image URL..."
+            onKeyDown={function(e) { if (e.key === 'Enter' && urlInput) { onSelect(urlInput); onClose(); } }}
+            style={{ flex: 1, padding: '10px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+          <button type="button" onClick={function() { if (urlInput) { onSelect(urlInput); onClose(); } }}
+            style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
+            Add
+          </button>
+        </div>
+      )}
+
+      {tab === 'pexels' && (
+        <>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input type="text" value={pexelsQuery} onChange={function(e) { setPexelsQuery(e.target.value); }}
+              placeholder="Search photos..."
+              onKeyDown={function(e) { if (e.key === 'Enter') searchPexels(pexelsQuery); }}
+              style={{ flex: 1, padding: '10px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+            <button type="button" onClick={function() { searchPexels(pexelsQuery); }}
+              style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
+              {pexelsLoading ? '...' : 'Search'}
+            </button>
+          </div>
+          {pexelsResults.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxHeight: 200, overflowY: 'auto' }}>
+              {pexelsResults.map(function(img) {
+                return (
+                  <button key={img.id} type="button" onClick={function() { onSelect(img.regular); onClose(); }}
+                    style={{ padding: 0, border: '2px solid transparent', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: 'transparent', transition: 'border-color 0.1s' }}
+                    onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}>
+                    <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block', borderRadius: 6 }} />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Video Picker Dropdown — 400px wide with URL input                  */
+/* ------------------------------------------------------------------ */
+
+function VideoPicker({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (url: string) => void;
+  onClose: () => void;
+}) {
+  var [urlInput, setUrlInput] = useState('');
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)',
+      background: '#fff', borderRadius: 16, border: '1px solid ' + C.BORDER,
+      width: 400, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+      zIndex: 50,
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 12 }}>Video URL</div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input type="text" value={urlInput} onChange={function(e) { setUrlInput(e.target.value); }}
+          placeholder="YouTube, Vimeo, or video URL..."
+          onKeyDown={function(e) { if (e.key === 'Enter' && urlInput) { onSelect(urlInput); onClose(); } }}
+          style={{ flex: 1, padding: '10px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+        <button type="button" onClick={function() { if (urlInput) { onSelect(urlInput); onClose(); } }}
+          style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
+          Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Question Canvas — rebuilt without hero media, with toolbar         */
+/* ------------------------------------------------------------------ */
+
+function QuestionCanvas({
+  block,
+  questionNum,
+  totalQuestions,
+  onChange,
+}: {
+  block: QuestionBlock;
+  questionNum: number;
+  totalQuestions: number;
+  onChange: (updated: QuestionBlock) => void;
+}) {
+  var layout = block.answerLayout || 'list';
+  var isSplit = layout === 'splitLayout';
+  var isGrid = layout === 'grid' || layout === 'fullBackground';
+  var isFullBg = layout === 'fullBackground';
+  var [showImagePicker, setShowImagePicker] = useState(false);
+  var [showVideoPicker, setShowVideoPicker] = useState(false);
+
+  function updateOptionText(idx: number, text: string) {
+    var newOpts = block.options.map(function(o, i) {
+      return i === idx ? Object.assign({}, o, { text: text }) : o;
+    });
+    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
+  }
+
+  function updateOptionScore(idx: number, score: number) {
+    var newOpts = block.options.map(function(o, i) {
+      return i === idx ? Object.assign({}, o, { score: score }) : o;
+    });
+    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
+  }
+
+  function deleteOption(idx: number) {
+    if (block.options.length <= 2) return;
+    var newOpts = block.options.filter(function(_, i) { return i !== idx; });
+    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
+  }
+
+  function moveOption(idx: number, dir: number) {
+    var target = idx + dir;
+    if (target < 0 || target >= block.options.length) return;
+    var newOpts = block.options.slice();
+    var temp = newOpts[idx];
+    newOpts[idx] = newOpts[target];
+    newOpts[target] = temp;
+    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
+  }
+
+  function addOption() {
+    if (block.options.length >= 8) return;
+    var newOpts = block.options.slice();
+    newOpts.push({ id: uid(), text: '', score: 0 });
+    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
+  }
+
+  /* ---- SPLIT LAYOUT ---- */
+  if (isSplit) {
+    return (
+      <div style={{
+        maxWidth: 820, width: '100%', background: '#fff', borderRadius: 16,
+        overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 400,
+      }}>
+        {/* Left: media */}
+        <div style={{
+          background: block.mediaUrl ? 'transparent' : 'linear-gradient(135deg, #1D2939, #344054)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {block.mediaUrl && block.mediaType === 'video' ? (
+            <video src={block.mediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : block.mediaUrl ? (
+            <img src={block.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          ) : (
+            <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+              <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 8px' }}>
+                <rect x={3} y={3} width={18} height={18} rx={2} />
+                <circle cx={8.5} cy={8.5} r={1.5} />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>Add media via toolbar</div>
+            </div>
+          )}
+        </div>
+
+        {/* Right: question + answers */}
+        <div style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+            Question {String(questionNum).padStart(2, '0')}
+          </div>
+          <textarea value={block.text || ''} onChange={function(e) {
+              onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
+            placeholder="Your question..."
+            onClick={function(e) { e.stopPropagation(); }}
+            ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
+            style={{
+              fontSize: 22, fontWeight: 700, color: C.TEXT, border: 'none', outline: 'none',
+              background: 'transparent', resize: 'none', fontFamily: C.FONT,
+              lineHeight: 1.3, marginBottom: 20, width: '100%',
+              overflow: 'hidden', minHeight: 36,
+            }}
+            rows={1}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+            {block.options.map(function(opt, oi) {
+              return (
+                <AnswerRow key={opt.id} opt={opt} index={oi} total={block.options.length}
+                  onChangeText={function(t) { updateOptionText(oi, t); }}
+                  onChangeScore={function(s) { updateOptionScore(oi, s); }}
+                  onDelete={function() { deleteOption(oi); }}
+                  onMoveUp={function() { moveOption(oi, -1); }}
+                  onMoveDown={function() { moveOption(oi, 1); }}
+                />
+              );
+            })}
+          </div>
+          <button type="button" onClick={addOption} disabled={block.options.length >= 8}
+            style={{
+              marginTop: 12, padding: '10px 0', borderRadius: 8,
+              border: '1px dashed ' + C.BORDER, background: 'transparent',
+              color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
+              cursor: block.options.length >= 8 ? 'default' : 'pointer',
+              fontFamily: C.FONT, transition: 'all 0.15s',
+            }}>
+            + Add option{block.options.length >= 7 ? ' (max 8)' : ''}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---- DEFAULT / ALL OTHER LAYOUTS ---- */
+  return (
+    <div style={{
+      maxWidth: 720, width: '100%', background: '#fff', borderRadius: 16,
+      overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    }}>
+      {/* Question text area */}
+      <div style={{ padding: '28px 32px 0' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+          Question {String(questionNum).padStart(2, '0')} of {totalQuestions}
+        </div>
+        <textarea
+          value={block.text || ''}
+          onChange={function(e) {
+            onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
+            e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight + 'px';
+          }}
+          onClick={function(e) { e.stopPropagation(); }}
+          onFocus={function(e) { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+          ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
+          placeholder="Enter your question here..."
+          style={{
+            width: '100%', fontSize: 26, fontWeight: 700, color: C.TEXT,
+            border: 'none', outline: 'none', background: 'transparent',
+            resize: 'none', fontFamily: C.FONT, lineHeight: 1.3,
+            overflow: 'hidden', minHeight: 40,
+          }}
+          rows={1}
+        />
+        {block.subtitle && (
+          <div style={{ fontSize: 14, color: C.TEXT_MUTED, marginTop: -4, marginBottom: 8 }}>{block.subtitle}</div>
+        )}
+      </div>
+
+      {/* Toolbar */}
+      <QuestionToolbar
+        block={block}
+        onAddImage={function() { setShowImagePicker(true); }}
+        onAddVideo={function() { setShowVideoPicker(true); }}
+        onAddHelp={function() { onChange(Object.assign({}, block, { subtitle: block.subtitle ? undefined : 'Add help text here...' }) as QuestionBlock); }}
+      />
+
+      {/* Inline media preview */}
+      <InlineMediaPreview
+        block={block}
+        onClearMedia={function() { onChange(Object.assign({}, block, { mediaUrl: undefined, mediaType: undefined }) as QuestionBlock); }}
+      />
+
+      {/* Answer options — layout-aware rendering */}
+      <div style={{ padding: '16px 32px 28px' }}>
+        {isGrid ? (
+          /* Grid / Full-background layout */
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {block.options.map(function(opt, oi) {
+              return (
+                <GridAnswerCard key={opt.id} opt={opt} index={oi} total={block.options.length}
+                  isFullBg={isFullBg}
+                  onChangeText={function(t) { updateOptionText(oi, t); }}
+                  onChangeScore={function(s) { updateOptionScore(oi, s); }}
+                  onDelete={function() { deleteOption(oi); }}
+                />
+              );
+            })}
+          </div>
+        ) : layout === 'imageThumbnails' ? (
+          /* Thumbnail layout — image + text + description row */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {block.options.map(function(opt, oi) {
+              return (
+                <div key={opt.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '14px 16px', borderRadius: 10,
+                  border: '1px solid ' + C.BORDER, background: '#fff',
+                  transition: 'all 0.12s',
+                }}>
+                  {/* Thumbnail */}
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 8, overflow: 'hidden',
+                    background: '#F2F4F7', flexShrink: 0,
+                  }}>
+                    {opt.imageUrl ? (
+                      <img src={opt.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.TEXT_SUBTLE }}>
+                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /></svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Text + optional description */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <input type="text" value={opt.text || ''} onChange={function(e) { updateOptionText(oi, e.target.value); }}
+                      onClick={function(e) { e.stopPropagation(); }}
+                      placeholder="Answer..."
+                      style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT }} />
+                    {opt.explanation && (
+                      <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>{opt.explanation}</div>
+                    )}
+                  </div>
+
+                  {/* Score */}
+                  <ScoreBadge score={opt.score || 0} onChange={function(s) { updateOptionScore(oi, s); }} />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Default list layout */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {block.options.map(function(opt, oi) {
+              return (
+                <AnswerRow key={opt.id} opt={opt} index={oi} total={block.options.length}
+                  onChangeText={function(t) { updateOptionText(oi, t); }}
+                  onChangeScore={function(s) { updateOptionScore(oi, s); }}
+                  onDelete={function() { deleteOption(oi); }}
+                  onMoveUp={function() { moveOption(oi, -1); }}
+                  onMoveDown={function() { moveOption(oi, 1); }}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Add option */}
+        <button type="button" onClick={addOption} disabled={block.options.length >= 8}
+          style={{
+            width: '100%', marginTop: 12, padding: '10px 0', borderRadius: 8,
+            border: '1px dashed ' + C.BORDER, background: 'transparent',
+            color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
+            cursor: block.options.length >= 8 ? 'default' : 'pointer',
+            fontFamily: C.FONT, transition: 'all 0.15s',
+          }}
+          onMouseEnter={function(e) { if (block.options.length < 8) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.color = C.ACCENT; } }}
+          onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.color = C.TEXT_MUTED; }}
+        >
+          + Add option{block.options.length >= 7 ? ' (max 8)' : ''}
+        </button>
+      </div>
+
+      {/* Media picker modals */}
+      {showImagePicker && (
+        <>
+          <ImagePicker
+            onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'image' }) as QuestionBlock); }}
+            onClose={function() { setShowImagePicker(false); }}
+          />
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowImagePicker(false); }} />
+        </>
+      )}
+      {showVideoPicker && (
+        <>
+          <VideoPicker
+            onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'video' }) as QuestionBlock); }}
+            onClose={function() { setShowVideoPicker(false); }}
+          />
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowVideoPicker(false); }} />
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Floating Toolbar — REMOVED Media button, keeps Option/Timer/Branch */
+/* ------------------------------------------------------------------ */
+
+function FloatingToolbar({
+  block,
+  allBlocks,
+  onAddOption,
+  onChangeLayout,
+  onChangeTimer,
+  onShowBranch,
+}: {
+  block: QuestionBlock;
+  allBlocks: QuizBlock[];
+  onAddOption: () => void;
+  onChangeLayout: (layout: AnswerLayout) => void;
+  onChangeTimer: (seconds: number | undefined) => void;
+  onShowBranch: () => void;
+}) {
+  var [activePopover, setActivePopover] = useState<string | null>(null);
+  var [timerVal, setTimerVal] = useState(String(block.timeLimit || ''));
+
   var layouts: { value: AnswerLayout; label: string }[] = [
     { value: 'list', label: 'List' },
     { value: 'grid', label: 'Grid' },
@@ -1123,33 +1385,6 @@ function FloatingToolbar({
     borderRadius: 8, transition: 'all 0.12s', fontFamily: C.FONT,
     whiteSpace: 'nowrap' as const,
   };
-
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    var file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { alert('File too large. Max 20MB.'); return; }
-    var isVideo = file.type.startsWith('video/');
-    var reader = new FileReader();
-    reader.onload = function() {
-      var base64 = (reader.result as string).split(',')[1];
-      getClerkToken().then(function(token) {
-        fetch(API_BASE + '/api/media/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
-          body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data.url) {
-            onChangeMedia(data.url, isVideo ? 'video' : 'image');
-            setActivePopover(null);
-          }
-        })
-        .catch(function(err) { console.error('Upload error:', err); });
-      });
-    };
-    reader.readAsDataURL(file);
-  }
 
   return (
     <div style={{
@@ -1217,90 +1452,6 @@ function FloatingToolbar({
 
       <div style={{ width: 1, height: 20, background: C.BORDER }} />
 
-      {/* Media */}
-      <div style={{ position: 'relative' }}>
-        <button type="button" style={Object.assign({}, btnStyle, block.mediaUrl ? { color: '#7C3AED' } : {})}
-          onClick={function() { setActivePopover(activePopover === 'media' ? null : 'media'); }}
-          onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_LIGHT; }}
-          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}
-        >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <rect x={3} y={3} width={18} height={18} rx={2} />
-            <circle cx={8.5} cy={8.5} r={1.5} />
-            <polyline points="21 15 16 10 5 21" />
-          </svg>
-          Media
-        </button>
-        {activePopover === 'media' && (
-          <div style={{ position: 'absolute', bottom: 48, left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 12, padding: 16, minWidth: 360, maxWidth: 420, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 10 }}>Add Media</div>
-
-            {/* Current media preview + remove */}
-            {block.mediaUrl && (
-              <div style={{ position: 'relative', marginBottom: 10, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + C.BORDER }}>
-                <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }}
-                  onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                <button type="button" onClick={function() { onClearMedia(); }}
-                  style={{ position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 6, background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}
-                  title="Remove media">
-                  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
-                </button>
-              </div>
-            )}
-
-            {/* Upload */}
-            <button type="button" onClick={function() { fileRef.current?.click(); }}
-              style={{ width: '100%', padding: '10px', borderRadius: 8, border: '2px dashed ' + C.BORDER, background: '#FAFAFA', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.TEXT, fontFamily: C.FONT, marginBottom: 8 }}>
-              Upload image or video
-            </button>
-            <input ref={fileRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
-
-            {/* Paste URL */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-              <input type="text" value={mediaUrl} onChange={function(e) { setMediaUrl(e.target.value); }}
-                placeholder="Paste image URL..."
-                onKeyDown={function(e) { if (e.key === 'Enter' && mediaUrl) { onChangeMedia(mediaUrl, mediaUrl.includes('youtube') || mediaUrl.includes('vimeo') ? 'video' : 'image'); setMediaUrl(''); setActivePopover(null); } }}
-                style={{ flex: 1, padding: '8px 10px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
-            </div>
-
-            {/* Pexels search */}
-            <div style={{ borderTop: '1px solid ' + C.BORDER, paddingTop: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx={11} cy={11} r={8} /><line x1={21} y1={21} x2={16.65} y2={16.65} /></svg>
-                Search Pexels
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input type="text" value={pexelsQuery} onChange={function(e) { setPexelsQuery(e.target.value); }}
-                  placeholder="Search free photos..."
-                  onKeyDown={function(e) { if (e.key === 'Enter') searchPexels(pexelsQuery); }}
-                  style={{ flex: 1, padding: '8px 10px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
-                <button type="button" onClick={function() { searchPexels(pexelsQuery); }}
-                  style={{ padding: '8px 12px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: C.FONT }}>
-                  {pexelsLoading ? '...' : 'Search'}
-                </button>
-              </div>
-              {pexelsResults.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 8, maxHeight: 180, overflowY: 'auto' }}>
-                  {pexelsResults.map(function(img) {
-                    return (
-                      <button key={img.id} type="button"
-                        onClick={function() { onChangeMedia(img.regular, 'image'); setActivePopover(null); setPexelsResults([]); setPexelsQuery(''); }}
-                        style={{ padding: 0, border: '2px solid transparent', borderRadius: 6, overflow: 'hidden', cursor: 'pointer', background: 'transparent', transition: 'border-color 0.1s' }}
-                        onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
-                        onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}>
-                        <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 64, objectFit: 'cover', display: 'block', borderRadius: 4 }} />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div style={{ width: 1, height: 20, background: C.BORDER }} />
-
       {/* Layout */}
       <div style={{ position: 'relative' }}>
         <button type="button" style={btnStyle}
@@ -1321,11 +1472,7 @@ function FloatingToolbar({
               var isActive = (block.answerLayout || 'list') === l.value;
               return (
                 <button key={l.value} type="button"
-                  onClick={function() {
-                    var style = l.value === 'grid' ? 'cards' : l.value === 'fullBackground' ? 'imageChoice' : l.value === 'imageThumbnails' ? 'imageChoice' : 'buttons';
-                    onChangeLayout(l.value);
-                    setActivePopover(null);
-                  }}
+                  onClick={function() { onChangeLayout(l.value); setActivePopover(null); }}
                   style={{
                     display: 'block', width: '100%', padding: '8px 12px', borderRadius: 6,
                     border: 'none', background: isActive ? C.ACCENT_LIGHT : 'transparent',
@@ -1348,6 +1495,350 @@ function FloatingToolbar({
         <div style={{ position: 'fixed', inset: 0, zIndex: 39 }}
           onClick={function() { setActivePopover(null); }} />
       )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Settings Panel — Inline 380px right panel with 5 tabs              */
+/* ------------------------------------------------------------------ */
+
+function SettingsPanel({
+  open,
+  onClose,
+  settings,
+  onSettingsChange,
+  userPlan,
+  quizId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  settings?: QuizSettings;
+  onSettingsChange?: (s: QuizSettings) => void;
+  userPlan?: UserPlan;
+  quizId?: string;
+}) {
+  var [tab, setTab] = useState<'question' | 'design' | 'behavior' | 'integrations' | 'advanced'>('question');
+
+  if (!open) return null;
+
+  return (
+    <div style={{
+      width: 380, background: '#fff', borderLeft: '1px solid ' + C.BORDER,
+      overflowY: 'auto', display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Header */}
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid ' + C.BORDER, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: C.TEXT, fontFamily: C.FONT }}>Settings</span>
+        <button type="button" onClick={onClose}
+          style={{ width: 28, height: 28, borderRadius: 6, background: 'transparent', border: '1px solid ' + C.BORDER, color: C.TEXT_MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid ' + C.BORDER, background: '#F9FAFB', padding: '0 16px' }}>
+        {(['question', 'design', 'behavior', 'integrations', 'advanced'] as const).map(function(t) {
+          var active = tab === t;
+          var label = t === 'question' ? 'Question' : t === 'design' ? 'Design' : t === 'behavior' ? 'Behavior' : t === 'integrations' ? 'Integrations' : 'Advanced';
+          return (
+            <button key={t} type="button" onClick={function() { setTab(t); }}
+              style={{
+                flex: 1, padding: '12px 8px', borderRadius: 0,
+                border: 'none', background: 'transparent',
+                color: active ? C.ACCENT : C.TEXT_MUTED,
+                fontSize: 11, fontWeight: active ? 700 : 600,
+                cursor: 'pointer', fontFamily: C.FONT,
+                borderBottom: active ? '2px solid ' + C.ACCENT : '2px solid transparent',
+                transition: 'all 0.15s',
+              }}>
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        {tab === 'question' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Question Settings</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Question type</div>
+                <select style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff', outline: 'none' }}>
+                  <option>Single choice</option><option>Multiple choice</option><option>Text input</option><option>Rating scale</option><option>Date picker</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Help text</div>
+                <input type="text" placeholder="Optional hint below question..." style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Required</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Shuffle answers</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Allow multiple selection</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Timer</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Time limit (seconds)</div>
+              <input type="number" placeholder="No limit" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Scoring</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Show scores to user</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Show explanations</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Skip Logic / Branching</div>
+              <p style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 12 }}>Route users to different questions based on their answer.</p>
+              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1.5px dashed ' + C.BORDER, background: 'transparent', fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, cursor: 'pointer', fontFamily: C.FONT }}>+ Add branching rule</button>
+            </div>
+          </div>
+        )}
+
+        {tab === 'design' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Theme Colors</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#0D7377', border: '2px solid ' + C.BORDER }} />
+                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Primary</span>
+                <input type="text" defaultValue="#0D7377" style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center', fontFamily: C.FONT }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#FFFFFF', border: '2px solid #ddd' }} />
+                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Background</span>
+                <input type="text" defaultValue="#FFFFFF" style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center', fontFamily: C.FONT }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#101828', border: '2px solid ' + C.BORDER }} />
+                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Text</span>
+                <input type="text" defaultValue="#101828" style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center', fontFamily: C.FONT }} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Typography</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Font</div>
+                <select style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff' }}>
+                  <option>Inter</option><option>Playfair Display</option><option>Roboto</option><option>Space Grotesk</option>
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Question size</div>
+                <select style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff' }}>
+                  <option>Small</option><option>Medium</option><option>Large</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Branding</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Remove branding <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB', textTransform: 'uppercase' }}>STARTER</span></span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Custom logo URL</div>
+                <input type="text" placeholder="https://yourdomain.com/logo.png" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Custom CSS <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></div>
+              <textarea placeholder="/* Your styles */" style={{ width: '100%', minHeight: 80, padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: 'monospace', color: C.TEXT, resize: 'vertical' as const, outline: 'none' }}
+                value={settings?.custom_css || ''}
+                onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { custom_css: e.target.value })); }} />
+            </div>
+          </div>
+        )}
+
+        {tab === 'behavior' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Quiz Flow</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Progress bar</span>
+                <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { show_progress_bar: !(settings?.show_progress_bar !== false) })); }}
+                  style={{ width: 40, height: 22, borderRadius: 11, background: settings?.show_progress_bar !== false ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: settings?.show_progress_bar !== false ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Shuffle questions</span>
+                <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { shuffle_questions: !(settings?.shuffle_questions) })); }}
+                  style={{ width: 40, height: 22, borderRadius: 11, background: settings?.shuffle_questions ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: settings?.shuffle_questions ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+                </button>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Transition</div>
+                <select value={settings?.transition_type || 'slide'}
+                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { transition_type: e.target.value as any })); }}
+                  style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff' }}>
+                  <option value="slide">Slide</option><option value="fade">Fade</option><option value="none">None</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Completion</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Redirect URL</div>
+                <input type="text" placeholder="https://yourdomain.com/thanks" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Redirect delay (sec)</div>
+                <input type="number" defaultValue="3" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Scheduling <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Publish at</div>
+                <input type="datetime-local" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Unpublish at</div>
+                <input type="datetime-local" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>A/B Testing <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></div>
+              <p style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10 }}>Split traffic 50/50 between two quiz variants.</p>
+              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid ' + C.ACCENT, background: C.ACCENT_LIGHT, fontSize: 12, fontWeight: 600, color: C.ACCENT, cursor: 'pointer', fontFamily: C.FONT }}>Create Variant B</button>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>GDPR / Privacy</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Consent checkbox</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Privacy policy URL</div>
+                <input type="text" placeholder="https://yourdomain.com/privacy" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'integrations' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Connected Services</div>
+              <p style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 16 }}>Send leads to your tools automatically.</p>
+              {[
+                { name: 'Mailchimp', icon: '📧', connected: true },
+                { name: 'Klaviyo', icon: '📋', connected: false },
+                { name: 'HubSpot', icon: '🔗', connected: false },
+                { name: 'Zapier', icon: '🔄', connected: true },
+                { name: 'Google Sheets', icon: '📊', connected: false },
+              ].map(function(svc) {
+                return (
+                  <div key={svc.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid ' + C.BORDER, borderRadius: 8, marginBottom: 8, transition: 'all 0.15s' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, background: '#F9FAFB' }}>{svc.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT }}>{svc.name}</div>
+                      <div style={{ fontSize: 11, color: svc.connected ? '#16A34A' : C.TEXT_SUBTLE }}>{svc.connected ? 'Connected' : 'Not connected'}</div>
+                    </div>
+                    <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: svc.connected ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                      <span style={{ position: 'absolute', top: 2, left: svc.connected ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Webhook</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Webhook URL</div>
+                <input type="text" placeholder="https://your-api.com/webhook" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Send on completion</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Send on lead capture</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'advanced' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Embed Code</div>
+              <div style={{ background: '#1D2939', borderRadius: 8, padding: 14, fontFamily: 'monospace', fontSize: 11, color: '#E5E7EB', lineHeight: 1.6, wordBreak: 'break-all' as const, marginBottom: 12 }}>
+                {'<iframe src="https://quiz.squarespell.com/embed/' + (quizId || 'your-slug') + '" width="100%" height="600"></iframe>'}
+              </div>
+              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid ' + C.ACCENT, background: C.ACCENT_LIGHT, fontSize: 12, fontWeight: 600, color: C.ACCENT, cursor: 'pointer', fontFamily: C.FONT }}>Copy embed code</button>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Security</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>reCAPTCHA <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></span>
+                <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { enable_recaptcha: !(settings?.enable_recaptcha) })); }}
+                  style={{ width: 40, height: 22, borderRadius: 11, background: settings?.enable_recaptcha ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: settings?.enable_recaptcha ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Rate limiting</span>
+                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </button>
+              </div>
+            </div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>SEO</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Slug</div>
+                <input type="text" defaultValue={quizId || 'dream-squarespace-site'} style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Meta description</div>
+                <textarea placeholder="Discover which plan fits you..." style={{ width: '100%', minHeight: 60, padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none', resize: 'vertical' as const }} />
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Danger Zone</div>
+              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #DC2626', background: '#FEF2F2', fontSize: 12, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: C.FONT }}>Delete this quiz</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1445,160 +1936,6 @@ function SkipLogicModal({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Settings Panel (slide-out right)                                   */
-/* ------------------------------------------------------------------ */
-
-function SettingsPanel({
-  open,
-  onClose,
-  settings,
-  onSettingsChange,
-  userPlan,
-  quizId,
-}: {
-  open: boolean;
-  onClose: () => void;
-  settings?: QuizSettings;
-  onSettingsChange?: (s: QuizSettings) => void;
-  userPlan?: UserPlan;
-  quizId?: string;
-}) {
-  if (!open) return null;
-
-  return (
-    <div style={{
-      position: 'fixed', right: 0, top: 0, width: 360, height: '100vh',
-      background: '#fff', borderLeft: '1px solid ' + C.BORDER,
-      overflowY: 'auto', zIndex: 30,
-      boxShadow: '-8px 0 24px rgba(0,0,0,0.06)',
-    }}>
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid ' + C.BORDER, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, fontFamily: C.FONT }}>Quiz Settings</span>
-        <button type="button" onClick={onClose}
-          style={{ width: 32, height: 32, borderRadius: 8, background: 'transparent', border: '1px solid ' + C.BORDER, color: C.TEXT_MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
-        </button>
-      </div>
-
-      <div style={{ padding: '20px 24px' }}>
-        {/* Shuffle questions */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '14px 16px', background: C.SURFACE, borderRadius: 12, border: '1px solid ' + C.BORDER, marginBottom: 10 }}>
-          <input type="checkbox" checked={settings?.shuffle_questions || false}
-            onChange={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { shuffle_questions: !(settings?.shuffle_questions || false) })); }}
-            style={{ accentColor: C.ACCENT, width: 18, height: 18 }} />
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT }}>Shuffle questions</div>
-            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Randomize order each attempt</div>
-          </div>
-        </label>
-
-        {/* Progress bar */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '14px 16px', background: C.SURFACE, borderRadius: 12, border: '1px solid ' + C.BORDER, marginBottom: 10 }}>
-          <input type="checkbox" checked={settings?.show_progress_bar !== false}
-            onChange={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { show_progress_bar: settings?.show_progress_bar === false ? true : false })); }}
-            style={{ accentColor: C.ACCENT, width: 18, height: 18 }} />
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT }}>Progress bar</div>
-            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Show completion progress</div>
-          </div>
-        </label>
-
-        {/* Transition */}
-        <div style={{ padding: '14px 16px', background: C.SURFACE, borderRadius: 12, border: '1px solid ' + C.BORDER, marginBottom: 10 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 10 }}>Transition</div>
-          <div style={{ display: 'flex', gap: 0, background: '#F2F4F7', borderRadius: 10, padding: 3 }}>
-            {(['slide', 'fade', 'scale', 'none'] as const).map(function(t) {
-              var active = (settings?.transition_type || 'slide') === t;
-              return (
-                <button key={t} type="button"
-                  onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { transition_type: t })); }}
-                  style={{
-                    flex: 1, padding: '8px 6px', borderRadius: 8, border: 'none',
-                    background: active ? '#fff' : 'transparent', color: active ? C.TEXT : C.TEXT_MUTED,
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
-                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                  }}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Remove branding */}
-        <div onClick={function() { if (hasPlanAccess(userPlan, 'pro') && onSettingsChange) onSettingsChange(Object.assign({}, settings, { remove_branding: !(settings?.remove_branding || false) })); }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'pro') ? 'pointer' : 'default',
-            padding: '14px 16px', background: C.SURFACE, borderRadius: 12, border: '1px solid ' + C.BORDER, marginBottom: 10,
-            opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.45,
-          }}>
-          <input type="checkbox" checked={settings?.remove_branding || false} readOnly style={{ accentColor: C.ACCENT, width: 18, height: 18 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, display: 'flex', alignItems: 'center' }}>
-              Remove branding{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}
-            </div>
-            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Hide &quot;Powered by Squarespell&quot;</div>
-          </div>
-        </div>
-
-        {/* reCAPTCHA */}
-        <div onClick={function() { if (hasPlanAccess(userPlan, 'starter') && onSettingsChange) onSettingsChange(Object.assign({}, settings, { enable_recaptcha: !(settings?.enable_recaptcha || false) })); }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12, cursor: hasPlanAccess(userPlan, 'starter') ? 'pointer' : 'default',
-            padding: '14px 16px', background: C.SURFACE, borderRadius: 12, border: '1px solid ' + C.BORDER, marginBottom: 10,
-            opacity: hasPlanAccess(userPlan, 'starter') ? 1 : 0.45,
-          }}>
-          <input type="checkbox" checked={settings?.enable_recaptcha || false} readOnly style={{ accentColor: C.ACCENT, width: 18, height: 18 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, display: 'flex', alignItems: 'center' }}>
-              reCAPTCHA{!hasPlanAccess(userPlan, 'starter') && <PlanBadge requiredPlan="starter" />}
-            </div>
-            <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Block spam submissions</div>
-          </div>
-        </div>
-
-        {/* Custom CSS */}
-        <div style={{
-          padding: '14px 16px', background: C.SURFACE, borderRadius: 12, border: '1px solid ' + C.BORDER, marginBottom: 10,
-          opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.45,
-        }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 6, display: 'flex', alignItems: 'center' }}>
-            Custom CSS{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}
-          </div>
-          <textarea value={settings?.custom_css || ''} disabled={!hasPlanAccess(userPlan, 'pro')}
-            onChange={function(e) { if (onSettingsChange && hasPlanAccess(userPlan, 'pro')) onSettingsChange(Object.assign({}, settings, { custom_css: e.target.value })); }}
-            placeholder=".squarespell-quiz { }"
-            style={{
-              width: '100%', minHeight: 72, padding: '8px 10px', borderRadius: 8,
-              border: '1px solid ' + C.BORDER, fontSize: 12, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-              color: C.TEXT, background: '#fff', resize: 'vertical' as const,
-            }} />
-        </div>
-
-        {/* A/B Testing link */}
-        {quizId && (
-          <a href={hasPlanAccess(userPlan, 'pro') ? '/dashboard/quiz/' + quizId + '/ab-testing' : undefined}
-            onClick={function(e) { if (!hasPlanAccess(userPlan, 'pro')) e.preventDefault(); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '16px', background: '#F9FAFB', borderRadius: 12,
-              border: '1px solid ' + C.BORDER, textDecoration: 'none', color: C.TEXT,
-              opacity: hasPlanAccess(userPlan, 'pro') ? 1 : 0.45,
-            }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(13,115,119,0.08)', color: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center' }}>A/B Testing{!hasPlanAccess(userPlan, 'pro') && <PlanBadge requiredPlan="pro" />}</div>
-              <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>Compare quiz variants</div>
-            </div>
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -1652,7 +1989,6 @@ export function QuizBlockEditor({
   function addBlock(type: QuizBlockType) {
     var newBlock = createDefaultQuizBlock(type);
     var next = blocks.slice();
-    // Insert after selected, or at end
     var insertIdx = selectedId ? blocks.findIndex(function(b) { return b.id === selectedId; }) + 1 : blocks.length;
     next.splice(insertIdx, 0, newBlock);
     commit(next);
@@ -1812,53 +2148,67 @@ export function QuizBlockEditor({
           </div>
         </div>
 
-        {/* Canvas area */}
-        <div style={{
-          flex: 1, overflowY: 'auto', background: C.GRAY_50,
-          padding: '40px 32px 100px',
-          display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
-        }}>
-          {blocks.length === 0 ? (
-            <div style={{ textAlign: 'center', marginTop: 120 }}>
-              <div style={{
-                width: 64, height: 64, borderRadius: 16, background: 'rgba(13,115,119,0.08)',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 16, color: C.ACCENT,
-              }}>
-                <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                  <rect x={3} y={3} width={18} height={18} rx={2} />
-                  <line x1={12} y1={8} x2={12} y2={16} /><line x1={8} y1={12} x2={16} y2={12} />
-                </svg>
-              </div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.TEXT, marginBottom: 8, fontFamily: C.FONT }}>Add your first question</div>
-              <div style={{ fontSize: 14, color: C.TEXT_MUTED, marginBottom: 20 }}>Click the + button in the sidebar to get started</div>
-              <button type="button" onClick={function() { addBlock('question'); }}
-                style={{
-                  padding: '12px 24px', background: C.ACCENT, color: '#fff', border: 'none',
-                  borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: C.FONT,
+        {/* Canvas area + Settings as flex layout */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: C.GRAY_50 }}>
+          {/* Canvas */}
+          <div style={{
+            flex: 1, overflowY: 'auto', padding: '40px 32px 100px',
+            display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
+          }}>
+            {blocks.length === 0 ? (
+              <div style={{ textAlign: 'center', marginTop: 120 }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: 16, background: 'rgba(13,115,119,0.08)',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  marginBottom: 16, color: C.ACCENT,
                 }}>
-                + New Question
-              </button>
-            </div>
-          ) : selectedBlock ? (
-            selectedBlock.type === 'question' ? (
-              <QuestionCanvas
-                block={selectedBlock as QuestionBlock}
-                questionNum={selectedQuestionNum}
-                totalQuestions={questionBlocks.length}
-                onChange={function(updated) { updateBlock(updated); }}
-              />
-            ) : selectedBlock.type === 'outcome' ? (
-              <OutcomeCanvas block={selectedBlock as OutcomeBlock} onChange={function(u) { updateBlock(u); }} />
-            ) : selectedBlock.type === 'leadGate' ? (
-              <LeadGateCanvas block={selectedBlock as LeadGateBlock} onChange={function(u) { updateBlock(u); }} />
+                  <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x={3} y={3} width={18} height={18} rx={2} />
+                    <line x1={12} y1={8} x2={12} y2={16} /><line x1={8} y1={12} x2={16} y2={12} />
+                  </svg>
+                </div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.TEXT, marginBottom: 8, fontFamily: C.FONT }}>Add your first question</div>
+                <div style={{ fontSize: 14, color: C.TEXT_MUTED, marginBottom: 20 }}>Click the + button in the sidebar to get started</div>
+                <button type="button" onClick={function() { addBlock('question'); }}
+                  style={{
+                    padding: '12px 24px', background: C.ACCENT, color: '#fff', border: 'none',
+                    borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: C.FONT,
+                  }}>
+                  + New Question
+                </button>
+              </div>
+            ) : selectedBlock ? (
+              selectedBlock.type === 'question' ? (
+                <QuestionCanvas
+                  block={selectedBlock as QuestionBlock}
+                  questionNum={selectedQuestionNum}
+                  totalQuestions={questionBlocks.length}
+                  onChange={function(updated) { updateBlock(updated); }}
+                />
+              ) : selectedBlock.type === 'outcome' ? (
+                <OutcomeCanvas block={selectedBlock as OutcomeBlock} onChange={function(u) { updateBlock(u); }} />
+              ) : selectedBlock.type === 'leadGate' ? (
+                <LeadGateCanvas block={selectedBlock as LeadGateBlock} onChange={function(u) { updateBlock(u); }} />
+              ) : (
+                <GenericBlockCanvas block={selectedBlock} onChange={function(u) { updateBlock(u); }} />
+              )
             ) : (
-              <GenericBlockCanvas block={selectedBlock} onChange={function(u) { updateBlock(u); }} />
-            )
-          ) : (
-            <div style={{ textAlign: 'center', marginTop: 120, color: C.TEXT_MUTED, fontSize: 14 }}>
-              Select a block from the sidebar to edit
-            </div>
+              <div style={{ textAlign: 'center', marginTop: 120, color: C.TEXT_MUTED, fontSize: 14 }}>
+                Select a block from the sidebar to edit
+              </div>
+            )}
+          </div>
+
+          {/* Settings Panel — inline */}
+          {settingsOpen && (
+            <SettingsPanel
+              open={settingsOpen}
+              onClose={function() { setSettingsOpen(false); }}
+              settings={settings}
+              onSettingsChange={onSettingsChange}
+              userPlan={userPlan}
+              quizId={quizId}
+            />
           )}
         </div>
       </div>
@@ -1877,14 +2227,7 @@ export function QuizBlockEditor({
           }}
           onChangeLayout={function(layout) {
             var qb = selectedBlock as QuestionBlock;
-            var style = layout === 'grid' ? 'cards' : layout === 'fullBackground' ? 'imageChoice' : layout === 'imageThumbnails' ? 'imageChoice' : layout === 'splitLayout' ? 'buttons' : 'buttons';
-            updateBlock(Object.assign({}, qb, { answerLayout: layout, questionStyle: style }) as QuestionBlock);
-          }}
-          onChangeMedia={function(url, type) {
-            updateBlock(Object.assign({}, selectedBlock, { mediaUrl: url, mediaType: type }) as QuestionBlock);
-          }}
-          onClearMedia={function() {
-            updateBlock(Object.assign({}, selectedBlock, { mediaUrl: undefined, mediaType: undefined }) as QuestionBlock);
+            updateBlock(Object.assign({}, qb, { answerLayout: layout }) as QuestionBlock);
           }}
           onChangeTimer={function(seconds) {
             updateBlock(Object.assign({}, selectedBlock, { timeLimit: seconds }) as QuestionBlock);
@@ -1892,16 +2235,6 @@ export function QuizBlockEditor({
           onShowBranch={function() { setShowSkipLogic(true); }}
         />
       )}
-
-      {/* Settings Panel */}
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={function() { setSettingsOpen(false); }}
-        settings={settings}
-        onSettingsChange={onSettingsChange}
-        userPlan={userPlan}
-        quizId={quizId}
-      />
 
       {/* Skip Logic Modal */}
       {showSkipLogic && (

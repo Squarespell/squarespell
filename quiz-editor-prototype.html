@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squarespell Quiz Editor — Prototype v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#0D7377;--accent-light:#F0FAFB;--accent-dark:#095457;
+  --bg:#F7F7F5;--surface:#FFFFFF;
+  --text:#101828;--text-muted:#667085;--text-subtle:#98A2B3;
+  --border:#E4E7EC;--border-light:#F2F4F7;
+  --danger:#DC2626;--danger-light:#FEF2F2;
+  --orange:#FF9500;--green:#16A34A;
+  --purple:#7C3AED;
+  --font:'Inter',-apple-system,system-ui,sans-serif;
+  --radius:12px;--radius-sm:8px;--radius-xs:6px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.12);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+
+/* ===== TOP BAR ===== */
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:100}
+.topbar-back{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:all .15s}
+.topbar-back:hover{border-color:var(--accent);color:var(--accent)}
+.topbar-title{flex:1;font-size:15px;font-weight:600;color:var(--text);border:none;background:none;outline:none;padding:6px 10px;border-radius:var(--radius-xs)}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.topbar-btn{height:36px;padding:0 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:var(--font)}
+.topbar-btn:hover{border-color:var(--accent);color:var(--accent)}
+.topbar-btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.topbar-btn-primary:hover{background:var(--accent-dark)}
+.save-ind{font-size:12px;font-weight:600;color:var(--green);display:flex;align-items:center;gap:4px}
+.undo-redo{display:flex;gap:2px}
+.undo-redo button{width:32px;height:32px;border-radius:var(--radius-xs);border:none;background:none;cursor:pointer;color:var(--text-subtle);display:flex;align-items:center;justify-content:center;transition:all .1s}
+.undo-redo button:hover{background:var(--border-light);color:var(--text)}
+
+/* ===== LAYOUT ===== */
+.editor-layout{display:flex;height:calc(100vh - 56px)}
+
+/* SIDEBAR */
+.sidebar{width:72px;min-width:72px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.q-btn{width:44px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:var(--font)}
+.q-btn:hover{border-color:var(--accent);color:var(--accent)}
+.q-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(13,115,119,.3)}
+.q-btn.outcome.active{background:var(--green);border-color:var(--green);box-shadow:0 2px 8px rgba(22,163,74,.3)}
+.q-btn.leadgate.active{background:var(--orange);border-color:var(--orange);box-shadow:0 2px 8px rgba(255,149,0,.3)}
+.sidebar-div{width:28px;height:1px;background:var(--border);margin:6px 0}
+.sidebar-add{width:44px;height:38px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:22px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(13,115,119,.3);transition:transform .15s}
+.sidebar-add:hover{transform:scale(1.08)}
+.sidebar-more{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative}
+.sidebar-more:hover{border-color:var(--accent);color:var(--accent)}
+.more-menu{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:6px;min-width:170px;box-shadow:var(--shadow-lg);z-index:60;display:none}
+.more-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 14px;border:none;background:transparent;cursor:pointer;border-radius:var(--radius-xs);font-size:13px;font-weight:600;color:var(--text);font-family:var(--font);transition:background .1s}
+.more-menu button:hover{background:var(--border-light)}
+
+/* CANVAS */
+.canvas-area{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:40px 32px 120px}
+.canvas-area::-webkit-scrollbar{width:6px}
+.canvas-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ===== QUESTION CARD ===== */
+.question-card{max-width:740px;width:100%;background:var(--surface);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+
+.q-header{padding:28px 36px 0}
+.q-number{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.q-text{width:100%;font-size:26px;font-weight:700;border:none;outline:none;background:transparent;resize:none;font-family:var(--font);line-height:1.35;color:var(--text);min-height:40px}
+.q-text::placeholder{color:var(--text-subtle)}
+
+/* ===== QUESTION MINI-TOOLBAR — attached below question text ===== */
+.q-toolbar{
+  display:flex;align-items:center;gap:2px;
+  padding:8px 0 0;margin:8px 36px 0;
+  border-top:1px solid var(--border-light);
+}
+.q-toolbar-btn{
+  height:32px;padding:0 10px;border-radius:var(--radius-xs);
+  border:none;background:transparent;
+  font-size:11px;font-weight:600;color:var(--text-subtle);
+  cursor:pointer;display:flex;align-items:center;gap:5px;
+  font-family:var(--font);transition:all .15s;
+}
+.q-toolbar-btn:hover{background:var(--border-light);color:var(--text)}
+.q-toolbar-btn.active{background:var(--accent-light);color:var(--accent)}
+.q-toolbar-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+
+/* ===== INLINE MEDIA PREVIEW — appears below mini-toolbar ===== */
+.q-media-preview{
+  margin:12px 36px 0;
+  border-radius:var(--radius);
+  overflow:hidden;
+  position:relative;
+  display:none;
+}
+.q-media-preview.show{display:block}
+.q-media-preview img{width:100%;height:200px;object-fit:cover;display:block}
+.q-media-preview video{width:100%;display:block}
+.q-media-preview iframe{width:100%;aspect-ratio:16/9;border:none;display:block}
+.q-media-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:center;justify-content:center;gap:8px;
+}
+.q-media-preview:hover .q-media-overlay{display:flex}
+.mo-btn{padding:9px 16px;border-radius:var(--radius-sm);border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px;transition:all .15s}
+.mo-btn.replace{background:#fff;color:var(--text)}.mo-btn.replace:hover{background:#f3f3f3}
+.mo-btn.delete{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2)}.mo-btn.delete:hover{background:rgba(220,38,38,.8);border-color:transparent}
+
+/* ===== MEDIA PICKER DROPDOWN — opens from the toolbar buttons ===== */
+.media-dropdown{
+  position:absolute;top:40px;left:0;
+  background:#fff;border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--shadow-lg);display:none;overflow:hidden;z-index:90;
+  width:420px;
+}
+.media-dropdown.show{display:block}
+.md-tabs{display:flex;border-bottom:1px solid var(--border)}
+.md-tab{flex:1;padding:13px 0;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-family:var(--font);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.md-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.md-tab:hover:not(.active){color:var(--text)}
+.md-body{padding:16px}
+.md-upload{border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .2s}
+.md-upload:hover{border-color:var(--accent);background:var(--accent-light)}
+.pexels-bar{display:flex;gap:8px;margin-bottom:12px}
+.pexels-bar input{flex:1;padding:9px 12px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font);outline:none}
+.pexels-bar input:focus{border-color:var(--accent)}
+.pexels-bar button{padding:0 16px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.pexels-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:180px;overflow-y:auto}
+.pexels-grid::-webkit-scrollbar{width:3px}
+.pexels-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.pexels-thumb{border-radius:var(--radius-xs);overflow:hidden;cursor:pointer;aspect-ratio:1;border:2px solid transparent;transition:all .15s}
+.pexels-thumb:hover{border-color:var(--accent);transform:scale(1.03)}
+.pexels-thumb img{width:100%;height:100%;object-fit:cover}
+
+/* Video picker */
+.v-preview{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;margin-top:10px}
+.v-preview iframe{width:100%;height:100%;border:none}
+.v-preview .ph{color:rgba(255,255,255,.3);text-align:center}
+.v-chips{display:flex;gap:8px;margin-top:10px}
+.v-chip{padding:5px 10px;border-radius:16px;border:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+
+/* Answers */
+.answer-list{padding:16px 36px 28px;display:flex;flex-direction:column;gap:8px}
+.answer-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#fff;transition:all .12s}
+.answer-row:hover{background:#FAFBFC}
+.a-letter{width:30px;height:30px;border-radius:var(--radius-sm);background:var(--accent-light);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.a-text{flex:1;border:none;background:transparent;font-size:15px;color:var(--text);outline:none;font-family:var(--font);padding:4px 0}
+.a-text::placeholder{color:var(--text-subtle)}
+.a-score{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0;cursor:pointer;background:rgba(0,0,0,.04);color:var(--text-muted);border:1px solid rgba(0,0,0,.06)}
+.a-score.high{background:rgba(13,115,119,.12);color:var(--accent);border-color:rgba(13,115,119,.2)}
+.a-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.answer-row:hover .a-actions{opacity:1}
+.a-act{width:24px;height:24px;border-radius:4px;border:none;background:none;cursor:pointer;color:var(--text-subtle);display:flex;align-items:center;justify-content:center;transition:all .1s}
+.a-act:hover{background:var(--border-light);color:var(--text)}
+.a-act.del:hover{background:var(--danger-light);color:var(--danger)}
+.add-opt{width:100%;padding:12px;border-radius:var(--radius-sm);border:1.5px dashed var(--border);background:transparent;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:var(--font);transition:all .15s;margin-top:4px}
+.add-opt:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* Grid answers */
+.answer-grid{padding:16px 36px 28px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:#fff;transition:all .15s;position:relative}
+.g-card:hover{box-shadow:var(--shadow-md)}
+.g-card-img{height:130px;background:var(--border-light);display:flex;align-items:center;justify-content:center;color:var(--text-subtle);overflow:hidden;position:relative}
+.g-card-img img{width:100%;height:100%;object-fit:cover}
+.g-card-body{padding:10px 14px;display:flex;align-items:center;gap:8px}
+.g-card-letter{width:24px;height:24px;border-radius:6px;background:var(--accent-light);color:var(--accent);font-size:10px;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.g-card-text{flex:1;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--text);outline:none;font-family:var(--font)}
+.g-card-del{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.5);border:none;color:#fff;cursor:pointer;display:none;align-items:center;justify-content:center}
+.g-card:hover .g-card-del{display:flex}
+
+/* Split */
+.split-card{max-width:840px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);display:grid;grid-template-columns:1fr 1fr;min-height:440px}
+.split-media{background:linear-gradient(135deg,#1D2939,#344054);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.split-media img{width:100%;height:100%;object-fit:cover}
+.split-body{padding:36px 32px;display:flex;flex-direction:column}
+
+/* Outcome */
+.outcome-card{max-width:740px;width:100%;background:#fff;border-radius:16px;padding:36px;box-shadow:var(--shadow-sm)}
+.o-badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.o-badge.green{color:var(--green)}.o-badge.orange{color:var(--orange)}
+.o-field{width:100%;padding:10px 14px;font-size:14px;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);outline:none;margin-bottom:16px;transition:border-color .15s}
+.o-field:focus{border-color:var(--accent)}
+.o-field.title{font-size:22px;font-weight:700}
+.o-field-group{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.o-field-label{font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px}
+
+/* ===== SETTINGS PANEL ===== */
+.settings-panel{width:380px;min-width:380px;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;display:none;flex-direction:column}
+.settings-panel.open{display:flex}
+.settings-panel::-webkit-scrollbar{width:4px}
+.settings-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sp-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sp-header h3{font-size:14px;font-weight:700}
+.sp-close{width:28px;height:28px;border-radius:var(--radius-xs);border:none;background:none;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center}
+.sp-close:hover{background:var(--border-light)}
+.sp-nav{display:flex;border-bottom:1px solid var(--border);overflow-x:auto}
+.sp-nav::-webkit-scrollbar{height:0}
+.sp-nav-btn{padding:12px 16px;font-size:12px;font-weight:600;color:var(--text-muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:var(--font);white-space:nowrap}
+.sp-nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.sp-nav-btn:hover:not(.active){color:var(--text)}
+.sp-body{padding:20px 24px;flex:1}
+.sp-section{margin-bottom:28px}
+.sp-section-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.sp-field{margin-bottom:16px}
+.sp-label{font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.sp-input{width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);outline:none;transition:border-color .15s}
+.sp-input:focus{border-color:var(--accent)}
+select.sp-input{-webkit-appearance:none;appearance:none;background:url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center var(--surface);padding-right:32px}
+textarea.sp-input{resize:vertical;min-height:60px}
+.sp-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border-light)}
+.sp-toggle-row:last-child{border-bottom:none}
+.sp-toggle-label{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px}
+.toggle{width:40px;height:22px;border-radius:11px;background:var(--border);cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.toggle.on::after{transform:translateX(18px)}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+.badge-pro{background:#F5F3FF;color:#7C3AED}.badge-starter{background:#EFF6FF;color:#2563EB}
+.color-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.color-swatch{width:32px;height:32px;border-radius:8px;border:2px solid var(--border);cursor:pointer;flex-shrink:0}
+.color-label{font-size:12px;font-weight:500;color:var(--text-muted);flex:1}
+.color-hex{font-size:12px;font-weight:600;color:var(--text);padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);width:80px;text-align:center;font-family:var(--font)}
+.integ-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;transition:all .15s}
+.integ-row:hover{border-color:var(--accent);background:var(--accent-light)}
+.integ-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.integ-info{flex:1}.integ-name{font-size:13px;font-weight:600}.integ-status{font-size:11px;color:var(--text-subtle)}
+
+/* FLOATING TOOLBAR */
+.floating-toolbar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:6px 8px;display:flex;align-items:center;gap:2px;box-shadow:var(--shadow-lg);z-index:80}
+.tb-btn{height:38px;padding:0 14px;border-radius:var(--radius-sm);border:none;background:transparent;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:7px;font-family:var(--font);transition:all .12s;white-space:nowrap}
+.tb-btn:hover{background:var(--border-light);color:var(--text)}
+.tb-btn.active{background:var(--accent-light);color:var(--accent)}
+.tb-sep{width:1px;height:24px;background:var(--border);margin:0 4px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <button class="topbar-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <input class="topbar-title" value="What's Your Dream Squarespace Site?" />
+  <div class="undo-redo">
+    <button><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
+    <button><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.13-9.36L23 10"/></svg></button>
+  </div>
+  <div class="save-ind"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Saved</div>
+  <div class="topbar-actions">
+    <button class="topbar-btn" onclick="toggleSettings()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06c.5.5 1.2.68 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.5.5-.68 1.2-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
+    <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>
+    <button class="topbar-btn topbar-btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Publish</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="editor-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <button class="q-btn active" onclick="selectQ(0)">1</button>
+    <button class="q-btn" onclick="selectQ(1)">2</button>
+    <button class="q-btn" onclick="selectQ(2)">3</button>
+    <button class="q-btn" onclick="selectQ(3)">4</button>
+    <button class="q-btn" onclick="selectQ(4)">5</button>
+    <div class="sidebar-div"></div>
+    <button class="q-btn leadgate" onclick="selectBlock('leadgate')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></button>
+    <button class="q-btn outcome" onclick="selectBlock('outcome1')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+    <button class="q-btn outcome" onclick="selectBlock('outcome2')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+    <div style="flex:1"></div>
+    <button class="sidebar-add" title="Add question">+</button>
+    <div style="position:relative">
+      <button class="sidebar-more" onclick="toggleMore()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="6" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="18" r="1"/></svg></button>
+      <div class="more-menu" id="moreMenu">
+        <button>Add Outcome</button>
+        <button>Add Lead Gate</button>
+        <button>Add Heading</button>
+        <button>Add Divider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-area">
+
+    <!-- ========== LIST LAYOUT QUESTION ========== -->
+    <div class="question-card" id="cardList">
+      <div class="q-header">
+        <div class="q-number">Question 01 of 5</div>
+        <textarea class="q-text" rows="1" oninput="autoResize(this)">What type of website do you want to build?</textarea>
+      </div>
+
+      <!-- MINI TOOLBAR — glued to question text -->
+      <div class="q-toolbar">
+        <button class="q-toolbar-btn" onclick="openImgPicker(this)" title="Add image to this question">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Image
+        </button>
+        <button class="q-toolbar-btn" onclick="openVidPicker(this)" title="Add video to this question">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          Video
+        </button>
+        <div class="q-toolbar-sep"></div>
+        <button class="q-toolbar-btn" title="Add subtitle / help text">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Help text
+        </button>
+      </div>
+
+      <!-- INLINE MEDIA (hidden until added) -->
+      <div class="q-media-preview" id="qMediaPreview">
+        <img id="qMediaImg" src="" alt="" />
+        <div class="q-media-overlay">
+          <button class="mo-btn replace" onclick="openImgPicker(null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Replace</button>
+          <button class="mo-btn delete" onclick="removeMedia()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Remove</button>
+        </div>
+      </div>
+
+      <!-- IMAGE PICKER DROPDOWN (attached to toolbar) -->
+      <div class="media-dropdown" id="imgPicker" style="position:fixed;z-index:100">
+        <div class="md-tabs">
+          <button class="md-tab active" onclick="switchImgTab(this,'itUpload')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload</button>
+          <button class="md-tab" onclick="switchImgTab(this,'itUrl')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg> URL</button>
+          <button class="md-tab" onclick="switchImgTab(this,'itPexels')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Pexels</button>
+        </div>
+        <div class="md-body" id="itUpload"><div class="md-upload"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="display:block;margin:0 auto 6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div style="font-size:13px;font-weight:600">Click to upload</div><div style="font-size:11px;color:var(--text-subtle);margin-top:3px">PNG, JPG, GIF, WebP — max 5MB</div></div></div>
+        <div class="md-body" id="itUrl" style="display:none"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Image URL</label><input class="sp-input" placeholder="https://example.com/photo.jpg" /><div style="margin-top:10px;text-align:right"><button style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)">Add</button></div></div>
+        <div class="md-body" id="itPexels" style="display:none">
+          <div class="pexels-bar"><input placeholder="Search free photos..." value="website" /><button>Search</button></div>
+          <div class="pexels-grid">
+            <div class="pexels-thumb" onclick="pickImg(this)"><img src="https://images.pexels.com/photos/1779487/pexels-photo-1779487.jpeg?auto=compress&w=200" /></div>
+            <div class="pexels-thumb" onclick="pickImg(this)"><img src="https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&w=200" /></div>
+            <div class="pexels-thumb" onclick="pickImg(this)"><img src="https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&w=200" /></div>
+            <div class="pexels-thumb" onclick="pickImg(this)"><img src="https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&w=200" /></div>
+            <div class="pexels-thumb" onclick="pickImg(this)"><img src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&w=200" /></div>
+            <div class="pexels-thumb" onclick="pickImg(this)"><img src="https://images.pexels.com/photos/1148820/pexels-photo-1148820.jpeg?auto=compress&w=200" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEO PICKER DROPDOWN -->
+      <div class="media-dropdown" id="vidPicker" style="position:fixed;z-index:100;width:400px">
+        <div style="padding:16px">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Paste video URL</label>
+          <input class="sp-input" placeholder="youtube.com/watch?v=... or vimeo.com/..." id="vidUrl" oninput="vidPreview(this.value)" />
+          <div class="v-preview" id="vidBox"><div class="ph"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><div style="font-size:11px;margin-top:6px">Paste URL to preview</div></div></div>
+          <div class="v-chips"><span class="v-chip"><svg width="10" height="10" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 00.5 6.19 31.6 31.6 0 000 12a31.6 31.6 0 00.5 5.81 3.02 3.02 0 002.12 2.14c1.87.55 9.38.55 9.38.55s7.5 0 9.38-.55a3.02 3.02 0 002.12-2.14A31.6 31.6 0 0024 12a31.6 31.6 0 00-.5-5.81z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98" fill="#FFF"/></svg>YouTube</span><span class="v-chip">Vimeo</span><span class="v-chip">Loom</span></div>
+          <div style="margin-top:12px;text-align:right"><button style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)" onclick="addVid()">Add Video</button></div>
+        </div>
+      </div>
+
+      <div class="answer-list">
+        <div class="answer-row"><span class="a-letter">A</span><input class="a-text" value="Portfolio / Creative showcase" /><span class="a-score high">+3pts</span><div class="a-actions"><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg></button><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg></button><button class="a-act del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>
+        <div class="answer-row"><span class="a-letter">B</span><input class="a-text" value="Online store / E-commerce" /><span class="a-score high">+5pts</span><div class="a-actions"><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg></button><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg></button><button class="a-act del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>
+        <div class="answer-row"><span class="a-letter">C</span><input class="a-text" value="Blog / Content site" /><span class="a-score">+1pts</span><div class="a-actions"><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg></button><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg></button><button class="a-act del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>
+        <div class="answer-row"><span class="a-letter">D</span><input class="a-text" value="Business / Services site" /><span class="a-score">+2pts</span><div class="a-actions"><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg></button><button class="a-act"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg></button><button class="a-act del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>
+        <button class="add-opt">+ Add option</button>
+      </div>
+    </div>
+
+    <!-- GRID -->
+    <div class="question-card" id="cardGrid" style="display:none">
+      <div class="q-header"><div class="q-number">Question 02 of 5</div><textarea class="q-text" rows="1" oninput="autoResize(this)">Which design style speaks to you?</textarea></div>
+      <div class="q-toolbar"><button class="q-toolbar-btn" onclick="openImgPicker(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Image</button><button class="q-toolbar-btn" onclick="openVidPicker(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Video</button><div class="q-toolbar-sep"></div><button class="q-toolbar-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Help text</button></div>
+      <div class="answer-grid">
+        <div class="g-card"><div class="g-card-img"><img src="https://images.pexels.com/photos/1779487/pexels-photo-1779487.jpeg?auto=compress&w=400" /><button class="g-card-del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="g-card-body"><span class="g-card-letter">A</span><input class="g-card-text" value="Clean & Minimal" /><span class="a-score high">+3pts</span></div></div>
+        <div class="g-card"><div class="g-card-img"><img src="https://images.pexels.com/photos/1148820/pexels-photo-1148820.jpeg?auto=compress&w=400" /><button class="g-card-del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="g-card-body"><span class="g-card-letter">B</span><input class="g-card-text" value="Bold & Colorful" /><span class="a-score">+2pts</span></div></div>
+        <div class="g-card"><div class="g-card-img"><img src="https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&w=400" /><button class="g-card-del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="g-card-body"><span class="g-card-letter">C</span><input class="g-card-text" value="Professional" /><span class="a-score">+1pts</span></div></div>
+        <div class="g-card"><div class="g-card-img"><img src="https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&w=400" /><button class="g-card-del"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="g-card-body"><span class="g-card-letter">D</span><input class="g-card-text" value="Artistic" /><span class="a-score high">+4pts</span></div></div>
+      </div>
+      <div style="padding:0 36px 28px"><button class="add-opt">+ Add option</button></div>
+    </div>
+
+    <!-- SPLIT -->
+    <div class="split-card" id="cardSplit" style="display:none">
+      <div class="split-media"><img src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&w=800" style="width:100%;height:100%;object-fit:cover" /><div class="q-media-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;gap:8px" onmouseenter="this.style.display='flex'" onmouseleave="this.style.display='none'"><button class="mo-btn replace">Replace</button><button class="mo-btn delete">Remove</button></div></div>
+      <div class="split-body">
+        <div class="q-number">Question 03 of 5</div>
+        <textarea class="q-text" rows="1" oninput="autoResize(this)" style="font-size:22px">How many pages will your site need?</textarea>
+        <div class="q-toolbar" style="margin:8px 0 0;padding:8px 0 0"><button class="q-toolbar-btn" onclick="openImgPicker(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Image</button><button class="q-toolbar-btn" onclick="openVidPicker(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Video</button></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;margin-top:16px">
+          <div class="answer-row"><span class="a-letter">A</span><input class="a-text" value="Just 1-3 pages" /><span class="a-score">+1pts</span></div>
+          <div class="answer-row"><span class="a-letter">B</span><input class="a-text" value="4-10 pages" /><span class="a-score">+2pts</span></div>
+          <div class="answer-row"><span class="a-letter">C</span><input class="a-text" value="10+ pages with blog" /><span class="a-score high">+4pts</span></div>
+        </div>
+        <button class="add-opt" style="margin-top:12px">+ Add option</button>
+      </div>
+    </div>
+
+    <!-- OUTCOME -->
+    <div class="outcome-card" id="cardOutcome" style="display:none">
+      <div class="o-badge green">Outcome</div>
+      <input class="o-field title" value="You're Ready for Squarespace Business!" />
+      <textarea class="o-field" rows="3" style="min-height:80px;resize:vertical">Based on your answers, the Business plan is perfect for your needs.</textarea>
+      <div class="o-field-group" style="margin-bottom:16px"><div><div class="o-field-label">CTA Text</div><input class="o-field" value="Start Free Trial" style="margin-bottom:0" /></div><div><div class="o-field-label">CTA URL</div><input class="o-field" value="https://squarespace.com/pricing" style="margin-bottom:0" /></div></div>
+      <div class="o-field-group"><div><div class="o-field-label">Min Score</div><input class="o-field" type="number" value="8" style="margin-bottom:0" /></div><div><div class="o-field-label">Max Score</div><input class="o-field" type="number" value="20" style="margin-bottom:0" /></div></div>
+    </div>
+
+    <!-- LEAD GATE -->
+    <div class="outcome-card" id="cardLeadgate" style="display:none">
+      <div class="o-badge orange">Lead Gate</div>
+      <input class="o-field title" value="Almost there! See your results" />
+      <input class="o-field" value="Enter your email to get your recommendation" />
+      <div style="margin-top:8px"><div class="o-field-label">Fields</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:var(--text-muted);min-width:50px">Email</span><input class="o-field" value="Your email" style="flex:1;margin-bottom:0" /><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px"><input type="checkbox" checked style="accent-color:var(--accent)"> Req</label></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:var(--text-muted);min-width:50px">Name</span><input class="o-field" value="Your name" style="flex:1;margin-bottom:0" /><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:var(--accent)"> Req</label></div>
+      </div>
+      <div style="margin-top:16px"><div class="o-field-label">Button Label</div><input class="o-field" value="See My Results" /></div>
+    </div>
+
+  </div>
+
+  <!-- SETTINGS PANEL -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="sp-header"><h3>Settings</h3><button class="sp-close" onclick="toggleSettings()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="sp-nav">
+      <button class="sp-nav-btn active" onclick="switchP(this,'pQ')">Question</button>
+      <button class="sp-nav-btn" onclick="switchP(this,'pDesign')">Design</button>
+      <button class="sp-nav-btn" onclick="switchP(this,'pBehavior')">Behavior</button>
+      <button class="sp-nav-btn" onclick="switchP(this,'pInteg')">Integrations</button>
+      <button class="sp-nav-btn" onclick="switchP(this,'pAdv')">Advanced</button>
+    </div>
+    <!-- Question -->
+    <div class="sp-body" id="pQ">
+      <div class="sp-section"><div class="sp-section-title">Question Settings</div>
+        <div class="sp-field"><label class="sp-label">Question type</label><select class="sp-input"><option>Single choice</option><option>Multiple choice</option><option>Text input</option><option>Rating scale</option><option>Date picker</option></select></div>
+        <div class="sp-field"><label class="sp-label">Help text</label><input class="sp-input" placeholder="Optional hint below question..." /></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Required</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Shuffle answers</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Allow multiple selection</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Timer</div><div class="sp-field"><label class="sp-label">Time limit (seconds)</label><input class="sp-input" type="number" placeholder="No limit" /></div></div>
+      <div class="sp-section"><div class="sp-section-title">Scoring</div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Show scores to user</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Show explanations</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Skip Logic / Branching</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Route users to different questions based on their answer.</p>
+        <div style="padding:14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--border-light);margin-bottom:8px"><div style="font-size:12px;font-weight:600;margin-bottom:4px">If answer is <span style="color:var(--accent)">"Online store"</span></div><div style="font-size:12px;color:var(--text-muted)">→ Go to <span style="font-weight:600">Question 4</span></div></div>
+        <button style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1.5px dashed var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:var(--font)">+ Add branching rule</button>
+      </div>
+    </div>
+    <!-- Design -->
+    <div class="sp-body" id="pDesign" style="display:none">
+      <div class="sp-section"><div class="sp-section-title">Theme Colors</div>
+        <div class="color-row"><div class="color-swatch" style="background:#0D7377"></div><span class="color-label">Primary</span><input class="color-hex" value="#0D7377" /></div>
+        <div class="color-row"><div class="color-swatch" style="background:#FFFFFF;border-color:#ddd"></div><span class="color-label">Background</span><input class="color-hex" value="#FFFFFF" /></div>
+        <div class="color-row"><div class="color-swatch" style="background:#101828"></div><span class="color-label">Text</span><input class="color-hex" value="#101828" /></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Typography</div>
+        <div class="sp-field"><label class="sp-label">Font</label><select class="sp-input"><option>Inter</option><option>Playfair Display</option><option>Roboto</option><option>Space Grotesk</option></select></div>
+        <div class="sp-field"><label class="sp-label">Question size</label><select class="sp-input"><option>Small</option><option selected>Medium</option><option>Large</option></select></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Branding</div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Remove branding <span class="badge badge-starter">STARTER</span></span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-field" style="margin-top:12px"><label class="sp-label">Custom logo URL</label><input class="sp-input" placeholder="https://yourdomain.com/logo.png" /></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Custom CSS <span class="badge badge-pro">PRO</span></div><textarea class="sp-input" rows="4" placeholder="/* Your styles */" style="font-family:monospace;font-size:12px"></textarea></div>
+    </div>
+    <!-- Behavior -->
+    <div class="sp-body" id="pBehavior" style="display:none">
+      <div class="sp-section"><div class="sp-section-title">Quiz Flow</div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Progress bar</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Shuffle questions</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-field" style="margin-top:12px"><label class="sp-label">Transition</label><select class="sp-input"><option>Slide</option><option>Fade</option><option>None</option></select></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Completion</div>
+        <div class="sp-field"><label class="sp-label">Redirect URL</label><input class="sp-input" placeholder="https://yourdomain.com/thanks" /></div>
+        <div class="sp-field"><label class="sp-label">Redirect delay (sec)</label><input class="sp-input" type="number" value="3" /></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Scheduling <span class="badge badge-pro">PRO</span></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Enable scheduling</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-field" style="margin-top:12px"><label class="sp-label">Publish at</label><input class="sp-input" type="datetime-local" /></div>
+        <div class="sp-field"><label class="sp-label">Unpublish at</label><input class="sp-input" type="datetime-local" /></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">A/B Testing <span class="badge badge-pro">PRO</span></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Enable A/B testing</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Split traffic 50/50 between two quiz variants.</p>
+        <button style="margin-top:10px;width:100%;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--accent);background:var(--accent-light);font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;font-family:var(--font)">Create Variant B</button>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">GDPR / Privacy</div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Consent checkbox</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-field" style="margin-top:8px"><label class="sp-label">Consent text</label><textarea class="sp-input" rows="2" placeholder="I agree to the privacy policy..."></textarea></div>
+        <div class="sp-field"><label class="sp-label">Privacy policy URL</label><input class="sp-input" placeholder="https://yourdomain.com/privacy" /></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Allow deletion requests</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-field" style="margin-top:8px"><label class="sp-label">Data retention (days)</label><input class="sp-input" type="number" value="365" /></div>
+      </div>
+    </div>
+    <!-- Integrations -->
+    <div class="sp-body" id="pInteg" style="display:none">
+      <div class="sp-section"><div class="sp-section-title">Connected Services</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Send leads to your tools automatically.</p>
+        <div class="integ-row"><div class="integ-icon" style="background:#FFE01B33">📧</div><div class="integ-info"><div class="integ-name">Mailchimp</div><div class="integ-status" style="color:var(--green)">Connected</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="integ-row"><div class="integ-icon" style="background:#0D444B22">📋</div><div class="integ-info"><div class="integ-name">Klaviyo</div><div class="integ-status">Not connected</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="integ-row"><div class="integ-icon" style="background:#FF6A3D22">🔗</div><div class="integ-info"><div class="integ-name">HubSpot</div><div class="integ-status">Not connected</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="integ-row"><div class="integ-icon" style="background:#C8510222">🔄</div><div class="integ-info"><div class="integ-name">Zapier</div><div class="integ-status" style="color:var(--green)">Connected</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="integ-row"><div class="integ-icon" style="background:#4285F422">📊</div><div class="integ-info"><div class="integ-name">Google Sheets</div><div class="integ-status">Not connected</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Webhook</div>
+        <div class="sp-field"><label class="sp-label">Webhook URL</label><input class="sp-input" placeholder="https://your-api.com/webhook" /></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Send on completion</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Send on lead capture</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+    </div>
+    <!-- Advanced -->
+    <div class="sp-body" id="pAdv" style="display:none">
+      <div class="sp-section"><div class="sp-section-title">Embed Code</div>
+        <div style="background:#1D2939;border-radius:var(--radius-sm);padding:14px;font-family:monospace;font-size:11px;color:#E5E7EB;line-height:1.6;word-break:break-all;margin-bottom:12px">&lt;iframe src="https://quiz.squarespell.com/embed/your-slug" width="100%" height="600"&gt;&lt;/iframe&gt;</div>
+        <button style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--accent);background:var(--accent-light);font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;font-family:var(--font)">Copy embed code</button>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">Security</div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">reCAPTCHA <span class="badge badge-pro">PRO</span></span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="sp-toggle-row"><span class="sp-toggle-label">Rate limiting</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title">SEO</div>
+        <div class="sp-field"><label class="sp-label">Slug</label><input class="sp-input" value="dream-squarespace-site" /></div>
+        <div class="sp-field"><label class="sp-label">Meta description</label><textarea class="sp-input" rows="2" placeholder="Discover which Squarespace plan fits you..."></textarea></div>
+      </div>
+      <div class="sp-section"><div class="sp-section-title" style="color:var(--danger)">Danger Zone</div>
+        <button style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--danger);background:var(--danger-light);font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;font-family:var(--font)">Delete this quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING TOOLBAR -->
+<div class="floating-toolbar" id="toolbar">
+  <button class="tb-btn active" onclick="switchLayout('list')" id="tbList"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>List</button>
+  <button class="tb-btn" onclick="switchLayout('grid')" id="tbGrid"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Grid</button>
+  <button class="tb-btn" onclick="switchLayout('split')" id="tbSplit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>Split</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="this.classList.toggle('active')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Timer</button>
+  <button class="tb-btn" onclick="this.classList.toggle('active')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 01-9 9"/></svg>Branch</button>
+</div>
+
+<script>
+var curQ=0,curBlock=null,curLayout='list';
+
+function selectQ(i){curQ=i;curBlock=null;updateUI()}
+function selectBlock(t){curBlock=t;updateUI()}
+function updateUI(){
+  document.querySelectorAll('.sidebar .q-btn').forEach(function(b){b.classList.remove('active')});
+  if(!curBlock){var qs=document.querySelectorAll('.sidebar .q-btn:not(.outcome):not(.leadgate)');if(qs[curQ])qs[curQ].classList.add('active')}
+  else if(curBlock==='leadgate')document.querySelector('.q-btn.leadgate').classList.add('active');
+  else if(curBlock==='outcome1')document.querySelectorAll('.q-btn.outcome')[0].classList.add('active');
+  else if(curBlock==='outcome2')document.querySelectorAll('.q-btn.outcome')[1].classList.add('active');
+  ['cardList','cardGrid','cardSplit','cardOutcome','cardLeadgate'].forEach(function(id){document.getElementById(id).style.display='none'});
+  document.getElementById('toolbar').style.display=curBlock?'none':'flex';
+  closePickers();
+  if(curBlock==='outcome1'||curBlock==='outcome2'){document.getElementById('cardOutcome').style.display='block';return}
+  if(curBlock==='leadgate'){document.getElementById('cardLeadgate').style.display='block';return}
+  if(curLayout==='grid')document.getElementById('cardGrid').style.display='block';
+  else if(curLayout==='split')document.getElementById('cardSplit').style.display='grid';
+  else document.getElementById('cardList').style.display='block';
+}
+function switchLayout(l){
+  curLayout=l;document.querySelectorAll('.floating-toolbar .tb-btn').forEach(function(b){b.classList.remove('active')});
+  var m={list:'tbList',grid:'tbGrid',split:'tbSplit'};if(m[l])document.getElementById(m[l]).classList.add('active');
+  updateUI();
+}
+function toggleSettings(){document.getElementById('settingsPanel').classList.toggle('open')}
+function switchP(el,id){
+  document.querySelectorAll('.sp-nav-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');
+  ['pQ','pDesign','pBehavior','pInteg','pAdv'].forEach(function(p){document.getElementById(p).style.display='none'});
+  document.getElementById(id).style.display='block';
+}
+function toggleMore(){var m=document.getElementById('moreMenu');m.style.display=m.style.display==='none'?'block':'none'}
+
+// Media pickers — position near the clicked button
+function openImgPicker(btn){
+  closePickers();
+  var p=document.getElementById('imgPicker');
+  if(btn){var r=btn.getBoundingClientRect();p.style.top=(r.bottom+6)+'px';p.style.left=r.left+'px'}
+  p.classList.add('show');
+}
+function openVidPicker(btn){
+  closePickers();
+  var p=document.getElementById('vidPicker');
+  if(btn){var r=btn.getBoundingClientRect();p.style.top=(r.bottom+6)+'px';p.style.left=r.left+'px'}
+  p.classList.add('show');
+}
+function closePickers(){
+  document.getElementById('imgPicker').classList.remove('show');
+  document.getElementById('vidPicker').classList.remove('show');
+  document.getElementById('moreMenu').style.display='none';
+}
+function switchImgTab(el,id){
+  document.querySelectorAll('#imgPicker .md-tab').forEach(function(t){t.classList.remove('active')});el.classList.add('active');
+  ['itUpload','itUrl','itPexels'].forEach(function(t){document.getElementById(t).style.display='none'});
+  document.getElementById(id).style.display='block';
+}
+function pickImg(thumb){
+  var img=thumb.querySelector('img');if(!img)return;
+  setMedia(img.src.replace('w=200','w=800'));
+}
+function setMedia(url){
+  var preview=document.getElementById('qMediaPreview');
+  document.getElementById('qMediaImg').src=url;
+  preview.classList.add('show');
+  // Highlight the Image button
+  var btns=document.querySelectorAll('#cardList .q-toolbar-btn');
+  if(btns[0])btns[0].classList.add('active');
+  closePickers();
+}
+function removeMedia(){
+  document.getElementById('qMediaPreview').classList.remove('show');
+  var btns=document.querySelectorAll('#cardList .q-toolbar-btn');
+  if(btns[0])btns[0].classList.remove('active');
+}
+function vidPreview(url){
+  var box=document.getElementById('vidBox');
+  if(url.includes('youtube.com')||url.includes('youtu.be')){
+    var id=url.split('v=')[1]||url.split('/').pop();if(id&&id.indexOf('&')!==-1)id=id.split('&')[0];
+    box.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'" allowfullscreen></iframe>';
+  }else{box.innerHTML='<div class="ph"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><div style="font-size:11px;margin-top:6px">Paste URL to preview</div></div>'}
+}
+function addVid(){setMedia('video');closePickers()}
+
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
+window.addEventListener('load',function(){document.querySelectorAll('.q-text').forEach(autoResize)});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.media-dropdown')&&!e.target.closest('.q-toolbar-btn'))closePickers();
+  if(!e.target.closest('.more-menu')&&!e.target.closest('.sidebar-more'))document.getElementById('moreMenu').style.display='none';
+});
+</script>
+</body>
+</html>
