@@ -551,8 +551,37 @@ function GridAnswerCard({
               style={{ width: '100%', border: 'none', background: 'transparent', color: '#fff', fontSize: 14, fontWeight: 600, outline: 'none', fontFamily: C.FONT }} />
           </div>
         )}
-        {/* Hover delete */}
-        {hover && total > 2 && (
+        {/* Hover overlay with replace/delete */}
+        {hover && opt.imageUrl && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            <button type="button" onClick={function(e) { e.stopPropagation(); /* TODO: open option image picker */ }}
+              style={{
+                padding: '5px 10px', borderRadius: 6,
+                background: 'rgba(255,255,255,0.92)', border: 'none',
+                color: '#344054', fontSize: 11, fontWeight: 600,
+                cursor: 'pointer', fontFamily: C.FONT,
+              }}>
+              Replace
+            </button>
+            {total > 2 && (
+              <button type="button" onClick={function(e) { e.stopPropagation(); onDelete(); }}
+                style={{
+                  padding: '5px 10px', borderRadius: 6,
+                  background: 'rgba(255,255,255,0.92)', border: 'none',
+                  color: '#DC2626', fontSize: 11, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: C.FONT,
+                }}>
+                Delete
+              </button>
+            )}
+          </div>
+        )}
+        {/* Delete X when no image */}
+        {hover && !opt.imageUrl && total > 2 && (
           <button type="button" onClick={function(e) { e.stopPropagation(); onDelete(); }}
             style={{
               position: 'absolute', top: 6, right: 6, width: 24, height: 24,
@@ -773,11 +802,15 @@ function QuestionToolbar({
   onAddImage,
   onAddVideo,
   onAddHelp,
+  imageRef,
+  videoRef,
 }: {
   block: QuestionBlock;
   onAddImage: () => void;
   onAddVideo: () => void;
   onAddHelp: () => void;
+  imageRef: React.RefObject<HTMLButtonElement | null>;
+  videoRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
     <div style={{
@@ -785,45 +818,45 @@ function QuestionToolbar({
       padding: '8px 0 0', margin: '8px 36px 0',
       borderTop: '1px solid #F2F4F7',
     }}>
-      <button type="button" onClick={onAddImage}
+      <button type="button" ref={imageRef} onClick={onAddImage}
         title="Add image to this question"
         style={{
           height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
           background: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT_LIGHT : 'transparent',
           fontSize: 11, fontWeight: 600,
-          color: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT : '#98A2B3',
+          color: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT : '#667085',
           cursor: 'pointer', fontFamily: C.FONT,
           display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
         }}
       >
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
+        <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={3} /><circle cx={8.5} cy={8.5} r={1.5} /><path d="M21 15l-5-5L5 21" /></svg>
         Image
       </button>
-      <button type="button" onClick={onAddVideo}
+      <button type="button" ref={videoRef} onClick={onAddVideo}
         title="Add video to this question"
         style={{
           height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
           background: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT_LIGHT : 'transparent',
           fontSize: 11, fontWeight: 600,
-          color: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT : '#98A2B3',
+          color: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT : '#667085',
           cursor: 'pointer', fontFamily: C.FONT,
           display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
         }}
       >
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x={1} y={5} width={15} height={14} rx={2} /></svg>
+        <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x={2} y={4} width={14} height={16} rx={2} /><path d="M16 8l4.586-2.293A1 1 0 0122 6.586v10.828a1 1 0 01-1.414.879L16 16" /></svg>
         Video
       </button>
-      <div style={{ width: 1, height: 18, background: C.BORDER, margin: '0 4px' }} />
+      <div style={{ width: 1, height: 18, background: '#E4E7EC', margin: '0 4px' }} />
       <button type="button" onClick={onAddHelp}
         title="Add subtitle / help text"
         style={{
           height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
-          background: 'transparent', fontSize: 11, fontWeight: 600,
-          color: '#98A2B3', cursor: 'pointer', fontFamily: C.FONT,
+          background: block.subtitle ? C.ACCENT_LIGHT : 'transparent', fontSize: 11, fontWeight: 600,
+          color: block.subtitle ? C.ACCENT : '#667085', cursor: 'pointer', fontFamily: C.FONT,
           display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
         }}
       >
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+        <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx={12} cy={12} r={10} /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" /><line x1={12} y1={17} x2={12.01} y2={17} /></svg>
         Help text
       </button>
     </div>
@@ -831,62 +864,127 @@ function QuestionToolbar({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Inline Media Preview — shows image/video with overlay controls     */
+/*  Inline Media Preview — shows image/video with hover overlay        */
 /* ------------------------------------------------------------------ */
 
 function InlineMediaPreview({
   block,
   onClearMedia,
+  onReplace,
 }: {
   block: QuestionBlock;
   onClearMedia: () => void;
+  onReplace: () => void;
 }) {
+  var [hovered, setHovered] = useState(false);
   if (!block.mediaUrl) return null;
 
   var isVideo = block.mediaType === 'video';
 
+  /* Detect YouTube/Vimeo embed URLs */
+  var embedUrl = '';
+  if (isVideo && block.mediaUrl) {
+    var ytMatch = block.mediaUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+    var vimeoMatch = block.mediaUrl.match(/(?:vimeo\.com\/)(\d+)/);
+    if (ytMatch) embedUrl = 'https://www.youtube.com/embed/' + ytMatch[1];
+    else if (vimeoMatch) embedUrl = 'https://player.vimeo.com/video/' + vimeoMatch[1];
+  }
+
   return (
-    <div style={{
-      margin: '12px 36px 0', borderRadius: 12, overflow: 'hidden',
-      position: 'relative', background: isVideo ? '#000' : '#F2F4F7',
-      height: isVideo ? 'auto' : 240,
-    }}>
+    <div
+      style={{
+        margin: '12px 36px 0', borderRadius: 12, overflow: 'hidden',
+        position: 'relative', background: isVideo ? '#000' : '#F2F4F7',
+        maxHeight: isVideo ? 200 : 220,
+      }}
+      onMouseEnter={function() { setHovered(true); }}
+      onMouseLeave={function() { setHovered(false); }}
+    >
       {isVideo ? (
-        <video src={block.mediaUrl} controls playsInline style={{ width: '100%', display: 'block' }} />
+        embedUrl ? (
+          <iframe src={embedUrl} style={{ width: '100%', height: 200, border: 'none', display: 'block' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        ) : (
+          <video src={block.mediaUrl} controls playsInline style={{ width: '100%', maxHeight: 200, display: 'block', objectFit: 'contain' }} />
+        )
       ) : (
-        <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 240, objectFit: 'cover', display: 'block' }}
+        <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
       )}
-      <button type="button" onClick={onClearMedia}
-        style={{
-          position: 'absolute', top: 8, right: 8, width: 30, height: 30,
-          borderRadius: 8, background: 'rgba(0,0,0,0.6)', border: 'none',
-          color: '#fff', cursor: 'pointer', display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
+
+      {/* Hover overlay with Replace + Remove */}
+      {hovered && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+          transition: 'opacity 0.15s',
         }}>
-        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
-      </button>
+          <button type="button" onClick={function(e) { e.stopPropagation(); onReplace(); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.95)', border: 'none',
+              color: '#344054', fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', fontFamily: C.FONT,
+            }}>
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></svg>
+            Replace
+          </button>
+          <button type="button" onClick={function(e) { e.stopPropagation(); onClearMedia(); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.95)', border: 'none',
+              color: '#DC2626', fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', fontFamily: C.FONT,
+            }}>
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+            Remove
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Image Picker Dropdown — 420px wide with 3 tabs                     */
+/*  Image Picker Dropdown — positioned near anchor, Upload + Browse    */
 /* ------------------------------------------------------------------ */
 
 function ImagePicker({
   onSelect,
   onClose,
+  anchorRef,
 }: {
   onSelect: (url: string) => void;
   onClose: () => void;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
 }) {
-  var [tab, setTab] = useState<'upload' | 'url' | 'pexels'>('upload');
-  var [urlInput, setUrlInput] = useState('');
+  var [tab, setTab] = useState<'upload' | 'browse'>('browse');
   var [pexelsQuery, setPexelsQuery] = useState('');
   var [pexelsResults, setPexelsResults] = useState<{ id: string; thumb: string; regular: string; alt: string }[]>([]);
   var [pexelsLoading, setPexelsLoading] = useState(false);
+  var [uploading, setUploading] = useState(false);
   var fileRef = useRef<HTMLInputElement>(null);
+  var pickerRef = useRef<HTMLDivElement>(null);
+  var [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  /* Position near the anchor button */
+  useEffect(function() {
+    if (anchorRef.current) {
+      var rect = anchorRef.current.getBoundingClientRect();
+      var pickerWidth = 400;
+      var leftPos = rect.left + rect.width / 2 - pickerWidth / 2;
+      if (leftPos < 16) leftPos = 16;
+      if (leftPos + pickerWidth > window.innerWidth - 16) leftPos = window.innerWidth - pickerWidth - 16;
+      setPos({ top: rect.bottom + 8, left: leftPos });
+    }
+  }, []);
+
+  /* Auto-load Pexels on mount */
+  useEffect(function() {
+    searchPexels('nature');
+  }, []);
 
   function searchPexels(query: string) {
     if (!query.trim()) return;
@@ -908,6 +1006,7 @@ function ImagePicker({
     var file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 20 * 1024 * 1024) { alert('File too large. Max 20MB.'); return; }
+    setUploading(true);
     var reader = new FileReader();
     reader.onload = function() {
       var base64 = (reader.result as string).split(',')[1];
@@ -919,35 +1018,46 @@ function ImagePicker({
         })
         .then(function(res) { return res.json(); })
         .then(function(data) {
+          setUploading(false);
           if (data.url) {
             onSelect(data.url);
             onClose();
           }
         })
-        .catch(function(err) { console.error('Upload error:', err); });
+        .catch(function(err) { setUploading(false); console.error('Upload error:', err); });
       });
     };
     reader.readAsDataURL(file);
   }
 
   return (
-    <div style={{
-      position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)',
-      background: '#fff', borderRadius: 16, border: '1px solid ' + C.BORDER,
-      width: 420, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+    <div ref={pickerRef} style={{
+      position: 'fixed', top: pos.top, left: pos.left,
+      background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
+      width: 400, padding: 16, boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
       zIndex: 50,
     }}>
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, background: '#F2F4F7', borderRadius: 10, padding: 3 }}>
-        {(['upload', 'url', 'pexels'] as const).map(function(t) {
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>Add Image</div>
+        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+        </button>
+      </div>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 14, background: '#F2F4F7', borderRadius: 9, padding: 3 }}>
+        {(['upload', 'browse'] as const).map(function(t) {
           var active = tab === t;
-          var label = t === 'upload' ? 'Upload' : t === 'url' ? 'URL' : 'Pexels';
+          var label = t === 'upload' ? 'Upload' : 'Browse images';
           return (
             <button key={t} type="button" onClick={function() { setTab(t); }}
               style={{
-                flex: 1, padding: '8px 6px', borderRadius: 8, border: 'none',
-                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : C.TEXT_MUTED,
+                flex: 1, padding: '7px 6px', borderRadius: 7, border: 'none',
+                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#667085',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
                 boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.12s',
               }}>
               {label}
             </button>
@@ -958,52 +1068,55 @@ function ImagePicker({
       {tab === 'upload' && (
         <>
           <button type="button" onClick={function() { fileRef.current?.click(); }}
-            style={{ width: '100%', padding: '16px', borderRadius: 8, border: '2px dashed ' + C.BORDER, background: '#FAFAFA', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.TEXT, fontFamily: C.FONT, marginBottom: 16 }}>
-            Click to upload
+            style={{
+              width: '100%', padding: '28px 16px', borderRadius: 10,
+              border: '2px dashed #D0D5DD', background: '#FAFBFC',
+              cursor: uploading ? 'default' : 'pointer',
+              fontSize: 13, fontWeight: 600, color: '#344054', fontFamily: C.FONT,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              opacity: uploading ? 0.6 : 1,
+            }}>
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+            {uploading ? 'Uploading...' : 'Click to upload image'}
+            <span style={{ fontSize: 11, color: '#98A2B3', fontWeight: 400 }}>PNG, JPG, GIF up to 20MB</span>
           </button>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
         </>
       )}
 
-      {tab === 'url' && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input type="text" value={urlInput} onChange={function(e) { setUrlInput(e.target.value); }}
-            placeholder="Paste image URL..."
-            onKeyDown={function(e) { if (e.key === 'Enter' && urlInput) { onSelect(urlInput); onClose(); } }}
-            style={{ flex: 1, padding: '10px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
-          <button type="button" onClick={function() { if (urlInput) { onSelect(urlInput); onClose(); } }}
-            style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
-            Add
-          </button>
-        </div>
-      )}
-
-      {tab === 'pexels' && (
+      {tab === 'browse' && (
         <>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <input type="text" value={pexelsQuery} onChange={function(e) { setPexelsQuery(e.target.value); }}
-              placeholder="Search photos..."
+              placeholder="Search free photos..."
               onKeyDown={function(e) { if (e.key === 'Enter') searchPexels(pexelsQuery); }}
-              style={{ flex: 1, padding: '10px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+              style={{ flex: 1, padding: '9px 12px', border: '1px solid #D0D5DD', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
             <button type="button" onClick={function() { searchPexels(pexelsQuery); }}
-              style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
+              style={{ padding: '9px 14px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
               {pexelsLoading ? '...' : 'Search'}
             </button>
           </div>
-          {pexelsResults.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxHeight: 200, overflowY: 'auto' }}>
+          {pexelsResults.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, maxHeight: 220, overflowY: 'auto', borderRadius: 8 }}>
               {pexelsResults.map(function(img) {
                 return (
                   <button key={img.id} type="button" onClick={function() { onSelect(img.regular); onClose(); }}
-                    style={{ padding: 0, border: '2px solid transparent', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: 'transparent', transition: 'border-color 0.1s' }}
+                    style={{ padding: 0, border: '2px solid transparent', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: '#F2F4F7', transition: 'border-color 0.1s' }}
                     onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
                     onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}>
-                    <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block', borderRadius: 6 }} />
+                    <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 76, objectFit: 'cover', display: 'block' }} />
                   </button>
                 );
               })}
             </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: '#98A2B3', fontSize: 12 }}>
+              {pexelsLoading ? 'Loading images...' : 'Search for free stock photos'}
+            </div>
           )}
+          <div style={{ marginTop: 8, fontSize: 10, color: '#98A2B3', textAlign: 'center' }}>
+            Photos provided by Pexels
+          </div>
         </>
       )}
     </div>
@@ -1011,36 +1124,141 @@ function ImagePicker({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Video Picker Dropdown — 400px wide with URL input                  */
+/*  Video Picker Dropdown — Upload + URL, positioned near anchor       */
 /* ------------------------------------------------------------------ */
 
 function VideoPicker({
   onSelect,
   onClose,
+  anchorRef,
 }: {
-  onSelect: (url: string) => void;
+  onSelect: (url: string, type?: string) => void;
   onClose: () => void;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
 }) {
+  var [tab, setTab] = useState<'url' | 'upload'>('url');
   var [urlInput, setUrlInput] = useState('');
+  var [uploading, setUploading] = useState(false);
+  var fileRef = useRef<HTMLInputElement>(null);
+  var [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  /* Position near the anchor button */
+  useEffect(function() {
+    if (anchorRef.current) {
+      var rect = anchorRef.current.getBoundingClientRect();
+      var pickerWidth = 400;
+      var leftPos = rect.left + rect.width / 2 - pickerWidth / 2;
+      if (leftPos < 16) leftPos = 16;
+      if (leftPos + pickerWidth > window.innerWidth - 16) leftPos = window.innerWidth - pickerWidth - 16;
+      setPos({ top: rect.bottom + 8, left: leftPos });
+    }
+  }, []);
+
+  function handleUrlSubmit() {
+    if (!urlInput.trim()) return;
+    onSelect(urlInput.trim(), 'video');
+    onClose();
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    var file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) { alert('File too large. Max 100MB for video.'); return; }
+    setUploading(true);
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = (reader.result as string).split(',')[1];
+      getClerkToken().then(function(token) {
+        fetch(API_BASE + '/api/media/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
+          body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          setUploading(false);
+          if (data.url) {
+            onSelect(data.url, 'video');
+            onClose();
+          }
+        })
+        .catch(function(err) { setUploading(false); console.error('Upload error:', err); });
+      });
+    };
+    reader.readAsDataURL(file);
+  }
 
   return (
     <div style={{
-      position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)',
-      background: '#fff', borderRadius: 16, border: '1px solid ' + C.BORDER,
-      width: 400, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+      position: 'fixed', top: pos.top, left: pos.left,
+      background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
+      width: 400, padding: 16, boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
       zIndex: 50,
     }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 12 }}>Video URL</div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input type="text" value={urlInput} onChange={function(e) { setUrlInput(e.target.value); }}
-          placeholder="YouTube, Vimeo, or video URL..."
-          onKeyDown={function(e) { if (e.key === 'Enter' && urlInput) { onSelect(urlInput); onClose(); } }}
-          style={{ flex: 1, padding: '10px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
-        <button type="button" onClick={function() { if (urlInput) { onSelect(urlInput); onClose(); } }}
-          style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
-          Add
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>Add Video</div>
+        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
         </button>
       </div>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 14, background: '#F2F4F7', borderRadius: 9, padding: 3 }}>
+        {(['url', 'upload'] as const).map(function(t) {
+          var active = tab === t;
+          var label = t === 'url' ? 'YouTube / Vimeo' : 'Upload';
+          return (
+            <button key={t} type="button" onClick={function() { setTab(t); }}
+              style={{
+                flex: 1, padding: '7px 6px', borderRadius: 7, border: 'none',
+                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#667085',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
+                boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.12s',
+              }}>
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === 'url' && (
+        <>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input type="text" value={urlInput} onChange={function(e) { setUrlInput(e.target.value); }}
+              placeholder="Paste YouTube or Vimeo URL..."
+              onKeyDown={function(e) { if (e.key === 'Enter') handleUrlSubmit(); }}
+              style={{ flex: 1, padding: '10px 12px', border: '1px solid #D0D5DD', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+            <button type="button" onClick={handleUrlSubmit}
+              style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
+              Add
+            </button>
+          </div>
+          <div style={{ marginTop: 10, fontSize: 11, color: '#98A2B3' }}>
+            Supports YouTube, Vimeo, and direct video URLs
+          </div>
+        </>
+      )}
+
+      {tab === 'upload' && (
+        <>
+          <button type="button" onClick={function() { fileRef.current?.click(); }}
+            style={{
+              width: '100%', padding: '28px 16px', borderRadius: 10,
+              border: '2px dashed #D0D5DD', background: '#FAFBFC',
+              cursor: uploading ? 'default' : 'pointer',
+              fontSize: 13, fontWeight: 600, color: '#344054', fontFamily: C.FONT,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              opacity: uploading ? 0.6 : 1,
+            }}>
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+            {uploading ? 'Uploading video...' : 'Click to upload video'}
+            <span style={{ fontSize: 11, color: '#98A2B3', fontWeight: 400 }}>MP4, MOV, WebM up to 100MB</span>
+          </button>
+          <input ref={fileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+        </>
+      )}
     </div>
   );
 }
@@ -1066,6 +1284,8 @@ function QuestionCanvas({
   var isFullBg = layout === 'fullBackground';
   var [showImagePicker, setShowImagePicker] = useState(false);
   var [showVideoPicker, setShowVideoPicker] = useState(false);
+  var imageBtnRef = useRef<HTMLButtonElement>(null);
+  var videoBtnRef = useRef<HTMLButtonElement>(null);
 
   function updateOptionText(idx: number, text: string) {
     var newOpts = block.options.map(function(o, i) {
@@ -1222,15 +1442,22 @@ function QuestionCanvas({
       {/* Toolbar */}
       <QuestionToolbar
         block={block}
-        onAddImage={function() { setShowImagePicker(true); }}
-        onAddVideo={function() { setShowVideoPicker(true); }}
+        onAddImage={function() { setShowVideoPicker(false); setShowImagePicker(!showImagePicker); }}
+        onAddVideo={function() { setShowImagePicker(false); setShowVideoPicker(!showVideoPicker); }}
         onAddHelp={function() { onChange(Object.assign({}, block, { subtitle: block.subtitle ? undefined : 'Add help text here...' }) as QuestionBlock); }}
+        imageRef={imageBtnRef}
+        videoRef={videoBtnRef}
       />
 
       {/* Inline media preview */}
       <InlineMediaPreview
         block={block}
         onClearMedia={function() { onChange(Object.assign({}, block, { mediaUrl: undefined, mediaType: undefined }) as QuestionBlock); }}
+        onReplace={function() {
+          var mType = block.mediaType;
+          if (mType === 'video') { setShowVideoPicker(true); }
+          else { setShowImagePicker(true); }
+        }}
       />
 
       {/* Answer options — layout-aware rendering */}
@@ -1328,20 +1555,22 @@ function QuestionCanvas({
       {/* Media picker modals */}
       {showImagePicker && (
         <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowImagePicker(false); }} />
           <ImagePicker
             onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'image' }) as QuestionBlock); }}
             onClose={function() { setShowImagePicker(false); }}
+            anchorRef={imageBtnRef}
           />
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowImagePicker(false); }} />
         </>
       )}
       {showVideoPicker && (
         <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowVideoPicker(false); }} />
           <VideoPicker
             onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'video' }) as QuestionBlock); }}
             onClose={function() { setShowVideoPicker(false); }}
+            anchorRef={videoBtnRef}
           />
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowVideoPicker(false); }} />
         </>
       )}
     </div>
