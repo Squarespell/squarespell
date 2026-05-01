@@ -109,6 +109,13 @@ interface Quiz {
     custom_css?: string;
     remove_branding?: boolean;
     enable_recaptcha?: boolean;
+    redirect_url?: string;
+    redirect_delay?: number;
+    logo_url?: string;
+    consent_required?: boolean;
+    privacy_policy_url?: string;
+    webhook_url?: string;
+    meta_description?: string;
   };
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
@@ -197,6 +204,7 @@ export default function QuizPage() {
   var [email, setEmail] = useState('');
   var [firstName, setFirstName] = useState('');
   var [submitting, setSubmitting] = useState(false);
+  var [consentGiven, setConsentGiven] = useState(false);
   var [leadError, setLeadError] = useState('');
   var [outcome, setOutcome] = useState<QuizOutcome | null>(null);
   var [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -345,6 +353,21 @@ export default function QuizPage() {
     return function() { clearTimeout(t); };
   }, [transitioning]);
 
+  // Redirect after result is shown (if redirect_url is set)
+  useEffect(function() {
+    if (stage !== 'result' || !redirectUrl) return;
+    var delay = (redirectDelay || 5) * 1000;
+    var t = setTimeout(function() { window.location.href = redirectUrl; }, delay);
+    return function() { clearTimeout(t); };
+  }, [stage, redirectUrl, redirectDelay]);
+
+  // Fire webhook on quiz completion
+  useEffect(function() {
+    if (stage !== 'result' || !webhookUrl || !quiz) return;
+    var payload = { quiz_id: quiz.id, quiz_title: quiz.title, answers: answers, outcome: outcome, email: email, first_name: firstName, completed_at: new Date().toISOString() };
+    fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(function() { /* silent fail */ });
+  }, [stage, webhookUrl]);
+
   var submitLead = useCallback(function() {
     if (!quiz) return;
     if (!email.trim() || !email.includes('@')) {
@@ -403,6 +426,13 @@ export default function QuizPage() {
   var showProgressBar = quiz?.settings?.show_progress_bar !== false;
   var transitionType = quiz?.settings?.transition_type || 'slide';
   var customCss = quiz?.settings?.custom_css || '';
+  var redirectUrl = quiz?.settings?.redirect_url || '';
+  var redirectDelay = quiz?.settings?.redirect_delay || 5;
+  var logoUrl = quiz?.settings?.logo_url || '';
+  var consentRequired = quiz?.settings?.consent_required || false;
+  var privacyPolicyUrl = quiz?.settings?.privacy_policy_url || '';
+  var webhookUrl = quiz?.settings?.webhook_url || '';
+  var metaDescription = quiz?.settings?.meta_description || '';
   var LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
   /* ---------- current question helpers ---------- */
@@ -436,6 +466,8 @@ export default function QuizPage() {
 
   return (
     <>
+      {metaDescription && <meta name="description" content={metaDescription} />}
+
       <style dangerouslySetInnerHTML={{ __html: "\n@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');\n*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }\nhtml, body { height: 100%; }\nbody {\n  font-family: " + brandFont + ";\n  background: " + brandBg + ";\n  color: " + brandText + ";\n}\n*:focus-visible { outline: 2px solid " + brandPrimary + "; outline-offset: 2px; }\n@keyframes sq-slide-in-fwd { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-slide-in-back { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-fade-in { from { opacity: 0; } to { opacity: 1; } }\n" + customCss + "\n" }} />
 
       <div style={{
@@ -457,7 +489,8 @@ export default function QuizPage() {
             }}>
               {/* Header */}
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
-                {brandName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary }}>{brandName}</div>}
+                {logoUrl && <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><img src={logoUrl} alt="" style={{ maxHeight: 48, maxWidth: 180, objectFit: 'contain' }} /></div>}
+                {brandName && !logoUrl && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary }}>{brandName}</div>}
                 <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15 }}>{quiz.title}</div>
                 {quiz.description && <div style={{ fontSize: 14, opacity: 0.64, lineHeight: 1.55 }}>{quiz.description}</div>}
               </div>
@@ -783,13 +816,25 @@ export default function QuizPage() {
                   }} />
               </div>
 
-              <button type="button" onClick={submitLead} disabled={submitting || !email.trim()}
+              {consentRequired && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, textAlign: 'left', marginTop: 8 }}>
+                  <input type="checkbox" checked={consentGiven} onChange={function(e) { setConsentGiven(e.target.checked); }}
+                    style={{ marginTop: 3, width: 16, height: 16, cursor: 'pointer', accentColor: brandPrimary }} />
+                  <span style={{ fontSize: 12, color: brandText, opacity: 0.7, lineHeight: 1.4 }}>
+                    I agree to the {privacyPolicyUrl ? (
+                      <a href={privacyPolicyUrl} target="_blank" rel="noopener noreferrer" style={{ color: brandPrimary, textDecoration: 'underline' }}>privacy policy</a>
+                    ) : 'privacy policy'} and consent to having my data processed.
+                  </span>
+                </div>
+              )}
+
+              <button type="button" onClick={submitLead} disabled={submitting || !email.trim() || (consentRequired && !consentGiven)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   width: '100%', padding: '14px 22px', marginTop: 10,
                   background: brandPrimary, color: brandBg, border: 0, borderRadius: 100,
                   fontFamily: brandFont, fontSize: 14, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-                  transition: 'transform 0.2s', opacity: submitting || !email.trim() ? 0.5 : 1,
+                  transition: 'transform 0.2s', opacity: submitting || !email.trim() || (consentRequired && !consentGiven) ? 0.5 : 1,
                 }}>
                 {submitting ? 'Loading...' : (quiz.leadGate?.buttonText || 'Show my result')}
               </button>

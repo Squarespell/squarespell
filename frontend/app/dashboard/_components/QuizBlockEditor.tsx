@@ -38,6 +38,14 @@ export interface QuizSettings {
   remove_branding?: boolean;
   enable_recaptcha?: boolean;
   custom_css?: string;
+  redirect_url?: string;
+  redirect_delay?: number;
+  primary_color?: string;
+  logo_url?: string;
+  consent_required?: boolean;
+  privacy_policy_url?: string;
+  webhook_url?: string;
+  meta_description?: string;
 }
 
 export type UserPlan = 'free' | 'trial' | 'starter' | 'pro' | 'agency';
@@ -2345,21 +2353,75 @@ function SettingsPanel({
                 <option value="slide">Slide</option><option value="fade">Fade</option><option value="none">None</option>
               </select>
             </div>
+
+            {/* Completion */}
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14, marginTop: 28 }}>Completion</div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Redirect URL</div>
+              <input type="text" placeholder="https://yourdomain.com/thanks" value={settings?.redirect_url || ''}
+                onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { redirect_url: e.target.value })); }}
+                style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Redirect delay (seconds)</div>
+              <input type="number" placeholder="5" value={settings?.redirect_delay || ''}
+                onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { redirect_delay: parseInt(e.target.value) || 0 })); }}
+                style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+            </div>
+
+            {/* GDPR / Privacy */}
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14, marginTop: 28 }}>GDPR / Privacy</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Require consent</span>
+              <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { consent_required: !(settings?.consent_required) })); }}
+                style={{ width: 40, height: 22, borderRadius: 11, background: settings?.consent_required ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                <span style={{ position: 'absolute', top: 2, left: settings?.consent_required ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+              </button>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Privacy policy URL</div>
+              <input type="text" placeholder="https://yourdomain.com/privacy" value={settings?.privacy_policy_url || ''}
+                onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { privacy_policy_url: e.target.value })); }}
+                style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+            </div>
           </div>
         )}
 
         {tab === 'design' && (
           <div>
+            {/* Primary Color */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Theme Color</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input type="color" value={settings?.primary_color || '#0D7377'}
+                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
+                  style={{ width: 36, height: 36, borderRadius: 8, border: '2px solid ' + C.BORDER, cursor: 'pointer', padding: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Primary</span>
+                <input type="text" value={settings?.primary_color || '#0D7377'}
+                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
+                  style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' as const, fontFamily: C.FONT }} />
+              </div>
+            </div>
+
+            {/* Branding */}
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Branding</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
                 <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Remove branding <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB', textTransform: 'uppercase' }}>STARTER</span></span>
                 <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { remove_branding: !(settings?.remove_branding) })); }}
                   style={{ width: 40, height: 22, borderRadius: 11, background: settings?.remove_branding ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
                   <span style={{ position: 'absolute', top: 2, left: settings?.remove_branding ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
                 </button>
               </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Custom logo URL</div>
+                <input type="text" placeholder="https://yourdomain.com/logo.png" value={settings?.logo_url || ''}
+                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { logo_url: e.target.value })); }}
+                  style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
             </div>
+
+            {/* Custom CSS */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Custom CSS <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></div>
               <textarea placeholder="/* Your styles */" style={{ width: '100%', minHeight: 80, padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: 'monospace', color: C.TEXT, resize: 'vertical' as const, outline: 'none' }}
@@ -2410,7 +2472,29 @@ function SettingsPanel({
                 {copied ? 'Copied!' : 'Copy embed code'}
               </button>
             </div>
-            <div>
+            {/* Webhook */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Webhook</div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Webhook URL</div>
+                <input type="text" placeholder="https://your-api.com/webhook" value={settings?.webhook_url || ''}
+                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { webhook_url: e.target.value })); }}
+                  style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+              </div>
+              <p style={{ fontSize: 11, color: C.TEXT_MUTED, margin: 0 }}>We'll POST quiz results here on completion.</p>
+            </div>
+
+            {/* SEO */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>SEO</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Meta description</div>
+              <textarea placeholder="Discover which plan fits you..." value={settings?.meta_description || ''}
+                onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { meta_description: e.target.value })); }}
+                style={{ width: '100%', minHeight: 60, padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none', resize: 'vertical' as const }} />
+            </div>
+
+            {/* Security */}
+            <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Security</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
                 <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>reCAPTCHA <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></span>
@@ -2419,6 +2503,20 @@ function SettingsPanel({
                   <span style={{ position: 'absolute', top: 2, left: settings?.enable_recaptcha ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
                 </button>
               </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Danger Zone</div>
+              <button type="button" onClick={function() {
+                if (window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
+                  fetch(API_BASE + '/api/quizzes/' + quizId, { method: 'DELETE', credentials: 'include' as const })
+                    .then(function() { window.location.href = '/dashboard'; });
+                }
+              }}
+                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #DC2626', background: '#FEF2F2', fontSize: 12, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: C.FONT }}>
+                Delete this quiz
+              </button>
             </div>
           </div>
         )}
