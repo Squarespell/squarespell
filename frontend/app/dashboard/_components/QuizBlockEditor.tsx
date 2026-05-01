@@ -2259,7 +2259,7 @@ function FloatingToolbar({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Settings Panel — Inline 380px right panel with 5 tabs              */
+/*  Settings Panel — Inline 380px right panel with 3 tabs              */
 /* ------------------------------------------------------------------ */
 
 function SettingsPanel({
@@ -2277,7 +2277,7 @@ function SettingsPanel({
   userPlan?: UserPlan;
   quizId?: string;
 }) {
-  var [tab, setTab] = useState<'question' | 'design' | 'behavior' | 'integrations' | 'advanced'>('question');
+  var [tab, setTab] = useState<'behavior' | 'design' | 'advanced'>('behavior');
 
   if (!open) return null;
 
@@ -2297,9 +2297,9 @@ function SettingsPanel({
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid ' + C.BORDER, background: '#F9FAFB', padding: '0 16px' }}>
-        {(['question', 'design', 'behavior', 'integrations', 'advanced'] as const).map(function(t) {
+        {(['behavior', 'design', 'advanced'] as const).map(function(t) {
           var active = tab === t;
-          var label = t === 'question' ? 'Question' : t === 'design' ? 'Design' : t === 'behavior' ? 'Behavior' : t === 'integrations' ? 'Integrations' : 'Advanced';
+          var label = t === 'behavior' ? 'Behavior' : t === 'design' ? 'Design' : 'Advanced';
           return (
             <button key={t} type="button" onClick={function() { setTab(t); }}
               style={{
@@ -2319,63 +2319,30 @@ function SettingsPanel({
 
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-        {tab === 'question' && (
+        {tab === 'behavior' && (
           <div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Question Settings</div>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Question type</div>
-                <select style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff', outline: 'none' }}>
-                  <option>Single choice</option><option>Multiple choice</option><option>Text input</option><option>Rating scale</option><option>Date picker</option>
-                </select>
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Help text</div>
-                <input type="text" placeholder="Optional hint below question..." style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Required</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Shuffle answers</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Allow multiple selection</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Quiz Flow</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Progress bar</span>
+              <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { show_progress_bar: !(settings?.show_progress_bar !== false) })); }}
+                style={{ width: 40, height: 22, borderRadius: 11, background: settings?.show_progress_bar !== false ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                <span style={{ position: 'absolute', top: 2, left: settings?.show_progress_bar !== false ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+              </button>
             </div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Timer</div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Time limit (seconds)</div>
-              <input type="number" placeholder="No limit" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Shuffle questions</span>
+              <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { shuffle_questions: !(settings?.shuffle_questions) })); }}
+                style={{ width: 40, height: 22, borderRadius: 11, background: settings?.shuffle_questions ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                <span style={{ position: 'absolute', top: 2, left: settings?.shuffle_questions ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+              </button>
             </div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Scoring</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Show scores to user</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Show explanations</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Skip Logic / Branching</div>
-              <p style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 12 }}>Route users to different questions based on their answer.</p>
-              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1.5px dashed ' + C.BORDER, background: 'transparent', fontSize: 12, fontWeight: 600, color: C.TEXT_MUTED, cursor: 'pointer', fontFamily: C.FONT }}>+ Add branching rule</button>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Transition</div>
+              <select value={settings?.transition_type || 'slide'}
+                onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { transition_type: e.target.value as any })); }}
+                style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff' }}>
+                <option value="slide">Slide</option><option value="fade">Fade</option><option value="none">None</option>
+              </select>
             </div>
           </div>
         )}
@@ -2383,49 +2350,13 @@ function SettingsPanel({
         {tab === 'design' && (
           <div>
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Theme Colors</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#0D7377', border: '2px solid ' + C.BORDER }} />
-                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Primary</span>
-                <input type="text" defaultValue="#0D7377" style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center', fontFamily: C.FONT }} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#FFFFFF', border: '2px solid #ddd' }} />
-                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Background</span>
-                <input type="text" defaultValue="#FFFFFF" style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center', fontFamily: C.FONT }} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#101828', border: '2px solid ' + C.BORDER }} />
-                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Text</span>
-                <input type="text" defaultValue="#101828" style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center', fontFamily: C.FONT }} />
-              </div>
-            </div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Typography</div>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Font</div>
-                <select style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff' }}>
-                  <option>Inter</option><option>Playfair Display</option><option>Roboto</option><option>Space Grotesk</option>
-                </select>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Question size</div>
-                <select style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff' }}>
-                  <option>Small</option><option>Medium</option><option>Large</option>
-                </select>
-              </div>
-            </div>
-            <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Branding</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
                 <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Remove branding <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB', textTransform: 'uppercase' }}>STARTER</span></span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { remove_branding: !(settings?.remove_branding) })); }}
+                  style={{ width: 40, height: 22, borderRadius: 11, background: settings?.remove_branding ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: 2, left: settings?.remove_branding ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
                 </button>
-              </div>
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Custom logo URL</div>
-                <input type="text" placeholder="https://yourdomain.com/logo.png" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
               </div>
             </div>
             <div>
@@ -2433,124 +2364,6 @@ function SettingsPanel({
               <textarea placeholder="/* Your styles */" style={{ width: '100%', minHeight: 80, padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 12, fontFamily: 'monospace', color: C.TEXT, resize: 'vertical' as const, outline: 'none' }}
                 value={settings?.custom_css || ''}
                 onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { custom_css: e.target.value })); }} />
-            </div>
-          </div>
-        )}
-
-        {tab === 'behavior' && (
-          <div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Quiz Flow</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Progress bar</span>
-                <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { show_progress_bar: !(settings?.show_progress_bar !== false) })); }}
-                  style={{ width: 40, height: 22, borderRadius: 11, background: settings?.show_progress_bar !== false ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: settings?.show_progress_bar !== false ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Shuffle questions</span>
-                <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { shuffle_questions: !(settings?.shuffle_questions) })); }}
-                  style={{ width: 40, height: 22, borderRadius: 11, background: settings?.shuffle_questions ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: settings?.shuffle_questions ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
-                </button>
-              </div>
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Transition</div>
-                <select value={settings?.transition_type || 'slide'}
-                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { transition_type: e.target.value as any })); }}
-                  style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, background: '#fff' }}>
-                  <option value="slide">Slide</option><option value="fade">Fade</option><option value="none">None</option>
-                </select>
-              </div>
-            </div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Completion</div>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Redirect URL</div>
-                <input type="text" placeholder="https://yourdomain.com/thanks" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Redirect delay (sec)</div>
-                <input type="number" defaultValue="3" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-            </div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Scheduling <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></div>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Publish at</div>
-                <input type="datetime-local" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Unpublish at</div>
-                <input type="datetime-local" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-            </div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>A/B Testing <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></div>
-              <p style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 10 }}>Split traffic 50/50 between two quiz variants.</p>
-              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid ' + C.ACCENT, background: C.ACCENT_LIGHT, fontSize: 12, fontWeight: 600, color: C.ACCENT, cursor: 'pointer', fontFamily: C.FONT }}>Create Variant B</button>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>GDPR / Privacy</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Consent checkbox</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
-              <div style={{ marginTop: 8 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Privacy policy URL</div>
-                <input type="text" placeholder="https://yourdomain.com/privacy" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === 'integrations' && (
-          <div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Connected Services</div>
-              <p style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 16 }}>Send leads to your tools automatically.</p>
-              {[
-                { name: 'Mailchimp', icon: '📧', connected: true },
-                { name: 'Klaviyo', icon: '📋', connected: false },
-                { name: 'HubSpot', icon: '🔗', connected: false },
-                { name: 'Zapier', icon: '🔄', connected: true },
-                { name: 'Google Sheets', icon: '📊', connected: false },
-              ].map(function(svc) {
-                return (
-                  <div key={svc.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid ' + C.BORDER, borderRadius: 8, marginBottom: 8, transition: 'all 0.15s' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, background: '#F9FAFB' }}>{svc.icon}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT }}>{svc.name}</div>
-                      <div style={{ fontSize: 11, color: svc.connected ? '#16A34A' : C.TEXT_SUBTLE }}>{svc.connected ? 'Connected' : 'Not connected'}</div>
-                    </div>
-                    <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: svc.connected ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                      <span style={{ position: 'absolute', top: 2, left: svc.connected ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Webhook</div>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Webhook URL</div>
-                <input type="text" placeholder="https://your-api.com/webhook" style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Send on completion</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Send on lead capture</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
             </div>
           </div>
         )}
@@ -2564,36 +2377,15 @@ function SettingsPanel({
               </div>
               <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid ' + C.ACCENT, background: C.ACCENT_LIGHT, fontSize: 12, fontWeight: 600, color: C.ACCENT, cursor: 'pointer', fontFamily: C.FONT }}>Copy embed code</button>
             </div>
-            <div style={{ marginBottom: 28 }}>
+            <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Security</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
                 <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>reCAPTCHA <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span></span>
                 <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { enable_recaptcha: !(settings?.enable_recaptcha) })); }}
                   style={{ width: 40, height: 22, borderRadius: 11, background: settings?.enable_recaptcha ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
                   <span style={{ position: 'absolute', top: 2, left: settings?.enable_recaptcha ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
                 </button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0' }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Rate limiting</span>
-                <button type="button" style={{ width: 40, height: 22, borderRadius: 11, background: C.ACCENT, border: 'none', cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: 2, left: 20, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </button>
-              </div>
-            </div>
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>SEO</div>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Slug</div>
-                <input type="text" defaultValue={quizId || 'dream-squarespace-site'} style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Meta description</div>
-                <textarea placeholder="Discover which plan fits you..." style={{ width: '100%', minHeight: 60, padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none', resize: 'vertical' as const }} />
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Danger Zone</div>
-              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #DC2626', background: '#FEF2F2', fontSize: 12, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: C.FONT }}>Delete this quiz</button>
             </div>
           </div>
         )}
