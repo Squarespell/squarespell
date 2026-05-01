@@ -2278,6 +2278,7 @@ function SettingsPanel({
   quizId?: string;
 }) {
   var [tab, setTab] = useState<'behavior' | 'design' | 'advanced'>('behavior');
+  var [copied, setCopied] = useState(false);
 
   if (!open) return null;
 
@@ -2375,7 +2376,16 @@ function SettingsPanel({
               <div style={{ background: '#1D2939', borderRadius: 8, padding: 14, fontFamily: 'monospace', fontSize: 11, color: '#E5E7EB', lineHeight: 1.6, wordBreak: 'break-all' as const, marginBottom: 12 }}>
                 {'<iframe src="https://quiz.squarespell.com/embed/' + (quizId || 'your-slug') + '" width="100%" height="600"></iframe>'}
               </div>
-              <button type="button" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid ' + C.ACCENT, background: C.ACCENT_LIGHT, fontSize: 12, fontWeight: 600, color: C.ACCENT, cursor: 'pointer', fontFamily: C.FONT }}>Copy embed code</button>
+              <button type="button" onClick={function() {
+                var code = '<iframe src="https://quiz.squarespell.com/embed/' + (quizId || 'your-slug') + '" width="100%" height="600"></iframe>';
+                navigator.clipboard.writeText(code).then(function() {
+                  setCopied(true);
+                  setTimeout(function() { setCopied(false); }, 2000);
+                });
+              }}
+                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid ' + (copied ? '#16A34A' : C.ACCENT), background: copied ? '#F0FDF4' : C.ACCENT_LIGHT, fontSize: 12, fontWeight: 600, color: copied ? '#16A34A' : C.ACCENT, cursor: 'pointer', fontFamily: C.FONT, transition: 'all 0.2s' }}>
+                {copied ? 'Copied!' : 'Copy embed code'}
+              </button>
             </div>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Security</div>
