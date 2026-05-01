@@ -664,6 +664,78 @@ export default function EmbedQuizClient({
           border-color: ${brandPrimary};
           background: ${brandPrimary}14;
         }
+
+        /* Split layout — media left, question+answers right */
+        .sq-split {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          min-height: 380px;
+          overflow: hidden;
+          border-radius: 18px;
+          border: 1px solid ${brandBorder};
+          background: ${brandSurface};
+          box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+        }
+        .sq-split-media {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, #1D2939, #344054);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .sq-split-media img,
+        .sq-split-media video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .sq-split-media-placeholder {
+          color: rgba(255,255,255,0.35);
+          text-align: center;
+          font-size: 13px;
+          font-weight: 600;
+        }
+        .sq-split-body {
+          padding: 32px 28px;
+          display: flex;
+          flex-direction: column;
+        }
+        .sq-split-body .sq-qlabel {
+          margin-bottom: 8px;
+        }
+        .sq-split-body .sq-q {
+          font-size: 22px;
+          margin-bottom: 16px;
+        }
+        .sq-split-body .sq-opts {
+          gap: 8px;
+          flex: 1;
+        }
+        .sq-split-body .sq-opt {
+          padding: 12px 14px;
+          font-size: 13px;
+        }
+        @container (max-width: 600px) {
+          .sq-split {
+            grid-template-columns: 1fr;
+            min-height: auto;
+          }
+          .sq-split-media {
+            height: 200px;
+          }
+        }
+        @media (max-width: 600px) {
+          .sq-split {
+            grid-template-columns: 1fr;
+            min-height: auto;
+          }
+          .sq-split-media {
+            height: 200px;
+          }
+        }
+
         .sq-back {
           margin-top: 16px;
           font-size: 12px;
@@ -913,25 +985,29 @@ export default function EmbedQuizClient({
               </div>
 
               <div className="sq-card">
-                {timeRemaining !== null && (
+                {timeRemaining !== null && currentQ.answerLayout !== 'splitLayout' && (
                   <div className={'sq-timer' + (timeRemaining < 5 ? ' warning' : '')} aria-label={'Time remaining: ' + timeRemaining + ' seconds'}>{timeRemaining}s</div>
                 )}
-                <div className="sq-prog">
-                  <span>Question {qIdx + 1} of {totalQs}</span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="sq-bar"><div className="sq-bar-fill" style={{ width: `${progress}%` }} /></div>
+                {currentQ.answerLayout !== 'splitLayout' && (
+                  <>
+                    <div className="sq-prog">
+                      <span>Question {qIdx + 1} of {totalQs}</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <div className="sq-bar"><div className="sq-bar-fill" style={{ width: `${progress}%` }} /></div>
 
-                <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
-                <div className="sq-q">{currentQ.text || currentQ.question}</div>
-                {currentQ.subtitle && <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 16, marginTop: -12, lineHeight: 1.5 }}>{currentQ.subtitle}</div>}
+                    <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
+                    <div className="sq-q">{currentQ.text || currentQ.question}</div>
+                    {currentQ.subtitle && <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 16, marginTop: -12, lineHeight: 1.5 }}>{currentQ.subtitle}</div>}
 
-                {/* Question media (image or video) */}
-                {currentQ.mediaUrl && currentQ.mediaType === 'video' && (
-                  <video className="sq-q-video" src={currentQ.mediaUrl} controls playsInline />
-                )}
-                {currentQ.mediaUrl && currentQ.mediaType !== 'video' && (
-                  <img className="sq-q-media" src={currentQ.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                    {/* Question media (image or video) — not in splitLayout, it renders its own */}
+                    {currentQ.mediaUrl && currentQ.mediaType === 'video' && (
+                      <video className="sq-q-video" src={currentQ.mediaUrl} controls playsInline />
+                    )}
+                    {currentQ.mediaUrl && currentQ.mediaType !== 'video' && (
+                      <img className="sq-q-media" src={currentQ.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                    )}
+                  </>
                 )}
 
                 {/* Answer options — render based on answerLayout */}
@@ -939,44 +1015,125 @@ export default function EmbedQuizClient({
                   var layout = currentQ.answerLayout || 'list';
                   var hasImages = currentQ.options.some(function(o) { return !!o.imageUrl; });
 
+                  /* Split layout — media on left, question + answers on right */
+                  if (layout === 'splitLayout') {
+                    var hasMedia = !!currentQ.mediaUrl;
+                    var isVid = currentQ.mediaType === 'video';
+                    return (
+                      <>
+                        {/* Close the sq-card early — splitLayout replaces it */}
+                        <style dangerouslySetInnerHTML={{ __html: '.sq-card:has(.sq-split-inject) { border: none; padding: 0; background: transparent; box-shadow: none; }' }} />
+                        <div className="sq-split-inject" style={{ margin: '-26px -22px -26px' }}>
+                          <div className="sq-split">
+                            <div className="sq-split-media">
+                              {hasMedia && isVid ? (
+                                <video src={currentQ.mediaUrl} controls playsInline />
+                              ) : hasMedia ? (
+                                <img src={currentQ.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                              ) : (
+                                <div className="sq-split-media-placeholder">
+                                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 6px' }}>
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <polyline points="21 15 16 10 5 21" />
+                                  </svg>
+                                  No media
+                                </div>
+                              )}
+                            </div>
+                            <div className="sq-split-body">
+                              <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
+                              <div className="sq-q">{currentQ.text || currentQ.question}</div>
+                              {currentQ.subtitle && <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 12, marginTop: -8, lineHeight: 1.5 }}>{currentQ.subtitle}</div>}
+                              <div className="sq-opts">
+                                {currentQ.options.map(function(opt, oi) {
+                                  return (
+                                    <button key={opt.id + oi} className={'sq-opt' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
+                                      {opt.imageUrl && <img style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
+                                      <div className="sq-opt-letter">{LETTERS[oi]}</div>
+                                      <div>{opt.text}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {qHistory.length > 1 && (
+                                <span className="sq-back" onClick={goBack} style={{ marginTop: 12 }}>← Previous question</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  }
+
                   /* Grid layout (2x2) */
                   if (layout === 'grid') {
                     return (
                       <div className="sq-opts-grid">
-                        {currentQ.options.map((opt, oi) => (
-                          <button key={opt.id + oi} className={'sq-opt-grid' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img className="sq-opt-img" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
-                            <div>{opt.text}</div>
-                          </button>
-                        ))}
+                        {currentQ.options.map(function(opt, oi) {
+                          return (
+                            <button key={opt.id + oi} className={'sq-opt-grid' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
+                              {opt.imageUrl ? (
+                                <img className="sq-opt-img" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                              ) : (
+                                <div style={{ width: '100%', height: 100, borderRadius: 8, background: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                                <span className="sq-opt-letter" style={{ width: 22, height: 22, borderRadius: 6, fontSize: 10 }}>{LETTERS[oi]}</span>
+                                <span>{opt.text}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   }
 
-                  /* Thumbnails layout — small image + text */
+                  /* Thumbnails layout — 56x56 image + text row */
                   if (layout === 'imageThumbnails') {
                     return (
                       <div className="sq-opts">
-                        {currentQ.options.map((opt, oi) => (
-                          <button key={opt.id + oi} className={'sq-opt-thumb' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img className="sq-opt-thumb-img" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
-                            <div>{opt.text}</div>
-                          </button>
-                        ))}
+                        {currentQ.options.map(function(opt, oi) {
+                          return (
+                            <button key={opt.id + oi} className={'sq-opt-thumb' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
+                              <div style={{ width: 56, height: 56, borderRadius: 8, overflow: 'hidden', background: 'rgba(0,0,0,0.04)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {opt.imageUrl ? (
+                                  <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                                ) : (
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+                                )}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 600 }}>{opt.text}</div>
+                                {opt.explanation && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{opt.explanation}</div>}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   }
 
                   /* Full background image layout */
-                  if (layout === 'fullBackground' && hasImages) {
+                  if (layout === 'fullBackground') {
                     return (
                       <div className="sq-opts-grid">
-                        {currentQ.options.map((opt, oi) => (
-                          <button key={opt.id + oi} className={'sq-opt-full' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img className="sq-opt-full-bg" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
-                            <div className="sq-opt-full-label">{opt.text}</div>
-                          </button>
-                        ))}
+                        {currentQ.options.map(function(opt, oi) {
+                          return (
+                            <button key={opt.id + oi} className={'sq-opt-full' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button" style={{ minHeight: hasImages ? 160 : 120 }}>
+                              {opt.imageUrl ? (
+                                <img className="sq-opt-full-bg" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                              ) : (
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                                </div>
+                              )}
+                              <div className="sq-opt-full-label">{opt.text}</div>
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   }
@@ -986,13 +1143,15 @@ export default function EmbedQuizClient({
                   if (style === 'cards') {
                     return (
                       <div className="sq-cards-layout">
-                        {currentQ.options.map((opt, oi) => (
-                          <button key={opt.id + oi} className={'sq-opt-card' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
-                            <div className="sq-opt-letter">{LETTERS[oi]}</div>
-                            <div>{opt.text}</div>
-                          </button>
-                        ))}
+                        {currentQ.options.map(function(opt, oi) {
+                          return (
+                            <button key={opt.id + oi} className={'sq-opt-card' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
+                              {opt.imageUrl && <img style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
+                              <div className="sq-opt-letter">{LETTERS[oi]}</div>
+                              <div>{opt.text}</div>
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   }
@@ -1000,18 +1159,20 @@ export default function EmbedQuizClient({
                   /* Default: list buttons */
                   return (
                     <div className="sq-opts">
-                      {currentQ.options.map((opt, oi) => (
-                        <button key={opt.id + oi} className={'sq-opt' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                          {opt.imageUrl && <img style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
-                          <div className="sq-opt-letter">{LETTERS[oi]}</div>
-                          <div>{opt.text}</div>
-                        </button>
-                      ))}
+                      {currentQ.options.map(function(opt, oi) {
+                        return (
+                          <button key={opt.id + oi} className={'sq-opt' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
+                            {opt.imageUrl && <img style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
+                            <div className="sq-opt-letter">{LETTERS[oi]}</div>
+                            <div>{opt.text}</div>
+                          </button>
+                        );
+                      })}
                     </div>
                   );
                 })()}
 
-                {qHistory.length > 1 && (
+                {currentQ.answerLayout !== 'splitLayout' && qHistory.length > 1 && (
                   <span className="sq-back" onClick={goBack}>← Previous question</span>
                 )}
               </div>

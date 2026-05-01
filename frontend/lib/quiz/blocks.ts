@@ -20,7 +20,7 @@ export type QuizBlockType =
 export type QuestionStyle = 'buttons' | 'cards' | 'dropdown' | 'imageChoice';
 
 /** Visual layout for answer options — how answers are arranged on screen */
-export type AnswerLayout = 'list' | 'grid' | 'imageThumbnails' | 'fullBackground';
+export type AnswerLayout = 'list' | 'grid' | 'imageThumbnails' | 'fullBackground' | 'splitLayout';
 
 export interface BaseQuizBlock {
   id: string;
