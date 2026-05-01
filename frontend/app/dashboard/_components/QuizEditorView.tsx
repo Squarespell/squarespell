@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 import { PublishModal } from "./Modals";
-import { QuizBlockEditor, QuizSettings } from './QuizBlockEditor';
+import { QuizBlockEditor, QuizSettings, SaveState } from './QuizBlockEditor';
 import { QuizBlock, legacyToBlocks, blocksToLegacy } from '@/lib/quiz/blocks';
 import { findTemplateData } from '@/lib/quiz/templates';
 
@@ -330,6 +330,8 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
   var [initialBlocksReady, setInitialBlocksReady] = useState(false);
   var [editorBlocks, setEditorBlocks] = useState<QuizBlock[]>([]);
   var saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  var [saveState, setSaveState] = useState<SaveState>('idle');
+  var saveStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize blocks from quiz data — prefer saved editor_blocks for round-trip fidelity
   useEffect(function() {
@@ -388,6 +390,8 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
   var handleBlocksChange = useCallback(function(blocks: QuizBlock[]) {
     setEditorBlocks(blocks);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (saveStateTimerRef.current) clearTimeout(saveStateTimerRef.current);
+    setSaveState('saving');
     saveTimerRef.current = setTimeout(function() {
       var legacy = blocksToLegacy(blocks);
       var mergedSettings = Object.assign({}, quiz?.settings || {}, quizSettings, {
@@ -408,8 +412,11 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
             if (!prev) return prev;
             return Object.assign({}, prev, { id: created.id });
           });
+          setSaveState('saved');
+          saveStateTimerRef.current = setTimeout(function() { setSaveState('idle'); }, 2000);
         }).catch(function(err: any) {
           console.error('[block-editor] Create quiz failed:', err);
+          setSaveState('error');
         });
         return;
       }
@@ -418,8 +425,12 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
         questions: legacy.questions,
         outcomes: legacy.outcomes,
         settings: mergedSettings,
+      }).then(function() {
+        setSaveState('saved');
+        saveStateTimerRef.current = setTimeout(function() { setSaveState('idle'); }, 2000);
       }).catch(function(err: any) {
         console.error('[block-editor] Auto-save failed:', err);
+        setSaveState('error');
       });
     }, 800);
   }, [resolvedId, quiz, quizSettings]);
@@ -458,6 +469,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
         settings={quizSettings}
         onSettingsChange={handleSettingsChange}
         userPlan={userPlan}
+        saveState={saveState}
         backUrl={templateId ? '/dashboard/templates' : undefined}
         quizId={(quiz as any)?.id || quizId || undefined}
       />

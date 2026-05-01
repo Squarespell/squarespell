@@ -271,6 +271,90 @@ function BlockCard({
     onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
   }
 
+  function removeOption(optIdx: number) {
+    if (!qb || qb.options.length <= 2) return;
+    var newOpts = qb.options.filter(function(_, i) { return i !== optIdx; });
+    onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
+  }
+
+  function moveOption(optIdx: number, direction: number) {
+    if (!qb) return;
+    var targetIdx = optIdx + direction;
+    if (targetIdx < 0 || targetIdx >= qb.options.length) return;
+    var newOpts = qb.options.slice();
+    var temp = newOpts[optIdx];
+    newOpts[optIdx] = newOpts[targetIdx];
+    newOpts[targetIdx] = temp;
+    onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
+  }
+
+  function addOption() {
+    if (!qb || qb.options.length >= 8) return;
+    var newOpts = qb.options.slice();
+    newOpts.push({ id: uid(), text: '', score: 0 });
+    onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
+  }
+
+  var optionActionBtnStyle: React.CSSProperties = {
+    width: 20, height: 20, borderRadius: 4, border: 'none',
+    background: 'transparent', cursor: 'pointer', padding: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'background 0.12s',
+  };
+
+  function OptionActions({ oi }: { oi: number }) {
+    if (!selected || !qb) return null;
+    return (
+      <div className="sq-option-actions" style={{
+        display: 'flex', gap: 2, opacity: 0, transition: 'opacity 0.15s',
+        flexShrink: 0, marginLeft: 4,
+      }}>
+        <button type="button" style={Object.assign({}, optionActionBtnStyle, { color: oi === 0 ? C.BORDER : C.TEXT_MUTED })}
+          disabled={oi === 0} title="Move up"
+          onClick={function(e) { e.stopPropagation(); moveOption(oi, -1); }}
+          onMouseEnter={function(e) { if (oi > 0) e.currentTarget.style.background = '#F2F4F7'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="18 15 12 9 6 15" /></svg>
+        </button>
+        <button type="button" style={Object.assign({}, optionActionBtnStyle, { color: oi === qb.options.length - 1 ? C.BORDER : C.TEXT_MUTED })}
+          disabled={oi === qb.options.length - 1} title="Move down"
+          onClick={function(e) { e.stopPropagation(); moveOption(oi, 1); }}
+          onMouseEnter={function(e) { if (oi < qb!.options.length - 1) e.currentTarget.style.background = '#F2F4F7'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </button>
+        <button type="button" style={Object.assign({}, optionActionBtnStyle, { color: qb.options.length <= 2 ? C.BORDER : '#DC2626' })}
+          disabled={qb.options.length <= 2} title={qb.options.length <= 2 ? 'Minimum 2 options required' : 'Remove option'}
+          onClick={function(e) { e.stopPropagation(); removeOption(oi); }}
+          onMouseEnter={function(e) { if (qb!.options.length > 2) e.currentTarget.style.background = '#FEF2F2'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+        </button>
+      </div>
+    );
+  }
+
+  function AddOptionRow() {
+    if (!selected || !qb || qb.options.length >= 8) return null;
+    return (
+      <div style={{ padding: '0 20px 12px 74px' }}>
+        <button type="button" onClick={function(e) { e.stopPropagation(); addOption(); }}
+          style={{
+            width: '100%', padding: '8px 12px', borderRadius: 8,
+            border: '1px dashed ' + C.BORDER, background: 'transparent',
+            color: C.TEXT_MUTED, fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', fontFamily: C.FONT + ',system-ui,sans-serif',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.color = C.ACCENT; }}
+          onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.color = C.TEXT_MUTED; }}
+        >
+          + Add option{qb.options.length >= 7 ? ' (max 8)' : ''}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       data-block-id={block.id}
@@ -454,6 +538,11 @@ function BlockCard({
 
         /* Inline image upload for answer option cards */
         function handleOptionImageUpload(optIndex: number, file: File) {
+          var MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+          if (file.size > MAX_FILE_SIZE) {
+            alert('File is too large (' + Math.round(file.size / 1024 / 1024) + ' MB). Maximum size is 20 MB.');
+            return;
+          }
           var reader = new FileReader();
           reader.onload = function() {
             var base64 = (reader.result as string).split(',')[1];
@@ -689,14 +778,16 @@ function BlockCard({
         /* Grid = small landscape image on top + prominent white text bar below */
         if (layout === 'grid') {
           return (
-            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ padding: '0 20px 16px 74px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {qb.options.map(function(opt, oi) {
                 return (
-                  <div key={opt.id} style={{
+                  <div key={opt.id} className="sq-opt-row" style={{
                     borderRadius: 10, overflow: 'hidden',
                     border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
                     background: '#fff', transition: 'border-color 0.15s',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    position: 'relative',
                   }}>
                     <div style={{ position: 'relative' }}>
                       <div onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}
@@ -722,9 +813,12 @@ function BlockCard({
                       {opt.imageUrl && selected && imageOverlay(oi)}
                     </div>
                     {cardBottomBar(opt, oi)}
+                    {selected && <OptionActions oi={oi} />}
                   </div>
                 );
               })}
+            </div>
+            {selected && <AddOptionRow />}
             </div>
           );
         }
@@ -733,10 +827,11 @@ function BlockCard({
         /* Full Image = tall portrait card, image IS the entire card, text overlaid on dark gradient */
         if (layout === 'fullBackground') {
           return (
-            <div style={{ padding: '0 20px 16px 74px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ padding: '0 20px 16px 74px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {qb.options.map(function(opt, oi) {
                 return (
-                  <div key={opt.id} style={{
+                  <div key={opt.id} className="sq-opt-row" style={{
                     position: 'relative', borderRadius: 12, overflow: 'hidden',
                     border: '1px solid ' + (selected ? C.ACCENT + '40' : 'rgba(0,0,0,0.08)'),
                     aspectRatio: '3/4', display: 'flex', alignItems: 'flex-end',
@@ -770,9 +865,12 @@ function BlockCard({
                         color: 'rgba(255,255,255,0.9)',
                       }}>+{opt.score || 0}pts</span>
                     </div>
+                    {selected && <OptionActions oi={oi} />}
                   </div>
                 );
               })}
+            </div>
+            {selected && <AddOptionRow />}
             </div>
           );
         }
@@ -783,11 +881,12 @@ function BlockCard({
             <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               {qb.options.map(function(opt, oi) {
                 return (
-                  <div key={opt.id} style={{
+                  <div key={opt.id} className="sq-opt-row" style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '6px 8px',
                     borderRadius: 10, background: '#fff', border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
                     transition: 'border-color 0.15s',
+                    position: 'relative',
                   }}>
                     <div style={{ position: 'relative', flexShrink: 0 }}
                       onClick={function(e) { e.stopPropagation(); if (selected) openImagePicker(oi); }}>
@@ -815,9 +914,11 @@ function BlockCard({
                       <span style={{ flex: 1, fontWeight: 500, fontSize: 13, color: C.TEXT }}>{opt.text || 'Option ' + LETTERS[oi]}</span>
                     )}
                     {scoreBadge(opt)}
+                    {selected && <OptionActions oi={oi} />}
                   </div>
                 );
               })}
+              {selected && <AddOptionRow />}
             </div>
           );
         }
@@ -827,12 +928,13 @@ function BlockCard({
           <div style={{ padding: '0 20px 16px 74px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {qb.options.map(function(opt, oi) {
               return (
-                <div key={opt.id} style={{
+                <div key={opt.id} className="sq-opt-row" style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '8px 10px',
                   borderRadius: 10,
                   background: '#fff', border: '1px solid ' + (selected ? C.ACCENT + '40' : C.BORDER),
                   transition: 'border-color 0.15s',
+                  position: 'relative',
                 }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: 6,
@@ -884,9 +986,11 @@ function BlockCard({
                       onBlur={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
                     />
                   ) : scoreBadge(opt)}
+                  {selected && <OptionActions oi={oi} />}
                 </div>
               );
             })}
+            {selected && <AddOptionRow />}
           </div>
         );
       })()}
@@ -1092,6 +1196,11 @@ function MediaPicker({
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     var file = e.target.files?.[0];
     if (!file) return;
+    var MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+    if (file.size > MAX_FILE_SIZE) {
+      setUploadError('File is too large (' + Math.round(file.size / 1024 / 1024) + ' MB). Maximum size is 20 MB.');
+      return;
+    }
     var isVideo = file.type.startsWith('video/');
     setUploading(true);
     setUploadError('');
@@ -1396,7 +1505,7 @@ function MediaPicker({
       )}
 
       {/* Spin animation for upload */}
-      <style dangerouslySetInnerHTML={{ __html: '@keyframes spin { to { transform: rotate(360deg); } }' }} />
+      <style dangerouslySetInnerHTML={{ __html: '@keyframes spin { to { transform: rotate(360deg); } } .sq-opt-row:hover .sq-option-actions { opacity: 1 !important; }' }} />
     </div>
   );
 }
@@ -1460,13 +1569,9 @@ function BlockInspector({
                     key={opt.value}
                     type="button"
                     onClick={function() {
-                      // Apply layout to ALL questions
+                      // Apply layout to THIS question only
                       var style = opt.value === 'grid' ? 'cards' : opt.value === 'fullBackground' ? 'imageChoice' : opt.value === 'imageThumbnails' ? 'imageChoice' : 'buttons';
-                      if (onChangeAllQuestions) {
-                        onChangeAllQuestions({ answerLayout: opt.value, questionStyle: style });
-                      } else {
-                        onChange(Object.assign({}, block, { answerLayout: opt.value, questionStyle: style }));
-                      }
+                      onChange(Object.assign({}, block, { answerLayout: opt.value, questionStyle: style }));
                     }}
                     style={{
                       padding: '10px 8px', borderRadius: 8,
@@ -1484,10 +1589,26 @@ function BlockInspector({
                 );
               })}
             </div>
+            {onChangeAllQuestions && (
+              <button
+                type="button"
+                onClick={function() {
+                  var style = (qb.answerLayout || 'list') === 'grid' ? 'cards' : (qb.answerLayout || 'list') === 'fullBackground' ? 'imageChoice' : (qb.answerLayout || 'list') === 'imageThumbnails' ? 'imageChoice' : 'buttons';
+                  onChangeAllQuestions({ answerLayout: qb.answerLayout || 'list', questionStyle: style });
+                }}
+                style={{
+                  marginTop: 6, width: '100%', padding: '6px 0', fontSize: 11, fontWeight: 600,
+                  color: C.ACCENT, background: 'transparent', border: '1px dashed ' + C.ACCENT + '60',
+                  borderRadius: 6, cursor: 'pointer', fontFamily: C.FONT + ',system-ui,sans-serif',
+                }}
+              >
+                Apply layout to all questions
+              </button>
+            )}
           </div>
           {/* Add / remove options */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
-            <span style={{ fontSize: 14, color: C.TEXT_MUTED, fontWeight: 600 }}>{qb.options.length} options</span>
+            <span style={{ fontSize: 14, color: C.TEXT_MUTED, fontWeight: 600 }}>{qb.options.length} / 8 options</span>
             <div style={{ display: 'flex', gap: 8 }}>
               {qb.options.length > 2 && (
                 <button
@@ -2383,6 +2504,8 @@ export interface QuizSettings {
 
 export type UserPlan = 'free' | 'trial' | 'starter' | 'pro' | 'agency';
 
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
 export interface QuizBlockEditorProps {
   blocks: QuizBlock[];
   onChange: (blocks: QuizBlock[]) => void;
@@ -2393,6 +2516,8 @@ export interface QuizBlockEditorProps {
   backUrl?: string;
   /** Quiz ID — used for linking to A/B testing, analytics, etc. */
   quizId?: string;
+  /** Save state passed from parent for indicator display */
+  saveState?: SaveState;
 }
 
 /** Plan badge shown inline next to gated features */
@@ -2422,7 +2547,7 @@ function hasPlanAccess(userPlan: UserPlan | undefined, required: 'starter' | 'pr
   return userTier >= requiredTier;
 }
 
-export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange, userPlan, backUrl, quizId }: QuizBlockEditorProps) {
+export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onSettingsChange, userPlan, backUrl, quizId, saveState }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
   var [selectedId, setSelectedId] = useState<string | null>(null);
@@ -2643,6 +2768,56 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
           <span style={{ fontSize: 12, color: C.TEXT_SUBTLE, fontWeight: 500 }}>
             {blocks.filter(function(b) { return b.type === 'question'; }).length} questions
           </span>
+          {/* Undo / Redo */}
+          <div style={{ display: 'flex', gap: 2, marginLeft: 4, borderLeft: '1px solid ' + C.BORDER, paddingLeft: 12 }}>
+            <button type="button" onClick={function() { history.undo(); }} disabled={!history.canUndo} title="Undo (⌘Z)"
+              style={{
+                width: 30, height: 30, borderRadius: 6, border: '1px solid ' + C.BORDER,
+                background: 'transparent', color: history.canUndo ? C.TEXT : C.BORDER,
+                cursor: history.canUndo ? 'pointer' : 'default', opacity: history.canUndo ? 1 : 0.4,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s',
+              }}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 105.64-11.36L1 10" />
+              </svg>
+            </button>
+            <button type="button" onClick={function() { history.redo(); }} disabled={!history.canRedo} title="Redo (⌘⇧Z)"
+              style={{
+                width: 30, height: 30, borderRadius: 6, border: '1px solid ' + C.BORDER,
+                background: 'transparent', color: history.canRedo ? C.TEXT : C.BORDER,
+                cursor: history.canRedo ? 'pointer' : 'default', opacity: history.canRedo ? 1 : 0.4,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s',
+              }}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-5.64-11.36L23 10" />
+              </svg>
+            </button>
+          </div>
+          {/* Save indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 4 }}>
+            {saveState === 'saving' && (
+              <>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', border: '1.5px solid ' + C.ACCENT, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: C.TEXT_MUTED }}>Saving...</span>
+              </>
+            )}
+            {(saveState === 'saved' || saveState === 'idle' || !saveState) && (
+              <>
+                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={saveState === 'saved' ? '#16A34A' : C.TEXT_SUBTLE} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span style={{ fontSize: 11, fontWeight: 600, color: saveState === 'saved' ? '#16A34A' : C.TEXT_SUBTLE }}>Saved</span>
+              </>
+            )}
+            {saveState === 'error' && (
+              <>
+                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx={12} cy={12} r={10} /><line x1={12} y1={8} x2={12} y2={12} /><line x1={12} y1={16} x2={12.01} y2={16} />
+                </svg>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626' }}>Save failed</span>
+              </>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
@@ -2663,23 +2838,6 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               <circle cx={12} cy={12} r={3} />
             </svg>
             Preview
-          </button>
-          <button
-            type="button"
-            style={{
-              height: 34, padding: '0 18px', borderRadius: 8,
-              background: C.ACCENT, border: 'none',
-              color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontFamily: C.FONT + ',system-ui,sans-serif',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
-            }}
-            title="Changes are auto-saved"
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Published
           </button>
         </div>
       </div>
@@ -3325,36 +3483,7 @@ export function QuizBlockEditor({ blocks: initialBlocks, onChange, settings, onS
               </a>
             )}
 
-            {/* Feature summary */}
-            <div style={{ background: '#F9FAFB', borderRadius: 14, padding: 20, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT_MUTED, marginBottom: 12, letterSpacing: '-0.01em' }}>Features used</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).questionStyle === 'imageChoice'; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#F0FDF4', color: '#16A34A' }}>Image choices</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).mediaUrl; }) && (
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB' }}>Media</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).branchRules && (b as QuestionBlock).branchRules!.length > 0; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#F5F3FF', color: '#7C3AED' }}>Branching</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).timeLimit; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FEF2F2', color: '#EF4444' }}>Timers</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'outcome' && (b as OutcomeBlock).shareEnabled; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FFF7ED', color: '#EA580C' }}>Social sharing</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'outcome' && (b as OutcomeBlock).imageUrl; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#ECFDF5', color: '#059669' }}>Rich results</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'leadGate'; }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FFF1F2', color: '#E11D48' }}>Lead capture</span>
-                )}
-                {blocks.some(function(b) { return b.type === 'question' && (b as QuestionBlock).options.some(function(o) { return o.explanation; }); }) && (
-                  <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 6, background: '#FEFCE8', color: '#CA8A04' }}>Explanations</span>
-                )}
-              </div>
-            </div>
+            {/* Features used section removed — was noise for most users */}
 
           </div>
         )}
