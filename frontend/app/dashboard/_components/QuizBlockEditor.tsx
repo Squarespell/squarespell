@@ -495,6 +495,8 @@ function GridAnswerCard({
   isFullBg,
   onChangeText,
   onChangeScore,
+  onChangeImage,
+  onClearImage,
   onDelete,
   total,
 }: {
@@ -503,10 +505,35 @@ function GridAnswerCard({
   isFullBg: boolean;
   onChangeText: (t: string) => void;
   onChangeScore: (s: number) => void;
+  onChangeImage: (url: string) => void;
+  onClearImage: () => void;
   onDelete: () => void;
   total: number;
 }) {
   var [hover, setHover] = useState(false);
+  var [showPicker, setShowPicker] = useState(false);
+  var fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    var file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { alert('File too large. Max 20MB.'); return; }
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = (reader.result as string).split(',')[1];
+      getClerkToken().then(function(token) {
+        fetch(API_BASE + '/api/media/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
+          body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) { if (data.url) { onChangeImage(data.url); setShowPicker(false); } })
+        .catch(function(err) { console.error('Upload error:', err); });
+      });
+    };
+    reader.readAsDataURL(file);
+  }
 
   return (
     <div
@@ -523,22 +550,23 @@ function GridAnswerCard({
       <div style={{
         height: isFullBg ? 160 : 120, background: opt.imageUrl ? 'transparent' : '#F2F4F7',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative',
-      }}>
+        position: 'relative', cursor: opt.imageUrl ? 'default' : 'pointer',
+      }}
+        onClick={function() { if (!opt.imageUrl) { fileInputRef.current?.click(); } }}
+      >
         {opt.imageUrl ? (
           <img src={opt.imageUrl} alt={opt.text || ''} style={{
             width: '100%', height: '100%', objectFit: 'cover',
           }} onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
         ) : (
-          <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, fontWeight: 600 }}>
+          <div style={{ color: C.TEXT_SUBTLE, fontSize: 11, fontWeight: 600, textAlign: 'center' }}>
             <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 4px' }}>
-              <rect x={3} y={3} width={18} height={18} rx={2} />
-              <circle cx={8.5} cy={8.5} r={1.5} />
-              <polyline points="21 15 16 10 5 21" />
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} />
             </svg>
-            No image
+            Add image
           </div>
         )}
+        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
         {isFullBg && opt.imageUrl && (
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -551,14 +579,14 @@ function GridAnswerCard({
               style={{ width: '100%', border: 'none', background: 'transparent', color: '#fff', fontSize: 14, fontWeight: 600, outline: 'none', fontFamily: C.FONT }} />
           </div>
         )}
-        {/* Hover overlay with replace/delete */}
+        {/* Hover overlay with replace/remove image */}
         {hover && opt.imageUrl && (
           <div style={{
             position: 'absolute', inset: 0,
             background: 'rgba(0,0,0,0.45)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            <button type="button" onClick={function(e) { e.stopPropagation(); /* TODO: open option image picker */ }}
+            <button type="button" onClick={function(e) { e.stopPropagation(); fileInputRef.current?.click(); }}
               style={{
                 padding: '5px 10px', borderRadius: 6,
                 background: 'rgba(255,255,255,0.92)', border: 'none',
@@ -567,26 +595,25 @@ function GridAnswerCard({
               }}>
               Replace
             </button>
-            {total > 2 && (
-              <button type="button" onClick={function(e) { e.stopPropagation(); onDelete(); }}
-                style={{
-                  padding: '5px 10px', borderRadius: 6,
-                  background: 'rgba(255,255,255,0.92)', border: 'none',
-                  color: '#DC2626', fontSize: 11, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: C.FONT,
-                }}>
-                Delete
-              </button>
-            )}
+            <button type="button" onClick={function(e) { e.stopPropagation(); onClearImage(); }}
+              style={{
+                padding: '5px 10px', borderRadius: 6,
+                background: 'rgba(255,255,255,0.92)', border: 'none',
+                color: '#DC2626', fontSize: 11, fontWeight: 600,
+                cursor: 'pointer', fontFamily: C.FONT,
+              }}>
+              Remove
+            </button>
           </div>
         )}
-        {/* Delete X when no image */}
-        {hover && !opt.imageUrl && total > 2 && (
+        {/* Delete option X (top-right, always show on hover) */}
+        {hover && total > 2 && (
           <button type="button" onClick={function(e) { e.stopPropagation(); onDelete(); }}
+            title="Delete option"
             style={{
-              position: 'absolute', top: 6, right: 6, width: 24, height: 24,
-              borderRadius: 6, background: 'rgba(0,0,0,0.5)', border: 'none',
-              color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'absolute', top: 6, right: 6, width: 22, height: 22,
+              borderRadius: 5, background: opt.imageUrl ? 'transparent' : 'rgba(0,0,0,0.5)', border: 'none',
+              color: '#fff', cursor: 'pointer', display: opt.imageUrl ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
           </button>
@@ -613,6 +640,145 @@ function GridAnswerCard({
         <div style={{ padding: '6px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 10, fontWeight: 700, color: C.ACCENT_LIGHT }}>{LETTERS[index]}</span>
           <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Thumbnail Answer Row (imageThumbnails layout)                      */
+/* ------------------------------------------------------------------ */
+
+function ThumbnailAnswerRow({
+  opt,
+  index,
+  total,
+  onChangeText,
+  onChangeScore,
+  onChangeImage,
+  onClearImage,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+}: {
+  opt: any;
+  index: number;
+  total: number;
+  onChangeText: (t: string) => void;
+  onChangeScore: (s: number) => void;
+  onChangeImage: (url: string) => void;
+  onClearImage: () => void;
+  onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  var [hover, setHover] = useState(false);
+  var [thumbHover, setThumbHover] = useState(false);
+  var fileRef = useRef<HTMLInputElement>(null);
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    var file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { alert('File too large. Max 20MB.'); return; }
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = (reader.result as string).split(',')[1];
+      getClerkToken().then(function(token) {
+        fetch(API_BASE + '/api/media/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
+          body: JSON.stringify({ data: base64, fileName: file.name, contentType: file.type }),
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) { if (data.url) onChangeImage(data.url); })
+        .catch(function(err) { console.error('Upload error:', err); });
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div
+      onMouseEnter={function() { setHover(true); }}
+      onMouseLeave={function() { setHover(false); }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '14px 16px', borderRadius: 10,
+        border: '1px solid ' + C.BORDER,
+        background: hover ? '#F9FAFB' : '#fff',
+        transition: 'all 0.12s',
+      }}
+    >
+      {/* Thumbnail with hover overlay */}
+      <div
+        style={{
+          width: 56, height: 56, borderRadius: 8, overflow: 'hidden',
+          background: '#F2F4F7', flexShrink: 0, position: 'relative',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={function() { setThumbHover(true); }}
+        onMouseLeave={function() { setThumbHover(false); }}
+        onClick={function() { fileRef.current?.click(); }}
+      >
+        {opt.imageUrl ? (
+          <img src={opt.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.TEXT_SUBTLE }}>
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} />
+            </svg>
+          </div>
+        )}
+        {thumbHover && opt.imageUrl && (
+          <div style={{
+            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2,
+          }}>
+            <button type="button" onClick={function(e) { e.stopPropagation(); fileRef.current?.click(); }}
+              title="Replace"
+              style={{ width: 22, height: 22, borderRadius: 4, background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#344054' }}>
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+            </button>
+            <button type="button" onClick={function(e) { e.stopPropagation(); onClearImage(); }}
+              title="Remove image"
+              style={{ width: 22, height: 22, borderRadius: 4, background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+            </button>
+          </div>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <input type="text" value={opt.text || ''} onChange={function(e) { onChangeText(e.target.value); }}
+          onClick={function(e) { e.stopPropagation(); }}
+          placeholder="Answer..."
+          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT }} />
+      </div>
+
+      {/* Score */}
+      <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
+
+      {/* Hover actions */}
+      {hover && (
+        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          <button type="button" disabled={index === 0} onClick={function(e) { e.stopPropagation(); onMoveUp(); }}
+            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index === 0 ? 'default' : 'pointer', color: index === 0 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="18 15 12 9 6 15" /></svg>
+          </button>
+          <button type="button" disabled={index >= total - 1} onClick={function(e) { e.stopPropagation(); onMoveDown(); }}
+            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index >= total - 1 ? 'default' : 'pointer', color: index >= total - 1 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
+          </button>
+          <button type="button" disabled={total <= 2} onClick={function(e) { e.stopPropagation(); onDelete(); }}
+            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: total <= 2 ? 'default' : 'pointer', color: total <= 2 ? C.BORDER : '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={function(e) { if (total > 2) e.currentTarget.style.background = '#FEF2F2'; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
+            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+          </button>
         </div>
       )}
     </div>
@@ -1325,6 +1491,20 @@ function QuestionCanvas({
     onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
   }
 
+  function updateOptionImage(idx: number, url: string) {
+    var newOpts = block.options.map(function(o, i) {
+      return i === idx ? Object.assign({}, o, { imageUrl: url }) : o;
+    });
+    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
+  }
+
+  function clearOptionImage(idx: number) {
+    var newOpts = block.options.map(function(o, i) {
+      return i === idx ? Object.assign({}, o, { imageUrl: undefined }) : o;
+    });
+    onChange(Object.assign({}, block, { options: newOpts }) as QuestionBlock);
+  }
+
   function addOption() {
     if (block.options.length >= 8) return;
     var newOpts = block.options.slice();
@@ -1346,9 +1526,14 @@ function QuestionCanvas({
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           position: 'relative', overflow: 'hidden',
         }}>
-          {block.mediaUrl && block.mediaType === 'video' ? (
-            <video src={block.mediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : block.mediaUrl ? (
+          {block.mediaUrl && block.mediaType === 'video' ? (function() {
+            var ytM = block.mediaUrl!.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+            var viM = block.mediaUrl!.match(/(?:vimeo\.com\/)(\d+)/);
+            var eUrl = ytM ? 'https://www.youtube.com/embed/' + ytM[1] : viM ? 'https://player.vimeo.com/video/' + viM[1] : '';
+            return eUrl
+              ? <iframe src={eUrl} style={{ width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+              : <video src={block.mediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+          })() : block.mediaUrl ? (
             <img src={block.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
           ) : (
@@ -1479,6 +1664,8 @@ function QuestionCanvas({
                   isFullBg={isFullBg}
                   onChangeText={function(t) { updateOptionText(oi, t); }}
                   onChangeScore={function(s) { updateOptionScore(oi, s); }}
+                  onChangeImage={function(url) { updateOptionImage(oi, url); }}
+                  onClearImage={function() { clearOptionImage(oi); }}
                   onDelete={function() { deleteOption(oi); }}
                 />
               );
@@ -1489,41 +1676,15 @@ function QuestionCanvas({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {block.options.map(function(opt, oi) {
               return (
-                <div key={opt.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: '14px 16px', borderRadius: 10,
-                  border: '1px solid ' + C.BORDER, background: '#fff',
-                  transition: 'all 0.12s',
-                }}>
-                  {/* Thumbnail */}
-                  <div style={{
-                    width: 56, height: 56, borderRadius: 8, overflow: 'hidden',
-                    background: '#F2F4F7', flexShrink: 0,
-                  }}>
-                    {opt.imageUrl ? (
-                      <img src={opt.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.TEXT_SUBTLE }}>
-                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /></svg>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Text + optional description */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <input type="text" value={opt.text || ''} onChange={function(e) { updateOptionText(oi, e.target.value); }}
-                      onClick={function(e) { e.stopPropagation(); }}
-                      placeholder="Answer..."
-                      style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT }} />
-                    {opt.explanation && (
-                      <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginTop: 2 }}>{opt.explanation}</div>
-                    )}
-                  </div>
-
-                  {/* Score */}
-                  <ScoreBadge score={opt.score || 0} onChange={function(s) { updateOptionScore(oi, s); }} />
-                </div>
+                <ThumbnailAnswerRow key={opt.id} opt={opt} index={oi} total={block.options.length}
+                  onChangeText={function(t) { updateOptionText(oi, t); }}
+                  onChangeScore={function(s) { updateOptionScore(oi, s); }}
+                  onChangeImage={function(url) { updateOptionImage(oi, url); }}
+                  onClearImage={function() { clearOptionImage(oi); }}
+                  onDelete={function() { deleteOption(oi); }}
+                  onMoveUp={function() { moveOption(oi, -1); }}
+                  onMoveDown={function() { moveOption(oi, 1); }}
+                />
               );
             })}
           </div>
