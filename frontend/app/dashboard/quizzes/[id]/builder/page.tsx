@@ -139,6 +139,9 @@ export default function QuizBuilderPage() {
 
   // Quiz state
   const [quiz, setQuiz] = useState<QuizData | null>(null);
+  // Optimistic locking: track version from server to detect concurrent edits
+  const quizVersionRef = useRef<number>(1);
+  const [conflictError, setConflictError] = useState<string | null>(null);
 
   /* ========================= Autosave ========================= */
   // Debounced autosave + unsaved-changes tracking. Fires 2s after the last
@@ -150,13 +153,27 @@ export default function QuizBuilderPage() {
     enabled: !!quiz,
     onSave: async (q) => {
       if (!q) return;
-      await api.updateQuiz(quizId, {
-        title: q.title,
-        description: q.description,
-        questions: q.questions,
-        outcomes: q.outcomes,
-        settings: q.settings,
-      });
+      try {
+        var result = await api.updateQuiz(quizId, {
+          title: q.title,
+          description: q.description,
+          questions: q.questions,
+          outcomes: q.outcomes,
+          settings: q.settings,
+          expected_version: quizVersionRef.current,
+        });
+        // Update version from server response
+        if (result && result.version) {
+          quizVersionRef.current = result.version;
+        }
+        setConflictError(null);
+      } catch (err: any) {
+        if (err.message && err.message.includes('Conflict')) {
+          setConflictError('Another tab or session modified this quiz. Please refresh to get the latest version.');
+          throw err; // Let autosave mark status as 'error'
+        }
+        throw err;
+      }
     },
   });
 
@@ -192,6 +209,7 @@ export default function QuizBuilderPage() {
         const data = await api.getQuiz(quizId);
         setQuiz(data as QuizData);
         setOriginalTitle(data.title);
+        if (data.version) quizVersionRef.current = data.version;
         // Load outcome automations
         try {
           const autos = await api.getOutcomeAutomations(quizId);
@@ -493,9 +511,19 @@ export default function QuizBuilderPage() {
         autosaveStatus={autosave.status}
         autosaveError={autosave.error}
         onSave={handleSave}
+        onRetry={function() { autosave.saveNow(); }}
         onPreview={() => window.open(`/tools/quiz-funnel/preview?quizId=${quizId}`, '_blank')}
         onBack={() => router.push('/dashboard/quizzes')}
       />
+
+      {/* Conflict error banner */}
+      {conflictError && (
+        <div style={{ background: '#fef3c7', border: '1px solid #fde68a', color: '#92400e', padding: '10px 16px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>{conflictError}</span>
+          <button onClick={function() { window.location.reload(); }} style={{ marginLeft: 'auto', background: '#92400e', color: '#fff', border: 'none', padding: '4px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Reload latest</button>
+        </div>
+      )}
 
       {/* Main Content */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -663,6 +691,7 @@ function TopBar({
   autosaveStatus,
   autosaveError,
   onSave,
+  onRetry,
   onPreview,
   onBack,
 }: {
@@ -674,6 +703,7 @@ function TopBar({
   autosaveStatus?: 'saved' | 'saving' | 'unsaved' | 'error';
   autosaveError?: string | null;
   onSave: () => void;
+  onRetry: () => void;
   onPreview: () => void;
   onBack: () => void;
 }) {
@@ -781,12 +811,16 @@ function TopBar({
           Preview
         </button>
 
-        {/* Autosave status indicator (M1 fix) */}
+        {/* Autosave status indicator with retry */}
         {autosaveStatus === 'error' && (
-          <span style={{ color: '#ef4444', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }} title={autosaveError || 'Save failed'}>
+          <button
+            onClick={onRetry}
+            style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, cursor: 'pointer' }}
+            title={autosaveError || 'Save failed — click to retry'}
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-            Save failed
-          </span>
+            Save failed — retry
+          </button>
         )}
         {autosaveStatus === 'saving' && (
           <span style={{ color: COLORS.TEXT_MUTED, fontSize: 12 }}>Auto-saving...</span>

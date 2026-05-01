@@ -210,5 +210,18 @@ app.listen(PORT, () => {
       }
     }, DIGEST_CHECK_MS);
     log.info('Weekly digest scheduler enabled (Mon 9AM UTC)');
+
+    // Preview cache cleanup — run every 30 minutes alongside the digest check
+    setInterval(function() {
+      var cronSecret = process.env.CRON_SECRET || '';
+      fetch(externalUrl + '/cron/cleanup-preview-cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-cron-secret': cronSecret },
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data: any) { if (data.deleted > 0) log.info('[Cron] Preview cache cleanup: ' + data.deleted + ' removed'); })
+        .catch(function() { /* silent — non-critical cleanup */ });
+    }, DIGEST_CHECK_MS);
+    log.info('Preview cache cleanup scheduler enabled (every 30 min)');
   }
 });

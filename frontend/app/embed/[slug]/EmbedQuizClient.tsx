@@ -13,6 +13,11 @@ interface QuizOption {
   explanation?: string;
 }
 
+interface BranchRule {
+  if_answer: string;
+  goto: string;
+}
+
 interface QuizQuestion {
   id: string;
   text?: string;
@@ -25,6 +30,8 @@ interface QuizQuestion {
   mediaUrl?: string;
   mediaType?: string;
   timeLimit?: number;
+  next_question_rules?: BranchRule[];
+  shuffle_answers?: boolean;
 }
 
 interface QuizOutcome {
@@ -69,6 +76,7 @@ interface Quiz {
     schedule_enabled?: boolean;
     publish_at?: string;
     unpublish_at?: string;
+    shuffle_questions?: boolean;
   };
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
@@ -101,9 +109,40 @@ export default function EmbedQuizClient({
   );
 
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+  const [qHistory, setQHistory] = useState<number[]>([0]);
 
-  const totalQs = quiz.questions.length || 0;
-  const currentQ = quiz.questions[qIdx];
+  // Build question ID → index map for branching logic
+  var questionIdMap = useRef<Record<string, number>>({});
+  useEffect(function() {
+    var map: Record<string, number> = {};
+    quiz.questions.forEach(function(q, idx) {
+      if (q.id) map[q.id] = idx;
+    });
+    questionIdMap.current = map;
+  }, [quiz.questions]);
+
+  // Shuffle options per question if shuffle_answers is enabled (memoize once)
+  var shuffledQuestions = useRef<QuizQuestion[] | null>(null);
+  if (!shuffledQuestions.current) {
+    shuffledQuestions.current = quiz.questions.map(function(q) {
+      if (q.shuffle_answers || quiz.settings?.shuffle_questions) {
+        var opts = q.options.slice();
+        // Fisher-Yates shuffle
+        for (var i = opts.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = opts[i];
+          opts[i] = opts[j];
+          opts[j] = tmp;
+        }
+        return Object.assign({}, q, { options: opts });
+      }
+      return q;
+    });
+  }
+
+  var questions = shuffledQuestions.current;
+  var totalQs = questions.length || 0;
+  var currentQ = questions[qIdx];
   const requireEmail = quiz.settings?.requireEmail !== false;
   const progress =
     stage === 'question' ? Math.round(((qIdx + 1) / Math.max(totalQs, 1)) * 100) :
@@ -184,18 +223,39 @@ export default function EmbedQuizClient({
   }, [qIdx, currentQ, stage]);
 
   function getOutcome(answers: Record<number, number>): QuizOutcome | null {
-    const outcomes = quiz.outcomes || quiz.results || [];
+    var outcomes = quiz.outcomes || quiz.results || [];
     if (outcomes.length === 0) return null;
-    let total = 0;
-    Object.entries(answers).forEach(([qi, oi]) => {
-      const q = quiz.questions[Number(qi)];
-      const opt = q?.options?.[Number(oi)];
+    var total = 0;
+    Object.entries(answers).forEach(function(entry) {
+      var qi = entry[0];
+      var oi = entry[1];
+      var q = questions[Number(qi)];
+      var opt = q?.options?.[Number(oi)];
       if (opt?.score !== undefined) total += Number(opt.score);
     });
-    const matched = outcomes.find(
-      (o) => o.minScore !== undefined && o.maxScore !== undefined && total >= o.minScore && total <= o.maxScore
-    );
+    var matched = outcomes.find(function(o) {
+      return o.minScore !== undefined && o.maxScore !== undefined && total >= o.minScore && total <= o.maxScore;
+    });
     return matched || outcomes[0];
+  }
+
+  // Evaluate branching rules to find the next question index
+  function getNextQuestionIndex(currentIdx: number, selectedOptionId: string): number {
+    var q = questions[currentIdx];
+    if (!q) return currentIdx + 1;
+
+    var rules = q.next_question_rules;
+    if (rules && Array.isArray(rules) && rules.length > 0) {
+      var matchedRule = rules.find(function(r) { return r.if_answer === selectedOptionId; });
+      if (matchedRule && matchedRule.goto) {
+        var targetIdx = questionIdMap.current[matchedRule.goto];
+        if (typeof targetIdx === 'number' && targetIdx >= 0 && targetIdx < questions.length) {
+          return targetIdx;
+        }
+      }
+    }
+
+    return currentIdx + 1;
   }
 
   var pickOption = useCallback(
@@ -204,8 +264,14 @@ export default function EmbedQuizClient({
       if (oi >= 0) {
         setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
       }
-      if (qIdx < (quiz.questions.length - 1)) {
-        setQIdx(qIdx + 1);
+
+      // Determine next question using branching logic
+      var selectedOptionId = (oi >= 0 && currentQ && currentQ.options[oi]) ? currentQ.options[oi].id : '';
+      var nextIdx = getNextQuestionIndex(qIdx, selectedOptionId);
+
+      if (nextIdx < questions.length) {
+        setQIdx(nextIdx);
+        setQHistory(function(prev) { return prev.concat([nextIdx]); });
       } else {
         if (requireEmail) {
           setStage('leadgate');
@@ -228,10 +294,17 @@ export default function EmbedQuizClient({
         }
       }
     },
-    [qIdx, answers, requireEmail, quiz.questions.length, quiz.slug]
+    [qIdx, answers, requireEmail, questions.length, quiz.slug, currentQ]
   );
 
-  const goBack = () => { if (qIdx > 0) setQIdx(qIdx - 1); };
+  // Go back using history stack (handles non-linear branching paths)
+  var goBack = useCallback(function() {
+    if (qHistory.length > 1) {
+      var newHistory = qHistory.slice(0, -1);
+      setQHistory(newHistory);
+      setQIdx(newHistory[newHistory.length - 1]);
+    }
+  }, [qHistory]);
 
   const submitLead = useCallback(async () => {
     if (!email.trim() || !email.includes('@')) {
@@ -858,7 +931,7 @@ export default function EmbedQuizClient({
                   <video className="sq-q-video" src={currentQ.mediaUrl} controls playsInline />
                 )}
                 {currentQ.mediaUrl && currentQ.mediaType !== 'video' && (
-                  <img className="sq-q-media" src={currentQ.mediaUrl} alt="" />
+                  <img className="sq-q-media" src={currentQ.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                 )}
 
                 {/* Answer options — render based on answerLayout */}
@@ -872,7 +945,7 @@ export default function EmbedQuizClient({
                       <div className="sq-opts-grid">
                         {currentQ.options.map((opt, oi) => (
                           <button key={opt.id + oi} className={'sq-opt-grid' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img className="sq-opt-img" src={opt.imageUrl} alt={opt.text} />}
+                            {opt.imageUrl && <img className="sq-opt-img" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
                             <div>{opt.text}</div>
                           </button>
                         ))}
@@ -886,7 +959,7 @@ export default function EmbedQuizClient({
                       <div className="sq-opts">
                         {currentQ.options.map((opt, oi) => (
                           <button key={opt.id + oi} className={'sq-opt-thumb' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img className="sq-opt-thumb-img" src={opt.imageUrl} alt={opt.text} />}
+                            {opt.imageUrl && <img className="sq-opt-thumb-img" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
                             <div>{opt.text}</div>
                           </button>
                         ))}
@@ -900,7 +973,7 @@ export default function EmbedQuizClient({
                       <div className="sq-opts-grid">
                         {currentQ.options.map((opt, oi) => (
                           <button key={opt.id + oi} className={'sq-opt-full' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img className="sq-opt-full-bg" src={opt.imageUrl} alt={opt.text} />}
+                            {opt.imageUrl && <img className="sq-opt-full-bg" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
                             <div className="sq-opt-full-label">{opt.text}</div>
                           </button>
                         ))}
@@ -915,7 +988,7 @@ export default function EmbedQuizClient({
                       <div className="sq-cards-layout">
                         {currentQ.options.map((opt, oi) => (
                           <button key={opt.id + oi} className={'sq-opt-card' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                            {opt.imageUrl && <img style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} />}
+                            {opt.imageUrl && <img style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
                             <div className="sq-opt-letter">{LETTERS[oi]}</div>
                             <div>{opt.text}</div>
                           </button>
@@ -929,7 +1002,7 @@ export default function EmbedQuizClient({
                     <div className="sq-opts">
                       {currentQ.options.map((opt, oi) => (
                         <button key={opt.id + oi} className={'sq-opt' + (answers[qIdx] === oi ? ' picked' : '')} onClick={() => pickOption(oi)} type="button">
-                          {opt.imageUrl && <img style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} />}
+                          {opt.imageUrl && <img style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
                           <div className="sq-opt-letter">{LETTERS[oi]}</div>
                           <div>{opt.text}</div>
                         </button>
@@ -938,7 +1011,7 @@ export default function EmbedQuizClient({
                   );
                 })()}
 
-                {qIdx > 0 && (
+                {qHistory.length > 1 && (
                   <span className="sq-back" onClick={goBack}>← Previous question</span>
                 )}
               </div>

@@ -261,10 +261,13 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
     }
 
     // Increment plan counter (best-effort; don't fail the request)
-    supabase.rpc('increment_quiz_count', { uid: userId }).then(
-      () => {},
-      (e) => console.warn('[FromUrl] increment_quiz_count failed:', e),
-    );
+    // Skip if the atomic guard already incremented
+    if (!(req as any).quizCountIncrementedAtomically) {
+      supabase.rpc('increment_quiz_count', { uid: userId }).then(
+        () => {},
+        (e: any) => console.warn('[FromUrl] increment_quiz_count failed:', e),
+      );
+    }
 
     log.info(`[FromUrl] SUCCESS quiz_id=${inserted.id} slug=${inserted.slug}`);
     return res.status(201).json({

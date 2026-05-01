@@ -273,8 +273,16 @@ function BlockCard({
 
   function removeOption(optIdx: number) {
     if (!qb || qb.options.length <= 2) return;
+    var deletedOpt = qb.options[optIdx];
     var newOpts = qb.options.filter(function(_, i) { return i !== optIdx; });
-    onChange(Object.assign({}, qb, { options: newOpts }) as QuizBlock);
+    var updated = Object.assign({}, qb, { options: newOpts });
+    // Clean up branching rules that reference the deleted option
+    if (deletedOpt && deletedOpt.id && (updated as any).next_question_rules && Array.isArray((updated as any).next_question_rules)) {
+      (updated as any).next_question_rules = (updated as any).next_question_rules.filter(function(rule: any) {
+        return rule.if_answer !== deletedOpt.id;
+      });
+    }
+    onChange(updated as QuizBlock);
   }
 
   function moveOption(optIdx: number, direction: number) {

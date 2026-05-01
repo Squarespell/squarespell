@@ -74,7 +74,16 @@ export async function guardQuizCreation(
     const limit = PLAN_LIMITS[plan]?.quizzes ?? 5;
     const quizCount = user.quiz_count ?? 0;
 
-    if (quizCount >= limit) {
+    // For unlimited plans, skip the atomic check — increment happens in the route
+    if (limit === Infinity) {
+      (req as any).userPlan = plan;
+      (req as any).quizCount = quizCount;
+      return next();
+    }
+
+    // Atomic check-and-increment to prevent race condition
+    var { data: allowed, error: rpcErr } = await supabase.rpc('try_increment_quiz_count', { uid: req.dbUserId, max_allowed: limit });
+    if (rpcErr || !allowed) {
       return res.status(403).json({
         error: 'quiz_limit_reached',
         message: `You have reached your ${plan} plan limit of ${limit} quizzes.`,
@@ -85,7 +94,8 @@ export async function guardQuizCreation(
     }
 
     (req as any).userPlan = plan;
-    (req as any).quizCount = quizCount;
+    (req as any).quizCount = quizCount + 1;
+    (req as any).quizCountIncrementedAtomically = true;
     next();
   } catch (err: any) {
     log.error('guardQuizCreation error:', { err: err.message });

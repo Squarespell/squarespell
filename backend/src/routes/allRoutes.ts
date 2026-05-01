@@ -198,8 +198,22 @@ async function markDraftClaimed(claimToken: string, userId: string): Promise<voi
 // build-quiz can use them without re-scraping.
 const previewSessionCache = new Map<string, { brand: any; url: string; onboarding_questions: any[]; answers: Record<string, string>; createdAt: number }>();
 
+// Evict stale in-memory preview sessions every 30 minutes (24h TTL)
+var PREVIEW_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+setInterval(function() {
+  var now = Date.now();
+  var evicted = 0;
+  previewSessionCache.forEach(function(entry, key) {
+    if (now - entry.createdAt > PREVIEW_SESSION_TTL_MS) {
+      previewSessionCache.delete(key);
+      evicted++;
+    }
+  });
+  if (evicted > 0) console.log('[Cache] Evicted ' + evicted + ' stale in-memory preview sessions');
+}, 30 * 60 * 1000);
+
 // ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
-import { previewLimiter, getClientIp } from '../services/rateLimiter';
+import { previewLimiter, leadLimiter, publicQuizLimiter, getClientIp } from '../services/rateLimiter';
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
   // Rate limit via Redis-backed Upstash limiter (replaces in-memory Map)
@@ -455,6 +469,11 @@ publicQuizRouter.get('/:slug', async (req, res) => {
   res.json(data);
 });
 publicQuizRouter.post('/:slug/event', async (req, res) => {
+  // Rate limit: 30 events per minute per IP per quiz
+  var eventIp = getClientIp(req);
+  var { success: eventRlOk } = await publicQuizLimiter.limit('event:' + eventIp + ':' + req.params.slug);
+  if (!eventRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
+
   const { event_type, session_id, metadata } = req.body;
   const { data: quiz } = await supabase.from('quizzes').select('id').eq('slug', req.params.slug).single();
   if (!quiz) return res.status(404).json({ error: 'Not found' });
@@ -475,6 +494,11 @@ publicQuizRouter.post('/:slug/process-other', async (req, res) => {
 // ── Leads ─────────────────────────────────────────────────────────────────────
 export const leadsRouter = Router();
 leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
+  // Rate limit: 3 leads per minute per IP per quiz
+  var leadIp = getClientIp(req);
+  var { success: leadRlOk } = await leadLimiter.limit('lead:' + leadIp + ':' + req.params.slug);
+  if (!leadRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
+
   const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
@@ -500,6 +524,22 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (ua.os.name) {
     metadata.os = ua.os.name;
   }
+
+  // Snapshot outcome title+description so leads survive outcome edits/deletions
+  var outcomeTitle: string | null = null;
+  var outcomeDescription: string | null = null;
+  if (outcome_id) {
+    var outcomes = (quiz.outcomes as any[]) || [];
+    var matchedOutcome = outcomes.find(function(o: any) { return o.id === outcome_id; });
+    if (matchedOutcome) {
+      outcomeTitle = matchedOutcome.title || null;
+      outcomeDescription = matchedOutcome.description || null;
+    }
+  }
+
+  // Store outcome snapshot in metadata for resilience against outcome edits
+  if (outcomeTitle) metadata.outcome_title = outcomeTitle;
+  if (outcomeDescription) metadata.outcome_description = outcomeDescription;
 
   // Atomic lead insert with limit check — prevents race condition (C4 fix)
   const { data: leadResult, error } = await supabase.rpc('insert_lead_with_limit_check', {
@@ -2069,6 +2109,22 @@ cronRouter.post('/process-scheduled-sends', async (req, res) => {
   } catch (err: any) {
     log.error('[Cron] process-scheduled-sends failed:', { err: err });
     res.status(500).json({ error: err?.message || 'scheduled send dispatch failed' });
+  }
+});
+
+cronRouter.post('/cleanup-preview-cache', async (req, res) => {
+  var cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    var { cleanupExpiredCache } = await import('../services/previewCache');
+    var deleted = await cleanupExpiredCache();
+    log.info('[Cron] preview-cache cleanup: removed ' + deleted + ' expired entries');
+    res.json({ ok: true, deleted: deleted });
+  } catch (err: any) {
+    log.error('[Cron] cleanup-preview-cache failed:', { err: err });
+    res.status(500).json({ error: err?.message || 'preview cache cleanup failed' });
   }
 });
 

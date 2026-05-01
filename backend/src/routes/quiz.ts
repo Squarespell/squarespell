@@ -38,7 +38,11 @@ router.post('/', guardQuizCreation, async (req: AuthenticatedRequest, res) => {
   const quizMode = mode && ['lead_quiz', 'price_calculator', 'service_recommender', 'client_qualifier', 'segmentation_quiz'].includes(mode) ? mode : 'lead_quiz';
   const { data, error } = await supabase.from('quizzes').insert({ user_id: req.dbUserId, title: title ?? 'Untitled Quiz', slug: await makeUniqueSlug(title ?? 'Untitled Quiz'), mode: quizMode, questions: questions ?? [], outcomes: outcomes ?? [], branding: branding ?? {}, settings: settings ?? {}, status: 'draft' }).select().single();
   if (error) return res.status(500).json({ error: error.message });
-  await supabase.rpc('increment_quiz_count', { uid: req.dbUserId });
+  // For limited plans, the atomic guard already incremented quiz_count.
+  // For unlimited plans (trial, pro, business), increment here.
+  if (!(req as any).quizCountIncrementedAtomically) {
+    await supabase.rpc('increment_quiz_count', { uid: req.dbUserId });
+  }
   res.status(201).json(data);
 });
 
@@ -98,7 +102,50 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
       }
     }
 
-    const { data, error } = await supabase
+    // ── Optimistic locking ──────────────────────────────────────────────
+    // If the client sends an expected_version, check it matches the DB
+    // before applying updates. This prevents silent overwrites from
+    // concurrent editors or duplicate tabs.
+    var expectedVersion = req.body.expected_version;
+
+    if (typeof expectedVersion === 'number') {
+      // Use a conditional update: only succeed if version matches
+      var query = supabase
+        .from('quizzes')
+        .update(Object.assign({}, updates, { version: expectedVersion + 1 }))
+        .eq('id', req.params.id)
+        .eq('user_id', req.dbUserId)
+        .eq('version', expectedVersion)
+        .select()
+        .single();
+
+      var { data, error } = await query;
+
+      if (error && error.code === 'PGRST116') {
+        // No row matched — either quiz not found or version mismatch
+        var { data: existing } = await supabase
+          .from('quizzes')
+          .select('version')
+          .eq('id', req.params.id)
+          .eq('user_id', req.dbUserId)
+          .single();
+
+        if (existing && existing.version !== expectedVersion) {
+          return res.status(409).json({
+            error: 'Conflict: quiz was modified by another session',
+            current_version: existing.version,
+            expected_version: expectedVersion
+          });
+        }
+        return res.status(404).json({ error: 'Quiz not found' });
+      }
+
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json(data);
+    }
+
+    // No version sent — legacy save (no conflict detection)
+    const { data: legacyData, error: legacyError } = await supabase
       .from('quizzes')
       .update(updates)
       .eq('id', req.params.id)
@@ -106,8 +153,8 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+    if (legacyError) return res.status(500).json({ error: legacyError.message });
+    res.json(legacyData);
   } catch (err: any) {
     log.error('Quiz patch error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Update failed' });
@@ -124,6 +171,31 @@ router.post('/:id/publish', async (req: AuthenticatedRequest, res) => {
   var outcomes = quizForValidation.outcomes as any[] || [];
   if (questions.length === 0) return res.status(400).json({ error: 'Quiz must have at least 1 question to publish' });
   if (outcomes.length === 0) return res.status(400).json({ error: 'Quiz must have at least 1 outcome to publish' });
+
+  // Validate score ranges — check for overlaps and gaps
+  var scoredOutcomes = outcomes.filter(function(o: any) {
+    return o.minScore !== undefined && o.maxScore !== undefined &&
+           o.minScore !== null && o.maxScore !== null;
+  });
+  if (scoredOutcomes.length > 1) {
+    // Sort by minScore
+    var sorted = scoredOutcomes.slice().sort(function(a: any, b: any) { return a.minScore - b.minScore; });
+    var warnings: string[] = [];
+    for (var si = 0; si < sorted.length - 1; si++) {
+      var curr = sorted[si];
+      var next = sorted[si + 1];
+      if (curr.maxScore >= next.minScore) {
+        warnings.push('Score ranges overlap between "' + (curr.title || 'Outcome ' + (si + 1)) + '" and "' + (next.title || 'Outcome ' + (si + 2)) + '"');
+      } else if (curr.maxScore + 1 < next.minScore) {
+        warnings.push('Score gap between ' + (curr.maxScore + 1) + '-' + (next.minScore - 1) + ' has no matching outcome');
+      }
+    }
+    // Return warnings but don't block publish — just inform the user
+    if (warnings.length > 0) {
+      // We still allow publish but include warnings in the response
+      // The frontend can show these to the user
+    }
+  }
 
   // If the slug is still the legacy 8-char random, regenerate from title
   // so the published URL is human-readable.

@@ -41,6 +41,9 @@ interface QuizQuestion {
   answerLayout?: string;
   mediaUrl?: string;
   mediaType?: string;
+  timeLimit?: number;
+  next_question_rules?: Array<{ if_answer: string; goto: string }>;
+  shuffle_answers?: boolean;
 }
 
 interface QuizOutcome {
@@ -75,6 +78,17 @@ interface Quiz {
     cta_url?: string;
     show_branding?: boolean;
     requireEmail?: boolean;
+    shuffle_questions?: boolean;
+    redirect_url?: string;
+    redirect_delay?: number;
+    gdpr_consent_enabled?: boolean;
+    gdpr_consent_text?: string;
+    gdpr_policy_url?: string;
+    gdpr_allow_deletion?: boolean;
+    gdpr_data_retention_days?: number;
+    schedule_enabled?: boolean;
+    publish_at?: string;
+    unpublish_at?: string;
   };
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
