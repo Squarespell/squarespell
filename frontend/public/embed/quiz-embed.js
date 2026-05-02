@@ -1,5 +1,5 @@
 /*!
- * Squarespell Quiz Embed v2.2.0
+ * Squarespell Quiz Embed v2.3.0
  * Rewritten for Squarespace 7.1 AJAX navigation compatibility.
  *
  * Usage (Code Block):
@@ -13,7 +13,7 @@
   'use strict';
 
   var BASE_URL = 'https://app.squarespell.com';
-  var EMBED_VERSION = '2.2.0';
+  var EMBED_VERSION = '2.3.0';
   var INIT_ATTR = 'data-squarespell-init';
 
   // ── Utility helpers ──────────────────────────────────────────────────────
@@ -366,8 +366,16 @@
       window.__squarespell_version_logged = true;
     }
 
-    // Find all quiz containers: both new-style and legacy
+    // Find all quiz containers: both new-style divs and legacy/fallback script tags
     var elements = document.querySelectorAll('[data-squarespell-quiz], script[data-quiz]');
+
+    if (elements.length === 0 && !window.__squarespell_no_container_warned) {
+      console.warn('[Squarespell] No quiz containers found. Make sure your embed code is in a Code Block (not Code Injection). Expected: <div data-squarespell-quiz="YOUR_SLUG"></div>');
+      window.__squarespell_no_container_warned = true;
+    }
+
+    // Track which slugs we've already handled (dedup div + script for same quiz)
+    var handledSlugs = {};
 
     for (var i = 0; i < elements.length; i++) {
       var el = elements[i];
@@ -375,16 +383,15 @@
       // Skip already-initialized elements
       if (el.getAttribute(INIT_ATTR) === 'true') continue;
 
-      var slug, fixedHeight, mode, buttonText, accentColor, insertTarget;
+      var slug, fixedHeight, mode, buttonText, accentColor;
 
       if (el.tagName === 'SCRIPT') {
-        // Legacy: <script data-quiz="slug">
+        // Legacy / fallback: <script data-quiz="slug">
         slug = el.getAttribute('data-quiz');
         fixedHeight = el.getAttribute('data-height');
         mode = el.getAttribute('data-mode');
         buttonText = el.getAttribute('data-button-text');
         accentColor = el.getAttribute('data-accent-color');
-        insertTarget = el;
       } else {
         // New: <div data-squarespell-quiz="slug">
         slug = el.getAttribute('data-squarespell-quiz');
@@ -392,7 +399,6 @@
         mode = el.getAttribute('data-mode');
         buttonText = el.getAttribute('data-button-text');
         accentColor = el.getAttribute('data-accent-color');
-        insertTarget = el;
       }
 
       if (!slug) continue;
@@ -403,6 +409,13 @@
         continue;
       }
 
+      // Skip if we already handled this slug in this scan pass (dedup div+script)
+      if (handledSlugs[slug]) {
+        el.setAttribute(INIT_ATTR, 'true');
+        continue;
+      }
+      handledSlugs[slug] = true;
+
       // Build and insert
       var widget = buildWidget(slug, fixedHeight, mode, buttonText, accentColor);
 
@@ -411,12 +424,31 @@
         // append to <body> instead — elements in <head> are invisible.
         var parent = el.parentNode;
         if (parent && parent.tagName === 'HEAD') {
-          document.body.appendChild(widget.wrapper);
+          if (document.body) {
+            document.body.appendChild(widget.wrapper);
+          } else {
+            // body doesn't exist yet — wait for it
+            document.addEventListener('DOMContentLoaded', function(w) {
+              return function() { document.body.appendChild(w.wrapper); };
+            }(widget));
+          }
         } else {
           parent.insertBefore(widget.wrapper, el.nextSibling);
         }
       } else {
-        el.appendChild(widget.wrapper);
+        // Div container — check if it somehow ended up in <head>
+        var divParent = el.parentNode;
+        while (divParent && divParent !== document.body && divParent !== document.head && divParent.parentNode) {
+          divParent = divParent.parentNode;
+        }
+        if (divParent === document.head) {
+          // Div is inside <head> — move widget to body
+          if (document.body) {
+            document.body.appendChild(widget.wrapper);
+          }
+        } else {
+          el.appendChild(widget.wrapper);
+        }
       }
 
       el.setAttribute(INIT_ATTR, 'true');
@@ -458,7 +490,8 @@
   }
 
   // 2. MutationObserver: detect late-rendered Code Blocks or dynamic inserts
-  if (typeof MutationObserver !== 'undefined') {
+  function startObserver() {
+    if (typeof MutationObserver === 'undefined' || !document.body) return;
     var debounceTimer = null;
     var observer = new MutationObserver(function () {
       // Debounce: Squarespace can trigger many mutations during page load
@@ -466,6 +499,12 @@
       debounceTimer = setTimeout(scanAndInit, 200);
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+  // If body exists now, start immediately; otherwise wait for DOMContentLoaded
+  if (document.body) {
+    startObserver();
+  } else {
+    document.addEventListener('DOMContentLoaded', startObserver);
   }
 
   // 3. Squarespace "mercury:load" event (AJAX page transitions)

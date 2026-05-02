@@ -379,8 +379,8 @@ export function PublishModal({
               <CopyRow label="Fallback iframe" value={iframeFallback} />
             </details>
             <p style={{ margin: '6px 0 0', fontSize: 12.5, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
-              Paste the top snippet into a Squarespace Code Block. It auto-mounts a responsive,
-              branded iframe and syncs height as visitors progress.
+              Paste the snippet into a <strong>Code Block</strong> on your Squarespace page (not Code Injection).
+              It auto-mounts a responsive, branded iframe and syncs height as visitors progress.
             </p>
           </>
         )}

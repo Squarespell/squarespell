@@ -34,7 +34,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
 
   const embedScript = quiz
     ? `<div data-squarespell-quiz="${quiz.slug}"></div>
-<script src="${embedScriptUrl()}" async></script>`
+<script src="${embedScriptUrl()}" data-quiz="${quiz.slug}" async></script>`
     : '';
 
   const iframeEmbed = quiz
@@ -97,7 +97,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
             </button>
           </div>
           <div style={{ background:'#EEEDE9', borderRadius:10, padding:18, fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(26,26,26,.7)', lineHeight:1.7, overflowX:'auto', border:'.5px solid var(--b2)', whiteSpace:'pre' }}>
-            {`<div data-squarespell-quiz="${quiz.slug}"></div>\n<script src="${embedScriptUrl()}" async><\/script>`}
+            {`<div data-squarespell-quiz="${quiz.slug}"></div>\n<script src="${embedScriptUrl()}" data-quiz="${quiz.slug}" async><\/script>`}
           </div>
         </div>
 
@@ -110,10 +110,13 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
               <p style={{ fontSize:12, color:'var(--t3)' }}>3 steps to go live</p>
             </div>
           </div>
+          <div style={{ background:'rgba(13,115,119,.08)', border:'1px solid rgba(13,115,119,.18)', borderRadius:8, padding:'10px 14px', marginBottom:16, fontSize:12, color:'rgba(26,26,26,.6)', lineHeight:1.6 }}>
+            <strong style={{ color:'var(--t1)' }}>Important:</strong> Use a <strong>Code Block</strong> on your page, not Code Injection (Settings &rarr; Advanced). Code Injection goes in the page header where the quiz container can be stripped.
+          </div>
           {[
             { step:'Open your Squarespace page editor', detail:'Go to the page where you want the quiz to appear.' },
-            { step:'Add a Code Block', detail:'Click + to add a new block, search for "Code" and insert it.' },
-            { step:'Paste and save', detail:'Paste the embed code above into the code block and click Save.' },
+            { step:'Add a Code Block', detail:'Click + to add a new block, search for "Code" and insert a Code Block.' },
+            { step:'Paste and save', detail:'Paste the embed code above into the code block, uncheck "Display Source", and click Save.' },
           ].map((item, i) => (
             <div key={i} style={{ display:'flex', gap:14, marginBottom: i < 2 ? 16 : 0 }}>
               <div style={{ width:22, height:22, borderRadius:'50%', background:'var(--g2)', border:'.5px solid var(--b2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'rgba(26,26,26,.42)', flexShrink:0, marginTop:1 }}>{i+1}</div>

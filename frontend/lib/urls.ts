@@ -52,9 +52,13 @@ export const publicQuizUrl = (slug: string): string =>
 /** URL to the JS embed loader a Squarespace site owner drops into a Code Block. */
 export const embedScriptUrl = (): string => `${APP_URL}/embed.js`;
 
-/** Full embed snippet for copy/paste install (div + script format). */
+/** Full embed snippet for copy/paste install (div + script format).
+ *  The script tag also carries data-quiz as a fallback — if the <div> is
+ *  stripped (e.g. Squarespace Code Injection puts it in <head> where divs
+ *  are invalid), the embed loader can still discover the quiz slug from
+ *  the script element itself. */
 export const embedSnippet = (slug: string): string =>
-  `<div data-squarespell-quiz="${slug}"></div>\n<script src="${embedScriptUrl()}" async></script>`;
+  `<div data-squarespell-quiz="${slug}"></div>\n<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
 
 /** Authenticated dashboard landing URL. */
 export const dashboardUrl = (): string => `${APP_URL}/dashboard`;

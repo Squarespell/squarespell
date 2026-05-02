@@ -37,9 +37,9 @@ type EmbedMode = 'inline' | 'popup' | 'tab';
 function buildSnippet(slug: string, mode: EmbedMode = 'inline'): string {
   if (mode === 'inline') return embedSnippet(slug);
   if (mode === 'popup') return `<div data-squarespell-quiz="${slug}" data-mode="popup" data-button-text="Take the quiz"></div>
-<script src="${embedScriptUrl()}" async></script>`;
+<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
   return `<div data-squarespell-quiz="${slug}" data-mode="tab" data-button-text="Take our quiz"></div>
-<script src="${embedScriptUrl()}" async></script>`;
+<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
 }
 
 const MODE_LABELS: Record<EmbedMode, { label: string; desc: string }> = {
