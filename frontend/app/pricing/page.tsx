@@ -82,7 +82,20 @@ const PLANS = [
     featured: false,
     limits: { quizzes: 'Unlimited', leads: 'Unlimited', emails: 'Unlimited' },
     included: [
-      'Everything in Pro',
+      'AI quiz generation from your URL',
+      'Squarespace one-click connect',
+      'Remove Squarespell branding',
+      'Branching logic',
+      'Weighted scoring',
+      'Quiz scheduling',
+      'A/B testing',
+      'Email sequences',
+      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
+      'Webhooks',
+      'Standard + advanced analytics',
+      'Per-question drop-off analysis',
+      'Custom CSS',
+      'Lead dashboard + CSV export',
       'White-label (your brand on everything)',
       'Custom domain for quizzes',
       'Team seats (3 included, $5/seat extra)',
@@ -337,7 +350,7 @@ function PricingInner() {
         .pop-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--acc); color: #fff; font-size: 11px; font-weight: 800; padding: 5px 18px; border-radius: 100px; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
         .plan-name { font-size: 20px; font-weight: 700; color: var(--t1); margin-bottom: 8px; }
         .plan-name.accent { color: var(--acc); }
-        .plan-desc { font-size: 15px; color: var(--t3); line-height: 1.55; margin-bottom: 24px; min-height: 48px; }
+        .plan-desc { font-size: 15px; color: var(--t3); line-height: 1.55; margin-bottom: 24px; min-height: 68px; }
 
         /* price block */
         .price-block { margin-bottom: 8px; }

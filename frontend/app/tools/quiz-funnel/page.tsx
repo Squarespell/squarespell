@@ -36,30 +36,50 @@ export default function LandingPage() {
       name: 'Core',
       monthlyPrice: 12,
       yearlyPrice: 9,
-      description: 'Perfect for getting started',
+      description: 'Build real quiz funnels with branching logic and scoring.',
       features: [
-        '5 quizzes',
+        '5 live quizzes',
         '1,000 leads/mo',
         '1,000 emails/mo',
-        'Basic analytics',
-        'Squarespace embed',
-        'Email support'
+        'AI quiz generation from your URL',
+        'Squarespace one-click connect',
+        'Remove Squarespell branding',
+        'Branching logic & weighted scoring',
+        'Quiz scheduling',
+        'Standard analytics',
+        'Lead dashboard + CSV export',
+      ],
+      excluded: [
+        'A/B testing',
+        'Email sequences',
+        'Integrations (Zapier, Mailchimp, etc.)',
+        'Advanced analytics',
+        'Custom CSS',
+        'White-label / Custom domain',
       ]
     },
     {
       name: 'Pro',
       monthlyPrice: 19,
       yearlyPrice: 16,
-      description: 'For growing brands',
+      description: 'Full power — unlimited quizzes, integrations, A/B testing.',
       features: [
         'Unlimited quizzes',
         '3,000 leads/mo',
         '3,000 emails/mo',
-        'Advanced analytics',
+        'Everything in Core, plus:',
         'A/B testing',
-        'Email integrations',
-        'Zapier support',
-        'Priority support'
+        'Email sequences',
+        'All integrations (Zapier, Mailchimp, Klaviyo, HubSpot)',
+        'Advanced analytics & drop-off',
+        'Custom CSS',
+        'Priority email support',
+      ],
+      excluded: [
+        'White-label (your brand)',
+        'Custom domain for quizzes',
+        'Team seats',
+        'API access',
       ],
       highlight: true
     },
@@ -67,17 +87,18 @@ export default function LandingPage() {
       name: 'Business',
       monthlyPrice: 35,
       yearlyPrice: 29,
-      description: 'For agencies & enterprises',
+      description: 'Unlimited everything with white-label and team seats.',
       features: [
-        'Unlimited everything',
-        'White-label quizzes',
-        'Custom domain',
-        'Team seats (5)',
-        'Advanced integrations',
-        'Dedicated support',
+        'Unlimited quizzes, leads & emails',
+        'Everything in Pro, plus:',
+        'White-label (your brand on everything)',
+        'Custom domain for quizzes',
+        'Team seats (3 included)',
         'API access',
-        'SLA guarantee'
-      ]
+        'Priority support (email + chat)',
+        'Dedicated onboarding call',
+      ],
+      excluded: []
     }
   ];
 
@@ -595,20 +616,24 @@ export default function LandingPage() {
           <div className="pricing-grid">
             {plans.map(function(plan, i) {
               var price = selectedPlan === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-              var period = selectedPlan === 'monthly' ? '/month' : '/year';
               return (
                 <article key={i} className={'pricing-card ' + (plan.highlight ? 'highlight' : '')}>
                   {plan.highlight && <div className="popular-badge">Most Popular</div>}
                   <h3 className="h3">{plan.name}</h3>
                   <p className="plan-desc">{plan.description}</p>
                   <div className="price">
+                    {selectedPlan === 'yearly' && <span className="price-old">${plan.monthlyPrice}</span>}
                     <span className="amount">${price}</span>
-                    <span className="period">{period}</span>
+                    <span className="period">/mo</span>
+                  </div>
+                  <div className="price-sub">
+                    {selectedPlan === 'yearly' ? 'Billed $' + (plan.yearlyPrice * 12) + '/year' : 'Billed monthly'}
                   </div>
                   <Link href={QUIZ_BUILDER_PATH} className="btn-pill btn-full">
-                    Start trial
+                    Start free trial
                   </Link>
                   <div className="divider"></div>
+                  <div className="included-label">Included</div>
                   <ul className="features-list">
                     {plan.features.map(function(feat, fi) {
                       return (
@@ -619,6 +644,18 @@ export default function LandingPage() {
                       );
                     })}
                   </ul>
+                  {plan.excluded && plan.excluded.length > 0 && (
+                    <ul className="features-list excluded-list">
+                      {plan.excluded.map(function(feat, fi) {
+                        return (
+                          <li key={fi} className="excluded-item">
+                            <span className="cross">✕</span>
+                            {feat}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </article>
               );
             })}
@@ -1726,14 +1763,18 @@ button, input {
   font-weight: 700;
 }
 
-.plan-desc {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 24px;
+.price {
+  margin-bottom: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
-.price {
-  margin-bottom: 28px;
+.price-old {
+  font-size: 18px;
+  color: #999;
+  text-decoration: line-through;
+  margin-right: 4px;
 }
 
 .amount {
@@ -1748,10 +1789,34 @@ button, input {
   margin-left: 4px;
 }
 
+.price-sub {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 24px;
+}
+
+.plan-desc {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+  min-height: 44px;
+}
+
 .divider {
   height: 1px;
   background: var(--line);
-  margin: 28px 0;
+  margin: 24px 0 16px;
+}
+
+.included-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--t);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(15,115,119,.15);
 }
 
 .features-list {
@@ -1763,15 +1828,31 @@ button, input {
 
 .features-list li {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  color: #666;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  color: #444;
+  line-height: 1.4;
+}
+
+.excluded-list {
+  margin-top: 12px;
+}
+
+.excluded-item {
+  color: #bbb !important;
+}
+
+.cross {
+  color: #ccc;
+  font-weight: 500;
+  font-size: 13px;
 }
 
 .check {
   color: var(--t);
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .pricing-note {
