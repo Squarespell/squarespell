@@ -586,13 +586,13 @@ export default function QuizPage() {
               {isSplit ? (
                 /* ---- SPLIT LAYOUT ---- */
                 <div style={{
-                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
+                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 16,
                   overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
-                  display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 400,
+                  display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 360,
                 }}>
                   {/* Left: media */}
                   <div style={{
-                    background: qMediaUrl ? 'transparent' : 'linear-gradient(135deg, #1D2939, #344054)',
+                    background: '#0a0a0a',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     position: 'relative', overflow: 'hidden',
                   }}>
@@ -612,7 +612,7 @@ export default function QuizPage() {
                     )}
                   </div>
                   {/* Right: question + answers */}
-                  <div style={{ padding: '28px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     {timeRemaining !== null && (
                       <div style={{
                         position: 'absolute', top: 22, right: 22,
@@ -693,7 +693,7 @@ export default function QuizPage() {
                         <span>Question {qIdx + 1} of {totalQs}</span>
                         <span>{progress}%</span>
                       </div>
-                      <div style={{ height: 4, background: brandBorder, borderRadius: 100, overflow: 'hidden', marginBottom: 22 }}>
+                      <div style={{ height: 3, background: brandBorder, borderRadius: 100, overflow: 'hidden', marginBottom: 22 }}>
                         <div style={{ height: '100%', background: brandPrimary, borderRadius: 100, transition: 'width 0.45s cubic-bezier(0.16,1,0.3,1)', width: progress + '%' }} />
                       </div>
                     </>
@@ -718,7 +718,7 @@ export default function QuizPage() {
                   {/* Answer options — layout-aware */}
                   {isGrid ? (
                     /* Grid / Full-background layout */
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {currentQ.options.map(function(opt, oi) {
                         var optImg = getOptionImage(opt);
                         var picked = answers[qIdx] === oi;
@@ -727,20 +727,20 @@ export default function QuizPage() {
                             onMouseEnter={function() { setHoverOpt(oi); }}
                             onMouseLeave={function() { setHoverOpt(null); }}
                             style={{
-                              display: 'flex', flexDirection: 'column', alignItems: 'center',
+                              display: 'flex', flexDirection: 'column', alignItems: 'stretch',
                               padding: 0, background: picked ? brandPrimary + '14' : brandBg,
                               border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
-                              borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                              borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
                               fontFamily: brandFont, color: brandText,
                               transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
                               transform: hoverOpt === oi ? 'translateY(-2px)' : 'none',
-                              boxShadow: hoverOpt === oi ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
+                              boxShadow: hoverOpt === oi ? '0 4px 16px rgba(0,0,0,0.06)' : picked ? '0 0 0 1px ' + brandPrimary : 'none',
                               textAlign: 'center',
                             }}>
                             {/* Image area */}
                             <div style={{
-                              width: '100%', height: isFullBg ? 160 : 120,
-                              background: optImg ? 'transparent' : '#F2F4F7',
+                              width: '100%', height: isFullBg ? 140 : 110,
+                              background: optImg ? 'transparent' : 'rgba(0,0,0,0.03)',
                               position: 'relative', overflow: 'hidden',
                             }}>
                               {optImg ? (
@@ -751,25 +751,25 @@ export default function QuizPage() {
                                 </div>
                               )}
                               {isFullBg && optImg && (
-                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.55))' }} />
+                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.6))' }} />
                               )}
                               {isFullBg && optImg && (
-                                <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, color: '#fff', fontSize: 13, fontWeight: 700, textAlign: 'center', padding: '0 8px', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                                <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, color: '#fff', fontSize: 13, fontWeight: 600, textAlign: 'center', padding: '0 8px', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
                                   {opt.text}
                                 </div>
                               )}
                             </div>
                             {/* Text below image (unless fullBg which shows text over image) */}
                             {!isFullBg && (
-                              <div style={{ padding: '10px 12px', width: '100%', display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ padding: '8px 10px', width: '100%', display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left' }}>
                                 <div style={{
-                                  width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+                                  width: 20, height: 20, borderRadius: 5, flexShrink: 0,
                                   background: picked ? brandPrimary : brandBorder,
                                   color: picked ? brandBg : brandText,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontSize: 10, fontWeight: 700,
+                                  fontSize: 9, fontWeight: 700,
                                 }}>{LETTERS[oi]}</div>
-                                <div style={{ fontSize: 13, fontWeight: 600, textAlign: 'left' }}>{opt.text}</div>
+                                <div style={{ fontSize: 12, fontWeight: 500 }}>{opt.text}</div>
                               </div>
                             )}
                           </button>
@@ -777,8 +777,8 @@ export default function QuizPage() {
                       })}
                     </div>
                   ) : isThumbnail ? (
-                    /* Thumbnail layout — image + text row */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    /* Thumbnail layout — image + letter + text + description row */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {currentQ.options.map(function(opt, oi) {
                         var optImg = getOptionImage(opt);
                         var picked = answers[qIdx] === oi;
@@ -787,17 +787,18 @@ export default function QuizPage() {
                             onMouseEnter={function() { setHoverOpt(oi); }}
                             onMouseLeave={function() { setHoverOpt(null); }}
                             style={{
-                              display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+                              display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
                               padding: '10px 14px', background: picked ? brandPrimary + '14' : brandBg,
                               border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
                               borderRadius: 12, fontFamily: brandFont, fontSize: 14, color: brandText,
                               cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
                               transform: hoverOpt === oi ? 'translateY(-1px)' : 'none',
+                              boxShadow: hoverOpt === oi ? '0 3px 12px rgba(0,0,0,0.05)' : 'none',
                             }}>
                             {/* Thumbnail */}
                             <div style={{
                               width: 52, height: 52, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
-                              background: optImg ? 'transparent' : '#F2F4F7',
+                              background: optImg ? 'transparent' : 'rgba(0,0,0,0.04)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>
                               {optImg ? (
@@ -807,13 +808,16 @@ export default function QuizPage() {
                               )}
                             </div>
                             <div style={{
-                              width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
                               background: picked ? brandPrimary : brandBorder,
                               color: picked ? brandBg : brandText,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 11, fontWeight: 700,
+                              fontSize: 10, fontWeight: 700,
                             }}>{LETTERS[oi]}</div>
-                            <div style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{opt.text}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 14, fontWeight: 600 }}>{opt.text}</div>
+                              {(opt as any).explanation && <div style={{ fontSize: 12, opacity: 0.55, marginTop: 2, lineHeight: 1.4 }}>{(opt as any).explanation}</div>}
+                            </div>
                           </button>
                         );
                       })}

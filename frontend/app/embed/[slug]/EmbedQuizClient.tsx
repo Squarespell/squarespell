@@ -177,6 +177,16 @@ export default function EmbedQuizClient({
   const brandName = quiz.branding?.site_name || '';
   const showBranding = quiz.settings?.show_branding !== false;
 
+  /** Detect YouTube/Vimeo and return embed URL, or empty string for direct video */
+  function getVideoEmbedUrl(url: string): string {
+    if (!url) return '';
+    var ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+    if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1];
+    var vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+    if (vimeoMatch) return 'https://player.vimeo.com/video/' + vimeoMatch[1];
+    return '';
+  }
+
   // Notify embed parent of height changes
   useEffect(() => {
     if (typeof window === 'undefined' || window.parent === window) return;
@@ -445,7 +455,7 @@ export default function EmbedQuizClient({
           letter-spacing: 0.02em;
         }
         .sq-bar {
-          height: 4px;
+          height: 3px;
           background: ${brandBorder};
           border-radius: 100px;
           overflow: hidden;
@@ -524,12 +534,27 @@ export default function EmbedQuizClient({
           object-fit: cover;
           margin-bottom: 18px;
         }
-        .sq-q-video {
+        .sq-q-video-wrap {
+          position: relative;
           width: 100%;
+          padding-bottom: 56.25%;
           border-radius: 12px;
-          max-height: 320px;
+          overflow: hidden;
           margin-bottom: 18px;
-          background: #000;
+          background: #0a0a0a;
+        }
+        .sq-q-video-wrap iframe,
+        .sq-q-video-wrap video {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
+          display: block;
+        }
+        .sq-q-video-wrap video {
+          object-fit: contain;
         }
         .sq-opts-grid {
           display: grid;
@@ -539,9 +564,9 @@ export default function EmbedQuizClient({
         .sq-opt-grid {
           display: flex;
           flex-direction: column;
-          align-items: center;
+          align-items: stretch;
           text-align: center;
-          padding: 18px 14px;
+          padding: 0;
           background: ${brandBg};
           border: 1.5px solid ${brandBorder};
           border-radius: 12px;
@@ -550,26 +575,40 @@ export default function EmbedQuizClient({
           color: ${brandText};
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
-          gap: 8px;
+          overflow: hidden;
         }
         .sq-opt-grid:hover {
           border-color: ${brandPrimary};
-          transform: translateY(-1px);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.06);
         }
         .sq-opt-grid.picked {
           border-color: ${brandPrimary};
           background: ${brandPrimary}14;
         }
+        .sq-opt-grid-img-area {
+          width: 100%;
+          height: 110px;
+          position: relative;
+          overflow: hidden;
+        }
         .sq-opt-img {
           width: 100%;
-          height: 100px;
+          height: 100%;
           object-fit: cover;
-          border-radius: 8px;
+          display: block;
+        }
+        .sq-opt-grid-bar {
+          padding: 8px 10px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          text-align: left;
         }
         .sq-opt-thumb {
           display: flex;
           align-items: center;
-          gap: 14px;
+          gap: 12px;
           width: 100%;
           text-align: left;
           padding: 10px 14px;
@@ -585,23 +624,48 @@ export default function EmbedQuizClient({
         .sq-opt-thumb:hover {
           border-color: ${brandPrimary};
           transform: translateY(-1px);
+          box-shadow: 0 3px 12px rgba(0,0,0,0.05);
         }
         .sq-opt-thumb.picked {
           border-color: ${brandPrimary};
           background: ${brandPrimary}14;
         }
-        .sq-opt-thumb-img {
-          width: 48px;
-          height: 48px;
-          object-fit: cover;
+        .sq-opt-thumb-wrap {
+          width: 52px;
+          height: 52px;
           border-radius: 8px;
+          overflow: hidden;
           flex-shrink: 0;
+          background: rgba(0,0,0,0.04);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .sq-opt-thumb-wrap img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .sq-opt-thumb-text {
+          flex: 1;
+          min-width: 0;
+        }
+        .sq-opt-thumb-title {
+          font-weight: 600;
+          font-size: 14px;
+        }
+        .sq-opt-thumb-desc {
+          font-size: 12px;
+          opacity: 0.55;
+          margin-top: 2px;
+          line-height: 1.4;
         }
         .sq-opt-full {
           position: relative;
           overflow: hidden;
           border-radius: 12px;
-          min-height: 120px;
+          min-height: 130px;
           display: flex;
           align-items: flex-end;
           cursor: pointer;
@@ -610,10 +674,12 @@ export default function EmbedQuizClient({
         }
         .sq-opt-full:hover {
           border-color: ${brandPrimary};
-          transform: translateY(-1px);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.1);
         }
         .sq-opt-full.picked {
           border-color: ${brandPrimary};
+          box-shadow: 0 0 0 1px ${brandPrimary};
         }
         .sq-opt-full-bg {
           position: absolute;
@@ -626,12 +692,13 @@ export default function EmbedQuizClient({
           position: relative;
           z-index: 1;
           width: 100%;
-          padding: 12px 14px;
-          background: linear-gradient(transparent, rgba(0,0,0,0.7));
+          padding: 14px;
+          background: linear-gradient(transparent 30%, rgba(0,0,0,0.6));
           color: #fff;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
           font-family: ${brandFont};
+          text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .sq-cards-layout {
           display: flex;
@@ -669,9 +736,9 @@ export default function EmbedQuizClient({
         .sq-split {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          min-height: 380px;
+          min-height: 360px;
           overflow: hidden;
-          border-radius: 18px;
+          border-radius: 16px;
           border: 1px solid ${brandBorder};
           background: ${brandSurface};
           box-shadow: 0 8px 30px rgba(0,0,0,0.04);
@@ -679,43 +746,66 @@ export default function EmbedQuizClient({
         .sq-split-media {
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, #1D2939, #344054);
+          background: #0a0a0a;
           display: flex;
           align-items: center;
           justify-content: center;
         }
-        .sq-split-media img,
+        .sq-split-media img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
         .sq-split-media video {
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
         }
+        .sq-split-media iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+          display: block;
+        }
         .sq-split-media-placeholder {
-          color: rgba(255,255,255,0.35);
+          color: rgba(255,255,255,0.3);
           text-align: center;
           font-size: 13px;
           font-weight: 600;
         }
         .sq-split-body {
-          padding: 32px 28px;
+          padding: 28px 24px;
           display: flex;
           flex-direction: column;
+          justify-content: center;
         }
         .sq-split-body .sq-qlabel {
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
         .sq-split-body .sq-q {
-          font-size: 22px;
-          margin-bottom: 16px;
+          font-size: 20px;
+          margin-bottom: 6px;
         }
         .sq-split-body .sq-opts {
-          gap: 8px;
+          gap: 7px;
           flex: 1;
         }
         .sq-split-body .sq-opt {
-          padding: 12px 14px;
+          padding: 11px 13px;
           font-size: 13px;
+        }
+        .sq-split-body .sq-opt-letter {
+          width: 22px;
+          height: 22px;
+          border-radius: 6px;
+          font-size: 10px;
+        }
+        .sq-split-body .sq-opt-thumb-wrap {
+          width: 36px;
+          height: 36px;
+          border-radius: 6px;
         }
         @container (max-width: 600px) {
           .sq-split {
@@ -723,7 +813,10 @@ export default function EmbedQuizClient({
             min-height: auto;
           }
           .sq-split-media {
-            height: 200px;
+            height: 220px;
+          }
+          .sq-split-body {
+            padding: 22px 20px;
           }
         }
         @media (max-width: 600px) {
@@ -732,7 +825,10 @@ export default function EmbedQuizClient({
             min-height: auto;
           }
           .sq-split-media {
-            height: 200px;
+            height: 220px;
+          }
+          .sq-split-body {
+            padding: 22px 20px;
           }
         }
 
@@ -979,7 +1075,7 @@ export default function EmbedQuizClient({
           {stage === 'question' && currentQ && (
             <>
               <div className="sq-head">
-                {brandName && <div className="sq-eyebrow">{brandName} · Free quiz</div>}
+                {brandName && <div className="sq-eyebrow">{brandName}</div>}
                 <div className="sq-title">{quiz.title}</div>
                 {quiz.description && <div className="sq-sub">{quiz.description}</div>}
               </div>
@@ -1001,9 +1097,18 @@ export default function EmbedQuizClient({
                     {currentQ.subtitle && <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 16, marginTop: -12, lineHeight: 1.5 }}>{currentQ.subtitle}</div>}
 
                     {/* Question media (image or video) — not in splitLayout, it renders its own */}
-                    {currentQ.mediaUrl && currentQ.mediaType === 'video' && (
-                      <video className="sq-q-video" src={currentQ.mediaUrl} controls playsInline />
-                    )}
+                    {currentQ.mediaUrl && currentQ.mediaType === 'video' && (function() {
+                      var embedUrl = getVideoEmbedUrl(currentQ.mediaUrl!);
+                      return (
+                        <div className="sq-q-video-wrap">
+                          {embedUrl ? (
+                            <iframe src={embedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                          ) : (
+                            <video src={currentQ.mediaUrl} controls playsInline />
+                          )}
+                        </div>
+                      );
+                    })()}
                     {currentQ.mediaUrl && currentQ.mediaType !== 'video' && (
                       <img className="sq-q-media" src={currentQ.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                     )}
@@ -1019,6 +1124,7 @@ export default function EmbedQuizClient({
                   if (layout === 'splitLayout') {
                     var hasMedia = !!currentQ.mediaUrl;
                     var isVid = currentQ.mediaType === 'video';
+                    var splitEmbedUrl = isVid && currentQ.mediaUrl ? getVideoEmbedUrl(currentQ.mediaUrl) : '';
                     return (
                       <>
                         {/* Close the sq-card early — splitLayout replaces it */}
@@ -1026,7 +1132,9 @@ export default function EmbedQuizClient({
                         <div className="sq-split-inject" style={{ margin: '-26px -22px -26px' }}>
                           <div className="sq-split">
                             <div className="sq-split-media">
-                              {hasMedia && isVid ? (
+                              {hasMedia && isVid && splitEmbedUrl ? (
+                                <iframe src={splitEmbedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                              ) : hasMedia && isVid ? (
                                 <video src={currentQ.mediaUrl} controls playsInline />
                               ) : hasMedia ? (
                                 <img src={currentQ.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
@@ -1044,12 +1152,12 @@ export default function EmbedQuizClient({
                             <div className="sq-split-body">
                               <div className="sq-qlabel">Question {String(qIdx + 1).padStart(2, '0')}</div>
                               <div className="sq-q">{currentQ.text || currentQ.question}</div>
-                              {currentQ.subtitle && <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 12, marginTop: -8, lineHeight: 1.5 }}>{currentQ.subtitle}</div>}
+                              {currentQ.subtitle && <div style={{ fontSize: 13, opacity: 0.55, marginBottom: 12, marginTop: -2, lineHeight: 1.5 }}>{currentQ.subtitle}</div>}
                               <div className="sq-opts">
                                 {currentQ.options.map(function(opt, oi) {
                                   return (
                                     <button key={opt.id + oi} className={'sq-opt' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
-                                      {opt.imageUrl && <img style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />}
+                                      {opt.imageUrl && <div className="sq-opt-thumb-wrap" style={{ width: 32, height: 32, borderRadius: 6 }}><img src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} /></div>}
                                       <div className="sq-opt-letter">{LETTERS[oi]}</div>
                                       <div>{opt.text}</div>
                                     </button>
@@ -1073,15 +1181,17 @@ export default function EmbedQuizClient({
                         {currentQ.options.map(function(opt, oi) {
                           return (
                             <button key={opt.id + oi} className={'sq-opt-grid' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
-                              {opt.imageUrl ? (
-                                <img className="sq-opt-img" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
-                              ) : (
-                                <div style={{ width: '100%', height: 100, borderRadius: 8, background: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-                                </div>
-                              )}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-                                <span className="sq-opt-letter" style={{ width: 22, height: 22, borderRadius: 6, fontSize: 10 }}>{LETTERS[oi]}</span>
+                              <div className="sq-opt-grid-img-area">
+                                {opt.imageUrl ? (
+                                  <img className="sq-opt-img" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                                ) : (
+                                  <div style={{ width: '100%', height: '100%', background: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="sq-opt-grid-bar">
+                                <span className="sq-opt-letter" style={{ width: 20, height: 20, borderRadius: 5, fontSize: 9 }}>{LETTERS[oi]}</span>
                                 <span>{opt.text}</span>
                               </div>
                             </button>
@@ -1091,23 +1201,24 @@ export default function EmbedQuizClient({
                     );
                   }
 
-                  /* Thumbnails layout — 56x56 image + text row */
+                  /* Thumbnails layout — image + text + description row */
                   if (layout === 'imageThumbnails') {
                     return (
                       <div className="sq-opts">
                         {currentQ.options.map(function(opt, oi) {
                           return (
                             <button key={opt.id + oi} className={'sq-opt-thumb' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button">
-                              <div style={{ width: 56, height: 56, borderRadius: 8, overflow: 'hidden', background: 'rgba(0,0,0,0.04)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div className="sq-opt-thumb-wrap">
                                 {opt.imageUrl ? (
-                                  <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
+                                  <img src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                                 ) : (
                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
                                 )}
                               </div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 600 }}>{opt.text}</div>
-                                {opt.explanation && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{opt.explanation}</div>}
+                              <div className="sq-opt-letter" style={{ width: 22, height: 22, borderRadius: 6, fontSize: 10 }}>{LETTERS[oi]}</div>
+                              <div className="sq-opt-thumb-text">
+                                <div className="sq-opt-thumb-title">{opt.text}</div>
+                                {opt.explanation && <div className="sq-opt-thumb-desc">{opt.explanation}</div>}
                               </div>
                             </button>
                           );

@@ -1,5 +1,5 @@
 /*!
- * Squarespell Quiz Embed v2.1.0
+ * Squarespell Quiz Embed v2.2.0
  * Rewritten for Squarespace 7.1 AJAX navigation compatibility.
  *
  * Usage (Code Block):
@@ -13,7 +13,7 @@
   'use strict';
 
   var BASE_URL = 'https://app.squarespell.com';
-  var EMBED_VERSION = '2.1.0';
+  var EMBED_VERSION = '2.2.0';
   var INIT_ATTR = 'data-squarespell-init';
 
   // ── Utility helpers ──────────────────────────────────────────────────────
@@ -84,20 +84,28 @@
       '.squarespell-fallback{display:none;text-align:center;padding:20px;font-size:14px}',
       '.squarespell-fallback a{display:inline-block;padding:12px 24px;background:#0D7377;color:#0a0f05;border-radius:20px;font-weight:700;text-decoration:none}',
       /* Popup mode styles */
-      '.squarespell-popup-btn{padding:12px 24px;border:none;border-radius:20px;font-weight:700;font-size:14px;cursor:pointer;transition:opacity 0.2s ease}',
-      '.squarespell-popup-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center}',
-      '.squarespell-popup-overlay.active{display:flex}',
-      '.squarespell-popup-container{background:white;border-radius:16px;max-width:640px;width:90%;max-height:90vh;overflow:auto;position:relative;box-shadow:0 10px 40px rgba(0,0,0,0.2)}',
-      '.squarespell-popup-close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;z-index:10000}',
-      '.squarespell-popup-close:hover{color:#000}',
-      '.squarespell-popup-iframe{width:100%;border:none;display:block;height:600px}',
+      '.squarespell-popup-btn{padding:14px 28px;border:none;border-radius:12px;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s ease;letter-spacing:-0.01em;box-shadow:0 2px 8px rgba(0,0,0,0.1)}',
+      '.squarespell-popup-btn:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,0.15)}',
+      '.squarespell-popup-btn:active{transform:translateY(0);box-shadow:0 1px 4px rgba(0,0,0,0.1)}',
+      '.squarespell-popup-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 0.25s ease}',
+      '.squarespell-popup-overlay.active{opacity:1}',
+      '.squarespell-popup-container{background:white;border-radius:18px;max-width:640px;width:92%;max-height:88vh;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2),0 0 0 1px rgba(0,0,0,0.05);animation:sq-popup-in 0.25s ease}',
+      '@keyframes sq-popup-in{from{opacity:0;transform:scale(0.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}',
+      '.squarespell-popup-close{position:absolute;top:14px;right:14px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.06);border:none;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;color:#555;z-index:10000;transition:all 0.15s ease}',
+      '.squarespell-popup-close:hover{background:rgba(0,0,0,0.1);color:#111}',
+      '.squarespell-popup-iframe{width:100%;border:none;display:block;height:600px;max-height:85vh}',
       /* Slidein mode styles */
-      '.squarespell-slidein-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);background:#0D7377;color:#0a0f05;border:none;border-radius:20px 0 0 20px;padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer;z-index:9998;writing-mode:vertical-rl;text-orientation:mixed;transform:translateY(-50%) rotateZ(180deg)}',
-      '.squarespell-slidein-panel{position:fixed;right:0;top:0;bottom:0;width:400px;background:white;box-shadow:-2px 0 10px rgba(0,0,0,0.2);z-index:9999;transform:translateX(100%);transition:transform 0.3s ease;overflow:auto;max-width:100vw}',
+      '.squarespell-slidein-tab{position:fixed;right:0;top:50%;background:#0D7377;color:#fff;border:none;border-radius:12px 0 0 12px;padding:14px 12px;font-weight:600;font-size:13px;cursor:pointer;z-index:9998;writing-mode:vertical-rl;text-orientation:mixed;transform:translateY(-50%) rotateZ(180deg);letter-spacing:0.02em;box-shadow:-2px 2px 12px rgba(0,0,0,0.15);transition:all 0.2s ease}',
+      '.squarespell-slidein-tab:hover{padding-right:16px;box-shadow:-4px 2px 18px rgba(0,0,0,0.2)}',
+      '.squarespell-slidein-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:9998;transition:opacity 0.3s ease}',
+      '.squarespell-slidein-overlay.active{display:block}',
+      '.squarespell-slidein-panel{position:fixed;right:0;top:0;bottom:0;width:420px;background:white;box-shadow:-4px 0 24px rgba(0,0,0,0.15);z-index:9999;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);overflow:hidden;max-width:100vw}',
       '.squarespell-slidein-panel.active{transform:translateX(0)}',
-      '.squarespell-slidein-close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;z-index:10000}',
-      '.squarespell-slidein-close:hover{color:#000}',
-      '.squarespell-slidein-iframe{width:100%;border:none;display:block;height:100vh;height:100%}'
+      '.squarespell-slidein-close{position:absolute;top:14px;right:14px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.06);border:none;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;color:#555;z-index:10000;transition:all 0.15s ease}',
+      '.squarespell-slidein-close:hover{background:rgba(0,0,0,0.1);color:#111}',
+      '.squarespell-slidein-iframe{width:100%;border:none;display:block;height:100%}',
+      /* Mobile responsive */
+      '@media(max-width:480px){.squarespell-popup-container{width:96%;max-height:92vh;border-radius:14px}.squarespell-slidein-panel{width:100%}}'
     ].join('');
     document.head.appendChild(css);
   }
@@ -149,7 +157,7 @@
       btn.className = 'squarespell-popup-btn';
       btn.textContent = buttonText || 'Take the Quiz';
       btn.style.backgroundColor = finalAccent;
-      btn.style.color = '#0a0f05';
+      btn.style.color = '#fff';
 
       var overlay = document.createElement('div');
       overlay.className = 'squarespell-popup-overlay';
@@ -175,17 +183,32 @@
       container.appendChild(overlay);
 
       btn.addEventListener('click', function () {
+        overlay.style.display = 'flex';
+        // Force reflow for transition
+        overlay.offsetHeight;
         overlay.classList.add('active');
       });
 
+      function closePopup() {
+        overlay.classList.remove('active');
+        setTimeout(function () { overlay.style.display = 'none'; }, 250);
+      }
+
       closeBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        overlay.classList.remove('active');
+        closePopup();
       });
 
       overlay.addEventListener('click', function (e) {
         if (e.target === overlay) {
-          overlay.classList.remove('active');
+          closePopup();
+        }
+      });
+
+      // Close on Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('active')) {
+          closePopup();
         }
       });
 
@@ -201,8 +224,11 @@
       tab.className = 'squarespell-slidein-tab';
       tab.textContent = buttonText || 'Take Quiz';
       tab.style.backgroundColor = finalAccent;
-      tab.style.color = '#0a0f05';
+      tab.style.color = '#fff';
       tab.setAttribute('aria-label', 'Open quiz panel');
+
+      var overlay = document.createElement('div');
+      overlay.className = 'squarespell-slidein-overlay';
 
       var panel = document.createElement('div');
       panel.className = 'squarespell-slidein-panel';
@@ -220,15 +246,32 @@
       panel.appendChild(closeBtn);
       panel.appendChild(iframeSlidein);
       container.appendChild(tab);
+      container.appendChild(overlay);
       container.appendChild(panel);
 
-      tab.addEventListener('click', function () {
+      function openSlidein() {
         panel.classList.add('active');
-      });
+        overlay.classList.add('active');
+      }
+      function closeSlidein() {
+        panel.classList.remove('active');
+        overlay.classList.remove('active');
+      }
+
+      tab.addEventListener('click', openSlidein);
 
       closeBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        panel.classList.remove('active');
+        closeSlidein();
+      });
+
+      overlay.addEventListener('click', closeSlidein);
+
+      // Close on Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && panel.classList.contains('active')) {
+          closeSlidein();
+        }
       });
 
       return { wrapper: container, iframe: iframeSlidein };
@@ -250,8 +293,8 @@
       var d = e.data;
       if (!d || d.source !== 'squarespell') return;
 
-      // Find the iframe that sent this message
-      var iframes = document.querySelectorAll('.squarespell-wrapper iframe');
+      // Find the iframe that sent this message (inline, popup, or slidein)
+      var iframes = document.querySelectorAll('.squarespell-wrapper iframe, .squarespell-popup-iframe, .squarespell-slidein-iframe');
       var targetIframe = null;
       for (var i = 0; i < iframes.length; i++) {
         if (iframes[i].contentWindow === e.source) {
@@ -261,7 +304,8 @@
       }
       if (!targetIframe) return;
 
-      var slug = targetIframe.closest('.squarespell-wrapper')?.id?.replace('squarespell-embed-', '') || '';
+      var embedContainer = targetIframe.closest('[id^="squarespell-embed-"]');
+      var slug = embedContainer ? embedContainer.id.replace('squarespell-embed-', '') : '';
       var parentEl = targetIframe.closest('[data-squarespell-quiz], [data-quiz]');
       var fixedHeight = parentEl ? parentEl.getAttribute('data-height') : null;
 
