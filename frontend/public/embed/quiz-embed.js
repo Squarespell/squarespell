@@ -1,5 +1,5 @@
 /*!
- * Squarespell Quiz Embed v2.3.0
+ * Squarespell Quiz Embed v2.3.1
  * Rewritten for Squarespace 7.1 AJAX navigation compatibility.
  *
  * Usage (Code Block):
@@ -13,7 +13,7 @@
   'use strict';
 
   var BASE_URL = 'https://app.squarespell.com';
-  var EMBED_VERSION = '2.3.0';
+  var EMBED_VERSION = '2.3.1';
   var INIT_ATTR = 'data-squarespell-init';
 
   // ── Utility helpers ──────────────────────────────────────────────────────
@@ -126,8 +126,10 @@
       var iframe = document.createElement('iframe');
       iframe.src = url;
       iframe.title = 'Squarespell Quiz';
-      iframe.loading = 'lazy';
-      iframe.style.height = (fixedHeight && fixedHeight !== 'auto') ? fixedHeight + 'px' : '0px';
+      // NEVER use loading="lazy" — the iframe starts small, so the browser
+      // thinks it's off-screen and defers loading forever (height-0 deadlock).
+      iframe.loading = 'eager';
+      iframe.style.height = (fixedHeight && fixedHeight !== 'auto') ? fixedHeight + 'px' : '600px';
       iframe.style.display = 'block';
       iframe.style.margin = '0';
       iframe.style.padding = '0';
@@ -310,7 +312,9 @@
       var fixedHeight = parentEl ? parentEl.getAttribute('data-height') : null;
 
       if (d.type === 'resize' && typeof d.height === 'number' && (!fixedHeight || fixedHeight === 'auto')) {
-        var desired = Math.min(Math.max(0, Math.round(d.height)), 4000);
+        // Enforce a minimum of 200px to prevent the iframe from collapsing to
+        // invisible (which breaks lazy-loading recovery and looks broken).
+        var desired = Math.min(Math.max(200, Math.round(d.height)), 4000);
         var current = parseFloat(targetIframe.style.height) || 0;
         if (Math.abs(desired - current) >= 2) {
           targetIframe.style.height = desired + 'px';
