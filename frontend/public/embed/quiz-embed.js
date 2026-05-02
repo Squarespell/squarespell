@@ -407,7 +407,14 @@
       var widget = buildWidget(slug, fixedHeight, mode, buttonText, accentColor);
 
       if (el.tagName === 'SCRIPT') {
-        el.parentNode.insertBefore(widget.wrapper, el.nextSibling);
+        // If the script is in <head> (e.g. Squarespace Code Injection),
+        // append to <body> instead — elements in <head> are invisible.
+        var parent = el.parentNode;
+        if (parent && parent.tagName === 'HEAD') {
+          document.body.appendChild(widget.wrapper);
+        } else {
+          parent.insertBefore(widget.wrapper, el.nextSibling);
+        }
       } else {
         el.appendChild(widget.wrapper);
       }
@@ -428,6 +435,14 @@
     } catch(e) {}
   }
 
+  // ── Self-detecting script tag (legacy <script data-quiz="slug"> in Code Injection) ──
+  //
+  // When the embed script itself carries data-quiz, and it's loaded in <head>
+  // via Squarespace Code Injection, scanAndInit may run before <body> exists.
+  // We capture document.currentScript now and ensure it's processed.
+
+  var selfScript = (typeof document !== 'undefined') ? document.currentScript : null;
+
   // ── Squarespace 7.1 AJAX navigation support ─────────────────────────────
   //
   // Squarespace 7.1 uses AJAX page transitions ("Mercury" loader).
@@ -435,7 +450,7 @@
   // window object persists. We need to re-scan for quiz elements after
   // every navigation event.
 
-  // 1. Initial load
+  // 1. Initial load — wait for body to exist when loaded from <head>
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', scanAndInit);
   } else {
