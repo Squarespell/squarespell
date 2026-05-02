@@ -10,16 +10,27 @@ const supabase = createClient(
 
 const TRIAL_DAYS = 14;
 
-export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number; emails: number; removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string; branchingLogic: boolean; integrations: boolean; emailSequences: boolean; whiteLabel: boolean; customDomain: boolean; teamSeats: boolean }> = {
-  free:     { quizzes: 0,        leads: 0,        emails: 0,        removeBranding: false, abTesting: false, zapier: false, analytics: 'basic',    branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
-  trial:    { quizzes: Infinity, leads: 2000,     emails: 2000,     removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: false, customDomain: false, teamSeats: false },
-  starter:  { quizzes: 3,        leads: 500,      emails: 500,      removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
-  pro:      { quizzes: Infinity, leads: 2000,     emails: 2000,     removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: false, customDomain: false, teamSeats: false },
-  business: { quizzes: Infinity, leads: Infinity, emails: Infinity, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: true,  customDomain: true,  teamSeats: true },
-  // Legacy aliases — map old plan names to new ones
-  growth:   { quizzes: 3,        leads: 500,      emails: 500,      removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false },
-  agency:   { quizzes: Infinity, leads: Infinity, emails: Infinity, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: true,  customDomain: true,  teamSeats: true },
+export const PLAN_LIMITS: Record<string, { quizzes: number; leads: number; emails: number; removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string; branchingLogic: boolean; integrations: boolean; emailSequences: boolean; whiteLabel: boolean; customDomain: boolean; teamSeats: boolean; scheduling: boolean }> = {
+  free:     { quizzes: 0,        leads: 0,        emails: 0,        removeBranding: false, abTesting: false, zapier: false, analytics: 'basic',    branchingLogic: false, integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false, scheduling: false },
+  trial:    { quizzes: Infinity, leads: 3000,     emails: 3000,     removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: false, customDomain: false, teamSeats: false, scheduling: true },
+  core:     { quizzes: 5,        leads: 1000,     emails: 1000,     removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: true,  integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false, scheduling: true },
+  pro:      { quizzes: Infinity, leads: 3000,     emails: 3000,     removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: false, customDomain: false, teamSeats: false, scheduling: true },
+  business: { quizzes: Infinity, leads: Infinity, emails: Infinity, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: true,  customDomain: true,  teamSeats: true,  scheduling: true },
+  // Legacy aliases — map old plan names to current plans
+  starter:  { quizzes: 5,        leads: 1000,     emails: 1000,     removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: true,  integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false, scheduling: true },
+  growth:   { quizzes: 5,        leads: 1000,     emails: 1000,     removeBranding: true,  abTesting: false, zapier: false, analytics: 'standard', branchingLogic: true,  integrations: false, emailSequences: false, whiteLabel: false, customDomain: false, teamSeats: false, scheduling: true },
+  agency:   { quizzes: Infinity, leads: Infinity, emails: Infinity, removeBranding: true,  abTesting: true,  zapier: true,  analytics: 'advanced', branchingLogic: true,  integrations: true,  emailSequences: true,  whiteLabel: true,  customDomain: true,  teamSeats: true,  scheduling: true },
 };
+
+/**
+ * Resolve a plan string (which may be a legacy alias) to a canonical name.
+ */
+export function canonicalPlanName(plan: string): string {
+  if (plan === 'starter' || plan === 'growth') return 'core';
+  if (plan === 'agency') return 'business';
+  if (plan === 'free') return 'free';
+  return plan;
+}
 
 export function getPlanLimits(plan: string) {
   return PLAN_LIMITS[plan] ?? PLAN_LIMITS['free'];
@@ -62,7 +73,7 @@ export async function guardQuizCreation(
       if (!isTrialActive(user.created_at)) {
         return res.status(403).json({
           error: 'trial_expired',
-          message: 'Your 14-day trial has ended. Choose a plan to keep your quizzes running.',
+          message: 'Your 14-day trial has ended. Pick a plan to keep capturing leads — plans start at $9/mo.',
           upgrade_url: `${process.env.FRONTEND_URL}/pricing`,
         });
       }
@@ -71,8 +82,10 @@ export async function guardQuizCreation(
       return next();
     }
 
-    const limit = PLAN_LIMITS[plan]?.quizzes ?? 5;
+    const limits = getPlanLimits(plan);
+    const limit = limits.quizzes;
     const quizCount = user.quiz_count ?? 0;
+    const displayName = canonicalPlanName(plan);
 
     // For unlimited plans, skip the atomic check — increment happens in the route
     if (limit === Infinity) {
@@ -86,7 +99,7 @@ export async function guardQuizCreation(
     if (rpcErr || !allowed) {
       return res.status(403).json({
         error: 'quiz_limit_reached',
-        message: `You have reached your ${plan} plan limit of ${limit} quizzes.`,
+        message: `You've reached your ${displayName} plan limit of ${limit} quizzes. Upgrade to get unlimited quizzes.`,
         current: quizCount,
         limit,
         upgrade_url: `${process.env.FRONTEND_URL}/pricing`,

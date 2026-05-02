@@ -131,10 +131,10 @@ export function TopBanner({ token, announcement }: TopBannerProps) {
             banners.push({
               variant: 'trial',
               message: urgent
-                ? `Your free trial expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}. Upgrade now to keep your quizzes live.`
-                : `You're on a free trial - ${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining.`,
-              ctaLabel: 'Upgrade',
-              ctaHref: '/dashboard/billing',
+                ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left in your trial. Lock in $9/mo before it ends.`
+                : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left in your free trial. Plans start at $9/mo.`,
+              ctaLabel: 'Choose a Plan',
+              ctaHref: '/pricing',
               dismissKey: `trial_${daysLeft <= 3 ? 'urgent' : 'normal'}`,
             });
           }

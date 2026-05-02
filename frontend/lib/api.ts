@@ -92,4 +92,7 @@ export const api = {
   getABTest:            (testId: string)            => req('/api/quizzes/tests/' + testId),
   updateABTestStatus:   (testId: string, status: string) => req('/api/quizzes/tests/' + testId,             { method: 'PATCH', body: JSON.stringify({ status }) }),
   declareABTestWinner:  (testId: string, variantId: string) => req('/api/quizzes/tests/' + testId + '/winner', { method: 'POST', body: JSON.stringify({ variant_id: variantId }) }),
+  // Add-on packs
+  createAddonCheckout:  (addonKey: string)             => req('/api/stripe/create-addon-checkout', { method: 'POST', body: JSON.stringify({ addon_key: addonKey }) }),
+  cancelAddon:          (addonType: string)            => req('/api/stripe/cancel-addon',          { method: 'POST', body: JSON.stringify({ addon_type: addonType }) }),
 };

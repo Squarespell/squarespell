@@ -202,7 +202,7 @@ export interface TryFlowInnerProps {
    *  for surfacing its own error). Ignored in preview mode. */
   onPublish?: () => Promise<boolean>;
   /** User's current plan - used to gate paid-only features like branding removal. */
-  plan?: 'trial' | 'starter' | 'pro' | 'agency' | 'free';
+  plan?: 'trial' | 'core' | 'starter' | 'pro' | 'business' | 'agency' | 'free';
   /** Extra ReactNode to render at the start of .s3-top-right (e.g. mode toggle). */
   extraTopbarRight?: React.ReactNode;
 }

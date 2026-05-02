@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { embedSnippet, publicQuizUrl } from '@/lib/urls';
 import { minimumPlanFor, type PlanFeatures } from '@/lib/plans';
+import { api } from '@/lib/api';
 
 /* ------------------------------------------------------------------ */
 /* Sheet - shared backdrop + centered card                             */
@@ -487,15 +488,27 @@ var UPGRADE_COPY: Record<string, { title: string; desc: string; icon: string }> 
   },
   leadLimit: {
     title: 'Lead limit reached',
-    desc: 'You have reached your monthly lead cap. Upgrade so you never miss another lead.',
+    desc: 'Add more leads to your plan or upgrade for higher limits.',
     icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
   },
   emailLimit: {
     title: 'Email limit reached',
-    desc: 'You have sent all your emails for this month. Upgrade for a higher sending limit.',
+    desc: 'Add more emails to your plan or upgrade for higher limits.',
     icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6',
   },
 };
+
+var LEAD_ADDON_OPTIONS = [
+  { key: 'lead_500', label: '+500 leads/mo', price: 3 },
+  { key: 'lead_1500', label: '+1,500 leads/mo', price: 7 },
+  { key: 'lead_3000', label: '+3,000 leads/mo', price: 12 },
+];
+
+var EMAIL_ADDON_OPTIONS = [
+  { key: 'email_1000', label: '+1,000 emails/mo', price: 3 },
+  { key: 'email_5000', label: '+5,000 emails/mo', price: 7 },
+  { key: 'email_10000', label: '+10,000 emails/mo', price: 12 },
+];
 
 export function UpgradeModal({
   open,
@@ -509,6 +522,7 @@ export function UpgradeModal({
   onClose: () => void;
 }) {
   var router = useRouter();
+  var [addonLoading, setAddonLoading] = useState<string | null>(null);
   if (!open) return null;
 
   var copy = UPGRADE_COPY[feature] || UPGRADE_COPY.quizLimit;
@@ -517,6 +531,28 @@ export function UpgradeModal({
   var targetPlan = isKnownFeature ? minimumPlanFor(featureKey) : null;
   var targetName = targetPlan ? targetPlan.name : 'a higher';
   var targetPrice = targetPlan ? '$' + targetPlan.monthlyPrice + '/mo' : '';
+
+  var isPaid = currentPlan && ['core', 'starter', 'growth', 'pro', 'business', 'agency'].includes(currentPlan);
+  var isLimitHit = feature === 'leadLimit' || feature === 'emailLimit';
+  var showAddons = isPaid && isLimitHit;
+  var addonOptions = feature === 'emailLimit' ? EMAIL_ADDON_OPTIONS : LEAD_ADDON_OPTIONS;
+
+  function handleAddonCheckout(addonKey: string) {
+    setAddonLoading(addonKey);
+    api.createAddonCheckout(addonKey)
+      .then(function(data: any) {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert(data.error || 'Could not start add-on checkout');
+          setAddonLoading(null);
+        }
+      })
+      .catch(function() {
+        alert('Something went wrong. Please try again.');
+        setAddonLoading(null);
+      });
+  }
 
   return (
     <Sheet onClose={onClose} labelledBy="upgrade-title" width={460}>
@@ -557,6 +593,48 @@ export function UpgradeModal({
           <p style={{ margin: '0 0 0', fontSize: 13, color: C.ACCENT, fontWeight: 600 }}>
             Available on {targetName} ({targetPrice}) and above
           </p>
+        )}
+
+        {/* Add-on quick purchase for paid users hitting lead/email limits */}
+        {showAddons && (
+          <div style={{ marginTop: 20, padding: '16px 0 0', borderTop: '1px solid ' + C.BORDER }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+              Quick fix — add extra capacity
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {addonOptions.map(function(a) {
+                return (
+                  <button
+                    key={a.key}
+                    onClick={function() { handleAddonCheckout(a.key); }}
+                    disabled={addonLoading === a.key}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 2,
+                      padding: '10px 14px',
+                      background: C.SURFACE,
+                      border: '1px solid ' + C.BORDER,
+                      borderRadius: 10,
+                      cursor: addonLoading === a.key ? 'not-allowed' : 'pointer',
+                      transition: 'border-color 0.15s',
+                      fontFamily: 'inherit',
+                      opacity: addonLoading === a.key ? 0.6 : 1,
+                      minWidth: 120,
+                    }}
+                    onMouseEnter={function(e) { if (!addonLoading) e.currentTarget.style.borderColor = C.ACCENT; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
+                  >
+                    <span style={{ fontSize: 12, fontWeight: 600, color: C.TEXT }}>{a.label}</span>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: C.ACCENT }}>
+                      {addonLoading === a.key ? '...' : '$' + a.price + '/mo'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
 
@@ -602,7 +680,7 @@ export function UpgradeModal({
             fontFamily: 'inherit',
           }}
         >
-          View plans
+          {showAddons ? 'View all plans' : 'View plans'}
         </button>
       </div>
     </Sheet>

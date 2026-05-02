@@ -244,10 +244,9 @@ function AdminDashboard() {
 
   var planData = [
     { name: 'Free', value: data.users.byPlan.free || 0, fill: C.GRAY_300 },
-    { name: 'Starter', value: data.users.byPlan.starter || 0, fill: C.BRAND_500 },
-    { name: 'Growth', value: data.users.byPlan.growth || 0, fill: C.PURPLE_500 },
+    { name: 'Core', value: (data.users.byPlan.core || 0) + (data.users.byPlan.starter || 0) + (data.users.byPlan.growth || 0), fill: C.BRAND_500 },
     { name: 'Pro', value: data.users.byPlan.pro || 0, fill: C.SUCCESS_500 },
-    { name: 'Agency', value: data.users.byPlan.agency || 0, fill: '#FF6B6B' },
+    { name: 'Business', value: (data.users.byPlan.business || 0) + (data.users.byPlan.agency || 0), fill: '#FF6B6B' },
     { name: 'Trial', value: data.users.byPlan.trial || 0, fill: C.WARNING_500 }
   ].filter(function(p) { return p.value > 0; });
 
@@ -411,7 +410,7 @@ function AdminDashboard() {
               <div style={{ fontSize: 11, fontWeight: 600, color: C.TEXT_SUBTLE, textTransform: 'uppercase' as any, letterSpacing: '0.05em', marginBottom: 14 }}>
                 User Breakdown
               </div>
-              {['free', 'starter', 'growth', 'pro', 'agency', 'trial'].map(function(plan) {
+              {['free', 'trial', 'core', 'starter', 'growth', 'pro', 'business', 'agency'].map(function(plan) {
                 return (
                   <div key={plan} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, color: C.TEXT }}>
                     <span style={{ textTransform: 'capitalize' as any }}>{plan}</span>

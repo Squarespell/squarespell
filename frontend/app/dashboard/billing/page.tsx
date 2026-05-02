@@ -24,15 +24,25 @@ import {
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
+type AddonInfo = {
+  key: string;
+  extra: number;
+  price: number;
+  cancel_at_period_end?: boolean;
+};
+
 type UserPlan = {
-  plan: 'trial' | 'starter' | 'pro' | 'business';
+  plan: 'trial' | 'core' | 'starter' | 'pro' | 'business';
   quiz_count: number;
   limits: { quizzes: number; leads: number; emails: number };
+  base_limits?: { leads: number; emails: number };
   trial_ends_at: string | null;
   email: string;
   leads_this_month?: number;
   emails_this_month?: number;
   features?: { removeBranding: boolean; abTesting: boolean; zapier: boolean; analytics: string };
+  lead_addon?: AddonInfo | null;
+  email_addon?: AddonInfo | null;
 };
 
 type Invoice = {
@@ -53,28 +63,28 @@ const PLAN_CATALOG: Array<{
   features: string[];
 }> = [
   {
-    id: 'starter',
-    name: 'Starter',
+    id: 'core',
+    name: 'Core',
     monthlyPrice: 12,
     yearlyPrice: 108,
     tagline: 'Remove branding and grow your list',
-    features: ['3 quizzes', '500 responses / month', '500 emails / month', 'AI quiz generation', 'Remove branding', 'Standard analytics'],
+    features: ['5 quizzes', '1,000 leads / month', '1,000 emails / month', 'AI quiz generation', 'Remove branding', 'Branching logic & scoring', 'Quiz scheduling', 'Standard analytics'],
   },
   {
     id: 'pro',
     name: 'Pro',
-    monthlyPrice: 25,
-    yearlyPrice: 228,
+    monthlyPrice: 19,
+    yearlyPrice: 192,
     tagline: 'Full power for serious lead generation',
-    features: ['Unlimited quizzes', '2,000 responses / month', '2,000 emails / month', 'A/B testing', 'Branching logic', 'All integrations & webhooks', 'Email sequences', 'Advanced analytics'],
+    features: ['Unlimited quizzes', '3,000 leads / month', '3,000 emails / month', 'A/B testing', 'All integrations & webhooks', 'Email sequences', 'Advanced analytics'],
   },
   {
     id: 'business',
     name: 'Business',
-    monthlyPrice: 49,
-    yearlyPrice: 468,
+    monthlyPrice: 35,
+    yearlyPrice: 348,
     tagline: 'For agencies and power users',
-    features: ['Everything in Pro', 'Unlimited responses', 'Unlimited emails', 'White-label branding', 'Custom domain', 'Team seats', 'Priority support'],
+    features: ['Everything in Pro', 'Unlimited leads', 'Unlimited emails', 'White-label branding', 'Custom domain', 'Team seats (3 included)', 'Priority support'],
   },
 ];
 
@@ -305,6 +315,54 @@ export default function BillingPage() {
   var isTrial = plan?.plan === 'trial';
   var isPaid = plan && !isTrial;
   var [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  var [addonLoading, setAddonLoading] = useState<string | null>(null);
+
+  function handleAddonCheckout(addonKey: string) {
+    if (!token) return;
+    setAddonLoading(addonKey);
+    fetch(API + '/api/stripe/create-addon-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ addon_key: addonKey }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert(data.error || 'Could not start add-on checkout');
+          setAddonLoading(null);
+        }
+      })
+      .catch(function() {
+        alert('Something went wrong. Please try again.');
+        setAddonLoading(null);
+      });
+  }
+
+  function handleCancelAddon(type: 'lead' | 'email') {
+    if (!token) return;
+    if (!confirm('Cancel your ' + type + ' add-on? It will remain active until the end of the current billing period.')) return;
+    setAddonLoading(type);
+    fetch(API + '/api/stripe/cancel-addon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ addon_type: type }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setAddonLoading(null);
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+        fetchPlan();
+      })
+      .catch(function() {
+        alert('Something went wrong. Please try again.');
+        setAddonLoading(null);
+      });
+  }
 
   // Plan switch modal state
   var [switchModal, setSwitchModal] = useState<{
@@ -501,6 +559,114 @@ export default function BillingPage() {
 
         <InvoicesSection token={token} />
 
+        {/* ── Add-on Packs ── */}
+        {isPaid && (
+          <Card>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
+              Need more leads or emails?
+            </h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
+              Add extra capacity to your current plan without upgrading. Add-ons are billed monthly and can be cancelled anytime.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
+              {/* Lead add-ons */}
+              <div style={{ padding: 16, background: C.SURFACE, borderRadius: 10, border: '1px solid ' + C.BORDER }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>Lead Packs</div>
+                {plan.lead_addon ? (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>
+                      +{plan.lead_addon.extra.toLocaleString()} leads/mo
+                    </div>
+                    <div style={{ fontSize: 12, color: C.ACCENT, fontWeight: 700, marginBottom: 8 }}>
+                      ${plan.lead_addon.price}/mo active
+                    </div>
+                    {plan.lead_addon.cancel_at_period_end ? (
+                      <div style={{ fontSize: 11, color: '#92400E', background: '#FFFBEB', padding: '4px 8px', borderRadius: 6, display: 'inline-block' }}>Cancels at period end</div>
+                    ) : (
+                      <button onClick={function() { handleCancelAddon('lead'); }}
+                        style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                        Cancel add-on
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {[
+                      { key: 'lead_500', label: '+500', price: 3 },
+                      { key: 'lead_1500', label: '+1,500', price: 7 },
+                      { key: 'lead_3000', label: '+3,000', price: 12 },
+                    ].map(function(a) {
+                      return (
+                        <button key={a.key} onClick={function() { handleAddonCheckout(a.key); }}
+                          disabled={addonLoading === a.key}
+                          style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            padding: '8px 12px', borderRadius: 8, border: '1px solid ' + C.BORDER,
+                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"DM Sans",system-ui,sans-serif',
+                            transition: 'border-color 0.15s',
+                          }}
+                          onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                          onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}>
+                          <span style={{ fontWeight: 600, color: C.TEXT }}>{a.label} leads/mo</span>
+                          <span style={{ fontWeight: 700, color: C.ACCENT }}>{addonLoading === a.key ? '...' : '$' + a.price + '/mo'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Email add-ons */}
+              <div style={{ padding: 16, background: C.SURFACE, borderRadius: 10, border: '1px solid ' + C.BORDER }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>Email Packs</div>
+                {plan.email_addon ? (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>
+                      +{plan.email_addon.extra.toLocaleString()} emails/mo
+                    </div>
+                    <div style={{ fontSize: 12, color: C.ACCENT, fontWeight: 700, marginBottom: 8 }}>
+                      ${plan.email_addon.price}/mo active
+                    </div>
+                    {plan.email_addon.cancel_at_period_end ? (
+                      <div style={{ fontSize: 11, color: '#92400E', background: '#FFFBEB', padding: '4px 8px', borderRadius: 6, display: 'inline-block' }}>Cancels at period end</div>
+                    ) : (
+                      <button onClick={function() { handleCancelAddon('email'); }}
+                        style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                        Cancel add-on
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {[
+                      { key: 'email_1000', label: '+1,000', price: 3 },
+                      { key: 'email_5000', label: '+5,000', price: 7 },
+                      { key: 'email_10000', label: '+10,000', price: 12 },
+                    ].map(function(a) {
+                      return (
+                        <button key={a.key} onClick={function() { handleAddonCheckout(a.key); }}
+                          disabled={addonLoading === a.key}
+                          style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            padding: '8px 12px', borderRadius: 8, border: '1px solid ' + C.BORDER,
+                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"DM Sans",system-ui,sans-serif',
+                            transition: 'border-color 0.15s',
+                          }}
+                          onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
+                          onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}>
+                          <span style={{ fontWeight: 600, color: C.TEXT }}>{a.label} emails/mo</span>
+                          <span style={{ fontWeight: 700, color: C.ACCENT }}>{addonLoading === a.key ? '...' : '$' + a.price + '/mo'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
             <h2
@@ -544,11 +710,11 @@ export default function BillingPage() {
                 />
               </button>
               <span style={{ fontSize: 13, fontWeight: yearly ? 700 : 500, color: yearly ? C.TEXT : C.TEXT_MUTED }}>
-                Yearly
+                Annual
               </span>
               {yearly && (
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#FFFFFF', background: C.ACCENT, padding: '2px 8px', borderRadius: 6 }}>
-                  Save 20%
+                  Save up to 25%
                 </span>
               )}
             </div>

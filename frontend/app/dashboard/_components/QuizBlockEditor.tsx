@@ -61,7 +61,7 @@ export interface QuizSettings {
   unpublish_at?: string;
 }
 
-export type UserPlan = 'free' | 'trial' | 'starter' | 'pro' | 'agency' | 'business';
+export type UserPlan = 'free' | 'trial' | 'core' | 'starter' | 'pro' | 'agency' | 'business';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface QuizBlockEditorProps {
@@ -86,18 +86,18 @@ var LETTERS = 'ABCDEFGHIJKLMNOP';
 /*  Plan gating                                                        */
 /* ------------------------------------------------------------------ */
 
-function hasPlanAccess(userPlan: UserPlan | undefined, required: 'starter' | 'pro' | 'agency'): boolean {
-  var tiers: Record<string, number> = { free: 0, trial: 0, starter: 1, pro: 2, business: 3, agency: 3 };
+function hasPlanAccess(userPlan: UserPlan | undefined, required: 'core' | 'pro' | 'business'): boolean {
+  var tiers: Record<string, number> = { free: 0, trial: 0, core: 1, starter: 1, growth: 1, pro: 2, business: 3, agency: 3 };
   var userTier = tiers[userPlan || 'free'] ?? 0;
   var requiredTier = tiers[required] ?? 0;
   return userTier >= requiredTier;
 }
 
-function PlanBadge({ requiredPlan }: { requiredPlan: 'starter' | 'pro' | 'agency' }) {
+function PlanBadge({ requiredPlan }: { requiredPlan: 'core' | 'pro' | 'business' }) {
   var colors: Record<string, { bg: string; text: string }> = {
-    starter: { bg: '#EFF6FF', text: '#2563EB' },
+    core: { bg: '#EFF6FF', text: '#2563EB' },
     pro: { bg: '#F5F3FF', text: '#7C3AED' },
-    agency: { bg: '#FFF7ED', text: '#EA580C' },
+    business: { bg: '#FFF7ED', text: '#EA580C' },
   };
   var c = colors[requiredPlan] || colors.pro;
   return (
@@ -750,15 +750,14 @@ function AnswerImagePicker({
 
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 45 }} onClick={onClose} />
-      <div style={{
-        position: 'fixed', top: pos.top, left: pos.left,
+      <div style={{ position: 'fixed', inset: 0, zIndex: 45, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+      <div onClick={function(e) { e.stopPropagation(); }} style={{
         background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
-        width: 360, padding: 14, boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+        width: 400, maxWidth: 'calc(100vw - 32px)', padding: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
         zIndex: 50,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>Choose image</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>Choose image</div>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
           </button>
@@ -831,6 +830,7 @@ function AnswerImagePicker({
             <div style={{ marginTop: 6, fontSize: 10, color: '#98A2B3', textAlign: 'center' }}>Photos provided by Pexels</div>
           </>
         )}
+      </div>
       </div>
     </>
   );
@@ -1717,15 +1717,15 @@ function ImagePicker({
   }
 
   return (
-    <div ref={pickerRef} style={{
-      position: 'fixed', top: pos.top, left: pos.left,
+    <div style={{ position: 'fixed', inset: 0, zIndex: 45, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+    <div ref={pickerRef} onClick={function(e) { e.stopPropagation(); }} style={{
       background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
-      width: 400, padding: 16, boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+      width: 440, maxWidth: 'calc(100vw - 32px)', padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
       zIndex: 50,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>Add Image</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>Add Image</div>
         <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
         </button>
@@ -1805,6 +1805,7 @@ function ImagePicker({
           </div>
         </>
       )}
+    </div>
     </div>
   );
 }
@@ -1895,15 +1896,15 @@ function VideoPicker({
   }
 
   return (
-    <div style={{
-      position: 'fixed', top: pos.top, left: pos.left,
+    <div style={{ position: 'fixed', inset: 0, zIndex: 45, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+    <div onClick={function(e) { e.stopPropagation(); }} style={{
       background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
-      width: 400, padding: 16, boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+      width: 440, maxWidth: 'calc(100vw - 32px)', padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
       zIndex: 50,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: C.TEXT }}>Add Video</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>Add Video</div>
         <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
         </button>
@@ -1965,6 +1966,7 @@ function VideoPicker({
           <input ref={fileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
         </>
       )}
+    </div>
     </div>
   );
 }
@@ -2259,24 +2261,18 @@ function QuestionCanvas({
 
       {/* Media picker modals */}
       {showImagePicker && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowImagePicker(false); }} />
-          <ImagePicker
-            onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'image' }) as QuestionBlock); }}
-            onClose={function() { setShowImagePicker(false); }}
-            anchorRef={imageBtnRef}
-          />
-        </>
+        <ImagePicker
+          onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'image' }) as QuestionBlock); }}
+          onClose={function() { setShowImagePicker(false); }}
+          anchorRef={imageBtnRef}
+        />
       )}
       {showVideoPicker && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={function() { setShowVideoPicker(false); }} />
-          <VideoPicker
-            onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'video' }) as QuestionBlock); }}
-            onClose={function() { setShowVideoPicker(false); }}
-            anchorRef={videoBtnRef}
-          />
-        </>
+        <VideoPicker
+          onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'video' }) as QuestionBlock); }}
+          onClose={function() { setShowVideoPicker(false); }}
+          anchorRef={videoBtnRef}
+        />
       )}
     </div>
   );

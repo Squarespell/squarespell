@@ -224,7 +224,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
   }
 
   const [quiz, setQuiz] = useState<DbQuiz | null>(null);
-  const [userPlan, setUserPlan] = useState<'trial' | 'starter' | 'pro' | 'agency' | 'free'>('trial');
+  const [userPlan, setUserPlan] = useState<'trial' | 'core' | 'starter' | 'pro' | 'agency' | 'business' | 'free'>('trial');
   const [resolvedId, setResolvedId] = useState<string>('');
   const [state, setState] = useState<'loading' | 'error' | 'empty' | 'ready'>('loading');
   const [errorMsg, setErrorMsg] = useState('');

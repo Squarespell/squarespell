@@ -31,7 +31,7 @@ npm run dev
 - Frontend → Vercel (set root directory to /frontend)
 
 ## Pricing
-- Free: 1 quiz, 50 leads/month
-- Starter: $19/mo — 5 quizzes, 500 leads
-- Pro: $39/mo — 20 quizzes, 5,000 leads
-- Agency: $79/mo — unlimited
+- Trial: 14-day free trial with Pro-level features
+- Core: $12/mo ($9/mo annual) — 5 quizzes, 1,000 leads/mo, 1,000 emails/mo
+- Pro: $19/mo ($16/mo annual) — Unlimited quizzes, 3,000 leads/mo, 3,000 emails/mo
+- Business: $35/mo ($29/mo annual) — Unlimited everything, white-label, custom domain, team seats

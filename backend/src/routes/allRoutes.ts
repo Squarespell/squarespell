@@ -514,8 +514,9 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'email required' });
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-  const { data: owner } = await supabase.from('users').select('plan,brand_kit').eq('id', quiz.user_id).single();
-  const { leads: leadLimit } = getPlanLimits(owner?.plan ?? 'free');
+  const { data: owner } = await supabase.from('users').select('plan,brand_kit,lead_addon').eq('id', quiz.user_id).single();
+  const baseLimits = getPlanLimits(owner?.plan ?? 'free');
+  const leadLimit = getEffectiveLeadLimit(baseLimits, owner?.lead_addon);
 
   const metadata: Record<string, any> = {};
   if (typeof time_to_complete_ms === 'number') {
@@ -1691,13 +1692,13 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
 export const userRouter = Router();
 userRouter.use(requireAuth, attachUser);
 userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
-  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications,custom_domain,domain_verified').eq('id', req.dbUserId).single();
+  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications,custom_domain,domain_verified,lead_addon,email_addon').eq('id', req.dbUserId).single();
   if (!user) return res.status(404).json({ error: 'Not found' });
   var plan = user.plan || 'free';
   // Map legacy 'starter' to 'free' for users who never paid
   if (plan === 'starter' && !user.plan) plan = 'free';
   var trialEndsAt = (plan === 'free' || plan === 'trial') && user.created_at
-    ? new Date(new Date(user.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    ? new Date(new Date(user.created_at).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString()
     : null;
   var limits = getPlanLimits(plan);
   // Count leads and emails for the current month
@@ -1711,7 +1712,24 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   ]);
   var leadsThisMonth = leadRes.count || 0;
   var emailsThisMonth = emailRes.count || 0;
-  res.json({ plan: plan, quiz_count: user.quiz_count, limits: limits, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, custom_domain: user.custom_domain || null, domain_verified: user.domain_verified || false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics } });
+  // Compute effective limits including add-ons
+  var effectiveLeads = getEffectiveLeadLimit(limits, user.lead_addon);
+  var effectiveEmails = getEffectiveEmailLimit(limits, user.email_addon);
+  var effectiveLimits = { ...limits, leads: effectiveLeads, emails: effectiveEmails };
+  // Build add-on summary for frontend
+  var leadAddonInfo = user.lead_addon && user.lead_addon.key ? {
+    key: user.lead_addon.key,
+    extra: LEAD_ADDON_PRICES[user.lead_addon.key]?.leads || 0,
+    price: LEAD_ADDON_PRICES[user.lead_addon.key]?.price || 0,
+    cancel_at_period_end: user.lead_addon.cancel_at_period_end || false,
+  } : null;
+  var emailAddonInfo = user.email_addon && user.email_addon.key ? {
+    key: user.email_addon.key,
+    extra: EMAIL_ADDON_PRICES[user.email_addon.key]?.emails || 0,
+    price: EMAIL_ADDON_PRICES[user.email_addon.key]?.price || 0,
+    cancel_at_period_end: user.email_addon.cancel_at_period_end || false,
+  } : null;
+  res.json({ plan: plan, quiz_count: user.quiz_count, limits: effectiveLimits, base_limits: { leads: limits.leads, emails: limits.emails }, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, custom_domain: user.custom_domain || null, domain_verified: user.domain_verified || false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics }, lead_addon: leadAddonInfo, email_addon: emailAddonInfo });
 });
 
 // PATCH /api/user/custom-domain — set custom domain (business plan only)
@@ -1850,13 +1868,57 @@ userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const PRICE_IDS: Record<string,Record<string,string>> = {
-  starter: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! },
+  core: { monthly: process.env.STRIPE_CORE_PRICE_ID!, yearly: process.env.STRIPE_CORE_YEARLY_PRICE_ID! },
   pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! },
   business: { monthly: process.env.STRIPE_BUSINESS_PRICE_ID!, yearly: process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID! },
   // Legacy aliases for existing subscribers
-  growth: { monthly: process.env.STRIPE_STARTER_PRICE_ID!, yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID! },
+  starter: { monthly: process.env.STRIPE_CORE_PRICE_ID!, yearly: process.env.STRIPE_CORE_YEARLY_PRICE_ID! },
+  growth: { monthly: process.env.STRIPE_CORE_PRICE_ID!, yearly: process.env.STRIPE_CORE_YEARLY_PRICE_ID! },
   agency: { monthly: process.env.STRIPE_BUSINESS_PRICE_ID!, yearly: process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID! },
 };
+
+// ── Add-on pack price IDs ────────────────────────────────────────────────────
+const LEAD_ADDON_PRICES: Record<string, { priceId: string; leads: number; price: number }> = {
+  lead_500:  { priceId: process.env.STRIPE_LEAD_500_PRICE_ID  || '', leads: 500,  price: 3  },
+  lead_1500: { priceId: process.env.STRIPE_LEAD_1500_PRICE_ID || '', leads: 1500, price: 7  },
+  lead_3000: { priceId: process.env.STRIPE_LEAD_3000_PRICE_ID || '', leads: 3000, price: 12 },
+};
+const EMAIL_ADDON_PRICES: Record<string, { priceId: string; emails: number; price: number }> = {
+  email_1000:  { priceId: process.env.STRIPE_EMAIL_1000_PRICE_ID  || '', emails: 1000,  price: 3  },
+  email_5000:  { priceId: process.env.STRIPE_EMAIL_5000_PRICE_ID  || '', emails: 5000,  price: 7  },
+  email_10000: { priceId: process.env.STRIPE_EMAIL_10000_PRICE_ID || '', emails: 10000, price: 12 },
+};
+
+// Reverse lookup: add-on Stripe price ID → addon key
+function priceIdToAddon(priceId: string): { type: 'lead' | 'email'; key: string } | null {
+  for (var k in LEAD_ADDON_PRICES) {
+    if (LEAD_ADDON_PRICES[k].priceId === priceId) return { type: 'lead', key: k };
+  }
+  for (var k2 in EMAIL_ADDON_PRICES) {
+    if (EMAIL_ADDON_PRICES[k2].priceId === priceId) return { type: 'email', key: k2 };
+  }
+  return null;
+}
+
+/** Get total lead limit including add-ons */
+function getEffectiveLeadLimit(planLimits: { leads: number }, leadAddon: any): number {
+  var base = planLimits.leads;
+  if (!isFinite(base)) return Infinity;
+  if (leadAddon && leadAddon.key && LEAD_ADDON_PRICES[leadAddon.key]) {
+    return base + LEAD_ADDON_PRICES[leadAddon.key].leads;
+  }
+  return base;
+}
+
+/** Get total email limit including add-ons */
+function getEffectiveEmailLimit(planLimits: { emails: number }, emailAddon: any): number {
+  var base = planLimits.emails;
+  if (!isFinite(base)) return Infinity;
+  if (emailAddon && emailAddon.key && EMAIL_ADDON_PRICES[emailAddon.key]) {
+    return base + EMAIL_ADDON_PRICES[emailAddon.key].emails;
+  }
+  return base;
+}
 
 // Reverse lookup: Stripe price ID → our plan name
 function priceIdToPlan(priceId: string): string | null {
@@ -1887,6 +1949,84 @@ stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: Authe
   const session = await stripe.checkout.sessions.create({ mode: 'subscription', payment_method_types: ['card'], customer_email: user?.stripe_customer_id ? undefined : user?.email, customer: user?.stripe_customer_id ?? undefined, line_items: [{ price: priceId, quantity: 1 }], success_url: `${process.env.FRONTEND_URL}/dashboard?upgraded=true`, cancel_url: `${process.env.FRONTEND_URL}/pricing`, metadata: { db_user_id: req.dbUserId!, plan: req.body.plan } });
   res.json({ url: session.url });
 });
+
+// ── Add-on checkout ──────────────────────────────────────────────────────────
+stripeRouter.post('/create-addon-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    var addonKey = req.body.addon as string; // e.g. 'lead_500', 'email_1000'
+    if (!addonKey) return res.status(400).json({ error: 'addon is required' });
+
+    var leadAddon = LEAD_ADDON_PRICES[addonKey];
+    var emailAddon = EMAIL_ADDON_PRICES[addonKey];
+    var addon = leadAddon || emailAddon;
+    if (!addon || !addon.priceId) return res.status(400).json({ error: 'Invalid add-on: ' + addonKey });
+
+    var addonType = leadAddon ? 'lead' : 'email';
+
+    // User must be on a paid plan
+    var { data: user } = await supabase.from('users').select('plan,email,stripe_customer_id').eq('id', req.dbUserId).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    var isTrial = user.plan === 'trial' || user.plan === 'free';
+    if (isTrial) return res.status(403).json({ error: 'Add-on packs are available on paid plans only. Please choose a plan first.', redirect: '/pricing' });
+
+    var session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      customer_email: user.stripe_customer_id ? undefined : user.email,
+      customer: user.stripe_customer_id ?? undefined,
+      line_items: [{ price: addon.priceId, quantity: 1 }],
+      success_url: `${process.env.FRONTEND_URL}/dashboard/billing?addon=success`,
+      cancel_url: `${process.env.FRONTEND_URL}/dashboard/billing`,
+      metadata: {
+        db_user_id: req.dbUserId!,
+        addon_type: addonType,
+        addon_key: addonKey,
+      },
+    });
+    res.json({ url: session.url });
+  } catch (err: any) {
+    log.error('create-addon-checkout error:', { err: err.message });
+    res.status(500).json({ error: err.message || 'Failed to create checkout' });
+  }
+});
+
+// ── Cancel add-on ────────────────────────────────────────────────────────────
+stripeRouter.post('/cancel-addon', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    var addonType = req.body.type as string; // 'lead' or 'email'
+    if (addonType !== 'lead' && addonType !== 'email') return res.status(400).json({ error: 'type must be lead or email' });
+    var field = addonType === 'lead' ? 'lead_addon' : 'email_addon';
+
+    var { data: user } = await supabase.from('users').select(field).eq('id', req.dbUserId).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    var addonData = (user as any)[field];
+    if (!addonData || !addonData.stripe_sub_id) return res.status(400).json({ error: 'No active ' + addonType + ' add-on' });
+
+    // Cancel at period end so they keep the add-on until the billing period ends
+    await stripe.subscriptions.update(addonData.stripe_sub_id, { cancel_at_period_end: true });
+    // Update local record
+    await supabase.from('users').update({ [field]: { ...addonData, cancel_at_period_end: true } }).eq('id', req.dbUserId);
+    res.json({ success: true, message: 'Add-on will be cancelled at the end of the billing period.' });
+  } catch (err: any) {
+    log.error('cancel-addon error:', { err: err.message });
+    res.status(500).json({ error: err.message || 'Failed to cancel add-on' });
+  }
+});
+
+// ── Get active add-ons ───────────────────────────────────────────────────────
+stripeRouter.get('/addons', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    var { data: user } = await supabase.from('users').select('lead_addon,email_addon').eq('id', req.dbUserId).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      lead_addon: user.lead_addon || null,
+      email_addon: user.email_addon || null,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to fetch add-ons' });
+  }
+});
+
 stripeRouter.post('/webhook', async (req, res) => {
   var event: Stripe.Event;
   try { event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'] as string, process.env.STRIPE_WEBHOOK_SECRET!); }
@@ -1894,6 +2034,23 @@ stripeRouter.post('/webhook', async (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     var s = event.data.object as Stripe.Checkout.Session;
+
+    // Handle add-on checkout
+    if (s.metadata?.db_user_id && s.metadata?.addon_type && s.metadata?.addon_key) {
+      var addonField = s.metadata.addon_type === 'lead' ? 'lead_addon' : 'email_addon';
+      var addonValue = {
+        key: s.metadata.addon_key,
+        stripe_sub_id: s.subscription as string,
+        created_at: new Date().toISOString(),
+      };
+      await supabase.from('users').update({
+        [addonField]: addonValue,
+        stripe_customer_id: s.customer as string,
+      }).eq('id', s.metadata.db_user_id);
+      log.info('[StripeWebhook] Add-on activated: ' + s.metadata.addon_key + ' for user ' + s.metadata.db_user_id);
+    }
+
+    // Handle plan checkout
     if (s.metadata?.db_user_id && s.metadata?.plan) {
       await supabase.from('users').update({ plan: s.metadata.plan, stripe_customer_id: s.customer as string, stripe_subscription_id: s.subscription as string }).eq('id', s.metadata.db_user_id);
       // Send payment confirmed / plan upgraded email
@@ -1939,9 +2096,22 @@ stripeRouter.post('/webhook', async (req, res) => {
 
   if (event.type === 'customer.subscription.deleted') {
     var sub = event.data.object as Stripe.Subscription;
-    // Fetch user before downgrading so we have their email
+
+    // Check if this is an add-on subscription being cancelled
+    var subPriceId = sub.items?.data?.[0]?.price?.id || '';
+    var cancelledAddon = priceIdToAddon(subPriceId);
+    if (cancelledAddon) {
+      // Clear the add-on from the user record
+      var addonCancelField = cancelledAddon.type === 'lead' ? 'lead_addon' : 'email_addon';
+      await supabase.from('users').update({ [addonCancelField]: null }).filter(addonCancelField + '->>stripe_sub_id', 'eq', sub.id);
+      log.info('[StripeWebhook] Add-on cancelled: ' + cancelledAddon.key + ' (sub ' + sub.id + ')');
+    }
+
+    // Handle main plan subscription cancellation
     var { data: cancelUser } = await supabase.from('users').select('id,email,first_name').eq('stripe_subscription_id', sub.id).single();
-    await supabase.from('users').update({ plan: 'free', stripe_subscription_id: null }).eq('stripe_subscription_id', sub.id);
+    if (cancelUser) {
+      await supabase.from('users').update({ plan: 'free', stripe_subscription_id: null }).eq('stripe_subscription_id', sub.id);
+    }
     if (cancelUser) {
       var endsAt = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
       sendPlatformEmail({
@@ -2372,7 +2542,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
         var now = new Date();
         var daysSinceSignup = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
         var isTrial = user.plan === 'trial' || user.plan === 'free';
-        var isPaid = user.plan === 'starter' || user.plan === 'growth' || user.plan === 'pro' || user.plan === 'agency';
+        var isPaid = user.plan === 'core' || user.plan === 'starter' || user.plan === 'growth' || user.plan === 'pro' || user.plan === 'agency' || user.plan === 'business';
 
         // ── STAGE 1: ONBOARDING (trial/free users only) ──
 
@@ -2485,7 +2655,7 @@ trialReminderRouter.post('/monthly-report', async (req, res) => {
     var { data: users, error: usersError } = await supabase
       .from('users')
       .select('id,email,first_name,plan')
-      .in('plan', ['starter', 'growth', 'pro', 'agency']);
+      .in('plan', ['core', 'starter', 'growth', 'pro', 'agency', 'business']);
     if (usersError) throw usersError;
 
     var emailsSent = 0;
@@ -2932,7 +3102,7 @@ whiteLabelRouter.get('/', requireAuth, attachUser, async function(req: Authentic
   }
 });
 
-// PATCH /api/white-label — update white-label settings (auth required, agency plan only)
+// PATCH /api/white-label — update white-label settings (auth required, business plan only)
 whiteLabelRouter.patch('/', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     if (!req.dbUserId) {
@@ -3114,12 +3284,14 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     }).length;
 
     // Calculate MRR (Monthly Recurring Revenue)
-    // Sum up all paid plans: starter ($29), growth ($99), pro ($199), agency ($499)
+    // Sum up all paid plans with current pricing
     var planPrices: Record<string, number> = {
-      'starter': 19,
-      'growth': 19,
-      'pro': 39,
-      'agency': 79
+      'core': 12,
+      'starter': 12,
+      'growth': 12,
+      'pro': 19,
+      'business': 35,
+      'agency': 35
     };
     var mrr = 0;
     allUsers.forEach(function(u) {
@@ -3146,9 +3318,11 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     // Count users by plan
     var planCounts: Record<string, number> = {
       'free': 0,
+      'core': 0,
       'starter': 0,
       'growth': 0,
       'pro': 0,
+      'business': 0,
       'agency': 0,
       'trial': 0
     };

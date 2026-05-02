@@ -39,16 +39,18 @@ type Plan = {
 
 var PLANS: Plan[] = [
   {
-    name: 'Starter',
+    name: 'Core',
     monthly: 12,
     yearly: 9,
     desc: 'Remove branding and grow your list.',
     features: [
-      '3 quizzes',
-      '500 responses / month',
-      '500 emails / month',
+      '5 quizzes',
+      '1,000 leads / month',
+      '1,000 emails / month',
       'AI quiz generation',
       'Remove branding',
+      'Branching logic & scoring',
+      'Quiz scheduling',
       'Standard analytics',
     ],
     cta: 'Start 14-day trial',
@@ -56,14 +58,14 @@ var PLANS: Plan[] = [
   },
   {
     name: 'Pro',
-    monthly: 25,
-    yearly: 19,
+    monthly: 19,
+    yearly: 16,
     desc: 'Full power for serious lead gen.',
     features: [
       'Unlimited quizzes',
-      '2,000 responses / month',
-      '2,000 emails / month',
-      'A/B testing & branching logic',
+      '3,000 leads / month',
+      '3,000 emails / month',
+      'A/B testing',
       'All integrations & webhooks',
       'Email sequences',
       'Advanced analytics',
@@ -74,14 +76,14 @@ var PLANS: Plan[] = [
   },
   {
     name: 'Business',
-    monthly: 49,
-    yearly: 39,
+    monthly: 35,
+    yearly: 29,
     desc: 'For agencies and power users.',
     features: [
       'Everything in Pro',
-      'Unlimited responses & emails',
+      'Unlimited leads & emails',
       'White-label & custom domain',
-      'Team seats',
+      'Team seats (3 included)',
       'Priority support',
       'API access',
     ],
@@ -857,7 +859,7 @@ export default function LandingPage() {
 
           <div className="billing-toggle">
             <button className={'bt-btn' + (billing === 'monthly' ? ' on' : '')} onClick={function() { setBilling('monthly'); }} type="button">Monthly</button>
-            <button className={'bt-btn' + (billing === 'yearly' ? ' on' : '')} onClick={function() { setBilling('yearly'); }} type="button">Annual <span className="bt-save">Save 20%</span></button>
+            <button className={'bt-btn' + (billing === 'yearly' ? ' on' : '')} onClick={function() { setBilling('yearly'); }} type="button">Annual <span className="bt-save">Save up to 25%</span></button>
           </div>
 
           <div className="pricing-grid">
@@ -881,7 +883,7 @@ export default function LandingPage() {
               );
             })}
           </div>
-          <div className="pricing-foot">Need more emails? Add packs from $5/mo on any paid plan &middot; Cancel anytime</div>
+          <div className="pricing-foot">Need more leads or emails? Add packs from $3/mo on any paid plan &middot; Cancel anytime</div>
         </div>
       </section>
 

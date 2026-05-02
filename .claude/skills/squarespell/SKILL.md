@@ -95,7 +95,7 @@ squarespell2/
 ## Database Schema (Supabase PostgreSQL)
 
 ### users
-`id` UUID PK, `clerk_user_id` TEXT unique, `email`, `plan` (free|trial|starter|pro|agency), `stripe_customer_id`, `stripe_subscription_id`, `plan_expires_at`, `quiz_count`, `squarespace_token`, `squarespace_site_url`, `onboarding_completed` BOOL, `notification_digest` BOOL, `trial_extended` BOOL, `created_at`
+`id` UUID PK, `clerk_user_id` TEXT unique, `email`, `plan` (free|trial|core|pro|business + legacy: starter|growth|agency), `stripe_customer_id`, `stripe_subscription_id`, `plan_expires_at`, `quiz_count`, `squarespace_token`, `squarespace_site_url`, `onboarding_completed` BOOL, `notification_digest` BOOL, `trial_extended` BOOL, `created_at`
 
 ### quizzes
 `id` UUID PK, `user_id` FK→users, `title`, `status` (draft|live|archived), `slug` unique, `questions` JSONB, `outcomes` JSONB, `branding` JSONB, `settings` JSONB, `lead_count`, `view_count`, `embed_format`, `email_gate_position`, `badge_hidden` BOOL, `created_at`, `updated_at`
@@ -169,12 +169,12 @@ squarespell2/
 - `GET/POST /auth/squarespace/*` — Squarespace OAuth flow
 
 ## Pricing Plans
-| Plan | Monthly | Yearly | Quizzes | Leads |
-|------|---------|--------|---------|-------|
-| Trial | Free (7 days) | — | 1 | 50 |
-| Starter | $19/mo | $15/mo | 5 | 500 |
-| Pro | $39/mo | $31/mo | 20 | 5,000 |
-| Agency | $79/mo | $63/mo | Unlimited | Unlimited |
+| Plan | Monthly | Annual | Quizzes | Leads | Emails |
+|------|---------|--------|---------|-------|--------|
+| Trial | Free (14 days) | — | Unlimited | 3,000 | 3,000 |
+| Core | $12/mo | $9/mo | 5 | 1,000 | 1,000 |
+| Pro | $19/mo | $16/mo | Unlimited | 3,000 | 3,000 |
+| Business | $35/mo | $29/mo | Unlimited | Unlimited | Unlimited |
 
 ## Dashboard Pages (inside squarespell-app.html)
 The dashboard is a single HTML file loaded via iframe. Navigation via `gD('pagename')` function.
@@ -213,8 +213,8 @@ The dashboard is a single HTML file loaded via iframe. Navigation via `gD('pagen
 - Lead scoring shows random 78-98 (not calculated from answers)
 - Squarespace OAuth token saved but not used for anything
 - No A/B testing (listed in Pro pricing)
-- No white-label mode (listed in Agency pricing)
-- No team seats (listed in Agency pricing)
+- No white-label mode (listed in Business pricing)
+- No team seats (listed in Business pricing)
 - RLS disabled in Supabase
 - No rate limiting on public endpoints
 

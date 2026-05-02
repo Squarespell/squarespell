@@ -137,32 +137,37 @@ What Squarespace owners are saying
 Simple pricing. Start free.
 
 **Subheadline:**
-7-day free trial with full access. No credit card required.
+14-day free trial with full access. No credit card required.
 
-**Plan 1: Starter — $19/mo**
+**Plan 1: Core — $12/mo ($9/mo annual)**
 - 5 quizzes
-- 500 leads/month
-- Email notifications
-- CSV export
-- Brand auto-detection
+- 1,000 leads/month
+- 1,000 emails/month
+- Remove branding
+- Branching logic & scoring
+- Quiz scheduling
+- Standard analytics
 - Button: "Start free trial" → link to app.squarespell.com/sign-up
 
-**Plan 2: Pro — $39/mo (mark as "Most Popular")**
-- 20 quizzes
-- 5,000 leads/month
-- Everything in Starter
-- Advanced analytics
-- Priority support
-- Zapier integration
-- Button: "Start free trial" → link to app.squarespell.com/sign-up
-
-**Plan 3: Agency — $79/mo**
+**Plan 2: Pro — $19/mo ($16/mo annual) (mark as "Most Popular")**
 - Unlimited quizzes
-- Unlimited leads
+- 3,000 leads/month
+- 3,000 emails/month
+- Everything in Core
+- A/B testing
+- All integrations & webhooks
+- Email sequences
+- Advanced analytics
+- Button: "Start free trial" → link to app.squarespell.com/sign-up
+
+**Plan 3: Business — $35/mo ($29/mo annual)**
+- Unlimited quizzes
+- Unlimited leads & emails
 - Everything in Pro
-- White-label (coming soon)
-- Team seats (coming soon)
-- Custom integrations
+- White-label branding
+- Custom domain
+- Team seats (3 included)
+- Priority support
 - Button: "Start free trial" → link to app.squarespell.com/sign-up
 
 **Below pricing:**
