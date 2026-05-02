@@ -32,7 +32,7 @@ type AddonInfo = {
 };
 
 type UserPlan = {
-  plan: 'trial' | 'core' | 'starter' | 'pro' | 'business';
+  plan: 'trial' | 'core' | 'starter' | 'pro' | 'business' | 'agency' | 'free' | string;
   quiz_count: number;
   limits: { quizzes: number; leads: number; emails: number };
   base_limits?: { leads: number; emails: number };
@@ -545,7 +545,7 @@ export default function BillingPage() {
           <div style={{ display: 'grid', gap: 18 }}>
             <UsageBar label="Quizzes" used={plan.quiz_count} limit={plan.limits.quizzes} />
             <UsageBar label="Leads (monthly)" used={plan.leads_this_month || 0} limit={plan.limits.leads} />
-            <UsageBar label="Emails (monthly)" used={plan.emails_this_month || 0} limit={plan.limits.emails || 50} />
+            <UsageBar label="Emails (monthly)" used={plan.emails_this_month || 0} limit={plan.limits.emails} />
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 18 }}>
             {isPaid ? (
