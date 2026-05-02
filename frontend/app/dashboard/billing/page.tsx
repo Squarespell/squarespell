@@ -59,27 +59,41 @@ const PLAN_CATALOG: Array<{
   name: string;
   monthlyPrice: number;
   yearlyPrice: number;
+  yearlySave: number;
   tagline: string;
-  features: string[];
+  featured: boolean;
+  limits: { quizzes: string; leads: string; emails: string };
+  included: string[];
+  excluded: string[];
 }> = [
   {
     id: 'core',
     name: 'Core',
     monthlyPrice: 12,
     yearlyPrice: 108,
-    tagline: 'Build real quiz funnels with branching logic and scoring.',
-    features: [
-      '5 live quizzes',
-      '1,000 leads / month',
-      '1,000 emails / month',
+    yearlySave: 36,
+    tagline: 'Build real quiz funnels with branching logic, scoring, and scheduling.',
+    featured: false,
+    limits: { quizzes: '5', leads: '1,000', emails: '1,000' },
+    included: [
       'AI quiz generation from your URL',
       'Squarespace one-click connect',
       'Remove Squarespell branding',
-      'Branching logic & weighted scoring',
+      'Branching logic',
+      'Weighted scoring',
       'Quiz scheduling',
       'Standard analytics',
       'Lead dashboard + CSV export',
       'Lead & email add-on packs',
+    ],
+    excluded: [
+      'A/B testing',
+      'Email sequences',
+      'Integrations (Zapier, Mailchimp, etc.)',
+      'Advanced analytics',
+      'Custom CSS',
+      'White-label / Custom domain',
+      'Team seats',
     ],
   },
   {
@@ -87,20 +101,28 @@ const PLAN_CATALOG: Array<{
     name: 'Pro',
     monthlyPrice: 19,
     yearlyPrice: 192,
-    tagline: 'Full power — unlimited quizzes, integrations, A/B testing.',
-    features: [
-      'Unlimited quizzes',
-      '3,000 leads / month',
-      '3,000 emails / month',
-      'Everything in Core, plus:',
+    yearlySave: 36,
+    tagline: 'Full power for serious lead generation — unlimited quizzes, integrations, and A/B testing.',
+    featured: true,
+    limits: { quizzes: 'Unlimited', leads: '3,000', emails: '3,000' },
+    included: [
+      'Everything in Core',
       'A/B testing',
       'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, HubSpot, Google Sheets)',
+      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
       'Webhooks',
-      'Advanced analytics & drop-off',
+      'Advanced analytics',
+      'Per-question drop-off analysis',
       'Custom CSS',
       'Priority email support',
       'Lead & email add-on packs',
+    ],
+    excluded: [
+      'White-label (your brand)',
+      'Custom domain for quizzes',
+      'Team seats',
+      'API access',
+      'Dedicated onboarding call',
     ],
   },
   {
@@ -108,10 +130,25 @@ const PLAN_CATALOG: Array<{
     name: 'Business',
     monthlyPrice: 35,
     yearlyPrice: 348,
-    tagline: 'Unlimited everything with white-label and team seats.',
-    features: [
-      'Unlimited quizzes, leads & emails',
-      'Everything in Pro, plus:',
+    yearlySave: 72,
+    tagline: 'Unlimited everything with white-label, custom domains, team seats, and API access.',
+    featured: false,
+    limits: { quizzes: 'Unlimited', leads: 'Unlimited', emails: 'Unlimited' },
+    included: [
+      'AI quiz generation from your URL',
+      'Squarespace one-click connect',
+      'Remove Squarespell branding',
+      'Branching logic',
+      'Weighted scoring',
+      'Quiz scheduling',
+      'A/B testing',
+      'Email sequences',
+      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
+      'Webhooks',
+      'Standard + advanced analytics',
+      'Per-question drop-off analysis',
+      'Custom CSS',
+      'Lead dashboard + CSV export',
       'White-label (your brand on everything)',
       'Custom domain for quizzes',
       'Team seats (3 included, $5/seat extra)',
@@ -119,6 +156,7 @@ const PLAN_CATALOG: Array<{
       'Priority support (email + chat)',
       'Dedicated onboarding call',
     ],
+    excluded: [],
   },
 ];
 
@@ -763,81 +801,130 @@ export default function BillingPage() {
             }}
           >
             {PLAN_CATALOG.map(function(p) {
-              var current = plan.plan === p.id;
-              var displayPrice = yearly
-                ? '$' + Math.round(p.yearlyPrice / 12) + '/mo'
-                : '$' + p.monthlyPrice + '/mo';
-              var billedNote = yearly
-                ? 'Billed $' + p.yearlyPrice + '/year'
-                : null;
               var isCurrentPlan = plan.plan === p.id;
+              var moPrice = yearly ? Math.round(p.yearlyPrice / 12) : p.monthlyPrice;
+              var billedNote = yearly ? 'Billed $' + p.yearlyPrice + '/year' : 'Billed monthly';
               return (
                 <div
                   key={p.id}
                   style={{
-                    background: C.ELEVATED,
-                    border: isCurrentPlan ? '1px solid ' + C.ACCENT : '1px solid ' + C.BORDER,
-                    borderRadius: 14,
-                    padding: 22,
+                    background: p.featured ? 'linear-gradient(180deg, rgba(13,115,119,.03) 0%, rgba(13,115,119,.08) 100%)' : C.ELEVATED,
+                    border: p.featured ? '2px solid rgba(13,115,119,.30)' : isCurrentPlan ? '2px solid ' + C.ACCENT : '1.5px solid ' + C.BORDER,
+                    borderRadius: 18,
+                    padding: '28px 22px 24px',
                     position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column' as const,
                   }}
                 >
+                  {/* badges */}
+                  {p.featured && (
+                    <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: C.ACCENT, color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 100, letterSpacing: '.07em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const }}>Most Popular</div>
+                  )}
                   {isCurrentPlan && (
-                    <div style={{ position: 'absolute', top: 14, right: 14 }}>
+                    <div style={{ position: 'absolute', top: 12, right: 14 }}>
                       <Pill variant="accent">Current</Pill>
                     </div>
                   )}
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>
+
+                  {/* name + tagline */}
+                  <div style={{ fontSize: 18, fontWeight: 700, color: p.featured ? C.ACCENT : C.TEXT, marginBottom: 4 }}>
                     {p.name}
                   </div>
-                  {p.monthlyPrice === 0 ? (
-                    <div style={{ fontSize: 22, fontWeight: 800, color: C.ACCENT, marginBottom: 2 }}>
-                      Free
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 22, fontWeight: 800, color: C.ACCENT, marginBottom: 2 }}>
-                      {displayPrice}
-                    </div>
-                  )}
-                  {billedNote && (
-                    <div style={{ fontSize: 11, color: C.TEXT_MUTED, marginBottom: 6 }}>
-                      {billedNote}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 12.5, color: C.TEXT_MUTED, marginBottom: 14, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5, marginBottom: 16, minHeight: 40 }}>
                     {p.tagline}
                   </div>
-                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', marginBottom: 16 }}>
-                    {p.features.map(function(f) {
+
+                  {/* price */}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 2 }}>
+                    {yearly && <span style={{ fontSize: 15, color: C.TEXT_MUTED, textDecoration: 'line-through', marginRight: 4 }}>${p.monthlyPrice}</span>}
+                    <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.04em', color: C.TEXT, lineHeight: 1 }}>${moPrice}</span>
+                    <span style={{ fontSize: 14, color: C.TEXT_MUTED }}>/mo</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 4 }}>{billedNote}</div>
+                  {yearly && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600, color: '#059669', marginBottom: 12 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                      Save ${p.yearlySave}/year
+                    </div>
+                  )}
+                  {!yearly && <div style={{ height: 12 }} />}
+
+                  {/* limits badges */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, padding: '12px 10px', background: 'rgba(0,0,0,.025)', borderRadius: 10, marginBottom: 18 }}>
+                    {[
+                      { val: p.limits.quizzes, label: 'Quizzes' },
+                      { val: p.limits.leads, label: 'Leads/mo' },
+                      { val: p.limits.emails, label: 'Emails/mo' },
+                    ].map(function(lim) {
                       return (
-                        <li
-                          key={f}
-                          style={{
-                            fontSize: 13,
-                            color: C.TEXT,
-                            padding: '6px 0',
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: 8,
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+                        <div key={lim.label} style={{ textAlign: 'center' as const }}>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: C.TEXT, letterSpacing: '-.02em' }}>{lim.val}</div>
+                          <div style={{ fontSize: 9, color: C.TEXT_MUTED, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginTop: 1 }}>{lim.label}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* CTA button */}
+                  {!isCurrentPlan && (
+                    <div style={{ marginBottom: 18 }}>
+                      <button
+                        onClick={function() { handlePlanAction(p.id); }}
+                        disabled={checkoutLoading === p.id}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: 10,
+                          border: p.featured ? 'none' : '1px solid ' + C.BORDER,
+                          background: p.featured ? C.ACCENT : C.SURFACE,
+                          color: p.featured ? '#fff' : C.TEXT,
+                          fontSize: 14,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontFamily: '"DM Sans",system-ui,sans-serif',
+                          transition: 'all .15s',
+                          opacity: checkoutLoading === p.id ? 0.5 : 1,
+                        }}
+                      >
+                        {checkoutLoading === p.id ? 'Loading...' : (
+                          isPaid ? (
+                            PLAN_CATALOG.findIndex(function(c) { return c.id === plan.plan; }) <
+                            PLAN_CATALOG.findIndex(function(c) { return c.id === p.id; })
+                              ? 'Upgrade to ' + p.name
+                              : 'Switch to ' + p.name
+                          ) : 'Start free trial'
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  {isCurrentPlan && <div style={{ height: 18 }} />}
+
+                  {/* included */}
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.08em', color: C.ACCENT, marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid rgba(13,115,119,.15)' }}>Included</div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', flex: 1, display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+                    {p.included.map(function(f) {
+                      return (
+                        <li key={f} style={{ fontSize: 13, color: C.TEXT, display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.4 }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={p.featured ? C.ACCENT : '#059669'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><polyline points="20 6 9 17 4 12" /></svg>
                           {f}
                         </li>
                       );
                     })}
                   </ul>
-                  {!isCurrentPlan && (
-                    <GhostButton onClick={function() { handlePlanAction(p.id); }}>
-                      {checkoutLoading === p.id ? 'Loading...' : (
-                        isPaid ? (
-                          PLAN_CATALOG.findIndex(function(c) { return c.id === plan.plan; }) <
-                          PLAN_CATALOG.findIndex(function(c) { return c.id === p.id; })
-                            ? 'Upgrade to ' + p.name
-                            : 'Switch to ' + p.name
-                        ) : 'Choose ' + p.name
-                      )}
-                    </GhostButton>
+
+                  {/* excluded */}
+                  {p.excluded.length > 0 && (
+                    <ul style={{ margin: '12px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+                      {p.excluded.map(function(f) {
+                        return (
+                          <li key={f} style={{ fontSize: 13, color: 'rgba(26,26,26,.30)', display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.4 }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(26,26,26,.22)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                            {f}
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </div>
               );
