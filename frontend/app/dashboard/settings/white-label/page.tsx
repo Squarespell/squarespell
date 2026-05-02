@@ -122,16 +122,16 @@ export default function WhiteLabelSettingsPage() {
     return <DashboardShell title="White-Label Settings"><PageLoading /></DashboardShell>;
   }
 
-  if (!plan || plan.plan !== 'agency') {
+  if (!plan || !['agency', 'business'].includes(plan.plan)) {
     return (
       <DashboardShell title="White-Label Settings">
         <PageHeader title="White-Label Branding" subtitle="Customize the look and feel of public quiz pages" />
         <Card style={{ textAlign: 'center', padding: '40px 20px' }}>
           <h2 style={{ margin: '0 0 12px 0', fontSize: 18, fontWeight: 700, color: C.TEXT }}>
-            Agency Plan Required
+            Business Plan Required
           </h2>
           <p style={{ margin: '0 0 20px 0', fontSize: 14, color: C.TEXT_MUTED, maxWidth: 400 }}>
-            White-label branding is available exclusively for Agency tier users. Upgrade your account to customize the appearance of your quizzes.
+            White-label branding is available for Business tier users. Upgrade your account to customize the appearance of your quizzes.
           </p>
           <Link
             href="/pricing"

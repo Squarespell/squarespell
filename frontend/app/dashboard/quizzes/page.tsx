@@ -154,6 +154,36 @@ export default function QuizzesPage() {
       });
   }
 
+  function handlePause(quiz: Quiz) {
+    if (!token) return;
+    fetch(API + '/api/quizzes/' + quiz.id + '/pause', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(updated: any) {
+        if (updated && updated.id) {
+          setQuizzes(function(prev) { return prev.map(function(q) { return q.id === updated.id ? Object.assign({}, q, { status: updated.status }) : q; }); });
+        }
+      })
+      .catch(function(e) { console.error('Pause failed:', e); });
+  }
+
+  function handleResume(quiz: Quiz) {
+    if (!token) return;
+    fetch(API + '/api/quizzes/' + quiz.id + '/publish', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(updated: any) {
+        if (updated && updated.id) {
+          setQuizzes(function(prev) { return prev.map(function(q) { return q.id === updated.id ? Object.assign({}, q, { status: updated.status }) : q; }); });
+        }
+      })
+      .catch(function(e) { console.error('Resume failed:', e); });
+  }
+
   function handleBulkDelete() {
     if (selectedIds.size === 0 || !token) return;
     var toDelete = Array.from(selectedIds);
@@ -774,10 +804,11 @@ export default function QuizzesPage() {
                                 { label: 'Edit', action: function() { window.location.href = '/dashboard/' + quiz.id; } },
                                 { label: 'Preview', action: function() { window.open('/quiz/' + quiz.slug, '_blank'); } },
                                 { label: 'Share', action: function() { setPublishQuiz(quiz); setOpenMenuId(null); } },
+                                quiz.status === 'live' ? { label: 'Pause', action: function() { handlePause(quiz); setOpenMenuId(null); } } : quiz.status === 'draft' ? { label: 'Resume / Publish', action: function() { handleResume(quiz); setOpenMenuId(null); } } : null,
                                 { label: 'Duplicate', action: function() { handleDuplicate(quiz); setOpenMenuId(null); } },
                                 { label: 'Archive', action: function() { console.log('Archive:', quiz.id); setOpenMenuId(null); } },
                                 { label: 'Delete', action: function() { setDeleteQuiz(quiz); setOpenMenuId(null); }, danger: true },
-                              ].map(function(item, idx) {
+                              ].filter(Boolean).map(function(item, idx) {
                                 return (
                                   <button
                                     key={idx}

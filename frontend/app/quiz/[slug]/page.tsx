@@ -158,6 +158,7 @@ interface Quiz {
     show_pdf_download?: boolean;
   };
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
+  owner_plan?: string;
 }
 
 type Stage = 'loading' | 'error' | 'question' | 'leadgate' | 'submitted' | 'result';
@@ -255,6 +256,8 @@ export default function QuizPage() {
   var [outcome, setOutcome] = useState<QuizOutcome | null>(null);
   var [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   var [hoverOpt, setHoverOpt] = useState<number | null>(null);
+  var [pdfGenerating, setPdfGenerating] = useState(false);
+  var resultCardRef = useRef<HTMLDivElement>(null);
   var sessionIdRef = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   );
@@ -501,16 +504,21 @@ export default function QuizPage() {
   var privacyPolicyUrl = quiz?.settings?.privacy_policy_url || '';
   var webhookUrl = quiz?.settings?.webhook_url || '';
   var metaDescription = quiz?.settings?.meta_description || '';
+  // Plan gating: Pro features require pro/business/agency plan
+  var ownerPlan = quiz?.owner_plan || 'free';
+  var isProPlan = ownerPlan === 'pro' || ownerPlan === 'business' || ownerPlan === 'agency' || ownerPlan === 'trial';
+
   var showSocialSharing = quiz?.settings?.show_social_sharing !== false;
   var showScoreBreakdown = quiz?.settings?.show_score_breakdown !== false;
-  var showEmailResults = quiz?.settings?.show_email_results !== false;
-  var showCountdownTimer = quiz?.settings?.show_countdown_timer !== false;
-  var showCoupon = quiz?.settings?.show_coupon || false;
-  var showProducts = quiz?.settings?.show_products || false;
-  var showBooking = quiz?.settings?.show_booking || false;
-  var showTestimonial = quiz?.settings?.show_testimonial || false;
-  var showBeforeAfter = quiz?.settings?.show_before_after || false;
-  var showPdfDownload = quiz?.settings?.show_pdf_download || false;
+  // Pro-gated features: only show if owner has Pro+ plan
+  var showEmailResults = isProPlan && (quiz?.settings?.show_email_results !== false);
+  var showCountdownTimer = isProPlan && (quiz?.settings?.show_countdown_timer !== false);
+  var showCoupon = isProPlan && (quiz?.settings?.show_coupon || false);
+  var showProducts = isProPlan && (quiz?.settings?.show_products || false);
+  var showBooking = isProPlan && (quiz?.settings?.show_booking || false);
+  var showTestimonial = isProPlan && (quiz?.settings?.show_testimonial || false);
+  var showBeforeAfter = isProPlan && (quiz?.settings?.show_before_after || false);
+  var showPdfDownload = isProPlan && (quiz?.settings?.show_pdf_download || false);
   var LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
   /* ---------- current question helpers ---------- */
@@ -948,7 +956,7 @@ export default function QuizPage() {
 
           {/* ============= RESULT ============= */}
           {stage === 'result' && outcome && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div ref={resultCardRef} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Main outcome card */}
               <div style={{
                 background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
@@ -1240,6 +1248,51 @@ export default function QuizPage() {
                 }}>
                   Redirecting in {countdown}s... <button type="button" onClick={function() { if (countdownRef.current) clearInterval(countdownRef.current); setCountdown(-1); }}
                     style={{ background: 'none', border: 'none', color: brandPrimary, cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>Cancel</button>
+                </div>
+              )}
+
+              {/* PDF Download */}
+              {showPdfDownload && (
+                <div style={{ textAlign: 'center', paddingTop: 4 }}>
+                  <button type="button" disabled={pdfGenerating} onClick={function() {
+                    if (!resultCardRef.current || pdfGenerating) return;
+                    setPdfGenerating(true);
+                    Promise.all([
+                      import('html2canvas'),
+                      import('jspdf'),
+                    ]).then(function(mods) {
+                      var html2canvas = mods[0].default;
+                      var jsPDF = mods[1].default;
+                      return html2canvas(resultCardRef.current as HTMLElement, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                      }).then(function(canvas) {
+                        var imgData = canvas.toDataURL('image/png');
+                        var imgW = canvas.width;
+                        var imgH = canvas.height;
+                        var pdfW = 210;
+                        var pdfH = (imgH * pdfW) / imgW;
+                        var doc = new jsPDF('p', 'mm', [pdfW, Math.max(pdfH + 20, 297)]);
+                        doc.addImage(imgData, 'PNG', 0, 10, pdfW, pdfH);
+                        var safeName = (quiz?.title || 'quiz-result').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+                        doc.save(safeName + '-result.pdf');
+                        setPdfGenerating(false);
+                      });
+                    }).catch(function() {
+                      setPdfGenerating(false);
+                    });
+                  }} style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    padding: '12px 24px', background: brandSurface, color: brandText,
+                    border: '1px solid ' + brandBorder, borderRadius: 100,
+                    fontFamily: brandFont, fontSize: 13, fontWeight: 600, cursor: pdfGenerating ? 'wait' : 'pointer',
+                    opacity: pdfGenerating ? 0.6 : 1, transition: 'all 0.2s',
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    {pdfGenerating ? 'Generating PDF...' : 'Download PDF Report'}
+                  </button>
                 </div>
               )}
             </div>

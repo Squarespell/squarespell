@@ -440,13 +440,13 @@ publicQuizRouter.get('/:slug', async (req, res) => {
   // Try slug first
   let { data } = await supabase
     .from('quizzes')
-    .select('id,title,questions,outcomes,branding,settings')
+    .select('id,title,questions,outcomes,branding,settings,user_id')
     .eq('slug', key).eq('status', 'live').maybeSingle();
   // Fallback: treat the param as a quiz id (covers id-based shared links)
   if (!data) {
     const r = await supabase
       .from('quizzes')
-      .select('id,title,questions,outcomes,branding,settings')
+      .select('id,title,questions,outcomes,branding,settings,user_id')
       .eq('id', key).eq('status', 'live').maybeSingle();
     data = r.data;
   }
@@ -466,7 +466,18 @@ publicQuizRouter.get('/:slug', async (req, res) => {
     }
   }
 
-  res.json(data);
+  // Look up owner's plan for feature gating on the public result page
+  var ownerPlan = 'free';
+  if (data.user_id) {
+    var { data: ownerData } = await supabase.from('users').select('plan').eq('id', data.user_id).single();
+    if (ownerData) ownerPlan = ownerData.plan || 'free';
+  }
+
+  // Remove user_id from public response, add owner_plan
+  var publicData = Object.assign({}, data, { owner_plan: ownerPlan });
+  delete (publicData as any).user_id;
+
+  res.json(publicData);
 });
 publicQuizRouter.post('/:slug/event', async (req, res) => {
   // Rate limit: 30 events per minute per IP per quiz
@@ -1680,7 +1691,7 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
 export const userRouter = Router();
 userRouter.use(requireAuth, attachUser);
 userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
-  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications').eq('id', req.dbUserId).single();
+  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications,custom_domain,domain_verified').eq('id', req.dbUserId).single();
   if (!user) return res.status(404).json({ error: 'Not found' });
   var plan = user.plan || 'free';
   // Map legacy 'starter' to 'free' for users who never paid
@@ -1700,8 +1711,48 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   ]);
   var leadsThisMonth = leadRes.count || 0;
   var emailsThisMonth = emailRes.count || 0;
-  res.json({ plan: plan, quiz_count: user.quiz_count, limits: limits, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics } });
+  res.json({ plan: plan, quiz_count: user.quiz_count, limits: limits, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, custom_domain: user.custom_domain || null, domain_verified: user.domain_verified || false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics } });
 });
+
+// PATCH /api/user/custom-domain — set custom domain (business plan only)
+userRouter.patch('/custom-domain', async function(req: AuthenticatedRequest, res) {
+  try {
+    var { data: user } = await supabase.from('users').select('plan').eq('id', req.dbUserId).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    var plan = user.plan || 'free';
+    if (plan !== 'business' && plan !== 'agency') {
+      return res.status(403).json({ error: 'Custom domains require the Business plan.' });
+    }
+    var domain = req.body.custom_domain || null;
+    var { error: updateErr } = await supabase.from('users').update({ custom_domain: domain, domain_verified: false }).eq('id', req.dbUserId);
+    if (updateErr) return res.status(500).json({ error: updateErr.message });
+    res.json({ custom_domain: domain, domain_verified: false });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to update domain' });
+  }
+});
+
+// POST /api/user/custom-domain/verify — check if CNAME is properly configured
+userRouter.post('/custom-domain/verify', async function(req: AuthenticatedRequest, res) {
+  try {
+    var { data: user } = await supabase.from('users').select('custom_domain').eq('id', req.dbUserId).single();
+    if (!user || !user.custom_domain) return res.status(400).json({ error: 'No custom domain set' });
+    // In production, we'd do a DNS lookup here. For now, mark as verified.
+    var dns = require('dns');
+    dns.resolveCname(user.custom_domain, function(err: any, addresses: string[]) {
+      if (!err && addresses && addresses.some(function(a: string) { return a.includes('squarespell.com'); })) {
+        supabase.from('users').update({ domain_verified: true }).eq('id', req.dbUserId).then(function() {
+          res.json({ verified: true });
+        });
+      } else {
+        res.json({ verified: false, message: 'CNAME not pointing to quiz.squarespell.com' });
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Verification failed' });
+  }
+});
+
 userRouter.get('/recommendations', async function(req: AuthenticatedRequest, res) {
   try {
     var recs = await getRecommendations(req.dbUserId!);
@@ -2899,10 +2950,10 @@ whiteLabelRouter.patch('/', requireAuth, attachUser, async function(req: Authent
     }
 
     var plan = userResult.data.plan ?? 'free';
-    if (plan !== 'agency') {
+    if (plan !== 'agency' && plan !== 'business') {
       return res.status(403).json({
         error: 'plan_required',
-        message: 'White-label branding is only available on the Agency plan.',
+        message: 'White-label branding is only available on the Business plan.',
       });
     }
 

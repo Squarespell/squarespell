@@ -269,6 +269,117 @@ function InstallGuide() {
   );
 }
 
+function SquarespaceConnect({ token }: { token: string | null }) {
+  var [siteUrl, setSiteUrl] = useState('');
+  var [connecting, setConnecting] = useState(false);
+  var [connected, setConnected] = useState(false);
+  var [brandResult, setBrandResult] = useState<any>(null);
+  var [error, setError] = useState('');
+
+  function handleConnect() {
+    if (!siteUrl.trim() || !token) return;
+    setConnecting(true);
+    setError('');
+    var url = siteUrl.trim();
+    if (!url.startsWith('http')) url = 'https://' + url;
+
+    // Step 1: Scrape brand from the Squarespace URL
+    fetch(API + '/api/scrape-brand', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ url: url }),
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.error) throw new Error(data.error);
+        setBrandResult(data);
+
+        // Step 2: Save as brand kit
+        return fetch(API + '/api/user/brand-kit', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({
+            colors: data.colors || {},
+            font_family: data.font_family || '',
+            site_name: data.site_name || '',
+            favicon_url: data.favicon_url || '',
+            site_url: url,
+          }),
+        });
+      })
+      .then(function() {
+        setConnected(true);
+      })
+      .catch(function(err) { setError(err.message || 'Failed to connect'); })
+      .finally(function() { setConnecting(false); });
+  }
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10, background: '#000',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 18, fontWeight: 800, color: '#fff',
+        }}>S</div>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.TEXT }}>
+            Connect Squarespace
+          </h2>
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>Auto-detect your brand and generate embed code</div>
+        </div>
+      </div>
+
+      {connected && brandResult ? (
+        <div style={{
+          padding: '16px 20px', background: '#F0FDF4', border: '1px solid #BBF7D0',
+          borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <span style={{ fontSize: 20 }}>✓</span>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#16A34A' }}>
+              Connected to {brandResult.site_name || siteUrl}
+            </div>
+            <div style={{ fontSize: 12, color: '#15803D' }}>
+              Brand colors {brandResult.colors?.primary ? '(' + brandResult.colors.primary + ')' : ''} and fonts imported to your Brand Kit.
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="text"
+              value={siteUrl}
+              onChange={function(e) { setSiteUrl(e.target.value); }}
+              onKeyDown={function(e) { if (e.key === 'Enter') handleConnect(); }}
+              placeholder="yoursite.squarespace.com"
+              style={{
+                flex: 1, padding: '10px 14px', border: '1px solid ' + C.BORDER,
+                borderRadius: 10, fontSize: 13.5, color: C.TEXT, outline: 'none',
+                fontFamily: '"DM Sans",system-ui,sans-serif',
+              }}
+            />
+            <button type="button" onClick={handleConnect} disabled={connecting || !siteUrl.trim()}
+              style={{
+                padding: '10px 20px', background: C.ACCENT, color: '#fff',
+                border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                cursor: connecting ? 'wait' : 'pointer', opacity: connecting ? 0.6 : 1,
+                whiteSpace: 'nowrap' as const,
+              }}>
+              {connecting ? 'Connecting...' : 'Connect'}
+            </button>
+          </div>
+          {error && <div style={{ fontSize: 12, color: '#DC2626', marginTop: 8 }}>{error}</div>}
+          <p style={{ fontSize: 12, color: C.TEXT_MUTED, margin: '10px 0 0' }}>
+            We'll detect your Squarespace site's brand colors, fonts, and logo so every quiz matches your site perfectly.
+          </p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function EmbedPage() {
   var { token, status: authStatus } = useDashboardAuth();
   var [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -362,6 +473,8 @@ export default function EmbedPage() {
               <QuizEmbedCard key={q.id} quiz={q} />
             ))}
           </div>
+
+          <SquarespaceConnect token={token} />
 
           <InstallGuide />
         </div>

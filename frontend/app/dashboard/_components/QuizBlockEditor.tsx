@@ -56,9 +56,12 @@ export interface QuizSettings {
   show_testimonial?: boolean;
   show_before_after?: boolean;
   show_pdf_download?: boolean;
+  schedule_enabled?: boolean;
+  publish_at?: string;
+  unpublish_at?: string;
 }
 
-export type UserPlan = 'free' | 'trial' | 'starter' | 'pro' | 'agency';
+export type UserPlan = 'free' | 'trial' | 'starter' | 'pro' | 'agency' | 'business';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface QuizBlockEditorProps {
@@ -2696,6 +2699,38 @@ function SettingsPanel({
                   <span style={{ position: 'absolute', top: 2, left: settings?.enable_recaptcha ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
                 </button>
               </div>
+            </div>
+
+            {/* Quiz Scheduling */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
+                Quiz Scheduling <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Enable scheduling</span>
+                <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { schedule_enabled: !(settings?.schedule_enabled) })); }}
+                  style={{ width: 40, height: 22, borderRadius: 11, background: settings?.schedule_enabled ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' as const }}>
+                  <span style={{ position: 'absolute' as const, top: 2, left: settings?.schedule_enabled ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
+                </button>
+              </div>
+              {settings?.schedule_enabled && (
+                <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Publish date</div>
+                    <input type="datetime-local" value={settings?.publish_at ? settings.publish_at.slice(0, 16) : ''}
+                      onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { publish_at: e.target.value ? new Date(e.target.value).toISOString() : '' })); }}
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+                    <p style={{ fontSize: 11, color: C.TEXT_MUTED, margin: '4px 0 0' }}>Quiz won't be visible until this date.</p>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT, marginBottom: 6 }}>Unpublish date <span style={{ fontWeight: 400, color: C.TEXT_MUTED }}>(optional)</span></div>
+                    <input type="datetime-local" value={settings?.unpublish_at ? settings.unpublish_at.slice(0, 16) : ''}
+                      onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { unpublish_at: e.target.value ? new Date(e.target.value).toISOString() : '' })); }}
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid ' + C.BORDER, borderRadius: 8, fontSize: 13, color: C.TEXT, fontFamily: C.FONT, outline: 'none' }} />
+                    <p style={{ fontSize: 11, color: C.TEXT_MUTED, margin: '4px 0 0' }}>Quiz will auto-hide after this date.</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Danger Zone */}
