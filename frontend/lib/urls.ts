@@ -49,8 +49,12 @@ export const QUIZ_FUNNEL_LANDING_PATH = '/tools/quiz-funnel';
 export const publicQuizUrl = (slug: string): string =>
   `${APP_URL}/q/${slug}`;
 
-/** URL to the JS embed loader a Squarespace site owner drops into a Code Block. */
-export const embedScriptUrl = (): string => `${APP_URL}/embed.js`;
+/** URL to the JS embed loader a Squarespace site owner drops into a Code Block.
+ *  The ?v= cache-buster forces browsers to fetch the new version even if an
+ *  older copy is cached with a long max-age header. Bump EMBED_CACHE_VERSION
+ *  whenever quiz-embed.js changes. */
+const EMBED_CACHE_VERSION = '231';
+export const embedScriptUrl = (): string => `${APP_URL}/embed.js?v=${EMBED_CACHE_VERSION}`;
 
 /** Full embed snippet for copy/paste install (div + script format).
  *  The script tag also carries data-quiz as a fallback — if the <div> is
