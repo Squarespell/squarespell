@@ -149,10 +149,15 @@ export default function AutomationsPage() {
         .auto-recipe { transition: box-shadow 0.2s; }
         .auto-recipe:hover { box-shadow: ${C.SHADOW_MD}; }
         .auto-input:focus { border-color: ${C.ACCENT} !important; box-shadow: ${C.FOCUS_RING} !important; }
+        .auto-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        @media (max-width: 1200px) { .auto-stats-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 900px) { .auto-stats-grid { grid-template-columns: 1fr !important; } }
       `}</style>
 
+      <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap' as const, gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.3 }}>
             Automations
@@ -175,7 +180,7 @@ export default function AutomationsPage() {
       </div>
 
       {/* ── 4 Stat cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div className="auto-stats-grid">
         {[
           { label: 'Active automations', value: String(activeCount), sub: activeCount === 0 ? 'No active rules yet' : activeCount + ' running', iconBg: C.BRAND_50, color: C.ACCENT,
             icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /><path d="M14 8l3 4-3 4" /></svg> },
@@ -197,7 +202,7 @@ export default function AutomationsPage() {
                 }}>
                   {stat.icon}
                 </div>
-                <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ position: 'relative', zIndex: 1, minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 6 }}>{stat.label}</div>
                   <div style={{ fontSize: 26, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1 }}>{stat.value}</div>
                   <div style={{ fontSize: 12, color: C.GRAY_400, fontFamily: C.FONT, marginTop: 6 }}>{stat.sub}</div>
@@ -318,7 +323,7 @@ export default function AutomationsPage() {
           {/* Recipe banner */}
           <div className="auto-recipe" style={{
             ...cardBase, padding: '20px 24px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 12,
           }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
               <div style={{
@@ -361,7 +366,7 @@ export default function AutomationsPage() {
             return (
               <div key={rule.id} className="auto-card" style={{
                 ...cardBase, padding: '18px 24px',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 16,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0 }}>
                   <div style={{
@@ -422,7 +427,7 @@ export default function AutomationsPage() {
           {/* Recipe banner */}
           <div className="auto-recipe" style={{
             ...cardBase, padding: '20px 24px', marginTop: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 12,
           }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
               <div style={{
@@ -454,6 +459,8 @@ export default function AutomationsPage() {
           </div>
         </div>
       )}
+
+      </div>{/* close overflow wrapper */}
 
       {/* ── Create modal ── */}
       {showCreate && (
