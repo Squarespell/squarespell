@@ -24,6 +24,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
 import { addUtmParams, quizUtm } from '@/lib/urls';
+import generatePdfReport from './generatePdfReport';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -1255,43 +1256,64 @@ export default function QuizPage() {
               {showPdfDownload && (
                 <div style={{ textAlign: 'center', paddingTop: 4 }}>
                   <button type="button" disabled={pdfGenerating} onClick={function() {
-                    var target = resultCardRef.current;
-                    if (!target) {
-                      /* Fallback: grab the result wrapper from the DOM directly */
-                      var pdfBtnEl = document.querySelector('[data-pdf-trigger]');
-                      if (pdfBtnEl && pdfBtnEl.parentElement && pdfBtnEl.parentElement.parentElement) {
-                        target = pdfBtnEl.parentElement.parentElement as HTMLDivElement;
-                      }
-                    }
-                    if (!target || pdfGenerating) return;
+                    if (pdfGenerating || !quiz) return;
                     setPdfGenerating(true);
-                    Promise.all([
-                      import('html2canvas'),
-                      import('jspdf'),
-                    ]).then(function(mods) {
-                      var html2canvas = mods[0].default;
-                      var jsPDF = mods[1].default;
-                      return html2canvas(target as HTMLElement, {
-                        scale: 2,
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false,
-                      }).then(function(canvas) {
-                        var imgData = canvas.toDataURL('image/png');
-                        var imgW = canvas.width;
-                        var imgH = canvas.height;
-                        var pdfW = 210;
-                        var pdfH = (imgH * pdfW) / imgW;
-                        var doc = new jsPDF('p', 'mm', [pdfW, Math.max(pdfH + 20, 297)]);
-                        doc.addImage(imgData, 'PNG', 0, 10, pdfW, pdfH);
-                        var safeName = (quiz?.title || 'quiz-result').replace(/[^a-z0-9]/gi, '-').toLowerCase();
-                        doc.save(safeName + '-result.pdf');
-                        setPdfGenerating(false);
+                    try {
+                      var questions = quiz.questions || [];
+                      var questionResults: Array<{ questionText: string; chosenAnswer: string; score: number; maxScore: number }> = [];
+                      var maxPossible = 0;
+                      Object.keys(answers).forEach(function(k) {
+                        var qIdx = parseInt(k);
+                        var q = questions[qIdx];
+                        if (!q) return;
+                        var chosenIdx = answers[qIdx];
+                        var chosenOpt = q.options[chosenIdx];
+                        var qMaxScore = 0;
+                        q.options.forEach(function(opt) {
+                          var s = opt.score || 0;
+                          if (s > qMaxScore) qMaxScore = s;
+                        });
+                        maxPossible += qMaxScore;
+                        questionResults.push({
+                          questionText: q.text || q.question || 'Question ' + (qIdx + 1),
+                          chosenAnswer: chosenOpt ? chosenOpt.text : '',
+                          score: chosenOpt ? (chosenOpt.score || 0) : 0,
+                          maxScore: qMaxScore,
+                        });
                       });
-                    }).catch(function(err) {
+                      var oc = outcome || getOutcome(quiz, answers);
+                      generatePdfReport({
+                        quizTitle: quiz.title || 'Quiz Report',
+                        quizDescription: quiz.description,
+                        respondentName: firstName || 'Quiz Taker',
+                        respondentEmail: email || '',
+                        outcomeName: oc ? oc.title : '',
+                        outcomeDescription: oc ? oc.description : '',
+                        totalScore: totalScore,
+                        maxPossibleScore: maxPossible,
+                        questionResults: questionResults,
+                        tips: oc?.tips || [],
+                        ctaText: oc?.ctaText || oc?.cta_text || quiz.settings?.cta_text || '',
+                        ctaUrl: oc?.ctaUrl || oc?.cta_url || quiz.settings?.cta_url || '',
+                        couponCode: oc?.couponCode || oc?.coupon_code || '',
+                        couponLabel: oc?.couponLabel || oc?.coupon_label || '',
+                        testimonialQuote: oc?.testimonialQuote || oc?.testimonial_quote || '',
+                        testimonialAuthor: oc?.testimonialAuthor || oc?.testimonial_author || '',
+                        beforeText: oc?.beforeText || oc?.before_text || '',
+                        afterText: oc?.afterText || oc?.after_text || '',
+                        bookingUrl: oc?.bookingUrl || oc?.booking_url || '',
+                        bookingText: oc?.bookingText || oc?.booking_text || '',
+                        brandPrimary: brandPrimary,
+                        brandName: brandName || quiz.title || 'Quiz',
+                        brandFont: brandFont,
+                        logoUrl: logoUrl,
+                        generatedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                      });
+                      setTimeout(function() { setPdfGenerating(false); }, 2000);
+                    } catch(err) {
                       console.error('PDF generation failed:', err);
                       setPdfGenerating(false);
-                    });
+                    }
                   }} data-pdf-trigger="true" style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     padding: '12px 24px', background: brandSurface, color: brandText,
