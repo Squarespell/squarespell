@@ -1255,7 +1255,15 @@ export default function QuizPage() {
               {showPdfDownload && (
                 <div style={{ textAlign: 'center', paddingTop: 4 }}>
                   <button type="button" disabled={pdfGenerating} onClick={function() {
-                    if (!resultCardRef.current || pdfGenerating) return;
+                    var target = resultCardRef.current;
+                    if (!target) {
+                      /* Fallback: grab the result wrapper from the DOM directly */
+                      var pdfBtnEl = document.querySelector('[data-pdf-trigger]');
+                      if (pdfBtnEl && pdfBtnEl.parentElement && pdfBtnEl.parentElement.parentElement) {
+                        target = pdfBtnEl.parentElement.parentElement as HTMLDivElement;
+                      }
+                    }
+                    if (!target || pdfGenerating) return;
                     setPdfGenerating(true);
                     Promise.all([
                       import('html2canvas'),
@@ -1263,7 +1271,7 @@ export default function QuizPage() {
                     ]).then(function(mods) {
                       var html2canvas = mods[0].default;
                       var jsPDF = mods[1].default;
-                      return html2canvas(resultCardRef.current as HTMLElement, {
+                      return html2canvas(target as HTMLElement, {
                         scale: 2,
                         useCORS: true,
                         backgroundColor: '#ffffff',
@@ -1280,10 +1288,11 @@ export default function QuizPage() {
                         doc.save(safeName + '-result.pdf');
                         setPdfGenerating(false);
                       });
-                    }).catch(function() {
+                    }).catch(function(err) {
+                      console.error('PDF generation failed:', err);
                       setPdfGenerating(false);
                     });
-                  }} style={{
+                  }} data-pdf-trigger="true" style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     padding: '12px 24px', background: brandSurface, color: brandText,
                     border: '1px solid ' + brandBorder, borderRadius: 100,
