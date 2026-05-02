@@ -192,23 +192,29 @@ export default function EmbedQuizClient({
     if (typeof window === 'undefined' || window.parent === window) return;
     let lastSent = 0;
     const notify = () => {
-      // Measure actual content height, not the iframe-fitted documentElement.
-      // Use the first child of body (the quiz root) to avoid feedback loops.
-      const root = document.body.firstElementChild as HTMLElement | null;
-      const h = root ? Math.ceil(root.getBoundingClientRect().height) : document.body.scrollHeight;
+      // Measure the .sq-root element directly — in Next.js the first child of
+      // body is #__next, not .sq-root. Use scrollHeight as a fallback which
+      // captures the full content height regardless of overflow clipping.
+      const sqRoot = document.querySelector('.sq-root') as HTMLElement | null;
+      const h = sqRoot
+        ? Math.ceil(sqRoot.getBoundingClientRect().height)
+        : document.body.scrollHeight;
       if (Math.abs(h - lastSent) < 2) return;
       lastSent = h;
       window.parent.postMessage({ source: 'squarespell', type: 'resize', height: h }, '*');
     };
-    const root = document.body.firstElementChild;
+    // Observe the .sq-root element, falling back to body
+    const sqRoot = document.querySelector('.sq-root');
     const ro = new ResizeObserver(notify);
-    if (root) ro.observe(root); else ro.observe(document.body);
-    // Also observe body in case content isn't wrapped
+    if (sqRoot) ro.observe(sqRoot); else ro.observe(document.body);
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     document.body.style.margin = '0';
+    // Fire immediately, then again after a short delay to catch late-rendering
+    // content like YouTube embeds that load asynchronously.
     notify();
-    return () => ro.disconnect();
+    const delayed = setTimeout(notify, 1000);
+    return () => { ro.disconnect(); clearTimeout(delayed); };
   }, [stage, qIdx]);
 
   // Timer countdown for current question
@@ -371,7 +377,6 @@ export default function EmbedQuizClient({
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        html, body { height: 100%; }
         body {
           font-family: ${brandFont};
           background: ${brandBg};
@@ -379,7 +384,6 @@ export default function EmbedQuizClient({
         }
         .sq-root {
           container-type: inline-size;
-          min-height: 100svh;
           background: ${brandBg};
           color: ${brandText};
           padding: 28px 20px 40px;
@@ -542,6 +546,7 @@ export default function EmbedQuizClient({
           overflow: hidden;
           margin-bottom: 18px;
           background: #0a0a0a;
+          max-height: 280px;
         }
         .sq-q-video-wrap iframe,
         .sq-q-video-wrap video {

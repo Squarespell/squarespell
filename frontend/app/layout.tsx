@@ -9,14 +9,29 @@ import { ToastProvider } from '../lib/toast';
 import './globals.css';
 
 function AuthTokenSync() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   useEffect(() => {
+    if (!isLoaded) return;
     if (isSignedIn) {
-      getToken().then(t => setAuthToken(t));
+      // Pass the getToken *function* so every API call fetches a fresh token
+      // instead of caching a single string that goes stale on rotation.
+      setAuthToken(
+        () => getToken().then(t => t || ''),
+        () => getToken({ skipCache: true } as any).then(t => t || '')
+      );
     } else {
-      setAuthToken(null);
+      // Grace period: when Clerk rotates the session token, isSignedIn can
+      // briefly flip to false. Do NOT nuke the token immediately — wait 5s
+      // to see if Clerk recovers. If it doesn't, clear it.
+      const timer = setTimeout(() => {
+        // Re-check: if still not signed in after the grace period, clear it.
+        getToken().then(t => {
+          if (!t) setAuthToken(null);
+        }).catch(() => setAuthToken(null));
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [isSignedIn, getToken]);
+  }, [isLoaded, isSignedIn, getToken]);
   return null;
 }
 

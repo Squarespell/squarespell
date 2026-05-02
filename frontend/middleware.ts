@@ -83,10 +83,23 @@ export default clerkMiddleware((auth, req) => {
   //    page.tsx which redirects them to /dashboard.
   //    (Handled inside app/page.tsx, not here, so we don't break SSR.)
 
+  // Let client-side useDashboardAuth handle auth for page routes.
+  // The middleware only needs to protect server API routes under /dashboard.
+  // Page navigations get through to the client, where useDashboardAuth has
+  // a grace window for Clerk token rotation — the middleware does not, so
+  // it was bouncing users to /sign-in during brief rotation gaps.
   if (isProtectedRoute(req)) {
-    auth().protect({
-      unauthenticatedUrl: new URL('/sign-in', req.url).toString(),
-    })
+    const authObj = auth();
+    if (!authObj.userId) {
+      // For API/trpc routes, hard-block — they can't do client-side retry
+      if (pathname.startsWith('/api/') || pathname.startsWith('/trpc/')) {
+        authObj.protect({
+          unauthenticatedUrl: new URL('/sign-in', req.url).toString(),
+        });
+      }
+      // For page routes, let them through — useDashboardAuth handles it
+      // with retry logic and a grace window for token rotation.
+    }
   }
   return NextResponse.next()
 })
