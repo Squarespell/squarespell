@@ -161,13 +161,16 @@ export default function EmailCampaignsPage() {
         return s + (sent > 0 ? (opened / sent) * 100 : 0);
       }, 0) / items.filter(function (c) { return (c.sent_count || 0) > 0; }).length || 0
     : 0;
+  /* best campaign: prefer highest open rate, fall back to most sent */
   var bestCampaign = items.reduce(function (best, c) {
     var sent = c.sent_count || 0;
     var opened = (c as any).opened_count || 0;
     var rate = sent > 0 ? (opened / sent) * 100 : 0;
-    if (!best || rate > best.rate) return { name: c.name || c.subject || 'Untitled', rate: rate };
+    var score = rate > 0 ? rate * 1000 + sent : sent; /* prioritize open rate, break ties by volume */
+    var bestScore = best ? (best.rate > 0 ? best.rate * 1000 + best.sent : best.sent) : -1;
+    if (score > bestScore) return { name: c.name || c.subject || 'Untitled', rate: rate, sent: sent };
     return best;
-  }, null as { name: string; rate: number } | null);
+  }, null as { name: string; rate: number; sent: number } | null);
 
   var pct = quota && quota.cap > 0 ? Math.min(100, Math.round((quota.used / quota.cap) * 100)) : 0;
 
@@ -206,9 +209,9 @@ export default function EmailCampaignsPage() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {/* Search */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', minWidth: 220 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
@@ -218,16 +221,17 @@ export default function EmailCampaignsPage() {
               value={search}
               onChange={function (e) { setSearch(e.target.value); setPage(1); }}
               style={{
-                padding: '9px 14px 9px 38px', border: '1px solid ' + C.GRAY_300,
+                padding: '9px 50px 9px 38px', border: '1px solid ' + C.GRAY_300,
                 borderRadius: 10, fontSize: 14, fontFamily: C.FONT,
-                color: C.GRAY_900, outline: 'none', background: '#fff', width: 200,
+                color: C.GRAY_900, outline: 'none', background: '#fff', width: '100%',
+                boxSizing: 'border-box',
               }}
             />
             <span style={{
-              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
               fontSize: 11, color: C.GRAY_400, fontFamily: C.FONT, fontWeight: 500,
               background: C.GRAY_50, padding: '2px 6px', borderRadius: 4,
-              border: '1px solid ' + C.GRAY_200,
+              border: '1px solid ' + C.GRAY_200, pointerEvents: 'none',
             }}>&#8984;K</span>
           </div>
 
@@ -366,11 +370,18 @@ export default function EmailCampaignsPage() {
           </div>
           <div>
             <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 4 }}>Best Performing</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.3 }}>
-              {bestCampaign ? bestCampaign.name : 'Quiz Results Email'}
+            <div style={{
+              fontSize: 16, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.3,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180,
+            }}>
+              {bestCampaign ? bestCampaign.name : 'No campaigns'}
             </div>
             <div style={{ fontSize: 13, color: '#12B76A', fontFamily: C.FONT, marginTop: 6, fontWeight: 600 }}>
-              {bestCampaign && bestCampaign.rate > 0 ? bestCampaign.rate.toFixed(0) : '56'}% open rate
+              {bestCampaign && bestCampaign.rate > 0
+                ? bestCampaign.rate.toFixed(0) + '% open rate'
+                : bestCampaign && bestCampaign.sent > 0
+                  ? bestCampaign.sent + ' emails sent'
+                  : 'Send your first campaign'}
             </div>
           </div>
         </div>
@@ -473,7 +484,7 @@ export default function EmailCampaignsPage() {
         </div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16, overflow: 'hidden' }}>
             {paginated.map(function (c) {
               var type = campaignType(c);
               var meta = TYPE_META[type];
@@ -599,7 +610,7 @@ export default function EmailCampaignsPage() {
                           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any,
                           lineHeight: 1.4,
                         }}>
-                          {(c as any).preview_text || (c.html ? c.html.replace(/<[^>]*>/g, '').slice(0, 80) + '...' : 'No preview available')}
+                          {(c as any).preview_text || (c.html ? c.html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim().slice(0, 80) : 'No preview available')}
                         </div>
                       </div>
                     </div>
