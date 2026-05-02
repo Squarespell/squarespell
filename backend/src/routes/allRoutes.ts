@@ -844,7 +844,7 @@ leadsRouter.get('/leads', requireAuth, attachUser, async (req: AuthenticatedRequ
     var limit = Math.min(parseInt((req.query.limit as string) || '200', 10) || 200, 1000);
     var query = supabase
       .from('leads')
-      .select('id, name, email, answers, outcome_id, created_at, quiz_id, metadata, quizzes(id, title, slug)')
+      .select('id, name, email, answers, outcome_id, score, created_at, quiz_id, metadata, quizzes(id, title, slug)')
       .eq('user_id', req.dbUserId)
       .order('created_at', { ascending: false })
       .limit(limit);
