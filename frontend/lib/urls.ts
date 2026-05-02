@@ -52,9 +52,9 @@ export const publicQuizUrl = (slug: string): string =>
 /** URL to the JS embed loader a Squarespace site owner drops into a Code Block. */
 export const embedScriptUrl = (): string => `${APP_URL}/embed.js`;
 
-/** Full <script> snippet for copy/paste install. */
+/** Full embed snippet for copy/paste install (div + script format). */
 export const embedSnippet = (slug: string): string =>
-  `<script src="${embedScriptUrl()}" data-quiz="${slug}"></script>`;
+  `<div data-squarespell-quiz="${slug}"></div>\n<script src="${embedScriptUrl()}" async></script>`;
 
 /** Authenticated dashboard landing URL. */
 export const dashboardUrl = (): string => `${APP_URL}/dashboard`;

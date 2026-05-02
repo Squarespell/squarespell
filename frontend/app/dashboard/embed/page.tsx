@@ -155,7 +155,7 @@ function InstallGuide() {
   const blockSteps = [
     {
       title: 'Copy your quiz snippet',
-      body: 'Click "Copy snippet" on any quiz card above. The snippet is a single <script> tag tied to that specific quiz.',
+      body: 'Click "Copy snippet" on any quiz card above. The snippet is a small code block tied to that specific quiz.',
     },
     {
       title: 'Edit the target page in Squarespace',
