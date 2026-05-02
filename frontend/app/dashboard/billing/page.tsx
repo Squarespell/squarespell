@@ -88,9 +88,11 @@ const PLAN_CATALOG: Array<{
   },
 ];
 
-function UsageBar({ label, used, limit }: { label: string; used: number; limit: number }) {
-  var pct = limit > 0 && isFinite(limit) ? Math.min(100, (used / limit) * 100) : 0;
-  var over = limit > 0 && isFinite(limit) && used > limit * 0.85;
+function UsageBar({ label, used, limit }: { label: string; used: number; limit: number | null }) {
+  var safeUsed = used ?? 0;
+  var isUnlimited = limit == null || !isFinite(limit);
+  var pct = !isUnlimited && limit > 0 ? Math.min(100, (safeUsed / limit) * 100) : 0;
+  var over = !isUnlimited && limit > 0 && safeUsed > limit * 0.85;
   return (
     <div>
       <div
@@ -113,10 +115,10 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
           {label}
         </span>
         <span style={{ fontSize: 13, color: C.TEXT, fontVariantNumeric: 'tabular-nums' }}>
-          <strong>{used.toLocaleString()}</strong>
+          <strong>{safeUsed.toLocaleString()}</strong>
           <span style={{ color: C.TEXT_MUTED }}>
             {' / '}
-            {isFinite(limit) ? limit.toLocaleString() : '∞'}
+            {isUnlimited ? '∞' : limit.toLocaleString()}
           </span>
         </span>
       </div>
