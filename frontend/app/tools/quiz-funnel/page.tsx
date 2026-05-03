@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { QUIZ_BUILDER_PATH } from '@/lib/urls';
@@ -12,6 +12,23 @@ export default function LandingPage() {
   var [selectedPlan, setSelectedPlan] = useState('monthly');
   var [selectedCategory, setSelectedCategory] = useState('All');
   var [expandedFaq, setExpandedFaq] = useState(null);
+
+  useEffect(function() {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    var animateItems = document.querySelectorAll('[data-animate]');
+    animateItems.forEach(function(item) {
+      observer.observe(item);
+    });
+
+    return function() { observer.disconnect(); };
+  }, []);
 
   var filteredTemplates = useMemo(function() {
     if (selectedCategory === 'All') return QUIZ_TEMPLATE_CATALOG.slice(0, 4);
@@ -163,32 +180,32 @@ export default function LandingPage() {
 
   var features = [
     {
-      icon: '⚡',
+      icon: 'wand',
       title: 'AI Quiz Generation',
       desc: 'Paste your Squarespace URL. Our AI reads your content, brand, and business type—then generates a fully branded quiz in 60 seconds.'
     },
     {
-      icon: '🎨',
+      icon: 'palette',
       title: 'Brand Auto-Detection',
       desc: 'Colors, fonts, and design style are pulled automatically from your site. Your quiz looks native to your brand, not like an external tool.'
     },
     {
-      icon: '📧',
+      icon: 'mail',
       title: 'Smart Lead Capture',
       desc: 'Email gate before results drives 60%+ lead capture rates. Segment leads by answers for personalized follow-up.'
     },
     {
-      icon: '📊',
+      icon: 'chart',
       title: 'Real-Time Analytics',
       desc: 'See views, completions, drop-off points, and conversion funnels in real time. Understand exactly where visitors engage or bounce.'
     },
     {
-      icon: '🧪',
+      icon: 'beaker',
       title: 'A/B Testing',
       desc: 'Test quiz variants, questions, and outcomes. Auto-detect winners at 97% statistical confidence.'
     },
     {
-      icon: '✨',
+      icon: 'code',
       title: 'One-Line Embed',
       desc: 'Single script tag embeds your quiz on any Squarespace page. Responsive, fast, and zero impact on site performance.'
     }
@@ -222,8 +239,49 @@ export default function LandingPage() {
     { name: 'Brand/Saturated', primary: '#FF6B35', background: '#FFF8E7' }
   ];
 
+  function renderIcon(iconName) {
+    var size = '24';
+    var strokeWidth = '2';
+    var baseAttrs = { viewBox: '0 0 24 24', width: size, height: size, fill: 'none', stroke: 'currentColor', strokeWidth: strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+
+    switch(iconName) {
+      case 'wand':
+        return <svg {...baseAttrs}><path d="M15 4V2m0 2a10 10 0 0 1 7.07 2.93M15 4a10 10 0 0 0-7.07 2.93M22 9h2m-2 0a10 10 0 0 1-2.93 7.07M22 9a10 10 0 0 0-7.07-2.93M9 22v2m0-2a10 10 0 0 1-7.07-2.93m7.07 2.93a10 10 0 0 0 7.07-2.93M2 9h-2m2 0a10 10 0 0 0 2.93 7.07M2 9a10 10 0 0 1 2.93-7.07M4 4l2.121 2.121m10.758 0L20 4m0 16l-2.121-2.121M6.121 6.121L4 4m0 16l2.121-2.121M20 20l-2.121-2.121" /></svg>;
+      case 'palette':
+        return <svg {...baseAttrs}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /><path d="M7.2 7.2A10 10 0 0 0 2 12m0 0a10 10 0 0 0 5.2 4.8m10-9.6A10 10 0 0 0 22 12m0 0a10 10 0 0 0-5.2 4.8" /></svg>;
+      case 'mail':
+        return <svg {...baseAttrs}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M2 6l10 7.5L22 6" /></svg>;
+      case 'chart':
+        return <svg {...baseAttrs}><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="14" /><rect x="14" y="17" width="7" height="3" /><rect x="3" y="11" width="7" height="9" /></svg>;
+      case 'beaker':
+        return <svg {...baseAttrs}><path d="M4.5 3h15v8c0 3-2.24 5.5-5 6.5v3.5h-5v-3.5c-2.76-1-5-3.5-5-6.5V3z" /><line x1="9" y1="21" x2="15" y2="21" /></svg>;
+      case 'code':
+        return <svg {...baseAttrs}><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>;
+      case 'link':
+        return <svg {...baseAttrs}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>;
+      case 'zap':
+        return <svg {...baseAttrs}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
+      case 'star':
+        return <svg {...baseAttrs}><polygon points="12 2 15.09 10.26 23.77 11.27 17.88 17.07 19.24 25.72 12 21.77 4.76 25.72 6.12 17.07 0.23 11.27 8.91 10.26 12 2" /></svg>;
+      case 'check':
+        return <svg {...baseAttrs}><polyline points="20 6 9 17 4 12" /></svg>;
+      case 'x':
+        return <svg {...baseAttrs}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
+      case 'arrow-right':
+        return <svg {...baseAttrs}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>;
+      default:
+        return null;
+    }
+  }
+
   return (
     <div className="lp">
+      <div className="announcement-bar">
+        <div className="container">
+          <p className="announcement-text">New: AI generates your quiz from any URL in 60 seconds → <Link href={QUIZ_BUILDER_PATH}>Try it free</Link></p>
+        </div>
+      </div>
+
       <header className="nav">
         <div className="nav-container">
           <div className="nav-logo">
@@ -244,7 +302,7 @@ export default function LandingPage() {
 
       <section className="hero" id="hero">
         <div className="container">
-          <div className="hero-content">
+          <div className="hero-content" data-animate>
             <h1 className="h1">
               AI Quiz Funnels <span className="accent-word">for Squarespace</span>
             </h1>
@@ -259,7 +317,7 @@ export default function LandingPage() {
                   placeholder="https://yoursite.squarespace.com"
                   value={heroUrl}
                   onChange={function(e) { setHeroUrl(e.target.value); }}
-                  onKeyPress={function(e) { if (e.key === 'Enter') handleHeroSubmit(); }}
+                  onKeyDown={function(e) { if (e.key === 'Enter') handleHeroSubmit(); }}
                   className="form-input"
                 />
                 <button onClick={handleHeroSubmit} className="btn-pill btn-large">
@@ -274,19 +332,22 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="hero-visual">
-            <div className="quiz-mockup">
-              <div className="quiz-card">
-                <div className="quiz-header">
-                  <div className="ai-tag">AI-generated</div>
+          <div className="hero-visual" data-animate>
+            <div className="quiz-mockup-wrapper">
+              <div className="quiz-glow"></div>
+              <div className="quiz-mockup">
+                <div className="quiz-card">
+                  <div className="quiz-header">
+                    <div className="ai-tag">AI-generated</div>
+                  </div>
+                  <div className="quiz-question">Which describes you best?</div>
+                  <div className="quiz-options">
+                    <div className="option">Mobile-first</div>
+                    <div className="option">Enterprise</div>
+                    <div className="option">Startup</div>
+                  </div>
+                  <div className="live-indicator">● Live</div>
                 </div>
-                <div className="quiz-question">Which describes you best?</div>
-                <div className="quiz-options">
-                  <div className="option">📱 Mobile-first</div>
-                  <div className="option">💼 Enterprise</div>
-                  <div className="option">🚀 Startup</div>
-                </div>
-                <div className="live-indicator">● Live</div>
               </div>
             </div>
           </div>
@@ -297,19 +358,19 @@ export default function LandingPage() {
         <div className="container">
           <p className="proof-text">Trusted by 2,400+ Squarespace site owners</p>
           <div className="proof-badges">
-            <div className="proof-badge">
+            <div className="proof-badge" data-animate>
               <span className="badge-icon">✓</span>
               <span>GDPR Compliant</span>
             </div>
-            <div className="proof-badge">
+            <div className="proof-badge" data-animate>
               <span className="badge-icon">✓</span>
               <span>Squarespace Native</span>
             </div>
-            <div className="proof-badge">
+            <div className="proof-badge" data-animate>
               <span className="badge-icon">✓</span>
               <span>Powered by AI</span>
             </div>
-            <div className="proof-badge">
+            <div className="proof-badge" data-animate>
               <span className="badge-icon">✓</span>
               <span>SOC 2 Ready</span>
             </div>
@@ -319,20 +380,26 @@ export default function LandingPage() {
 
       <section className="how-it-works" id="how">
         <div className="container">
-          <h2 className="h2">How It Works</h2>
+          <h2 className="h2" data-animate>How It Works</h2>
           <div className="steps">
-            <article className="step">
-              <div className="step-number">1</div>
+            <article className="step" data-animate>
+              <div className="step-icon">
+                {renderIcon('link')}
+              </div>
               <h3 className="h3">Paste Your URL</h3>
               <p>Our AI reads your Squarespace site, detects your colors, fonts, business type, and audience.</p>
             </article>
-            <article className="step">
-              <div className="step-number">2</div>
+            <article className="step" data-animate>
+              <div className="step-icon">
+                {renderIcon('zap')}
+              </div>
               <h3 className="h3">AI Builds Your Quiz</h3>
               <p>Branded questions, smart scoring, and personalized outcomes—all generated in 60 seconds.</p>
             </article>
-            <article className="step">
-              <div className="step-number">3</div>
+            <article className="step" data-animate>
+              <div className="step-icon">
+                {renderIcon('arrow-right')}
+              </div>
               <h3 className="h3">Embed & Capture Leads</h3>
               <p>One line of code. Goes live instantly. Leads flow to your dashboard in real time.</p>
             </article>
@@ -342,33 +409,33 @@ export default function LandingPage() {
 
       <section className="comparison" id="comparison">
         <div className="container">
-          <h2 className="h2">Contact Forms Are Killing Your Conversions</h2>
+          <h2 className="h2" data-animate>Contact Forms Are Killing Your Conversions</h2>
           <div className="comparison-table">
             <div className="comp-row header">
               <div className="comp-col">Contact Form</div>
               <div className="comp-col">Squarespell Quiz Funnel</div>
             </div>
-            <div className="comp-row">
+            <div className="comp-row" data-animate>
               <div className="comp-col">2-3% conversion</div>
               <div className="comp-col accent">10-15% conversion</div>
             </div>
-            <div className="comp-row">
+            <div className="comp-row" data-animate>
               <div className="comp-col">No engagement</div>
               <div className="comp-col accent">Interactive & personalized</div>
             </div>
-            <div className="comp-row">
+            <div className="comp-row" data-animate>
               <div className="comp-col">Name + email only</div>
               <div className="comp-col accent">Name, email, preferences, intent</div>
             </div>
-            <div className="comp-row">
+            <div className="comp-row" data-animate>
               <div className="comp-col">Generic follow-up</div>
               <div className="comp-col accent">Personalized recommendations</div>
             </div>
-            <div className="comp-row">
+            <div className="comp-row" data-animate>
               <div className="comp-col">Zero insights</div>
               <div className="comp-col accent">Full analytics dashboard</div>
             </div>
-            <div className="comp-row">
+            <div className="comp-row" data-animate>
               <div className="comp-col">Visitors bounce</div>
               <div className="comp-col accent">Visitors complete and share</div>
             </div>
@@ -378,12 +445,14 @@ export default function LandingPage() {
 
       <section className="features">
         <div className="container">
-          <h2 className="h2">Everything You Need</h2>
+          <h2 className="h2" data-animate>Everything You Need</h2>
           <div className="features-grid">
             {features.map(function(f, i) {
               return (
-                <article key={i} className="feature-card">
-                  <div className="feature-icon">{f.icon}</div>
+                <article key={i} className="feature-card" data-animate style={{transitionDelay: (i * 0.1) + 's'}}>
+                  <div className="feature-icon-wrapper">
+                    {renderIcon(f.icon)}
+                  </div>
                   <h3 className="h3">{f.title}</h3>
                   <p>{f.desc}</p>
                 </article>
@@ -395,19 +464,19 @@ export default function LandingPage() {
 
       <section className="ai-flow">
         <div className="container">
-          <h2 className="h2">AI-Powered Generation</h2>
+          <h2 className="h2" data-animate>AI-Powered Generation</h2>
           <div className="flow-diagram">
-            <div className="flow-step input">
+            <div className="flow-step input" data-animate>
               <div className="flow-title">Input</div>
               <p>Paste URL</p>
             </div>
             <div className="flow-arrow">→</div>
-            <div className="flow-step extract">
+            <div className="flow-step extract" data-animate>
               <div className="flow-title">Extract</div>
               <p>Brand, Product,<br/>Audience</p>
             </div>
             <div className="flow-arrow">→</div>
-            <div className="flow-step output">
+            <div className="flow-step output" data-animate>
               <div className="flow-title">Output</div>
               <p>Generated Quiz<br/>with Questions</p>
             </div>
@@ -417,11 +486,16 @@ export default function LandingPage() {
 
       <section className="analytics">
         <div className="container">
-          <h2 className="h2">Measure What Matters</h2>
+          <h2 className="h2" data-animate>Measure What Matters</h2>
           <div className="analytics-grid">
-            <div className="analytics-card">
+            <div className="analytics-card" data-animate>
               <h3 className="h3">Lead Capture Trend</h3>
               <svg className="chart" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                <line x1="0" y1="120" x2="300" y2="120" stroke="var(--line)" strokeWidth="1"/>
+                <line x1="10" y1="130" x2="10" y2="120" stroke="var(--line)" strokeWidth="1"/>
+                <text x="10" y="145" fontSize="10" textAnchor="middle" fill="#999">Day 1</text>
+                <line x1="250" y1="130" x2="250" y2="120" stroke="var(--line)" strokeWidth="1"/>
+                <text x="250" y="145" fontSize="10" textAnchor="middle" fill="#999">Day 30</text>
                 <polyline
                   points="10,120 40,100 70,80 100,60 130,40 160,30 190,25 220,20 250,15"
                   fill="none"
@@ -431,17 +505,32 @@ export default function LandingPage() {
                 <circle cx="250" cy="15" r="5" fill="var(--t)"/>
               </svg>
             </div>
-            <div className="analytics-card">
+            <div className="analytics-card" data-animate>
               <h3 className="h3">Question Drop-off</h3>
               <div className="bars">
-                <div className="bar" style={{height: '100%'}}><span>Q1</span></div>
-                <div className="bar" style={{height: '85%'}}><span>Q2</span></div>
-                <div className="bar" style={{height: '72%'}}><span>Q3</span></div>
-                <div className="bar" style={{height: '65%'}}><span>Q4</span></div>
-                <div className="bar" style={{height: '58%'}}><span>Q5</span></div>
+                <div className="bar-wrapper">
+                  <div className="bar" style={{height: '100%'}}></div>
+                  <span className="bar-label">Q1</span>
+                </div>
+                <div className="bar-wrapper">
+                  <div className="bar" style={{height: '85%'}}></div>
+                  <span className="bar-label">Q2</span>
+                </div>
+                <div className="bar-wrapper">
+                  <div className="bar" style={{height: '72%'}}></div>
+                  <span className="bar-label">Q3</span>
+                </div>
+                <div className="bar-wrapper">
+                  <div className="bar" style={{height: '65%'}}></div>
+                  <span className="bar-label">Q4</span>
+                </div>
+                <div className="bar-wrapper">
+                  <div className="bar" style={{height: '58%'}}></div>
+                  <span className="bar-label">Q5</span>
+                </div>
               </div>
             </div>
-            <div className="analytics-card">
+            <div className="analytics-card" data-animate>
               <h3 className="h3">A/B Test Winner</h3>
               <div className="ab-test">
                 <div className="variant">
@@ -462,18 +551,18 @@ export default function LandingPage() {
 
       <section className="integrations">
         <div className="container">
-          <h2 className="h2">Connect Everything</h2>
+          <h2 className="h2" data-animate>Connect Everything</h2>
           <div className="integrations-hub">
             <div className="hub-center">Squarespell</div>
             <div className="hub-items">
               {integrations.slice(0, 9).map(function(int, i) {
                 return (
-                  <div key={i} className="hub-item">
+                  <div key={i} className="hub-item" data-animate style={{transitionDelay: (i * 0.05) + 's'}}>
                     {int}
                   </div>
                 );
               })}
-              <div className="hub-item more">
+              <div className="hub-item more" data-animate>
                 +{integrations.length - 9} more
               </div>
             </div>
@@ -483,7 +572,7 @@ export default function LandingPage() {
 
       <section className="templates">
         <div className="container">
-          <h2 className="h2">Browse Templates</h2>
+          <h2 className="h2" data-animate>Browse Templates</h2>
           <div className="template-categories">
             {templateCategories.map(function(cat) {
               return (
@@ -501,7 +590,7 @@ export default function LandingPage() {
             {filteredTemplates.length > 0 ? (
               filteredTemplates.map(function(tmpl, i) {
                 return (
-                  <article key={i} className="template-card">
+                  <article key={i} className="template-card" data-animate style={{transitionDelay: (i * 0.1) + 's'}}>
                     <div className="template-header">
                       <h3 className="h3">{tmpl.name}</h3>
                     </div>
@@ -527,11 +616,11 @@ export default function LandingPage() {
 
       <section className="embed-modes">
         <div className="container">
-          <h2 className="h2">Choose Your Embed</h2>
+          <h2 className="h2" data-animate>Choose Your Embed</h2>
           <div className="embed-grid">
             {embedModes.map(function(mode, i) {
               return (
-                <article key={i} className="embed-card">
+                <article key={i} className="embed-card" data-animate style={{transitionDelay: (i * 0.1) + 's'}}>
                   <div className="embed-mockup">
                     {mode.name === 'Inline' && (
                       <div className="mockup-inline">
@@ -569,11 +658,11 @@ export default function LandingPage() {
 
       <section className="brand-kit">
         <div className="container">
-          <h2 className="h2">Choose Your Skin</h2>
+          <h2 className="h2" data-animate>Choose Your Skin</h2>
           <div className="skins-grid">
             {skins.map(function(skin, i) {
               return (
-                <article key={i} className="skin-card">
+                <article key={i} className="skin-card" data-animate style={{transitionDelay: (i * 0.1) + 's'}}>
                   <div className="skin-preview">
                     <svg viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg">
                       <rect width="200" height="250" fill={skin.background}/>
@@ -595,7 +684,7 @@ export default function LandingPage() {
 
       <section className="pricing" id="pricing">
         <div className="container">
-          <h2 className="h2">Simple, Transparent Pricing</h2>
+          <h2 className="h2" data-animate>Simple, Transparent Pricing</h2>
 
           <div className="billing-toggle">
             <button
@@ -617,7 +706,7 @@ export default function LandingPage() {
             {plans.map(function(plan, i) {
               var price = selectedPlan === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
               return (
-                <article key={i} className={'pricing-card ' + (plan.highlight ? 'highlight' : '')}>
+                <article key={i} className={'pricing-card ' + (plan.highlight ? 'highlight' : '')} data-animate style={{transitionDelay: (i * 0.1) + 's'}}>
                   {plan.highlight && <div className="popular-badge">Most Popular</div>}
                   <h3 className="h3">{plan.name}</h3>
                   <p className="plan-desc">{plan.description}</p>
@@ -638,7 +727,7 @@ export default function LandingPage() {
                     {plan.features.map(function(feat, fi) {
                       return (
                         <li key={fi}>
-                          <span className="check">✓</span>
+                          <span className="check-icon">{renderIcon('check')}</span>
                           {feat}
                         </li>
                       );
@@ -649,7 +738,7 @@ export default function LandingPage() {
                       {plan.excluded.map(function(feat, fi) {
                         return (
                           <li key={fi} className="excluded-item">
-                            <span className="cross">✕</span>
+                            <span className="cross-icon">{renderIcon('x')}</span>
                             {feat}
                           </li>
                         );
@@ -669,36 +758,51 @@ export default function LandingPage() {
 
       <section className="testimonials">
         <div className="container">
-          <h2 className="h2">What Squarespace Owners Are Saying</h2>
+          <h2 className="h2" data-animate>What Squarespace Owners Are Saying</h2>
           <div className="testimonials-grid">
-            <article className="testimonial-card">
-              <div className="testimonial-stars">★★★★★</div>
+            <article className="testimonial-card" data-animate>
+              <div className="testimonial-stars">
+                {renderIcon('star')} {renderIcon('star')} {renderIcon('star')} {renderIcon('star')} {renderIcon('star')}
+              </div>
               <p className="testimonial-text">
                 "We switched from a contact form to Squarespell and immediately saw a 4x jump in qualified leads. The quiz captures exactly what we need to know about each prospect."
               </p>
               <div className="testimonial-author">
-                <div className="author-name">Sarah Chen</div>
-                <div className="author-role">Design Studio Owner</div>
+                <div className="author-avatar">S</div>
+                <div>
+                  <div className="author-name">Sarah Chen</div>
+                  <div className="author-role">Design Studio Owner</div>
+                </div>
               </div>
             </article>
-            <article className="testimonial-card">
-              <div className="testimonial-stars">★★★★★</div>
+            <article className="testimonial-card" data-animate>
+              <div className="testimonial-stars">
+                {renderIcon('star')} {renderIcon('star')} {renderIcon('star')} {renderIcon('star')} {renderIcon('star')}
+              </div>
               <p className="testimonial-text">
                 "The AI generation is insanely fast. We had our quiz live in under a minute. No design work, no writing—just paste our URL and it was done. Best $19/month we spend."
               </p>
               <div className="testimonial-author">
-                <div className="author-name">Marcus Rodriguez</div>
-                <div className="author-role">E-commerce Brand Founder</div>
+                <div className="author-avatar">M</div>
+                <div>
+                  <div className="author-name">Marcus Rodriguez</div>
+                  <div className="author-role">E-commerce Brand Founder</div>
+                </div>
               </div>
             </article>
-            <article className="testimonial-card">
-              <div className="testimonial-stars">★★★★★</div>
+            <article className="testimonial-card" data-animate>
+              <div className="testimonial-stars">
+                {renderIcon('star')} {renderIcon('star')} {renderIcon('star')} {renderIcon('star')} {renderIcon('star')}
+              </div>
               <p className="testimonial-text">
                 "The analytics show us exactly which questions are confusing visitors. We A/B tested two variants and the winner has 28% better completion. This is powerful stuff."
               </p>
               <div className="testimonial-author">
-                <div className="author-name">Jennifer Walsh</div>
-                <div className="author-role">Coaching Business Owner</div>
+                <div className="author-avatar">J</div>
+                <div>
+                  <div className="author-name">Jennifer Walsh</div>
+                  <div className="author-role">Coaching Business Owner</div>
+                </div>
               </div>
             </article>
           </div>
@@ -707,11 +811,11 @@ export default function LandingPage() {
 
       <section className="faq" id="faq">
         <div className="container">
-          <h2 className="h2">Frequently Asked Questions</h2>
+          <h2 className="h2" data-animate>Frequently Asked Questions</h2>
           <div className="faq-list">
             {faqs.map(function(item, i) {
               return (
-                <article key={i} className="faq-item">
+                <article key={i} className="faq-item" data-animate style={{transitionDelay: (i * 0.05) + 's'}}>
                   <button
                     className="faq-question"
                     onClick={function() { toggleFaq(i); }}
@@ -732,7 +836,7 @@ export default function LandingPage() {
       </section>
 
       <section className="final-cta">
-        <div className="container">
+        <div className="container" data-animate>
           <h2 className="h2">Your next lead is one quiz away.</h2>
           <Link href={QUIZ_BUILDER_PATH} className="btn-pill btn-large">
             Start 14-day trial
@@ -941,9 +1045,77 @@ button, input {
   font-family: inherit;
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+[data-animate] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+[data-animate].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.announcement-bar {
+  background: #0F7377;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.announcement-bar .container {
+  width: 100%;
+}
+
+.announcement-text {
+  color: white;
+  font-size: 13px;
+  text-align: center;
+  margin: 0;
+  font-weight: 500;
+}
+
+.announcement-text a {
+  color: white;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
 .nav {
   position: sticky;
-  top: 0;
+  top: 40px;
   z-index: 100;
   background: rgba(247, 247, 245, 0.95);
   backdrop-filter: blur(10px);
@@ -1103,11 +1275,34 @@ button, input {
 .hero-visual {
   display: flex;
   justify-content: center;
+  position: relative;
+}
+
+.quiz-mockup-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.quiz-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(15, 115, 119, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse-glow 3s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .quiz-mockup {
   width: 100%;
   max-width: 320px;
+  animation: float 3s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
 }
 
 .quiz-card {
@@ -1115,7 +1310,7 @@ button, input {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 32px 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   position: relative;
 }
 
@@ -1131,6 +1326,7 @@ button, input {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .quiz-question {
@@ -1154,6 +1350,7 @@ button, input {
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
+  background: white;
 }
 
 .option:hover {
@@ -1214,18 +1411,29 @@ button, input {
   text-align: center;
 }
 
-.step-number {
-  width: 56px;
-  height: 56px;
-  background: var(--t);
-  color: white;
+.step-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(15, 115, 119, 0.1);
+  border: 2px solid rgba(15, 115, 119, 0.2);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  font-size: 28px;
-  font-weight: 700;
   margin: 0 auto 24px;
+  color: var(--t);
+  transition: all 0.3s;
+}
+
+.step:hover .step-icon {
+  background: rgba(15, 115, 119, 0.15);
+  border-color: var(--t);
+  transform: translateY(-4px);
+}
+
+.step-icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 .comparison {
@@ -1278,17 +1486,37 @@ button, input {
   background: white;
   border: 1px solid var(--line);
   border-radius: 12px;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .feature-card:hover {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(15, 115, 119, 0.12);
   border-color: var(--t);
+  transform: translateY(-4px);
 }
 
-.feature-icon {
-  font-size: 40px;
+.feature-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 115, 119, 0.08);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 16px;
+  color: var(--t);
+  transition: all 0.3s;
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  background: rgba(15, 115, 119, 0.15);
+  transform: scale(1.1);
+}
+
+.feature-icon-wrapper svg {
+  width: 24px;
+  height: 24px;
 }
 
 .feature-card p {
@@ -1316,6 +1544,12 @@ button, input {
   border: 2px solid var(--line);
   text-align: center;
   min-width: 160px;
+  transition: all 0.3s;
+}
+
+.flow-step:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
 }
 
 .flow-step.input {
@@ -1363,6 +1597,12 @@ button, input {
   background: white;
   border: 1px solid var(--line);
   border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.analytics-card:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border-color: var(--t);
 }
 
 .chart {
@@ -1380,17 +1620,30 @@ button, input {
   margin-bottom: 24px;
 }
 
+.bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
 .bar {
-  width: 20%;
+  width: 100%;
   background: var(--t);
   border-radius: 4px 4px 0 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  color: white;
+  transition: all 0.3s;
+  min-width: 28px;
+}
+
+.bar:hover {
+  background: rgba(15, 115, 119, 0.8);
+}
+
+.bar-label {
   font-size: 12px;
   font-weight: 600;
-  padding-bottom: 8px;
+  color: #666;
 }
 
 .ab-test {
@@ -1476,6 +1729,13 @@ button, input {
   font-size: 13px;
   font-weight: 600;
   text-align: center;
+  transition: all 0.3s;
+}
+
+.hub-item:hover {
+  border-color: var(--t);
+  box-shadow: 0 4px 12px rgba(15, 115, 119, 0.1);
+  transform: translateY(-2px);
 }
 
 .hub-item.more {
@@ -1536,6 +1796,7 @@ button, input {
 .template-card:hover {
   border-color: var(--t);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
 }
 
 .template-header {
@@ -1583,6 +1844,12 @@ button, input {
   background: white;
   border: 1px solid var(--line);
   border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.embed-card:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border-color: var(--t);
 }
 
 .embed-mockup {
@@ -1661,6 +1928,11 @@ button, input {
 
 .skin-card {
   text-align: center;
+  transition: all 0.3s;
+}
+
+.skin-card:hover {
+  transform: translateY(-4px);
 }
 
 .skin-preview {
@@ -1669,6 +1941,12 @@ button, input {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 20px;
+  transition: all 0.3s;
+}
+
+.skin-card:hover .skin-preview {
+  border-color: var(--t);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
 .skin-preview svg {
@@ -1744,6 +2022,10 @@ button, input {
   transition: all 0.3s;
 }
 
+.pricing-card:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
 .pricing-card.highlight {
   border: 2px solid var(--t);
   transform: scale(1.05);
@@ -1816,7 +2098,7 @@ button, input {
   color: var(--t);
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(15,115,119,.15);
+  border-bottom: 1px solid rgba(15, 115, 119, .15);
 }
 
 .features-list {
@@ -1835,24 +2117,40 @@ button, input {
   line-height: 1.4;
 }
 
+.check-icon, .cross-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.check-icon {
+  color: var(--t);
+  stroke-width: 3;
+}
+
+.check-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.cross-icon {
+  color: #ccc;
+}
+
+.cross-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .excluded-list {
   margin-top: 12px;
 }
 
 .excluded-item {
   color: #bbb !important;
-}
-
-.cross {
-  color: #ccc;
-  font-weight: 500;
-  font-size: 13px;
-}
-
-.check {
-  color: var(--t);
-  font-weight: 700;
-  flex-shrink: 0;
 }
 
 .pricing-note {
@@ -1877,12 +2175,28 @@ button, input {
   background: white;
   border: 1px solid var(--line);
   border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.testimonial-card:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border-color: var(--t);
+  transform: translateY(-4px);
 }
 
 .testimonial-stars {
   font-size: 14px;
   margin-bottom: 16px;
   color: #fbbf24;
+  display: flex;
+  gap: 4px;
+}
+
+.testimonial-stars svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  stroke: none;
 }
 
 .testimonial-text {
@@ -1894,7 +2208,22 @@ button, input {
 
 .testimonial-author {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--t);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .author-name {
@@ -1940,12 +2269,18 @@ button, input {
   font-weight: 600;
   color: var(--ink);
   text-align: left;
+  transition: color 0.2s;
+}
+
+.faq-question:hover {
+  color: var(--t);
 }
 
 .faq-toggle {
   font-size: 24px;
   color: var(--t);
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .faq-answer {
@@ -1955,6 +2290,7 @@ button, input {
   font-size: 15px;
   color: #666;
   line-height: 1.6;
+  animation: fadeInUp 0.3s ease;
 }
 
 .faq-answer p {
@@ -2067,6 +2403,19 @@ button, input {
     font-size: 32px;
   }
 
+  .announcement-bar {
+    height: auto;
+    padding: 12px 20px;
+  }
+
+  .announcement-text {
+    font-size: 12px;
+  }
+
+  .nav {
+    top: auto;
+  }
+
   .hero {
     padding: 100px 0 80px;
   }
@@ -2130,6 +2479,14 @@ button, input {
 
   .h-sub {
     font-size: 16px;
+  }
+
+  .announcement-bar {
+    padding: 10px 16px;
+  }
+
+  .announcement-text {
+    font-size: 11px;
   }
 
   .nav {
