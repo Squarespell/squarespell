@@ -364,22 +364,22 @@ export default function QuizzesPage() {
             <div style={{ background: C.BG, border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Quizzes</div>
               <div style={{ fontSize: 20, fontWeight: 700, color: C.TEXT, marginTop: 4 }}>{totalQuizzes}</div>
-              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{totalQuizzes === 0 ? '— No change' : '↑ 12% vs last month'}</div>
+              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{totalQuizzes === 0 ? '— No quizzes yet' : totalQuizzes + ' total'}</div>
             </div>
             <div style={{ background: C.BG, border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Live Quizzes</div>
               <div style={{ fontSize: 20, fontWeight: 700, color: C.ACCENT, marginTop: 4 }}>{liveQuizzes}</div>
-              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{liveQuizzes === 0 ? '— No change' : '↑ 8% vs last month'}</div>
+              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{liveQuizzes === 0 ? '— None live' : liveQuizzes + ' of ' + totalQuizzes + ' published'}</div>
             </div>
             <div style={{ background: C.BG, border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Drafts</div>
               <div style={{ fontSize: 20, fontWeight: 700, color: C.TEXT, marginTop: 4 }}>{draftQuizzes}</div>
-              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{draftQuizzes === 0 ? '— No change' : '↑ 5% vs last month'}</div>
+              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{draftQuizzes === 0 ? '— No change' : draftQuizzes + ' in progress'}</div>
             </div>
             <div style={{ background: C.BG, border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Views</div>
               <div style={{ fontSize: 20, fontWeight: 700, color: C.TEXT, marginTop: 4 }}>{formatNumber(totalViews)}</div>
-              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{totalViews === 0 ? '— No change' : '↑ 23% vs last month'}</div>
+              <div style={{ fontSize: 10, color: C.TEXT_MUTED, marginTop: 4 }}>{totalViews === 0 ? '— No views yet' : formatNumber(totalViews) + ' across all quizzes'}</div>
             </div>
           </div>
 

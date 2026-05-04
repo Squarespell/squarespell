@@ -350,6 +350,7 @@ export default function BillingPage() {
   var router = useRouter();
   var { token, status: authStatus } = useDashboardAuth();
   var [plan, setPlan] = useState<UserPlan | null>(null);
+  var [realQuizCount, setRealQuizCount] = useState<number | null>(null);
   var [loading, setLoading] = useState(true);
   var [yearly, setYearly] = useState(true);
   var [error, setError] = useState(false);
@@ -374,6 +375,17 @@ export default function BillingPage() {
         setError(true);
         setLoading(false);
       });
+    /* Also fetch real quiz count (active quizzes only) */
+    fetch(API + '/api/quizzes', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data && Array.isArray(data)) {
+          setRealQuizCount(data.filter(function(q: any) { return q.status !== 'archived' && q.status !== 'deleted'; }).length);
+        }
+      })
+      .catch(function() { /* ignore — fall back to plan.quiz_count */ });
   }
 
   useEffect(function() {
@@ -625,8 +637,7 @@ export default function BillingPage() {
             </h3>
           </div>
           <div style={{ display: 'grid', gap: 18 }}>
-            {/* KNOWN ISSUE: quiz_count includes deleted and template quizzes. Accurate count of active quizzes should filter these from the API response. */}
-            <UsageBar label="Quizzes" used={plan.quiz_count} limit={plan.limits.quizzes} />
+            <UsageBar label="Quizzes" used={realQuizCount !== null ? realQuizCount : plan.quiz_count} limit={plan.limits.quizzes} />
             <UsageBar label="Leads (monthly)" used={plan.leads_this_month || 0} limit={plan.limits.leads} />
             <UsageBar label="Emails (monthly)" used={plan.emails_this_month || 0} limit={plan.limits.emails} />
           </div>

@@ -291,11 +291,8 @@ export default function EmailCampaignsPage() {
               <div style={{ fontSize: 26, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1 }}>
                 {totalSent.toLocaleString()}
               </div>
-              <div style={{ fontSize: 12, color: '#12B76A', fontFamily: C.FONT, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 9V3M6 3L3 6M6 3l3 3" stroke="#12B76A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                18.5% from last month
+              <div style={{ fontSize: 12, color: totalSent > 0 ? '#12B76A' : C.GRAY_400, fontFamily: C.FONT, marginTop: 8 }}>
+                {totalSent > 0 ? totalSent + ' emails delivered' : '— No emails sent yet'}
               </div>
             </div>
           </div>
@@ -311,13 +308,10 @@ export default function EmailCampaignsPage() {
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 6 }}>Average Open Rate</div>
               <div style={{ fontSize: 26, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1 }}>
-                {avgOpen > 0 ? avgOpen.toFixed(0) + '%' : '42%'}
+                {avgOpen > 0 ? avgOpen.toFixed(0) + '%' : '0%'}
               </div>
-              <div style={{ fontSize: 12, color: '#12B76A', fontFamily: C.FONT, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 9V3M6 3L3 6M6 3l3 3" stroke="#12B76A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                6.3% from last month
+              <div style={{ fontSize: 12, color: avgOpen > 0 ? '#12B76A' : C.GRAY_400, fontFamily: C.FONT, marginTop: 8 }}>
+                {avgOpen > 0 ? 'across ' + items.filter(function(c) { return c.status === 'sent'; }).length + ' campaigns' : '— Send campaigns to track'}
               </div>
             </div>
           </div>
