@@ -530,20 +530,20 @@ export default function EmailCampaignsPage() {
                             fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT,
                             marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
                           }}>
-                            {c.name || 'Untitled'}
+                            {(c.name || 'Untitled').replace(/\{\{[^}]*\}\}/g, '').trim() || 'Untitled'}
                           </div>
                           <div style={{
                             fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT,
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, marginBottom: 4,
                           }}>
-                            {c.subject || 'No subject'}
+                            {(c.subject || 'No subject').replace(/\{\{[^}]*\}\}/g, '').trim() || 'No subject'}
                           </div>
                           <div style={{
                             fontSize: 12, color: C.GRAY_400, fontFamily: C.FONT, lineHeight: 1.4,
                             overflow: 'hidden', textOverflow: 'ellipsis',
                             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any,
                           }}>
-                            {c.html ? stripHtml(c.html).slice(0, 80) || 'No preview' : 'No preview available'}
+                            {c.html ? stripHtml(c.html).replace(/\{\{[^}]*\}\}/g, '').slice(0, 80) || 'No preview' : 'No preview available'}
                           </div>
                         </div>
                       </div>
