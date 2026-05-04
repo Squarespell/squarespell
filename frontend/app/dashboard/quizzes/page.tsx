@@ -803,6 +803,7 @@ export default function QuizzesPage() {
                               {[
                                 { label: 'Edit', action: function() { window.location.href = '/dashboard/' + quiz.id; } },
                                 { label: 'Preview', action: function() { window.open('/quiz/' + quiz.slug, '_blank'); } },
+                                { label: 'A/B Test', action: function() { window.location.href = '/dashboard/quiz/' + quiz.id + '/ab-testing'; setOpenMenuId(null); } },
                                 { label: 'Share', action: function() { setPublishQuiz(quiz); setOpenMenuId(null); } },
                                 quiz.status === 'live' ? { label: 'Pause', action: function() { handlePause(quiz); setOpenMenuId(null); } } : quiz.status === 'draft' ? { label: 'Resume / Publish', action: function() { handleResume(quiz); setOpenMenuId(null); } } : null,
                                 { label: 'Duplicate', action: function() { handleDuplicate(quiz); setOpenMenuId(null); } },
@@ -964,6 +965,7 @@ export default function QuizzesPage() {
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         <GhostButton href={'/dashboard/' + quiz.id}>Edit</GhostButton>
                         <GhostButton href={'/quiz/' + quiz.slug} target="_blank">View live</GhostButton>
+                        <GhostButton href={'/dashboard/quiz/' + quiz.id + '/ab-testing'}>A/B Test</GhostButton>
                         <GhostButton onClick={function() { setPublishQuiz(quiz); }}>
                           {quiz.status === 'live' ? 'Share' : 'Publish'}
                         </GhostButton>

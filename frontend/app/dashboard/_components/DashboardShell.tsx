@@ -293,7 +293,11 @@ function SidebarPlanCard({ plan }: { plan: { name: string; renewsAt: string; vie
         <span style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900 }}>{plan.name}</span>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.SUCCESS_500, flexShrink: 0 }} />
       </div>
-      <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8 }}>Renews on {plan.renewsAt}</div>
+      {plan.renewsAt ? (
+        <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8 }}>Renews on {plan.renewsAt}</div>
+      ) : (
+        <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8 }}>Active</div>
+      )}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900 }}>
           {plan.viewsUsed.toLocaleString()} / {plan.viewsLimit.toLocaleString()}
@@ -452,8 +456,16 @@ export function DashboardShell({
           var data = await res.json();
           if (!cancelled) {
             var renewDate = data.current_period_end ? new Date(data.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+            /* Map backend plan slugs to display names */
+            var PLAN_NAMES: Record<string, string> = {
+              free: 'Free Plan', core: 'Core Plan', pro: 'Pro Plan',
+              business: 'Business Plan', agency: 'Business Plan',
+              starter: 'Core Plan', growth: 'Pro Plan', scale: 'Business Plan',
+            };
+            var rawPlan = (data.plan || 'free').toLowerCase();
+            var planDisplayName = PLAN_NAMES[rawPlan] || (rawPlan.charAt(0).toUpperCase() + rawPlan.slice(1) + ' Plan');
             setPlanData({
-              name: (data.plan || 'free').charAt(0).toUpperCase() + (data.plan || 'free').slice(1) + ' Plan',
+              name: planDisplayName,
               renewsAt: renewDate,
               viewsUsed: data.usage?.views || 0,
               viewsLimit: data.limits?.views || 25000,

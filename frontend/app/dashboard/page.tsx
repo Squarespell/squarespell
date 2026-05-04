@@ -188,29 +188,29 @@ function DashStatCard({
         borderRadius: 12,
         padding: 20,
         fontFamily: C.FONT,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Sparkline — bottom-right decorative */}
+      <svg width="80" height="32" viewBox="0 0 80 32" fill="none" style={{ position: 'absolute', bottom: 12, right: 16, opacity: 0.25 }}>
+        <path
+          d={trendUp ? 'M0 28Q10 20 20 24T40 16T60 20T80 10' : 'M0 10Q10 18 20 14T40 22T60 18T80 28'}
+          stroke={sparkColor}
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </svg>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_500 }}>{label}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: C.ACCENT_LIGHT, border: '1px solid rgba(13,115,119,0.12)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: C.ACCENT,
-          }}>
-            {icon}
-          </div>
-          <svg width="24" height="16" viewBox="0 0 24 16" fill="none">
-            <polyline
-              points={trendUp ? '2,12 8,8 14,10 22,3' : '2,4 8,8 14,6 22,13'}
-              stroke={sparkColor}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </svg>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: C.ACCENT_LIGHT, border: '1px solid rgba(13,115,119,0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: C.ACCENT,
+        }}>
+          {icon}
         </div>
       </div>
       <div
@@ -839,15 +839,15 @@ function QuestionDropoff({ questions, quizTitle, quizzes, selectedQuizId, onQuiz
             {questions.map(function(q, qi) {
               return (
                 <tr key={qi}>
-                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: C.GRAY_600 }}>{qi + 1}. {q.question}</td>
-                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: '#F04438' }}>{q.dropoff_rate}%</td>
+                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: C.GRAY_600 }}>{qi + 1}.{q.question ? ' ' + q.question : ''}</td>
+                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: '#F04438' }}>{q.dropoff_rate || 0}%</td>
                   <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, width: 160 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ flex: 1, height: 6, background: C.GRAY_100, borderRadius: 3, overflow: 'hidden', display: 'flex' }}>
-                        <div style={{ height: '100%', width: q.dropoff_rate + '%', background: '#F04438', borderRadius: '3px 0 0 3px', flexShrink: 0 }} />
-                        <div style={{ height: '100%', width: q.completion_rate + '%', background: C.ACCENT, borderRadius: '0 3px 3px 0', flexShrink: 0 }} />
+                        <div style={{ height: '100%', width: (q.dropoff_rate || 0) + '%', background: '#F04438', borderRadius: '3px 0 0 3px', flexShrink: 0 }} />
+                        <div style={{ height: '100%', width: (q.completion_rate || 0) + '%', background: C.ACCENT, borderRadius: '0 3px 3px 0', flexShrink: 0 }} />
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: C.GRAY_700, minWidth: 35, textAlign: 'right' }}>{q.completion_rate}%</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: C.GRAY_700, minWidth: 35, textAlign: 'right' }}>{q.completion_rate || 0}%</span>
                     </div>
                   </td>
                 </tr>

@@ -36,7 +36,7 @@ var ACTION_OPTIONS = [
 /* ─── sparkline SVG ─── */
 function Sparkline({ color }: { color: string }) {
   return (
-    <svg width="80" height="32" viewBox="0 0 80 32" fill="none" style={{ position: 'absolute', bottom: 12, right: 16, opacity: 0.25 }}>
+    <svg width="80" height="32" viewBox="0 0 80 32" fill="none" style={{ position: 'absolute', bottom: 12, right: 16, opacity: 0.35 }}>
       <path d="M0 28Q10 20 20 24T40 16T60 20T80 10" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
@@ -166,17 +166,19 @@ export default function AutomationsPage() {
             Trigger actions automatically when leads complete quizzes, reach scores, or get tagged.
           </p>
         </div>
-        <button type="button" className="auto-create"
-          onClick={function () { setShowCreate(true); }}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '10px 20px', borderRadius: 10, border: 'none',
-            background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600,
-            fontFamily: C.FONT, cursor: 'pointer', boxShadow: C.SHADOW_XS, whiteSpace: 'nowrap',
-          }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
-          Create automation
-        </button>
+        {rules.length > 0 && (
+          <button type="button" className="auto-create"
+            onClick={function () { setShowCreate(true); }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '10px 20px', borderRadius: 10, border: 'none',
+              background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600,
+              fontFamily: C.FONT, cursor: 'pointer', boxShadow: C.SHADOW_XS, whiteSpace: 'nowrap',
+            }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
+            Create automation
+          </button>
+        )}
       </div>
 
       {/* ── 4 Stat cards ── */}
