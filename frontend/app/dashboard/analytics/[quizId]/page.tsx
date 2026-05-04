@@ -147,7 +147,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
             </svg>
             A/B tests
           </button>
-          <button className={styles.exportBtn} onClick={exportCsv} disabled={exporting||leads.length===0}>{exporting?'Exporting...':`Export ${leads.length} leads CSV`}</button>
+          <button className={styles.exportBtn} onClick={exportCsv} disabled={exporting||(stats?.leads??0)===0}>{exporting?'Exporting...':`Export ${stats?.leads??0} leads CSV`}</button>
         </div>
       </div>
       <div className={styles.statGrid}>

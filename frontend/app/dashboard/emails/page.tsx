@@ -149,7 +149,8 @@ export default function EmailCampaignsPage() {
     var rate = sent > 0 ? (opened / sent) * 100 : 0;
     var score = rate > 0 ? rate * 1000 + sent : sent;
     var bestScore = best ? (best.rate > 0 ? best.rate * 1000 + best.sent : best.sent) : -1;
-    if (score > bestScore) return { name: c.name || c.subject || 'Untitled', rate: rate, sent: sent };
+    var displayName = (c.name || c.subject || 'Untitled').replace(/\{\{[^}]*\}\}/g, '').trim();
+    if (score > bestScore) return { name: displayName, rate: rate, sent: sent };
     return best;
   }, null as { name: string; rate: number; sent: number } | null);
 

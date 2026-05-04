@@ -189,8 +189,9 @@ export default function LeadsPage() {
   var totalLeads = filtered.length;
   var highIntent = filtered.filter(function (l) { return getIntentLabel(l.score) === 'high'; }).length;
   var newLeads = filtered.filter(function (l) { return getIntentLabel(l.score) === 'new'; }).length;
-  var quizIds = new Set(filtered.map(function (l) { return l.quiz_id; }));
-  var totalQuizzes = quizIds.size;
+  /* Count ALL unique quizzes across all leads (not just filtered) */
+  var allQuizIds = new Set(leads.map(function (l) { return l.quiz_id; }));
+  var totalQuizzes = allQuizIds.size || leads.length > 0 ? allQuizIds.size : 0;
 
   /* loading / error states */
   if (authStatus === 'loading' || loading) {
@@ -251,10 +252,10 @@ export default function LeadsPage() {
           {/* stat cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
             {[
-              { label: 'Total Leads', val: totalLeads, change: '↑ 28% vs last 30 days', up: true, iconBg: 'rgba(13,115,119,.08)', iconColor: C.ACCENT, iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
-              { label: 'Conversion Rate', val: '32.6%', change: '↑ 6.4% vs last 30 days', up: true, iconBg: 'rgba(5,150,105,.08)', iconColor: '#059669', iconPath: 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6' },
-              { label: 'Total Quizzes', val: totalQuizzes, change: '— No change', up: false, iconBg: 'rgba(37,99,235,.08)', iconColor: '#2563EB', iconPath: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6' },
-              { label: 'High Intent Leads', val: highIntent, change: '↑ 14% vs last 30 days', up: true, iconBg: 'rgba(220,38,38,.08)', iconColor: '#DC2626', iconPath: 'M12 2c-4 4-8 7-8 12a8 8 0 0016 0c0-5-4-8-8-12z' },
+              { label: 'Total Leads', val: totalLeads, change: totalLeads > 0 ? '↑ ' + totalLeads + ' total' : '— No data yet', up: totalLeads > 0, iconBg: 'rgba(13,115,119,.08)', iconColor: C.ACCENT, iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
+              { label: 'Conversion Rate', val: totalLeads > 0 ? (totalLeads / Math.max(filtered.length, 1) * 100).toFixed(1) + '%' : '0%', change: totalLeads > 0 ? 'Based on current data' : '— No data yet', up: totalLeads > 0, iconBg: 'rgba(5,150,105,.08)', iconColor: '#059669', iconPath: 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6' },
+              { label: 'Total Quizzes', val: totalQuizzes, change: totalQuizzes > 0 ? totalQuizzes + ' active' : '— No data yet', up: false, iconBg: 'rgba(37,99,235,.08)', iconColor: '#2563EB', iconPath: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6' },
+              { label: 'High Intent Leads', val: highIntent, change: highIntent > 0 ? '↑ ' + highIntent + ' high intent' : '— No change', up: highIntent > 0, iconBg: 'rgba(220,38,38,.08)', iconColor: '#DC2626', iconPath: 'M12 2c-4 4-8 7-8 12a8 8 0 0016 0c0-5-4-8-8-12z' },
             ].map(function (s) {
               return (
                 <div key={s.label} style={{ background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: 10, padding: '14px 16px' }}>
@@ -322,7 +323,7 @@ export default function LeadsPage() {
                     <div style={{ fontSize: 10, color: C.TEXT_SUBTLE, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Quiz</div>
                     <div style={{ fontSize: 12, color: C.TEXT_SECONDARY, marginBottom: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.quizzes?.title || 'Unknown'}</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em', color: C.TEXT }}>{l.score ?? '—'} <span style={{ fontSize: 11, fontWeight: 400, color: C.TEXT_MUTED }}>/100</span></div>
+                      <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em', color: C.TEXT }}>{l.score != null ? l.score + ' /100' : '—'}</div>
                       <IntentBadge intent={intent} />
                     </div>
                     <div style={{ fontSize: 10, color: C.TEXT_SUBTLE, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -384,7 +385,7 @@ export default function LeadsPage() {
                 <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>{selectedLead.name || selectedLead.email.split('@')[0]}</div>
                 <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 8 }}>{selectedLead.email}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: C.ACCENT }}>{selectedLead.score ?? '—'} <span style={{ fontWeight: 400, color: C.TEXT_MUTED }}>/100</span></span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: C.ACCENT }}>{selectedLead.score != null ? selectedLead.score + ' /100' : '—'}</span>
                   <IntentBadge intent={getIntentLabel(selectedLead.score)} />
                 </div>
               </div>

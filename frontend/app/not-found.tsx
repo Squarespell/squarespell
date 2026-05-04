@@ -37,8 +37,8 @@ export default function NotFound() {
           We couldn&apos;t find that page
         </h1>
         <p style={{ fontSize: 14, opacity: 0.66, lineHeight: 1.55, margin: '0 0 24px' }}>
-          The link may be broken, or the quiz may have been unpublished. Try
-          the dashboard or head back home.
+          This page doesn't exist. Try returning to the dashboard or going back
+          home.
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link

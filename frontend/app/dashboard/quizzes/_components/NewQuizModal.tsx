@@ -281,6 +281,15 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       setErrorMsg("Paste a site URL to continue.");
       return;
     }
+
+    // Validate URL format using URL constructor
+    try {
+      new URL(normalized);
+    } catch (e) {
+      setErrorMsg("Please enter a valid URL (e.g., yourbrand.com or https://yourbrand.com).");
+      return;
+    }
+
     setErrorMsg("");
     setStage("loading");
 

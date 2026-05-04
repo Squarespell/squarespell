@@ -216,7 +216,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
   );
 }
 
-function CurrentPlanBadge({ plan }: { plan: UserPlan }) {
+function CurrentPlanBadge({ plan, displayName }: { plan: UserPlan; displayName: string }) {
   var billingCycleText = plan.plan === 'trial' ? 'No billing yet' : 'Monthly billing';
   if (plan.plan === 'trial' && plan.trial_ends_at) {
     var daysLeft = Math.max(0, Math.ceil((new Date(plan.trial_ends_at).getTime() - Date.now()) / 86400000));
@@ -237,8 +237,8 @@ function CurrentPlanBadge({ plan }: { plan: UserPlan }) {
             Current plan
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 28, fontWeight: 800, color: C.ACCENT, textTransform: 'capitalize' }}>
-              {plan.plan}
+            <span style={{ fontSize: 28, fontWeight: 800, color: C.ACCENT }}>
+              {displayName}
             </span>
             <Pill variant={plan.plan === 'trial' ? 'accent' : 'live'}>
               {plan.plan === 'trial' ? '14-day Pro trial' : 'Active'}
@@ -599,14 +599,24 @@ export default function BillingPage() {
     );
   }
 
-  var displayPlanName = plan.plan;
+  // Map internal plan names to user-friendly display names
+  const PLAN_NAME_MAP: Record<string, string> = {
+    trial: 'Trial',
+    core: 'Core',
+    starter: 'Core', // Legacy name, map to Core
+    pro: 'Pro',
+    business: 'Business',
+    agency: 'Business', // Legacy/internal name, map to Business
+    free: 'Free',
+  };
+  var displayPlanName = PLAN_NAME_MAP[plan.plan] || plan.plan;
 
   return (
     <DashboardShell title="Billing & plan">
       <PageHeader title="Billing & plan" subtitle="Manage your Squarespell subscription" />
 
       <div style={{ display: 'grid', gap: 20 }}>
-        <CurrentPlanBadge plan={plan} />
+        <CurrentPlanBadge plan={plan} displayName={displayPlanName} />
 
         <Card>
           <div style={{ marginBottom: 16 }}>
@@ -615,6 +625,7 @@ export default function BillingPage() {
             </h3>
           </div>
           <div style={{ display: 'grid', gap: 18 }}>
+            {/* KNOWN ISSUE: quiz_count includes deleted and template quizzes. Accurate count of active quizzes should filter these from the API response. */}
             <UsageBar label="Quizzes" used={plan.quiz_count} limit={plan.limits.quizzes} />
             <UsageBar label="Leads (monthly)" used={plan.leads_this_month || 0} limit={plan.limits.leads} />
             <UsageBar label="Emails (monthly)" used={plan.emails_this_month || 0} limit={plan.limits.emails} />

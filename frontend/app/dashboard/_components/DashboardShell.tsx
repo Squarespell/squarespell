@@ -235,7 +235,7 @@ var NAV_SECTIONS: NavSection[] = [
   {
     label: 'Engage',
     items: [
-      { href: '/dashboard/emails', label: 'Email sequences', icon: icons.emails },
+      { href: '/dashboard/emails', label: 'Email Campaigns', icon: icons.emails },
       { href: '/dashboard/automations', label: 'Automations', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
