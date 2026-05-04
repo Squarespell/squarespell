@@ -29,6 +29,23 @@ export interface MergeContext {
 // Tag resolution (mirrors frontend applyMergeTags exactly)
 // ---------------------------------------------------------------------------
 
+// camelCase → snake_case alias map so templates written with either
+// convention resolve correctly (e.g. {{firstName}} → first_name).
+var CAMEL_ALIASES: Record<string, string> = {
+  firstName: 'first_name',
+  lastName: 'last_name',
+  quizName: 'quiz_name',
+  quizTitle: 'quiz_name',
+  quizUrl: 'quiz_url',
+  outcomeName: 'outcome_name',
+  outcomeTitle: 'outcome_name',
+  outcomeDescription: 'outcome_description',
+  outcomeScore: 'outcome_score',
+  brandName: 'brand_name',
+  brand: 'brand_name',
+  ctaUrl: 'cta_url',
+};
+
 function resolveTag(tag: string, ctx: MergeContext): string {
   const trimmed = tag.trim();
   if (trimmed.startsWith('answer:')) {
@@ -36,7 +53,9 @@ function resolveTag(tag: string, ctx: MergeContext): string {
     const v = ctx.answers && ctx.answers[slug];
     return v == null ? '' : String(v);
   }
-  const v = (ctx as Record<string, unknown>)[trimmed];
+  // Try direct key first, then camelCase alias
+  const key = CAMEL_ALIASES[trimmed] || trimmed;
+  const v = (ctx as Record<string, unknown>)[key];
   return v == null ? '' : String(v);
 }
 

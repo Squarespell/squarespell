@@ -3060,6 +3060,29 @@ export function QuizBlockEditor({
               Preview
             </button>
 
+            {/* A/B Test */}
+            {quizId && (
+              <button type="button" onClick={function() {
+                window.location.href = '/dashboard/quiz/' + quizId + '/ab-testing';
+              }} title="A/B Testing"
+                style={{
+                  height: 34, padding: '0 12px', borderRadius: 8,
+                  background: 'transparent',
+                  border: '1px solid ' + C.BORDER,
+                  color: C.TEXT,
+                  cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
+                }}
+                onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_LIGHT; e.currentTarget.style.borderColor = C.ACCENT + '40'; e.currentTarget.style.color = C.ACCENT; }}
+                onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.color = C.TEXT; }}
+              >
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+                </svg>
+                A/B Test
+              </button>
+            )}
+
             {/* Settings gear */}
             <button type="button" onClick={function() { setSettingsOpen(!settingsOpen); }} title="Quiz settings"
               style={{
