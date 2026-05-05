@@ -1,6 +1,7 @@
 import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
+import { trackEngagementEvent } from '../services/leadScoring';
 
 const r = Router();
 
@@ -56,7 +57,38 @@ r.post('/resend', async (req, res) => {
       }
     }
 
-    // 4. Classify bounces and auto-suppress hard bounces + complaints
+    // 4a. Feed engagement events into lead scoring system
+    if (type === 'opened' || type === 'clicked' || type === 'delivered') {
+      try {
+        const { data: sendRow } = await supabase.from('email_sends')
+          .select('to_email, tenant_id, campaign_id')
+          .eq('id', sendId).single();
+        if (sendRow?.to_email && sendRow?.tenant_id) {
+          // Look up the lead by email + tenant
+          const { data: lead } = await supabase.from('leads')
+            .select('id')
+            .eq('email', sendRow.to_email)
+            .eq('user_id', sendRow.tenant_id)
+            .limit(1).maybeSingle();
+          if (lead) {
+            var eventType: 'email_sent' | 'email_opened' | 'email_clicked' =
+              type === 'opened' ? 'email_opened'
+              : type === 'clicked' ? 'email_clicked'
+              : 'email_sent';
+            await trackEngagementEvent(
+              lead.id,
+              sendRow.tenant_id,
+              eventType,
+              sendRow.campaign_id || undefined,
+            );
+          }
+        }
+      } catch (engErr: any) {
+        log.error('[Webhook] Lead scoring update failed (non-critical)', { err: engErr.message });
+      }
+    }
+
+    // 4b. Classify bounces and auto-suppress hard bounces + complaints
     if (type === 'bounced') {
       const recipientEmail = e?.data?.to?.[0] || e?.data?.email_id;
       // Resend bounce payloads include bounce_type or error codes

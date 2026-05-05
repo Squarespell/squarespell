@@ -133,6 +133,50 @@ export async function getCampaignStats(id: string): Promise<CampaignStats> {
   return req(`/api/emails/campaigns/${id}/stats`);
 }
 
+// Per-recipient engagement data
+export type RecipientEngagement = {
+  email: string;
+  status: string;
+  sent_at: string | null;
+  opened_at: string | null;
+  clicked_at: string | null;
+  engaged: boolean;
+  bounce_type: string | null;
+};
+
+export type RecipientsResponse = {
+  total: number;
+  opened: number;
+  clicked: number;
+  not_engaged: number;
+  recipients: RecipientEngagement[];
+};
+
+export async function getCampaignRecipients(id: string): Promise<RecipientsResponse> {
+  return req(`/api/emails/campaigns/${id}/recipients`);
+}
+
+// Engagement timeline (hourly buckets with cumulative totals)
+export type TimelinePoint = {
+  hour: string;
+  opens: number;
+  clicks: number;
+  sends: number;
+  cumulative_opens: number;
+  cumulative_clicks: number;
+};
+
+export async function getCampaignTimeline(id: string): Promise<{ timeline: TimelinePoint[] }> {
+  return req(`/api/emails/campaigns/${id}/timeline`);
+}
+
+// Link click breakdown
+export type LinkClick = { url: string; clicks: number };
+
+export async function getCampaignLinkClicks(id: string): Promise<{ links: LinkClick[] }> {
+  return req(`/api/emails/campaigns/${id}/link-clicks`);
+}
+
 // AI-powered email design: LLM picks template + generates content
 export interface AiDesignRequest {
   userPrompt?: string;

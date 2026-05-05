@@ -208,6 +208,134 @@ r.get('/campaigns/:id/stats', async (req, res) => {
   res.json(stats);
 });
 
+// Per-recipient engagement data for a campaign
+r.get('/campaigns/:id/recipients', async (req, res) => {
+  var tenantId = req.dbUserId;
+  var { data: c } = await supabase.from('email_campaigns')
+    .select('id').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!c) return res.status(404).json({ error: 'Campaign not found' });
+
+  var { data: sends } = await supabase.from('email_sends')
+    .select('id, to_email, status, sent_at, opened_at, clicked_at, metadata')
+    .eq('campaign_id', req.params.id)
+    .order('sent_at', { ascending: false });
+
+  var recipients = (sends || []).map(function(s: any) {
+    return {
+      email: s.to_email,
+      status: s.status,
+      sent_at: s.sent_at,
+      opened_at: s.opened_at,
+      clicked_at: s.clicked_at,
+      engaged: !!(s.opened_at || s.clicked_at),
+      bounce_type: s.metadata?.bounce_type || null,
+    };
+  });
+
+  res.json({
+    total: recipients.length,
+    opened: recipients.filter(function(r: any) { return r.opened_at; }).length,
+    clicked: recipients.filter(function(r: any) { return r.clicked_at; }).length,
+    not_engaged: recipients.filter(function(r: any) { return !r.engaged && r.status !== 'bounced' && r.status !== 'failed'; }).length,
+    recipients: recipients,
+  });
+});
+
+// Engagement timeline: opens and clicks over time (hourly buckets)
+r.get('/campaigns/:id/timeline', async (req, res) => {
+  var tenantId = req.dbUserId;
+  var { data: c } = await supabase.from('email_campaigns')
+    .select('id').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!c) return res.status(404).json({ error: 'Campaign not found' });
+
+  var { data: events } = await supabase.from('email_events')
+    .select('type, occurred_at')
+    .in('type', ['opened', 'clicked', 'delivered'])
+    .eq('send_id', req.params.id);
+
+  // Also fetch from email_sends for campaigns with many recipients
+  var { data: sends } = await supabase.from('email_sends')
+    .select('sent_at, opened_at, clicked_at')
+    .eq('campaign_id', req.params.id)
+    .not('sent_at', 'is', null);
+
+  // Build hourly timeline from send data
+  var buckets: Record<string, { hour: string; opens: number; clicks: number; sends: number }> = {};
+
+  (sends || []).forEach(function(s: any) {
+    if (s.sent_at) {
+      var h = s.sent_at.slice(0, 13); // YYYY-MM-DDTHH
+      if (!buckets[h]) buckets[h] = { hour: h, opens: 0, clicks: 0, sends: 0 };
+      buckets[h].sends++;
+    }
+    if (s.opened_at) {
+      var oh = s.opened_at.slice(0, 13);
+      if (!buckets[oh]) buckets[oh] = { hour: oh, opens: 0, clicks: 0, sends: 0 };
+      buckets[oh].opens++;
+    }
+    if (s.clicked_at) {
+      var ch = s.clicked_at.slice(0, 13);
+      if (!buckets[ch]) buckets[ch] = { hour: ch, opens: 0, clicks: 0, sends: 0 };
+      buckets[ch].clicks++;
+    }
+  });
+
+  var timeline = Object.values(buckets).sort(function(a, b) {
+    return a.hour < b.hour ? -1 : a.hour > b.hour ? 1 : 0;
+  });
+
+  // Cumulative totals
+  var cumOpens = 0;
+  var cumClicks = 0;
+  var cumulativeTimeline = timeline.map(function(t) {
+    cumOpens += t.opens;
+    cumClicks += t.clicks;
+    return {
+      hour: t.hour,
+      opens: t.opens,
+      clicks: t.clicks,
+      sends: t.sends,
+      cumulative_opens: cumOpens,
+      cumulative_clicks: cumClicks,
+    };
+  });
+
+  res.json({ timeline: cumulativeTimeline });
+});
+
+// Link click breakdown: which links were clicked most
+r.get('/campaigns/:id/link-clicks', async (req, res) => {
+  var tenantId = req.dbUserId;
+  var { data: c } = await supabase.from('email_campaigns')
+    .select('id').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+  if (!c) return res.status(404).json({ error: 'Campaign not found' });
+
+  var { data: events } = await supabase.from('email_events')
+    .select('meta')
+    .eq('type', 'clicked');
+
+  // Filter to this campaign's sends and extract click URLs
+  var { data: sendIds } = await supabase.from('email_sends')
+    .select('id')
+    .eq('campaign_id', req.params.id);
+
+  var sendIdSet = new Set((sendIds || []).map(function(s: any) { return s.id; }));
+
+  var linkCounts: Record<string, number> = {};
+  (events || []).forEach(function(ev: any) {
+    if (ev.meta?.data?.headers?.['X-Send-Id'] && sendIdSet.has(ev.meta.data.headers['X-Send-Id'])) {
+      var url = ev.meta?.data?.click?.link || ev.meta?.data?.url || 'unknown';
+      linkCounts[url] = (linkCounts[url] || 0) + 1;
+    }
+  });
+
+  var links = Object.entries(linkCounts).map(function(entry) {
+    return { url: entry[0], clicks: entry[1] };
+  }).sort(function(a, b) { return b.clicks - a.clicks; });
+
+  res.json({ links: links });
+});
+
 r.post('/campaigns', async (req, res) => {
   const tenantId = req.dbUserId;
   const {
@@ -363,26 +491,59 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     });
   }
 
-  // 2. Send in chunks of BATCH_SIZE via batch API
+  // 2. Send in chunks of BATCH_SIZE via batch API with retry logic
+  var MAX_RETRIES = 2;
   for (let i = 0; i < prepared.length; i += BATCH_SIZE) {
     const chunk = prepared.slice(i, i + BATCH_SIZE);
-    try {
-      const { messageIds } = await resendProvider.sendBatch(chunk.map(p => p.payload));
-      const now = new Date().toISOString();
-      for (let j = 0; j < chunk.length; j++) {
-        const mid = messageIds[j] || '';
-        await supabase.from('email_sends').update({
-          provider_message_id: mid, status: 'sent', sent_at: now,
-        }).eq('id', chunk[j].sendId);
-        results.push({ to: chunk[j].to, ok: true });
-        totalSent++;
+    var batchSuccess = false;
+
+    for (var attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { messageIds } = await resendProvider.sendBatch(chunk.map(p => p.payload));
+        const now = new Date().toISOString();
+        for (let j = 0; j < chunk.length; j++) {
+          const mid = messageIds[j] || '';
+          await supabase.from('email_sends').update({
+            provider_message_id: mid, status: 'sent', sent_at: now,
+          }).eq('id', chunk[j].sendId);
+          results.push({ to: chunk[j].to, ok: true });
+          totalSent++;
+        }
+        batchSuccess = true;
+        break; // Success — exit retry loop
+      } catch (e: any) {
+        var isRetryable = e.message && (
+          e.message.includes('rate limit') ||
+          e.message.includes('timeout') ||
+          e.message.includes('503') ||
+          e.message.includes('429') ||
+          e.message.includes('ECONNRESET')
+        );
+        if (attempt < MAX_RETRIES && isRetryable) {
+          var delay = Math.pow(2, attempt) * 1000; // 1s, 2s exponential backoff
+          log.info('[Email] Batch retry ' + (attempt + 1) + '/' + MAX_RETRIES + ' after ' + delay + 'ms', {
+            campaign_id: c.id, batch_start: i, error: e.message,
+          });
+          await new Promise(function(resolve) { setTimeout(resolve, delay); });
+          continue;
+        }
+        // Final failure — mark all sends in this chunk as failed
+        for (const item of chunk) {
+          await supabase.from('email_sends').update({
+            status: 'failed',
+            metadata: { error: e.message, retries: attempt },
+          }).eq('id', item.sendId);
+          results.push({ to: item.to, ok: false, error: e.message });
+        }
+        log.error('[Email] Batch failed after ' + (attempt + 1) + ' attempts', {
+          campaign_id: c.id, batch_start: i, error: e.message,
+        });
       }
-    } catch (e: any) {
-      // Entire batch failed - mark all sends in this chunk as failed
-      for (const item of chunk) {
-        await supabase.from('email_sends').update({ status: 'failed' }).eq('id', item.sendId);
-        results.push({ to: item.to, ok: false, error: e.message });
-      }
+    }
+
+    // Small delay between batches to respect rate limits
+    if (batchSuccess && i + BATCH_SIZE < prepared.length) {
+      await new Promise(function(resolve) { setTimeout(resolve, 200); });
     }
   }
 

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 import { PageHeader, Card, PrimaryButton, PageLoading, Pill } from '../../_components/PageShell';
 import { useDashboardAuth } from '../../_components/useDashboardAuth';
-import { getCampaign, sendCampaign, testSendCampaign, updateCampaign, deleteCampaign, getCampaignStats, Campaign, CampaignStats } from '../../../../lib/emails';
+import { getCampaign, sendCampaign, testSendCampaign, updateCampaign, deleteCampaign, getCampaignStats, getCampaignRecipients, getCampaignTimeline, getCampaignLinkClicks, Campaign, CampaignStats, RecipientsResponse, TimelinePoint, LinkClick } from '../../../../lib/emails';
 
 type StatusVariant = 'live' | 'draft' | 'neutral' | 'accent';
 function statusVariant(s: string): StatusVariant {
@@ -67,6 +67,13 @@ export default function CampaignDetailPage() {
   const [stats, setStats] = useState<CampaignStats | null>(null);
   const [sourceQuiz, setSourceQuiz] = useState<any>(null);
 
+  // Enhanced analytics
+  const [recipientData, setRecipientData] = useState<RecipientsResponse | null>(null);
+  const [timeline, setTimeline] = useState<TimelinePoint[]>([]);
+  const [linkClicks, setLinkClicks] = useState<LinkClick[]>([]);
+  const [recipientFilter, setRecipientFilter] = useState<'all' | 'opened' | 'clicked' | 'not_engaged'>('all');
+  const [showAllRecipients, setShowAllRecipients] = useState(false);
+
   useEffect(() => {
     if (!token || !campaignId) return;
     let cancelled = false;
@@ -79,9 +86,12 @@ export default function CampaignDetailPage() {
           setEditSubject(c.subject || '');
           setEditFromName(c.from_name || '');
           setEditFromEmail(c.from_email || '');
-          // Fetch stats if sent
+          // Fetch stats + enhanced analytics if sent
           if (c.status === 'sent' || c.status === 'sending') {
             getCampaignStats(c.id).then(function (s) { if (!cancelled) setStats(s); }).catch(function () {});
+            getCampaignRecipients(c.id).then(function (r) { if (!cancelled) setRecipientData(r); }).catch(function () {});
+            getCampaignTimeline(c.id).then(function (t) { if (!cancelled) setTimeline(t.timeline || []); }).catch(function () {});
+            getCampaignLinkClicks(c.id).then(function (l) { if (!cancelled) setLinkClicks(l.links || []); }).catch(function () {});
           }
           // Fetch source quiz title
           if (c.source_quiz_id) {
@@ -301,6 +311,171 @@ export default function CampaignDetailPage() {
               {stats.hard_bounced} hard bounce{stats.hard_bounced !== 1 ? 's' : ''}, {stats.soft_bounced} soft bounce{stats.soft_bounced !== 1 ? 's' : ''}
             </div>
           )}
+        </Card>
+      )}
+
+      {/* Engagement timeline chart */}
+      {isSent && timeline.length > 1 && (
+        <Card>
+          <div style={{ color: C.TEXT, fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Engagement over time</div>
+          <div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.TEXT_MUTED }}>
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: '#60a5fa', display: 'inline-block' }} />
+              Opens
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.TEXT_MUTED }}>
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: C.ACCENT, display: 'inline-block' }} />
+              Clicks
+            </div>
+          </div>
+          <div style={{ position: 'relative', height: 180 }}>
+            {(() => {
+              var maxOpens = Math.max(...timeline.map(function(t) { return t.cumulative_opens; }), 1);
+              var width = 100;
+              var height = 160;
+              var points = timeline.length;
+              var stepX = points > 1 ? width / (points - 1) : width;
+
+              var openPath = timeline.map(function(t, i) {
+                var x = i * stepX;
+                var y = height - (t.cumulative_opens / maxOpens) * height;
+                return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+              }).join(' ');
+
+              var clickPath = timeline.map(function(t, i) {
+                var x = i * stepX;
+                var y = height - (t.cumulative_clicks / maxOpens) * height;
+                return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+              }).join(' ');
+
+              return (
+                <svg viewBox={'0 0 ' + width + ' ' + height} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
+                  <path d={openPath} fill="none" stroke="#60a5fa" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+                  <path d={clickPath} fill="none" stroke={C.ACCENT} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+                </svg>
+              );
+            })()}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.TEXT_SUBTLE, marginTop: 4 }}>
+              <span>{timeline[0]?.hour?.slice(5, 16).replace('T', ' ') || ''}</span>
+              <span>{timeline[timeline.length - 1]?.hour?.slice(5, 16).replace('T', ' ') || ''}</span>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Per-recipient engagement table */}
+      {isSent && recipientData && recipientData.total > 0 && (
+        <Card>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ color: C.TEXT, fontSize: 14, fontWeight: 600 }}>Recipient engagement</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {(['all', 'opened', 'clicked', 'not_engaged'] as const).map(function(f) {
+                var labels: Record<string, string> = { all: 'All', opened: 'Opened', clicked: 'Clicked', not_engaged: 'Not engaged' };
+                var counts: Record<string, number> = {
+                  all: recipientData.total,
+                  opened: recipientData.opened,
+                  clicked: recipientData.clicked,
+                  not_engaged: recipientData.not_engaged,
+                };
+                return (
+                  <button
+                    key={f}
+                    onClick={function() { setRecipientFilter(f); setShowAllRecipients(false); }}
+                    style={{
+                      padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer',
+                      border: recipientFilter === f ? '1px solid ' + C.ACCENT : '1px solid ' + C.BORDER,
+                      background: recipientFilter === f ? C.ACCENT + '15' : 'transparent',
+                      color: recipientFilter === f ? C.ACCENT : C.TEXT_MUTED,
+                    }}
+                  >
+                    {labels[f]} ({counts[f]})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid ' + C.BORDER }}>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', color: C.TEXT_MUTED, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Email</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', color: C.TEXT_MUTED, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Status</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', color: C.TEXT_MUTED, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Opened</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', color: C.TEXT_MUTED, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Clicked</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recipientData.recipients
+                  .filter(function(r) {
+                    if (recipientFilter === 'opened') return !!r.opened_at;
+                    if (recipientFilter === 'clicked') return !!r.clicked_at;
+                    if (recipientFilter === 'not_engaged') return !r.engaged && r.status !== 'bounced' && r.status !== 'failed';
+                    return true;
+                  })
+                  .slice(0, showAllRecipients ? 500 : 20)
+                  .map(function(r, i) {
+                    return (
+                      <tr key={r.email + i} style={{ borderBottom: '1px solid ' + C.BORDER + '40' }}>
+                        <td style={{ padding: '10px 12px', color: C.TEXT, fontFamily: 'monospace', fontSize: 12 }}>{r.email}</td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
+                            background: r.status === 'delivered' ? '#2D6A4F20' : r.status === 'bounced' ? '#C5303020' : r.status === 'failed' ? '#C5303020' : C.SURFACE,
+                            color: r.status === 'delivered' ? '#2D6A4F' : r.status === 'bounced' ? '#C53030' : r.status === 'failed' ? '#C53030' : C.TEXT_MUTED,
+                          }}>
+                            {r.status}{r.bounce_type ? ' (' + r.bounce_type.replace('_', ' ') + ')' : ''}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px', color: r.opened_at ? '#2D6A4F' : C.TEXT_SUBTLE, fontSize: 12 }}>
+                          {r.opened_at ? new Date(r.opened_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: r.clicked_at ? C.ACCENT : C.TEXT_SUBTLE, fontSize: 12 }}>
+                          {r.clicked_at ? new Date(r.clicked_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+          {!showAllRecipients && recipientData.total > 20 && (
+            <button
+              onClick={function() { setShowAllRecipients(true); }}
+              style={{
+                marginTop: 12, padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: 'transparent', color: C.ACCENT, border: '1px solid ' + C.BORDER, borderRadius: 6,
+              }}
+            >
+              Show all {recipientData.total} recipients
+            </button>
+          )}
+        </Card>
+      )}
+
+      {/* Top clicked links */}
+      {isSent && linkClicks.length > 0 && (
+        <Card>
+          <div style={{ color: C.TEXT, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Top clicked links</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {linkClicks.slice(0, 10).map(function(l, i) {
+              var maxClicks = linkClicks[0]?.clicks || 1;
+              return (
+                <div key={l.url + i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: C.ACCENT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {l.url}
+                    </div>
+                    <div style={{ marginTop: 4, height: 6, background: C.SURFACE, borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ width: Math.round((l.clicks / maxClicks) * 100) + '%', height: '100%', background: C.ACCENT, borderRadius: 3 }} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.TEXT, minWidth: 50, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                    {l.clicks} {l.clicks === 1 ? 'click' : 'clicks'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </Card>
       )}
 
