@@ -39,6 +39,8 @@ import unsubscribeRouter from './routes/unsubscribe';
 import clerkWebhookRoute from './routes/clerkWebhook';
 import { log } from './lib/logger';
 import { requestLogger } from './middleware/requestLogger';
+import { requireAuth, attachUser } from './middleware/auth';
+import { supabase } from './db/supabaseClient';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -166,6 +168,46 @@ app.use('/api', extendedFeaturesRouter);
 app.use('/api/public', publicExtendedRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+// Dashboard activity feed — returns recent leads + emails as activity items
+app.get('/api/dashboard/activity', requireAuth, attachUser, async (req: any, res) => {
+  try {
+    const userId = req.dbUserId;
+    if (!userId) return res.json([]);
+    const activities: any[] = [];
+    // Recent leads (last 5)
+    const { data: recentLeads } = await supabase.from('leads')
+      .select('id, email, name, created_at, quiz_id')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
+    for (const l of recentLeads || []) {
+      activities.push({
+        id: 'lead-' + l.id,
+        type: 'lead',
+        title: 'New lead captured',
+        description: (l.name || l.email || 'Anonymous') + ' completed a quiz',
+        time: l.created_at,
+      });
+    }
+    // Recent email sends (last 3)
+    const { data: recentSends } = await supabase.from('email_sends')
+      .select('id, to_email, status, created_at, campaign_id')
+      .eq('tenant_id', userId).order('created_at', { ascending: false }).limit(3);
+    for (const s of recentSends || []) {
+      activities.push({
+        id: 'email-' + s.id,
+        type: 'integration',
+        title: 'Email ' + (s.status === 'delivered' ? 'delivered' : s.status === 'sent' ? 'sent' : s.status),
+        description: 'To ' + s.to_email,
+        time: s.created_at,
+      });
+    }
+    // Sort by time descending
+    activities.sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    res.json(activities.slice(0, 8));
+  } catch (e: any) {
+    res.json([]);
+  }
+});
 
 // Sentry error handler must be registered after all routes
 if (process.env.SENTRY_DSN) {
