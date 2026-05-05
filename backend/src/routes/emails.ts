@@ -419,13 +419,15 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     return res.status(400).json({ error: 'Campaign has already been sent. Use "live" mode for re-sends.' });
   }
 
-  // Atomically set status to 'sending' to block concurrent requests
-  const { error: lockErr } = await supabase.from('email_campaigns')
+  // Atomically set status to 'sending' to block concurrent requests.
+  // Use .select() to check if the row was actually updated (0 rows = lock failed).
+  const { data: lockRows, error: lockErr } = await supabase.from('email_campaigns')
     .update({ status: 'sending' })
     .eq('id', c.id)
     .eq('tenant_id', tenantId)
-    .neq('status', 'sending'); // Only succeeds if not already sending
-  if (lockErr) {
+    .neq('status', 'sending')
+    .select('id');
+  if (lockErr || !lockRows || lockRows.length === 0) {
     return res.status(409).json({ error: 'Campaign send already in progress' });
   }
 
