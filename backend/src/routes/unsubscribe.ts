@@ -6,6 +6,12 @@ const r = Router();
 
 const APP_URL = process.env.FRONTEND_URL || 'https://app.squarespell.com';
 
+/** Escape HTML entities to prevent XSS */
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 /**
  * GET /api/public/unsubscribe?token=<base64>
  * Renders a simple HTML confirmation page (no frontend needed).
@@ -31,7 +37,7 @@ r.get('/unsubscribe', async (req, res) => {
     email = emailParam;
   }
 
-  if (!email) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).send(buildPage('Invalid Link', 'This unsubscribe link is invalid or expired.', false));
   }
 
@@ -43,16 +49,16 @@ r.get('/unsubscribe', async (req, res) => {
     .maybeSingle();
 
   if (existing) {
-    return res.send(buildPage('Already Unsubscribed', `<strong>${email}</strong> is already unsubscribed. You will not receive any more emails from us.`, false));
+    return res.send(buildPage('Already Unsubscribed', `<strong>${escHtml(email)}</strong> is already unsubscribed. You will not receive any more emails from us.`, false));
   }
 
   // Show confirmation form
   const formAction = `${process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com'}/api/public/unsubscribe`;
   res.send(buildPage('Unsubscribe', `
-    <p>Unsubscribe <strong>${email}</strong> from all Squarespell emails?</p>
-    <form method="POST" action="${formAction}">
-      <input type="hidden" name="email" value="${email}" />
-      ${quizId ? `<input type="hidden" name="quiz_id" value="${quizId}" />` : ''}
+    <p>Unsubscribe <strong>${escHtml(email)}</strong> from all Squarespell emails?</p>
+    <form method="POST" action="${escHtml(formAction)}">
+      <input type="hidden" name="email" value="${escHtml(email)}" />
+      ${quizId ? `<input type="hidden" name="quiz_id" value="${escHtml(quizId)}" />` : ''}
       <button type="submit" style="display:inline-block;margin-top:16px;padding:14px 32px;background:#D2FF1D;color:#07090c;border:none;border-radius:8px;font-weight:700;font-size:16px;cursor:pointer;">Confirm Unsubscribe</button>
     </form>
   `, true));
@@ -118,7 +124,7 @@ r.post('/unsubscribe', async (req, res) => {
 
   // For web form, show confirmation
   res.send(buildPage('Unsubscribed', `
-    <p><strong>${normalized}</strong> has been unsubscribed.</p>
+    <p><strong>${escHtml(normalized)}</strong> has been unsubscribed.</p>
     <p style="color:#888;margin-top:12px;">You will no longer receive emails from Squarespell quizzes. This may take up to 24 hours to take full effect.</p>
   `, false));
 });

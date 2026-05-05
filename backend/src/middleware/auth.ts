@@ -65,6 +65,7 @@ export async function attachUser(
 
     if (existing) {
       req.dbUserId = existing.id;
+      (req as any).userPlan = existing.plan || 'free';
       // Update last_login_at for win-back email tracking (at most once per hour
       // to avoid hammering the DB on every request)
       var lastLogin = existing.last_login_at ? new Date(existing.last_login_at).getTime() : 0;
@@ -100,6 +101,7 @@ export async function attachUser(
     }
 
     req.dbUserId = newUser?.id;
+    (req as any).userPlan = 'free';
     next();
   } catch (err: any) {
     log.error('attachUser error:', { err: err.message });

@@ -2,8 +2,13 @@ import type { Request, Response, NextFunction } from 'express';
 import { supabase } from '../db/supabaseClient';
 import { limitFor } from '../services/email/limits';
 export async function emailQuota(req: Request, res: Response, next: NextFunction) {
-  const tenantId = (req as any).auth?.userId;
-  const plan = (req as any).auth?.plan || 'starter';
+  // Use req.dbUserId (set by attachUser middleware) — this is the Supabase user UUID
+  // Fallback to req.auth?.userId for backward compat, but dbUserId is canonical
+  const tenantId = (req as any).dbUserId || (req as any).auth?.userId;
+  if (!tenantId) return res.status(401).json({ error: 'unauthorized' });
+
+  // Get plan from user record (already fetched by attachUser)
+  const plan = (req as any).userPlan || 'starter';
   const periodStart = new Date(); periodStart.setDate(1);
   const ps = periodStart.toISOString().slice(0,10);
   const { data } = await supabase.from('email_quota_usage')

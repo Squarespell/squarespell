@@ -59,7 +59,7 @@ async function resolveRecipients(
 
 r.get('/quota', async (req, res) => {
   const tenantId = req.dbUserId;
-  const plan = (req as any).auth?.plan || 'starter';
+  const plan = (req as any).userPlan || 'starter';
   const ps = new Date(); ps.setDate(1);
   const { data } = await supabase.from('email_quota_usage')
     .select('sends').eq('tenant_id', tenantId).eq('period_start', ps.toISOString().slice(0,10)).maybeSingle();
@@ -248,10 +248,8 @@ r.get('/campaigns/:id/timeline', async (req, res) => {
     .select('id').eq('id', req.params.id).eq('tenant_id', tenantId).single();
   if (!c) return res.status(404).json({ error: 'Campaign not found' });
 
-  var { data: events } = await supabase.from('email_events')
-    .select('type, occurred_at')
-    .in('type', ['opened', 'clicked', 'delivered'])
-    .eq('send_id', req.params.id);
+  // Note: email_events.send_id references individual send IDs, not campaign IDs.
+  // We use email_sends data directly for timeline (already fetched below).
 
   // Also fetch from email_sends for campaigns with many recipients
   var { data: sends } = await supabase.from('email_sends')
@@ -310,23 +308,24 @@ r.get('/campaigns/:id/link-clicks', async (req, res) => {
     .select('id').eq('id', req.params.id).eq('tenant_id', tenantId).single();
   if (!c) return res.status(404).json({ error: 'Campaign not found' });
 
-  var { data: events } = await supabase.from('email_events')
-    .select('meta')
-    .eq('type', 'clicked');
-
-  // Filter to this campaign's sends and extract click URLs
+  // First get send IDs for this campaign, then query only relevant click events
   var { data: sendIds } = await supabase.from('email_sends')
     .select('id')
     .eq('campaign_id', req.params.id);
 
-  var sendIdSet = new Set((sendIds || []).map(function(s: any) { return s.id; }));
+  var sendIdList = (sendIds || []).map(function(s: any) { return s.id; });
+  if (sendIdList.length === 0) return res.json({ links: [] });
+
+  // Query click events only for this campaign's sends (filtered at DB level)
+  var { data: events } = await supabase.from('email_events')
+    .select('meta')
+    .eq('type', 'clicked')
+    .in('send_id', sendIdList);
 
   var linkCounts: Record<string, number> = {};
   (events || []).forEach(function(ev: any) {
-    if (ev.meta?.data?.headers?.['X-Send-Id'] && sendIdSet.has(ev.meta.data.headers['X-Send-Id'])) {
-      var url = ev.meta?.data?.click?.link || ev.meta?.data?.url || 'unknown';
-      linkCounts[url] = (linkCounts[url] || 0) + 1;
-    }
+    var url = ev.meta?.data?.click?.link || ev.meta?.data?.url || 'unknown';
+    linkCounts[url] = (linkCounts[url] || 0) + 1;
   });
 
   var links = Object.entries(linkCounts).map(function(entry) {
@@ -412,12 +411,32 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     .eq('id', req.params.id).eq('tenant_id', tenantId).single();
   if (!c) return res.status(404).json({ error: 'not_found' });
 
+  // Concurrency guard: prevent double-sends
+  if (c.status === 'sending') {
+    return res.status(409).json({ error: 'Campaign is already being sent' });
+  }
+  if (c.status === 'sent' && c.mode !== 'live') {
+    return res.status(400).json({ error: 'Campaign has already been sent. Use "live" mode for re-sends.' });
+  }
+
+  // Atomically set status to 'sending' to block concurrent requests
+  const { error: lockErr } = await supabase.from('email_campaigns')
+    .update({ status: 'sending' })
+    .eq('id', c.id)
+    .eq('tenant_id', tenantId)
+    .neq('status', 'sending'); // Only succeeds if not already sending
+  if (lockErr) {
+    return res.status(409).json({ error: 'Campaign send already in progress' });
+  }
+
   // Resolve recipients: explicit list OR from source_quiz_id + filters
   let recipients: string[] = Array.isArray(body.recipients) ? body.recipients : [];
   if (recipients.length === 0 && c.source_quiz_id) {
     try {
       recipients = await resolveRecipients(tenantId!, c.source_quiz_id, c.source_filters || {});
     } catch (e: any) {
+      // Reset status so campaign isn't stuck in 'sending'
+      await supabase.from('email_campaigns').update({ status: 'draft' }).eq('id', c.id);
       return res.status(500).json({ error: 'resolve_failed: ' + e.message });
     }
   }
@@ -550,10 +569,15 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
   await supabase.from('email_quota_usage').upsert({
     tenant_id: tenantId, period_start: periodStart, sends: used + totalSent,
   }, { onConflict: 'tenant_id,period_start' });
+
+  // Update campaign status: 'sent' for blast mode, back to 'draft' for live mode (re-runnable)
+  const finalStatus = c.mode === 'live' ? 'draft' : 'sent';
   await supabase.from('email_campaigns').update({
+    status: totalSent > 0 ? finalStatus : (c.mode === 'live' ? 'draft' : 'failed'),
     last_run_at: new Date().toISOString(),
     sent_count: (c.sent_count || 0) + totalSent,
   }).eq('id', c.id);
+
   res.json({
     sent: totalSent,
     skipped: recipients.length - allowed.length,
@@ -570,25 +594,36 @@ r.post('/campaigns/:id/test-send', async (req, res) => {
   const { data: c } = await supabase.from('email_campaigns').select('*')
     .eq('id', req.params.id).eq('tenant_id', tenantId).single();
   if (!c) return res.status(404).json({ error: 'not_found' });
-  // Replace merge tags with sample values for test send
-  const sampleTags: Record<string, string> = {
-    '{{firstName}}': 'Alex',
-    '{{outcomeTitle}}': 'Your Result',
-    '{{quizTitle}}': 'Your Quiz',
-    '{{ctaUrl}}': 'https://example.com',
-    '{{brand}}': c.from_name || 'Your Brand',
-    '{{unsubscribeUrl}}': 'https://example.com/unsubscribe',
+
+  // Use the production merge tag system with sample data for accurate test preview
+  const sampleCtx: MergeContext = {
+    first_name: 'Alex',
+    last_name: 'Sample',
+    email: to,
+    quiz_name: 'Your Quiz',
+    quiz_url: 'https://example.com/quiz',
+    outcome_name: 'Your Result',
+    outcome_description: 'This is a sample outcome description.',
+    outcome_score: '85',
+    brand_name: c.from_name || 'Your Brand',
+    cta_url: 'https://example.com',
+    answers: {},
   };
-  let html = c.html;
-  let subject = c.subject;
-  for (const [tag, val] of Object.entries(sampleTags)) {
-    html = html.split(tag).join(val);
-    subject = subject.split(tag).join(val);
+  const resolvedSubject = applyMergeTags(c.subject || '', sampleCtx);
+  let resolvedHtml = applyMergeTags(c.html || '', sampleCtx);
+
+  const footer = canSpamFooterHtml(to, { siteName: c.from_name });
+  if (resolvedHtml.includes('</body>')) {
+    resolvedHtml = resolvedHtml.replace('</body>', footer + '</body>');
+  } else {
+    resolvedHtml += footer;
   }
+
   try {
     const { messageId } = await resendProvider.send({
       to, from: c.from_email, fromName: c.from_name,
-      subject: '[TEST] ' + subject, html,
+      subject: '[TEST] ' + resolvedSubject, html: resolvedHtml,
+      headers: { ...buildUnsubscribeHeaders(to) },
       tags: [{ name: 'campaign', value: c.id }, { name: 'test', value: '1' }],
     });
     res.json({ ok: true, messageId });
@@ -672,14 +707,25 @@ r.get('/deliverability', async (req, res) => {
 });
 
 // ── Suppression List ─────────────────────────────────────────────────────
-// GET /api/emails/suppressions - list all suppressed emails for this tenant
+// GET /api/emails/suppressions - list suppressed emails relevant to this tenant
 r.get('/suppressions', async (req, res) => {
   try {
-    // email_unsubscribes is global (not per-tenant) since emails are unique
-    // Show all suppressions - the table is small enough for full fetch
+    const tenantId = req.dbUserId;
+
+    // Only show suppressions for emails this tenant has actually sent to
+    // This prevents cross-tenant data leakage
+    const { data: sentEmails } = await supabase
+      .from('email_sends')
+      .select('to_email')
+      .eq('tenant_id', tenantId);
+
+    const tenantEmails = [...new Set((sentEmails || []).map((s: any) => s.to_email).filter(Boolean))];
+    if (tenantEmails.length === 0) return res.json([]);
+
     const { data, error } = await supabase
       .from('email_unsubscribes')
       .select('id, email, source, created_at')
+      .in('email', tenantEmails)
       .order('created_at', { ascending: false })
       .limit(500);
 

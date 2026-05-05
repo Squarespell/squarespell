@@ -15,12 +15,27 @@ r.post('/resend', async (req, res) => {
     const type = (e?.type || '').replace('email.', '');
     if (!sendId || !type) return res.json({ ok: true });
 
+    // Deduplication: Resend can deliver the same webhook multiple times.
+    // Check if we already processed this exact event (same send_id + type + timestamp).
+    const occurredAt = e?.created_at || new Date().toISOString();
+    const { data: existing } = await supabase.from('email_events')
+      .select('id')
+      .eq('send_id', sendId)
+      .eq('type', type)
+      .eq('occurred_at', occurredAt)
+      .limit(1)
+      .maybeSingle();
+    if (existing) {
+      // Already processed this event — skip to avoid duplicate side effects
+      return res.json({ ok: true });
+    }
+
     // 1. Store event in email_events for analytics
     await supabase.from('email_events').insert({
       send_id: sendId,
       type,
       meta: e,
-      occurred_at: e?.created_at || new Date().toISOString(),
+      occurred_at: occurredAt,
     });
 
     // 2. Update email_sends status based on event type
