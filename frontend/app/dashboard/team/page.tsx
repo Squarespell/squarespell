@@ -156,7 +156,7 @@ export default function TeamPage() {
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({ name: newTeamName.trim() }),
       });
-      if (!res.ok) { var errData = await res.json(); throw new Error(errData.error || 'Failed to create team'); }
+      if (!res.ok) { var errData: any = {}; try { errData = await res.json(); } catch {} throw new Error(errData.error || 'Failed to create team'); }
       var newTeam = await res.json();
       setTeams(function (prev) { return [...prev, newTeam]; });
       setSelectedTeam(newTeam);
@@ -177,7 +177,7 @@ export default function TeamPage() {
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
-      if (!res.ok) { var errData = await res.json(); throw new Error(errData.error || 'Failed to invite member'); }
+      if (!res.ok) { var errData: any = {}; try { errData = await res.json(); } catch {} throw new Error(errData.error || 'Failed to invite member'); }
       setInviteEmail(''); setInviteRole('editor'); setInviteOpen(false);
       setSuccess('Member invited successfully');
       setTimeout(function () { setSuccess(''); }, 3000);

@@ -35,6 +35,7 @@ import { richResultsRouter, publicRichResultsRouter } from './routes/richResults
 import { commerceRouter } from './routes/commerce';
 import { gdprRouter, publicGdprRouter } from './routes/gdpr';
 import { extendedFeaturesRouter, publicExtendedRouter } from './routes/extendedFeatures';
+import teamsRouter from './routes/teams';
 import unsubscribeRouter from './routes/unsubscribe';
 import clerkWebhookRoute from './routes/clerkWebhook';
 import { log } from './lib/logger';
@@ -166,6 +167,7 @@ app.use('/api/gdpr', gdprRouter);
 app.use('/api/public', publicGdprRouter);
 app.use('/api', extendedFeaturesRouter);
 app.use('/api/public', publicExtendedRouter);
+app.use('/api/teams', teamsRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
