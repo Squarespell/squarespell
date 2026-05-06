@@ -558,25 +558,16 @@ export default function BillingPage() {
 
   const openPortal = () => {
     if (!token) return;
-    // Stripe portal is a redirect endpoint - we open with the auth header via a GET
-    // through fetch won't follow cross-origin redirects; the backend route redirects
-    // the browser, so we navigate directly with the token in a URL is unsafe.
-    // Instead the backend /api/stripe/portal requires auth; we do a same-tab fetch
-    // to read the portal URL. But that route does res.redirect - so fetch follows
-    // it and returns the final HTML. Safer: POST a helper or read location from
-    // response. For now, open in a new tab via a fetch that returns the redirect
-    // target URL. (Matches the existing dashboard behavior.)
     fetch(`${API}/api/stripe/portal`, {
       headers: { Authorization: `Bearer ${token}` },
-      redirect: 'manual',
     })
-      .then((r) => {
-        const loc = r.headers.get('Location');
-        if (loc) window.location.href = loc;
-        else window.location.href = `${API}/api/stripe/portal`;
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.url) window.location.href = data.url;
+        else alert('Could not open billing portal. Please try again.');
       })
       .catch(() => {
-        window.location.href = `${API}/api/stripe/portal`;
+        alert('Something went wrong opening the billing portal.');
       });
   };
 

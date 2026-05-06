@@ -1958,7 +1958,7 @@ stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: Authe
 // ── Add-on checkout ──────────────────────────────────────────────────────────
 stripeRouter.post('/create-addon-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
-    var addonKey = req.body.addon as string; // e.g. 'lead_500', 'email_1000'
+    var addonKey = (req.body.addon_key || req.body.addon) as string; // e.g. 'lead_500', 'email_1000'
     if (!addonKey) return res.status(400).json({ error: 'addon is required' });
 
     var leadAddon = LEAD_ADDON_PRICES[addonKey];
@@ -1998,7 +1998,7 @@ stripeRouter.post('/create-addon-checkout', requireAuth, attachUser, async (req:
 // ── Cancel add-on ────────────────────────────────────────────────────────────
 stripeRouter.post('/cancel-addon', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
-    var addonType = req.body.type as string; // 'lead' or 'email'
+    var addonType = (req.body.addon_type || req.body.type) as string; // 'lead' or 'email'
     if (addonType !== 'lead' && addonType !== 'email') return res.status(400).json({ error: 'type must be lead or email' });
     var field = addonType === 'lead' ? 'lead_addon' : 'email_addon';
 
@@ -2149,9 +2149,9 @@ stripeRouter.post('/webhook', async (req, res) => {
 });
 stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   const { data: user } = await supabase.from('users').select('stripe_customer_id').eq('id', req.dbUserId).single();
-  if (!user?.stripe_customer_id) return res.redirect(`${process.env.FRONTEND_URL}/pricing`);
+  if (!user?.stripe_customer_id) return res.json({ url: `${process.env.FRONTEND_URL}/pricing` });
   const portal = await stripe.billingPortal.sessions.create({ customer: user.stripe_customer_id, return_url: `${process.env.FRONTEND_URL}/dashboard` });
-  res.redirect(portal.url);
+  res.json({ url: portal.url });
 });
 
 // ── Switch Plan (upgrade/downgrade with proration) ──────────────────────────

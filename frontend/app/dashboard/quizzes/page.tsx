@@ -656,7 +656,7 @@ export default function QuizzesPage() {
                             {quiz.title}
                           </div>
                           <div style={{ fontSize: 11, color: C.TEXT_MUTED }}>
-                            {quiz.view_count} views · {quiz.lead_count} leads · {conversion}% conversion
+                            {quiz.view_count} {quiz.view_count === 1 ? 'view' : 'views'} · {quiz.lead_count} {quiz.lead_count === 1 ? 'lead' : 'leads'} · {conversion}% conversion
                           </div>
                         </div>
 
