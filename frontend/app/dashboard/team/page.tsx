@@ -225,7 +225,22 @@ export default function TeamPage() {
     } catch (err: any) { setError(err.message); }
   }
 
+  async function handleDeleteTeam() {
+    if (!selectedTeam || !confirm('Are you sure you want to delete this team? This action cannot be undone.')) return;
+    try {
+      var res = await fetch(API + '/api/teams/' + selectedTeam.id, {
+        method: 'DELETE', headers: { Authorization: 'Bearer ' + token },
+      });
+      if (!res.ok) throw new Error('Failed to delete team');
+      setSuccess('Team deleted');
+      setTimeout(function () { setSuccess(''); }, 3000);
+      setSelectedTeam(null);
+      await fetchTeams();
+    } catch (err: any) { setError(err.message); }
+  }
+
   var isOwnerOrAdmin = selectedTeam && (selectedTeam.user_role === 'owner' || selectedTeam.user_role === 'admin');
+  var isOwner = selectedTeam && selectedTeam.user_role === 'owner';
 
   /* ── input style ── */
   var inputStyle: React.CSSProperties = {
@@ -425,21 +440,38 @@ export default function TeamPage() {
                       </span>
                     </p>
                   </div>
-                  {isOwnerOrAdmin && (
-                    <button type="button" className="tm-create"
-                      onClick={function () { setInviteOpen(true); }}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        padding: '9px 18px', borderRadius: 10, border: 'none',
-                        background: C.ACCENT, color: '#fff', fontSize: 13, fontWeight: 600,
-                        fontFamily: C.FONT, cursor: 'pointer', whiteSpace: 'nowrap',
-                      }}>
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
-                      Invite Member
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    {isOwnerOrAdmin && (
+                      <button type="button" className="tm-create"
+                        onClick={function () { setInviteOpen(true); }}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          padding: '9px 18px', borderRadius: 10, border: 'none',
+                          background: C.ACCENT, color: '#fff', fontSize: 13, fontWeight: 600,
+                          fontFamily: C.FONT, cursor: 'pointer', whiteSpace: 'nowrap',
+                        }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        Invite Member
+                      </button>
+                    )}
+                    {isOwner && (
+                      <button type="button" className="tm-action"
+                        onClick={handleDeleteTeam}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          padding: '9px 18px', borderRadius: 10, border: '1px solid #FEE4E2',
+                          background: '#FEF3F2', color: '#F04438', fontSize: 13, fontWeight: 600,
+                          fontFamily: C.FONT, cursor: 'pointer', whiteSpace: 'nowrap',
+                        }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M2 4h12M6.5 7v4M9.5 7v4M3 4l0.5 9c0 0.6 0.4 1 1 1h7c0.6 0 1-0.4 1-1l0.5-9M5.5 4V3c0-0.6 0.4-1 1-1h3c0.6 0 1 0.4 1 1v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Delete Team
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

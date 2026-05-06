@@ -11,6 +11,7 @@ import {
   removeQuizFromTeam,
   checkTeamPermission,
   getUserTeamRole,
+  deleteTeam,
 } from '../services/teamService';
 
 const router = Router();
@@ -67,6 +68,22 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
     res.json({ ...team, user_role: role });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to fetch team' });
+  }
+});
+
+// ── DELETE /api/teams/:id — delete a team ────────────────────────────────────
+router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const teamId = req.params.id;
+
+    await deleteTeam(teamId, userId);
+    res.json({ deleted: true });
+  } catch (err: any) {
+    const status = err.message.includes('Only the team owner') ? 403 : 500;
+    res.status(status).json({ error: err.message || 'Failed to delete team' });
   }
 });
 

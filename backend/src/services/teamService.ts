@@ -233,6 +233,47 @@ export async function getTeamMembers(teamId: string): Promise<any[]> {
   return data ?? [];
 }
 
+/**
+ * Delete a team and all its members.
+ * Only the owner can delete a team.
+ */
+export async function deleteTeam(teamId: string, userId: string): Promise<void> {
+  // Check if user is the owner
+  const { data: team, error: teamError } = await supabase
+    .from('teams')
+    .select('owner_id')
+    .eq('id', teamId)
+    .single();
+
+  if (teamError || !team) {
+    throw new Error('Team not found');
+  }
+
+  if (team.owner_id !== userId) {
+    throw new Error('Only the team owner can delete the team');
+  }
+
+  // Delete all team members first
+  const { error: deleteMembersError } = await supabase
+    .from('team_members')
+    .delete()
+    .eq('team_id', teamId);
+
+  if (deleteMembersError) {
+    throw new Error(`Failed to delete team members: ${deleteMembersError.message}`);
+  }
+
+  // Delete the team
+  const { error: deleteTeamError } = await supabase
+    .from('teams')
+    .delete()
+    .eq('id', teamId);
+
+  if (deleteTeamError) {
+    throw new Error(`Failed to delete team: ${deleteTeamError.message}`);
+  }
+}
+
 // ── Quiz Sharing ───────────────────────────────────────────────────────────
 
 /**
