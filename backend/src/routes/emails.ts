@@ -60,9 +60,21 @@ async function resolveRecipients(
 r.get('/quota', async (req, res) => {
   const tenantId = req.dbUserId;
   const plan = (req as any).userPlan || 'starter';
-  const ps = new Date(); ps.setDate(1);
-  const { data } = await supabase.from('email_quota_usage')
-    .select('sends').eq('tenant_id', tenantId).eq('period_start', ps.toISOString().slice(0,10)).maybeSingle();
+  const ps = new Date(); ps.setDate(1); ps.setHours(0,0,0,0);
+  const periodStart = ps.toISOString().slice(0,10);
+  // Try exact match first, then fallback to gte/lt range for the month
+  let { data } = await supabase.from('email_quota_usage')
+    .select('sends').eq('tenant_id', tenantId).eq('period_start', periodStart).maybeSingle();
+  if (!data) {
+    // Fallback: look for any record this month
+    const nextMonth = new Date(ps); nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const { data: rangeData } = await supabase.from('email_quota_usage')
+      .select('sends').eq('tenant_id', tenantId)
+      .gte('period_start', periodStart)
+      .lt('period_start', nextMonth.toISOString().slice(0,10))
+      .maybeSingle();
+    data = rangeData;
+  }
   res.json({ used: data?.sends ?? 0, cap: limitFor(plan), plan });
 });
 

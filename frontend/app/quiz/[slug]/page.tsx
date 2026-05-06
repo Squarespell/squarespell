@@ -209,7 +209,7 @@ function getTimeLimit(q: QuizQuestion): number | undefined {
 
 /** Render question media — image or video (with YouTube/Vimeo embed support) */
 function QuestionMedia({ mediaUrl, mediaType, brandPrimary }: { mediaUrl: string; mediaType: string; brandPrimary: string }) {
-  if (mediaType === 'video') {
+  if (mediaType === 'video' || /youtube\.com|youtu\.be|vimeo\.com/.test(mediaUrl)) {
     var ytMatch = mediaUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
     var vimeoMatch = mediaUrl.match(/(?:vimeo\.com\/)(\d+)/);
     var embedUrl = ytMatch ? 'https://www.youtube.com/embed/' + ytMatch[1] : vimeoMatch ? 'https://player.vimeo.com/video/' + vimeoMatch[1] : '';
@@ -596,7 +596,7 @@ export default function QuizPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     position: 'relative', overflow: 'hidden',
                   }}>
-                    {qMediaUrl && qMediaType === 'video' ? (function() {
+                    {qMediaUrl && (qMediaType === 'video' || /youtube\.com|youtu\.be|vimeo\.com/.test(qMediaUrl)) ? (function() {
                       var ytM = qMediaUrl!.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
                       var viM = qMediaUrl!.match(/(?:vimeo\.com\/)(\d+)/);
                       var eUrl = ytM ? 'https://www.youtube.com/embed/' + ytM[1] : viM ? 'https://player.vimeo.com/video/' + viM[1] : '';

@@ -323,7 +323,7 @@ export default function LeadsPage() {
                     <div style={{ fontSize: 10, color: C.TEXT_SUBTLE, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Quiz</div>
                     <div style={{ fontSize: 12, color: C.TEXT_SECONDARY, marginBottom: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.quizzes?.title || 'Unknown'}</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em', color: C.TEXT }}>{l.score != null ? l.score + ' /100' : '—'}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em', color: C.TEXT }}>{l.score != null ? l.score + '/100' : '—'}</div>
                       <IntentBadge intent={intent} />
                     </div>
                     <div style={{ fontSize: 10, color: C.TEXT_SUBTLE, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -385,7 +385,7 @@ export default function LeadsPage() {
                 <div style={{ fontSize: 16, fontWeight: 700, color: C.TEXT, marginBottom: 2 }}>{selectedLead.name || selectedLead.email.split('@')[0]}</div>
                 <div style={{ fontSize: 12, color: C.TEXT_MUTED, marginBottom: 8 }}>{selectedLead.email}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: C.ACCENT }}>{selectedLead.score != null ? selectedLead.score + ' /100' : '—'}</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: C.ACCENT }}>{selectedLead.score != null ? selectedLead.score + '/100' : '—'}</span>
                   <IntentBadge intent={getIntentLabel(selectedLead.score)} />
                 </div>
               </div>

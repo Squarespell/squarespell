@@ -1406,10 +1406,13 @@ analyticsRouter.get('/:quizId/dropoff', async (req: AuthenticatedRequest, res) =
       }
     }
   });
+  const questions = quiz.questions ?? [];
   const result = Object.keys(questionStats).map(idx => {
     const i = parseInt(idx);
     const st = questionStats[i].started;
-    return { question_index: i, started: st, completed: questionStats[i].completed, dropoff_rate: st > 0 ? Math.round(((st - questionStats[i].completed) / st) * 100) : 0 };
+    const questionText = questions[i]?.title || questions[i]?.question || questions[i]?.text || '';
+    const completionRate = st > 0 ? Math.round((questionStats[i].completed / st) * 100) : 0;
+    return { question_index: i, question: questionText, started: st, completed: questionStats[i].completed, dropoff_rate: st > 0 ? Math.round(((st - questionStats[i].completed) / st) * 100) : 0, completion_rate: completionRate };
   });
   res.json(result);
 });
@@ -1706,12 +1709,14 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
   var monthISO = monthStart.toISOString();
-  var [leadRes, emailRes] = await Promise.all([
+  var [leadRes, emailRes, viewsRes] = await Promise.all([
     supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId).gte('created_at', monthISO),
     supabase.from('email_logs').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId).gte('sent_at', monthISO),
+    supabase.from('quizzes').select('view_count').eq('user_id', req.dbUserId),
   ]);
   var leadsThisMonth = leadRes.count || 0;
   var emailsThisMonth = emailRes.count || 0;
+  var totalViews = (viewsRes.data || []).reduce((sum: number, q: any) => sum + (q.view_count || 0), 0);
   // Compute effective limits including add-ons
   var effectiveLeads = getEffectiveLeadLimit(limits, user.lead_addon);
   var effectiveEmails = getEffectiveEmailLimit(limits, user.email_addon);
@@ -1729,7 +1734,7 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
     price: EMAIL_ADDON_PRICES[user.email_addon.key]?.price || 0,
     cancel_at_period_end: user.email_addon.cancel_at_period_end || false,
   } : null;
-  res.json({ plan: plan, quiz_count: user.quiz_count, limits: effectiveLimits, base_limits: { leads: limits.leads, emails: limits.emails }, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, custom_domain: user.custom_domain || null, domain_verified: user.domain_verified || false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics }, lead_addon: leadAddonInfo, email_addon: emailAddonInfo });
+  res.json({ plan: plan, quiz_count: user.quiz_count, limits: effectiveLimits, base_limits: { leads: limits.leads, emails: limits.emails }, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, usage: { views: totalViews, leads: leadsThisMonth, emails: emailsThisMonth }, custom_domain: user.custom_domain || null, domain_verified: user.domain_verified || false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics }, lead_addon: leadAddonInfo, email_addon: emailAddonInfo });
 });
 
 // PATCH /api/user/custom-domain — set custom domain (business plan only)

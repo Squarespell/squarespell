@@ -348,7 +348,9 @@ export default function AutomationsPage() {
                 </div>
               </div>
             </div>
-            <button type="button" className="auto-action" style={{
+            <button type="button" className="auto-action"
+              onClick={function () { setShowCreate(true); }}
+              style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '9px 18px', borderRadius: 10, border: '1px solid ' + C.GRAY_200,
               background: '#fff', color: C.GRAY_700, fontSize: 14, fontWeight: 600,
@@ -447,7 +449,9 @@ export default function AutomationsPage() {
                 <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Explore pre-built automation recipes to get started in seconds.</div>
               </div>
             </div>
-            <button type="button" className="auto-action" style={{
+            <button type="button" className="auto-action"
+              onClick={function () { setShowCreate(true); }}
+              style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '9px 18px', borderRadius: 10, border: '1px solid ' + C.GRAY_200,
               background: '#fff', color: C.GRAY_700, fontSize: 14, fontWeight: 600,

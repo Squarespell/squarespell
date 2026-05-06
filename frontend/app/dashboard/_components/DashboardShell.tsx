@@ -278,6 +278,7 @@ function isActive(item: NavItem, pathname: string): boolean {
 /* Sidebar plan usage card */
 function SidebarPlanCard({ plan }: { plan: { name: string; renewsAt: string; viewsUsed: number; viewsLimit: number } }) {
   var pct = plan.viewsLimit > 0 ? Math.round((plan.viewsUsed / plan.viewsLimit) * 100) : 0;
+  var isTopTier = plan.name.toLowerCase().includes('business') || plan.name.toLowerCase().includes('agency');
   return (
     <div
       style={{
@@ -328,7 +329,7 @@ function SidebarPlanCard({ plan }: { plan: { name: string; renewsAt: string; vie
           transition: 'all 0.12s',
         }}
       >
-        Upgrade plan
+        {isTopTier ? 'Manage plan' : 'Upgrade plan'}
       </Link>
     </div>
   );
@@ -467,7 +468,7 @@ export function DashboardShell({
             setPlanData({
               name: planDisplayName,
               renewsAt: renewDate,
-              viewsUsed: data.usage?.views || 0,
+              viewsUsed: data.usage?.views ?? 0,
               viewsLimit: data.limits?.views || 25000,
             });
           }

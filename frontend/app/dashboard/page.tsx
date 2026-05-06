@@ -485,7 +485,7 @@ function TopQuizzesList({ quizzes }: { quizzes: Quiz[] }) {
               <span style={{ width: 20, fontSize: 14, fontWeight: 600, color: C.GRAY_400, textAlign: 'center', flexShrink: 0 }}>{idx + 1}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: C.FONT }}>{quiz.title}</div>
-                <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>{formatNumber(quiz.view_count)} views</div>
+                <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>{formatNumber(quiz.view_count)} {quiz.view_count === 1 ? 'view' : 'views'}</div>
               </div>
               <span style={{
                 padding: '4px 10px', borderRadius: 16, background: C.ACCENT_LIGHT, color: C.ACCENT,
@@ -913,7 +913,7 @@ function RecentActivityList({ activities }: { activities: ActivityItem[] }) {
                 <div style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_900, fontFamily: C.FONT }}>{act.title}</div>
                 <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>{act.description}</div>
               </div>
-              <span style={{ fontSize: 12, color: C.GRAY_400, flexShrink: 0, whiteSpace: 'nowrap', fontFamily: C.FONT }}>{act.time}</span>
+              <span style={{ fontSize: 12, color: C.GRAY_400, flexShrink: 0, whiteSpace: 'nowrap', fontFamily: C.FONT }}>{act.time && act.time.includes('T') ? formatRelative(act.time) : act.time}</span>
             </div>
           );
         })}
