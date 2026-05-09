@@ -11,8 +11,6 @@ import { QUIZ_TEMPLATE_CATALOG, getTemplateThumbnail, getTemplateQuestionCount }
    ───────────────────────────────────────────── */
 const C = {
   BG: '#FFFFFF',
-  SURFACE: '#FFFFFF',
-  GRAY_25: '#FCFCFD',
   GRAY_50: '#F9FAFB',
   GRAY_100: '#F2F4F7',
   GRAY_200: '#EAECF0',
@@ -28,1038 +26,909 @@ const C = {
   ACCENT_HOVER: '#0B6165',
   ACCENT_LIGHT: '#F0FAFB',
   BRAND_50: '#E0F5F6',
-  BRAND_100: '#B3E6E8',
-  BRAND_300: '#4DC2C6',
-  BRAND_500: '#0D7377',
-  BRAND_700: '#094F53',
   SUCCESS: '#027A48',
   SUCCESS_LIGHT: '#ECFDF3',
   SUCCESS_500: '#12B76A',
-  WARNING: '#B54708',
-  WARNING_LIGHT: '#FFFAEB',
   WARNING_500: '#F79009',
-  DANGER: '#B42318',
   ERROR_500: '#F04438',
   PURPLE_500: '#7F56D9',
-  PURPLE_100: '#F4EBFF',
   FONT: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
   SHADOW_XS: '0px 1px 2px rgba(16, 24, 40, 0.05)',
   SHADOW_SM: '0px 1px 3px rgba(16, 24, 40, 0.1), 0px 1px 2px rgba(16, 24, 40, 0.06)',
   SHADOW_MD: '0px 4px 8px -2px rgba(16, 24, 40, 0.1), 0px 2px 4px -2px rgba(16, 24, 40, 0.06)',
   SHADOW_LG: '0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03)',
+  SHADOW_XL: '0px 20px 24px -4px rgba(16, 24, 40, 0.08), 0px 8px 8px -4px rgba(16, 24, 40, 0.03)',
 }
 
 /* ─────────────────────────────────────────────
-   SVG Icons (stroke-based, consistent style)
+   Reusable sub-components
    ───────────────────────────────────────────── */
-const Icons = {
-  home: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-  ),
-  analytics: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-  ),
-  quiz: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-  ),
-  templates: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-  ),
-  edit: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-  ),
-  leads: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  ),
-  mail: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-  ),
-  automation: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-  ),
-  eye: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-  ),
-  target: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-  ),
-  check: (color = C.ACCENT, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-  ),
-  checkCircle: (color = C.SUCCESS, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-  ),
-  arrowRight: (color = C.ACCENT, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-  ),
-  sparkles: (color = C.ACCENT, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/></svg>
-  ),
-  globe: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-  ),
-  search: (color = C.GRAY_400, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-  ),
-  bell: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-  ),
-  send: (color = C.ACCENT, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-  ),
-  trendUp: (color = C.SUCCESS, size = 16) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-  ),
-  chevronDown: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-  ),
-  play: (color = C.ACCENT, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill={color}/></svg>
-  ),
-  layer: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-  ),
-  shield: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-  ),
-  zap: (color = C.ACCENT, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-  ),
-  link: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-  ),
-  users: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-  ),
-  pieChart: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-  ),
-  fileText: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-  ),
-  clock: (color = C.GRAY_500, size = 20) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-  ),
-}
 
-/* ─────────────────────────────────────────────
-   Squarespell Logo
-   ───────────────────────────────────────────── */
-const Logo = ({ size = 28 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-    <rect width="32" height="32" rx="8" fill={C.ACCENT}/>
-    <path d="M10 16l4-6 4 6-4 6z" fill="#fff" opacity="0.9"/>
-    <path d="M16 10l4 6-4 6" stroke="#fff" strokeWidth="1.5" fill="none"/>
-  </svg>
-)
-
-/* ═════════════════════════════════════════════
-   MAIN LANDING PAGE COMPONENT
-   ═════════════════════════════════════════════ */
-export default function LandingPage() {
-  const router = useRouter()
-  const [url, setUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [isYearly, setIsYearly] = useState(true)
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
-  const observerRef = useRef<IntersectionObserver | null>(null)
-  const [navScrolled, setNavScrolled] = useState(false)
-
-  /* Intersection Observer for scroll animations */
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const newVisible = new Set(visibleItems)
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            newVisible.add(entry.target.id)
-            observerRef.current?.unobserve(entry.target)
-          }
-        })
-        setVisibleItems(newVisible)
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    )
-    return () => { if (observerRef.current) observerRef.current.disconnect() }
-  }, [])
-
-  useEffect(() => {
-    if (observerRef.current) {
-      document.querySelectorAll('[data-animate]').forEach((el) => {
-        observerRef.current?.observe(el)
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    if (visibleItems.size > 0) {
-      document.querySelectorAll('[data-animate]').forEach((el) => {
-        if (visibleItems.has(el.id)) el.classList.add('visible')
-      })
-    }
-  }, [visibleItems])
-
-  useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const handleSubmitUrl = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (url.trim()) {
-      setLoading(true)
-      setTimeout(() => {
-        router.push(QUIZ_BUILDER_PATH + '?url=' + encodeURIComponent(url))
-      }, 300)
-    }
-  }
-
-  /* ── FAQ Data ── */
-  const faqItems = [
-    { question: 'How does Squarespell work with Squarespace?', answer: 'Squarespell generates a quiz embed code that you paste directly into your Squarespace site. No coding needed. The quiz matches your site design automatically, and you can customize every detail from there.' },
-    { question: 'Do I need coding skills?', answer: 'Not at all. Squarespell is built for creators and marketers with no technical background. Our AI does the heavy lifting, and the drag-and-drop editor makes customization simple.' },
-    { question: 'Will the quiz match my design?', answer: 'Yes. Our AI analyzes your Squarespace site\'s colors, typography, and style, then generates a quiz that looks like it was built just for your brand. You can further customize every detail.' },
-    { question: 'What happens with captured leads?', answer: 'Leads are stored securely in your Squarespell dashboard. You can export them as CSV, connect your favorite email tools, or set up automations to nurture them automatically.' },
-    { question: 'Can I customize after AI generates?', answer: 'Absolutely. The AI gives you a strong starting point. From there, edit questions, answers, branching logic, colors, fonts, and scoring rules. You have full creative control.' },
-    { question: 'Is there a free trial?', answer: 'Yes. You get a 14-day free trial with full Pro features, no credit card required. Your quizzes stay visible after the trial ends, but lead capture pauses until you subscribe.' },
-    { question: 'What if I need more leads but not a higher plan?', answer: 'Add-on packs let you buy extra capacity on any paid plan. Lead packs start at $3/mo for 500 extra leads. Email packs start at $3/mo for 1,000 extra emails. No upgrade required.' },
-    { question: 'How is Squarespell different from other quiz tools?', answer: 'Other quiz tools charge $27 to $75/mo for entry plans with fewer leads. Squarespell starts at $9/mo annual with 1,000 leads, branching logic, and native Squarespace integration. Our AI generates a fully branded quiz from your website URL in under 60 seconds.' },
-    { question: 'What integrations are included with Pro?', answer: 'Pro includes Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets, and webhooks. Connect your existing marketing stack with zero setup friction.' },
-    { question: 'I run an agency. Can I manage multiple client sites?', answer: 'Yes. The Business plan at $29/mo annual includes unlimited quizzes and leads, white-label branding, custom domains, team seats, API access, and a dedicated onboarding call.' },
-  ]
-
-  const templates = QUIZ_TEMPLATE_CATALOG.slice(0, 6)
-
-  /* ── Pricing Plans ── */
-  const pricingPlans = [
-    {
-      name: 'Core',
-      monthlyPrice: 12,
-      yearlyPrice: 9,
-      description: 'Build real quiz funnels with branching logic, scoring, and scheduling.',
-      limits: { quizzes: '5', leads: '1,000/mo', emails: '1,000/mo' },
-      features: [
-        'AI quiz generation from your URL',
-        'Squarespace one-click connect',
-        'Remove Squarespell branding',
-        'Branching logic & weighted scoring',
-        'Quiz scheduling',
-        'Standard analytics',
-        'Lead dashboard + CSV export',
-        'Lead & email add-on packs',
-      ],
-      cta: 'Start free trial',
-    },
-    {
-      name: 'Pro',
-      monthlyPrice: 19,
-      yearlyPrice: 16,
-      description: 'Full power for serious lead generation. Unlimited quizzes, integrations, and A/B testing.',
-      limits: { quizzes: 'Unlimited', leads: '3,000/mo', emails: '3,000/mo' },
-      features: [
-        'Everything in Core',
-        'A/B testing',
-        'Email sequences',
-        'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
-        'Webhooks',
-        'Advanced analytics & drop-off analysis',
-        'Custom CSS',
-        'Priority email support',
-      ],
-      cta: 'Start free trial',
-      featured: true,
-    },
-    {
-      name: 'Business',
-      monthlyPrice: 35,
-      yearlyPrice: 29,
-      description: 'Unlimited everything with white-label, custom domains, team seats, and API access.',
-      limits: { quizzes: 'Unlimited', leads: 'Unlimited', emails: 'Unlimited' },
-      features: [
-        'Everything in Pro',
-        'White-label (your brand on everything)',
-        'Custom domain for quizzes',
-        'Team seats (3 included, $5/seat extra)',
-        'API access',
-        'Priority support (email + chat)',
-        'Dedicated onboarding call',
-        'Unlimited leads & emails',
-      ],
-      cta: 'Start free trial',
-    },
-  ]
-
-  /* ── Features Grid Data ── */
-  const features = [
-    { icon: Icons.sparkles(C.ACCENT, 22), title: 'AI Quiz Generation', desc: 'Paste your Squarespace URL and AI analyzes your site, then generates a branded quiz in under 60 seconds.' },
-    { icon: Icons.globe(C.ACCENT, 22), title: 'Squarespace Native', desc: 'One-click embed that works with every Squarespace template. No plugins, no custom code, no friction.' },
-    { icon: Icons.target(C.ACCENT, 22), title: 'Branching Logic', desc: 'Show different questions based on previous answers. Create personalized paths that qualify leads automatically.' },
-    { icon: Icons.leads(C.ACCENT, 22), title: 'Lead Scoring', desc: 'Weighted scoring assigns intent labels (high, new, or low). Know exactly which leads to prioritize.' },
-    { icon: Icons.mail(C.ACCENT, 22), title: 'Email Campaigns', desc: 'Send broadcasts, automated sequences, and quiz-result emails. Track opens, clicks, and conversions.' },
-    { icon: Icons.automation(C.ACCENT, 22), title: 'Smart Automations', desc: 'Trigger emails, tags, and sequences when leads complete quizzes, reach scores, or get tagged.' },
-    { icon: Icons.analytics(C.ACCENT, 22), title: 'Deep Analytics', desc: 'Conversion funnels, question drop-off, lead sources, per-quiz performance, all in real time.' },
-    { icon: Icons.link(C.ACCENT, 22), title: 'Integrations', desc: 'Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets, and webhooks. Connect everything.' },
-    { icon: Icons.shield(C.ACCENT, 22), title: 'White-Label & Custom Domains', desc: 'Remove all Squarespell branding. Use your own domain for quizzes. Full agency-ready setup.' },
-  ]
-
-  /* ── Showcase sections data ── */
-  const showcaseSections = [
-    {
-      badge: 'Command Center',
-      heading: 'Your entire quiz funnel at a glance',
-      description: 'Real-time stats, performance charts, and conversion funnels. See exactly how your quizzes drive leads and revenue.',
-      active: 'Dashboard',
-      mockupId: 'dashboard',
-    },
-    {
-      badge: 'Visual Editor',
-      heading: 'Build quizzes that feel native to your brand',
-      description: 'Image choices, branching logic, weighted scoring, and a live preview. Every question is fully customizable.',
-      active: 'Quiz editor',
-      mockupId: 'editor',
-    },
-    {
-      badge: 'Lead Management',
-      heading: 'Every lead, scored and segmented',
-      description: 'See who completed your quiz, their answers, intent scores, and contact info. Filter, sort, and export in one click.',
-      active: 'All leads',
-      mockupId: 'leads',
-    },
-    {
-      badge: 'Email Campaigns',
-      heading: 'Turn quiz takers into paying customers',
-      description: 'Send targeted emails based on quiz results. Build welcome sequences, nurture flows, and broadcast campaigns.',
-      active: 'Email Campaigns',
-      mockupId: 'email',
-    },
-    {
-      badge: 'Automations',
-      heading: 'Set it and forget it',
-      description: 'Trigger emails and tags automatically when leads take specific actions. Save hours every week on manual follow-up.',
-      active: 'Automations',
-      mockupId: 'automations',
-    },
-    {
-      badge: 'Analytics',
-      heading: 'Data-driven decisions for every quiz',
-      description: 'Completion rates, drop-off analysis, lead source tracking, and per-quiz performance breakdowns.',
-      active: 'Analytics',
-      mockupId: 'analytics',
-    },
-  ]
-
-  /* ── Reusable: Browser Chrome Mockup Window ── */
-  const MockupWindow = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div style={{ background: C.BG, border: `1px solid ${C.GRAY_200}`, borderRadius: 16, overflow: 'hidden', boxShadow: C.SHADOW_LG }}>
-      <div style={{ height: 44, background: C.GRAY_50, borderBottom: `1px solid ${C.GRAY_200}`, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 6, marginRight: 12 }}>
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ff5f57' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#febc2e' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28c840' }} />
+function BrowserChrome({ children, url }: { children: React.ReactNode; url: string }) {
+  return (
+    <div style={{
+      background: C.GRAY_50,
+      borderRadius: 16,
+      border: `1px solid ${C.GRAY_100}`,
+      padding: '0 0 0 0',
+      boxShadow: C.SHADOW_XL,
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        background: C.GRAY_100,
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        borderBottom: `1px solid ${C.GRAY_200}`,
+      }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FF5F57' }} />
+          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FFBD2E' }} />
+          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28CA41' }} />
         </div>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          <div style={{ background: C.BG, border: `1px solid ${C.GRAY_200}`, borderRadius: 6, padding: '4px 32px', fontSize: 11, color: C.GRAY_400, fontFamily: C.FONT }}>{title}</div>
+        <div style={{
+          flex: 1,
+          background: C.BG,
+          borderRadius: 6,
+          padding: '6px 12px',
+          fontSize: 12,
+          color: C.GRAY_500,
+          fontFamily: C.FONT,
+          marginLeft: 8,
+        }}>
+          {url}
         </div>
-        <div style={{ width: 60 }} />
       </div>
-      <div style={{ display: 'flex', minHeight: 420 }}>
+      <div style={{ padding: '0' }}>
         {children}
       </div>
     </div>
   )
+}
 
-  /* ── Mini sidebar for mockups ── */
-  const MockupSidebar = ({ active }: { active: string }) => {
-    const items = [
-      { label: 'Dashboard', icon: Icons.home, section: 'OVERVIEW' },
-      { label: 'Analytics', icon: Icons.analytics, section: null },
-      { label: 'All quizzes', icon: Icons.quiz, section: 'QUIZZES' },
-      { label: 'Templates', icon: Icons.templates, section: null },
-      { label: 'Quiz editor', icon: Icons.edit, section: null },
-      { label: 'All leads', icon: Icons.leads, section: 'LEADS' },
-      { label: 'Segmentation', icon: Icons.target, section: null },
-      { label: 'Email Campaigns', icon: Icons.mail, section: 'ENGAGE' },
-      { label: 'Automations', icon: Icons.automation, section: null },
-    ]
-    return (
-      <div className="mockup-sidebar-hide" style={{ width: 180, borderRight: `1px solid ${C.GRAY_200}`, padding: '12px 0', flexShrink: 0, background: C.BG }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 14px', borderBottom: `1px solid ${C.GRAY_200}`, marginBottom: 8 }}>
-          <Logo size={22} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: C.GRAY_900 }}>Squarespell</span>
+/* Sidebar used in all mockups */
+function MockSidebar({ active }: { active: string }) {
+  const sections = [
+    { label: 'OVERVIEW', items: [{ name: 'Dashboard', icon: 'grid' }, { name: 'Analytics', icon: 'chart' }] },
+    { label: 'QUIZZES', items: [{ name: 'All quizzes', icon: 'list' }, { name: 'Templates', icon: 'layout' }, { name: 'Quiz editor', icon: 'edit' }] },
+    { label: 'LEADS', items: [{ name: 'All leads', icon: 'users' }, { name: 'Segmentation', icon: 'filter' }] },
+    { label: 'ENGAGE', items: [{ name: 'Email Campaigns', icon: 'mail' }, { name: 'Automations', icon: 'zap' }] },
+  ]
+  return (
+    <div style={{
+      width: 220,
+      minWidth: 220,
+      background: C.BG,
+      borderRight: `1px solid ${C.GRAY_200}`,
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '16px 0',
+      height: '100%',
+    }}>
+      <div style={{ padding: '0 16px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 6, background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
         </div>
-        {items.map((item, i) => (
-          <div key={i}>
-            {item.section && <div style={{ fontSize: 10, fontWeight: 600, color: C.GRAY_400, textTransform: 'uppercase' as const, letterSpacing: '0.05em', padding: '8px 14px 4px', marginTop: i > 0 ? 4 : 0 }}>{item.section}</div>}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', margin: '1px 6px', borderRadius: 6,
-              background: item.label === active ? C.ACCENT_LIGHT : 'transparent',
-            }}>
-              {item.icon(item.label === active ? C.ACCENT : C.GRAY_500, 15)}
-              <span style={{ fontSize: 12, color: item.label === active ? C.ACCENT : C.GRAY_600, fontWeight: item.label === active ? 600 : 400 }}>{item.label}</span>
-            </div>
-          </div>
-        ))}
+        <span style={{ fontWeight: 600, fontSize: 14, color: C.GRAY_900, fontFamily: C.FONT }}>Squarespell</span>
       </div>
-    )
-  }
-
-  /* ── Mini Stat Card for mockups ── */
-  const MiniStat = ({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) => (
-    <div style={{ border: `1px solid ${C.GRAY_200}`, borderRadius: 10, padding: '12px 14px', background: C.BG, flex: 1, minWidth: 0 }}>
-      <div style={{ fontSize: 11, color: C.GRAY_500, fontWeight: 500, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: color || C.GRAY_900 }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: C.SUCCESS, fontWeight: 500, marginTop: 2 }}>{sub}</div>}
+      {sections.map(s => (
+        <div key={s.label} style={{ marginBottom: 16 }}>
+          <div style={{ padding: '0 16px', fontSize: 11, fontWeight: 500, color: C.GRAY_400, marginBottom: 4, letterSpacing: '0.05em', fontFamily: C.FONT }}>{s.label}</div>
+          {s.items.map(item => {
+            const isActive = item.name === active
+            return (
+              <div key={item.name} style={{
+                padding: '7px 16px',
+                fontSize: 13,
+                color: isActive ? C.ACCENT : C.GRAY_600,
+                fontWeight: isActive ? 600 : 400,
+                background: isActive ? C.ACCENT_LIGHT : 'transparent',
+                borderRight: isActive ? `2px solid ${C.ACCENT}` : '2px solid transparent',
+                fontFamily: C.FONT,
+                cursor: 'default',
+              }}>
+                {item.name}
+              </div>
+            )
+          })}
+        </div>
+      ))}
+      <div style={{ marginTop: 'auto', padding: '12px 16px', borderTop: `1px solid ${C.GRAY_200}` }}>
+        <div style={{ fontSize: 11, fontWeight: 500, color: C.GRAY_400, marginBottom: 6, letterSpacing: '0.05em', fontFamily: C.FONT }}>COMMERCE</div>
+        <div style={{ padding: '7px 0', fontSize: 13, color: C.GRAY_600, fontFamily: C.FONT }}>Products</div>
+      </div>
     </div>
   )
+}
 
-  /* ═══════════════════════════════════════════
-     MOCKUP CONTENT RENDERERS
-     ═══════════════════════════════════════════ */
+function MockTopBar() {
+  return (
+    <div style={{
+      height: 52,
+      borderBottom: `1px solid ${C.GRAY_200}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 24px',
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        background: C.GRAY_50,
+        borderRadius: 8,
+        border: `1px solid ${C.GRAY_200}`,
+        padding: '6px 12px',
+        width: 240,
+      }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span style={{ fontSize: 13, color: C.GRAY_400, fontFamily: C.FONT }}>Search anything...</span>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: C.GRAY_400, background: C.GRAY_100, borderRadius: 4, padding: '2px 6px', fontFamily: C.FONT }}>Cmd+K</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_500} strokeWidth="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </div>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600, fontFamily: C.FONT }}>J</div>
+      </div>
+    </div>
+  )
+}
 
-  const renderDashboardMockup = () => (
-    <div style={{ flex: 1, padding: 20, overflow: 'hidden', background: C.GRAY_25 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900 }}>Welcome back</div>
-          <div style={{ fontSize: 11, color: C.GRAY_500 }}>May 1 - May 9, 2026</div>
-        </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {Icons.bell(C.GRAY_400, 16)}
-          <div style={{ width: 26, height: 26, borderRadius: '50%', background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontWeight: 600 }}>SQ</div>
-        </div>
-      </div>
-      {/* Stat cards */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <MiniStat label="Total views" value="8,432" sub="+12.3%" />
-        <MiniStat label="Leads captured" value="1,841" sub="+8.7%" />
-        <MiniStat label="Completion rate" value="55.6%" />
-        <MiniStat label="Lead rate" value="24.4%" color={C.ACCENT} />
-        <MiniStat label="Active quizzes" value="3" />
-      </div>
-      {/* Charts row */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-        {/* Performance overview (line chart) */}
-        <div style={{ flex: 2, border: `1px solid ${C.GRAY_200}`, borderRadius: 10, padding: 14, background: C.BG }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800, marginBottom: 12 }}>Performance overview</div>
-          <svg width="100%" height="90" viewBox="0 0 400 90" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={C.ACCENT} stopOpacity="0.15"/>
-                <stop offset="100%" stopColor={C.ACCENT} stopOpacity="0"/>
-              </linearGradient>
-            </defs>
-            <path d="M0,70 Q50,55 100,45 T200,30 T300,20 T400,10" fill="none" stroke={C.ACCENT} strokeWidth="2"/>
-            <path d="M0,70 Q50,55 100,45 T200,30 T300,20 T400,10 L400,90 L0,90Z" fill="url(#lg)"/>
-            <path d="M0,75 Q50,68 100,60 T200,50 T300,42 T400,38" fill="none" stroke={C.BRAND_300} strokeWidth="1.5" strokeDasharray="4 3"/>
-          </svg>
-          <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 8, height: 2, background: C.ACCENT, borderRadius: 1 }}/><span style={{ fontSize: 9, color: C.GRAY_500 }}>Views</span></div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 8, height: 2, background: C.BRAND_300, borderRadius: 1 }}/><span style={{ fontSize: 9, color: C.GRAY_500 }}>Leads</span></div>
-          </div>
-        </div>
-        {/* Conversion funnel (bars) */}
-        <div style={{ flex: 1, border: `1px solid ${C.GRAY_200}`, borderRadius: 10, padding: 14, background: C.BG }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800, marginBottom: 10 }}>Conversion funnel</div>
-          {[
-            { label: 'Views', val: 100, color: C.GRAY_300 },
-            { label: 'Started', val: 72, color: C.BRAND_300 },
-            { label: 'Completed', val: 56, color: C.ACCENT },
-            { label: 'Leads', val: 24, color: C.SUCCESS_500 },
-          ].map((b, i) => (
-            <div key={i} style={{ marginBottom: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: C.GRAY_500, marginBottom: 2 }}>
-                <span>{b.label}</span><span>{b.val}%</span>
+function StatCard({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{
+      flex: 1,
+      background: C.BG,
+      borderRadius: 8,
+      border: `1px solid ${C.GRAY_200}`,
+      padding: '14px 16px',
+      minWidth: 0,
+    }}>
+      <div style={{ fontSize: 11, color: C.GRAY_500, fontWeight: 500, marginBottom: 4, fontFamily: C.FONT, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: color || C.GRAY_900, fontFamily: C.FONT }}>{value}</div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Dashboard Mockup
+   ───────────────────────────────────────────── */
+function DashboardMockup() {
+  return (
+    <BrowserChrome url="app.squarespell.com/dashboard">
+      <div style={{ display: 'flex', height: 580, background: C.GRAY_50 }}>
+        <MockSidebar active="Dashboard" />
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MockTopBar />
+          <div style={{ flex: 1, padding: '20px 24px', overflow: 'hidden' }}>
+            {/* Welcome header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>Welcome back, Jessica <span role="img" aria-label="wave">&#128075;</span></div>
               </div>
-              <div style={{ height: 6, background: C.GRAY_100, borderRadius: 3 }}>
-                <div style={{ height: 6, background: b.color, borderRadius: 3, width: `${b.val}%` }}/>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.GRAY_200}`, fontSize: 12, color: C.GRAY_600, fontFamily: C.FONT, background: C.BG }}>Last 30 days</div>
+                <div style={{ padding: '6px 14px', borderRadius: 8, background: C.ACCENT, color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: C.FONT }}>+ Create quiz</div>
               </div>
             </div>
-          ))}
+            {/* Stat cards */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <StatCard label="Total views" value="45" />
+              <StatCard label="Leads captured" value="11" />
+              <StatCard label="Completion rate" value="55.6%" />
+              <StatCard label="Lead rate" value="24.4%" />
+              <StatCard label="Active quizzes" value="3/20" />
+            </div>
+            {/* Performance chart */}
+            <div style={{ background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, padding: 16, marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>Performance overview</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['Daily', 'Weekly', 'Monthly'].map((t, i) => (
+                    <div key={t} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, fontFamily: C.FONT, background: i === 0 ? C.ACCENT_LIGHT : 'transparent', color: i === 0 ? C.ACCENT : C.GRAY_500, cursor: 'default' }}>{t}</div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 2, background: C.ACCENT, borderRadius: 1 }} /><span style={{ fontSize: 11, color: C.GRAY_500, fontFamily: C.FONT }}>Views</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 2, background: C.GRAY_300, borderRadius: 1, borderTop: `1px dashed ${C.GRAY_400}` }} /><span style={{ fontSize: 11, color: C.GRAY_500, fontFamily: C.FONT }}>Leads</span></div>
+              </div>
+              {/* SVG chart */}
+              <svg width="100%" height="120" viewBox="0 0 500 120" preserveAspectRatio="none" style={{ display: 'block' }}>
+                <polyline fill="none" stroke={C.ACCENT} strokeWidth="2" points="0,100 50,90 100,70 150,80 200,50 250,60 300,40 350,45 400,30 450,35 500,20" />
+                <polyline fill="none" stroke={C.GRAY_300} strokeWidth="1.5" strokeDasharray="4,3" points="0,110 50,105 100,95 150,100 200,85 250,90 300,80 350,82 400,75 450,78 500,70" />
+              </svg>
+            </div>
+            {/* Bottom 3 cards */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1, background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 10, fontFamily: C.FONT }}>Top quizzes</div>
+                {[{ n: 'Find Your Perfect...', c: '32.5%' }, { n: 'Photography Style', c: '28.1%' }, { n: 'Fitness Goal Quiz', c: '18.7%' }].map((q, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 12, fontFamily: C.FONT }}>
+                    <span style={{ color: C.GRAY_700 }}>{i + 1}. {q.n}</span>
+                    <span style={{ color: C.ACCENT, fontWeight: 600 }}>{q.c}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ flex: 1, background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 10, fontFamily: C.FONT }}>Conversion funnel</div>
+                {[{ l: 'Views', v: 45, w: '100%' }, { l: 'Started', v: 25, w: '56%' }, { l: 'Completed', v: 25, w: '56%' }, { l: 'Leads', v: 11, w: '24%' }].map(b => (
+                  <div key={b.l} style={{ marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.GRAY_600, marginBottom: 2, fontFamily: C.FONT }}><span>{b.l}</span><span>{b.v}</span></div>
+                    <div style={{ height: 6, background: C.GRAY_100, borderRadius: 3 }}><div style={{ height: 6, background: C.ACCENT, borderRadius: 3, width: b.w }} /></div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ flex: 1, background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, padding: 14, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 10, fontFamily: C.FONT, alignSelf: 'flex-start' }}>Lead sources</div>
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="32" fill="none" stroke={C.ACCENT} strokeWidth="8" strokeDasharray="130 201" strokeDashoffset="0" />
+                  <circle cx="40" cy="40" r="32" fill="none" stroke={C.PURPLE_500} strokeWidth="8" strokeDasharray="45 201" strokeDashoffset="-130" />
+                  <circle cx="40" cy="40" r="32" fill="none" stroke={C.WARNING_500} strokeWidth="8" strokeDasharray="26 201" strokeDashoffset="-175" />
+                </svg>
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                  {[{ c: C.ACCENT, l: 'Direct' }, { c: C.PURPLE_500, l: 'Social' }, { c: C.WARNING_500, l: 'Email' }].map(s => (
+                    <div key={s.l} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: C.GRAY_600, fontFamily: C.FONT }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: s.c }} />{s.l}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      {/* Bottom row */}
-      <div style={{ display: 'flex', gap: 12 }}>
-        {/* Lead sources donut */}
-        <div style={{ flex: 1, border: `1px solid ${C.GRAY_200}`, borderRadius: 10, padding: 14, background: C.BG }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800, marginBottom: 8 }}>Lead sources</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <svg width="64" height="64" viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="24" fill="none" stroke={C.GRAY_100} strokeWidth="8"/>
-              <circle cx="32" cy="32" r="24" fill="none" stroke={C.ACCENT} strokeWidth="8" strokeDasharray="90 150.8" strokeDashoffset="0" transform="rotate(-90 32 32)"/>
-              <circle cx="32" cy="32" r="24" fill="none" stroke={C.BRAND_300} strokeWidth="8" strokeDasharray="37.7 203.1" strokeDashoffset="-90" transform="rotate(-90 32 32)"/>
-              <circle cx="32" cy="32" r="24" fill="none" stroke={C.WARNING_500} strokeWidth="8" strokeDasharray="22.6 218.2" strokeDashoffset="-127.7" transform="rotate(-90 32 32)"/>
-            </svg>
-            <div>
-              {[
-                { label: 'Direct embed', color: C.ACCENT, pct: '60%' },
-                { label: 'Social', color: C.BRAND_300, pct: '25%' },
-                { label: 'Email', color: C.WARNING_500, pct: '15%' },
-              ].map((s, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: 2, background: s.color }}/>
-                  <span style={{ fontSize: 9, color: C.GRAY_600 }}>{s.label}</span>
-                  <span style={{ fontSize: 9, color: C.GRAY_400, marginLeft: 'auto' }}>{s.pct}</span>
+    </BrowserChrome>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   All Quizzes Mockup
+   ───────────────────────────────────────────── */
+function QuizzesMockup() {
+  const quizzes = [
+    { name: 'Find Your Perfect Product', views: 22, leads: 7, conv: '31.8%', color: '#7F56D9' },
+    { name: 'Photography Style Quiz', views: 15, leads: 3, conv: '20.0%', color: '#F79009' },
+    { name: 'Fitness Goal Quiz', views: 8, leads: 1, conv: '12.5%', color: '#12B76A' },
+  ]
+  return (
+    <BrowserChrome url="app.squarespell.com/dashboard/quizzes">
+      <div style={{ display: 'flex', height: 520, background: C.GRAY_50 }}>
+        <MockSidebar active="All quizzes" />
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MockTopBar />
+          <div style={{ flex: 1, padding: '20px 24px', overflow: 'hidden' }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>All quizzes</div>
+              <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Create, edit, and publish your AI-powered quiz funnels.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <StatCard label="Total quizzes" value="3" />
+              <StatCard label="Live quizzes" value="3" />
+              <StatCard label="Drafts" value="0" />
+              <StatCard label="Total views" value="45" />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center' }}>
+              {['All', 'Live', 'Draft', 'Archived'].map((t, i) => (
+                <div key={t} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, fontFamily: C.FONT, background: i === 0 ? C.GRAY_900 : 'transparent', color: i === 0 ? '#fff' : C.GRAY_500, cursor: 'default' }}>{t}</div>
+              ))}
+              <div style={{ marginLeft: 'auto', padding: '5px 10px', borderRadius: 6, border: `1px solid ${C.GRAY_200}`, fontSize: 12, color: C.GRAY_600, fontFamily: C.FONT, background: C.BG }}>Recently updated</div>
+            </div>
+            <div style={{ background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}` }}>
+              {quizzes.map((q, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: i < quizzes.length - 1 ? `1px solid ${C.GRAY_100}` : 'none', gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: q.color, opacity: 0.15, position: 'relative' }}>
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: q.color, fontFamily: C.FONT }}>{q.name[0]}</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{q.name}</div>
+                    <div style={{ fontSize: 11, color: C.GRAY_500, fontFamily: C.FONT }}>{q.views} views - {q.leads} leads - {q.conv} conversion</div>
+                  </div>
+                  <div style={{ padding: '3px 8px', borderRadius: 10, background: C.SUCCESS_LIGHT, fontSize: 11, color: C.SUCCESS, fontWeight: 500, fontFamily: C.FONT }}>live</div>
+                  <div style={{ fontSize: 11, color: C.GRAY_400, fontFamily: C.FONT }}>2w ago</div>
+                  <div style={{ color: C.GRAY_400, cursor: 'default' }}>...</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        {/* Top quizzes */}
-        <div style={{ flex: 2, border: `1px solid ${C.GRAY_200}`, borderRadius: 10, padding: 14, background: C.BG }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800, marginBottom: 8 }}>Top quizzes</div>
-          {[
-            { name: 'Photography Style Quiz', views: '3,291', leads: '814', rate: '24.7%' },
-            { name: 'Product Finder Quiz', views: '2,847', leads: '612', rate: '21.5%' },
-            { name: 'Wedding Style Quiz', views: '2,294', leads: '415', rate: '18.1%' },
-          ].map((q, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < 2 ? `1px solid ${C.GRAY_100}` : 'none' }}>
-              <span style={{ fontSize: 11, color: C.GRAY_800, fontWeight: 500 }}>{q.name}</span>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <span style={{ fontSize: 10, color: C.GRAY_500 }}>{q.views} views</span>
-                <span style={{ fontSize: 10, color: C.GRAY_500 }}>{q.leads} leads</span>
-                <span style={{ fontSize: 10, color: C.ACCENT, fontWeight: 600 }}>{q.rate}</span>
+      </div>
+    </BrowserChrome>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Leads Mockup
+   ───────────────────────────────────────────── */
+function LeadsMockup() {
+  const leads = [
+    { name: 'Sarah Chen', email: 's.chen@email.com', quiz: 'Find Your Perfect...', score: '88/100', intent: 'High intent', color: '#7F56D9', dotColor: C.ERROR_500, time: '2 days ago' },
+    { name: 'Mike Johnson', email: 'mike.j@company.co', quiz: 'Find Your Perfect...', score: '91/100', intent: 'High intent', color: '#F79009', dotColor: C.ERROR_500, time: '4 days ago' },
+    { name: 'Emma Wilson', email: 'emma.w@mail.com', quiz: 'Find Your Perfect...', score: '72/100', intent: 'High intent', color: '#12B76A', dotColor: C.ERROR_500, time: '1 week ago' },
+    { name: 'David Park', email: 'dpark@inbox.com', quiz: 'Photography Style', score: '45/100', intent: 'New', color: '#0D7377', dotColor: C.ACCENT, time: '1 week ago' },
+    { name: 'Lisa Adams', email: 'l.adams@web.io', quiz: 'Photography Style', score: '38/100', intent: 'New', color: '#F04438', dotColor: C.ACCENT, time: '2 weeks ago' },
+  ]
+  return (
+    <BrowserChrome url="app.squarespell.com/dashboard/leads">
+      <div style={{ display: 'flex', height: 540, background: C.GRAY_50 }}>
+        <MockSidebar active="All leads" />
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MockTopBar />
+          <div style={{ flex: 1, padding: '20px 24px', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>Leads</div>
+                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Track and manage people who completed your quizzes</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.GRAY_200}`, fontSize: 12, color: C.GRAY_600, fontFamily: C.FONT, background: C.BG }}>Export CSV</div>
+                <div style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.GRAY_200}`, fontSize: 12, color: C.GRAY_600, fontFamily: C.FONT, background: C.BG }}>This 30 days</div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderEditorMockup = () => (
-    <div style={{ flex: 1, padding: 20, overflow: 'hidden', background: C.GRAY_25 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900 }}>Quiz Editor</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ padding: '5px 14px', border: `1px solid ${C.GRAY_300}`, borderRadius: 6, fontSize: 11, color: C.GRAY_600, fontWeight: 500, background: C.BG }}>Preview</div>
-          <div style={{ padding: '5px 14px', background: C.ACCENT, borderRadius: 6, fontSize: 11, color: '#fff', fontWeight: 600 }}>Publish</div>
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 14 }}>
-        {/* Question area */}
-        <div style={{ flex: 2, border: `1px solid ${C.GRAY_200}`, borderRadius: 10, padding: 18, background: C.BG }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: C.GRAY_400, textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>Question 1 of 5</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900, marginBottom: 16 }}>What&apos;s your photography style?</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {[
-              { label: 'Light & Airy', color: '#E8F4FD', accent: '#5BA4CF' },
-              { label: 'Bold & Dramatic', color: '#2D2D2D', accent: '#E85D5D', dark: true },
-              { label: 'Warm & Vintage', color: '#FDF0E2', accent: '#D4915E' },
-              { label: 'Classic & Timeless', color: '#F0EDE8', accent: '#7C7267' },
-            ].map((opt, i) => (
-              <div key={i} style={{ border: `2px solid ${i === 0 ? C.ACCENT : C.GRAY_200}`, borderRadius: 10, overflow: 'hidden', cursor: 'pointer' }}>
-                <div style={{ height: 64, background: opt.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={opt.dark ? '#fff' : opt.accent} strokeWidth="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <StatCard label="Total Leads" value="5" />
+              <StatCard label="New This Week" value="0" />
+              <StatCard label="Quizzes with Leads" value="1" />
+              <StatCard label="High Intent Leads" value="3" />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {[{ l: 'All 5', a: true }, { l: 'High intent 3', a: false }, { l: 'New 2', a: false }, { l: 'Low score 0', a: false }].map(t => (
+                <div key={t.l} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, fontFamily: C.FONT, background: t.a ? C.GRAY_900 : 'transparent', color: t.a ? '#fff' : C.GRAY_500 }}>{t.l}</div>
+              ))}
+              <div style={{ marginLeft: 'auto', fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>Sort by: Newest</div>
+            </div>
+            <div style={{ background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}` }}>
+              {leads.map((l, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: i < leads.length - 1 ? `1px solid ${C.GRAY_100}` : 'none', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: l.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600, fontFamily: C.FONT }}>{l.name.split(' ').map(w => w[0]).join('')}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{l.name}</div>
+                    <div style={{ fontSize: 11, color: C.GRAY_500, fontFamily: C.FONT }}>{l.email}</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: C.GRAY_500, fontFamily: C.FONT }}>QUIZ: {l.quiz}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{l.score}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 10, background: C.GRAY_50, fontSize: 11, color: C.GRAY_600, fontFamily: C.FONT }}>
+                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: l.dotColor }} />{l.intent}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.GRAY_400, fontFamily: C.FONT }}>{l.time}</div>
                 </div>
-                <div style={{ padding: '8px 10px', fontSize: 11, fontWeight: 600, color: C.GRAY_800, textAlign: 'center' }}>{opt.label}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </BrowserChrome>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Email Campaigns Mockup
+   ───────────────────────────────────────────── */
+function EmailMockup() {
+  const campaigns = [
+    { name: 'Welcome Series - New Leads', status: 'Sent', statusColor: C.SUCCESS, opens: '68%', clicks: '24%', subs: 11, time: '3 days ago' },
+    { name: 'Product Recommendations', status: 'Scheduled', statusColor: C.WARNING_500, opens: '-', clicks: '-', subs: 5, time: 'Tomorrow' },
+    { name: 'Re-engagement Campaign', status: 'Draft', statusColor: C.GRAY_400, opens: '-', clicks: '-', subs: 0, time: '1 week ago' },
+  ]
+  return (
+    <BrowserChrome url="app.squarespell.com/dashboard/campaigns">
+      <div style={{ display: 'flex', height: 480, background: C.GRAY_50 }}>
+        <MockSidebar active="Email Campaigns" />
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MockTopBar />
+          <div style={{ flex: 1, padding: '20px 24px', overflow: 'hidden' }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>Email Campaigns</div>
+              <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Create and send targeted email campaigns to your leads</div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <StatCard label="Campaigns Sent" value="1" />
+              <StatCard label="Avg Open Rate" value="68%" />
+              <StatCard label="Avg Click Rate" value="24%" />
+              <StatCard label="Total Subscribers" value="11" />
+            </div>
+            <div style={{ background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}` }}>
+              <div style={{ display: 'flex', padding: '10px 16px', borderBottom: `1px solid ${C.GRAY_200}`, fontSize: 11, fontWeight: 500, color: C.GRAY_500, fontFamily: C.FONT }}>
+                <div style={{ flex: 2 }}>Campaign</div>
+                <div style={{ width: 80, textAlign: 'center' }}>Status</div>
+                <div style={{ width: 70, textAlign: 'center' }}>Opens</div>
+                <div style={{ width: 70, textAlign: 'center' }}>Clicks</div>
+                <div style={{ width: 60, textAlign: 'center' }}>Subs</div>
+                <div style={{ width: 80, textAlign: 'right' }}>Date</div>
               </div>
-            ))}
+              {campaigns.map((c, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: i < campaigns.length - 1 ? `1px solid ${C.GRAY_100}` : 'none', fontSize: 13, fontFamily: C.FONT }}>
+                  <div style={{ flex: 2, fontWeight: 600, color: C.GRAY_900 }}>{c.name}</div>
+                  <div style={{ width: 80, textAlign: 'center' }}>
+                    <span style={{ padding: '3px 8px', borderRadius: 10, fontSize: 11, fontWeight: 500, color: c.statusColor, background: c.status === 'Sent' ? C.SUCCESS_LIGHT : C.GRAY_50 }}>{c.status}</span>
+                  </div>
+                  <div style={{ width: 70, textAlign: 'center', color: C.GRAY_700 }}>{c.opens}</div>
+                  <div style={{ width: 70, textAlign: 'center', color: C.GRAY_700 }}>{c.clicks}</div>
+                  <div style={{ width: 60, textAlign: 'center', color: C.GRAY_700 }}>{c.subs}</div>
+                  <div style={{ width: 80, textAlign: 'right', color: C.GRAY_400, fontSize: 11 }}>{c.time}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        {/* Settings panel */}
-        <div style={{ flex: 1, border: `1px solid ${C.GRAY_200}`, borderRadius: 10, padding: 14, background: C.BG }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800, marginBottom: 12 }}>Settings</div>
-          {[
-            { label: 'Type', value: 'Image Choice' },
-            { label: 'Logic', value: 'Branching ON' },
-            { label: 'Scoring', value: 'Weighted' },
-          ].map((s, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${C.GRAY_100}` }}>
-              <span style={{ fontSize: 11, color: C.GRAY_500 }}>{s.label}</span>
-              <span style={{ fontSize: 11, color: C.GRAY_900, fontWeight: 600 }}>{s.value}</span>
+      </div>
+    </BrowserChrome>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Automations Mockup
+   ───────────────────────────────────────────── */
+function AutomationsMockup() {
+  const flows = [
+    { name: 'Welcome Email on Lead Capture', trigger: 'New lead captured', action: 'Send welcome email + product recs', active: true },
+    { name: 'High Intent Follow-up', trigger: 'Lead score > 80', action: 'Send personal offer + notify sales', active: true },
+    { name: 'Quiz Abandonment Reminder', trigger: 'Quiz started but not completed', action: 'Send reminder email after 24h', active: false },
+    { name: 'Weekly Digest', trigger: 'Every Monday 9 AM', action: 'Send performance summary email', active: true },
+  ]
+  return (
+    <BrowserChrome url="app.squarespell.com/dashboard/automations">
+      <div style={{ display: 'flex', height: 480, background: C.GRAY_50 }}>
+        <MockSidebar active="Automations" />
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MockTopBar />
+          <div style={{ flex: 1, padding: '20px 24px', overflow: 'hidden' }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>Automations</div>
+              <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Set up automated workflows triggered by quiz events</div>
             </div>
-          ))}
-          <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 500, color: C.GRAY_500, marginBottom: 6 }}>Required</div>
-            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-              <div style={{ width: 32, height: 18, borderRadius: 9, background: C.ACCENT, padding: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff' }}/>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {flows.map((f, i) => (
+                <div key={i} style={{ background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, padding: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{f.name}</div>
+                    <div style={{ width: 34, height: 18, borderRadius: 9, background: f.active ? C.ACCENT : C.GRAY_300, position: 'relative' }}>
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: f.active ? 18 : 2, transition: 'left 0.2s' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontFamily: C.FONT }}>
+                    <div style={{ padding: '4px 8px', borderRadius: 6, background: C.ACCENT_LIGHT, color: C.ACCENT, fontWeight: 500 }}>{f.trigger}</div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                    <div style={{ padding: '4px 8px', borderRadius: 6, background: C.GRAY_50, color: C.GRAY_600, fontWeight: 500 }}>{f.action}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </BrowserChrome>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Analytics Mockup
+   ───────────────────────────────────────────── */
+function AnalyticsMockup() {
+  return (
+    <BrowserChrome url="app.squarespell.com/dashboard/analytics">
+      <div style={{ display: 'flex', height: 500, background: C.GRAY_50 }}>
+        <MockSidebar active="Analytics" />
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MockTopBar />
+          <div style={{ flex: 1, padding: '20px 24px', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>Analytics</div>
+                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Detailed performance insights across all quizzes</div>
               </div>
-              <span style={{ fontSize: 10, color: C.GRAY_600 }}>Yes</span>
+              <div style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.GRAY_200}`, fontSize: 12, color: C.GRAY_600, fontFamily: C.FONT, background: C.BG }}>Last 30 days</div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <StatCard label="Total Views" value="45" />
+              <StatCard label="Unique Visitors" value="38" />
+              <StatCard label="Avg. Time" value="2m 34s" />
+              <StatCard label="Bounce Rate" value="12.3%" />
+            </div>
+            {/* Quiz comparison chart */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 2, background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 14, fontFamily: C.FONT }}>Quiz performance comparison</div>
+                <div style={{ display: 'flex', gap: 16, height: 120 }}>
+                  {[{ name: 'Product Finder', views: 22, leads: 7, h: 100 }, { name: 'Photo Style', views: 15, leads: 3, h: 68 }, { name: 'Fitness Goal', views: 8, leads: 1, h: 36 }].map(q => (
+                    <div key={q.name} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', width: '100%', justifyContent: 'center' }}>
+                        <div style={{ width: '30%', height: q.h, background: C.ACCENT, borderRadius: '4px 4px 0 0', opacity: 0.8 }} />
+                        <div style={{ width: '30%', height: q.h * (q.leads / q.views), background: C.PURPLE_500, borderRadius: '4px 4px 0 0', opacity: 0.8 }} />
+                      </div>
+                      <div style={{ fontSize: 10, color: C.GRAY_500, fontFamily: C.FONT, textAlign: 'center' }}>{q.name}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: C.GRAY_500, fontFamily: C.FONT }}><div style={{ width: 8, height: 8, borderRadius: 2, background: C.ACCENT, opacity: 0.8 }} />Views</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: C.GRAY_500, fontFamily: C.FONT }}><div style={{ width: 8, height: 8, borderRadius: 2, background: C.PURPLE_500, opacity: 0.8 }} />Leads</div>
+                </div>
+              </div>
+              <div style={{ flex: 1, background: C.BG, borderRadius: 8, border: `1px solid ${C.GRAY_200}`, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 14, fontFamily: C.FONT }}>Drop-off analysis</div>
+                {[{ step: 'Q1', rate: '95%', w: '95%' }, { step: 'Q2', rate: '82%', w: '82%' }, { step: 'Q3', rate: '71%', w: '71%' }, { step: 'Q4', rate: '62%', w: '62%' }, { step: 'Result', rate: '56%', w: '56%' }].map(s => (
+                  <div key={s.step} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.GRAY_600, marginBottom: 2, fontFamily: C.FONT }}><span>{s.step}</span><span>{s.rate}</span></div>
+                    <div style={{ height: 5, background: C.GRAY_100, borderRadius: 3 }}><div style={{ height: 5, background: C.ACCENT, borderRadius: 3, width: s.w, opacity: 0.7 }} /></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      {/* Question tabs at bottom */}
-      <div style={{ display: 'flex', gap: 6, marginTop: 14, padding: '10px 0', borderTop: `1px solid ${C.GRAY_200}` }}>
-        {['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Lead Gate', 'Results'].map((tab, i) => (
-          <div key={i} style={{
-            padding: '5px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-            background: i === 0 ? C.ACCENT : C.GRAY_100,
-            color: i === 0 ? '#fff' : C.GRAY_600,
-          }}>{tab}</div>
-        ))}
-      </div>
+    </BrowserChrome>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Section heading component
+   ───────────────────────────────────────────── */
+function SectionHeading({ badge, title, subtitle }: { badge?: string; title: string; subtitle: string }) {
+  return (
+    <div style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto 48px' }}>
+      {badge && (
+        <div style={{ display: 'inline-block', padding: '6px 14px', borderRadius: 20, background: C.ACCENT_LIGHT, color: C.ACCENT, fontSize: 13, fontWeight: 600, marginBottom: 16, fontFamily: C.FONT }}>{badge}</div>
+      )}
+      <h2 style={{ fontSize: 40, fontWeight: 800, color: C.GRAY_900, margin: '0 0 16px', lineHeight: 1.15, fontFamily: C.FONT }}>{title}</h2>
+      <p style={{ fontSize: 18, color: C.GRAY_500, margin: 0, lineHeight: 1.6, fontFamily: C.FONT }}>{subtitle}</p>
     </div>
   )
+}
 
-  const renderLeadsMockup = () => (
-    <div style={{ flex: 1, padding: 20, overflow: 'hidden', background: C.GRAY_25 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900 }}>Leads</div>
-        <div style={{ padding: '6px 14px', border: `1px solid ${C.GRAY_300}`, borderRadius: 6, fontSize: 11, color: C.GRAY_700, fontWeight: 500, background: C.BG }}>Export CSV</div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-        <MiniStat label="Total Leads" value="1,841" sub="+8.7%" />
-        <MiniStat label="New This Week" value="47" sub="+23%" />
-        <MiniStat label="Quizzes with Leads" value="3" />
-        <MiniStat label="High Intent Leads" value="842" color={C.ACCENT} />
-      </div>
-      {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-        {['All', 'High intent', 'New', 'Low score'].map((f, i) => (
-          <div key={i} style={{
-            padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500,
-            background: i === 0 ? C.ACCENT : C.GRAY_100,
-            color: i === 0 ? '#fff' : C.GRAY_600,
-          }}>{f}</div>
-        ))}
-      </div>
-      {/* Lead cards */}
-      {[
-        { name: 'Sarah Chen', email: 'sarah@example.com', score: 92, intent: 'High', initials: 'SC', bg: '#E8F4FD' },
-        { name: 'Mike Rodriguez', email: 'mike@example.com', score: 87, intent: 'High', initials: 'MR', bg: '#ECFDF3' },
-        { name: 'Emily Park', email: 'emily@example.com', score: 74, intent: 'New', initials: 'EP', bg: '#F4EBFF' },
-        { name: 'Jake Thompson', email: 'jake@example.com', score: 45, intent: 'Low', initials: 'JT', bg: '#FFF6ED' },
-        { name: 'Lisa Wang', email: 'lisa@example.com', score: 91, intent: 'High', initials: 'LW', bg: '#F0FAFB' },
-      ].map((l, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: `1px solid ${C.GRAY_200}`, borderRadius: 8, marginBottom: 6, background: C.BG }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: l.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.GRAY_700, flexShrink: 0 }}>{l.initials}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800 }}>{l.name}</div>
-            <div style={{ fontSize: 10, color: C.GRAY_500 }}>{l.email}</div>
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.GRAY_900 }}>{l.score}<span style={{ fontSize: 10, fontWeight: 400, color: C.GRAY_400 }}>/100</span></div>
-          <div style={{
-            padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 600,
-            background: l.intent === 'High' ? C.SUCCESS_LIGHT : l.intent === 'New' ? C.PURPLE_100 : C.WARNING_LIGHT,
-            color: l.intent === 'High' ? C.SUCCESS : l.intent === 'New' ? C.PURPLE_500 : C.WARNING,
-          }}>{l.intent}</div>
-        </div>
-      ))}
-    </div>
-  )
+/* ─────────────────────────────────────────────
+   Main Page
+   ───────────────────────────────────────────── */
+export default function QuizFunnelPage() {
+  const router = useRouter()
+  const [url, setUrl] = useState('')
+  const [isYearly, setIsYearly] = useState(true)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  const renderEmailMockup = () => (
-    <div style={{ flex: 1, padding: 20, overflow: 'hidden', background: C.GRAY_25 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900 }}>Email Campaigns</div>
-        <div style={{ padding: '6px 14px', background: C.ACCENT, borderRadius: 6, fontSize: 11, color: '#fff', fontWeight: 600 }}>+ Create Campaign</div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-        <MiniStat label="Emails Sent" value="2,340" sub="+18%" />
-        <MiniStat label="Average Open Rate" value="68%" color={C.ACCENT} />
-        <MiniStat label="Best Performing" value="Welcome Seq." />
-      </div>
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 14, borderBottom: `1px solid ${C.GRAY_200}` }}>
-        {['All', 'Draft', 'Live', 'Automations'].map((f, i) => (
-          <div key={i} style={{
-            padding: '8px 16px', fontSize: 12, fontWeight: 500,
-            color: i === 0 ? C.ACCENT : C.GRAY_500,
-            borderBottom: i === 0 ? `2px solid ${C.ACCENT}` : '2px solid transparent',
-          }}>{f}</div>
-        ))}
-      </div>
-      {/* Campaign list */}
-      {[
-        { name: 'Welcome Sequence', type: 'Automation', status: 'Live', sent: '1,240', open: '72%', typeColor: C.PURPLE_500, typeBg: C.PURPLE_100 },
-        { name: 'Quiz Results Follow-up', type: 'Sequence', status: 'Live', sent: '680', open: '65%', typeColor: C.ACCENT, typeBg: C.ACCENT_LIGHT },
-        { name: 'Monthly Newsletter', type: 'Broadcast', status: 'Draft', sent: '420', open: '58%', typeColor: C.WARNING_500, typeBg: C.WARNING_LIGHT },
-        { name: 'Re-engagement Flow', type: 'Automation', status: 'Live', sent: '312', open: '44%', typeColor: C.PURPLE_500, typeBg: C.PURPLE_100 },
-      ].map((c, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: `1px solid ${C.GRAY_200}`, borderRadius: 8, marginBottom: 6, background: C.BG }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_800 }}>{c.name}</div>
-            <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-              <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 600, background: c.typeBg, color: c.typeColor }}>{c.type}</span>
-              <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 600, background: c.status === 'Live' ? C.SUCCESS_LIGHT : C.GRAY_100, color: c.status === 'Live' ? C.SUCCESS : C.GRAY_500 }}>{c.status}</span>
-            </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800 }}>{c.sent} sent</div>
-            <div style={{ fontSize: 10, color: C.GRAY_500 }}>{c.open} open rate</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).style.opacity = '1';
+            (entry.target as HTMLElement).style.transform = 'translateY(0)'
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+    sectionRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref)
+    })
+    return () => observer.disconnect()
+  }, [])
 
-  const renderAutomationsMockup = () => (
-    <div style={{ flex: 1, padding: 20, overflow: 'hidden', background: C.GRAY_25 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900 }}>Automations</div>
-        <div style={{ padding: '6px 14px', background: C.ACCENT, borderRadius: 6, fontSize: 11, color: '#fff', fontWeight: 600 }}>+ New Rule</div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <MiniStat label="Active automations" value="4" />
-        <MiniStat label="Emails sent" value="1,892" sub="+15%" />
-        <MiniStat label="Leads in automation" value="567" />
-        <MiniStat label="Time saved" value="24h" color={C.ACCENT} />
-      </div>
-      {/* Automation rules */}
-      {[
-        { trigger: 'Quiz completed', action: 'Send welcome email', active: true },
-        { trigger: 'High intent score (80+)', action: 'Tag as hot lead + notify', active: true },
-        { trigger: 'Lead gate submitted', action: 'Add to nurture sequence', active: true },
-        { trigger: 'Quiz abandoned (>50%)', action: 'Send reminder email', active: false },
-        { trigger: 'Score changes to high', action: 'Move to priority segment', active: true },
-      ].map((r, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: `1px solid ${C.GRAY_200}`, borderRadius: 8, marginBottom: 6, background: C.BG }}>
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: C.ACCENT_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {Icons.zap(C.ACCENT, 14)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: C.GRAY_800 }}>{r.trigger}</div>
-            <div style={{ fontSize: 10, color: C.GRAY_500, marginTop: 1 }}>Then: {r.action}</div>
-          </div>
-          {/* Toggle */}
-          <div style={{
-            width: 34, height: 18, borderRadius: 9, padding: 2,
-            background: r.active ? C.ACCENT : C.GRAY_300,
-            display: 'flex', justifyContent: r.active ? 'flex-end' : 'flex-start',
-          }}>
-            <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff' }}/>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-
-  const renderAnalyticsMockup = () => (
-    <div style={{ flex: 1, padding: 20, overflow: 'hidden', background: C.GRAY_25 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900 }}>Analytics</div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {Icons.bell(C.GRAY_400, 16)}
-        </div>
-      </div>
-      {/* Date tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 14 }}>
-        {['Today', '7d', '30d', '90d', 'All time', 'Custom'].map((d, i) => (
-          <div key={i} style={{
-            padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500,
-            background: i === 2 ? C.ACCENT : 'transparent',
-            color: i === 2 ? '#fff' : C.GRAY_500,
-          }}>{d}</div>
-        ))}
-      </div>
-      {/* Stat cards */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-        <MiniStat label="Total views" value="8,432" sub="+12%" />
-        <MiniStat label="Completions" value="4,689" sub="+9%" />
-        <MiniStat label="Leads" value="1,841" sub="+8%" />
-        <MiniStat label="Completion rate" value="55.6%" />
-        <MiniStat label="Avg. time" value="2m 14s" />
-      </div>
-      {/* Quiz performance table */}
-      <div style={{ border: `1px solid ${C.GRAY_200}`, borderRadius: 10, overflow: 'hidden', background: C.BG }}>
-        <div style={{ display: 'flex', padding: '10px 14px', background: C.GRAY_50, borderBottom: `1px solid ${C.GRAY_200}` }}>
-          {['Quiz', 'Status', 'Views', 'Completions', 'Leads', 'Comp. Rate', ''].map((h, i) => (
-            <div key={i} style={{ flex: i === 0 ? 2 : 1, fontSize: 10, fontWeight: 600, color: C.GRAY_500, textTransform: 'uppercase' as const }}>{h}</div>
-          ))}
-        </div>
-        {[
-          { name: 'Photography Style Quiz', status: 'Live', views: '3,291', comp: '1,892', leads: '814', rate: '57.5%' },
-          { name: 'Product Finder Quiz', status: 'Live', views: '2,847', comp: '1,526', leads: '612', rate: '53.6%' },
-          { name: 'Wedding Style Quiz', status: 'Live', views: '2,294', comp: '1,271', leads: '415', rate: '55.4%' },
-        ].map((row, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 14px', borderBottom: i < 2 ? `1px solid ${C.GRAY_100}` : 'none' }}>
-            <div style={{ flex: 2, fontSize: 12, fontWeight: 600, color: C.GRAY_800 }}>{row.name}</div>
-            <div style={{ flex: 1 }}><span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 600, background: C.SUCCESS_LIGHT, color: C.SUCCESS }}>{row.status}</span></div>
-            <div style={{ flex: 1, fontSize: 11, color: C.GRAY_600 }}>{row.views}</div>
-            <div style={{ flex: 1, fontSize: 11, color: C.GRAY_600 }}>{row.comp}</div>
-            <div style={{ flex: 1, fontSize: 11, color: C.GRAY_600 }}>{row.leads}</div>
-            <div style={{ flex: 1, fontSize: 11, color: C.ACCENT, fontWeight: 600 }}>{row.rate}</div>
-            <div style={{ flex: 1, fontSize: 10, color: C.ACCENT, fontWeight: 500, cursor: 'pointer' }}>View details</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
-  const mockupRenderers: Record<string, () => React.ReactNode> = {
-    dashboard: renderDashboardMockup,
-    editor: renderEditorMockup,
-    leads: renderLeadsMockup,
-    email: renderEmailMockup,
-    automations: renderAutomationsMockup,
-    analytics: renderAnalyticsMockup,
+  const addRef = (el: HTMLDivElement | null) => {
+    if (el && !sectionRefs.current.includes(el)) {
+      sectionRefs.current.push(el)
+    }
   }
 
-  /* ═══════════════════════════════════════════
-     RENDER
-     ═══════════════════════════════════════════ */
-  return (
-    <div style={{ fontFamily: C.FONT, background: C.BG, color: C.GRAY_900, overflowX: 'hidden' }}>
-      <style>{`
-        * { box-sizing: border-box; margin: 0; }
-        html { scroll-behavior: smooth; }
-        [data-animate] { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
-        [data-animate].visible { opacity: 1 !important; transform: translateY(0) !important; }
-        .card-hover { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: ${C.SHADOW_LG}; border-color: ${C.GRAY_300} !important; }
-        .btn-hover:hover { opacity: 0.92; }
-        @media (max-width: 900px) {
-          .grid-3 { grid-template-columns: 1fr !important; }
-          .grid-2 { grid-template-columns: 1fr !important; }
-          .hero-input-row { flex-direction: column !important; }
-          .nav-links { display: none !important; }
-          .footer-grid { grid-template-columns: 1fr 1fr !important; }
-          .mockup-sidebar-hide { display: none !important; }
-          .stats-row-4 { grid-template-columns: 1fr 1fr !important; }
-          .pricing-grid { grid-template-columns: 1fr !important; }
-          .addon-grid { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 600px) {
-          .stats-row-4 { grid-template-columns: 1fr !important; }
-          .footer-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+  const animStyle: React.CSSProperties = {
+    opacity: 0,
+    transform: 'translateY(30px)',
+    transition: 'opacity 0.7s ease, transform 0.7s ease',
+  }
 
-      {/* ═══ STICKY NAV ═══ */}
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (url.trim()) {
+      router.push(QUIZ_BUILDER_PATH + '?url=' + encodeURIComponent(url.trim()))
+    } else {
+      router.push(QUIZ_BUILDER_PATH)
+    }
+  }
+
+  const plans = [
+    {
+      name: 'Core',
+      price: isYearly ? 9 : 12,
+      period: isYearly ? '/yr' : '/mo',
+      desc: 'For getting started with quiz funnels',
+      features: ['5 quizzes', '1,000 leads/mo', '1,000 emails/mo', 'Basic analytics', 'Email support', 'Squarespace integration'],
+      featured: false,
+    },
+    {
+      name: 'Pro',
+      price: isYearly ? 16 : 19,
+      period: isYearly ? '/yr' : '/mo',
+      desc: 'For growing businesses that need more',
+      features: ['Unlimited quizzes', '3,000 leads/mo', '3,000 emails/mo', 'Advanced analytics', 'Priority support', 'Custom branding', 'A/B testing', 'Automations'],
+      featured: true,
+    },
+    {
+      name: 'Business',
+      price: isYearly ? 29 : 35,
+      period: isYearly ? '/yr' : '/mo',
+      desc: 'For teams and high-volume operations',
+      features: ['Unlimited quizzes', 'Unlimited leads', 'Unlimited emails', 'Full analytics suite', 'Dedicated support', 'White label', 'API access', 'Team seats', 'Custom integrations'],
+      featured: false,
+    },
+  ]
+
+  const faqs = [
+    { q: 'How does Squarespell integrate with Squarespace?', a: 'Squarespell embeds directly into your Squarespace site via a simple code snippet. No plugins, no complicated setup. Just paste one line of code into your site header and your quizzes appear right on your pages.' },
+    { q: 'Can I customize the quiz design to match my brand?', a: 'Absolutely. Every quiz automatically inherits your Squarespace site fonts, colors, and styling. You can also fine-tune individual elements like button colors, backgrounds, and typography to create a pixel-perfect match.' },
+    { q: 'What happens when someone completes a quiz?', a: 'Their responses are captured as a lead in your dashboard with a score based on their answers. You can trigger automated welcome emails, segment them by intent level, and export them as CSV for your own tools.' },
+    { q: 'Do I need coding experience?', a: 'Not at all. The quiz builder is entirely visual with drag-and-drop blocks. You can also use our AI assistant to generate a complete quiz from a simple text prompt describing what you want.' },
+    { q: 'Is there a free trial?', a: 'Yes. Every plan includes a 14-day free trial with full access to all features. No credit card required to start.' },
+    { q: 'Can I switch plans later?', a: 'Yes, you can upgrade or downgrade at any time. Changes take effect immediately, and billing is prorated so you only pay for what you use.' },
+  ]
+
+  const features = [
+    { icon: '&#9997;', title: 'AI Quiz Builder', desc: 'Generate a complete quiz from a text prompt. Add questions, logic branches, and result pages in minutes.' },
+    { icon: '&#127912;', title: 'Brand-Matched Design', desc: 'Quizzes inherit your Squarespace fonts, colors, and styling automatically. No design work needed.' },
+    { icon: '&#128202;', title: 'Real-time Analytics', desc: 'Track views, completions, lead rates, and conversion funnels with a dashboard built for clarity.' },
+    { icon: '&#128274;', title: 'Lead Capture & Scoring', desc: 'Every quiz response is captured as a scored lead. Segment by intent level and prioritize follow-ups.' },
+    { icon: '&#128231;', title: 'Email Campaigns', desc: 'Send targeted emails based on quiz results. Personalized recommendations that actually convert.' },
+    { icon: '&#9889;', title: 'Automations', desc: 'Set up trigger-based workflows. Welcome emails, follow-ups, and reminders run on autopilot.' },
+    { icon: '&#128256;', title: 'A/B Testing', desc: 'Test different questions, headlines, and result pages to find what converts best for your audience.' },
+    { icon: '&#128268;', title: 'Squarespace Native', desc: 'Built specifically for Squarespace. One code snippet to embed. No third-party plugins or iframes.' },
+    { icon: '&#128640;', title: 'Templates Library', desc: 'Start from industry-specific templates for photographers, fitness coaches, e-commerce, and more.' },
+  ]
+
+  const addOnPacks = [
+    { category: 'Lead Packs', items: [{ label: '+500 leads/mo', price: '$3/mo' }, { label: '+1,500 leads/mo', price: '$7/mo' }, { label: '+3,000 leads/mo', price: '$12/mo' }] },
+    { category: 'Email Packs', items: [{ label: '+1,000 emails/mo', price: '$3/mo' }, { label: '+5,000 emails/mo', price: '$7/mo' }, { label: '+10,000 emails/mo', price: '$12/mo' }] },
+  ]
+
+  return (
+    <div style={{ fontFamily: C.FONT, background: C.BG, color: C.GRAY_900, minHeight: '100vh' }}>
+      {/* ─── NAV ─── */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: navScrolled ? 'rgba(255,255,255,0.96)' : 'transparent',
-        backdropFilter: navScrolled ? 'blur(16px)' : 'none',
-        WebkitBackdropFilter: navScrolled ? 'blur(16px)' : 'none',
-        borderBottom: navScrolled ? `1px solid ${C.GRAY_200}` : '1px solid transparent',
-        transition: 'all 0.3s ease',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${C.GRAY_200}`,
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px', maxWidth: 1200, margin: '0 auto', height: 64 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Logo size={30} />
-            <span style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, letterSpacing: '-0.01em' }}>Squarespell</span>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+            </div>
+            <span style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900 }}>Squarespell</span>
           </div>
-          <div className="nav-links" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-            {[
-              { href: '#product', label: 'Product' },
-              { href: '#features', label: 'Features' },
-              { href: '#templates', label: 'Templates' },
-              { href: '#pricing', label: 'Pricing' },
-            ].map(link => (
-              <a key={link.href} href={link.href} style={{ textDecoration: 'none', color: C.GRAY_600, fontSize: 14, fontWeight: 500, transition: 'color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = C.GRAY_900}
-                onMouseLeave={e => e.currentTarget.style.color = C.GRAY_600}>{link.label}</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+            {['Features', 'Templates', 'Pricing'].map(link => (
+              <a key={link} href={`#${link.toLowerCase()}`} style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_600, textDecoration: 'none' }}>{link}</a>
             ))}
-            <Link href="/sign-in" style={{ textDecoration: 'none', color: C.GRAY_600, fontSize: 14, fontWeight: 500 }}>Log in</Link>
-            <Link href="/sign-up" style={{
-              textDecoration: 'none', background: C.ACCENT, color: '#fff', padding: '9px 22px', borderRadius: 8,
-              fontWeight: 600, fontSize: 14, transition: 'background 0.2s',
-            }}
-              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = C.ACCENT_HOVER)}
-              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = C.ACCENT)}>
-              Start Free
-            </Link>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <a href="https://app.squarespell.com" style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_700, textDecoration: 'none' }}>Log in</a>
+            <a href={QUIZ_BUILDER_PATH} style={{ padding: '8px 18px', borderRadius: 8, background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>Get Started Free</a>
           </div>
         </div>
       </nav>
 
-      {/* ═══ HERO ═══ */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '140px 40px 70px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', background: C.ACCENT_LIGHT, border: `1px solid ${C.BRAND_50}`, borderRadius: 100, fontSize: 13, color: C.ACCENT, fontWeight: 600, marginBottom: 32 }}>
-          {Icons.sparkles(C.ACCENT, 16)}
-          Built for Squarespace creators
-        </div>
-        <h1 style={{ fontSize: 'clamp(38px, 5.2vw, 58px)', lineHeight: 1.12, marginBottom: 24, fontWeight: 800, letterSpacing: '-0.025em', color: C.GRAY_900 }}>
-          Turn Your Squarespace Site<br />Into a <span style={{ color: C.ACCENT }}>Lead Machine</span>
-        </h1>
-        <p style={{ fontSize: 'clamp(16px, 2vw, 19px)', color: C.GRAY_500, marginBottom: 44, maxWidth: 600, margin: '0 auto 44px', lineHeight: 1.65 }}>
-          AI-powered quiz funnels that match your brand perfectly. Generate leads, qualify visitors, and grow revenue. All without leaving Squarespace.
-        </p>
-        <form onSubmit={handleSubmitUrl} style={{ maxWidth: 540, margin: '0 auto 18px' }}>
-          <div className="hero-input-row" style={{ display: 'flex', gap: 10 }}>
-            <input
-              type="url" placeholder="Paste your Squarespace URL..." value={url} onChange={e => setUrl(e.target.value)}
-              style={{
-                flex: 1, padding: '15px 18px', background: C.BG, border: `1.5px solid ${C.GRAY_300}`, borderRadius: 10,
-                color: C.GRAY_900, fontSize: 15, outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s', fontFamily: C.FONT,
-              }}
-              onFocus={e => { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.boxShadow = `0 0 0 3px ${C.BRAND_50}` }}
-              onBlur={e => { e.currentTarget.style.borderColor = C.GRAY_300; e.currentTarget.style.boxShadow = 'none' }}
-            />
-            <button type="submit" disabled={loading} style={{
-              padding: '15px 30px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 10,
-              fontWeight: 600, fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
-              whiteSpace: 'nowrap', transition: 'background 0.2s', fontFamily: C.FONT,
-            }}
-              onMouseEnter={e => !loading && (e.currentTarget.style.background = C.ACCENT_HOVER)}
-              onMouseLeave={e => (e.currentTarget.style.background = C.ACCENT)}>
-              {loading ? 'Creating...' : 'Create Quiz'}
-            </button>
+      {/* ─── HERO ─── */}
+      <section style={{ padding: '100px 32px 60px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'inline-block', padding: '6px 14px', borderRadius: 20, background: C.ACCENT_LIGHT, color: C.ACCENT, fontSize: 13, fontWeight: 600, marginBottom: 24 }}>
+            Built for Squarespace
           </div>
-        </form>
-        <p style={{ fontSize: 13, color: C.GRAY_400 }}>14-day free trial · No credit card required</p>
-      </section>
-
-      {/* ═══ SOCIAL PROOF STATS ═══ */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 40px 80px' }}>
-        <div id="stats" data-animate className="stats-row-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, border: `1px solid ${C.GRAY_200}`, borderRadius: 16, overflow: 'hidden', background: C.BG }}>
-          {[
-            { value: '45K+', label: 'Quizzes created', icon: Icons.quiz(C.ACCENT, 20) },
-            { value: '2.3M', label: 'Leads captured', icon: Icons.leads(C.ACCENT, 20) },
-            { value: '24.4%', label: 'Avg. conversion rate', icon: Icons.target(C.ACCENT, 20) },
-            { value: '<60s', label: 'Quiz generation time', icon: Icons.clock(C.ACCENT, 20) },
-          ].map((stat, i) => (
-            <div key={i} style={{
-              padding: '32px 28px', textAlign: 'center',
-              borderRight: i < 3 ? `1px solid ${C.GRAY_200}` : 'none',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>{stat.icon}</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em' }}>{stat.value}</div>
-              <div style={{ fontSize: 13, color: C.GRAY_500, fontWeight: 500, marginTop: 4 }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══ PRODUCT SHOWCASE ═══ */}
-      <section id="product" style={{ padding: '40px 0 80px' }}>
-        {showcaseSections.map((section, idx) => (
-          <div key={idx} id={`showcase-${idx}`} data-animate style={{ maxWidth: 1200, margin: '0 auto', padding: '60px 40px' }}>
-            {/* Centered text above */}
-            <div style={{ textAlign: 'center', marginBottom: 40, maxWidth: 640, margin: '0 auto 40px' }}>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px',
-                background: C.ACCENT_LIGHT, borderRadius: 100, fontSize: 12, color: C.ACCENT, fontWeight: 600, marginBottom: 16,
-              }}>
-                {section.badge}
-              </div>
-              <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 38px)', fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: 14 }}>
-                {section.heading}
-              </h2>
-              <p style={{ fontSize: 17, color: C.GRAY_500, lineHeight: 1.6 }}>
-                {section.description}
-              </p>
-            </div>
-            {/* FULL-WIDTH MOCKUP */}
-            <div style={{ background: C.GRAY_50, borderRadius: 20, padding: '24px 24px 0', border: `1px solid ${C.GRAY_100}` }}>
-              <MockupWindow title={`app.squarespell.com/${section.mockupId}`}>
-                <MockupSidebar active={section.active} />
-                {mockupRenderers[section.mockupId]()}
-              </MockupWindow>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* ═══ HOW IT WORKS ═══ */}
-      <section id="how-it-works" style={{ background: C.GRAY_50, padding: '100px 40px', borderTop: `1px solid ${C.GRAY_100}`, borderBottom: `1px solid ${C.GRAY_100}` }}>
-        <div id="hiw" data-animate style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', background: C.ACCENT_LIGHT, borderRadius: 100, fontSize: 12, color: C.ACCENT, fontWeight: 600, marginBottom: 16 }}>
-            3 Simple Steps
-          </div>
-          <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em', marginBottom: 16 }}>
-            From URL to leads in under 60 seconds
-          </h2>
-          <p style={{ fontSize: 17, color: C.GRAY_500, marginBottom: 56, maxWidth: 560, margin: '0 auto 56px', lineHeight: 1.6 }}>
-            No signup forms, no templates to customize from scratch. Just paste your URL and let AI do the work.
+          <h1 style={{ fontSize: 56, fontWeight: 800, lineHeight: 1.1, color: C.GRAY_900, margin: '0 auto 20px', maxWidth: 780 }}>
+            Turn visitors into leads with interactive quiz funnels
+          </h1>
+          <p style={{ fontSize: 20, color: C.GRAY_500, maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.6 }}>
+            Build AI-powered quizzes that capture emails, qualify leads, and drive sales. Designed exclusively for Squarespace websites.
           </p>
-          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', maxWidth: 520, margin: '0 auto 20px', gap: 0, background: C.BG, borderRadius: 12, border: `2px solid ${C.GRAY_200}`, overflow: 'hidden', boxShadow: C.SHADOW_MD }}>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="Enter your Squarespace URL..."
+              style={{ flex: 1, padding: '14px 20px', border: 'none', outline: 'none', fontSize: 15, fontFamily: C.FONT, color: C.GRAY_900, background: 'transparent' }}
+            />
+            <button type="submit" style={{ padding: '14px 28px', background: C.ACCENT, color: '#fff', border: 'none', fontSize: 15, fontWeight: 600, fontFamily: C.FONT, cursor: 'pointer' }}>
+              Build My Quiz
+            </button>
+          </form>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 24, fontSize: 13, color: C.GRAY_500 }}>
+            <span>No credit card required</span>
+            <span>14-day free trial</span>
+            <span>Setup in 2 minutes</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── HERO MOCKUP ─── */}
+      <section style={{ padding: '0 32px 100px' }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <DashboardMockup />
+        </div>
+      </section>
+
+      {/* ─── SOCIAL PROOF ─── */}
+      <section style={{ padding: '60px 32px 80px', background: C.GRAY_50, borderTop: `1px solid ${C.GRAY_100}`, borderBottom: `1px solid ${C.GRAY_100}` }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_400, marginBottom: 32, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Trusted by 2,400+ Squarespace creators worldwide</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 64, flexWrap: 'wrap' }}>
             {[
-              { step: '1', icon: Icons.globe(C.ACCENT, 28), title: 'Paste your URL', desc: 'Enter your Squarespace site URL. Our AI analyzes your brand colors, typography, and content in seconds.' },
-              { step: '2', icon: Icons.sparkles(C.ACCENT, 28), title: 'AI generates your quiz', desc: 'Get a fully branded quiz funnel with questions, scoring, lead gates, and result pages. Ready to publish.' },
-              { step: '3', icon: Icons.send(C.ACCENT, 28), title: 'Embed and collect leads', desc: 'Copy the embed code into Squarespace. Start capturing qualified leads and growing your email list instantly.' },
-            ].map((s, i) => (
-              <div key={i} style={{
-                background: C.BG, border: `1px solid ${C.GRAY_200}`, borderRadius: 16, padding: '40px 28px',
-                textAlign: 'center', position: 'relative',
-              }}>
-                <div style={{
-                  position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-                  width: 28, height: 28, borderRadius: '50%', background: C.ACCENT, color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700,
-                }}>{s.step}</div>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, marginTop: 8 }}>{s.icon}</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, marginBottom: 10 }}>{s.title}</div>
-                <div style={{ fontSize: 14, color: C.GRAY_500, lineHeight: 1.6 }}>{s.desc}</div>
+              { label: '2,400+', sub: 'Active users' },
+              { label: '180K+', sub: 'Leads captured' },
+              { label: '12K+', sub: 'Quizzes created' },
+              { label: '98%', sub: 'Satisfaction rate' },
+            ].map(s => (
+              <div key={s.label}>
+                <div style={{ fontSize: 32, fontWeight: 800, color: C.GRAY_900, fontFamily: C.FONT }}>{s.label}</div>
+                <div style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT }}>{s.sub}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══ FEATURES GRID ═══ */}
-      <section id="features" style={{ padding: '100px 40px' }}>
-        <div id="feat" data-animate style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', background: C.ACCENT_LIGHT, borderRadius: 100, fontSize: 12, color: C.ACCENT, fontWeight: 600, marginBottom: 16 }}>
-              Everything you need
-            </div>
-            <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em', marginBottom: 14 }}>
-              Built for serious lead generation
-            </h2>
-            <p style={{ fontSize: 17, color: C.GRAY_500, maxWidth: 560, margin: '0 auto', lineHeight: 1.6 }}>
-              Every feature is designed to help Squarespace creators convert more visitors into qualified leads.
-            </p>
+      {/* ─── SHOWCASE 1: DASHBOARD ─── */}
+      <section id="features" style={{ padding: '100px 32px' }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Command Center"
+            title="Everything you need, one dashboard"
+            subtitle="See your quiz performance at a glance. Track views, leads, completion rates, and conversion funnels in real time."
+          />
+          <DashboardMockup />
+        </div>
+      </section>
+
+      {/* ─── SHOWCASE 2: QUIZ EDITOR ─── */}
+      <section style={{ padding: '100px 32px', background: C.GRAY_50 }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Quiz Management"
+            title="Build, manage, and publish quizzes"
+            subtitle="Create AI-powered quizzes in minutes. Track every quiz with live status, views, leads, and conversion rates all in one place."
+          />
+          <QuizzesMockup />
+        </div>
+      </section>
+
+      {/* ─── SHOWCASE 3: LEADS ─── */}
+      <section style={{ padding: '100px 32px' }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Lead Intelligence"
+            title="Know your leads before you talk to them"
+            subtitle="Every quiz response is captured with a score, intent level, and full answer history. Filter, segment, and export with one click."
+          />
+          <LeadsMockup />
+        </div>
+      </section>
+
+      {/* ─── SHOWCASE 4: EMAIL ─── */}
+      <section style={{ padding: '100px 32px', background: C.GRAY_50 }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Email Campaigns"
+            title="Send emails that match their answers"
+            subtitle="Create targeted campaigns based on quiz results. Personalized product recommendations, welcome sequences, and follow-ups that convert."
+          />
+          <EmailMockup />
+        </div>
+      </section>
+
+      {/* ─── SHOWCASE 5: AUTOMATIONS ─── */}
+      <section style={{ padding: '100px 32px' }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Automations"
+            title="Set it up once, let it run forever"
+            subtitle="Trigger automated workflows when leads are captured, scores are high, or quizzes are abandoned. Your marketing runs on autopilot."
+          />
+          <AutomationsMockup />
+        </div>
+      </section>
+
+      {/* ─── SHOWCASE 6: ANALYTICS ─── */}
+      <section style={{ padding: '100px 32px', background: C.GRAY_50 }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Analytics"
+            title="Data that tells you what to do next"
+            subtitle="Compare quiz performance, identify drop-off points, and understand which questions drive the most conversions."
+          />
+          <AnalyticsMockup />
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─── */}
+      <section style={{ padding: '100px 32px' }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="How It Works"
+            title="Live in 3 simple steps"
+            subtitle="No code, no plugins, no complicated setup. Just paste, publish, and start capturing leads."
+          />
+          <div style={{ display: 'flex', gap: 32, maxWidth: 960, margin: '0 auto' }}>
+            {[
+              { step: '1', title: 'Build your quiz', desc: 'Use AI to generate a quiz from a prompt, or start from a template. Add questions, logic, and result pages in the visual editor.' },
+              { step: '2', title: 'Embed on your site', desc: 'Copy one line of code and paste it into your Squarespace site header. Your quiz appears instantly on any page.' },
+              { step: '3', title: 'Capture and convert', desc: 'Leads flow into your dashboard with scores and segments. Trigger emails and automations automatically.' },
+            ].map(s => (
+              <div key={s.step} style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: C.ACCENT_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 22, fontWeight: 800, color: C.ACCENT, fontFamily: C.FONT }}>{s.step}</div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, margin: '0 0 8px', fontFamily: C.FONT }}>{s.title}</h3>
+                <p style={{ fontSize: 14, color: C.GRAY_500, lineHeight: 1.6, margin: 0, fontFamily: C.FONT }}>{s.desc}</p>
+              </div>
+            ))}
           </div>
-          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        </div>
+      </section>
+
+      {/* ─── FEATURES GRID ─── */}
+      <section style={{ padding: '100px 32px', background: C.GRAY_50 }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            title="Everything you need to convert visitors"
+            subtitle="A complete toolkit for quiz-based lead generation, built natively for Squarespace."
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, maxWidth: 1080, margin: '0 auto' }}>
             {features.map((f, i) => (
-              <div key={i} className="card-hover" style={{
-                border: `1px solid ${C.GRAY_200}`, borderRadius: 14, padding: '28px 24px', background: C.BG,
-              }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 10, background: C.ACCENT_LIGHT,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-                }}>{f.icon}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900, marginBottom: 8 }}>{f.title}</div>
-                <div style={{ fontSize: 14, color: C.GRAY_500, lineHeight: 1.6 }}>{f.desc}</div>
+              <div key={i} style={{ background: C.BG, borderRadius: 12, border: `1px solid ${C.GRAY_200}`, padding: '28px 24px' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: C.ACCENT_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, fontSize: 20 }} dangerouslySetInnerHTML={{ __html: f.icon }} />
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900, margin: '0 0 8px', fontFamily: C.FONT }}>{f.title}</h3>
+                <p style={{ fontSize: 14, color: C.GRAY_500, lineHeight: 1.6, margin: 0, fontFamily: C.FONT }}>{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══ TEMPLATES ═══ */}
-      <section id="templates" style={{ background: C.GRAY_50, padding: '100px 40px', borderTop: `1px solid ${C.GRAY_100}`, borderBottom: `1px solid ${C.GRAY_100}` }}>
-        <div id="tpl" data-animate style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', background: C.ACCENT_LIGHT, borderRadius: 100, fontSize: 12, color: C.ACCENT, fontWeight: 600, marginBottom: 16 }}>
-              Ready-to-use
-            </div>
-            <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em', marginBottom: 14 }}>
-              Start with a proven template
-            </h2>
-            <p style={{ fontSize: 17, color: C.GRAY_500, maxWidth: 560, margin: '0 auto', lineHeight: 1.6 }}>
-              Industry-specific quiz funnels, pre-built with questions, scoring logic, and result pages. Customize everything.
-            </p>
-          </div>
-          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-            {templates.map((t) => {
+      {/* ─── TEMPLATES ─── */}
+      <section id="templates" style={{ padding: '100px 32px' }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Templates"
+            title="Start with a proven template"
+            subtitle="Industry-specific quiz templates built to capture leads and drive conversions from day one."
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, maxWidth: 1080, margin: '0 auto' }}>
+            {QUIZ_TEMPLATE_CATALOG.slice(0, 6).map((t) => {
               const thumb = getTemplateThumbnail(t.id)
-              const qCount = getTemplateQuestionCount(t.id)
+              const count = getTemplateQuestionCount(t.id)
               return (
-                <Link key={t.id} href={QUIZ_BUILDER_PATH + '?template=' + t.id} style={{ textDecoration: 'none' }}>
-                  <div className="card-hover" style={{
-                    border: `1px solid ${C.GRAY_200}`, borderRadius: 14, overflow: 'hidden', background: C.BG, cursor: 'pointer',
-                  }}>
+                <Link
+                  key={t.id}
+                  href={QUIZ_BUILDER_PATH + '?template=' + t.id}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div style={{
+                    background: C.BG,
+                    borderRadius: 12,
+                    border: `1px solid ${C.GRAY_200}`,
+                    overflow: 'hidden',
+                    transition: 'box-shadow 0.2s, transform 0.2s',
+                  }}
+                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = C.SHADOW_LG; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}
+                  >
                     <div style={{
-                      height: 180, background: thumb ? `url(${thumb}) center/cover` : `linear-gradient(135deg, ${C.ACCENT_LIGHT}, ${C.BRAND_50})`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+                      height: 160,
+                      background: thumb ? `url(${thumb}) center/cover` : `linear-gradient(135deg, ${C.ACCENT_LIGHT}, ${C.BRAND_50})`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}>
                       {!thumb && (
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d={t.iconPath || 'M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z'} />
+                          <path d={t.iconPath} />
                         </svg>
                       )}
-                      <div style={{ position: 'absolute', top: 10, right: 10, padding: '3px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)', fontSize: 11, fontWeight: 600, color: C.GRAY_700 }}>
-                        {t.category}
-                      </div>
                     </div>
-                    <div style={{ padding: '18px 20px' }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, marginBottom: 6 }}>{t.name}</div>
-                      <div style={{ fontSize: 13, color: C.GRAY_500, lineHeight: 1.55, marginBottom: 12, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
-                        {t.description}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 12, color: C.GRAY_400 }}>{qCount} questions</span>
-                        <span style={{ fontSize: 13, color: C.ACCENT, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                          Use template {Icons.arrowRight(C.ACCENT, 14)}
-                        </span>
-                      </div>
+                    <div style={{ padding: '16px 20px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 500, color: C.ACCENT, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: C.FONT }}>{t.category}</div>
+                      <h3 style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, margin: '0 0 6px', fontFamily: C.FONT }}>{t.name}</h3>
+                      <p style={{ fontSize: 13, color: C.GRAY_500, margin: '0 0 10px', lineHeight: 1.5, fontFamily: C.FONT, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.description}</p>
+                      <div style={{ fontSize: 12, color: C.GRAY_400, fontFamily: C.FONT }}>{count} questions</div>
                     </div>
                   </div>
                 </Link>
@@ -1069,294 +938,193 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ PRICING ═══ */}
-      <section id="pricing" style={{ padding: '100px 40px' }}>
-        <div id="price" data-animate style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', background: C.ACCENT_LIGHT, borderRadius: 100, fontSize: 12, color: C.ACCENT, fontWeight: 600, marginBottom: 16 }}>
-              14-DAY PRO TRIAL · NO CREDIT CARD
+      {/* ─── PRICING ─── */}
+      <section id="pricing" style={{ padding: '100px 32px', background: C.GRAY_50 }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            badge="Pricing"
+            title="Simple, transparent pricing"
+            subtitle="Start free, upgrade when you need to. Every plan includes a 14-day trial."
+          />
+          {/* Toggle */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginBottom: 48 }}>
+            <span style={{ fontSize: 14, fontWeight: isYearly ? 400 : 600, color: isYearly ? C.GRAY_500 : C.GRAY_900, fontFamily: C.FONT }}>Monthly</span>
+            <div
+              onClick={() => setIsYearly(!isYearly)}
+              style={{ width: 48, height: 26, borderRadius: 13, background: C.ACCENT, position: 'relative', cursor: 'pointer' }}
+            >
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: isYearly ? 25 : 3, transition: 'left 0.2s', boxShadow: C.SHADOW_XS }} />
             </div>
-            <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em', marginBottom: 14 }}>
-              Quiz funnels that fit your Squarespace budget.
-            </h2>
-            {/* Trust badges */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 32, flexWrap: 'wrap' }}>
-              {[
-                { icon: Icons.users(C.ACCENT, 16), text: '2,400+ Squarespace owners' },
-                { icon: Icons.shield(C.ACCENT, 16), text: 'No credit card required' },
-                { icon: Icons.check(C.ACCENT, 16), text: 'Cancel anytime' },
-              ].map((b, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.GRAY_500 }}>
-                  {b.icon}
-                  {b.text}
-                </div>
-              ))}
-            </div>
-            {/* Billing toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: isYearly ? 400 : 600, color: isYearly ? C.GRAY_400 : C.GRAY_900 }}>Monthly</span>
-              <button onClick={() => setIsYearly(!isYearly)} style={{
-                width: 48, height: 26, borderRadius: 13, border: 'none', padding: 3, cursor: 'pointer',
-                background: isYearly ? C.ACCENT : C.GRAY_300, transition: 'background 0.2s', position: 'relative',
-              }}>
-                <div style={{
-                  width: 20, height: 20, borderRadius: '50%', background: '#fff',
-                  transform: isYearly ? 'translateX(22px)' : 'translateX(0)',
-                  transition: 'transform 0.2s',
-                }}/>
-              </button>
-              <span style={{ fontSize: 14, fontWeight: isYearly ? 600 : 400, color: isYearly ? C.GRAY_900 : C.GRAY_400 }}>Annual</span>
-              {isYearly && (
-                <span style={{ padding: '3px 10px', borderRadius: 100, background: C.SUCCESS_LIGHT, color: C.SUCCESS, fontSize: 12, fontWeight: 600 }}>
-                  Save up to 25%
-                </span>
-              )}
-            </div>
+            <span style={{ fontSize: 14, fontWeight: isYearly ? 600 : 400, color: isYearly ? C.GRAY_900 : C.GRAY_500, fontFamily: C.FONT }}>Yearly</span>
+            {isYearly && <span style={{ padding: '4px 10px', borderRadius: 12, background: C.SUCCESS_LIGHT, color: C.SUCCESS, fontSize: 12, fontWeight: 600, fontFamily: C.FONT }}>Save 20%</span>}
           </div>
-
-          {/* Plan Cards */}
-          <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, alignItems: 'start' }}>
-            {pricingPlans.map((plan, i) => {
-              const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice
-              const origPrice = plan.monthlyPrice
-              const savePct = Math.round((1 - plan.yearlyPrice / plan.monthlyPrice) * 100)
-              return (
-                <div key={i} style={{
-                  border: plan.featured ? `2px solid ${C.ACCENT}` : `1px solid ${C.GRAY_200}`,
-                  borderRadius: 16, padding: '32px 28px', background: C.BG, position: 'relative',
-                  boxShadow: plan.featured ? C.SHADOW_MD : 'none',
+          {/* Plans */}
+          <div style={{ display: 'flex', gap: 24, maxWidth: 1080, margin: '0 auto 60px', alignItems: 'flex-start' }}>
+            {plans.map(p => (
+              <div key={p.name} style={{
+                flex: 1,
+                background: C.BG,
+                borderRadius: 16,
+                border: p.featured ? `2px solid ${C.ACCENT}` : `1px solid ${C.GRAY_200}`,
+                padding: '32px 28px',
+                position: 'relative',
+                boxShadow: p.featured ? C.SHADOW_LG : C.SHADOW_XS,
+              }}>
+                {p.featured && (
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', padding: '4px 14px', borderRadius: 12, background: C.ACCENT, color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: C.FONT }}>Most popular</div>
+                )}
+                <h3 style={{ fontSize: 20, fontWeight: 700, color: C.GRAY_900, margin: '0 0 4px', fontFamily: C.FONT }}>{p.name}</h3>
+                <p style={{ fontSize: 13, color: C.GRAY_500, margin: '0 0 20px', fontFamily: C.FONT }}>{p.desc}</p>
+                <div style={{ marginBottom: 24 }}>
+                  <span style={{ fontSize: 44, fontWeight: 800, color: C.GRAY_900, fontFamily: C.FONT }}>${p.price}</span>
+                  <span style={{ fontSize: 15, color: C.GRAY_500, fontFamily: C.FONT }}>{p.period}</span>
+                </div>
+                <a href={QUIZ_BUILDER_PATH} style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  padding: '12px 0',
+                  borderRadius: 8,
+                  background: p.featured ? C.ACCENT : 'transparent',
+                  color: p.featured ? '#fff' : C.ACCENT,
+                  border: p.featured ? 'none' : `1px solid ${C.ACCENT}`,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  fontFamily: C.FONT,
+                  marginBottom: 24,
                 }}>
-                  {plan.featured && (
-                    <div style={{
-                      position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
-                      padding: '4px 16px', borderRadius: 100, background: C.ACCENT, color: '#fff',
-                      fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.05em',
-                    }}>MOST POPULAR</div>
-                  )}
-                  <div style={{ fontSize: 20, fontWeight: 700, color: C.GRAY_900, marginBottom: 4 }}>{plan.name}</div>
-                  <div style={{ fontSize: 13, color: C.GRAY_500, lineHeight: 1.5, marginBottom: 20, minHeight: 40 }}>{plan.description}</div>
-                  <div style={{ marginBottom: 6 }}>
-                    {isYearly && <span style={{ fontSize: 16, color: C.GRAY_400, textDecoration: 'line-through', marginRight: 8 }}>${origPrice}</span>}
-                    <span style={{ fontSize: 42, fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em' }}>${price}</span>
-                    <span style={{ fontSize: 15, color: C.GRAY_500 }}>/mo</span>
-                  </div>
-                  {isYearly && (
-                    <div style={{ fontSize: 12, color: C.SUCCESS, fontWeight: 600, marginBottom: 6 }}>
-                      Billed yearly · Save {savePct}%
-                    </div>
-                  )}
-                  {/* Limits bar */}
-                  <div style={{ display: 'flex', gap: 8, marginTop: 16, marginBottom: 20, padding: '12px 14px', background: C.GRAY_50, borderRadius: 10 }}>
-                    {Object.entries(plan.limits).map(([k, v], j) => (
-                      <div key={j} style={{ flex: 1, textAlign: 'center' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.GRAY_900 }}>{v}</div>
-                        <div style={{ fontSize: 10, color: C.GRAY_500, textTransform: 'capitalize' as const }}>{k}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* CTA */}
-                  <Link href="/sign-up" style={{
-                    display: 'block', textAlign: 'center', textDecoration: 'none',
-                    padding: '12px 0', borderRadius: 10, fontWeight: 600, fontSize: 14,
-                    background: plan.featured ? C.ACCENT : 'transparent',
-                    color: plan.featured ? '#fff' : C.ACCENT,
-                    border: plan.featured ? 'none' : `1.5px solid ${C.ACCENT}`,
-                    transition: 'background 0.2s, opacity 0.2s',
-                    marginBottom: 24,
-                  }}
-                    onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                      if (plan.featured) e.currentTarget.style.background = C.ACCENT_HOVER
-                      else e.currentTarget.style.background = C.ACCENT_LIGHT
-                    }}
-                    onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                      if (plan.featured) e.currentTarget.style.background = C.ACCENT
-                      else e.currentTarget.style.background = 'transparent'
-                    }}>
-                    {plan.cta}
-                  </Link>
-                  {/* Feature list */}
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.GRAY_400, textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 12 }}>INCLUDED</div>
-                  {plan.features.map((f, j) => (
-                    <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
-                      <div style={{ flexShrink: 0, marginTop: 1 }}>{Icons.check(C.ACCENT, 16)}</div>
-                      <span style={{ fontSize: 13, color: C.GRAY_600, lineHeight: 1.4 }}>{f}</span>
+                  Start free trial
+                </a>
+                <div style={{ borderTop: `1px solid ${C.GRAY_200}`, paddingTop: 20 }}>
+                  {p.features.map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, fontSize: 13, color: C.GRAY_700, fontFamily: C.FONT }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.SUCCESS_500} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      {f}
                     </div>
                   ))}
                 </div>
-              )
-            })}
-          </div>
-
-          {/* ADD-ON PACKS */}
-          <div id="addons" data-animate style={{ marginTop: 64, textAlign: 'center' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', background: C.GRAY_100, borderRadius: 100, fontSize: 12, color: C.GRAY_600, fontWeight: 600, marginBottom: 16 }}>
-              ADD-ON PACKS
-            </div>
-            <h3 style={{ fontSize: 22, fontWeight: 700, color: C.GRAY_900, marginBottom: 8 }}>Need more capacity? Add it on.</h3>
-            <p style={{ fontSize: 15, color: C.GRAY_500, marginBottom: 36 }}>Available on any paid plan. No upgrade required.</p>
-            <div className="addon-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 800, margin: '0 auto' }}>
-              {/* Lead Packs */}
-              <div style={{ border: `1px solid ${C.GRAY_200}`, borderRadius: 14, padding: '24px', background: C.BG }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, marginBottom: 16 }}>Lead Packs</div>
-                {[
-                  { amount: '+500 leads', price: '$3/mo' },
-                  { amount: '+1,500 leads', price: '$7/mo' },
-                  { amount: '+3,000 leads', price: '$12/mo' },
-                ].map((p, j) => (
-                  <div key={j} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: j < 2 ? `1px solid ${C.GRAY_100}` : 'none' }}>
-                    <span style={{ fontSize: 14, color: C.GRAY_700 }}>{p.amount}</span>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: C.ACCENT }}>{p.price}</span>
-                  </div>
-                ))}
               </div>
-              {/* Email Packs */}
-              <div style={{ border: `1px solid ${C.GRAY_200}`, borderRadius: 14, padding: '24px', background: C.BG }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, marginBottom: 16 }}>Email Packs</div>
-                {[
-                  { amount: '+1,000 emails', price: '$3/mo' },
-                  { amount: '+5,000 emails', price: '$7/mo' },
-                  { amount: '+10,000 emails', price: '$12/mo' },
-                ].map((p, j) => (
-                  <div key={j} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: j < 2 ? `1px solid ${C.GRAY_100}` : 'none' }}>
-                    <span style={{ fontSize: 14, color: C.GRAY_700 }}>{p.amount}</span>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: C.ACCENT }}>{p.price}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
-        </div>
-      </section>
-
-      {/* ═══ FAQ ═══ */}
-      <section id="faq" style={{ background: C.GRAY_50, padding: '100px 40px', borderTop: `1px solid ${C.GRAY_100}` }}>
-        <div id="faqsec" data-animate style={{ maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 38px)', fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em', marginBottom: 14 }}>
-              Frequently asked questions
-            </h2>
-            <p style={{ fontSize: 16, color: C.GRAY_500 }}>Everything you need to know about Squarespell.</p>
-          </div>
-          {faqItems.map((faq, i) => (
-            <div key={i} style={{ borderBottom: `1px solid ${C.GRAY_200}`, background: C.BG, marginBottom: 0 }}>
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                style={{
-                  width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '20px 24px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: C.FONT,
-                  textAlign: 'left',
-                }}
-              >
-                <span style={{ fontSize: 15, fontWeight: 600, color: C.GRAY_900, paddingRight: 16 }}>{faq.question}</span>
-                <span style={{
-                  flexShrink: 0, transition: 'transform 0.25s',
-                  transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}>
-                  {Icons.chevronDown(C.GRAY_400, 20)}
-                </span>
-              </button>
-              <div style={{
-                maxHeight: openFaq === i ? 300 : 0,
-                overflow: 'hidden',
-                transition: 'max-height 0.3s ease',
-              }}>
-                <div style={{ padding: '0 24px 20px', fontSize: 14, color: C.GRAY_500, lineHeight: 1.7 }}>
-                  {faq.answer}
+          {/* Add-on packs */}
+          <div style={{ maxWidth: 720, margin: '0 auto' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: C.GRAY_900, textAlign: 'center', margin: '0 0 24px', fontFamily: C.FONT }}>Need more? Add extra capacity</h3>
+            <div style={{ display: 'flex', gap: 24 }}>
+              {addOnPacks.map(pack => (
+                <div key={pack.category} style={{ flex: 1, background: C.BG, borderRadius: 12, border: `1px solid ${C.GRAY_200}`, padding: '20px 24px' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900, marginBottom: 14, fontFamily: C.FONT }}>{pack.category}</div>
+                  {pack.items.map(item => (
+                    <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${C.GRAY_100}`, fontSize: 13, fontFamily: C.FONT }}>
+                      <span style={{ color: C.GRAY_700 }}>{item.label}</span>
+                      <span style={{ fontWeight: 600, color: C.GRAY_900 }}>{item.price}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* ═══ FINAL CTA ═══ */}
-      <section style={{ background: C.GRAY_900, padding: '100px 40px' }}>
-        <div id="cta" data-animate style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: 16 }}>
+      {/* ─── FAQ ─── */}
+      <section style={{ padding: '100px 32px' }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
+          <SectionHeading
+            title="Frequently asked questions"
+            subtitle="Everything you need to know about Squarespell quiz funnels."
+          />
+          <div style={{ maxWidth: 720, margin: '0 auto' }}>
+            {faqs.map((faq, i) => (
+              <div key={i} style={{ borderBottom: `1px solid ${C.GRAY_200}` }}>
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '20px 0',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: C.FONT,
+                  }}
+                >
+                  <span style={{ fontSize: 15, fontWeight: 600, color: C.GRAY_900, textAlign: 'left' }}>{faq.q}</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round" style={{ minWidth: 20, transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {openFaq === i && (
+                  <div style={{ paddingBottom: 20, fontSize: 14, color: C.GRAY_500, lineHeight: 1.7, fontFamily: C.FONT }}>{faq.a}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FINAL CTA ─── */}
+      <section style={{ padding: '100px 32px', background: C.GRAY_900 }}>
+        <div ref={addRef} style={{ ...animStyle, maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{ fontSize: 40, fontWeight: 800, color: '#fff', margin: '0 0 16px', lineHeight: 1.15, fontFamily: C.FONT }}>
             Ready to turn visitors into leads?
           </h2>
-          <p style={{ fontSize: 17, color: C.GRAY_400, marginBottom: 40, lineHeight: 1.6 }}>
-            Paste your Squarespace URL below. Your first quiz is ready in under 60 seconds.
+          <p style={{ fontSize: 18, color: C.GRAY_400, margin: '0 0 40px', lineHeight: 1.6, fontFamily: C.FONT }}>
+            Join 2,400+ Squarespace creators already using Squarespell to grow their business with quiz funnels.
           </p>
-          <form onSubmit={handleSubmitUrl} style={{ maxWidth: 520, margin: '0 auto 16px' }}>
-            <div className="hero-input-row" style={{ display: 'flex', gap: 10 }}>
-              <input
-                type="url" placeholder="yoursite.squarespace.com" value={url} onChange={e => setUrl(e.target.value)}
-                style={{
-                  flex: 1, padding: '15px 18px', background: C.GRAY_800, border: `1.5px solid ${C.GRAY_700}`, borderRadius: 10,
-                  color: '#fff', fontSize: 15, outline: 'none', transition: 'border-color 0.2s', fontFamily: C.FONT,
-                }}
-                onFocus={e => e.currentTarget.style.borderColor = C.ACCENT}
-                onBlur={e => e.currentTarget.style.borderColor = C.GRAY_700}
-              />
-              <button type="submit" disabled={loading} style={{
-                padding: '15px 30px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 10,
-                fontWeight: 600, fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
-                whiteSpace: 'nowrap', transition: 'background 0.2s', fontFamily: C.FONT,
-              }}
-                onMouseEnter={e => !loading && (e.currentTarget.style.background = C.ACCENT_HOVER)}
-                onMouseLeave={e => (e.currentTarget.style.background = C.ACCENT)}>
-                {loading ? 'Creating...' : 'Create Quiz'}
-              </button>
-            </div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', maxWidth: 520, margin: '0 auto 20px', gap: 0, background: C.GRAY_800, borderRadius: 12, border: `1px solid ${C.GRAY_700}`, overflow: 'hidden' }}>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="Enter your Squarespace URL..."
+              style={{ flex: 1, padding: '14px 20px', border: 'none', outline: 'none', fontSize: 15, fontFamily: C.FONT, color: '#fff', background: 'transparent' }}
+            />
+            <button type="submit" style={{ padding: '14px 28px', background: C.ACCENT, color: '#fff', border: 'none', fontSize: 15, fontWeight: 600, fontFamily: C.FONT, cursor: 'pointer' }}>
+              Get Started Free
+            </button>
           </form>
-          <p style={{ fontSize: 13, color: C.GRAY_500 }}>14-day free trial · No credit card required</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 24, fontSize: 13, color: C.GRAY_500 }}>
+            <span>No credit card required</span>
+            <span>14-day free trial</span>
+            <span>Cancel anytime</span>
+          </div>
         </div>
       </section>
 
-      {/* ═══ FOOTER ═══ */}
-      <footer style={{ borderTop: `1px solid ${C.GRAY_200}`, padding: '64px 40px 40px', background: C.BG }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 48 }}>
-            {/* Brand */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <Logo size={28} />
-                <span style={{ fontSize: 17, fontWeight: 700, color: C.GRAY_900 }}>Squarespell</span>
+      {/* ─── FOOTER ─── */}
+      <footer style={{ padding: '60px 32px 40px', borderTop: `1px solid ${C.GRAY_200}` }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 40, flexWrap: 'wrap', gap: 40 }}>
+            <div style={{ maxWidth: 280 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 6, background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>Squarespell</span>
               </div>
-              <p style={{ fontSize: 14, color: C.GRAY_500, lineHeight: 1.6, maxWidth: 280 }}>
-                AI-powered quiz funnels built for Squarespace. Generate leads, qualify visitors, and grow your business.
-              </p>
+              <p style={{ fontSize: 13, color: C.GRAY_500, lineHeight: 1.6, fontFamily: C.FONT }}>The quiz funnel builder made for Squarespace. Capture leads, qualify prospects, and grow your business.</p>
             </div>
-            {/* Product */}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.GRAY_900, marginBottom: 16 }}>Product</div>
-              {['Quiz Builder', 'Templates', 'Analytics', 'Integrations', 'Pricing'].map(l => (
-                <div key={l} style={{ marginBottom: 10 }}>
-                  <a href={l === 'Pricing' ? '#pricing' : l === 'Templates' ? '#templates' : '#product'} style={{ textDecoration: 'none', fontSize: 14, color: C.GRAY_500, transition: 'color 0.2s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.GRAY_900}
-                    onMouseLeave={e => e.currentTarget.style.color = C.GRAY_500}>{l}</a>
-                </div>
-              ))}
-            </div>
-            {/* Resources */}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.GRAY_900, marginBottom: 16 }}>Resources</div>
-              {['Blog', 'Help Center', 'API Docs', 'Changelog', 'Status'].map(l => (
-                <div key={l} style={{ marginBottom: 10 }}>
-                  <a href="#" style={{ textDecoration: 'none', fontSize: 14, color: C.GRAY_500, transition: 'color 0.2s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.GRAY_900}
-                    onMouseLeave={e => e.currentTarget.style.color = C.GRAY_500}>{l}</a>
-                </div>
-              ))}
-            </div>
-            {/* Company */}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.GRAY_900, marginBottom: 16 }}>Company</div>
-              {['About', 'Privacy', 'Terms', 'Contact'].map(l => (
-                <div key={l} style={{ marginBottom: 10 }}>
-                  <a href="#" style={{ textDecoration: 'none', fontSize: 14, color: C.GRAY_500, transition: 'color 0.2s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = C.GRAY_900}
-                    onMouseLeave={e => e.currentTarget.style.color = C.GRAY_500}>{l}</a>
-                </div>
-              ))}
-            </div>
+            {[
+              { title: 'Product', links: ['Features', 'Templates', 'Pricing', 'Changelog'] },
+              { title: 'Resources', links: ['Documentation', 'Blog', 'Help Center', 'API'] },
+              { title: 'Company', links: ['About', 'Contact', 'Privacy', 'Terms'] },
+            ].map(col => (
+              <div key={col.title}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, marginBottom: 12, fontFamily: C.FONT }}>{col.title}</div>
+                {col.links.map(link => (
+                  <div key={link} style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8, fontFamily: C.FONT, cursor: 'pointer' }}>{link}</div>
+                ))}
+              </div>
+            ))}
           </div>
-          <div style={{ borderTop: `1px solid ${C.GRAY_200}`, paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <span style={{ fontSize: 13, color: C.GRAY_400 }}>&copy; {new Date().getFullYear()} Squarespell. All rights reserved.</span>
-            <div style={{ display: 'flex', gap: 20 }}>
-              <a href="#" style={{ textDecoration: 'none', fontSize: 13, color: C.GRAY_400 }}>Privacy</a>
-              <a href="#" style={{ textDecoration: 'none', fontSize: 13, color: C.GRAY_400 }}>Terms</a>
+          <div style={{ borderTop: `1px solid ${C.GRAY_200}`, paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, color: C.GRAY_400, fontFamily: C.FONT }}>2025 Squarespell. All rights reserved.</span>
+            <div style={{ display: 'flex', gap: 16 }}>
+              {['Twitter', 'LinkedIn', 'YouTube'].map(s => (
+                <span key={s} style={{ fontSize: 13, color: C.GRAY_400, fontFamily: C.FONT, cursor: 'pointer' }}>{s}</span>
+              ))}
             </div>
           </div>
         </div>
