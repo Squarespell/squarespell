@@ -630,25 +630,88 @@ export default function QuizFunnelPage() {
     {
       name: 'Core',
       price: isYearly ? 9 : 12,
-      period: isYearly ? '/yr' : '/mo',
-      desc: 'For getting started with quiz funnels',
-      features: ['5 quizzes', '1,000 leads/mo', '1,000 emails/mo', 'Basic analytics', 'Email support', 'Squarespace integration'],
+      originalPrice: isYearly ? 12 : null,
+      period: '/mo',
+      billedText: isYearly ? 'Billed $108/year' : 'Billed monthly',
+      savings: isYearly ? 'Save $36/year' : null,
+      desc: 'Build real quiz funnels with branching logic, scoring, and scheduling.',
+      limits: [{ value: '5', label: 'QUIZZES' }, { value: '1,000', label: 'LEADS/MO' }, { value: '1,000', label: 'EMAILS/MO' }],
+      included: [
+        'AI quiz generation from your URL',
+        'Squarespace one-click connect',
+        'Remove Squarespell branding',
+        'Branching logic',
+        'Weighted scoring',
+        'Quiz scheduling',
+        'Standard analytics',
+        'Lead dashboard + CSV export',
+        'Lead & email add-on packs',
+      ],
+      excluded: [
+        'A/B testing',
+        'Email sequences',
+        'Integrations (Zapier, Mailchimp, etc.)',
+        'Advanced analytics',
+        'Custom CSS',
+        'White-label / Custom domain',
+        'Team seats',
+      ],
+      nudge: 'Need A/B testing or integrations? Upgrade to Pro',
       featured: false,
     },
     {
       name: 'Pro',
       price: isYearly ? 16 : 19,
-      period: isYearly ? '/yr' : '/mo',
-      desc: 'For growing businesses that need more',
-      features: ['Unlimited quizzes', '3,000 leads/mo', '3,000 emails/mo', 'Advanced analytics', 'Priority support', 'Custom branding', 'A/B testing', 'Automations'],
+      originalPrice: isYearly ? 19 : null,
+      period: '/mo',
+      billedText: isYearly ? 'Billed $192/year' : 'Billed monthly',
+      savings: isYearly ? 'Save $36/year' : null,
+      desc: 'Full power for serious lead generation - unlimited quizzes, integrations, and A/B testing.',
+      limits: [{ value: 'Unlimited', label: 'QUIZZES' }, { value: '3,000', label: 'LEADS/MO' }, { value: '3,000', label: 'EMAILS/MO' }],
+      included: [
+        'Everything in Core',
+        'A/B testing',
+        'Email sequences',
+        'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
+        'Webhooks',
+        'Advanced analytics',
+        'Per-question drop-off analysis',
+        'Custom CSS',
+        'Priority email support',
+        'Lead & email add-on packs',
+      ],
+      excluded: [
+        'White-label (your brand)',
+        'Custom domain for quizzes',
+        'Team seats',
+        'API access',
+        'Dedicated onboarding call',
+      ],
+      nudge: 'Need white-label or unlimited leads? Upgrade to Business',
       featured: true,
     },
     {
       name: 'Business',
       price: isYearly ? 29 : 35,
-      period: isYearly ? '/yr' : '/mo',
-      desc: 'For teams and high-volume operations',
-      features: ['Unlimited quizzes', 'Unlimited leads', 'Unlimited emails', 'Full analytics suite', 'Dedicated support', 'White label', 'API access', 'Team seats', 'Custom integrations'],
+      originalPrice: isYearly ? 35 : null,
+      period: '/mo',
+      billedText: isYearly ? 'Billed $348/year' : 'Billed monthly',
+      savings: isYearly ? 'Save $72/year' : null,
+      desc: 'Unlimited everything with white-label, custom domains, team seats, and API access.',
+      limits: [{ value: 'Unlimited', label: 'QUIZZES' }, { value: 'Unlimited', label: 'LEADS/MO' }, { value: 'Unlimited', label: 'EMAILS/MO' }],
+      included: [
+        'Everything in Pro',
+        'White-label (your brand on everything)',
+        'Custom domain for quizzes',
+        'Team seats (3 included, $5/seat extra)',
+        'API access',
+        'Priority support (email + chat)',
+        'Dedicated onboarding call',
+        'Unlimited leads & emails',
+        'Unlimited quizzes',
+      ],
+      excluded: [],
+      nudge: null,
       featured: false,
     },
   ]
@@ -738,13 +801,6 @@ export default function QuizFunnelPage() {
             <span>14-day free trial</span>
             <span>Setup in 2 minutes</span>
           </div>
-        </div>
-      </section>
-
-      {/* ─── HERO MOCKUP ─── */}
-      <section style={{ padding: '0 32px 100px' }}>
-        <div ref={addRef} style={{ ...animStyle, maxWidth: 1280, margin: '0 auto' }}>
-          <DashboardMockup />
         </div>
       </section>
 
@@ -947,46 +1003,62 @@ export default function QuizFunnelPage() {
             subtitle="Start free, upgrade when you need to. Every plan includes a 14-day trial."
           />
           {/* Toggle */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginBottom: 48 }}>
-            <span style={{ fontSize: 14, fontWeight: isYearly ? 400 : 600, color: isYearly ? C.GRAY_500 : C.GRAY_900, fontFamily: C.FONT }}>Monthly</span>
-            <div
-              onClick={() => setIsYearly(!isYearly)}
-              style={{ width: 48, height: 26, borderRadius: 13, background: C.ACCENT, position: 'relative', cursor: 'pointer' }}
-            >
-              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: isYearly ? 25 : 3, transition: 'left 0.2s', boxShadow: C.SHADOW_XS }} />
-            </div>
-            <span style={{ fontSize: 14, fontWeight: isYearly ? 600 : 400, color: isYearly ? C.GRAY_900 : C.GRAY_500, fontFamily: C.FONT }}>Yearly</span>
-            {isYearly && <span style={{ padding: '4px 10px', borderRadius: 12, background: C.SUCCESS_LIGHT, color: C.SUCCESS, fontSize: 12, fontWeight: 600, fontFamily: C.FONT }}>Save 20%</span>}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginBottom: 48 }}>
+            <span style={{ fontSize: 14, fontWeight: isYearly ? 400 : 600, color: isYearly ? C.GRAY_500 : C.GRAY_900, fontFamily: C.FONT, padding: '8px 16px', borderRadius: 20, background: !isYearly ? C.GRAY_100 : 'transparent', cursor: 'pointer' }} onClick={() => setIsYearly(false)}>Monthly</span>
+            <span onClick={() => setIsYearly(true)} style={{ fontSize: 14, fontWeight: isYearly ? 600 : 400, color: isYearly ? '#fff' : C.GRAY_500, fontFamily: C.FONT, padding: '8px 16px', borderRadius: 20, background: isYearly ? C.ACCENT : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              Annual {isYearly && <span style={{ padding: '2px 8px', borderRadius: 8, background: 'rgba(255,255,255,0.2)', fontSize: 11, fontWeight: 600 }}>Save up to 25%</span>}
+            </span>
+            {isYearly && <span style={{ fontSize: 13, color: C.ACCENT, fontWeight: 500, fontFamily: C.FONT }}>Save up to $72/year</span>}
           </div>
           {/* Plans */}
-          <div style={{ display: 'flex', gap: 24, maxWidth: 1080, margin: '0 auto 60px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: 24, maxWidth: 1080, margin: '0 auto 60px', alignItems: 'stretch' }}>
             {plans.map(p => (
               <div key={p.name} style={{
                 flex: 1,
                 background: C.BG,
                 borderRadius: 16,
                 border: p.featured ? `2px solid ${C.ACCENT}` : `1px solid ${C.GRAY_200}`,
-                padding: '32px 28px',
+                padding: '32px 28px 28px',
                 position: 'relative',
                 boxShadow: p.featured ? C.SHADOW_LG : C.SHADOW_XS,
+                display: 'flex',
+                flexDirection: 'column' as const,
               }}>
                 {p.featured && (
-                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', padding: '4px 14px', borderRadius: 12, background: C.ACCENT, color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: C.FONT }}>Most popular</div>
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', padding: '4px 14px', borderRadius: 12, background: C.ACCENT, color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: C.FONT, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>MOST POPULAR</div>
                 )}
-                <h3 style={{ fontSize: 20, fontWeight: 700, color: C.GRAY_900, margin: '0 0 4px', fontFamily: C.FONT }}>{p.name}</h3>
-                <p style={{ fontSize: 13, color: C.GRAY_500, margin: '0 0 20px', fontFamily: C.FONT }}>{p.desc}</p>
-                <div style={{ marginBottom: 24 }}>
-                  <span style={{ fontSize: 44, fontWeight: 800, color: C.GRAY_900, fontFamily: C.FONT }}>${p.price}</span>
+                <h3 style={{ fontSize: 22, fontWeight: 700, color: C.GRAY_900, margin: '0 0 6px', fontFamily: C.FONT }}>{p.name}</h3>
+                <p style={{ fontSize: 13, color: C.GRAY_500, margin: '0 0 20px', fontFamily: C.FONT, lineHeight: 1.5 }}>{p.desc}</p>
+                {/* Price */}
+                <div style={{ marginBottom: 4 }}>
+                  {p.originalPrice && <span style={{ fontSize: 14, color: C.GRAY_400, textDecoration: 'line-through', marginRight: 6, fontFamily: C.FONT }}>${p.originalPrice}</span>}
+                  <span style={{ fontSize: 48, fontWeight: 800, color: C.GRAY_900, fontFamily: C.FONT }}>${p.price}</span>
                   <span style={{ fontSize: 15, color: C.GRAY_500, fontFamily: C.FONT }}>{p.period}</span>
                 </div>
+                <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT, marginBottom: 4 }}>{p.billedText}</div>
+                {p.savings && <div style={{ fontSize: 12, color: C.SUCCESS, fontWeight: 500, fontFamily: C.FONT, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.SUCCESS} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  {p.savings}
+                </div>}
+                {!p.savings && <div style={{ height: 16, marginBottom: 16 }} />}
+                {/* Limits row */}
+                <div style={{ display: 'flex', gap: 0, marginBottom: 20, border: `1px solid ${C.GRAY_200}`, borderRadius: 10, overflow: 'hidden' }}>
+                  {p.limits.map((lim, li) => (
+                    <div key={li} style={{ flex: 1, padding: '12px 8px', textAlign: 'center', borderRight: li < 2 ? `1px solid ${C.GRAY_200}` : 'none', background: p.featured ? C.ACCENT_LIGHT : C.GRAY_50 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>{lim.value}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: C.GRAY_500, fontFamily: C.FONT, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{lim.label}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* CTA */}
                 <a href={QUIZ_BUILDER_PATH} style={{
                   display: 'block',
                   textAlign: 'center',
                   padding: '12px 0',
                   borderRadius: 8,
                   background: p.featured ? C.ACCENT : 'transparent',
-                  color: p.featured ? '#fff' : C.ACCENT,
-                  border: p.featured ? 'none' : `1px solid ${C.ACCENT}`,
+                  color: p.featured ? '#fff' : C.GRAY_900,
+                  border: p.featured ? 'none' : `1px solid ${C.GRAY_300}`,
                   fontSize: 14,
                   fontWeight: 600,
                   textDecoration: 'none',
@@ -995,14 +1067,33 @@ export default function QuizFunnelPage() {
                 }}>
                   Start free trial
                 </a>
-                <div style={{ borderTop: `1px solid ${C.GRAY_200}`, paddingTop: 20 }}>
-                  {p.features.map(f => (
-                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, fontSize: 13, color: C.GRAY_700, fontFamily: C.FONT }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.SUCCESS_500} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {/* Included features */}
+                <div style={{ fontSize: 11, fontWeight: 600, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12, fontFamily: C.FONT }}>INCLUDED</div>
+                <div style={{ flex: 1 }}>
+                  {p.included.map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10, fontSize: 13, color: C.GRAY_700, fontFamily: C.FONT }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.SUCCESS_500} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ minWidth: 16, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       {f}
                     </div>
                   ))}
                 </div>
+                {/* Excluded features */}
+                {p.excluded.length > 0 && (
+                  <div style={{ borderTop: `1px solid ${C.GRAY_200}`, paddingTop: 16, marginTop: 12 }}>
+                    {p.excluded.map(f => (
+                      <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8, fontSize: 13, color: C.GRAY_400, fontFamily: C.FONT }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_300} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ minWidth: 14, marginTop: 2 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        {f}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Upgrade nudge */}
+                {p.nudge && (
+                  <div style={{ marginTop: 16, padding: '10px 14px', borderRadius: 8, background: C.ACCENT_LIGHT, border: `1px solid ${C.BRAND_50}`, fontSize: 12, color: C.ACCENT, fontWeight: 500, fontFamily: C.FONT, textAlign: 'center' }}>
+                    {p.nudge} &rarr;
+                  </div>
+                )}
               </div>
             ))}
           </div>
