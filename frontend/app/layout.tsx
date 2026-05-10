@@ -21,14 +21,14 @@ function AuthTokenSync() {
       );
     } else {
       // Grace period: when Clerk rotates the session token, isSignedIn can
-      // briefly flip to false. Do NOT nuke the token immediately — wait 5s
-      // to see if Clerk recovers. If it doesn't, clear it.
+      // briefly flip to false. Do NOT nuke the token immediately — wait 12s
+      // to see if Clerk recovers (matches the useDashboardAuth grace window).
       const timer = setTimeout(() => {
         // Re-check: if still not signed in after the grace period, clear it.
         getToken().then(t => {
           if (!t) setAuthToken(null);
         }).catch(() => setAuthToken(null));
-      }, 5000);
+      }, 12000);
       return () => clearTimeout(timer);
     }
   }, [isLoaded, isSignedIn, getToken]);
