@@ -3,7 +3,7 @@
 /**
  * /tools - Tools hub.
  *
- * Lightweight index page listing all Squarespell tools. For now, only the
+ * Lightweight index page listing all Squarespell Quiz tools. For now, only the
  * AI Quiz Funnel lives here, but this is where future products (templates,
  * plugins, services) will be added.
  *
@@ -41,8 +41,10 @@ export default function ToolsHub() {
 
       <header className="th-nav">
         <Link href="/" className="th-logo">
-          <span className="th-logo-dot" />
-          Squarespell
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#fff"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#fff"/><circle cx="17" cy="18" r="2" fill="#fff"/></svg>
+          </div>
+          Squarespell Quiz
         </Link>
         <nav className="th-nav-links">
           <Link href="/tools">Tools</Link>
@@ -74,7 +76,7 @@ export default function ToolsHub() {
       </section>
 
       <footer className="th-footer">
-        © {new Date().getFullYear()} Squarespell. Not affiliated with Squarespace Inc.
+        © {new Date().getFullYear()} Squarespell Quiz. Not affiliated with Squarespace Inc.
       </footer>
     </div>
   );

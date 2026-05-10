@@ -1,7 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs';
 
 export var metadata = {
-  title: 'Squarespell Admin',
+  title: 'Squarespell Quiz Admin',
   description: 'Owner analytics dashboard',
 };
 

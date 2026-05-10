@@ -1,5 +1,5 @@
 /**
- * Shared color tokens for the Squarespell dashboard theme.
+ * Shared color tokens for the Squarespell Quiz dashboard theme.
  *
  * Untitled UI-inspired clean white/gray palette with teal brand accent.
  * Extracted to its own module so any component can import without
@@ -41,7 +41,7 @@ export var DASHBOARD_COLORS = {
   TEXT_MUTED: '#475467',
   TEXT_SUBTLE: '#667085',
 
-  // Accent (deep teal - Squarespell brand)
+  // Accent (deep teal - Squarespell Quiz brand)
   ACCENT: '#0D7377',
   ACCENT_LIGHT: '#F0FAFB',
   ACCENT_HOVER: '#0B6165',

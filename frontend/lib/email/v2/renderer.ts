@@ -138,7 +138,7 @@ export const SAMPLE_DATA: TemplateData = {
   result_category: 'Minimalist Portfolio',
   result_description: 'A clean, gallery-first layout that puts the work first. Perfect for photographers and designers who want their portfolio to speak for itself.',
   recommendation: 'Start with the Minimalist Portfolio template and customize the gallery grid to match your work.',
-  company_name: 'Squarespell',
+  company_name: 'Squarespell Quiz',
   unsubscribe_link: '#unsubscribe',
   preference_link: '#preferences',
   view_in_browser_link: '#browser',
@@ -146,7 +146,7 @@ export const SAMPLE_DATA: TemplateData = {
   quiz_url: 'https://app.squarespell.com/q/sample',
   date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
   expiry_date: '48 hours',
-  brand_name: 'Squarespell',
+  brand_name: 'Squarespell Quiz',
 };
 
 // ---------------------------------------------------------------------------

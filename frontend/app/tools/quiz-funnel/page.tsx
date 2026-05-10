@@ -7,7 +7,7 @@ import { QUIZ_BUILDER_PATH } from '@/lib/urls'
 import { QUIZ_TEMPLATE_CATALOG, getTemplateThumbnail, getTemplateQuestionCount } from '@/lib/quiz/templates'
 
 /* ================================================================
-   COLOR TOKENS - Squarespell brand (light theme)
+   COLOR TOKENS - Squarespell Quiz brand (light theme)
    ================================================================ */
 const C = {
   BG: '#FFFFFF',
@@ -72,9 +72,9 @@ function MockSidebar({ active }: { active: string }) {
     <div style={{ width: 190, minWidth: 190, borderRight: `1px solid ${C.GRAY_200}`, padding: '14px 0', background: C.BG, display: 'flex', flexDirection: 'column', fontSize: 11, fontFamily: C.FONT }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 14px 16px' }}>
         <div style={{ width: 22, height: 22, borderRadius: 5, background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#fff"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#fff"/><circle cx="17" cy="18" r="2" fill="#fff"/></svg>
         </div>
-        <span style={{ fontWeight: 700, color: C.GRAY_900, fontSize: 12 }}>Squarespell</span>
+        <span style={{ fontWeight: 700, color: C.GRAY_900, fontSize: 12 }}>Squarespell Quiz</span>
       </div>
       {sidebarSections.map(s => (
         <div key={s.label} style={{ marginBottom: 10 }}>
@@ -308,7 +308,7 @@ const PLANS = [
     desc: 'Build real quiz funnels with branching logic, scoring, and scheduling.',
     monthly: 12, yearly: 9, yearlySave: 36,
     limits: { quizzes: '5', leads: '1,000', emails: '1,000' },
-    included: ['AI quiz generation from your URL', 'Squarespace one-click connect', 'Remove Squarespell branding', 'Branching logic', 'Weighted scoring', 'Quiz scheduling', 'Standard analytics', 'Lead dashboard + CSV export'],
+    included: ['AI quiz generation from your URL', 'Squarespace one-click connect', 'Remove Squarespell Quiz branding', 'Branching logic', 'Weighted scoring', 'Quiz scheduling', 'Standard analytics', 'Lead dashboard + CSV export'],
     excluded: ['A/B testing', 'Email sequences', 'Integrations (Zapier, Mailchimp, etc.)', 'Advanced analytics', 'Custom CSS', 'White-label / Custom domain'],
     upgrade: 'Need A/B testing or integrations?',
   },
@@ -339,7 +339,7 @@ const FAQS = [
   { q: 'How does the 14-day free trial work?', a: 'You get full access to all Pro features for 14 days with no credit card required. Build quizzes, capture leads, and test integrations. Pick a plan when you are ready.' },
   { q: 'Can I change plans later?', a: 'Yes, you can upgrade or downgrade at any time. Changes take effect immediately and billing is prorated.' },
   { q: 'What counts as a lead?', a: 'A lead is counted when someone completes your quiz and submits their information. Partial completions and page views never count against your monthly limit.' },
-  { q: 'Does it work with any Squarespace template?', a: 'Yes. Squarespell works with every Squarespace template version (7.0, 7.1, and Fluid). Just paste the embed code or use our one-click connect.' },
+  { q: 'Does it work with any Squarespace template?', a: 'Yes. Squarespell Quiz works with every Squarespace template version (7.0, 7.1, and Fluid). Just paste the embed code or use our one-click connect.' },
   { q: 'What integrations are included with Pro?', a: 'Pro includes Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets, and webhooks. Connect your existing marketing stack with zero setup friction.' },
   { q: 'Can I cancel anytime?', a: 'Absolutely. No long-term contracts. Cancel from your billing page and your plan stays active until the end of the current billing period.' },
 ]
@@ -477,9 +477,9 @@ export default function QuizFunnelLandingPage() {
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <div style={{ width: 28, height: 28, borderRadius: 7, background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#fff"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#fff"/><circle cx="17" cy="18" r="2" fill="#fff"/></svg>
           </div>
-          <span style={{ fontWeight: 700, fontSize: 16, color: C.GRAY_900 }}>Squarespell</span>
+          <span style={{ fontWeight: 700, fontSize: 16, color: C.GRAY_900 }}>Squarespell Quiz</span>
         </Link>
         <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
           {['Features', 'Pricing', 'Templates'].map(item => (
@@ -642,8 +642,8 @@ export default function QuizFunnelLandingPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {[
-              { quote: 'Squarespell transformed how we capture leads on our photography site. The quiz funnels feel native to our Squarespace design and conversions went up 3x.', name: 'Sarah Mitchell', role: 'Photographer, Mitchell Studios' },
-              { quote: 'Setting up a quiz funnel used to take days with other tools. With Squarespell, I had one live in under 10 minutes. The AI generation is incredibly accurate.', name: 'James Rivera', role: 'Fitness Coach, FitPath' },
+              { quote: 'Squarespell Quiz transformed how we capture leads on our photography site. The quiz funnels feel native to our Squarespace design and conversions went up 3x.', name: 'Sarah Mitchell', role: 'Photographer, Mitchell Studios' },
+              { quote: 'Setting up a quiz funnel used to take days with other tools. With Squarespell Quiz, I had one live in under 10 minutes. The AI generation is incredibly accurate.', name: 'James Rivera', role: 'Fitness Coach, FitPath' },
               { quote: 'The email sequences triggered by quiz results are a game changer. Our follow-up is now personalized based on what clients actually need.', name: 'Emily Chen', role: 'Wedding Planner, Bloom Events' },
               { quote: 'We switched from Typeform and saved both money and time. The Squarespace integration is seamless and the analytics are exactly what we needed.', name: 'David Park', role: 'Owner, Park Dental' },
               { quote: 'Our lead quality improved dramatically. Quiz scoring helps us prioritize the right prospects and the segmentation makes our emails way more relevant.', name: 'Lisa Thompson', role: 'Marketing Director, Artisan Co.' },
@@ -679,7 +679,7 @@ export default function QuizFunnelLandingPage() {
           background: C.ACCENT, textAlign: 'center',
         }}>
           <h2 style={{ fontSize: 36, fontWeight: 500, lineHeight: '44px', margin: '0 0 16px', color: '#fff' }}>Ready to turn visitors into leads?</h2>
-          <p style={{ fontSize: 16, lineHeight: '26px', color: 'rgba(255,255,255,0.8)', margin: '0 0 32px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>Join thousands of Squarespace site owners who use Squarespell to build quiz funnels that convert.</p>
+          <p style={{ fontSize: 16, lineHeight: '26px', color: 'rgba(255,255,255,0.8)', margin: '0 0 32px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>Join thousands of Squarespace site owners who use Squarespell Quiz to build quiz funnels that convert.</p>
           <button onClick={() => router.push('/sign-up')} style={{
             padding: '14px 32px', borderRadius: 50, border: 'none',
             background: '#fff', color: C.ACCENT, fontSize: 15, fontWeight: 600,
@@ -870,9 +870,9 @@ export default function QuizFunnelLandingPage() {
           <div style={{ flex: 1.5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <div style={{ width: 28, height: 28, borderRadius: 7, background: C.ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#fff"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#fff"/><circle cx="17" cy="18" r="2" fill="#fff"/></svg>
               </div>
-              <span style={{ fontWeight: 700, fontSize: 16, color: C.GRAY_900 }}>Squarespell</span>
+              <span style={{ fontWeight: 700, fontSize: 16, color: C.GRAY_900 }}>Squarespell Quiz</span>
             </div>
             <p style={{ fontSize: 14, lineHeight: '22px', color: C.GRAY_500, maxWidth: 300, margin: 0 }}>
               The quiz funnel platform built for Squarespace. Capture leads, segment audiences, and automate follow-ups.
@@ -893,7 +893,7 @@ export default function QuizFunnelLandingPage() {
           ))}
         </div>
         <div style={{ maxWidth: L.CONTENT, margin: '40px auto 0', paddingTop: 24, borderTop: `1px solid ${C.GRAY_200}`, display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.GRAY_400 }}>
-          <span>&#169; 2024 Squarespell. All rights reserved.</span>
+          <span>&#169; 2026 Squarespell Quiz. All rights reserved.</span>
           <div style={{ display: 'flex', gap: 20 }}>
             <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
             <span style={{ cursor: 'pointer' }}>Terms of Service</span>

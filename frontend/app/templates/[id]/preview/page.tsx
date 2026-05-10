@@ -296,7 +296,7 @@ export default function TemplatePreviewPage() {
       <footer style={{ padding: '16px 24px', textAlign: 'center', borderTop: '1px solid ' + COLORS.border, background: '#fff' }}>
         <span style={{ fontSize: 12, color: COLORS.muted }}>
           Powered by{' '}
-          <a href="https://squarespell.com" style={{ color: COLORS.accent, textDecoration: 'none', fontWeight: 500 }}>Squarespell</a>
+          <a href="https://squarespell.com" style={{ color: COLORS.accent, textDecoration: 'none', fontWeight: 500 }}>Squarespell Quiz</a>
           {' '}— Quiz funnels for Squarespace
         </span>
       </footer>

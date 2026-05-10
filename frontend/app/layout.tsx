@@ -66,9 +66,9 @@ function Footer() {
           <div style={{width:'280px',flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}>
               <div style={{width:'32px',height:'32px',background:'#0D7377',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
               </div>
-              <span style={{fontSize: '14px',fontWeight:700,color:'#1A1A1A',letterSpacing:'-0.03em'}}>Squarespell</span>
+              <span style={{fontSize: '14px',fontWeight:700,color:'#1A1A1A',letterSpacing:'-0.03em'}}>Squarespell Quiz</span>
             </div>
             <p style={{fontSize:'15px',color:'#6B6B6B',lineHeight:'1.6',marginTop:'12px'}}>AI-powered quiz funnels for Squarespace. Turn visitors into leads in minutes.</p>
           </div>
@@ -97,7 +97,7 @@ function Footer() {
           </div>
         </div>
         <div style={{marginTop:'48px',paddingTop:'24px',borderTop:'1px solid #E4E3E0',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px'}}>
-          <span style={{fontSize:'14px',color:BAR_COLOR}}>&copy; 2025 Squarespell. Powered by Cloudflare.</span>
+          <span style={{fontSize:'14px',color:BAR_COLOR}}>&copy; 2026 Squarespell Quiz. Powered by Cloudflare.</span>
           <div style={{display:'flex',gap:'20px'}}>
             <Link href="/privacy" style={{fontSize:'14px',color:BAR_COLOR,textDecoration:'none',transition:'color .15s'}} {...hover(BAR_COLOR)}>Privacy</Link>
             <Link href="/terms" style={{fontSize:'14px',color:BAR_COLOR,textDecoration:'none',transition:'color .15s'}} {...hover(BAR_COLOR)}>Terms</Link>

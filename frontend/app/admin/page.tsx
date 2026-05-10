@@ -280,7 +280,7 @@ function AdminDashboard() {
           >
             S
           </div>
-          <span style={{ fontSize: 16, fontWeight: 700, color: C.TEXT }}>Squarespell Admin</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: C.TEXT }}>Squarespell Quiz Admin</span>
         </div>
         <div style={{ fontSize: 12, color: C.TEXT_SUBTLE }}>
           Last updated {new Date(data.timestamp).toLocaleString()}
@@ -295,7 +295,7 @@ function AdminDashboard() {
             Business Overview
           </h1>
           <p style={{ fontSize: 14, color: C.TEXT_SUBTLE, margin: 0 }}>
-            Real-time metrics for Squarespell
+            Real-time metrics for Squarespell Quiz
           </p>
         </div>
 

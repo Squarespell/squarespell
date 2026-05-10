@@ -91,7 +91,7 @@ function UnsubscribeContent() {
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}>
         <div style={{ color: '#0D7377', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' as const, marginBottom: '24px', fontWeight: 700 }}>
-          Squarespell
+          Squarespell Quiz
         </div>
 
         {status === 'loading' && (
@@ -109,7 +109,7 @@ function UnsubscribeContent() {
           <>
             <h1 style={{ color: '#1A1A1A', fontSize: '24px', marginBottom: '16px' }}>Email Preferences</h1>
             <p style={{ color: '#6B6B6B', fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
-              Unsubscribe <strong style={{ color: '#1A1A1A' }}>{resolvedEmail}</strong> from all Squarespell emails?
+              Unsubscribe <strong style={{ color: '#1A1A1A' }}>{resolvedEmail}</strong> from all Squarespell Quiz emails?
             </p>
             <button
               onClick={handleUnsubscribe}
@@ -135,7 +135,7 @@ function UnsubscribeContent() {
           <>
             <h1 style={{ color: '#1A1A1A', fontSize: '24px', marginBottom: '16px' }}>Unsubscribed</h1>
             <p style={{ color: '#6B6B6B', fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
-              <strong style={{ color: '#1A1A1A' }}>{resolvedEmail}</strong> has been unsubscribed from all Squarespell emails.
+              <strong style={{ color: '#1A1A1A' }}>{resolvedEmail}</strong> has been unsubscribed from all Squarespell Quiz emails.
             </p>
             <p style={{ color: '#6B6B6B', fontSize: '13px', marginBottom: '24px' }}>
               Changed your mind?

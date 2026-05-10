@@ -31,7 +31,7 @@ type BrandScrape = {
 };
 
 // Defaults used when scrape finds nothing or the user clears a swatch.
-// These mirror the Squarespell teal-on-white house style so the preview
+// These mirror the Squarespell Quiz teal-on-white house style so the preview
 // card always has a valid, readable combination to render.
 const DEFAULT_PRIMARY = '#0D7377';
 const DEFAULT_ACCENT = '#0B6165';
@@ -344,7 +344,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       } else if (resp.status === 422) {
         const errData = await resp.json().catch(() => ({}));
         if (errData.code === 'NOT_SQUARESPACE') {
-          setErrorMsg('This does not look like a Squarespace site. Squarespell is built exclusively for Squarespace - paste a Squarespace site URL to continue.');
+          setErrorMsg('This does not look like a Squarespace site. Squarespell Quiz is built exclusively for Squarespace - paste a Squarespace site URL to continue.');
           setIsSquarespace(false);
           clearTimeout(timer);
           setStage('site');
@@ -432,9 +432,9 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
           <aside className="sq-side">
             <div className="sq-brand">
               <span className="sq-logo" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="currentColor"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="currentColor"/><circle cx="17" cy="18" r="2" fill="currentColor"/></svg>
               </span>
-              <span>Squarespell</span>
+              <span>Squarespell Quiz</span>
             </div>
             {stepIndex === 0 ? (
               <>

@@ -2124,9 +2124,9 @@ export function TryFlowInner({
                             style={{ marginTop: 3, cursor: canRemove ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)', opacity: canRemove ? 1 : 0.4 }}
                           />
                           <label htmlFor="show-branding-toggle" style={{ cursor: canRemove ? 'pointer' : 'default', fontSize: 13, userSelect: 'none' }}>
-                            <div style={{ fontWeight: 600, marginBottom: 4 }}>Show Squarespell branding</div>
+                            <div style={{ fontWeight: 600, marginBottom: 4 }}>Show Squarespell Quiz branding</div>
                             <div style={{ fontSize: 12, opacity: 0.6, lineHeight: 1.4 }}>
-                              Display &quot;Powered by Squarespell&quot; badge at bottom of quiz
+                              Display &quot;Powered by Squarespell Quiz&quot; badge at bottom of quiz
                             </div>
                             {!canRemove && (
                               <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 6, fontWeight: 600, opacity: 0.9 }}>

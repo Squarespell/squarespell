@@ -24,7 +24,7 @@ export default function GlobalError({
   useEffect(() => {
     // Best-effort console log for Sentry / dev tools.
     if (typeof console !== 'undefined') {
-      console.error('[Squarespell] Unhandled error', error);
+      console.error('[Squarespell Quiz] Unhandled error', error);
     }
   }, [error]);
 

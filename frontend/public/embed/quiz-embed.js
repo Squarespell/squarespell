@@ -366,7 +366,7 @@
     // Log version on first init
     var loggedVersion = window.__squarespell_version_logged;
     if (!loggedVersion) {
-      console.log('[Squarespell] Embed v' + EMBED_VERSION + ' loaded');
+      console.log('[Squarespell Quiz] Embed v' + EMBED_VERSION + ' loaded');
       window.__squarespell_version_logged = true;
     }
 
@@ -374,7 +374,7 @@
     var elements = document.querySelectorAll('[data-squarespell-quiz], script[data-quiz]');
 
     if (elements.length === 0 && !window.__squarespell_no_container_warned) {
-      console.warn('[Squarespell] No quiz containers found. Make sure your embed code is in a Code Block (not Code Injection). Expected: <div data-squarespell-quiz="YOUR_SLUG"></div>');
+      console.warn('[Squarespell Quiz] No quiz containers found. Make sure your embed code is in a Code Block (not Code Injection). Expected: <div data-squarespell-quiz="YOUR_SLUG"></div>');
       window.__squarespell_no_container_warned = true;
     }
 
@@ -464,7 +464,7 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.latest && d.latest !== EMBED_VERSION) {
-            console.warn('[Squarespell] A newer embed version (' + d.latest + ') is available. Update your embed code for the best experience.');
+            console.warn('[Squarespell Quiz] A newer embed version (' + d.latest + ') is available. Update your embed code for the best experience.');
           }
         })
         .catch(function() {}); // Silent fail

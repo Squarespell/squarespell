@@ -1,5 +1,5 @@
 /*!
- * Squarespell Hook Widget v1.2.0
+ * Squarespell Quiz Hook Widget v1.2.0
  *
  * This is the compact "URL + Generate" input from prototype-v4 Stage 1,
  * packaged as a drop-in script tag that can be embedded anywhere

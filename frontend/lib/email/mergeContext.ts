@@ -56,10 +56,10 @@ export const SAMPLE_CONTEXT: MergeContext = {
     question_number: '3',
     question_slug: 'Book more paid photography clients',
   },
-  brand_name: 'Squarespell',
+  brand_name: 'Squarespell Quiz',
   cta_url: 'https://app.squarespell.com/q/sample?utm_source=email&utm_medium=post_quiz',
   footer_unsubscribe: '<a href="#" style="color:inherit;text-decoration:underline;">Unsubscribe</a>',
-  footer_address: 'Squarespell, 651 N Broad St, Suite 201, Middletown, DE 19709',
+  footer_address: 'Squarespell Quiz, 651 N Broad St, Suite 201, Middletown, DE 19709',
   footer_preference: '<a href="#" style="color:inherit;text-decoration:underline;">Email preferences</a>',
 };
 

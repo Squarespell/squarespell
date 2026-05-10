@@ -23,7 +23,7 @@ const PLANS = [
     included: [
       'AI quiz generation from your URL',
       'Squarespace one-click connect',
-      'Remove Squarespell branding',
+      'Remove Squarespell Quiz branding',
       'Branching logic',
       'Weighted scoring',
       'Quiz scheduling',
@@ -134,7 +134,7 @@ const MATRIX = [
     category: 'Branding & Design',
     rows: [
       { label: 'Custom brand colors', core: true, pro: true, business: true },
-      { label: 'Remove Squarespell branding', core: true, pro: true, business: true },
+      { label: 'Remove Squarespell Quiz branding', core: true, pro: true, business: true },
       { label: 'Custom CSS', core: false, pro: true, business: true },
       { label: 'White-label (your brand)', core: false, pro: false, business: true },
       { label: 'Custom domain for quizzes', core: false, pro: false, business: true },
@@ -194,7 +194,7 @@ const EMAIL_PACKS = [
 const FAQS = [
   {
     q: 'Do I need a Squarespace subscription?',
-    a: 'Yes, Squarespell works with any active Squarespace plan. You connect your site in one click through your dashboard. No code required.',
+    a: 'Yes, Squarespell Quiz works with any active Squarespace plan. You connect your site in one click through your dashboard. No code required.',
   },
   {
     q: 'What happens when my 14-day trial ends?',
@@ -213,8 +213,8 @@ const FAQS = [
     a: 'Add-on packs let you buy extra capacity on any paid plan. Lead packs start at $3/mo for 500 extra leads. Email packs start at $3/mo for 1,000 extra emails. No need to upgrade.',
   },
   {
-    q: 'How is Squarespell different from other quiz tools?',
-    a: 'Other quiz tools charge $27–75/mo for entry plans with fewer leads. Squarespell starts at $9/mo annual with 1,000 leads, branching logic, and native Squarespace integration. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
+    q: 'How is Squarespell Quiz different from other quiz tools?',
+    a: 'Other quiz tools charge $27–75/mo for entry plans with fewer leads. Squarespell Quiz starts at $9/mo annual with 1,000 leads, branching logic, and native Squarespace integration. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
   },
   {
     q: 'I run an agency. Can I manage multiple client sites?',
@@ -631,13 +631,13 @@ function PricingInner() {
           {/* ═══ COMPETITOR COMPARISON ═══ */}
           <div className="comp-section">
             <h2 className="sec-title">How we compare</h2>
-            <p className="sec-sub">Annual pricing. Squarespell gives you more for a fraction of the price.</p>
+            <p className="sec-sub">Annual pricing. Squarespell Quiz gives you more for a fraction of the price.</p>
             <div className="comp-card">
               <table className="comp-tbl">
                 <thead>
                   <tr>
                     <th>What you get</th>
-                    <th className="hl">Squarespell</th>
+                    <th className="hl">Squarespell Quiz</th>
                     <th>Interact</th>
                     <th>ScoreApp</th>
                     <th>Opinion Stage</th>

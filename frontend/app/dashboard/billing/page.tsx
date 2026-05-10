@@ -78,7 +78,7 @@ const PLAN_CATALOG: Array<{
     included: [
       'AI quiz generation from your URL',
       'Squarespace one-click connect',
-      'Remove Squarespell branding',
+      'Remove Squarespell Quiz branding',
       'Branching logic',
       'Weighted scoring',
       'Quiz scheduling',
@@ -137,7 +137,7 @@ const PLAN_CATALOG: Array<{
     included: [
       'AI quiz generation from your URL',
       'Squarespace one-click connect',
-      'Remove Squarespell branding',
+      'Remove Squarespell Quiz branding',
       'Branching logic',
       'Weighted scoring',
       'Quiz scheduling',
@@ -616,7 +616,7 @@ export default function BillingPage() {
 
   return (
     <DashboardShell title="Billing & plan">
-      <PageHeader title="Billing & plan" subtitle="Manage your Squarespell subscription" />
+      <PageHeader title="Billing & plan" subtitle="Manage your Squarespell Quiz subscription" />
 
       <div style={{ display: 'grid', gap: 20 }}>
         <CurrentPlanBadge plan={plan} displayName={displayPlanName} />

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Email Preferences - Squarespell',
+  title: 'Email Preferences - Squarespell Quiz',
   robots: 'noindex, nofollow',
 };
 

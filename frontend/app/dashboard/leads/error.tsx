@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 
 export default function LeadsError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(function() { console.error('[Squarespell] Leads error', error); }, [error]);
+  useEffect(function() { console.error('[Squarespell Quiz] Leads error', error); }, [error]);
 
   return (
     <DashboardShell title="Error">

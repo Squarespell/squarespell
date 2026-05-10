@@ -387,7 +387,7 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
 
             {quiz.settings?.show_branding !== false && (
               <div style={{ textAlign: 'center', fontSize: 12, opacity: 0.5, marginTop: 28 }}>
-                Powered by Squarespell
+                Powered by Squarespell Quiz
               </div>
             )}
           </div>
@@ -455,7 +455,7 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
 
             {quiz.settings?.show_branding !== false && (
               <div style={{ textAlign: 'center', fontSize: 12, opacity: 0.5, marginBottom: 16 }}>
-                Powered by Squarespell
+                Powered by Squarespell Quiz
               </div>
             )}
 
@@ -729,7 +729,7 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
 
             {quiz.settings?.show_branding !== false && (
               <div style={{ textAlign: 'center', fontSize: 12, opacity: 0.5, marginTop: 24 }}>
-                Powered by Squarespell
+                Powered by Squarespell Quiz
               </div>
             )}
           </div>
@@ -837,7 +837,7 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
 
           {quiz.settings?.show_branding !== false && (
             <div style={{ textAlign: 'center', fontSize: 12, opacity: 0.5, marginTop: 24 }}>
-              Powered by Squarespell
+              Powered by Squarespell Quiz
             </div>
           )}
         </div>

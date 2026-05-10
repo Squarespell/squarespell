@@ -126,14 +126,14 @@ function SignInContent() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '32px' }}>
           <div style={{ width: '36px', height: '36px', background: ACC, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
           </div>
-          <span style={{ fontSize: '22px', fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.04em' }}>Squarespell</span>
+          <span style={{ fontSize: '22px', fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.04em' }}>Squarespell Quiz</span>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.04em', margin: '0 0 8px', lineHeight: 1.1 }}>Welcome back</h1>
-          <p style={{ fontSize: '15px', color: '#6B6B6B', margin: 0 }}>Sign in to your Squarespell dashboard</p>
+          <p style={{ fontSize: '15px', color: '#6B6B6B', margin: 0 }}>Sign in to your Squarespell Quiz dashboard</p>
         </div>
 
         <style>{`@keyframes spin{to{transform:rotate(360deg)}} input:focus{border-color:#0B6165!important}`}</style>

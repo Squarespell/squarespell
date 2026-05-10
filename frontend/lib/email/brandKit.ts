@@ -57,7 +57,7 @@ export interface BrandKit {
 }
 
 // Sensible defaults before a customer has completed brand import. Uses the
-// Squarespell lime-accent dark palette so previews are legible immediately.
+// Squarespell Quiz lime-accent dark palette so previews are legible immediately.
 export const DEFAULT_BRAND_KIT: BrandKit = {
   id: 'default',
   user_id: '',
@@ -77,7 +77,7 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
   bodyWeight: 400,
   toneWords: ['direct', 'warm', 'practical'],
   businessName: 'Your business',
-  businessAddress: 'Squarespell, 651 N Broad St, Suite 201, Middletown, DE 19709',
+  businessAddress: 'Squarespell Quiz, 651 N Broad St, Suite 201, Middletown, DE 19709',
   supportEmail: 'hello@example.com',
   social: {},
   ctaButtonRadius: 8,

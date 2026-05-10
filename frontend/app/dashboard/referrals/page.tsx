@@ -276,7 +276,7 @@ export default function ReferralsPage() {
             Referrals &amp; Rewards
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT }}>
-            Earn rewards by inviting others to Squarespell
+            Earn rewards by inviting others to Squarespell Quiz
           </p>
         </div>
 

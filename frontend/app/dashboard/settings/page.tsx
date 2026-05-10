@@ -368,7 +368,7 @@ export default function SettingsPage() {
                   Need help?
                 </div>
                 <div style={{ fontSize: 13, color: C.TEXT_MUTED, fontFamily: C.FONT, marginTop: 2 }}>
-                  We're here to help you get the most out of Squarespell.
+                  We're here to help you get the most out of Squarespell Quiz.
                 </div>
               </div>
             </div>

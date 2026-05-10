@@ -30,12 +30,12 @@ export async function generateMetadata({
   const quiz = await fetchQuizMeta(params.slug);
 
   const title = quiz?.title
-    ? `${quiz.title} - Squarespell`
-    : 'Quiz - Squarespell';
+    ? `${quiz.title} - Squarespell Quiz`
+    : 'Quiz - Squarespell Quiz';
   const description =
-    quiz?.description || 'Take this interactive quiz powered by Squarespell.';
+    quiz?.description || 'Take this interactive quiz powered by Squarespell Quiz.';
   const url = `${APP_URL}/quiz/${params.slug}`;
-  const siteName = quiz?.branding?.site_name || 'Squarespell';
+  const siteName = quiz?.branding?.site_name || 'Squarespell Quiz';
 
   return {
     title,

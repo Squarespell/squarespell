@@ -7,7 +7,7 @@
  * - Brand name (shown in footer)
  * - Logo URL
  * - Primary brand color (hex)
- * - Toggle to hide "Powered by Squarespell" footer
+ * - Toggle to hide "Powered by Squarespell Quiz" footer
  *
  * Non-Agency users see an upgrade prompt.
  */
@@ -305,10 +305,10 @@ export default function WhiteLabelSettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 4 }}>
-                Hide "Powered by Squarespell"
+                Hide "Powered by Squarespell Quiz"
               </div>
               <div style={{ fontSize: 12.5, color: C.TEXT_MUTED }}>
-                Remove the Squarespell branding from quiz footer
+                Remove the Squarespell Quiz branding from quiz footer
               </div>
             </div>
             <button
@@ -356,7 +356,7 @@ export default function WhiteLabelSettingsPage() {
             </div>
             {!settings.hide_powered_by && (
               <div style={{ fontSize: 11, opacity: 0.8 }}>
-                Powered by Squarespell
+                Powered by Squarespell Quiz
               </div>
             )}
           </div>

@@ -1,10 +1,10 @@
 /**
- * Central URL configuration for Squarespell.
+ * Central URL configuration for Squarespell Quiz.
  *
  * Two production domains - both permanent, both hardcoded on purpose:
  *
  *   MARKETING_URL  - squarespell.com           (Squarespace marketing site)
- *   APP_URL        - app.squarespell.com       (the entire Squarespell app)
+ *   APP_URL        - app.squarespell.com       (the entire Squarespell Quiz app)
  *
  * Everything user-facing in the product lives under APP_URL on a single
  * subdomain so visitors never see the URL bar bounce between subdomains.
@@ -12,7 +12,7 @@
  *
  * URL structure under APP_URL:
  *
- *   /tools                           tools hub (lists all Squarespell tools)
+ *   /tools                           tools hub (lists all Squarespell Quiz tools)
  *   /tools/quiz-funnel               marketing landing page for the quiz tool
  *   /tools/quiz-funnel/build         public no-login quiz builder (Stages 1-6)
  *   /q/:slug                         public published quiz (lead capture)

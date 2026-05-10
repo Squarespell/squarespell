@@ -29,7 +29,7 @@ interface TourStep {
 var TOUR_STEPS: TourStep[] = [
   {
     target: '[data-tour="dashboard"]',
-    title: 'Welcome to Squarespell!',
+    title: 'Welcome to Squarespell Quiz!',
     description: 'This is your dashboard — a quick snapshot of quiz performance, recent leads, and recommendations to grow faster.',
     position: 'right',
   },

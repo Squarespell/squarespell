@@ -365,7 +365,7 @@ export function PublishModal({
             <CopyRow label="Shareable URL" value={link} />
             <p style={{ margin: 0, fontSize: 12.5, color: C.TEXT_MUTED, lineHeight: 1.55 }}>
               Use this URL in email campaigns, social posts, or any ad destination. It opens the
-              mobile-optimised quiz page on your branded Squarespell subdomain.
+              mobile-optimised quiz page on your branded Squarespell Quiz subdomain.
             </p>
           </>
         )}
@@ -462,8 +462,8 @@ export function PublishModal({
 
 var UPGRADE_COPY: Record<string, { title: string; desc: string; icon: string }> = {
   removeBranding: {
-    title: 'Remove Squarespell branding',
-    desc: 'Show your own brand on every quiz. Upgrade to remove the "Powered by Squarespell" badge.',
+    title: 'Remove Squarespell Quiz branding',
+    desc: 'Show your own brand on every quiz. Upgrade to remove the "Powered by Squarespell Quiz" badge.',
     icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
   },
   abTesting: {

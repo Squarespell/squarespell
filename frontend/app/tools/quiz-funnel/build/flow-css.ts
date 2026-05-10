@@ -1,5 +1,5 @@
 /**
- * Design tokens + component CSS for the Squarespell funnel.
+ * Design tokens + component CSS for the Squarespell Quiz funnel.
  * Source of truth: /sessions/upbeat-jolly-wozniak/mnt/outputs/prototype-v4.html
  * If you change tokens, update prototype-v4.html FIRST, then re-extract.
  *

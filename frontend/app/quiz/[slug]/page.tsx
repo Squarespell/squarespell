@@ -1337,7 +1337,7 @@ export default function QuizPage() {
           {showBranding && (
             <div style={{ textAlign: 'center', marginTop: 22, fontSize: 11, opacity: 0.45 }}>
               <a href="https://squarespell.com" target="_top" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                Powered by Squarespell
+                Powered by Squarespell Quiz
               </a>
             </div>
           )}

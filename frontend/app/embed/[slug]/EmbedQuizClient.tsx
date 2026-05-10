@@ -1408,7 +1408,7 @@ export default function EmbedQuizClient({
           {showBranding && (
             <div className="sq-brand-foot">
               <a href="https://squarespell.com" target="_top" rel="noopener noreferrer">
-                Powered by Squarespell
+                Powered by Squarespell Quiz
               </a>
             </div>
           )}

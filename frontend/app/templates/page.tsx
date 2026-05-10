@@ -97,11 +97,10 @@ export default function TemplatesGalleryPage() {
         borderBottom: '1px solid ' + COLORS.border, background: '#fff', position: 'sticky', top: 0, zIndex: 50,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill={COLORS.accent} />
-            <path d="M7 8h10M7 12h6M7 16h8" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span style={{ fontSize: 15, fontWeight: 700, color: COLORS.text }}>Squarespell</span>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: COLORS.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#fff"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#fff"/><circle cx="17" cy="18" r="2" fill="#fff"/></svg>
+          </div>
+          <span style={{ fontSize: 15, fontWeight: 700, color: COLORS.text }}>Squarespell Quiz</span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, textDecoration: 'none', padding: '8px 12px' }}>

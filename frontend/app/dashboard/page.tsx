@@ -1500,7 +1500,7 @@ function OverviewInner() {
           label="Active quizzes"
           value={<>{analytics.active_quizzes} <span style={{ fontSize: 18, fontWeight: 500, color: C.GRAY_400 }}>/ {analytics.quiz_limit}</span></>}
           sub={analytics.quiz_limit > 0 ? Math.round((analytics.active_quizzes / analytics.quiz_limit) * 100) + '% of limit used' : undefined}
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>}
+          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="currentColor"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="currentColor"/><circle cx="17" cy="18" r="2" fill="currentColor"/></svg>}
         />
       </div>
 

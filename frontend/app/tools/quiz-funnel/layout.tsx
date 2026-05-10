@@ -5,7 +5,7 @@ var PATH = '/tools/quiz-funnel';
 var FULL = SITE + PATH;
 
 export var metadata: Metadata = {
-  title: 'AI Quiz Funnels for Squarespace — Capture 3× More Leads | Squarespell',
+  title: 'AI Quiz Funnels for Squarespace — Capture 3× More Leads | Squarespell Quiz',
   description:
     'Build AI-powered quiz funnels for your Squarespace site in under 2 minutes. Segment visitors, capture emails, and convert 3× more leads with personalized result pages. Free plan available.',
   keywords: [
@@ -34,14 +34,14 @@ export var metadata: Metadata = {
     title: 'AI Quiz Funnels for Squarespace — Capture 3× More Leads',
     description:
       'Build AI-powered quiz funnels for your Squarespace site in under 2 minutes. Segment visitors, capture emails, and convert 3× more leads.',
-    siteName: 'Squarespell',
+    siteName: 'Squarespell Quiz',
     locale: 'en_US',
     images: [
       {
         url: SITE + '/og-quiz-funnel.png',
         width: 1200,
         height: 630,
-        alt: 'Squarespell AI Quiz Funnel Builder — create quizzes that capture leads on Squarespace',
+        alt: 'Squarespell Quiz AI Quiz Funnel Builder — create quizzes that capture leads on Squarespace',
       },
     ],
   },

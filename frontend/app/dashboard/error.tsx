@@ -18,7 +18,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(function() {
-    console.error('[Squarespell] Dashboard error', error);
+    console.error('[Squarespell Quiz] Dashboard error', error);
   }, [error]);
 
   return (

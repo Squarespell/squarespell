@@ -156,8 +156,13 @@ var icons = {
     </svg>
   ),
   logo: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="4" r="2" fill="#FFFFFF"/>
+      <line x1="12" y1="6" x2="12" y2="11"/>
+      <line x1="12" y1="11" x2="7" y2="16"/>
+      <line x1="12" y1="11" x2="17" y2="16"/>
+      <circle cx="7" cy="18" r="2" fill="#FFFFFF"/>
+      <circle cx="17" cy="18" r="2" fill="#FFFFFF"/>
     </svg>
   ),
   referrals: (
@@ -525,7 +530,7 @@ export function DashboardShell({
             {icons.logo}
           </div>
           <span style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, letterSpacing: '-0.02em' }}>
-            Squarespell
+            Squarespell Quiz
           </span>
         </Link>
       </div>
