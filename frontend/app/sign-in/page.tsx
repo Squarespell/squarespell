@@ -1,6 +1,6 @@
 'use client'
 import { useSignIn, useSignUp, useAuth } from '@clerk/nextjs'
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 const ACC = '#0D7377'
@@ -22,6 +22,11 @@ function SignInContent() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [appleLoading, setAppleLoading] = useState(false)
 
+  // Keep a ref to the latest signIn object so handlers can wait for it
+  // without being re-created on every Clerk state change.
+  const signInRef = useRef(signIn)
+  useEffect(() => { signInRef.current = signIn }, [signIn])
+
   // Preserve claim token through to dashboard after sign-in
   const destUrl = fromTry
     ? `/dashboard?new=true${claimParam ? `&claim=${claimParam}` : ''}`
@@ -33,11 +38,17 @@ function SignInContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isLoaded) return
+    if (loading) return
     setLoading(true)
     setError('')
+    let waited = 0
+    while (!signInRef.current && waited < 3000) {
+      await new Promise(r => setTimeout(r, 50))
+      waited += 50
+    }
+    if (!signInRef.current) { setLoading(false); return }
     try {
-      const result = await signIn.create({ identifier: email, password })
+      const result = await signInRef.current.create({ identifier: email, password })
       if (result.status === 'complete') {
         window.location.href = destUrl
       }
@@ -49,10 +60,18 @@ function SignInContent() {
   }
 
   const handleGoogle = useCallback(async () => {
-    if (!isLoaded || googleLoading) return
+    if (googleLoading) return
+    // Show loading spinner immediately — don't wait for the user to click twice
     setGoogleLoading(true)
+    // If Clerk hasn't hydrated yet, spin-wait up to 3 s (it usually takes <500 ms)
+    let waited = 0
+    while (!signInRef.current && waited < 3000) {
+      await new Promise(r => setTimeout(r, 50))
+      waited += 50
+    }
+    if (!signInRef.current) { setGoogleLoading(false); return }
     try {
-      await signIn.authenticateWithRedirect({
+      await signInRef.current.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: window.location.origin + '/sso-callback',
         redirectUrlComplete: window.location.origin + destUrl,
@@ -60,13 +79,19 @@ function SignInContent() {
     } catch {
       setGoogleLoading(false)
     }
-  }, [isLoaded, signIn, googleLoading, destUrl])
+  }, [googleLoading, destUrl])
 
   const handleApple = useCallback(async () => {
-    if (!isLoaded || appleLoading) return
+    if (appleLoading) return
     setAppleLoading(true)
+    let waited = 0
+    while (!signInRef.current && waited < 3000) {
+      await new Promise(r => setTimeout(r, 50))
+      waited += 50
+    }
+    if (!signInRef.current) { setAppleLoading(false); return }
     try {
-      await signIn.authenticateWithRedirect({
+      await signInRef.current.authenticateWithRedirect({
         strategy: 'oauth_apple',
         redirectUrl: window.location.origin + '/sso-callback',
         redirectUrlComplete: window.location.origin + destUrl,
@@ -74,7 +99,7 @@ function SignInContent() {
     } catch {
       setAppleLoading(false)
     }
-  }, [isLoaded, signIn, appleLoading, destUrl])
+  }, [appleLoading, destUrl])
 
   if (isSignedIn) return (
     <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
