@@ -369,24 +369,35 @@ function PerformanceChart({
     return chartH - 20 - ((val / maxVal) * (chartH - 40));
   }
 
-  var viewsPath = '';
-  var areaPath = '';
-  var leadsPath = '';
-  for (var pi = 0; pi < data.length; pi++) {
-    var x = padL + pi * stepX;
-    var vy = yPos(data[pi].views);
-    var ly = yPos(data[pi].leads);
-    if (pi === 0) {
-      viewsPath += 'M' + x + ' ' + vy;
-      areaPath += 'M' + x + ' ' + vy;
-      leadsPath += 'M' + x + ' ' + ly;
-    } else {
-      viewsPath += ' L' + x + ' ' + vy;
-      areaPath += ' L' + x + ' ' + vy;
-      leadsPath += ' L' + x + ' ' + ly;
+  // Build smooth cubic-bezier path (Catmull-Rom → bezier, tension 0.35)
+  function smoothD(pts: { x: number; y: number }[]): string {
+    if (pts.length === 0) return '';
+    if (pts.length === 1) return 'M' + pts[0].x + ' ' + pts[0].y;
+    var t = 0.35;
+    var d = 'M' + pts[0].x + ' ' + pts[0].y;
+    for (var si = 0; si < pts.length - 1; si++) {
+      var p0 = pts[Math.max(si - 1, 0)];
+      var p1 = pts[si];
+      var p2 = pts[si + 1];
+      var p3 = pts[Math.min(si + 2, pts.length - 1)];
+      var cp1x = p1.x + (p2.x - p0.x) * t;
+      var cp1y = p1.y + (p2.y - p0.y) * t;
+      var cp2x = p2.x - (p3.x - p1.x) * t;
+      var cp2y = p2.y - (p3.y - p1.y) * t;
+      d += ' C' + cp1x.toFixed(2) + ' ' + cp1y.toFixed(2) + ' ' + cp2x.toFixed(2) + ' ' + cp2y.toFixed(2) + ' ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2);
     }
+    return d;
   }
-  areaPath += ' L' + (padL + (data.length - 1) * stepX) + ' ' + chartH + ' L' + padL + ' ' + chartH + ' Z';
+
+  var viewsPts = data.map(function(pt, pi) { return { x: padL + pi * stepX, y: yPos(pt.views) }; });
+  var leadsPts = data.map(function(pt, pi) { return { x: padL + pi * stepX, y: yPos(pt.leads) }; });
+
+  var viewsPath = smoothD(viewsPts);
+  var leadsPath = smoothD(leadsPts);
+
+  // Area path: follow the smooth views curve then close back along the bottom
+  var lastX = padL + (data.length - 1) * stepX;
+  var areaPath = viewsPath + ' L' + lastX + ' ' + chartH + ' L' + padL + ' ' + chartH + ' Z';
 
   var yLabels = [0, 0.25, 0.5, 0.75, 1].map(function(p) {
     var val = Math.round(maxVal * p);
@@ -428,19 +439,20 @@ function PerformanceChart({
             </linearGradient>
           </defs>
           <path d={areaPath} fill="url(#viewsGrad)" />
+          {/* Leads line (dashed) — drawn first so views line sits on top */}
+          <path d={leadsPath} fill="none" stroke={C.GRAY_300} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5 5" />
           {/* Views line */}
           <path d={viewsPath} fill="none" stroke={C.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          {/* Leads line (dashed) */}
-          <path d={leadsPath} fill="none" stroke={C.GRAY_300} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 4" />
-          {/* Data points */}
+          {/* Data points — all visible, last point larger */}
           {data.map(function(pt, di) {
             var cx = padL + di * stepX;
+            var isLast = di === data.length - 1;
             return (
               <g key={di}>
-                <circle cx={cx} cy={yPos(pt.views)} r={di === data.length - 1 ? 5 : 4} fill={C.ACCENT} stroke="#fff" strokeWidth="2" />
-                {di === data.length - 1 && (
-                  <circle cx={cx} cy={yPos(pt.leads)} r={4} fill={C.GRAY_300} stroke="#fff" strokeWidth="2" />
-                )}
+                {/* Views dot */}
+                <circle cx={cx} cy={yPos(pt.views)} r={isLast ? 5.5 : 3.5} fill={C.ACCENT} stroke="#fff" strokeWidth={isLast ? 2.5 : 2} />
+                {/* Leads dot */}
+                <circle cx={cx} cy={yPos(pt.leads)} r={isLast ? 4.5 : 3} fill={C.GRAY_400} stroke="#fff" strokeWidth={isLast ? 2 : 1.5} />
               </g>
             );
           })}
