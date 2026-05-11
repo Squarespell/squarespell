@@ -446,7 +446,7 @@ function PerformanceChart({
           {/* Data points — all visible, last point larger */}
           {data.map(function(pt, di) {
             var cx = padL + di * stepX;
-            var isLast = di === data.length - 1;
+            var isLast = di === 0;
             return (
               <g key={di}>
                 {/* Views dot */}
@@ -1357,7 +1357,7 @@ function OverviewInner() {
         } catch {}
       }
 
-      var sortedDates = Object.keys(allDates).sort();
+      var sortedDates = Object.keys(allDates).sort().reverse();
       var points: ChartPoint[] = sortedDates.map(function(d) {
         var parts = d.split('-');
         var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
