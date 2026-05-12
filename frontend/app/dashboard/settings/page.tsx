@@ -71,7 +71,7 @@ function BellIcon() {
 /* ── Integrations icon ── */
 function IntegrationsIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="2" width="8" height="8" rx="2" />
       <rect x="14" y="2" width="8" height="8" rx="2" />
       <rect x="2" y="14" width="8" height="8" rx="2" />

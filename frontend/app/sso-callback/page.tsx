@@ -2,7 +2,7 @@
 import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 
-const ACC = '#0D7377'
+const ACC = '#0f7377'
 
 export default function SSOCallback() {
   const [elapsed, setElapsed] = useState(0)
@@ -13,7 +13,7 @@ export default function SSOCallback() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Poppins", system-ui, sans-serif' }}>
       <AuthenticateWithRedirectCallback
         afterSignInUrl="/dashboard"
         afterSignUpUrl="/dashboard"

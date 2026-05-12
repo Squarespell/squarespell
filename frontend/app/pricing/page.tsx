@@ -142,7 +142,7 @@ const FAQS = [
 
 function CheckIcon({ color }: { color?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color || '#0D7377'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color || '#0f7377'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -212,10 +212,10 @@ function PricingInner() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         html { font-size: 16px; }
-        body { font-family: 'DM Sans', system-ui, sans-serif; background: #F7F7F5; color: #1A1A1A; }
+        body { font-family: 'Poppins', system-ui, sans-serif; background: #F7F7F5; color: #1A1A1A; }
         button { cursor: pointer; font-family: inherit; }
         :root {
-          --acc: #0D7377; --acc-dark: #0B6165; --acc-bg: rgba(13,115,119,0.06);
+          --acc: #0f7377; --acc-dark: #0B6165; --acc-bg: rgba(13,115,119,0.06);
           --t1: #1A1A1A; --t2: rgba(26,26,26,0.85); --t3: rgba(26,26,26,0.55); --t4: rgba(26,26,26,0.35);
           --card: #FFFFFF; --border: #E4E3E0; --bg: #F7F7F5;
           --green: #059669; --green-bg: rgba(5,150,105,0.08);
@@ -468,7 +468,7 @@ function PricingInner() {
                     {plan.included.map(function (f, i) {
                       return (
                         <div key={i} className="feat-item">
-                          <span className="feat-icon"><CheckIcon color={plan.featured ? '#0D7377' : '#059669'} /></span>
+                          <span className="feat-icon"><CheckIcon color={plan.featured ? '#0f7377' : '#059669'} /></span>
                           <span className="feat-text">{f}</span>
                         </div>
                       );
@@ -599,7 +599,7 @@ function PricingInner() {
                               {(['core', 'pro', 'business'] as const).map(function (p) {
                                 var val = row[p];
                                 if (typeof val === 'boolean') {
-                                  return <td key={p}>{val ? <CheckIcon color={p === 'pro' ? '#0D7377' : '#059669'} /> : <CrossIcon />}</td>;
+                                  return <td key={p}>{val ? <CheckIcon color={p === 'pro' ? '#0f7377' : '#059669'} /> : <CrossIcon />}</td>;
                                 }
                                 return <td key={p}><span className={'cell-val' + (p === 'pro' ? ' pro-val' : '')}>{val}</span></td>;
                               })}

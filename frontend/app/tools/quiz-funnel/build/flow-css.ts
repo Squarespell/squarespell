@@ -19,7 +19,7 @@ export const FLOW_CSS = `
     --text: #101828;
     --text-muted: #475467;
     --text-dim: #98A2B3;
-    --accent: #0D7377;
+    --accent: #0f7377;
     --accent-dim: rgba(13,115,119,0.08);
     --danger: #F04438;
     --success: #12B76A;
@@ -34,7 +34,7 @@ export const FLOW_CSS = `
   html, body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-family: 'Poppins', -apple-system, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
   }
@@ -1088,7 +1088,7 @@ export const FLOW_CSS = `
   .s4-site {
     background: var(--site-bg, #ffffff);
     color: var(--site-text, #1a1a1a);
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     min-height: 620px;
     position: relative;
     overflow: hidden;
@@ -1117,7 +1117,7 @@ export const FLOW_CSS = `
     color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-weight: 800; font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
   }
   .s4-site-links {
     display: flex; gap: 24px;
@@ -1190,7 +1190,7 @@ export const FLOW_CSS = `
     margin-bottom: 10px;
     font-size: 12px;
     color: var(--site-muted, rgba(0,0,0,0.56));
-    font-family: 'Inter', 'DM Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
   }
   .s4-quiz-bar {
     height: 4px;
@@ -1212,7 +1212,7 @@ export const FLOW_CSS = `
     text-transform: uppercase;
     color: var(--site-primary, #5a7a4a);
     margin-bottom: 10px;
-    font-family: 'Inter', 'DM Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
   }
   .s4-quiz-q {
     font-family: var(--site-heading-font, 'Playfair Display', serif);
@@ -1232,7 +1232,7 @@ export const FLOW_CSS = `
     border: 1.5px solid var(--site-option-border, var(--site-card-border, rgba(0,0,0,0.08)));
     border-radius: calc(var(--site-radius, 16px) - 4px);
     color: var(--site-card-text, var(--site-text, #1a1a1a));
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     font-size: 15px;
     font-weight: 500;
     text-align: left;
@@ -1259,7 +1259,7 @@ export const FLOW_CSS = `
     font-size: 12px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    font-family: 'Inter', 'DM Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     transition: all 0.2s var(--ease);
   }
   .s4-quiz-opt:hover .s4-quiz-opt-letter,
@@ -1274,7 +1274,7 @@ export const FLOW_CSS = `
     color: var(--site-muted, rgba(0,0,0,0.56));
     display: inline-flex; align-items: center; gap: 6px;
     cursor: pointer;
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
   }
   .s4-quiz-back:hover { opacity: 0.9; }
 
@@ -1286,7 +1286,7 @@ export const FLOW_CSS = `
     letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--site-primary, #5a7a4a);
     margin-bottom: 14px;
-    font-family: 'Inter', 'DM Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
   }
   .s4-quiz-result-title {
     font-family: var(--site-heading-font, 'Playfair Display', serif);
@@ -1301,7 +1301,7 @@ export const FLOW_CSS = `
     color: var(--site-muted, rgba(0,0,0,0.56));
     line-height: 1.5;
     margin-bottom: 24px;
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
   }
   .s4-quiz-result-cta {
     display: inline-flex; align-items: center; gap: 8px;
@@ -1312,7 +1312,7 @@ export const FLOW_CSS = `
     font-weight: 600; font-size: 15px;
     cursor: pointer;
     transition: all 0.2s var(--ease);
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     text-decoration: none;
     border: none;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
@@ -1324,7 +1324,7 @@ export const FLOW_CSS = `
   }
   .s4-share-label {
     font-size: 12px; color: var(--site-muted, rgba(0,0,0,0.56));
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
   }
   .s4-share-btn {
     width: 32px; height: 32px; border-radius: 50%;
@@ -1341,7 +1341,7 @@ export const FLOW_CSS = `
     font-size: 13px;
     color: var(--site-muted, rgba(0,0,0,0.56));
     cursor: pointer;
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
   }
 
   /* ---- Lead capture gate ---- */
@@ -1361,12 +1361,12 @@ export const FLOW_CSS = `
   .s4-lead-gate-title {
     font-size: 20px; font-weight: 700;
     color: var(--site-card-heading, var(--site-text, #0a0a0a));
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     margin-bottom: 8px;
   }
   .s4-lead-gate-sub {
     font-size: 14px; color: var(--site-muted, rgba(0,0,0,0.56));
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     margin-bottom: 24px; line-height: 1.5;
   }
   .s4-lead-gate-input {
@@ -1375,7 +1375,7 @@ export const FLOW_CSS = `
     border: 2px solid var(--site-option-border, var(--site-card-border, rgba(0,0,0,0.12)));
     background: var(--site-option-bg, var(--site-card-bg, #fff));
     color: var(--site-card-text, var(--site-text, #1a1a1a));
-    font-size: 15px; font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-size: 15px; font-family: var(--site-body-font, 'Poppins', sans-serif);
     outline: none; transition: border-color 0.2s;
     text-align: center;
   }
@@ -1388,7 +1388,7 @@ export const FLOW_CSS = `
     background: var(--site-primary, #111);
     color: var(--site-btn-text, #fff);
     font-size: 15px; font-weight: 600; cursor: pointer;
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     transition: all 0.2s;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
@@ -1397,14 +1397,14 @@ export const FLOW_CSS = `
   .s4-lead-gate-skip {
     font-size: 13px; color: var(--site-muted, rgba(0,0,0,0.56));
     cursor: pointer; margin-top: 4px;
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     opacity: 0.8;
   }
   .s4-lead-gate-skip:hover { opacity: 1; }
   .s4-lead-gate-privacy {
     font-size: 11px; color: var(--site-muted, rgba(0,0,0,0.56));
     margin-top: 16px;
-    font-family: var(--site-body-font, 'Inter', sans-serif);
+    font-family: var(--site-body-font, 'Poppins', sans-serif);
     opacity: 0.7;
   }
 

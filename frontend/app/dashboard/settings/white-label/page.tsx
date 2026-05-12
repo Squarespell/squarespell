@@ -43,7 +43,7 @@ export default function WhiteLabelSettingsPage() {
 
   var brandName = settings?.custom_brand_name || 'Your Brand';
   var logoUrl = settings?.custom_brand_logo_url || '';
-  var brandColor = settings?.custom_brand_color || '#0D7377';
+  var brandColor = settings?.custom_brand_color || '#0f7377';
   var hidePoweredBy = settings?.hide_powered_by || false;
 
   useEffect(() => {
@@ -162,7 +162,7 @@ export default function WhiteLabelSettingsPage() {
     borderRadius: 10,
     fontSize: 13.5,
     color: C.TEXT,
-    fontFamily: '"DM Sans",system-ui,sans-serif',
+    fontFamily: '"Poppins",system-ui,sans-serif',
     outline: 'none',
     width: '100%',
     boxSizing: 'border-box',
@@ -250,7 +250,7 @@ export default function WhiteLabelSettingsPage() {
                     width: 44,
                     height: 44,
                     borderRadius: 10,
-                    background: settings.custom_brand_color || '#0D7377',
+                    background: settings.custom_brand_color || '#0f7377',
                     border: `1px solid ${C.BORDER}`,
                     flexShrink: 0,
                     cursor: 'pointer',
@@ -260,7 +260,7 @@ export default function WhiteLabelSettingsPage() {
                 >
                   <input
                     type="color"
-                    value={settings.custom_brand_color || '#0D7377'}
+                    value={settings.custom_brand_color || '#0f7377'}
                     onChange={function(e) {
                       setSettings({ ...settings, custom_brand_color: e.target.value });
                     }}
@@ -281,7 +281,7 @@ export default function WhiteLabelSettingsPage() {
                     onChange={function(e) {
                       setSettings({ ...settings, custom_brand_color: e.target.value || null });
                     }}
-                    placeholder="#0D7377"
+                    placeholder="#0f7377"
                     style={{
                       ...inputStyle,
                       fontFamily: 'ui-monospace,monospace',
@@ -332,7 +332,7 @@ export default function WhiteLabelSettingsPage() {
           <div
             style={{
               padding: '16px',
-              background: settings.custom_brand_color || '#0D7377',
+              background: settings.custom_brand_color || '#0f7377',
               borderRadius: 8,
               color: '#FFFFFF',
               textAlign: 'center',

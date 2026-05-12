@@ -7,7 +7,7 @@
  */
 export var DASHBOARD_COLORS = {
   // Font
-  FONT: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+  FONT: "'Poppins', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 
   // Backgrounds - Untitled UI gray scale
   BG: '#FFFFFF',
@@ -42,16 +42,16 @@ export var DASHBOARD_COLORS = {
   TEXT_SUBTLE: '#667085',
 
   // Accent (deep teal - Squarespell Quiz brand)
-  ACCENT: '#0D7377',
+  ACCENT: '#0f7377',
   ACCENT_LIGHT: '#F0FAFB',
-  ACCENT_HOVER: '#0B6165',
+  ACCENT_HOVER: '#0d6569',
   BRAND_25: '#F0FAFB',
   BRAND_50: '#E0F5F6',
   BRAND_100: '#B3E6E8',
   BRAND_300: '#4DC2C6',
-  BRAND_500: '#0D7377',
-  BRAND_600: '#0B6165',
-  BRAND_700: '#094F53',
+  BRAND_500: '#0f7377',
+  BRAND_600: '#0d6569',
+  BRAND_700: '#0b545a',
 
   // Semantic
   SUCCESS: '#027A48',

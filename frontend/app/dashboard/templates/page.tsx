@@ -85,7 +85,7 @@ export default function DashboardTemplatesPage() {
 
   return (
     <DashboardShell title="Templates">
-    <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 24 }}>

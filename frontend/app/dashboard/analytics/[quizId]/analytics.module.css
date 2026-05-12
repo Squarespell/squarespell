@@ -6,13 +6,13 @@
 .status { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 8px; }
 .live { background: #ECF5F0; color: #2D6A4F; border: 1px solid rgba(45,106,79,0.2); }
 .draft { background: #F5F5F4; color: #6B6B6B; border: 1px solid #E4E3E0; }
-.exportBtn { margin-left: auto; padding: 12px 22px; background: #0D7377; color: #FFFFFF; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+.exportBtn { margin-left: auto; padding: 12px 22px; background: #0f7377; color: #FFFFFF; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
 .exportBtn:hover:not(:disabled) { background: #0B6165; }
 .exportBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 .statGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
 .statCard { background: #FFFFFF; border: 1px solid #E4E3E0; border-radius: 12px; padding: 22px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 .statHighlight { border-color: rgba(13,115,119,0.3); }
-.statValue { font-size: 36px; font-weight: 800; color: #0D7377; line-height: 1; margin-bottom: 6px; }
+.statValue { font-size: 36px; font-weight: 800; color: #0f7377; line-height: 1; margin-bottom: 6px; }
 .statUnit { font-size: 18px; }
 .statLabel { font-size: 12px; font-weight: 600; color: #1A1A1A; margin-bottom: 4px; }
 .statSub { font-size: 11px; color: #6B6B6B; }
@@ -23,14 +23,14 @@
 .funnelRow { display: grid; grid-template-columns: 100px 1fr 60px 48px; align-items: center; gap: 14px; }
 .funnelLabel { font-size: 13px; color: #1A1A1A; }
 .funnelBar { height: 8px; background: #EEEDE9; border-radius: 4px; overflow: hidden; }
-.funnelFill { height: 100%; background: #0D7377; border-radius: 4px; transition: width 0.6s ease; }
+.funnelFill { height: 100%; background: #0f7377; border-radius: 4px; transition: width 0.6s ease; }
 .funnelCount { font-size: 13px; color: #1A1A1A; font-weight: 600; text-align: right; }
 .funnelPct { font-size: 12px; color: #6B6B6B; text-align: right; }
 .leadsCard { background: #FFFFFF; border: 1px solid #E4E3E0; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 .leadsHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .leadsHeader .sectionTitle { margin-bottom: 0; }
 .exportBtnSmall { padding: 8px 16px; background: transparent; border: 1px solid #E4E3E0; border-radius: 8px; color: #1A1A1A; font-size: 12px; cursor: pointer; transition: border-color 0.2s; }
-.exportBtnSmall:hover:not(:disabled) { border-color: #0D7377; color: #0D7377; }
+.exportBtnSmall:hover:not(:disabled) { border-color: #0f7377; color: #0f7377; }
 .exportBtnSmall:disabled { opacity: 0.4; cursor: not-allowed; }
 .empty { font-size: 14px; color: #6B6B6B; padding: 24px 0; text-align: center; }
 .tableWrap { overflow-x: auto; }
@@ -44,7 +44,7 @@
 .heatmapQuestion { margin-bottom: 24px; }
 .heatmapQuestion:last-child { margin-bottom: 0; }
 .heatmapQHeader { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
-.heatmapQNum { font-size: 11px; font-weight: 700; color: #0D7377; background: #E8F4F4; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.heatmapQNum { font-size: 11px; font-weight: 700; color: #0f7377; background: #E8F4F4; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
 .heatmapQText { font-size: 14px; color: #1A1A1A; font-weight: 600; }
 .heatmapMeta { font-size: 11px; color: #6B6B6B; margin-left: auto; white-space: nowrap; }
 .heatmapOptions { display: flex; flex-direction: column; gap: 6px; }

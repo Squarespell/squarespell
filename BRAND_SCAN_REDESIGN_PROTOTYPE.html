@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Squarespell Quiz — Brand Scan Redesign Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg: #FFFFFF;
+  --bg-2: #F9FAFB;
+  --surface: #FFFFFF;
+  --border: #EAECF0;
+  --border-2: #D0D5DD;
+  --text: #101828;
+  --text-muted: #475467;
+  --text-dim: #98A2B3;
+  --accent: #0D7377;
+  --accent-hover: #0B6165;
+  --accent-light: rgba(13,115,119,0.08);
+  --accent-mid: rgba(13,115,119,0.15);
+  --danger: #F04438;
+  --success: #12B76A;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Left panel dark theme */
+  --dark-bg: #0A1628;
+  --dark-bg-2: #0E1F38;
+  --dark-surface: rgba(255,255,255,0.06);
+  --dark-border: rgba(255,255,255,0.1);
+  --dark-text: #FFFFFF;
+  --dark-text-muted: rgba(255,255,255,0.6);
+  --dark-accent: #14B8A6;
+  --dark-accent-glow: rgba(20,184,166,0.2);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ============================================================
+   PROTOTYPE SWITCHER (dev only — remove in prod)
+   ============================================================ */
+.proto-switcher {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  gap: 2px;
+  background: rgba(16,24,40,0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 100px;
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.proto-btn {
+  padding: 7px 16px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.proto-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* ============================================================
+   LAYOUT — Full-screen split
+   ============================================================ */
+.flow-page {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.flow-page.visible { display: flex; }
+
+/* ============================================================
+   TOPBAR — matches dashboard exactly
+   ============================================================ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.logo-icon svg { display: block; }
+.logo-wordmark {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.logo-wordmark span { color: var(--accent); }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-ghost {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--border-2); }
+.btn-primary {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ============================================================
+   SPLIT LAYOUT
+   ============================================================ */
+.split {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 42% 58%;
+  min-height: 0;
+}
+@media (max-width: 768px) {
+  .split { grid-template-columns: 1fr; }
+  .split-left { display: none; }
+}
+
+/* ============================================================
+   LEFT PANEL — Dark, rich gradient
+   ============================================================ */
+.split-left {
+  background: linear-gradient(160deg, #0A1628 0%, #0D2040 40%, #0A2535 70%, #071520 100%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  min-height: calc(100vh - 60px);
+}
+
+/* Ambient glow orbs */
+.split-left::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  left: -80px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(13,115,119,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.split-left::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  right: -60px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Grid dot pattern overlay */
+.grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+.left-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 380px;
+}
+
+/* ============================================================
+   LEFT PANEL — Loading state
+   ============================================================ */
+.scan-animation {
+  width: 100%;
+}
+.scan-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--dark-border);
+  background: var(--dark-surface);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dark-accent);
+  margin-bottom: 28px;
+}
+.scan-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dark-accent);
+  animation: scan-pulse 1.5s ease-in-out infinite;
+}
+@keyframes scan-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.scan-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--dark-text);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+.scan-title span { color: var(--dark-accent); }
+.scan-sub {
+  font-size: 14px;
+  color: var(--dark-text-muted);
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+/* Website mockup being scanned */
+.scan-mockup {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+}
+.scan-mockup-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.scan-mockup-dots { display: flex; gap: 5px; }
+.scan-mockup-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+.scan-mockup-url {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  font-family: monospace;
+}
+.scan-mockup-body {
+  padding: 16px;
+}
+.scan-line {
+  height: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  animation: scan-shimmer 2s ease-in-out infinite;
+}
+.scan-line.w-100 { width: 100%; background: rgba(255,255,255,0.1); }
+.scan-line.w-80 { width: 80%; background: rgba(255,255,255,0.07); }
+.scan-line.w-60 { width: 60%; background: rgba(255,255,255,0.05); animation-delay: 0.3s; }
+.scan-line.w-90 { width: 90%; background: rgba(255,255,255,0.07); animation-delay: 0.6s; }
+.scan-line.w-70 { width: 70%; background: rgba(255,255,255,0.05); animation-delay: 0.9s; }
+.scan-line.accent { background: rgba(20,184,166,0.25); animation-delay: 0.15s; }
+
+@keyframes scan-shimmer {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Scan beam */
+.scan-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--dark-accent), transparent);
+  animation: scan-beam 2s ease-in-out infinite;
+  box-shadow: 0 0 12px var(--dark-accent);
+}
+@keyframes scan-beam {
+  0% { top: 42px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: calc(100% - 4px); opacity: 0; }
+}
+
+/* Detected chips */
+.scan-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.scan-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  background: rgba(20,184,166,0.1);
+  border: 1px solid rgba(20,184,166,0.25);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dark-accent);
+  animation: chip-in 0.4s var(--ease) both;
+}
+.scan-chip:nth-child(1) { animation-delay: 0.5s; }
+.scan-chip:nth-child(2) { animation-delay: 1.2s; }
+.scan-chip:nth-child(3) { animation-delay: 2s; }
+.scan-chip svg { width: 10px; height: 10px; }
+@keyframes chip-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   LEFT PANEL — Brand Detected state
+   ============================================================ */
+.brand-left {
+  width: 100%;
+}
+.brand-left-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(20,184,166,0.3);
+  background: rgba(20,184,166,0.1);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dark-accent);
+  margin-bottom: 24px;
+}
+.brand-left-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dark-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-left-title {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--dark-text);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
+}
+.brand-left-title span { color: var(--dark-accent); }
+.brand-left-sub {
+  font-size: 14px;
+  color: var(--dark-text-muted);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+/* Brand identity card */
+.brand-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: card-in 0.5s var(--ease) both;
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+.brand-card-head {
+  padding: 20px 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.brand-card-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+.brand-card-info { flex: 1; min-width: 0; }
+.brand-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark-text);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand-card-url {
+  font-size: 12px;
+  color: var(--dark-text-muted);
+  font-family: monospace;
+}
+.brand-card-verified {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dark-accent);
+}
+
+.brand-card-palette {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.palette-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dark-text-muted);
+  margin-right: 4px;
+}
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+  transition: transform 0.15s;
+  position: relative;
+}
+.swatch:hover { transform: scale(1.15); z-index: 1; }
+.swatch-hex {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--dark-text-muted);
+  white-space: nowrap;
+  font-family: monospace;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.swatch:hover .swatch-hex { opacity: 1; }
+
+.brand-card-rows {
+  padding: 12px 20px 16px;
+}
+.brand-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.brand-card-row:last-child { border-bottom: none; }
+.row-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+}
+.row-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.8);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 190px;
+}
+
+/* ============================================================
+   RIGHT PANEL
+   ============================================================ */
+.split-right {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: calc(100vh - 60px);
+}
+.right-inner {
+  flex: 1;
+  padding: 48px 52px;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 900px) {
+  .right-inner { padding: 32px 24px; }
+}
+
+/* ============================================================
+   RIGHT — Loading state
+   ============================================================ */
+.loading-right { flex: 1; display: flex; flex-direction: column; }
+.loading-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 40px;
+}
+.loading-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.status-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-mid);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.status-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.status-detail {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding-left: 28px;
+}
+
+/* Progress steps */
+.progress-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 40px;
+}
+.progress-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  position: relative;
+}
+.progress-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: -8px;
+  width: 1px;
+  background: var(--border);
+}
+.step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s var(--ease);
+  position: relative;
+  z-index: 1;
+}
+.step-icon.done {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.step-icon.active {
+  border-color: var(--accent);
+  background: white;
+  box-shadow: 0 0 0 4px var(--accent-light);
+}
+.step-icon.done svg { color: white; }
+.step-body {
+  padding: 6px 0 24px;
+}
+.step-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.step-name.muted { color: var(--text-dim); }
+.step-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Skeleton rows */
+.skel-block {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.skel-row {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--bg-2);
+  margin-bottom: 8px;
+  animation: skel-pulse 1.8s ease-in-out infinite;
+}
+.skel-row:last-child { margin-bottom: 0; }
+.skel-row.w-full { width: 100%; }
+.skel-row.w-3q { width: 75%; }
+.skel-row.w-half { width: 50%; }
+.skel-row.w-2q { width: 40%; }
+@keyframes skel-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ============================================================
+   RIGHT — Brand detected state
+   ============================================================ */
+.brand-right { flex: 1; display: flex; flex-direction: column; }
+
+.success-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(18,183,106,0.25);
+  background: rgba(18,183,106,0.06);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--success);
+  margin-bottom: 20px;
+  width: fit-content;
+}
+.badge-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-bottom: 8px;
+}
+.brand-title-acc { color: var(--accent); }
+.brand-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+.brand-subtitle a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Editable field rows */
+.field-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.field-section-header {
+  padding: 12px 18px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.field-row:last-child { border-bottom: none; }
+.field-row:hover { background: var(--bg-2); }
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 90px;
+}
+.field-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: right;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.field-edit-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.12s;
+  flex-shrink: 0;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.field-edit-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* Colors row */
+.colors-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+.colors-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 90px;
+}
+.colors-swatches {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.color-swatch-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.color-swatch:hover { transform: scale(1.1); border-color: var(--border-2); }
+.color-swatch-hex {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: monospace;
+}
+.colors-edit {
+  flex-shrink: 0;
+}
+
+/* Continue area */
+.continue-area {
+  margin-top: auto;
+  padding-top: 28px;
+}
+.continue-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-continue {
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(13,115,119,0.2), 0 4px 16px rgba(13,115,119,0.15);
+}
+.btn-continue:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(13,115,119,0.25), 0 8px 24px rgba(13,115,119,0.2);
+}
+.btn-continue svg { transition: transform 0.15s; }
+.btn-continue:hover svg { transform: translateX(2px); }
+
+.trust-line {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 12px;
+}
+
+/* ============================================================
+   ANNOTATIONS (prototype only)
+   ============================================================ */
+.anno {
+  position: fixed;
+  background: rgba(239,68,68,0.9);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 100px;
+  pointer-events: none;
+  z-index: 9998;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PROTOTYPE SWITCHER
+     ============================================================ -->
+<div class="proto-switcher">
+  <button class="proto-btn active" onclick="showState('loading')">State 1 — Scanning</button>
+  <button class="proto-btn" onclick="showState('brand')">State 2 — Brand Detected</button>
+</div>
+
+<!-- ============================================================
+     STATE 1: LOADING / SCANNING
+     ============================================================ -->
+<div class="flow-page visible" id="page-loading">
+  <nav class="topbar">
+    <a class="topbar-logo" href="#">
+      <div class="logo-icon">
+        <!-- Squarespell Quiz "A" icon — matches dashboard exactly -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 19h20L12 2z"/>
+          <path d="M8.5 14h7"/>
+        </svg>
+      </div>
+      <span class="logo-wordmark">Squarespell <span>Quiz</span></span>
+    </a>
+    <div class="topbar-right">
+      <button class="btn-ghost">Start over</button>
+    </div>
+  </nav>
+
+  <div class="split">
+    <!-- LEFT: Animated scan visualization (replaces pure black box) -->
+    <div class="split-left">
+      <div class="grid-pattern"></div>
+      <div class="left-content">
+        <div class="scan-animation">
+          <div class="scan-label">
+            <div class="scan-pulse"></div>
+            AI Analysis
+          </div>
+
+          <div class="scan-title">
+            Reading your<br /><span>website</span>
+          </div>
+          <div class="scan-sub">
+            We're extracting your brand identity, colors, fonts, and business details automatically.
+          </div>
+
+          <!-- Website mockup being scanned -->
+          <div class="scan-mockup">
+            <div class="scan-mockup-bar">
+              <div class="scan-mockup-dots">
+                <div class="scan-mockup-dot"></div>
+                <div class="scan-mockup-dot"></div>
+                <div class="scan-mockup-dot"></div>
+              </div>
+              <div class="scan-mockup-url">squarespell.com</div>
+            </div>
+            <div class="scan-mockup-body">
+              <div class="scan-line w-100 accent"></div>
+              <div class="scan-line w-80"></div>
+              <div class="scan-line w-60"></div>
+              <div style="height:12px"></div>
+              <div class="scan-line w-90"></div>
+              <div class="scan-line w-70"></div>
+              <div class="scan-line w-80"></div>
+              <div style="height:12px"></div>
+              <div class="scan-line w-60 accent"></div>
+              <div class="scan-line w-90"></div>
+            </div>
+            <div class="scan-beam"></div>
+          </div>
+
+          <!-- What's been detected so far -->
+          <div class="scan-chips">
+            <div class="scan-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Brand colors
+            </div>
+            <div class="scan-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Typography
+            </div>
+            <div class="scan-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Business type
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Progress steps (replaces raw spinner + skeleton) -->
+    <div class="split-right">
+      <div class="right-inner">
+        <div class="loading-right">
+          <div class="loading-status">
+            <div class="loading-status-row">
+              <div class="status-spinner"></div>
+              <div class="status-text">Analyzing your website…</div>
+            </div>
+            <div class="status-detail">Extracting brand, copy, and business details</div>
+          </div>
+
+          <!-- Step tracker -->
+          <div class="progress-steps">
+            <div class="progress-step">
+              <div class="step-icon done">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="step-body">
+                <div class="step-name">Site connected</div>
+                <div class="step-desc">squarespell.com — reachable</div>
+              </div>
+            </div>
+
+            <div class="progress-step">
+              <div class="step-icon active">
+                <div class="status-spinner" style="width:14px;height:14px;border-width:1.5px;margin:0"></div>
+              </div>
+              <div class="step-body">
+                <div class="step-name">Reading brand identity</div>
+                <div class="step-desc">Extracting colors, fonts, and logo</div>
+              </div>
+            </div>
+
+            <div class="progress-step">
+              <div class="step-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </div>
+              <div class="step-body">
+                <div class="step-name muted">Analyzing business type</div>
+                <div class="step-desc">Identifying audience, tone, and goals</div>
+              </div>
+            </div>
+
+            <div class="progress-step">
+              <div class="step-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D0D5DD" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </div>
+              <div class="step-body">
+                <div class="step-name muted">Generating quiz structure</div>
+                <div class="step-desc">Matching templates to your business</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content skeleton — gives sense of what's coming -->
+          <div class="skel-block">
+            <div class="skel-row w-2q"></div>
+            <div class="skel-row w-3q"></div>
+            <div class="skel-row w-full"></div>
+          </div>
+          <div class="skel-block">
+            <div class="skel-row w-half"></div>
+            <div class="skel-row w-3q"></div>
+          </div>
+          <div class="skel-block">
+            <div class="skel-row w-2q"></div>
+            <div class="skel-row w-full"></div>
+            <div class="skel-row w-3q"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     STATE 2: BRAND DETECTED
+     ============================================================ -->
+<div class="flow-page" id="page-brand">
+  <nav class="topbar">
+    <a class="topbar-logo" href="#">
+      <div class="logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 19h20L12 2z"/>
+          <path d="M8.5 14h7"/>
+        </svg>
+      </div>
+      <span class="logo-wordmark">Squarespell <span>Quiz</span></span>
+    </a>
+    <div class="topbar-right">
+      <button class="btn-ghost">Start over</button>
+    </div>
+  </nav>
+
+  <div class="split">
+    <!-- LEFT: Brand identity card on rich dark background -->
+    <div class="split-left">
+      <div class="grid-pattern"></div>
+      <div class="left-content">
+        <div class="brand-left">
+          <div class="brand-left-label">
+            <div class="brand-left-check">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Brand Detected
+          </div>
+          <div class="brand-left-title">
+            Identity<br /><span>Confirmed</span>
+          </div>
+          <div class="brand-left-sub">
+            Colors, fonts, and business details extracted from your website automatically.
+          </div>
+
+          <div class="brand-card">
+            <!-- Card header: logo + name + domain -->
+            <div class="brand-card-head">
+              <div class="brand-card-logo" style="background: #0D7377;">S</div>
+              <div class="brand-card-info">
+                <div class="brand-card-name">SQUARESPELL</div>
+                <div class="brand-card-url">squarespell.com</div>
+              </div>
+              <div class="brand-card-verified">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Verified
+              </div>
+            </div>
+
+            <!-- Color palette — shown as swatches only, not as app chrome -->
+            <div class="brand-card-palette">
+              <span class="palette-label">Colors</span>
+              <div class="swatch" style="background:#0D7377" title="#0D7377">
+                <span class="swatch-hex">#0D7377</span>
+              </div>
+              <div class="swatch" style="background:#101828" title="#101828">
+                <span class="swatch-hex">#101828</span>
+              </div>
+              <div class="swatch" style="background:#F9FAFB; border-color:rgba(255,255,255,0.1)" title="#F9FAFB">
+                <span class="swatch-hex">#F9FAFB</span>
+              </div>
+              <div class="swatch" style="background:#EAECF0; border-color:rgba(255,255,255,0.08)" title="#EAECF0">
+                <span class="swatch-hex">#EAECF0</span>
+              </div>
+            </div>
+
+            <!-- Business info rows -->
+            <div class="brand-card-rows">
+              <div class="brand-card-row">
+                <span class="row-label">Type</span>
+                <span class="row-val">Squarespace plugins & templates</span>
+              </div>
+              <div class="brand-card-row">
+                <span class="row-label">Audience</span>
+                <span class="row-val">Squarespace users, creatives, coaches</span>
+              </div>
+              <div class="brand-card-row">
+                <span class="row-label">Tone</span>
+                <span class="row-val">Professional and expert</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Review & edit detected info -->
+    <div class="split-right">
+      <div class="right-inner">
+        <div class="brand-right">
+
+          <div class="success-badge">
+            <div class="badge-check">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Site Analyzed
+          </div>
+
+          <h1 class="brand-title">
+            We analyzed your brand<br />
+            <span class="brand-title-acc">SQUARESPELL</span>
+          </h1>
+          <p class="brand-subtitle">
+            Here's what we found. Edit anything that doesn't look right before we build your quiz.
+          </p>
+
+          <!-- Business info — editable -->
+          <div class="field-section">
+            <div class="field-section-header">Business details</div>
+            <div class="field-row">
+              <div class="field-label">Business type</div>
+              <div class="field-value">Squarespace plugins and templates provider</div>
+              <button class="field-edit-btn" onclick="editField(this, 'Business type')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Edit
+              </button>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Audience</div>
+              <div class="field-value">Squarespace users, creatives, coaches, agencies</div>
+              <button class="field-edit-btn" onclick="editField(this, 'Audience')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Edit
+              </button>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Tone</div>
+              <div class="field-value">Professional and expert</div>
+              <button class="field-edit-btn" onclick="editField(this, 'Tone')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Edit
+              </button>
+            </div>
+          </div>
+
+          <!-- Brand colors — shown as palette, not as app chrome -->
+          <div class="field-section">
+            <div class="field-section-header">Brand colors</div>
+            <div class="colors-row">
+              <div class="colors-label">Detected</div>
+              <div class="colors-swatches">
+                <div class="color-swatch-wrap">
+                  <div class="color-swatch" style="background:#0D7377" title="Primary"></div>
+                  <div class="color-swatch-hex">#0D7377</div>
+                </div>
+                <div class="color-swatch-wrap">
+                  <div class="color-swatch" style="background:#101828" title="Dark"></div>
+                  <div class="color-swatch-hex">#101828</div>
+                </div>
+                <div class="color-swatch-wrap">
+                  <div class="color-swatch" style="background:#F9FAFB; border-color:var(--border-2)" title="Light"></div>
+                  <div class="color-swatch-hex">#F9FAFB</div>
+                </div>
+                <div class="color-swatch-wrap">
+                  <div class="color-swatch" style="background:#EAECF0; border-color:var(--border-2)" title="Border"></div>
+                  <div class="color-swatch-hex">#EAECF0</div>
+                </div>
+              </div>
+              <div class="colors-edit">
+                <button class="field-edit-btn">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  Edit
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA -->
+          <div class="continue-area">
+            <div class="continue-hint">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Looks good? We'll use this to build a quiz that matches your brand.
+            </div>
+            <button class="btn-continue" onclick="alert('→ Next: Quiz style picker (Step 2 of 3)')">
+              Continue — Build my quiz
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            <div class="trust-line">Your quiz will be built in under 60 seconds</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* State switcher */
+function showState(state) {
+  document.querySelectorAll('.flow-page').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('.proto-btn').forEach(b => b.classList.remove('active'));
+
+  if (state === 'loading') {
+    document.getElementById('page-loading').classList.add('visible');
+    document.querySelectorAll('.proto-btn')[0].classList.add('active');
+  } else {
+    document.getElementById('page-brand').classList.add('visible');
+    document.querySelectorAll('.proto-btn')[1].classList.add('active');
+  }
+}
+
+/* Inline edit simulation */
+function editField(btn, label) {
+  const row = btn.closest('.field-row');
+  const valEl = row.querySelector('.field-value');
+  const current = valEl.textContent.trim();
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = current;
+  input.style.cssText = `
+    flex:1; border:none; outline:none; background:transparent;
+    font-size:13px; font-weight:500; color:var(--accent);
+    font-family:inherit; text-align:right; min-width:0;
+    border-bottom: 1.5px solid var(--accent); padding-bottom:2px;
+  `;
+
+  valEl.style.display = 'none';
+  btn.style.display = 'none';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Save';
+  saveBtn.style.cssText = `
+    padding:5px 10px; border-radius:6px; font-size:11px; font-weight:600;
+    color:white; background:var(--accent); border:none; cursor:pointer;
+    font-family:inherit; flex-shrink:0;
+  `;
+
+  row.insertBefore(input, btn);
+  row.appendChild(saveBtn);
+
+  input.focus();
+  input.select();
+
+  function save() {
+    const newVal = input.value.trim() || current;
+    valEl.textContent = newVal;
+    valEl.style.display = '';
+    btn.style.display = '';
+    input.remove();
+    saveBtn.remove();
+  }
+
+  saveBtn.onclick = save;
+  input.onkeydown = (e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { input.value = current; save(); } };
+}
+</script>
+</body>
+</html>

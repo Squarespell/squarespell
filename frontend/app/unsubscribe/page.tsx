@@ -90,7 +90,7 @@ function UnsubscribeContent() {
         border: '1px solid #E4E3E0',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}>
-        <div style={{ color: '#0D7377', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' as const, marginBottom: '24px', fontWeight: 700 }}>
+        <div style={{ color: '#0f7377', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' as const, marginBottom: '24px', fontWeight: 700 }}>
           Squarespell Quiz
         </div>
 
@@ -116,7 +116,7 @@ function UnsubscribeContent() {
               disabled={working}
               style={{
                 padding: '14px 32px',
-                background: '#0D7377',
+                background: '#0f7377',
                 color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '8px',
@@ -146,7 +146,7 @@ function UnsubscribeContent() {
               style={{
                 padding: '12px 24px',
                 background: 'transparent',
-                color: '#0D7377',
+                color: '#0f7377',
                 border: '1px solid #E4E3E0',
                 borderRadius: '8px',
                 fontWeight: 600,
@@ -161,7 +161,7 @@ function UnsubscribeContent() {
         )}
 
         <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #E4E3E0', fontSize: '12px', color: '#6B6B6B' }}>
-          <a href="https://squarespell.com" style={{ color: '#0D7377', textDecoration: 'none' }}>squarespell.com</a>
+          <a href="https://squarespell.com" style={{ color: '#0f7377', textDecoration: 'none' }}>squarespell.com</a>
         </div>
       </div>
     </div>

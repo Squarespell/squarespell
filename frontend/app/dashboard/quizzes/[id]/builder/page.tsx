@@ -78,7 +78,7 @@ const COLORS = {
   TEXT: '#1A1A1A',
   TEXT_MUTED: '#6B6B6B',
   TEXT_SUBTLE: '#9B9B9B',
-  ACCENT: '#0D7377',
+  ACCENT: '#0f7377',
   ERROR: '#C53030',
   SUCCESS: '#2D6A4F',
   WARNING: '#B45309',
@@ -1388,7 +1388,7 @@ function QuestionEditor({
 /* ========================================================================= */
 
 const ROUTE_COLORS = [
-  '#0D7377', '#22d3ee', '#f472b6', '#a78bfa', '#fb923c',
+  '#0f7377', '#22d3ee', '#f472b6', '#a78bfa', '#fb923c',
   '#34d399', '#f87171', '#facc15', '#818cf8', '#38bdf8',
 ];
 
@@ -2160,7 +2160,7 @@ function SettingsPanel({
     width: '100%', padding: '8px 10px',
     background: COLORS.SURFACE, border: '1px solid ' + COLORS.BORDER,
     borderRadius: 4, color: COLORS.TEXT, fontSize: 12, outline: 'none',
-    fontFamily: '"DM Sans",system-ui,sans-serif',
+    fontFamily: '"Poppins",system-ui,sans-serif',
   };
 
   var settingsLabelStyle: React.CSSProperties = {

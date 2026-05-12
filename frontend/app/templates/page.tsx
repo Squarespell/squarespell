@@ -22,7 +22,7 @@ import {
 var COLORS = {
   bg: '#F9FAFB',
   card: '#FFFFFF',
-  accent: '#0D7377',
+  accent: '#0f7377',
   accentHover: '#0B6163',
   accentLight: '#E8F4F4',
   text: '#1A1A1A',
@@ -89,7 +89,7 @@ export default function TemplatesGalleryPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Poppins', system-ui, sans-serif" }}>
 
       {/* Header */}
       <header style={{

@@ -122,7 +122,7 @@ export default function CustomDomainPage() {
 
   var inputStyle = {
     padding: '10px 14px', background: C.SURFACE, border: '1px solid ' + C.BORDER,
-    borderRadius: 10, fontSize: 13.5, color: C.TEXT, fontFamily: '"DM Sans",system-ui,sans-serif',
+    borderRadius: 10, fontSize: 13.5, color: C.TEXT, fontFamily: '"Poppins",system-ui,sans-serif',
     outline: 'none', width: '100%', boxSizing: 'border-box' as const,
   };
 

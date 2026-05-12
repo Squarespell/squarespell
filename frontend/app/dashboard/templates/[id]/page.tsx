@@ -131,7 +131,7 @@ export default function DashboardTemplateDetailPage() {
 
   return (
     <DashboardShell title={template.name}>
-    <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: MUTED }}>
         <Link href="/dashboard/templates" style={{ color: ACCENT, textDecoration: 'none', fontWeight: 500 }}>Templates</Link>

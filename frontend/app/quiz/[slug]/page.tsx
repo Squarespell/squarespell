@@ -492,7 +492,7 @@ export default function QuizPage() {
   var brandFont =
     brand?.font_family && brand.font_family !== 'sans-serif'
       ? "'" + brand.font_family + "', system-ui, sans-serif"
-      : "'Inter', system-ui, sans-serif";
+      : "'Poppins', system-ui, sans-serif";
   var brandName = brand?.site_name || '';
   var showBranding = quiz?.settings?.show_branding !== false && !quiz?.settings?.remove_branding;
   var showProgressBar = quiz?.settings?.show_progress_bar !== false;

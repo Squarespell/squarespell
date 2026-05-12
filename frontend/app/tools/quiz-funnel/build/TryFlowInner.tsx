@@ -891,7 +891,7 @@ export function TryFlowInner({
   const brandBorder = 'rgba(0,0,0,0.10)';
   const brandFont = brand?.font_family && brand.font_family !== 'sans-serif'
     ? `'${brand.font_family}', system-ui, sans-serif`
-    : "'Inter', system-ui, sans-serif";
+    : "'Poppins', system-ui, sans-serif";
   const brandName = brand?.site_name || domain.replace(/\.[^.]+$/, '').replace(/^\w/, c => c.toUpperCase());
   // Real navigation links scraped from the website (falls back to generic)
   const navLinks: string[] = (brand?.business as any)?.nav_links?.length > 0
@@ -1117,7 +1117,7 @@ export function TryFlowInner({
       {/* ============ STAGE 2: SPLIT-SCREEN FLOW ============ */}
       <div className={`stage${stage === 2 ? ' active' : ''}`} id="stage-2">
         <div className="topbar">
-          <div className="brand"><div className="brand-dot" /> squarespell</div>
+          <div className="brand" style={{display:'flex',alignItems:'center',gap:'10px'}}><div style={{width:32,height:32,background:'#0f7377',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg></div><span style={{fontSize:15,fontWeight:700,letterSpacing:'-0.02em',color:'#1A1A1A'}}>Squarespell <span style={{color:'#0f7377'}}>Quiz</span></span></div>
           <div className="top-right">
             <button className="btn btn-ghost" onClick={function() { if (s2SubStep === 'choose') { setS2SubStep('brand'); } else { setStage(1); } }}>
               {s2SubStep === 'choose' ? 'Back' : 'Start over'}
@@ -1192,7 +1192,7 @@ export function TryFlowInner({
                         {brand?.favicon_url ? (
                           <img src={brand.favicon_url} className="s2-mock-card-icon" alt="" />
                         ) : (
-                          <div className="s2-mock-card-letter" style={{ background: brand?.colors?.primary || '#0D7377' }}>{siteLetter}</div>
+                          <div className="s2-mock-card-letter" style={{ background: brand?.colors?.primary || '#0f7377' }}>{siteLetter}</div>
                         )}
                         <div>
                           <div className="s2-mock-card-name">{brand?.site_name || domain}</div>
@@ -1231,12 +1231,12 @@ export function TryFlowInner({
                   <div className="s2-mockup s2-mockup-quiz">
                     {pickChoice === 'ai' ? (
                       <div className="s2-mock-card s2-mock-card-tilt">
-                        <div className="s2-mock-quiz-head" style={{ background: brand?.colors?.primary || '#0D7377' }}>
+                        <div className="s2-mock-quiz-head" style={{ background: brand?.colors?.primary || '#0f7377' }}>
                           <div className="s2-mock-quiz-logo">{siteLetter}</div>
                           <span>{brand?.site_name || domain}</span>
                         </div>
                         <div className="s2-mock-quiz-body">
-                          <div className="s2-mock-quiz-bar"><div className="s2-mock-quiz-bar-fill" style={{ background: brand?.colors?.primary || '#0D7377' }}></div></div>
+                          <div className="s2-mock-quiz-bar"><div className="s2-mock-quiz-bar-fill" style={{ background: brand?.colors?.primary || '#0f7377' }}></div></div>
                           <div className="s2-mock-quiz-q">What brings you here today?</div>
                           <div className="s2-mock-quiz-opt">Looking for something specific</div>
                           <div className="s2-mock-quiz-opt">Just browsing options</div>
@@ -2089,14 +2089,14 @@ export function TryFlowInner({
                     <div className="edit-group">
                       <div className="edit-group-label">Brand Colors (auto-detected)</div>
                       <div className="brand-preview">
-                        <div className="brand-preview-bar" style={{ background: brand.colors.primary || '#0D7377' }}>
+                        <div className="brand-preview-bar" style={{ background: brand.colors.primary || '#0f7377' }}>
                           <span className="brand-preview-text" style={{ color: brand.colors.background || '#F7F7F5' }}>{brand?.site_name || 'Your Site'}</span>
                         </div>
                         <div className="brand-preview-body" style={{ background: brand.colors.background || '#F7F7F5' }}>
                           <div className="brand-preview-q" style={{ color: brand.colors.text || '#1A1A1A' }}>Sample question here?</div>
-                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#0D7377', color: brand.colors.text || '#1A1A1A' }}>Option A</div>
-                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#0D7377', color: brand.colors.text || '#1A1A1A' }}>Option B</div>
-                          <div className="brand-preview-btn" style={{ background: brand.colors.primary || '#0D7377', color: brand.colors.background || '#FFFFFF' }}>Next</div>
+                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#0f7377', color: brand.colors.text || '#1A1A1A' }}>Option A</div>
+                          <div className="brand-preview-opt" style={{ borderColor: brand.colors.primary || '#0f7377', color: brand.colors.text || '#1A1A1A' }}>Option B</div>
+                          <div className="brand-preview-btn" style={{ background: brand.colors.primary || '#0f7377', color: brand.colors.background || '#FFFFFF' }}>Next</div>
                         </div>
                       </div>
                     </div>
@@ -2391,7 +2391,7 @@ export function TryFlowInner({
       <div className={`stage${stage === 5 ? ' active' : ''}`} id="stage-5">
         <div className="s5">
           <div className="s5-card">
-            <div className="s5-brand"><div className="brand-dot" /> squarespell</div>
+            <div className="s5-brand" style={{display:'flex',alignItems:'center',gap:'10px'}}><div style={{width:32,height:32,background:'#0f7377',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg></div><span style={{fontSize:15,fontWeight:700,letterSpacing:'-0.02em',color:'#1A1A1A'}}>Squarespell <span style={{color:'#0f7377'}}>Quiz</span></span></div>
 
             <div className="s5-banner">
               <SvgCheck size={16} />
@@ -2443,7 +2443,7 @@ export function TryFlowInner({
           port of prototype-v4 and can be reused from the authed dashboard. */}
       <div className={`stage${stage === 6 ? ' active' : ''}`} id="stage-6">
         <div className="topbar">
-          <div className="brand"><div className="brand-dot" /> squarespell</div>
+          <div className="brand" style={{display:'flex',alignItems:'center',gap:'10px'}}><div style={{width:32,height:32,background:'#0f7377',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg></div><span style={{fontSize:15,fontWeight:700,letterSpacing:'-0.02em',color:'#1A1A1A'}}>Squarespell <span style={{color:'#0f7377'}}>Quiz</span></span></div>
           <div className="top-right">
             <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>founder@{domain}</span>
             <button className="btn btn-ghost" onClick={() => setStage(3)} type="button">Back to editor</button>

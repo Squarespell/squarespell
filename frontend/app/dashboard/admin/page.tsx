@@ -15,7 +15,7 @@ export default function AdminRedirect() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Poppins', system-ui, sans-serif" }}>
       <p style={{ fontSize: 14, color: '#667085' }}>Redirecting to admin dashboard...</p>
     </div>
   );

@@ -16,9 +16,9 @@ function campaignType(c: Campaign): 'broadcast' | 'automation' | 'quiz-result' |
 }
 
 var TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
-  'broadcast':   { label: 'Broadcast',        color: '#0D7377', bg: '#E0F5F6' },
+  'broadcast':   { label: 'Broadcast',        color: '#0f7377', bg: '#E0F5F6' },
   'automation':  { label: 'Automation',        color: '#6941C6', bg: '#F4EBFF' },
-  'quiz-result': { label: 'Quiz Result Email', color: '#0D7377', bg: '#E0F5F6' },
+  'quiz-result': { label: 'Quiz Result Email', color: '#0f7377', bg: '#E0F5F6' },
   'follow-up':   { label: 'Follow-up',         color: '#DC6803', bg: '#FEF0C7' },
 };
 

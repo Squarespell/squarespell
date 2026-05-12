@@ -2585,11 +2585,11 @@ function SettingsPanel({
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Theme Color</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input type="color" value={settings?.primary_color || '#0D7377'}
+                <input type="color" value={settings?.primary_color || '#0f7377'}
                   onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
                   style={{ width: 36, height: 36, borderRadius: 8, border: '2px solid ' + C.BORDER, cursor: 'pointer', padding: 0 }} />
                 <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Primary</span>
-                <input type="text" value={settings?.primary_color || '#0D7377'}
+                <input type="text" value={settings?.primary_color || '#0f7377'}
                   onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
                   style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' as const, fontFamily: C.FONT }} />
               </div>

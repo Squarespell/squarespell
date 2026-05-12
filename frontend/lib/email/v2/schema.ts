@@ -110,13 +110,13 @@ export const DEFAULT_GLOBAL_STYLES: GlobalStyles = {
     bodyWeight: 400,
   },
   colors: {
-    primary: '#0D7377',
+    primary: '#0f7377',
     secondary: '#6B7280',
     background: '#F7F7F5',
     surface: '#FFFFFF',
     text: '#1A1A1A',
     textMuted: '#6B7280',
-    link: '#0D7377',
+    link: '#0f7377',
     border: '#E4E3E0',
     onPrimary: '#FFFFFF',
   },
@@ -811,37 +811,37 @@ export function createDefaultBlockV2(type: BlockV2Type): BlockV2 {
     case 'image':
       return { id, type, editable: true, compatibility: compat, properties: { src: '', alt: 'Image', href: '', width: 560, caption: '' }, styles: { align: 'center', borderRadius: 8, paddingTop: 8, paddingBottom: 8 } };
     case 'button':
-      return { id, type, editable: true, compatibility: compat, properties: { text: 'Get started', href: '{{cta_url}}', variant: 'primary', fullWidth: false }, styles: { align: 'left', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 16, fontWeight: 600, borderRadius: 8, paddingX: 24, paddingY: 14, marginTop: 8, marginBottom: 8 } };
+      return { id, type, editable: true, compatibility: compat, properties: { text: 'Get started', href: '{{cta_url}}', variant: 'primary', fullWidth: false }, styles: { align: 'left', backgroundColor: '#0f7377', textColor: '#FFFFFF', fontSize: 16, fontWeight: 600, borderRadius: 8, paddingX: 24, paddingY: 14, marginTop: 8, marginBottom: 8 } };
     case 'spacer':
       return { id, type, editable: true, compatibility: compat, properties: { height: 24 }, styles: {} };
     case 'divider':
       return { id, type, editable: true, compatibility: compat, properties: { lineStyle: 'solid' }, styles: { color: '#E4E3E0', thickness: 1, width: '100%', marginTop: 16, marginBottom: 16 } };
     case 'blockquote':
-      return { id, type, editable: true, compatibility: compat, properties: { text: 'This changed everything for my business.', citation: 'Alex Smith', citationTitle: 'Founder', rating: 5 }, styles: { borderLeftColor: '#0D7377', borderLeftWidth: 3, backgroundColor: '#F7F7F5', fontSize: 16, fontStyle: 'italic', paddingTop: 16, paddingBottom: 16, paddingLeft: 20, paddingRight: 20 } };
+      return { id, type, editable: true, compatibility: compat, properties: { text: 'This changed everything for my business.', citation: 'Alex Smith', citationTitle: 'Founder', rating: 5 }, styles: { borderLeftColor: '#0f7377', borderLeftWidth: 3, backgroundColor: '#F7F7F5', fontSize: 16, fontStyle: 'italic', paddingTop: 16, paddingBottom: 16, paddingLeft: 20, paddingRight: 20 } };
     case 'two_column_layout':
       return { id, type, editable: true, compatibility: compat, properties: { ratio: '50-50', stackOnMobile: true, reverseOnMobile: false }, styles: { gap: 16, paddingTop: 8, paddingBottom: 8, backgroundColor: '' }, leftColumn: [], rightColumn: [] };
     case 'three_column_layout':
       return { id, type, editable: true, compatibility: compat, properties: { ratio: '33-33-33', stackOnMobile: true }, styles: { gap: 16, paddingTop: 8, paddingBottom: 8, backgroundColor: '' }, columns: [[], [], []] };
     case 'full_width_banner':
-      return { id, type, editable: true, compatibility: compat, properties: { headline: 'Your offer headline', subheadline: 'Supporting text goes here.', ctaText: 'Learn more', ctaHref: '{{cta_url}}', backgroundImageUrl: '' }, styles: { backgroundColor: '#0D7377', textColor: '#FFFFFF', textAlign: 'center', minHeight: 200, paddingTop: 48, paddingBottom: 48, paddingLeft: 32, paddingRight: 32, overlayOpacity: 0 } };
+      return { id, type, editable: true, compatibility: compat, properties: { headline: 'Your offer headline', subheadline: 'Supporting text goes here.', ctaText: 'Learn more', ctaHref: '{{cta_url}}', backgroundImageUrl: '' }, styles: { backgroundColor: '#0f7377', textColor: '#FFFFFF', textAlign: 'center', minHeight: 200, paddingTop: 48, paddingBottom: 48, paddingLeft: 32, paddingRight: 32, overlayOpacity: 0 } };
     case 'card_block':
       return { id, type, editable: true, compatibility: compat, properties: { imageUrl: '', imageAlt: '', title: 'Card title', body: 'Card description text.', ctaText: 'Learn more', ctaHref: '{{cta_url}}' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: false, imageHeight: 160, paddingInner: 20 } };
     case 'score_display':
-      return { id, type, editable: true, compatibility: compat, properties: { scoreValue: '{{score}}', maxScore: '100', label: 'Your score', format: 'number' }, styles: { align: 'center', scoreColor: '#0D7377', scoreFontSize: 48, scoreFontWeight: 800, labelColor: '#6B7280', labelFontSize: 14, backgroundColor: '#F7F7F5', borderRadius: 12, paddingTop: 24, paddingBottom: 24 } };
+      return { id, type, editable: true, compatibility: compat, properties: { scoreValue: '{{score}}', maxScore: '100', label: 'Your score', format: 'number' }, styles: { align: 'center', scoreColor: '#0f7377', scoreFontSize: 48, scoreFontWeight: 800, labelColor: '#6B7280', labelFontSize: 14, backgroundColor: '#F7F7F5', borderRadius: 12, paddingTop: 24, paddingBottom: 24 } };
     case 'score_badge':
-      return { id, type, editable: true, compatibility: compat, properties: { badgeText: '{{result_category}}', subtext: 'Based on your answers', iconType: 'star' }, styles: { align: 'center', badgeColor: '#FFFFFF', badgeBackgroundColor: '#0D7377', badgeFontSize: 18, badgeBorderRadius: 999, subtextColor: '#6B7280', subtextFontSize: 13, paddingTop: 16, paddingBottom: 16 } };
+      return { id, type, editable: true, compatibility: compat, properties: { badgeText: '{{result_category}}', subtext: 'Based on your answers', iconType: 'star' }, styles: { align: 'center', badgeColor: '#FFFFFF', badgeBackgroundColor: '#0f7377', badgeFontSize: 18, badgeBorderRadius: 999, subtextColor: '#6B7280', subtextFontSize: 13, paddingTop: 16, paddingBottom: 16 } };
     case 'result_category':
-      return { id, type, editable: true, compatibility: compat, properties: { categoryName: '{{result_category}}', eyebrow: 'YOUR RESULT', description: '{{result_description}}' }, styles: { align: 'left', eyebrowColor: '#0D7377', eyebrowFontSize: 11, eyebrowLetterSpacing: 2, categoryColor: '#1A1A1A', categoryFontSize: 32, categoryFontWeight: 700, descriptionColor: '#6B7280', descriptionFontSize: 15, paddingTop: 16, paddingBottom: 16 } };
+      return { id, type, editable: true, compatibility: compat, properties: { categoryName: '{{result_category}}', eyebrow: 'YOUR RESULT', description: '{{result_description}}' }, styles: { align: 'left', eyebrowColor: '#0f7377', eyebrowFontSize: 11, eyebrowLetterSpacing: 2, categoryColor: '#1A1A1A', categoryFontSize: 32, categoryFontWeight: 700, descriptionColor: '#6B7280', descriptionFontSize: 15, paddingTop: 16, paddingBottom: 16 } };
     case 'result_description':
       return { id, type, editable: true, compatibility: compat, properties: { heading: 'What this means for you', body: '{{result_description}}', showDivider: true }, styles: { headingColor: '#1A1A1A', headingFontSize: 20, bodyColor: '#4B5563', bodyFontSize: 15, lineHeight: 1.6, dividerColor: '#E4E3E0', paddingTop: 12, paddingBottom: 12 } };
     case 'recommendation_card':
-      return { id, type, editable: true, compatibility: compat, properties: { imageUrl: '', imageAlt: '', title: 'Recommended for you', body: 'Based on your quiz result, we think this is the best fit.', ctaText: 'Get started', ctaHref: '{{cta_url}}', badge: 'Best match' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: false, titleFontSize: 18, bodyFontSize: 14, ctaColor: '#FFFFFF', ctaBackgroundColor: '#0D7377', paddingInner: 20 } };
+      return { id, type, editable: true, compatibility: compat, properties: { imageUrl: '', imageAlt: '', title: 'Recommended for you', body: 'Based on your quiz result, we think this is the best fit.', ctaText: 'Get started', ctaHref: '{{cta_url}}', badge: 'Best match' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: false, titleFontSize: 18, bodyFontSize: 14, ctaColor: '#FFFFFF', ctaBackgroundColor: '#0f7377', paddingInner: 20 } };
     case 'retake_quiz_button':
       return { id, type, editable: true, compatibility: compat, properties: { text: 'Retake the quiz', href: '{{quiz_url}}', subtitle: 'Your answers may have changed' }, styles: { align: 'center', backgroundColor: '#F7F7F5', textColor: '#1A1A1A', fontSize: 15, borderRadius: 8, subtitleColor: '#6B7280', subtitleFontSize: 12, paddingTop: 12, paddingBottom: 12 } };
     case 'score_breakdown':
-      return { id, type, editable: true, compatibility: compat, properties: { items: [{ label: 'Strategy', value: '85', maxValue: '100', color: '#0D7377' }, { label: 'Design', value: '72', maxValue: '100', color: '#6B7280' }, { label: 'Content', value: '91', maxValue: '100', color: '#2D6A4F' }], showBars: true }, styles: { labelColor: '#1A1A1A', labelFontSize: 14, valueColor: '#6B7280', valueFontSize: 14, barHeight: 8, barBackgroundColor: '#E4E3E0', barBorderRadius: 4, paddingTop: 12, paddingBottom: 12 } };
+      return { id, type, editable: true, compatibility: compat, properties: { items: [{ label: 'Strategy', value: '85', maxValue: '100', color: '#0f7377' }, { label: 'Design', value: '72', maxValue: '100', color: '#6B7280' }, { label: 'Content', value: '91', maxValue: '100', color: '#2D6A4F' }], showBars: true }, styles: { labelColor: '#1A1A1A', labelFontSize: 14, valueColor: '#6B7280', valueFontSize: 14, barHeight: 8, barBackgroundColor: '#E4E3E0', barBorderRadius: 4, paddingTop: 12, paddingBottom: 12 } };
     case 'comparison_bar':
-      return { id, type, editable: true, compatibility: compat, properties: { label: 'How you compare', yourScore: '{{score}}', averageScore: '62', maxScore: '100', yourLabel: 'You', averageLabel: 'Average' }, styles: { yourColor: '#0D7377', averageColor: '#D1D5DB', barHeight: 12, barBackgroundColor: '#F3F4F6', barBorderRadius: 6, labelColor: '#1A1A1A', labelFontSize: 13, paddingTop: 12, paddingBottom: 12 } };
+      return { id, type, editable: true, compatibility: compat, properties: { label: 'How you compare', yourScore: '{{score}}', averageScore: '62', maxScore: '100', yourLabel: 'You', averageLabel: 'Average' }, styles: { yourColor: '#0f7377', averageColor: '#D1D5DB', barHeight: 12, barBackgroundColor: '#F3F4F6', barBorderRadius: 6, labelColor: '#1A1A1A', labelFontSize: 13, paddingTop: 12, paddingBottom: 12 } };
     case 'preheader_text':
       return { id, type, editable: true, compatibility: compat, properties: { text: 'Your quiz result is ready.' }, styles: {} };
     case 'unsubscribe_block':

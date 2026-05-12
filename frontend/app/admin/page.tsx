@@ -16,7 +16,7 @@ var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.c
 
 // Inline color tokens (standalone - no dashboard dependency)
 var C = {
-  FONT: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+  FONT: "'Poppins', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
   BG: '#F9FAFB',
   SURFACE: '#FFFFFF',
   GRAY_50: '#F9FAFB',
@@ -26,8 +26,8 @@ var C = {
   TEXT: '#101828',
   TEXT_SECONDARY: '#344054',
   TEXT_SUBTLE: '#667085',
-  ACCENT: '#0D7377',
-  BRAND_500: '#0D7377',
+  ACCENT: '#0f7377',
+  BRAND_500: '#0f7377',
   PURPLE_500: '#7F56D9',
   SUCCESS_500: '#12B76A',
   WARNING_500: '#F79009',

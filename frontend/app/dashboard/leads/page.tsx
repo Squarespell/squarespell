@@ -60,7 +60,7 @@ function getInitials(name: string | null, email: string): string {
   return email.slice(0, 2).toUpperCase();
 }
 
-var AVATAR_COLORS = ['#0D7377', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#0B6165'];
+var AVATAR_COLORS = ['#0f7377', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#0B6165'];
 function avatarColor(s: string) {
   var hash = 0;
   for (var i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);

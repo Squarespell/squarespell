@@ -240,7 +240,7 @@ export function OnboardingTour() {
           boxShadow: '0 12px 40px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1)',
           zIndex: 10000,
           padding: '24px 22px 20px',
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: "'Poppins', system-ui, sans-serif",
           transition: 'top 0.3s ease, left 0.3s ease',
         }}
       >

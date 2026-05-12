@@ -48,7 +48,7 @@ function matchOutcome(blocks: QuizBlock[], totalScore: number) {
 var COLORS = {
   bg: '#F7F7F5',
   card: '#FFFFFF',
-  accent: '#0D7377',
+  accent: '#0f7377',
   accentLight: '#E8F4F4',
   text: '#1A1A1A',
   muted: '#6B6B6B',
@@ -123,7 +123,7 @@ export default function TemplatePreviewPage() {
   // Not found
   if (!template) {
     return (
-      <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Poppins', system-ui, sans-serif" }}>
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: COLORS.text, margin: '0 0 8px' }}>Template not found</h1>
           <p style={{ fontSize: 15, color: COLORS.muted, margin: '0 0 24px' }}>This template does not exist or has been removed.</p>
@@ -138,7 +138,7 @@ export default function TemplatePreviewPage() {
   if (stage === 'result') progress = 100;
 
   return (
-    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Poppins', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
       <header style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid ' + COLORS.border, background: '#fff' }}>

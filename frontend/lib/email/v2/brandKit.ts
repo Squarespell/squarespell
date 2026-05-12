@@ -23,7 +23,7 @@ export interface BrandKitV2 {
 
 export const DEFAULT_BRAND_KIT_V2: BrandKitV2 = {
   logoUrl: '',
-  primaryColor: '#0D7377',
+  primaryColor: '#0f7377',
   secondaryColor: '#6B7280',
   fontFamily: 'Inter',
   senderName: 'The team',
@@ -112,7 +112,7 @@ function applyBrandToBlock(
     case 'button': {
       var bb = b as any;
       if (bb.properties.variant === 'primary') {
-        if (bb.styles.backgroundColor === '#0D7377' || options.overrideManual) {
+        if (bb.styles.backgroundColor === '#0f7377' || options.overrideManual) {
           bb.styles.backgroundColor = kit.primaryColor;
         }
       }
@@ -120,49 +120,49 @@ function applyBrandToBlock(
     }
     case 'score_display': {
       var sd = b as any;
-      if (sd.styles.scoreColor === '#0D7377' || options.overrideManual) {
+      if (sd.styles.scoreColor === '#0f7377' || options.overrideManual) {
         sd.styles.scoreColor = kit.primaryColor;
       }
       break;
     }
     case 'score_badge': {
       var sb = b as any;
-      if (sb.styles.badgeBackgroundColor === '#0D7377' || options.overrideManual) {
+      if (sb.styles.badgeBackgroundColor === '#0f7377' || options.overrideManual) {
         sb.styles.badgeBackgroundColor = kit.primaryColor;
       }
       break;
     }
     case 'result_category': {
       var rc = b as any;
-      if (rc.styles.eyebrowColor === '#0D7377' || options.overrideManual) {
+      if (rc.styles.eyebrowColor === '#0f7377' || options.overrideManual) {
         rc.styles.eyebrowColor = kit.primaryColor;
       }
       break;
     }
     case 'recommendation_card': {
       var rk = b as any;
-      if (rk.styles.ctaBackgroundColor === '#0D7377' || options.overrideManual) {
+      if (rk.styles.ctaBackgroundColor === '#0f7377' || options.overrideManual) {
         rk.styles.ctaBackgroundColor = kit.primaryColor;
       }
       break;
     }
     case 'comparison_bar': {
       var cb = b as any;
-      if (cb.styles.yourColor === '#0D7377' || options.overrideManual) {
+      if (cb.styles.yourColor === '#0f7377' || options.overrideManual) {
         cb.styles.yourColor = kit.primaryColor;
       }
       break;
     }
     case 'blockquote': {
       var bq = b as any;
-      if (bq.styles.borderLeftColor === '#0D7377' || options.overrideManual) {
+      if (bq.styles.borderLeftColor === '#0f7377' || options.overrideManual) {
         bq.styles.borderLeftColor = kit.primaryColor;
       }
       break;
     }
     case 'full_width_banner': {
       var fb = b as any;
-      if (fb.styles.backgroundColor === '#0D7377' || options.overrideManual) {
+      if (fb.styles.backgroundColor === '#0f7377' || options.overrideManual) {
         fb.styles.backgroundColor = kit.primaryColor;
       }
       break;
@@ -205,7 +205,7 @@ function applyBrandToBlock(
 // When a block has a manual override (user changed the color from the default):
 //
 // 1. overrideManual: false (default)
-//    - Only updates blocks where the current value matches the old default (#0D7377)
+//    - Only updates blocks where the current value matches the old default (#0f7377)
 //    - Preserves any manually set colors
 //    - This is the behavior for "Apply Brand Kit" button click
 //

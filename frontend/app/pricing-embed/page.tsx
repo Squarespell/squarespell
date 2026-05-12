@@ -134,14 +134,14 @@ function PricingEmbedInner() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        html, body { background: transparent !important; font-family: 'DM Sans', system-ui, sans-serif; color: #1A1A1A; }
+        html, body { background: transparent !important; font-family: 'Poppins', system-ui, sans-serif; color: #1A1A1A; }
         button { cursor: pointer; font-family: inherit; border: none; }
 
         @keyframes sq-spin { to { transform: rotate(360deg); } }
         @keyframes sq-glow { 0%,100% { box-shadow: 0 4px 18px rgba(13,115,119,.30); } 50% { box-shadow: 0 4px 28px rgba(13,115,119,.55); } }
 
         :root {
-          --acc:        #0D7377;
+          --acc:        #0f7377;
           --acc-dark:   #0B6165;
           --acc-bg:     rgba(13,115,119,.06);
           --acc-border: rgba(13,115,119,.22);
@@ -339,7 +339,7 @@ function PricingEmbedInner() {
                     return (
                       <div key={i} className="sqp-feat">
                         <span className="sqp-feat-icon">
-                          <CheckIcon color={plan.featured ? '#0D7377' : '#059669'} />
+                          <CheckIcon color={plan.featured ? '#0f7377' : '#059669'} />
                         </span>
                         <span className="sqp-feat-text">{f}</span>
                       </div>

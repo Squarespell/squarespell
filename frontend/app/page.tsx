@@ -29,7 +29,7 @@ export default function HomePage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontFamily: "'Poppins', system-ui, sans-serif",
         color: 'rgba(26,26,26,0.35)',
         fontSize: 13,
       }}

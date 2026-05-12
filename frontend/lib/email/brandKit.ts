@@ -13,7 +13,7 @@ export interface BrandKit {
   logoUrl?: string;
   logoDarkUrl?: string;       // optional dark-mode variant
   colorMode?: ColorMode;      // which palette variant is active
-  primaryColor: string;       // hex, e.g. "#0D7377"
+  primaryColor: string;       // hex, e.g. "#0f7377"
   onPrimaryColor: string;     // text color that sits on primaryColor
   secondaryColor?: string;
   backgroundColor: string;    // email body background
@@ -62,7 +62,7 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
   id: 'default',
   user_id: '',
   brandName: 'Your brand',
-  primaryColor: '#0D7377',
+  primaryColor: '#0f7377',
   onPrimaryColor: '#FFFFFF',
   secondaryColor: '#9ca3af',
   backgroundColor: '#F7F7F5',
@@ -70,7 +70,7 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
   textColor: '#1A1A1A',
   mutedTextColor: '#6b7280',
   borderColor: '#E4E3E0',
-  accentColor: '#0D7377',
+  accentColor: '#0f7377',
   headingFont: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   bodyFont: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   headingWeight: 600,

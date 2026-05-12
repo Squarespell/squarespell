@@ -32,7 +32,7 @@ function NotFoundFallback() {
         <button
           onClick={() => router.push('/dashboard')}
           style={{
-            background: '#0D7377',
+            background: '#0f7377',
             color: '#fff',
             border: 'none',
             borderRadius: 8,

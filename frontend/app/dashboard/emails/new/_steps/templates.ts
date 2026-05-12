@@ -29,7 +29,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     html: shell(`
       <h1 style="margin:0 0 12px;font-size:26px;">Your result: {{outcomeTitle}}</h1>
       <p style="margin:0 0 20px;color:#444;line-height:1.55;">Hi {{firstName}}, thanks for taking {{quizTitle}}. Based on your answers, here's what we recommend next.</p>
-      <a href="{{ctaUrl}}" style="display:inline-block;background:#0D7377;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;">See your plan</a>
+      <a href="{{ctaUrl}}" style="display:inline-block;background:#0f7377;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;">See your plan</a>
     `),
   },
   {
@@ -41,7 +41,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     html: shell(`
       <h1 style="margin:0 0 12px;font-size:26px;">Welcome to {{brand}}</h1>
       <p style="margin:0 0 20px;color:#444;line-height:1.55;">Hi {{firstName}}, we're glad you're here. Here's what to expect from us: honest advice, zero spam, and the occasional useful tip.</p>
-      <a href="{{ctaUrl}}" style="display:inline-block;background:#0D7377;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;">Get started</a>
+      <a href="{{ctaUrl}}" style="display:inline-block;background:#0f7377;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;">Get started</a>
     `),
   },
   {
@@ -53,7 +53,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     html: shell(`
       <h1 style="margin:0 0 12px;font-size:24px;">Something you might like</h1>
       <p style="margin:0 0 16px;color:#444;line-height:1.6;">Hi {{firstName}}, we put together a short read on the topic that matched your quiz result. No pitch, just useful.</p>
-      <a href="{{ctaUrl}}" style="color:#0D7377;font-weight:600;text-decoration:underline;">Read it here</a>
+      <a href="{{ctaUrl}}" style="color:#0f7377;font-weight:600;text-decoration:underline;">Read it here</a>
     `),
   },
   {
@@ -64,11 +64,11 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     subjectSuggestion: '{{firstName}}, this is for you',
     html: shell(`
       <div style="background:#111;color:#fff;padding:28px;border-radius:12px;margin-bottom:20px;text-align:center;">
-        <div style="font-size:13px;letter-spacing:2px;color:#0D7377;margin-bottom:8px;">LIMITED OFFER</div>
+        <div style="font-size:13px;letter-spacing:2px;color:#0f7377;margin-bottom:8px;">LIMITED OFFER</div>
         <div style="font-size:28px;font-weight:700;">20% off - 48 hours only</div>
       </div>
       <p style="margin:0 0 20px;color:#444;line-height:1.55;">{{firstName}}, we picked something we think fits your result ({{outcomeTitle}}). It's on us for the next 48 hours.</p>
-      <a href="{{ctaUrl}}" style="display:inline-block;background:#0D7377;color:#ffffff;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:700;">Claim 20% off</a>
+      <a href="{{ctaUrl}}" style="display:inline-block;background:#0f7377;color:#ffffff;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:700;">Claim 20% off</a>
     `),
   },
   {

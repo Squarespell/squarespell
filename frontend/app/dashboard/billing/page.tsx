@@ -587,7 +587,7 @@ export default function BillingPage() {
                           style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             padding: '8px 12px', borderRadius: 8, border: '1px solid ' + C.BORDER,
-                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"DM Sans",system-ui,sans-serif',
+                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"Poppins",system-ui,sans-serif',
                             transition: 'border-color 0.15s',
                           }}
                           onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
@@ -634,7 +634,7 @@ export default function BillingPage() {
                           style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             padding: '8px 12px', borderRadius: 8, border: '1px solid ' + C.BORDER,
-                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"DM Sans",system-ui,sans-serif',
+                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"Poppins",system-ui,sans-serif',
                             transition: 'border-color 0.15s',
                           }}
                           onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
@@ -792,7 +792,7 @@ export default function BillingPage() {
                           fontSize: 14,
                           fontWeight: 700,
                           cursor: 'pointer',
-                          fontFamily: '"DM Sans",system-ui,sans-serif',
+                          fontFamily: '"Poppins",system-ui,sans-serif',
                           transition: 'all .15s',
                           opacity: checkoutLoading === p.id ? 0.5 : 1,
                         }}
@@ -900,7 +900,7 @@ export default function BillingPage() {
                 <span style={{ fontSize: 13, color: C.TEXT_MUTED }}>Proration adjustment</span>
                 <span style={{
                   fontSize: 14, fontWeight: 700,
-                  color: switchModal.prorationAmount >= 0 ? C.TEXT : '#0D7377',
+                  color: switchModal.prorationAmount >= 0 ? C.TEXT : '#0f7377',
                 }}>
                   {switchModal.prorationFormatted}
                 </span>
@@ -921,7 +921,7 @@ export default function BillingPage() {
                 padding: '10px 14px',
                 marginBottom: 20,
                 fontSize: 13,
-                color: '#0D7377',
+                color: '#0f7377',
                 lineHeight: 1.5,
               }}>
                 You&apos;ll receive a credit of {switchModal.prorationFormatted} for the unused time on your current plan.

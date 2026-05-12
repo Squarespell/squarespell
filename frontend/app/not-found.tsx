@@ -13,7 +13,7 @@ export default function NotFound() {
         minHeight: '100svh',
         background: '#F7F7F5',
         color: '#1A1A1A',
-        fontFamily: '"DM Sans", system-ui, sans-serif',
+        fontFamily: '"Poppins", system-ui, sans-serif',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -27,7 +27,7 @@ export default function NotFound() {
             fontWeight: 700,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: '#0D7377',
+            color: '#0f7377',
             margin: '0 0 10px',
           }}
         >
@@ -46,7 +46,7 @@ export default function NotFound() {
             style={{
               padding: '12px 22px',
               borderRadius: 100,
-              background: '#0D7377',
+              background: '#0f7377',
               color: '#FFFFFF',
               fontSize: 13,
               fontWeight: 700,

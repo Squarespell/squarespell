@@ -77,10 +77,10 @@ function generateAltPalette(colors: Record<string, string>): Record<string, stri
   }
   // Light bg -> generate dark variant
   return {
-    primary: colors.primary || '#0D7377',
+    primary: colors.primary || '#0f7377',
     background: '#F7F7F5',
     text: '#1A1A1A',
-    accent: colors.accent || colors.primary || '#0D7377',
+    accent: colors.accent || colors.primary || '#0f7377',
   };
 }
 
@@ -91,7 +91,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 10,
   fontSize: 13.5,
   color: C.TEXT,
-  fontFamily: '"DM Sans",system-ui,sans-serif',
+  fontFamily: '"Poppins",system-ui,sans-serif',
   outline: 'none',
   width: '100%',
 };

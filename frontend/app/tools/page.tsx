@@ -91,11 +91,11 @@ const CSS = `
   --text: #1A1A1A;
   --muted: #6B6B6B;
   --dim: #A0A0A0;
-  --accent: #0D7377;
+  --accent: #0f7377;
 
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
@@ -153,7 +153,7 @@ const CSS = `
   margin: 0 0 20px;
 }
 .th-title-accent {
-  background: linear-gradient(180deg, #0D7377 0%, #0a5a5e 100%);
+  background: linear-gradient(180deg, #0f7377 0%, #0a5a5e 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

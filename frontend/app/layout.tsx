@@ -54,7 +54,7 @@ function Footer() {
   const pathname = usePathname();
 
   return (
-    <footer style={{width:'100%',background:'#F7F7F5',borderTop:'1px solid #E4E3E0',marginTop:'80px',fontFamily:'"DM Sans",system-ui,sans-serif'}}>
+    <footer style={{width:'100%',background:'#F7F7F5',borderTop:'1px solid #E4E3E0',marginTop:'80px',fontFamily:'"Poppins",system-ui,sans-serif'}}>
       <style>{`
         @media(max-width:768px){
           .ft-top{flex-direction:column!important;gap:48px!important}
@@ -65,7 +65,7 @@ function Footer() {
         <div className="ft-top" style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap'}}>
           <div style={{width:'280px',flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}>
-              <div style={{width:'32px',height:'32px',background:'#0D7377',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:'32px',height:'32px',background:'#0f7377',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
               </div>
               <span style={{fontSize: '14px',fontWeight:700,color:'#1A1A1A',letterSpacing:'-0.03em'}}>Squarespell Quiz</span>
@@ -112,7 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ClerkProvider>
       <html lang="en">
-        <head><link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" /></head>
+        <head><link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></head>
         <body>
           <ToastProvider>
           <AuthTokenSync />

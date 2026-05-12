@@ -110,7 +110,7 @@ async function fetchQuiz(slug: string): Promise<Quiz | null> {
 
 function ErrorView() {
   return (
-    <div style={{ minHeight: '100svh', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif", color: '#1a1a1a', padding: 24, textAlign: 'center' }}>
+    <div style={{ minHeight: '100svh', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Poppins', system-ui, sans-serif", color: '#1a1a1a', padding: 24, textAlign: 'center' }}>
       <div style={{ maxWidth: 340 }}>
         <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Quiz not found</p>
         <p style={{ fontSize: 13, opacity: 0.6 }}>This quiz may have been removed or is not yet published.</p>
@@ -135,7 +135,7 @@ export default async function EmbedPage({ params }: { params: { slug: string } }
   const brandFont =
     brand?.font_family && brand.font_family !== 'sans-serif'
       ? `'${brand.font_family}', system-ui, sans-serif`
-      : "'Inter', system-ui, sans-serif";
+      : "'Poppins', system-ui, sans-serif";
 
   return (
     <Suspense fallback={<ErrorView />}>

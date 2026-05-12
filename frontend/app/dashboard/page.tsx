@@ -156,7 +156,7 @@ var AVATAR_COLORS = [
   { bg: '#FFE4E8', fg: '#E31B54' },
 ];
 
-var SOURCE_COLORS = ['#0D7377', '#4DC2C6', '#B3E6E8', '#F79009', '#F04438'];
+var SOURCE_COLORS = ['#0f7377', '#4DC2C6', '#B3E6E8', '#F79009', '#F04438'];
 
 // ═══════ STAT CARD ═══════
 

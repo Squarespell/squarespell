@@ -198,7 +198,7 @@ export const GLOBAL_STYLE_EDITOR: StyleEditorField[] = [
     section: 'Colors',
     field: 'primary',
     inputType: 'color-picker',
-    defaultValue: '#0D7377',
+    defaultValue: '#0f7377',
     livePreviewBehavior: 'Updates globalStyles.colors.primary. Propagates to: button backgrounds, link colors, accent elements, score display color, badge backgrounds.',
   },
   {
@@ -226,7 +226,7 @@ export const GLOBAL_STYLE_EDITOR: StyleEditorField[] = [
     section: 'Colors',
     field: 'link',
     inputType: 'color-picker',
-    defaultValue: '#0D7377',
+    defaultValue: '#0f7377',
     livePreviewBehavior: 'Updates globalStyles.colors.link. All anchor tags and text links inherit.',
   },
 

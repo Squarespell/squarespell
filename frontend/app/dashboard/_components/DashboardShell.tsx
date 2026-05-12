@@ -518,13 +518,13 @@ export function DashboardShell({
             style={{
               width: 36,
               height: 36,
-              background: 'linear-gradient(135deg, #0D7377 0%, #0fa3a8 100%)',
+              background: '#0f7377',
               borderRadius: 10,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
+              boxShadow: '0 2px 8px rgba(15,115,119,0.3)',
             }}
           >
             {icons.logo}
@@ -652,7 +652,7 @@ export function DashboardShell({
               width: 40,
               height: 40,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0D7377, #0fa3a8)',
+              background: 'linear-gradient(135deg, #0f7377, #0fa3a8)',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',

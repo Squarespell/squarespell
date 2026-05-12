@@ -84,7 +84,7 @@ function statusPill(status: string) {
   }
 }
 
-var variantColors = ['#0D7377', '#7C3AED', '#EA580C', '#0284C7'];
+var variantColors = ['#0f7377', '#7C3AED', '#EA580C', '#0284C7'];
 var variantLabels = ['A', 'B', 'C', 'D'];
 
 export default function ABTestingPage({ params }: { params: { id: string } }) {

@@ -13,7 +13,7 @@ type Segment = {
 
 /* ─── color presets ─── */
 var TAG_COLORS = [
-  '#0D7377', '#2E90FA', '#7F56D9', '#EE46BC',
+  '#0f7377', '#2E90FA', '#7F56D9', '#EE46BC',
   '#F04438', '#F79009', '#17B26A', '#475467',
 ];
 
@@ -27,7 +27,7 @@ export default function SegmentationPage() {
 
   /* tag creation */
   var [newTagName, setNewTagName] = useState('');
-  var [newTagColor, setNewTagColor] = useState('#0D7377');
+  var [newTagColor, setNewTagColor] = useState('#0f7377');
   var [colorOpen, setColorOpen] = useState(false);
   var colorRef = useRef<HTMLDivElement>(null);
 

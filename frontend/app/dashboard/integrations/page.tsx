@@ -193,7 +193,7 @@ var inputStyle: React.CSSProperties = {
   borderRadius: 8,
   fontSize: 13,
   color: C.TEXT,
-  fontFamily: '"DM Sans",system-ui,sans-serif',
+  fontFamily: '"Poppins",system-ui,sans-serif',
   outline: 'none',
 };
 

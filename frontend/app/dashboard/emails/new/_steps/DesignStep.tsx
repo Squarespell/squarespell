@@ -341,7 +341,7 @@ export function DesignStep({
                   <div style={{
                     position: 'absolute', top: 8, left: 8,
                     padding: '5px 12px', borderRadius: 20,
-                    background: 'linear-gradient(135deg, #0D7377 0%, #059669 100%)',
+                    background: 'linear-gradient(135deg, #0f7377 0%, #059669 100%)',
                     color: '#FFFFFF', fontSize: 11, fontWeight: 700,
                     display: 'flex', alignItems: 'center', gap: 5,
                     boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
@@ -394,7 +394,7 @@ export function DesignStep({
                       <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 4 }}>Brand applied</span>
                     )}
                     {aiDesign.quizContentApplied && (
-                      <span style={{ fontSize: 10, fontWeight: 600, color: '#0D7377', background: '#F0FDFA', padding: '2px 8px', borderRadius: 4 }}>Quiz content</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#0f7377', background: '#F0FDFA', padding: '2px 8px', borderRadius: 4 }}>Quiz content</span>
                     )}
                   </div>
                 </div>
@@ -662,7 +662,7 @@ export function DesignStep({
                   background: state.abEnabled
                     ? 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%)'
                     : '#FAFAF8',
-                  border: '1.5px solid ' + (state.abEnabled ? '#0D7377' : C.BORDER),
+                  border: '1.5px solid ' + (state.abEnabled ? '#0f7377' : C.BORDER),
                   borderRadius: 12, padding: 16,
                   transition: 'all 0.2s',
                 }}>
@@ -670,7 +670,7 @@ export function DesignStep({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{
                         width: 32, height: 32, borderRadius: 8,
-                        background: state.abEnabled ? 'linear-gradient(135deg, #0D7377, #059669)' : C.ELEVATED,
+                        background: state.abEnabled ? 'linear-gradient(135deg, #0f7377, #059669)' : C.ELEVATED,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         transition: 'all 0.2s',
                       }}>
@@ -687,7 +687,7 @@ export function DesignStep({
                       onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
                       style={{
                         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                        background: state.abEnabled ? '#0D7377' : '#D1D5DB',
+                        background: state.abEnabled ? '#0f7377' : '#D1D5DB',
                         position: 'relative', transition: 'background 0.2s', flexShrink: 0,
                       }}
                     >
@@ -704,10 +704,10 @@ export function DesignStep({
                   {state.abEnabled && (
                     <div>
                       <div style={{ marginBottom: 14 }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#0D7377', marginBottom: 6 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#0f7377', marginBottom: 6 }}>
                           <div style={{
                             width: 18, height: 18, borderRadius: 4,
-                            background: 'linear-gradient(135deg, #0D7377, #059669)',
+                            background: 'linear-gradient(135deg, #0f7377, #059669)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 10, fontWeight: 800, color: '#FFFFFF',
                           }}>B</div>

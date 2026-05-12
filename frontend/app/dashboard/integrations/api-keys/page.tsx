@@ -74,7 +74,7 @@ export default function ApiKeysPage() {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '12px 16px', background: C.SURFACE,
     border: `1px solid ${C.BORDER}`, borderRadius: 10, fontSize: 13.5,
-    color: C.TEXT, fontFamily: '"DM Sans",system-ui,sans-serif', outline: 'none',
+    color: C.TEXT, fontFamily: '"Poppins",system-ui,sans-serif', outline: 'none',
   };
 
   return (
@@ -131,7 +131,7 @@ export default function ApiKeysPage() {
                       <div style={{ fontSize: 14, fontWeight: 600, color: C.TEXT, marginBottom: 3 }}>{k.name}</div>
                       <div style={{ fontSize: 12, color: C.TEXT_MUTED, fontFamily: 'ui-monospace,monospace' }}>
                         {k.key_prefix}........
-                        <span style={{ marginLeft: 12, fontFamily: '"DM Sans",system-ui,sans-serif' }}>
+                        <span style={{ marginLeft: 12, fontFamily: '"Poppins",system-ui,sans-serif' }}>
                           Created {new Date(k.created_at).toLocaleDateString()}
                           {k.last_used_at && ` | Last used ${new Date(k.last_used_at).toLocaleDateString()}`}
                         </span>

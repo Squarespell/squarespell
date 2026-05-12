@@ -117,14 +117,14 @@ export var quizResultTemplate: EmailTemplateV2 = {
     // SCORE DISPLAY - Bold centered score
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'score_display', editable: true, compatibility: C.score_display, properties: { scoreValue: '{{score}}', maxScore: '100', label: 'Your match score', format: 'number' }, styles: { align: 'center', scoreColor: '#0D7377', scoreFontSize: 64, scoreFontWeight: 800, labelColor: '#6B7280', labelFontSize: 14, backgroundColor: '#F0FDFA', borderRadius: 16, paddingTop: 36, paddingBottom: 36 } },
+        { id: uid(), type: 'score_display', editable: true, compatibility: C.score_display, properties: { scoreValue: '{{score}}', maxScore: '100', label: 'Your match score', format: 'number' }, styles: { align: 'center', scoreColor: '#0f7377', scoreFontSize: 64, scoreFontWeight: 800, labelColor: '#6B7280', labelFontSize: 14, backgroundColor: '#F0FDFA', borderRadius: 16, paddingTop: 36, paddingBottom: 36 } },
       ]),
     ]),
 
     // RESULT CATEGORY - Your result with description
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'result_category', editable: true, compatibility: C.result_category, properties: { categoryName: '{{result_category}}', eyebrow: 'YOUR RESULT', description: '{{result_description}}' }, styles: { align: 'left', eyebrowColor: '#0D7377', eyebrowFontSize: 11, eyebrowLetterSpacing: 2, categoryColor: '#1A1A1A', categoryFontSize: 32, categoryFontWeight: 700, descriptionColor: '#6B7280', descriptionFontSize: 15, paddingTop: 24, paddingBottom: 16 } },
+        { id: uid(), type: 'result_category', editable: true, compatibility: C.result_category, properties: { categoryName: '{{result_category}}', eyebrow: 'YOUR RESULT', description: '{{result_description}}' }, styles: { align: 'left', eyebrowColor: '#0f7377', eyebrowFontSize: 11, eyebrowLetterSpacing: 2, categoryColor: '#1A1A1A', categoryFontSize: 32, categoryFontWeight: 700, descriptionColor: '#6B7280', descriptionFontSize: 15, paddingTop: 24, paddingBottom: 16 } },
       ]),
     ]),
 
@@ -138,14 +138,14 @@ export var quizResultTemplate: EmailTemplateV2 = {
     // RECOMMENDATION CARD - With image
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'recommendation_card', editable: true, compatibility: C.recommendation_card, properties: { imageUrl: IMG.recProduct, imageAlt: 'Personalized recommendation', title: 'Our top pick for you', body: '{{recommendation}}', ctaText: 'See the full plan', ctaHref: '{{cta_url}}', badge: 'Recommended' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: true, titleFontSize: 18, bodyFontSize: 14, ctaColor: '#FFFFFF', ctaBackgroundColor: '#0D7377', paddingInner: 20 } },
+        { id: uid(), type: 'recommendation_card', editable: true, compatibility: C.recommendation_card, properties: { imageUrl: IMG.recProduct, imageAlt: 'Personalized recommendation', title: 'Our top pick for you', body: '{{recommendation}}', ctaText: 'See the full plan', ctaHref: '{{cta_url}}', badge: 'Recommended' }, styles: { borderRadius: 12, borderColor: '#E4E3E0', backgroundColor: '#FFFFFF', shadow: true, titleFontSize: 18, bodyFontSize: 14, ctaColor: '#FFFFFF', ctaBackgroundColor: '#0f7377', paddingInner: 20 } },
       ]),
     ]),
 
     // CTA + RETAKE
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'View your full results', href: '{{cta_url}}', variant: 'primary', fullWidth: true }, styles: { align: 'center', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 17, fontWeight: 700, borderRadius: 10, paddingX: 32, paddingY: 16, marginTop: 8, marginBottom: 8 } },
+        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'View your full results', href: '{{cta_url}}', variant: 'primary', fullWidth: true }, styles: { align: 'center', backgroundColor: '#0f7377', textColor: '#FFFFFF', fontSize: 17, fontWeight: 700, borderRadius: 10, paddingX: 32, paddingY: 16, marginTop: 8, marginBottom: 8 } },
       ]),
       makeRow([
         { id: uid(), type: 'spacer', editable: true, compatibility: C.spacer, properties: { height: 8 }, styles: {} },
@@ -158,7 +158,7 @@ export var quizResultTemplate: EmailTemplateV2 = {
     // SOCIAL PROOF - Testimonial
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'blockquote', editable: true, compatibility: C.blockquote, properties: { text: 'The quiz put me on exactly the right path. I stopped guessing and started building within a day.', citation: 'Priya Sharma', citationTitle: 'Independent designer', rating: 5 }, styles: { borderLeftColor: '#0D7377', borderLeftWidth: 3, backgroundColor: '#F7F7F5', fontSize: 16, fontStyle: 'italic', paddingTop: 20, paddingBottom: 20, paddingLeft: 24, paddingRight: 24 } },
+        { id: uid(), type: 'blockquote', editable: true, compatibility: C.blockquote, properties: { text: 'The quiz put me on exactly the right path. I stopped guessing and started building within a day.', citation: 'Priya Sharma', citationTitle: 'Independent designer', rating: 5 }, styles: { borderLeftColor: '#0f7377', borderLeftWidth: 3, backgroundColor: '#F7F7F5', fontSize: 16, fontStyle: 'italic', paddingTop: 20, paddingBottom: 20, paddingLeft: 24, paddingRight: 24 } },
       ]),
     ]),
 
@@ -214,7 +214,7 @@ export var leadNurtureTemplate: EmailTemplateV2 = {
     // BANNER - Colored text section
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'full_width_banner', editable: true, compatibility: C.full_width_banner, properties: { headline: 'Built for your result', subheadline: 'A short playbook for people who landed on {{result_category}}.', ctaText: '', ctaHref: '', backgroundImageUrl: '' }, styles: { backgroundColor: '#0D7377', textColor: '#FFFFFF', textAlign: 'left', minHeight: 120, paddingTop: 32, paddingBottom: 32, paddingLeft: 32, paddingRight: 32, overlayOpacity: 0 } },
+        { id: uid(), type: 'full_width_banner', editable: true, compatibility: C.full_width_banner, properties: { headline: 'Built for your result', subheadline: 'A short playbook for people who landed on {{result_category}}.', ctaText: '', ctaHref: '', backgroundImageUrl: '' }, styles: { backgroundColor: '#0f7377', textColor: '#FFFFFF', textAlign: 'left', minHeight: 120, paddingTop: 32, paddingBottom: 32, paddingLeft: 32, paddingRight: 32, overlayOpacity: 0 } },
       ]),
     ], '#FFFFFF'),
 
@@ -250,14 +250,14 @@ export var leadNurtureTemplate: EmailTemplateV2 = {
         { id: uid(), type: 'divider', editable: true, compatibility: C.divider, properties: { lineStyle: 'solid' }, styles: { color: '#E4E3E0', thickness: 1, width: '100%', marginTop: 8, marginBottom: 16 } },
       ]),
       makeRow([
-        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Read the full playbook', href: '{{cta_url}}', variant: 'primary', fullWidth: false }, styles: { align: 'left', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 16, fontWeight: 600, borderRadius: 10, paddingX: 28, paddingY: 14, marginTop: 0, marginBottom: 8 } },
+        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Read the full playbook', href: '{{cta_url}}', variant: 'primary', fullWidth: false }, styles: { align: 'left', backgroundColor: '#0f7377', textColor: '#FFFFFF', fontSize: 16, fontWeight: 600, borderRadius: 10, paddingX: 28, paddingY: 14, marginTop: 0, marginBottom: 8 } },
       ]),
     ]),
 
     // SOCIAL PROOF
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'blockquote', editable: true, compatibility: C.blockquote, properties: { text: 'This playbook saved me weeks of trial and error. Clear, actionable, and perfectly matched to my situation.', citation: 'Alex Chen', citationTitle: 'Startup founder', rating: 5 }, styles: { borderLeftColor: '#0D7377', borderLeftWidth: 3, backgroundColor: '#F0FDFA', fontSize: 16, fontStyle: 'italic', paddingTop: 20, paddingBottom: 20, paddingLeft: 24, paddingRight: 24 } },
+        { id: uid(), type: 'blockquote', editable: true, compatibility: C.blockquote, properties: { text: 'This playbook saved me weeks of trial and error. Clear, actionable, and perfectly matched to my situation.', citation: 'Alex Chen', citationTitle: 'Startup founder', rating: 5 }, styles: { borderLeftColor: '#0f7377', borderLeftWidth: 3, backgroundColor: '#F0FDFA', fontSize: 16, fontStyle: 'italic', paddingTop: 20, paddingBottom: 20, paddingLeft: 24, paddingRight: 24 } },
       ]),
     ]),
 
@@ -313,7 +313,7 @@ export var promotionalOfferTemplate: EmailTemplateV2 = {
     // BADGE + URGENCY
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'score_badge', editable: true, compatibility: C.score_badge, properties: { badgeText: '{{result_category}}', subtext: 'Your tier - matched from your quiz score', iconType: 'trophy' }, styles: { align: 'center', badgeColor: '#FFFFFF', badgeBackgroundColor: '#0D7377', badgeFontSize: 18, badgeBorderRadius: 999, subtextColor: '#6B7280', subtextFontSize: 13, paddingTop: 28, paddingBottom: 12 } },
+        { id: uid(), type: 'score_badge', editable: true, compatibility: C.score_badge, properties: { badgeText: '{{result_category}}', subtext: 'Your tier - matched from your quiz score', iconType: 'trophy' }, styles: { align: 'center', badgeColor: '#FFFFFF', badgeBackgroundColor: '#0f7377', badgeFontSize: 18, badgeBorderRadius: 999, subtextColor: '#6B7280', subtextFontSize: 13, paddingTop: 28, paddingBottom: 12 } },
       ]),
       makeRow([
         { id: uid(), type: 'heading', editable: true, compatibility: C.heading, properties: { text: '{{expiry_date}} left', level: 2 }, styles: { align: 'center', color: '#DC2626', fontSize: 28, fontWeight: 700, letterSpacing: 0, paddingTop: 4, paddingBottom: 8 } },
@@ -337,14 +337,14 @@ export var promotionalOfferTemplate: EmailTemplateV2 = {
     // COMPARISON BAR
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'comparison_bar', editable: true, compatibility: C.comparison_bar, properties: { label: 'How your score compares', yourScore: '{{score}}', averageScore: '62', maxScore: '100', yourLabel: 'You', averageLabel: 'Average' }, styles: { yourColor: '#0D7377', averageColor: '#D1D5DB', barHeight: 12, barBackgroundColor: '#F3F4F6', barBorderRadius: 6, labelColor: '#1A1A1A', labelFontSize: 13, paddingTop: 16, paddingBottom: 16 } },
+        { id: uid(), type: 'comparison_bar', editable: true, compatibility: C.comparison_bar, properties: { label: 'How your score compares', yourScore: '{{score}}', averageScore: '62', maxScore: '100', yourLabel: 'You', averageLabel: 'Average' }, styles: { yourColor: '#0f7377', averageColor: '#D1D5DB', barHeight: 12, barBackgroundColor: '#F3F4F6', barBorderRadius: 6, labelColor: '#1A1A1A', labelFontSize: 13, paddingTop: 16, paddingBottom: 16 } },
       ]),
     ], '#F7F7F5'),
 
     // CTA
     makeSection('body', [
       makeRow([
-        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Claim my 20% off', href: '{{cta_url}}', variant: 'primary', fullWidth: true }, styles: { align: 'center', backgroundColor: '#0D7377', textColor: '#FFFFFF', fontSize: 18, fontWeight: 700, borderRadius: 10, paddingX: 32, paddingY: 18, marginTop: 16, marginBottom: 8 } },
+        { id: uid(), type: 'button', editable: true, compatibility: C.button, properties: { text: 'Claim my 20% off', href: '{{cta_url}}', variant: 'primary', fullWidth: true }, styles: { align: 'center', backgroundColor: '#0f7377', textColor: '#FFFFFF', fontSize: 18, fontWeight: 700, borderRadius: 10, paddingX: 32, paddingY: 18, marginTop: 16, marginBottom: 8 } },
       ]),
       makeRow([
         { id: uid(), type: 'paragraph', editable: true, compatibility: C.paragraph, properties: { html: '<em>No code needed. The link applies the discount automatically.</em>' }, styles: { align: 'center', color: '#9CA3AF', fontSize: 13, lineHeight: 1.5, paddingTop: 4, paddingBottom: 16 } },

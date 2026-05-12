@@ -98,7 +98,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
                     padding: '5px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600,
                     cursor: 'pointer', border: 'none', transition: 'all 0.15s ease',
                     background: active ? 'rgba(13,115,119,0.15)' : 'transparent',
-                    color: active ? '#0D7377' : 'rgba(0,0,0,0.4)',
+                    color: active ? '#0f7377' : 'rgba(0,0,0,0.4)',
                   }}
                 >
                   {r === 'all' ? 'All' : r}
@@ -114,7 +114,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
               cursor: 'pointer', transition: 'all 0.15s ease',
               background: excludeBots ? 'rgba(13,115,119,0.1)' : 'rgba(0,0,0,0.06)',
               border: excludeBots ? '1px solid rgba(13,115,119,0.3)' : '1px solid rgba(0,0,0,0.12)',
-              color: excludeBots ? '#0D7377' : 'rgba(0,0,0,0.5)',
+              color: excludeBots ? '#0f7377' : 'rgba(0,0,0,0.5)',
             }}
             title={excludeBots ? 'Bot traffic is excluded from analytics' : 'Bot traffic is included in analytics'}
           >
@@ -136,7 +136,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
               background: 'rgba(0,0,0,0.04)',
               border: '1px solid rgba(0,0,0,0.1)',
               color: 'rgba(0,0,0,0.5)',
-              fontFamily: '"DM Sans",system-ui,sans-serif',
+              fontFamily: '"Poppins",system-ui,sans-serif',
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -217,7 +217,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
           <h2 className={styles.sectionTitle}>Question heatmap</h2>
           {heatmap.questions.map(function (q: any, qi: number) {
             var maxCount = Math.max(1, ...(q.options || []).map(function (o: any) { return o.count; }));
-            var barColors = ['#0D7377', '#2D6A4F', '#4a9e3f', '#3b7dd8', '#9b59b6', '#e67e22', '#e74c3c', '#1abc9c'];
+            var barColors = ['#0f7377', '#2D6A4F', '#4a9e3f', '#3b7dd8', '#9b59b6', '#e67e22', '#e74c3c', '#1abc9c'];
             return (
               <div key={qi} className={styles.heatmapQuestion}>
                 <div className={styles.heatmapQHeader}>
