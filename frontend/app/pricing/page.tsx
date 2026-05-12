@@ -3,99 +3,11 @@
 import { Fragment, Suspense, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { PLANS } from '@/lib/planCatalog';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type Billing = 'monthly' | 'yearly';
-
-/* ── v3 plan data ─────────────────────────────────────────── */
-
-const PLANS = [
-  {
-    key: 'core',
-    name: 'Core',
-    desc: 'Build real quiz funnels with branching logic, scoring, and scheduling.',
-    monthly: 12,
-    yearly: 9,
-    yearlySave: 36,
-    featured: false,
-    limits: { quizzes: '5', leads: '1,000', emails: '1,000' },
-    included: [
-      'AI quiz generation from your URL',
-      'Squarespace one-click connect',
-      'Remove Squarespell Quiz branding',
-      'Branching logic',
-      'Weighted scoring',
-      'Quiz scheduling',
-      'Standard analytics',
-      'Lead dashboard + CSV export',
-      'Lead & email add-on packs',
-    ],
-    excluded: [
-      'A/B testing',
-      'Email sequences',
-      'Integrations (Zapier, Mailchimp, etc.)',
-      'Advanced analytics',
-      'Custom CSS',
-      'White-label / Custom domain',
-      'Team seats',
-    ],
-    upgrade: 'Need A/B testing or integrations?',
-  },
-  {
-    key: 'pro',
-    name: 'Pro',
-    desc: 'Full power for serious lead generation — unlimited quizzes, integrations, and A/B testing.',
-    monthly: 19,
-    yearly: 16,
-    yearlySave: 36,
-    featured: true,
-    limits: { quizzes: 'Unlimited', leads: '3,000', emails: '3,000' },
-    included: [
-      'Everything in Core',
-      'A/B testing',
-      'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
-      'Webhooks',
-      'Advanced analytics',
-      'Per-question drop-off analysis',
-      'Custom CSS',
-      'Priority email support',
-      'Lead & email add-on packs',
-    ],
-    excluded: [
-      'White-label (your brand)',
-      'Custom domain for quizzes',
-      'Team seats',
-      'API access',
-      'Dedicated onboarding call',
-    ],
-    upgrade: 'Need white-label or unlimited leads?',
-  },
-  {
-    key: 'business',
-    name: 'Business',
-    desc: 'Unlimited everything with white-label, custom domains, team seats, and API access.',
-    monthly: 35,
-    yearly: 29,
-    yearlySave: 72,
-    featured: false,
-    limits: { quizzes: 'Unlimited', leads: 'Unlimited', emails: 'Unlimited' },
-    included: [
-      'Everything in Pro',
-      'White-label (your brand on everything)',
-      'Custom domain for quizzes',
-      'Team seats (3 included, $5/seat extra)',
-      'API access',
-      'Priority support (email + chat)',
-      'Dedicated onboarding call',
-      'Unlimited leads & emails',
-      'Unlimited quizzes',
-    ],
-    excluded: [],
-    upgrade: '',
-  },
-];
 
 /* ── full comparison matrix ───────────────────────────────── */
 
@@ -515,7 +427,7 @@ function PricingInner() {
                       <span className="price-mo">/mo</span>
                     </div>
                     <div className="price-note">
-                      {billing === 'yearly' ? 'Billed $' + (plan.yearly * 12) + '/year' : 'Billed monthly'}
+                      {billing === 'yearly' ? 'Billed $' + plan.yearlyTotal + '/year' : 'Billed monthly'}
                     </div>
                     {billing === 'yearly' && (
                       <div className="price-save">

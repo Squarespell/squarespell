@@ -3,105 +3,44 @@
 /**
  * /pricing-embed — iframe-embeddable pricing widget for squarespell.com
  *
- * Embed on Squarespace:
- *   <iframe src="https://app.squarespell.com/pricing-embed"
- *           id="sq-pricing" width="100%" height="860"
- *           frameborder="0" scrolling="no"
- *           style="border:none;display:block;"></iframe>
+ * Embed on Squarespace (paste into a Code Block):
+ *
+ *   <div style="width:100%;max-width:1160px;margin:0 auto">
+ *     <iframe id="sq-pricing-frame"
+ *       src="https://app.squarespell.com/pricing-embed"
+ *       width="100%" height="900" frameborder="0" scrolling="no"
+ *       allowtransparency="true" allow="payment"
+ *       style="border:none;display:block;background:transparent;transition:height .25s ease">
+ *     </iframe>
+ *   </div>
  *   <script>
  *     window.addEventListener('message', function(e) {
  *       if (e.origin !== 'https://app.squarespell.com') return;
- *       if (e.data && e.data.type === 'sq-price-height') {
- *         document.getElementById('sq-pricing').height = e.data.height + 40;
- *       }
+ *       if (e.data && e.data.type === 'sq-price-height')
+ *         document.getElementById('sq-pricing-frame').height = e.data.height + 48;
  *     });
  *   </script>
  *
  * Auth behaviour:
- *   - Signed in  → calls /api/stripe/create-checkout and redirects window.top to Stripe
- *   - Not signed in → redirects window.top to /sign-up
+ *   Signed in  → POST /api/stripe/create-checkout, redirect window.top to Stripe
+ *   Not signed in → redirect window.top to /sign-up
  */
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { PLANS } from '@/lib/planCatalog';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 const APP = 'https://app.squarespell.com';
 
 type Billing = 'monthly' | 'yearly';
 
-const PLANS = [
-  {
-    key: 'core',
-    name: 'Core',
-    desc: 'Build real quiz funnels with branching logic, scoring, and lead capture.',
-    monthly: 12,
-    yearly: 9,
-    yearlySave: 36,
-    yearlyTotal: 108,
-    featured: false,
-    limits: { quizzes: '5', leads: '1,000', emails: '1,000' },
-    features: [
-      'AI quiz generation from your URL',
-      'Squarespace one-click connect',
-      'Remove Squarespell branding',
-      'Branching logic & weighted scoring',
-      'Quiz scheduling',
-      'Standard analytics',
-      'Lead dashboard + CSV export',
-    ],
-    notIncluded: ['A/B testing', 'Email sequences', 'Integrations'],
-    ctaLabel: 'Start free trial',
-  },
-  {
-    key: 'pro',
-    name: 'Pro',
-    desc: 'Full power for serious lead gen — unlimited quizzes, integrations, A/B testing.',
-    monthly: 19,
-    yearly: 16,
-    yearlySave: 36,
-    yearlyTotal: 192,
-    featured: true,
-    limits: { quizzes: 'Unlimited', leads: '3,000', emails: '3,000' },
-    features: [
-      'Everything in Core',
-      'A/B testing',
-      'Email sequences',
-      'Zapier, Mailchimp, Klaviyo, HubSpot',
-      'Advanced analytics + drop-off',
-      'Custom CSS',
-      'Priority email support',
-    ],
-    notIncluded: ['White-label', 'Custom domain', 'Team seats'],
-    ctaLabel: 'Start free trial',
-  },
-  {
-    key: 'business',
-    name: 'Business',
-    desc: 'Unlimited everything — white-label, custom domains, team seats, and API.',
-    monthly: 35,
-    yearly: 29,
-    yearlySave: 72,
-    yearlyTotal: 348,
-    featured: false,
-    limits: { quizzes: 'Unlimited', leads: 'Unlimited', emails: 'Unlimited' },
-    features: [
-      'Everything in Pro',
-      'White-label (your brand on everything)',
-      'Custom domain for quizzes',
-      'Team seats (3 included, $5/extra)',
-      'API access',
-      'Priority support (email + chat)',
-      'Dedicated onboarding call',
-    ],
-    notIncluded: [],
-    ctaLabel: 'Start free trial',
-  },
-];
+/* ── SVG helpers ─────────────────────────────────────────────── */
 
 function CheckIcon({ size = 16, color = '#059669' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -109,7 +48,8 @@ function CheckIcon({ size = 16, color = '#059669' }: { size?: number; color?: st
 
 function CrossIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(26,26,26,0.22)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="rgba(26,26,26,0.22)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -118,13 +58,19 @@ function CrossIcon() {
 
 function Spinner() {
   return (
-    <span style={{ display: 'inline-block', width: 16, height: 16, border: '2px solid rgba(255,255,255,.35)', borderTopColor: '#fff', borderRadius: '50%', animation: 'sq-spin .65s linear infinite' }} />
+    <span style={{
+      display: 'inline-block', width: 16, height: 16,
+      border: '2px solid rgba(255,255,255,.35)', borderTopColor: '#fff',
+      borderRadius: '50%', animation: 'sq-spin .65s linear infinite',
+    }} />
   );
 }
 
+/* ── main export ─────────────────────────────────────────────── */
+
 export default function PricingEmbed() {
   return (
-    <Suspense fallback={<div style={{ minHeight: 400, background: '#F7F7F5' }} />}>
+    <Suspense fallback={<div style={{ minHeight: 400, background: 'transparent' }} />}>
       <PricingEmbedInner />
     </Suspense>
   );
@@ -136,7 +82,7 @@ function PricingEmbedInner() {
   const [loading, setLoading] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  /* ── auto-resize iframe ───────────────────────────────────── */
+  /* ── auto-resize iframe ─────────────────────────────────────── */
   useEffect(function () {
     if (typeof window === 'undefined' || !containerRef.current) return;
     var el = containerRef.current;
@@ -152,25 +98,16 @@ function PricingEmbedInner() {
     return function () { ro.disconnect(); };
   }, [billing]);
 
-  /* ── checkout handler ─────────────────────────────────────── */
+  /* ── checkout / CTA handler ─────────────────────────────────── */
   async function handleCTA(planKey: string) {
     if (loading) return;
     setLoading(planKey);
 
     try {
-      if (!isLoaded) {
-        /* Clerk not ready — redirect to sign-up */
+      if (!isLoaded || !isSignedIn) {
         if (window.top) window.top.location.href = APP + '/sign-up';
         return;
       }
-
-      if (!isSignedIn) {
-        /* Not signed in — take them to sign-up */
-        if (window.top) window.top.location.href = APP + '/sign-up';
-        return;
-      }
-
-      /* Signed in — create Stripe checkout session */
       var token = await getToken();
       var res = await fetch(API + '/api/stripe/create-checkout', {
         method: 'POST',
@@ -182,7 +119,6 @@ function PricingEmbedInner() {
         if (window.top) window.top.location.href = data.url;
         return;
       }
-      /* fallback */
       if (window.top) window.top.location.href = APP + '/pricing?interval=' + billing;
     } catch (e) {
       console.error(e);
@@ -199,23 +135,28 @@ function PricingEmbedInner() {
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         html, body { background: transparent !important; font-family: 'DM Sans', system-ui, sans-serif; color: #1A1A1A; }
-        .sqp-wrap { background: transparent; }
         button { cursor: pointer; font-family: inherit; border: none; }
 
         @keyframes sq-spin { to { transform: rotate(360deg); } }
         @keyframes sq-glow { 0%,100% { box-shadow: 0 4px 18px rgba(13,115,119,.30); } 50% { box-shadow: 0 4px 28px rgba(13,115,119,.55); } }
 
         :root {
-          --acc: #0D7377;
-          --acc-dark: #0B6165;
-          --acc-bg: rgba(13,115,119,.06);
+          --acc:        #0D7377;
+          --acc-dark:   #0B6165;
+          --acc-bg:     rgba(13,115,119,.06);
           --acc-border: rgba(13,115,119,.22);
-          --t1: #1A1A1A; --t2: rgba(26,26,26,.85); --t3: rgba(26,26,26,.55); --t4: rgba(26,26,26,.30);
-          --card: #FFFFFF; --border: #E4E3E0; --surface: #F7F7F5;
-          --green: #059669; --green-bg: rgba(5,150,105,.09);
+          --t1: #1A1A1A;
+          --t2: rgba(26,26,26,.85);
+          --t3: rgba(26,26,26,.55);
+          --t4: rgba(26,26,26,.30);
+          --card:   #FFFFFF;
+          --border: #E4E3E0;
+          --surface:#F7F7F5;
+          --green:    #059669;
+          --green-bg: rgba(5,150,105,.09);
         }
 
-        .sqp-wrap { padding: 0 4px 32px; }
+        .sqp-wrap { padding: 0 4px 32px; background: transparent; }
 
         /* ── toggle ── */
         .sqp-toggle { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
@@ -225,7 +166,7 @@ function PricingEmbedInner() {
         .sqp-save-badge { background: var(--green-bg); color: var(--green); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 100px; border: 1px solid rgba(5,150,105,.18); }
 
         /* ── grid ── */
-        .sqp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .sqp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
 
         /* ── card ── */
         .sqp-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 20px; padding: 28px 22px 24px; display: flex; flex-direction: column; position: relative; transition: transform .18s, box-shadow .18s; }
@@ -260,11 +201,14 @@ function PricingEmbedInner() {
 
         /* features */
         .sqp-feat-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--acc); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid rgba(13,115,119,.15); }
-        .sqp-feats { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .sqp-feats { display: flex; flex-direction: column; gap: 8px; }
         .sqp-feat { display: flex; align-items: flex-start; gap: 8px; }
         .sqp-feat-icon { flex-shrink: 0; margin-top: 2px; }
         .sqp-feat-text { font-size: 13px; line-height: 1.45; color: var(--t2); }
         .sqp-feat-text.off { color: var(--t4); }
+
+        /* excluded section divider */
+        .sqp-excl-divider { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--t4); margin: 10px 0 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
 
         /* trust row */
         .sqp-trust { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
@@ -306,7 +250,9 @@ function PricingEmbedInner() {
             </button>
           </div>
           {billing === 'yearly' && (
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--green)' }}>Save up to $72/year</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--green)' }}>
+              Save up to $72/year
+            </span>
           )}
         </div>
 
@@ -321,17 +267,23 @@ function PricingEmbedInner() {
                 {plan.featured && <div className="sqp-pop">Most Popular</div>}
 
                 {/* name + desc */}
-                <div className={'sqp-plan-name' + (plan.featured ? ' accent' : '')}>{plan.name}</div>
+                <div className={'sqp-plan-name' + (plan.featured ? ' accent' : '')}>
+                  {plan.name}
+                </div>
                 <div className="sqp-plan-desc">{plan.desc}</div>
 
                 {/* price */}
                 <div className="sqp-price-row">
-                  {billing === 'yearly' && <span className="sqp-old">${plan.monthly}</span>}
+                  {billing === 'yearly' && (
+                    <span className="sqp-old">${plan.monthly}</span>
+                  )}
                   <span className="sqp-big">${price}</span>
                   <span className="sqp-mo">/mo</span>
                 </div>
                 <div className="sqp-note">
-                  {billing === 'yearly' ? 'Billed $' + plan.yearlyTotal + '/year' : 'Billed monthly'}
+                  {billing === 'yearly'
+                    ? 'Billed $' + plan.yearlyTotal + '/year'
+                    : 'Billed monthly'}
                 </div>
                 {billing === 'yearly' && (
                   <div className="sqp-save">
@@ -344,8 +296,8 @@ function PricingEmbedInner() {
                 <div className="sqp-limits">
                   {[
                     { val: plan.limits.quizzes, label: 'Quizzes' },
-                    { val: plan.limits.leads, label: 'Leads/mo' },
-                    { val: plan.limits.emails, label: 'Emails/mo' },
+                    { val: plan.limits.leads,   label: 'Leads/mo' },
+                    { val: plan.limits.emails,  label: 'Emails/mo' },
                   ].map(function (lim) {
                     return (
                       <div key={lim.label} className="sqp-lim">
@@ -362,13 +314,13 @@ function PricingEmbedInner() {
                   onClick={function () { handleCTA(plan.key); }}
                   disabled={!!loading}
                 >
-                  {isLoading ? <><Spinner /> Loading…</> : plan.ctaLabel}
+                  {isLoading ? <><Spinner /> Loading…</> : 'Start free trial'}
                 </button>
 
-                {/* features */}
+                {/* ── INCLUDED features ── */}
                 <div className="sqp-feat-head">Included</div>
                 <div className="sqp-feats">
-                  {plan.features.map(function (f, i) {
+                  {plan.included.map(function (f, i) {
                     return (
                       <div key={i} className="sqp-feat">
                         <span className="sqp-feat-icon">
@@ -378,10 +330,12 @@ function PricingEmbedInner() {
                       </div>
                     );
                   })}
-                  {plan.notIncluded.length > 0 && (
+
+                  {/* ── NOT INCLUDED features (only Core & Pro) ── */}
+                  {plan.excluded.length > 0 && (
                     <>
-                      <div style={{ height: 4 }} />
-                      {plan.notIncluded.map(function (f, i) {
+                      <div className="sqp-excl-divider">Not included</div>
+                      {plan.excluded.map(function (f, i) {
                         return (
                           <div key={'x' + i} className="sqp-feat">
                             <span className="sqp-feat-icon"><CrossIcon /></span>
@@ -399,11 +353,7 @@ function PricingEmbedInner() {
 
         {/* ── TRUST ROW ── */}
         <div className="sqp-trust">
-          {[
-            '14-day Pro trial',
-            'No credit card required',
-            'Cancel anytime',
-          ].map(function (t) {
+          {['14-day Pro trial', 'No credit card required', 'Cancel anytime'].map(function (t) {
             return (
               <span key={t}>
                 <CheckIcon size={13} color="var(--acc)" />

@@ -22,6 +22,8 @@ import {
   PageLoading,
 } from '../_components/PageShell';
 
+import { PLAN_CATALOG } from '@/lib/planCatalog';
+
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 type AddonInfo = {
@@ -54,111 +56,6 @@ type Invoice = {
   url: string;
 };
 
-const PLAN_CATALOG: Array<{
-  id: UserPlan['plan'];
-  name: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  yearlySave: number;
-  tagline: string;
-  featured: boolean;
-  limits: { quizzes: string; leads: string; emails: string };
-  included: string[];
-  excluded: string[];
-}> = [
-  {
-    id: 'core',
-    name: 'Core',
-    monthlyPrice: 12,
-    yearlyPrice: 108,
-    yearlySave: 36,
-    tagline: 'Build real quiz funnels with branching logic, scoring, and scheduling.',
-    featured: false,
-    limits: { quizzes: '5', leads: '1,000', emails: '1,000' },
-    included: [
-      'AI quiz generation from your URL',
-      'Squarespace one-click connect',
-      'Remove Squarespell Quiz branding',
-      'Branching logic',
-      'Weighted scoring',
-      'Quiz scheduling',
-      'Standard analytics',
-      'Lead dashboard + CSV export',
-      'Lead & email add-on packs',
-    ],
-    excluded: [
-      'A/B testing',
-      'Email sequences',
-      'Integrations (Zapier, Mailchimp, etc.)',
-      'Advanced analytics',
-      'Custom CSS',
-      'White-label / Custom domain',
-      'Team seats',
-    ],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    monthlyPrice: 19,
-    yearlyPrice: 192,
-    yearlySave: 36,
-    tagline: 'Full power for serious lead generation — unlimited quizzes, integrations, and A/B testing.',
-    featured: true,
-    limits: { quizzes: 'Unlimited', leads: '3,000', emails: '3,000' },
-    included: [
-      'Everything in Core',
-      'A/B testing',
-      'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
-      'Webhooks',
-      'Advanced analytics',
-      'Per-question drop-off analysis',
-      'Custom CSS',
-      'Priority email support',
-      'Lead & email add-on packs',
-    ],
-    excluded: [
-      'White-label (your brand)',
-      'Custom domain for quizzes',
-      'Team seats',
-      'API access',
-      'Dedicated onboarding call',
-    ],
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    monthlyPrice: 35,
-    yearlyPrice: 348,
-    yearlySave: 72,
-    tagline: 'Unlimited everything with white-label, custom domains, team seats, and API access.',
-    featured: false,
-    limits: { quizzes: 'Unlimited', leads: 'Unlimited', emails: 'Unlimited' },
-    included: [
-      'AI quiz generation from your URL',
-      'Squarespace one-click connect',
-      'Remove Squarespell Quiz branding',
-      'Branching logic',
-      'Weighted scoring',
-      'Quiz scheduling',
-      'A/B testing',
-      'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
-      'Webhooks',
-      'Standard + advanced analytics',
-      'Per-question drop-off analysis',
-      'Custom CSS',
-      'Lead dashboard + CSV export',
-      'White-label (your brand on everything)',
-      'Custom domain for quizzes',
-      'Team seats (3 included, $5/seat extra)',
-      'API access',
-      'Priority support (email + chat)',
-      'Dedicated onboarding call',
-    ],
-    excluded: [],
-  },
-];
 
 function UsageBar({ label, used, limit }: { label: string; used: number; limit: number | null }) {
   var safeUsed = used ?? 0;
