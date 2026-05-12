@@ -166,7 +166,7 @@ function PricingEmbedInner() {
         .sqp-save-badge { background: var(--green-bg); color: var(--green); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 100px; border: 1px solid rgba(5,150,105,.18); }
 
         /* ── grid ── */
-        .sqp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+        .sqp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
 
         /* ── card ── */
         .sqp-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 20px; padding: 28px 22px 24px; display: flex; flex-direction: column; position: relative; transition: transform .18s, box-shadow .18s; }
@@ -210,6 +210,19 @@ function PricingEmbedInner() {
         /* excluded section divider */
         .sqp-excl-divider { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--t4); margin: 10px 0 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
 
+        /* add-ons */
+        .sqp-addons { background: var(--card); border: 1.5px solid var(--border); border-radius: 18px; padding: 28px 24px; margin-top: 20px; }
+        .sqp-addons-title { font-size: 17px; font-weight: 800; color: var(--t1); letter-spacing: -.02em; margin-bottom: 4px; }
+        .sqp-addons-sub { font-size: 13px; color: var(--t3); line-height: 1.5; margin-bottom: 18px; }
+        .sqp-addons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .sqp-addon-col { background: var(--acc-bg); border: 1px solid rgba(13,115,119,.15); border-radius: 12px; padding: 16px 18px; }
+        .sqp-addon-label { font-size: 10px; font-weight: 700; color: var(--acc); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+        .sqp-addon-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: rgba(255,255,255,.75); border-radius: 8px; border: 1px solid rgba(0,0,0,.05); }
+        .sqp-addon-row + .sqp-addon-row { margin-top: 6px; }
+        .sqp-addon-name { font-size: 13px; font-weight: 600; color: var(--t1); }
+        .sqp-addon-price { font-size: 13px; font-weight: 700; color: var(--acc); }
+        .sqp-addon-per { font-size: 11px; color: var(--t4); margin-left: 6px; }
+
         /* trust row */
         .sqp-trust { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
         .sqp-trust span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--t3); font-weight: 500; }
@@ -219,6 +232,7 @@ function PricingEmbedInner() {
           .sqp-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; gap: 14px; }
           .sqp-card.featured { order: -1; }
           .sqp-plan-desc { min-height: unset; }
+          .sqp-addons-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 560px) {
           .sqp-wrap { padding: 0 0 24px; }
@@ -227,6 +241,7 @@ function PricingEmbedInner() {
           .sqp-big { font-size: 36px; }
           .sqp-trust { gap: 12px; }
           .sqp-trust span { font-size: 11px; }
+          .sqp-addons { padding: 20px 16px; }
         }
       `}</style>
 
@@ -349,6 +364,52 @@ function PricingEmbedInner() {
               </div>
             );
           })}
+        </div>
+
+        {/* ── ADD-ON PACKS ── */}
+        <div className="sqp-addons">
+          <div className="sqp-addons-title">Need more leads or emails?</div>
+          <div className="sqp-addons-sub">
+            Add extra capacity to any paid plan. Billed monthly, cancel anytime. Available on Core and Pro.
+          </div>
+          <div className="sqp-addons-grid">
+            <div className="sqp-addon-col">
+              <div className="sqp-addon-label">Lead add-on packs</div>
+              {[
+                { label: '+500 leads/mo',   price: '$3/mo',  per: '$0.006/lead' },
+                { label: '+1,500 leads/mo', price: '$7/mo',  per: '$0.005/lead' },
+                { label: '+3,000 leads/mo', price: '$12/mo', per: '$0.004/lead' },
+              ].map(function (a) {
+                return (
+                  <div key={a.label} className="sqp-addon-row">
+                    <span className="sqp-addon-name">{a.label}</span>
+                    <span>
+                      <span className="sqp-addon-price">{a.price}</span>
+                      <span className="sqp-addon-per">{a.per}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="sqp-addon-col">
+              <div className="sqp-addon-label">Email add-on packs</div>
+              {[
+                { label: '+1,000 emails/mo',  price: '$3/mo',  per: '$0.003/email' },
+                { label: '+5,000 emails/mo',  price: '$7/mo',  per: '$0.001/email' },
+                { label: '+10,000 emails/mo', price: '$12/mo', per: '$0.001/email' },
+              ].map(function (a) {
+                return (
+                  <div key={a.label} className="sqp-addon-row">
+                    <span className="sqp-addon-name">{a.label}</span>
+                    <span>
+                      <span className="sqp-addon-price">{a.price}</span>
+                      <span className="sqp-addon-per">{a.per}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* ── TRUST ROW ── */}
