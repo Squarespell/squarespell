@@ -59,56 +59,33 @@ type Invoice = {
 
 function UsageBar({ label, used, limit }: { label: string; used: number; limit: number | null }) {
   var safeUsed = used ?? 0;
-  var isUnlimited = limit == null || !isFinite(limit);
-  var pct = !isUnlimited && limit > 0 ? Math.min(100, (safeUsed / limit) * 100) : 0;
-  var over = !isUnlimited && limit > 0 && safeUsed > limit * 0.85;
+  var isUnlimited = limit == null || limit <= 0 || !isFinite(limit) || limit >= 999999;
+  var pct = !isUnlimited && limit! > 0 ? Math.min(100, Math.round((safeUsed / limit!) * 100)) : 0;
+  var barColor = pct >= 90 ? '#B42318' : pct >= 70 ? '#B54708' : C.ACCENT;
+  var pctColor = pct >= 90 ? '#B42318' : pct >= 70 ? '#B54708' : C.TEXT_MUTED;
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          marginBottom: 8,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: C.TEXT_MUTED,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-          }}
-        >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
           {label}
         </span>
-        <span style={{ fontSize: 13, color: C.TEXT, fontVariantNumeric: 'tabular-nums' }}>
-          <strong>{safeUsed.toLocaleString()}</strong>
-          <span style={{ color: C.TEXT_MUTED }}>
-            {' / '}
-            {isUnlimited ? '∞' : limit.toLocaleString()}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontSize: 13, color: C.TEXT, fontVariantNumeric: 'tabular-nums' }}>
+            <strong>{safeUsed.toLocaleString()}</strong>
+            <span style={{ color: C.TEXT_MUTED }}>{' / '}{isUnlimited ? 'Unlimited' : limit!.toLocaleString()}</span>
           </span>
-        </span>
+          {!isUnlimited && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: pctColor, minWidth: 34, textAlign: 'right' as const }}>{pct}%</span>
+          )}
+        </div>
       </div>
-      <div
-        style={{
-          height: 6,
-          borderRadius: 3,
-          background: C.SURFACE,
-          border: '1px solid ' + C.BORDER,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            width: pct + '%',
-            height: '100%',
-            background: over ? '#ff9f43' : C.ACCENT,
-            transition: 'width 0.3s ease',
-          }}
-        />
-      </div>
+      {isUnlimited ? (
+        <div style={{ height: 6, borderRadius: 3, background: C.ACCENT, opacity: 0.25 }} />
+      ) : (
+        <div style={{ height: 6, borderRadius: 3, background: C.SURFACE, border: '1px solid ' + C.BORDER, overflow: 'hidden' }}>
+          <div style={{ width: pct + '%', height: '100%', background: barColor, borderRadius: 3, transition: 'width 0.4s ease' }} />
+        </div>
+      )}
     </div>
   );
 }

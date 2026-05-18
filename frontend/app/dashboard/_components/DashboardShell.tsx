@@ -281,60 +281,101 @@ function isActive(item: NavItem, pathname: string): boolean {
 }
 
 /* Sidebar plan usage card */
-function SidebarPlanCard({ plan }: { plan: { name: string; renewsAt: string; viewsUsed: number; viewsLimit: number } }) {
-  var pct = plan.viewsLimit > 0 ? Math.round((plan.viewsUsed / plan.viewsLimit) * 100) : 0;
+type PlanCardData = {
+  name: string;
+  renewsAt: string;
+  isTrial: boolean;
+  trialDaysLeft: number;
+  leadsUsed: number;
+  leadsLimit: number;
+  quizzesUsed: number;
+  quizzesLimit: number;
+};
+
+function usageBarColor(pct: number): string {
+  if (pct >= 90) return C.DANGER;
+  if (pct >= 70) return C.WARNING;
+  return C.ACCENT;
+}
+
+function UsageBar({ label, used, limit, unlimited }: { label: string; used: number; limit: number; unlimited?: boolean }) {
+  var pct = (!unlimited && limit > 0) ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  var color = usageBarColor(pct);
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: C.GRAY_600 }}>{label}</span>
+        <span style={{ fontSize: 11, color: unlimited ? C.SUCCESS : (pct >= 90 ? C.DANGER : C.GRAY_500) }}>
+          {unlimited ? 'Unlimited' : used.toLocaleString() + ' / ' + limit.toLocaleString()}
+        </span>
+      </div>
+      {!unlimited && (
+        <div style={{ height: 5, background: C.GRAY_200, borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: pct + '%', background: color, borderRadius: 3, transition: 'width 0.4s' }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SidebarPlanCard({ plan }: { plan: PlanCardData }) {
   var isTopTier = plan.name.toLowerCase().includes('business') || plan.name.toLowerCase().includes('agency');
+  var leadsUnlimited = plan.leadsLimit <= 0 || plan.leadsLimit === Infinity || plan.leadsLimit >= 999999;
+  var quizzesUnlimited = plan.quizzesLimit <= 0 || plan.quizzesLimit === Infinity || plan.quizzesLimit >= 999999;
+  var trialUrgent = plan.isTrial && plan.trialDaysLeft <= 3;
   return (
     <div
       style={{
         margin: '0 16px 12px',
-        padding: 16,
+        padding: '14px 16px',
         background: C.GRAY_50,
-        border: '1px solid ' + C.GRAY_200,
+        border: '1px solid ' + (trialUrgent ? C.WARNING : C.GRAY_200),
         borderRadius: 12,
         fontFamily: C.FONT,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900 }}>{plan.name}</span>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.SUCCESS_500, flexShrink: 0 }} />
+      {/* Plan name + status */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.GRAY_900 }}>{plan.name}</span>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: trialUrgent ? C.WARNING : C.SUCCESS_500, flexShrink: 0 }} />
       </div>
-      {plan.renewsAt ? (
-        <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8 }}>Renews on {plan.renewsAt}</div>
-      ) : (
-        <div style={{ fontSize: 13, color: C.GRAY_500, marginBottom: 8 }}>Active</div>
-      )}
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900 }}>
-          {plan.viewsUsed.toLocaleString()} / {plan.viewsLimit.toLocaleString()}
-        </span>
-      </div>
-      <div style={{ fontSize: 12, color: C.GRAY_500, marginBottom: 6 }}>views used</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <div style={{ flex: 1, height: 6, background: C.GRAY_200, borderRadius: 3, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: pct + '%', background: C.ACCENT, borderRadius: 3, transition: 'width 0.3s' }} />
+      {/* Subline: trial days or renewal date */}
+      {plan.isTrial ? (
+        <div style={{ fontSize: 11, color: trialUrgent ? C.WARNING : C.GRAY_500, fontWeight: trialUrgent ? 600 : 400, marginBottom: 12 }}>
+          {plan.trialDaysLeft > 0 ? plan.trialDaysLeft + ' days left in trial' : 'Trial ended'}
         </div>
-        <span style={{ fontSize: 12, fontWeight: 500, color: C.ACCENT }}>{pct}%</span>
-      </div>
+      ) : plan.renewsAt ? (
+        <div style={{ fontSize: 11, color: C.GRAY_500, marginBottom: 12 }}>Renews {plan.renewsAt}</div>
+      ) : (
+        <div style={{ fontSize: 11, color: C.GRAY_500, marginBottom: 12 }}>Active</div>
+      )}
+
+      {/* Usage bars */}
+      <UsageBar label="Leads" used={plan.leadsUsed} limit={plan.leadsLimit} unlimited={leadsUnlimited} />
+      <UsageBar label="Quizzes" used={plan.quizzesUsed} limit={plan.quizzesLimit} unlimited={quizzesUnlimited} />
+
       <Link
         href="/dashboard/billing"
         style={{
           display: 'block',
           width: '100%',
-          padding: 8,
-          background: C.SURFACE,
-          border: '1px solid ' + C.GRAY_300,
+          padding: '7px 0',
+          marginTop: 4,
+          background: plan.isTrial ? C.ACCENT : C.SURFACE,
+          border: '1px solid ' + (plan.isTrial ? C.ACCENT : C.GRAY_300),
           borderRadius: 8,
-          fontSize: 13,
-          fontWeight: 600,
-          color: C.GRAY_700,
+          fontSize: 12,
+          fontWeight: 700,
+          color: plan.isTrial ? '#fff' : C.GRAY_700,
           textAlign: 'center',
           textDecoration: 'none',
           fontFamily: C.FONT,
-          transition: 'all 0.12s',
+          transition: 'opacity 0.12s',
         }}
+        onMouseEnter={function(e) { e.currentTarget.style.opacity = '0.85'; }}
+        onMouseLeave={function(e) { e.currentTarget.style.opacity = '1'; }}
       >
-        {isTopTier ? 'Manage plan' : 'Upgrade plan'}
+        {plan.isTrial ? 'Choose a plan' : isTopTier ? 'Manage plan' : 'Upgrade plan'}
       </Link>
     </div>
   );
@@ -407,8 +448,9 @@ export function DashboardShell({
   var [bannerToken, setBannerToken] = useState<string | null>(null);
   var sidebarScrollRef = useRef<HTMLDivElement>(null);
   var sidebarScrollPos = useRef(0);
-  var [planData, setPlanData] = useState<{ name: string; renewsAt: string; viewsUsed: number; viewsLimit: number }>({
-    name: 'Pro Plan', renewsAt: '', viewsUsed: 0, viewsLimit: 25000,
+  var [planData, setPlanData] = useState<PlanCardData>({
+    name: 'Loading...', renewsAt: '', isTrial: false, trialDaysLeft: 0,
+    leadsUsed: 0, leadsLimit: 0, quizzesUsed: 0, quizzesLimit: 0,
   });
 
   useEffect(function() {
@@ -462,19 +504,27 @@ export function DashboardShell({
           var data = await res.json();
           if (!cancelled) {
             var renewDate = data.current_period_end ? new Date(data.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-            /* Map backend plan slugs to display names */
             var PLAN_NAMES: Record<string, string> = {
-              free: 'Free Plan', core: 'Core Plan', pro: 'Pro Plan',
+              free: 'Free Plan', trial: 'Free Trial', core: 'Core Plan', pro: 'Pro Plan',
               business: 'Business Plan', agency: 'Business Plan',
               starter: 'Core Plan', growth: 'Pro Plan', scale: 'Business Plan',
             };
             var rawPlan = (data.plan || 'free').toLowerCase();
             var planDisplayName = PLAN_NAMES[rawPlan] || (rawPlan.charAt(0).toUpperCase() + rawPlan.slice(1) + ' Plan');
+            var isTrial = rawPlan === 'free' || rawPlan === 'trial';
+            var trialDaysLeft = 0;
+            if (isTrial && data.trial_ends_at) {
+              trialDaysLeft = Math.max(0, Math.ceil((new Date(data.trial_ends_at).getTime() - Date.now()) / 86400000));
+            }
             setPlanData({
               name: planDisplayName,
               renewsAt: renewDate,
-              viewsUsed: data.usage?.views ?? 0,
-              viewsLimit: data.limits?.views || 25000,
+              isTrial,
+              trialDaysLeft,
+              leadsUsed: data.leads_this_month ?? data.usage?.leads ?? 0,
+              leadsLimit: data.limits?.leads ?? 0,
+              quizzesUsed: data.quiz_count ?? 0,
+              quizzesLimit: data.limits?.quizzes ?? 0,
             });
           }
         }
