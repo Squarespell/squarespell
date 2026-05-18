@@ -6,6 +6,7 @@ import { createQuizFromUrl } from "./quizTemplates";
 import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '../../../../lib/quiz/templates';
 
 type Stage = "choose" | "templates" | "site" | "loading" | "pick" | "generating" | "error";
+type GateCode = "trial_expired" | "quiz_limit_reached" | null;
 
 type Goal = {
   id: string;
@@ -164,6 +165,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
   const [isSquarespace, setIsSquarespace] = useState(false);
   const [templateVersion, setTemplateVersion] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [gateCode, setGateCode] = useState<GateCode>(null);
   const [submitting, setSubmitting] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [templateFilter, setTemplateFilter] = useState<string>('All');
@@ -408,6 +410,12 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong. Try again.";
+      const code = (err as any)?.code as string | undefined;
+      if (code === "trial_expired" || code === "quiz_limit_reached") {
+        setGateCode(code as GateCode);
+      } else {
+        setGateCode(null);
+      }
       setErrorMsg(message);
       setStage("error");
     } finally {
@@ -733,7 +741,36 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 </div>
               )}
 
-              {stage === "error" && (
+              {stage === "error" && gateCode && (
+                <div className="sq-error-block">
+                  <div className="sq-gate-icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0f7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {gateCode === "trial_expired"
+                        ? <><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></>
+                        : <><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></>
+                      }
+                    </svg>
+                  </div>
+                  <div className="sq-error-title">
+                    {gateCode === "trial_expired" ? "Your free trial has ended" : "Quiz limit reached"}
+                  </div>
+                  <div className="sq-error-sub">
+                    {gateCode === "trial_expired"
+                      ? "Your 14-day trial is over. Pick a plan to keep building quizzes and collecting leads."
+                      : "You have reached the quiz limit on your current plan. Upgrade to create more."}
+                  </div>
+                  <a
+                    href="/pricing"
+                    className="sq-btn sq-btn-primary"
+                    style={{ marginTop: 20, display: "inline-flex", textDecoration: "none" }}
+                  >
+                    {gateCode === "trial_expired" ? "Choose a plan - from $9/mo" : "Upgrade your plan"}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                  </a>
+                </div>
+              )}
+
+              {stage === "error" && !gateCode && (
                 <div className="sq-error-block">
                   <div className="sq-error-icon" aria-hidden="true">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
@@ -758,7 +795,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                 {stage === "pick" && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("site")}>Back</button>
                 )}
-                {stage === "error" && (
+                {stage === "error" && !gateCode && (
                   <button type="button" className="sq-btn sq-btn-ghost" onClick={() => setStage("pick")}>Back</button>
                 )}
 
@@ -784,7 +821,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
                     {submitting ? "Generating..." : "Generate this quiz"}
                   </button>
                 )}
-                {stage === "error" && (
+                {stage === "error" && !gateCode && (
                   <button type="button" className="sq-btn sq-btn-primary" onClick={handleGenerate} disabled={submitting}>
                     Try again
                   </button>
@@ -1048,6 +1085,11 @@ const styles = `
 .sq-error-block {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 10px; padding: 40px 20px; text-align: center;
+}
+.sq-gate-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 60px; height: 60px; border-radius: 18px;
+  background: rgba(13,115,119,0.08); margin-bottom: 4px;
 }
 .sq-goal-icon {
   display: inline-flex;

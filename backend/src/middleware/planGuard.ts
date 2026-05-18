@@ -36,7 +36,7 @@ export function getPlanLimits(plan: string) {
   return PLAN_LIMITS[plan] ?? PLAN_LIMITS['free'];
 }
 
-function isTrialActive(createdAt: string): boolean {
+export function isTrialActive(createdAt: string): boolean {
   const created = new Date(createdAt);
   const trialEnd = new Date(created.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
   return new Date() < trialEnd;

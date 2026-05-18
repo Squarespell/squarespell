@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { log } from '../lib/logger';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
-import { guardQuizCreation, getPlanLimits } from '../middleware/planGuard';
+import { guardQuizCreation, getPlanLimits, isTrialActive } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
@@ -514,8 +514,18 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'email required' });
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-  const { data: owner } = await supabase.from('users').select('plan,brand_kit,lead_addon').eq('id', quiz.user_id).single();
-  const baseLimits = getPlanLimits(owner?.plan ?? 'free');
+  const { data: owner } = await supabase.from('users').select('plan,brand_kit,lead_addon,created_at').eq('id', quiz.user_id).single();
+
+  // Block lead collection when the quiz owner's trial has expired
+  const ownerPlan = owner?.plan ?? 'free';
+  if ((ownerPlan === 'free' || ownerPlan === 'trial') && owner?.created_at && !isTrialActive(owner.created_at)) {
+    return res.status(403).json({
+      error: 'trial_expired',
+      message: 'This quiz is no longer collecting leads. The account owner\'s trial has ended.',
+    });
+  }
+
+  const baseLimits = getPlanLimits(ownerPlan);
   const leadLimit = getEffectiveLeadLimit(baseLimits, owner?.lead_addon);
 
   const metadata: Record<string, any> = {};

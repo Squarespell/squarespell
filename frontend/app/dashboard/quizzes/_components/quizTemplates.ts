@@ -186,11 +186,14 @@ export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<
 
   if (!res.ok) {
     let msg = "Quiz creation failed (" + res.status + ")";
+    let code: string | undefined;
     try {
       const errBody = await res.json();
-      if (errBody?.error) msg = String(errBody.error);
+      if (errBody?.error) { msg = String(errBody.error); code = errBody.error; }
     } catch {}
-    throw new Error(msg);
+    const err = new Error(msg) as Error & { code?: string };
+    err.code = code;
+    throw err;
   }
   const raw = (await res.json()) as { quiz?: { id?: string }; id?: string };
   const id = raw?.quiz?.id ?? raw?.id;

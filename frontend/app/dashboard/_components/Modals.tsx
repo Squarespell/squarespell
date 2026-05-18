@@ -481,6 +481,11 @@ var UPGRADE_COPY: Record<string, { title: string; desc: string; icon: string }> 
     desc: 'Get conversion insights, lead scoring, funnel drop-off analysis, and question-level heatmaps.',
     icon: 'M18 20V10M12 20V4M6 20v-6',
   },
+  trialExpired: {
+    title: 'Your free trial has ended',
+    desc: 'Your 14-day trial is over. Pick a plan to keep building quizzes and collecting leads. Plans start at $9/mo.',
+    icon: 'M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-7v2h2v-2h-2zm0-8v6h2V7h-2z',
+  },
   quizLimit: {
     title: 'Quiz limit reached',
     desc: 'You have hit the maximum number of quizzes on your current plan. Upgrade to create more.',
