@@ -133,8 +133,9 @@ export async function initiateDeletionRequest(
 
 /**
  * Confirm and execute data deletion.
+ * quizOwnerId must match the user who initiated the request.
  */
-export async function confirmAndExecuteDeletion(token: string): Promise<{
+export async function confirmAndExecuteDeletion(token: string, quizOwnerId: string): Promise<{
   success: boolean;
   deleted_records: Record<string, number>;
 }> {
@@ -147,6 +148,12 @@ export async function confirmAndExecuteDeletion(token: string): Promise<{
     .single();
 
   if (!request) return { success: false, deleted_records: {} };
+
+  // Ownership check: only the user who created the request can confirm it
+  if (request.user_id !== quizOwnerId) {
+    log.warn('[GDPR] Ownership mismatch on confirm-delete', { requestUserId: request.user_id, callerId: quizOwnerId });
+    return { success: false, deleted_records: {} };
+  }
 
   var email = request.email;
   var userId = request.user_id;

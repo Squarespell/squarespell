@@ -1,5 +1,6 @@
 import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
+import { validateWebhookUrl } from '../utils/urlValidator';
 
 const BACKOFF_DELAYS = [60000, 300000, 1800000]; // 1min, 5min, 30min
 const MAX_ATTEMPTS = 3;
@@ -16,6 +17,21 @@ export async function deliverWebhook(
   webhookUrl: string,
   payload: any
 ): Promise<void> {
+  // Defense in depth: validate URL even if already checked on save
+  const urlError = validateWebhookUrl(webhookUrl);
+  if (urlError) {
+    log.warn('[Webhook] Blocked delivery - invalid URL', { integrationId, reason: urlError });
+    await supabase.from('webhook_deliveries').insert({
+      integration_id: integrationId,
+      lead_id: leadId,
+      payload,
+      status: 'failed',
+      attempts: 1,
+      last_error: `Blocked: ${urlError}`,
+    });
+    return;
+  }
+
   try {
     // Attempt to POST to the webhook URL with timeout
     const controller = new AbortController();
@@ -123,6 +139,18 @@ export async function processRetries(): Promise<number> {
       }
 
       const webhookUrl = integration.config.url;
+
+      // Defense in depth: re-validate URL before retry fetch
+      const retryUrlError = validateWebhookUrl(webhookUrl);
+      if (retryUrlError) {
+        log.warn('[Webhook] Blocked retry - invalid URL', { deliveryId: delivery.id, reason: retryUrlError });
+        await supabase
+          .from('webhook_deliveries')
+          .update({ status: 'failed', last_error: `Blocked: ${retryUrlError}` })
+          .eq('id', delivery.id);
+        processed++;
+        continue;
+      }
 
       // Attempt delivery
       try {

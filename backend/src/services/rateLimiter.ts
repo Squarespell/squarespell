@@ -36,6 +36,15 @@ export const publicQuizLimiter = new Ratelimit({
   ...(redis ? {} : { ephemeralCache: new Map() }),
 });
 
+// GDPR confirm-delete: 5 attempts per hour per user
+export const deletionLimiter = new Ratelimit({
+  redis: redis as any,
+  limiter: Ratelimit.slidingWindow(5, '1 h'),
+  prefix: 'ratelimit:deletion',
+  analytics: true,
+  ...(redis ? {} : { ephemeralCache: new Map() }),
+});
+
 export function getClientIp(req: any): string {
   return ((req.headers['x-forwarded-for'] as string) || req.ip || 'unknown').split(',')[0].trim();
 }
