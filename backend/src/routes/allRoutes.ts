@@ -28,6 +28,8 @@ import { sendPlatformEmail } from '../services/platformEmails';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { UAParser } from 'ua-parser-js';
+import { validateEmail } from '../services/emailValidator';
+import { validateName } from '../services/nameValidator';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -512,6 +514,20 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
 
   const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
+
+  // Reject malformed / disposable emails (C-Lead-Quality fix)
+  const emailCheck = validateEmail(email);
+  if (!emailCheck.valid) {
+    return res.status(400).json({ error: emailCheck.reason || 'Invalid email' });
+  }
+
+  // Reject obviously fake/junk names ("Test", "ABC", "asdf", keyboard mashes, etc.)
+  // Name remains optional, but if present it must look like a real name.
+  const nameCheck = validateName(name);
+  if (!nameCheck.valid) {
+    return res.status(400).json({ error: nameCheck.reason || 'Invalid name' });
+  }
+
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
   const { data: owner } = await supabase.from('users').select('plan,brand_kit,lead_addon,created_at').eq('id', quiz.user_id).single();
@@ -563,12 +579,16 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (outcomeTitle) metadata.outcome_title = outcomeTitle;
   if (outcomeDescription) metadata.outcome_description = outcomeDescription;
 
+  // Normalize for storage/dedup: trim name, lowercase+trim email
+  const normalizedName = typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
+  const normalizedEmail = email.trim().toLowerCase();
+
   // Atomic lead insert with limit check — prevents race condition (C4 fix)
   const { data: leadResult, error } = await supabase.rpc('insert_lead_with_limit_check', {
     p_quiz_id: quiz.id,
     p_user_id: quiz.user_id,
-    p_name: name ?? null,
-    p_email: email,
+    p_name: normalizedName,
+    p_email: normalizedEmail,
     p_answers: answers ?? {},
     p_outcome_id: outcome_id ?? null,
     p_metadata: metadata,
