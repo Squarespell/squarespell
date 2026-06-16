@@ -240,7 +240,28 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
 
   function calculateOutcome() {
     const score = calculateScore();
-    return (quiz.outcomes ?? []).find((o: any) => score >= o.score_range?.min && score <= o.score_range?.max) ?? quiz.outcomes?.[0];
+    const outcomes = quiz.outcomes ?? [];
+    const matched = outcomes.find((o: any) => score >= o.score_range?.min && score <= o.score_range?.max);
+    if (matched) return matched;
+    // No configured score_range covers this score (gap in ranges, or score
+    // outside every range due to misconfigured min/max). Falling back to
+    // outcomes[0] unconditionally would silently show the same "first"
+    // result to every such user regardless of how they actually scored —
+    // instead, pick whichever outcome's range is numerically closest to
+    // the real score so the result is at least directionally correct.
+    if (outcomes.length === 0) return undefined;
+    let closest = outcomes[0];
+    let closestDist = Infinity;
+    outcomes.forEach((o: any) => {
+      const min = o.score_range?.min ?? 0;
+      const max = o.score_range?.max ?? 0;
+      const dist = score < min ? min - score : score > max ? score - max : 0;
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = o;
+      }
+    });
+    return closest;
   }
 
   async function submitLead() {

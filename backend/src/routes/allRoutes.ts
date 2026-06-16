@@ -101,6 +101,52 @@ function calculateLeadScore(quiz: any, answers: Record<number, number>): number 
 }
 
 /**
+ * Server-side scoring/outcome/qualification recomputation for lead
+ * submissions. Mirrors calculateScore()/calculateOutcome() in
+ * frontend/components/quiz-taker/QuizRunner.tsx exactly (including the
+ * answers-keyed-by-question-id format that's actually used on the wire —
+ * NOT the index-keyed format calculateLeadScore() above assumes, which is
+ * unused dead code).
+ *
+ * This MUST be the source of truth for outcome_id / qualified / path_taken
+ * — never trust those fields verbatim from the client request body, since
+ * a caller can otherwise submit any outcome_id (e.g. always "best result")
+ * or fake qualified:true regardless of their actual answers.
+ */
+function computeServerScoreAndOutcome(quiz: any, answers: Record<string, any>): {
+  score: number;
+  outcomeId: string | null;
+  outcomeRangeMatched: boolean;
+} {
+  const questions = (quiz?.questions as any[]) || [];
+  const outcomes = (quiz?.outcomes as any[]) || [];
+
+  let score = 0;
+  questions.forEach((q: any) => {
+    const ans = answers?.[q.id];
+    if (ans === undefined || ans === null) return;
+    const selected = Array.isArray(ans) ? ans : [ans];
+    selected.forEach((id: any) => {
+      const opt = (q.options || []).find((o: any) => o.id === id);
+      const value = opt?.score_value ?? opt?.score;
+      if (typeof value === 'number' && Number.isFinite(value)) score += value;
+    });
+  });
+
+  if (!Number.isFinite(score)) score = 0;
+
+  const matched = outcomes.find(
+    (o: any) => score >= (o?.score_range?.min ?? -Infinity) && score <= (o?.score_range?.max ?? Infinity)
+  );
+
+  return {
+    score,
+    outcomeId: matched?.id ?? outcomes[0]?.id ?? null,
+    outcomeRangeMatched: !!matched,
+  };
+}
+
+/**
  * Get score label based on quiz settings and score thresholds.
  */
 function getScoreLabel(score: number | null, quiz: any): string {
@@ -622,12 +668,36 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     metadata.os = ua.os.name;
   }
 
+  // SECURITY: never trust outcome_id / qualified / path_taken / calculated_price
+  // verbatim from the client — recompute them server-side from the quiz's
+  // scoring config + the submitted answers. Without this, a caller could POST
+  // any outcome_id (e.g. always the "best" result) or fake qualified:true
+  // regardless of their actual answers.
+  const submittedAnswers = (answers && typeof answers === 'object') ? answers : {};
+  const outcomesConfigured = Array.isArray(quiz.outcomes) && quiz.outcomes.length > 0;
+  const serverScoring = outcomesConfigured
+    ? computeServerScoreAndOutcome(quiz, submittedAnswers)
+    : { score: 0, outcomeId: null as string | null, outcomeRangeMatched: false };
+
+  const resolvedOutcomeId = outcomesConfigured ? serverScoring.outcomeId : (outcome_id ?? null);
+
+  if (outcomesConfigured && outcome_id && outcome_id !== resolvedOutcomeId) {
+    log.warn('[Leads] Client outcome_id did not match server-computed outcome — using server value', {
+      quizId: quiz.id,
+      clientOutcomeId: outcome_id,
+      serverOutcomeId: resolvedOutcomeId,
+      score: serverScoring.score,
+    });
+  }
+
+  const quizMode = quiz.mode || quiz.settings?.mode;
+
   // Snapshot outcome title+description so leads survive outcome edits/deletions
   var outcomeTitle: string | null = null;
   var outcomeDescription: string | null = null;
-  if (outcome_id) {
+  if (resolvedOutcomeId) {
     var outcomes = (quiz.outcomes as any[]) || [];
-    var matchedOutcome = outcomes.find(function(o: any) { return o.id === outcome_id; });
+    var matchedOutcome = outcomes.find(function(o: any) { return o.id === resolvedOutcomeId; });
     if (matchedOutcome) {
       outcomeTitle = matchedOutcome.title || null;
       outcomeDescription = matchedOutcome.description || null;
@@ -637,6 +707,23 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   // Store outcome snapshot in metadata for resilience against outcome edits
   if (outcomeTitle) metadata.outcome_title = outcomeTitle;
   if (outcomeDescription) metadata.outcome_description = outcomeDescription;
+  if (outcomesConfigured) metadata.score = serverScoring.score;
+
+  // client_qualifier mode: recompute qualified/path_taken server-side from
+  // the server-computed score, never from the client-supplied values.
+  if (quizMode === 'client_qualifier') {
+    const threshold = Number(quiz.settings?.qualification_threshold ?? 70) || 70;
+    const isQualified = serverScoring.score >= threshold;
+    metadata.qualified = isQualified;
+    metadata.path_taken = isQualified ? 'booking' : 'nurture';
+  }
+
+  // price_calculator mode: recompute the dollar total server-side from the
+  // quiz's pricing config (mirrors computeServerPriceCents used at checkout)
+  // instead of trusting the client-supplied calculated_price.
+  if (quizMode === 'price_calculator') {
+    metadata.calculated_price = quizPaymentsService.computeServerPriceCents(quiz.questions as any[], submittedAnswers) / 100;
+  }
 
   // Normalize for storage/dedup: trim name, lowercase+trim email
   const normalizedName = typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
@@ -649,7 +736,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     p_name: normalizedName,
     p_email: normalizedEmail,
     p_answers: answers ?? {},
-    p_outcome_id: outcome_id ?? null,
+    p_outcome_id: resolvedOutcomeId,
     p_metadata: metadata,
     p_consent: consent === true,
     p_consent_text: consent ? (consent_text || null) : null,

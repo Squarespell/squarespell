@@ -26,13 +26,19 @@ interface CreateCheckoutSessionParams {
  * frontend/components/quiz-taker/QuizRunner.tsx — keep both in sync if the
  * pricing model changes.
  */
-function computeServerPriceCents(questions: any[], answers: Record<string, any>): number {
+export function computeServerPriceCents(questions: any[], answers: Record<string, any>): number {
   let totalDollars = 0;
 
   (questions || []).forEach((q: any) => {
     if (q.type === 'range_input') {
-      const rangeValue = answers?.[q.id];
-      if (rangeValue !== undefined && rangeValue !== null && typeof rangeValue === 'number') {
+      let rangeValue = answers?.[q.id];
+      if (rangeValue !== undefined && rangeValue !== null && typeof rangeValue === 'number' && Number.isFinite(rangeValue)) {
+        // Clamp to the question's configured min/max — without this, a
+        // caller hitting the lead/checkout API directly (bypassing the
+        // slider UI) could submit an arbitrarily large or out-of-range
+        // numeric answer to manipulate the computed price.
+        if (typeof q.min === 'number') rangeValue = Math.max(q.min, rangeValue);
+        if (typeof q.max === 'number') rangeValue = Math.min(q.max, rangeValue);
         totalDollars += rangeValue * (q.value_per_unit ?? 0);
       }
     } else {
