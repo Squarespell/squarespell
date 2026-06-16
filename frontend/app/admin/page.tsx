@@ -152,12 +152,34 @@ function LoadingSpinner() {
   );
 }
 
+// Same AbortController + retry-with-backoff pattern shipped for the public
+// quiz/embed pages (commit 8adacb9): a single transient blip (brief 5xx from
+// the backend, dropped connection, slow cold-start) should not permanently
+// surface "Failed to fetch" with no recovery path. Only retries on likely-
+// transient conditions (network error / 5xx); 401/403 fail fast since
+// retrying won't change an auth/permission outcome.
+async function fetchMetricsOnce(token: string | null): Promise<Response> {
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 8000);
+  try {
+    return await fetch(API + '/api/admin/metrics', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function AdminDashboard() {
   var router = useRouter();
   var { isLoaded, isSignedIn, getToken } = useAuth();
   var [data, setData] = useState<AdminMetrics | null>(null);
   var [error, setError] = useState<string>('');
   var [isLoadingData, setIsLoadingData] = useState(true);
+  var [retryToken, setRetryToken] = useState(0);
 
   useEffect(function() {
     if (!isLoaded) return;
@@ -166,42 +188,52 @@ function AdminDashboard() {
       return;
     }
 
+    var cancelled = false;
+
     async function fetchMetrics() {
-      try {
-        setIsLoadingData(true);
-        var token = await getToken();
-        var response = await fetch(API + '/api/admin/metrics', {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
-        });
+      setIsLoadingData(true);
+      var token = await getToken();
+      var maxAttempts = 3;
 
-        if (response.status === 403) {
-          setError('Access denied - admin access required');
-          return;
+      for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          var response = await fetchMetricsOnce(token);
+
+          if (response.status === 403) {
+            if (!cancelled) { setError('Access denied - admin access required'); setIsLoadingData(false); }
+            return;
+          }
+
+          if (response.status === 401) {
+            if (!cancelled) { setError('Not authenticated - please sign in'); setIsLoadingData(false); }
+            return;
+          }
+
+          if (response.ok) {
+            var metricsData = await response.json();
+            if (!cancelled) { setData(metricsData); setError(''); setIsLoadingData(false); }
+            return;
+          }
+
+          // Non-2xx, non-401/403: only worth retrying on likely-transient
+          // server errors (5xx). Anything else, fail fast.
+          if (response.status < 500 || attempt === maxAttempts) {
+            if (!cancelled) { setError('Failed to fetch metrics'); setIsLoadingData(false); }
+            return;
+          }
+        } catch (err: any) {
+          if (attempt === maxAttempts) {
+            if (!cancelled) { setError(err.message || 'Failed to load metrics'); setIsLoadingData(false); }
+            return;
+          }
         }
-
-        if (response.status === 401) {
-          setError('Not authenticated - please sign in');
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch metrics');
-        }
-
-        var metricsData = await response.json();
-        setData(metricsData);
-        setError('');
-      } catch (err: any) {
-        setError(err.message || 'Failed to load metrics');
-      } finally {
-        setIsLoadingData(false);
+        await new Promise(function(resolve) { setTimeout(resolve, attempt === 1 ? 400 : 1000); });
       }
     }
 
     fetchMetrics();
-  }, [isLoaded, isSignedIn, router, getToken]);
+    return function() { cancelled = true; };
+  }, [isLoaded, isSignedIn, router, getToken, retryToken]);
 
   if (!isLoaded || isLoadingData) {
     return <LoadingSpinner />;
@@ -232,7 +264,23 @@ function AdminDashboard() {
           }}
         >
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Dashboard Error</div>
-          <div style={{ fontSize: 14 }}>{error}</div>
+          <div style={{ fontSize: 14, marginBottom: 16 }}>{error}</div>
+          <button
+            onClick={function() { setRetryToken(function(n) { return n + 1; }); }}
+            style={{
+              padding: '8px 20px',
+              background: C.ERROR_700,
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: C.FONT
+            }}
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
