@@ -110,6 +110,41 @@ export default function EmbedQuizClient({
 
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
   const [qHistory, setQHistory] = useState<number[]>([0]);
+  const startSentRef = useRef(false);
+  const viewedQsRef = useRef<Record<number, boolean>>({});
+
+  // Fire-and-forget analytics event helper. This embed flow previously sent
+  // ONLY a 'complete' event and nothing else — no 'view' on load, no 'start',
+  // no per-question events — meaning every quiz embedded on a customer's
+  // Squarespace site contributed zero data to the dashboard's "viewed" /
+  // "started" funnel stages and to /dropoff, while still counting toward
+  // "completed". That silently broke conversion-rate math (completed/viewed)
+  // for the embed flow, which is this product's primary distribution channel.
+  const trackEvent = useCallback(
+    function(eventType: string, metadata?: Record<string, any>) {
+      fetch(API + '/api/quiz/' + quiz.slug + '/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_type: eventType, session_id: sessionIdRef.current, metadata: metadata }),
+      }).catch(function() {});
+    },
+    [quiz.slug]
+  );
+
+  // Fire 'view' once when the embed mounts (equivalent to the hosted
+  // /quiz/[slug] page's load-time 'view' event, which this embed never had).
+  useEffect(function() {
+    trackEvent('view');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Track each question's first view (feeds /dropoff's "started" count).
+  useEffect(function() {
+    if (stage !== 'question') return;
+    if (viewedQsRef.current[qIdx]) return;
+    viewedQsRef.current[qIdx] = true;
+    trackEvent('question_' + qIdx + '_view');
+  }, [stage, qIdx, trackEvent]);
 
   // Build question ID → index map for branching logic
   var questionIdMap = useRef<Record<string, number>>({});
@@ -276,9 +311,14 @@ export default function EmbedQuizClient({
 
   var pickOption = useCallback(
     function(oi: number) {
+      if (!startSentRef.current) {
+        startSentRef.current = true;
+        trackEvent('start');
+      }
       // Only record answer if oi >= 0 (oi = -1 means time ran out, skip)
       if (oi >= 0) {
         setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
+        trackEvent('question_' + qIdx + '_answer');
       }
 
       // Determine next question using branching logic
@@ -299,18 +339,14 @@ export default function EmbedQuizClient({
           var o = getOutcome(newAnswers);
           setOutcome(o);
           setStage('result');
-          fetch(API + '/api/quiz/' + quiz.slug + '/event', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event_type: 'complete', session_id: sessionIdRef.current, metadata: { outcome_id: o?.id } }),
-          }).catch(function() {});
+          trackEvent('complete', { outcome_id: o?.id });
           if (window.parent !== window) {
             window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
           }
         }
       }
     },
-    [qIdx, answers, requireEmail, questions.length, quiz.slug, currentQ]
+    [qIdx, answers, requireEmail, questions.length, quiz.slug, currentQ, trackEvent]
   );
 
   // Go back using history stack (handles non-linear branching paths)
@@ -353,15 +389,7 @@ export default function EmbedQuizClient({
       });
       setOutcome(o);
       setStage('result');
-      fetch(`${API}/api/quiz/${quiz.slug}/event`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'complete',
-          session_id: sessionIdRef.current,
-          metadata: { outcome_id: o?.id },
-        }),
-      }).catch(() => {});
+      trackEvent('complete', { outcome_id: o?.id });
       if (window.parent !== window) {
         window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
       }
@@ -370,7 +398,7 @@ export default function EmbedQuizClient({
     } finally {
       setSubmitting(false);
     }
-  }, [email, firstName, answers, quiz.slug]);
+  }, [email, firstName, answers, quiz.slug, trackEvent]);
 
   return (
     <>

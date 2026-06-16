@@ -265,6 +265,24 @@ export default function QuizPage() {
   var [prevQIdx, setPrevQIdx] = useState(0);
   var [transitioning, setTransitioning] = useState(false);
   var transDir = useRef<'forward' | 'back'>('forward');
+  var startSentRef = useRef(false);
+  var viewedQsRef = useRef<Record<number, boolean>>({});
+
+  // Fire-and-forget analytics event helper. Used to feed the dashboard's
+  // funnel ('start'), dropoff (question_<n>_view/answer), and other
+  // analytics endpoints, which previously received zero data from this page
+  // because it only ever sent 'view' (on load) and 'complete' (on finish).
+  var trackEvent = useCallback(
+    function(eventType: string, metadata?: Record<string, any>) {
+      if (!slug) return;
+      fetch(API + '/api/quiz/' + slug + '/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_type: eventType, session_id: sessionIdRef.current, metadata: metadata }),
+      }).catch(function() {});
+    },
+    [slug]
+  );
 
   // Shuffle questions once on load if setting is enabled
   useEffect(function() {
@@ -323,6 +341,14 @@ export default function QuizPage() {
       });
   }, [slug]);
 
+  // Track each question's first view (feeds /dropoff's "started" count).
+  useEffect(function() {
+    if (stage !== 'question' || !quiz) return;
+    if (viewedQsRef.current[qIdx]) return;
+    viewedQsRef.current[qIdx] = true;
+    trackEvent('question_' + qIdx + '_view');
+  }, [stage, qIdx, quiz, trackEvent]);
+
   var totalQs = quiz?.questions.length || 0;
   var currentQ = quiz?.questions[qIdx];
   var requireEmail = quiz?.settings?.requireEmail !== false;
@@ -333,8 +359,13 @@ export default function QuizPage() {
   var pickOption = useCallback(
     function(oi: number) {
       if (!quiz) return;
+      if (!startSentRef.current) {
+        startSentRef.current = true;
+        trackEvent('start');
+      }
       if (oi >= 0) {
         setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
+        trackEvent('question_' + qIdx + '_answer');
       }
       if (qIdx < (quiz.questions.length - 1)) {
         transDir.current = 'forward';
@@ -363,7 +394,7 @@ export default function QuizPage() {
         }
       }
     },
-    [quiz, qIdx, answers, requireEmail, slug]
+    [quiz, qIdx, answers, requireEmail, slug, trackEvent]
   );
 
   // Timer countdown for current question
