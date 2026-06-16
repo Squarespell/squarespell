@@ -313,12 +313,53 @@ export default function QuizPage() {
     return function() { ro.disconnect(); };
   }, [stage, qIdx]);
 
-  // Load quiz
+  // Load quiz.
+  //
+  // Hardened against transient network/backend blips: the bare single-shot
+  // fetch here used to convert ANY failure (timeout, brief 5xx during a
+  // backend restart, a dropped connection, a non-JSON error body) into a
+  // permanent, non-recoverable "Quiz not found" dead end for the visitor —
+  // with no way to retry short of a full page reload. That was confirmed in
+  // real-browser testing: repeated hard navigations to a known-good quiz
+  // intermittently failed even though the same endpoint, hit directly,
+  // succeeded every time — i.e. a transient-failure UX problem, not a
+  // missing-quiz problem. We now retry with backoff and a per-attempt
+  // timeout before giving up, and offer a manual "Try Again" action instead
+  // of a dead end.
+  var [retryToken, setRetryToken] = useState(0);
+
   useEffect(function() {
     if (!slug) return;
-    fetch(API + '/api/quiz/' + slug)
-      .then(function(r) { return r.json(); })
+    var cancelled = false;
+    var maxAttempts = 3;
+
+    function attempt(n: number): Promise<any> {
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
+      return fetch(API + '/api/quiz/' + slug, { signal: controller.signal })
+        .then(function(r) {
+          clearTimeout(timeoutId);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .catch(function(err) {
+          clearTimeout(timeoutId);
+          if (cancelled) throw err;
+          if (n < maxAttempts) {
+            var delay = n === 1 ? 600 : 1500;
+            return new Promise(function(resolve) { setTimeout(resolve, delay); }).then(function() {
+              return attempt(n + 1);
+            });
+          }
+          throw err;
+        });
+    }
+
+    setStage('loading');
+    setError('');
+    attempt(1)
       .then(function(data) {
+        if (cancelled) return;
         if (data.error) {
           setError(data.error);
           setStage('error');
@@ -336,10 +377,13 @@ export default function QuizPage() {
         }).catch(function() {});
       })
       .catch(function() {
+        if (cancelled) return;
         setError('Failed to load quiz.');
         setStage('error');
       });
-  }, [slug]);
+
+    return function() { cancelled = true; };
+  }, [slug, retryToken]);
 
   // Track each question's first view (feeds /dropoff's "started" count).
   useEffect(function() {
@@ -575,7 +619,23 @@ export default function QuizPage() {
       <div style={{ minHeight: '100svh', background: brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: brandFont, color: brandText, padding: 24, textAlign: 'center' }}>
         <div style={{ maxWidth: 340 }}>
           <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Quiz not found</p>
-          <p style={{ fontSize: 13, opacity: 0.6 }}>{error || 'This quiz may have been removed.'}</p>
+          <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 20 }}>{error || 'This quiz may have been removed.'}</p>
+          <button
+            type="button"
+            onClick={function() { setRetryToken(function(t) { return t + 1; }); }}
+            style={{
+              background: brandPrimary || '#0a0a0a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 22px',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );

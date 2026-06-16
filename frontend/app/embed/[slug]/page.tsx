@@ -93,17 +93,41 @@ interface Quiz {
   leadGate?: { headline?: string; subtext?: string; buttonText?: string };
 }
 
-async function fetchQuiz(slug: string): Promise<Quiz | null> {
+// Retries with a short backoff and a per-attempt timeout before giving up.
+// Without this, a single transient blip in the server-to-server call to the
+// backend (brief 5xx, dropped connection, slow response) permanently showed
+// visitors "Quiz not found" with zero way to recover short of a hard reload
+// — confirmed via real-browser testing where the same endpoint, hit directly,
+// succeeded reliably while hard page loads intermittently failed.
+async function fetchQuizOnce(slug: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
   try {
     const res = await fetch(`${API}/api/quiz/${slug}`, {
       cache: 'no-cache',
       headers: { 'Accept': 'application/json' },
+      signal: controller.signal,
     });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+async function fetchQuiz(slug: string): Promise<Quiz | null> {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetchQuizOnce(slug);
+      if (res.ok) return res.json();
+      // Non-2xx: only worth retrying on likely-transient server errors.
+      if (res.status < 500 || attempt === maxAttempts) return null;
+    } catch {
+      if (attempt === maxAttempts) return null;
+    }
+    await new Promise((resolve) => setTimeout(resolve, attempt === 1 ? 400 : 1000));
+  }
+  return null;
 }
 
 
