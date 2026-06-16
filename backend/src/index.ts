@@ -22,7 +22,7 @@ import express from 'express';
 import cors from 'cors';
 import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
-import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter, mediaRouter, referralsRouter, publicReferralRouter, whiteLabelRouter, publicWhiteLabelRouter, adminAnalyticsRouter } from './routes/allRoutes';
+import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter, mediaRouter, referralsRouter, publicReferralRouter, whiteLabelRouter, publicWhiteLabelRouter, adminAnalyticsRouter, quizPaymentsRouter } from './routes/allRoutes';
 import emailsRouter from './routes/emails';
 import resendWebhookRouter from './routes/resendWebhook';
 import { segmentationRouter } from './routes/segmentation';
@@ -48,6 +48,8 @@ const PORT = process.env.PORT || 3001;
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/clerk/webhook', express.raw({ type: 'application/json' }));
+// Quiz-payment Stripe webhook also needs the raw body for signature verification
+app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/json' }));
 
 /* ------------------------------------------------------------------ */
 /* CORS                                                                */
@@ -137,6 +139,11 @@ app.use('/api', leadsRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api', scrapeBrandRouter);
 app.use('/api/stripe', stripeRouter);
+// Quiz-embedded payments: POST /api/public/quiz/:slug/checkout, POST /api/webhooks/stripe-quiz-payment,
+// GET /api/quizzes/:id/payments — this router was previously defined but never mounted, so the entire
+// "pay to see results" checkout flow 404'd in production. Mounting at /api so its internal paths
+// (/public/quiz/:slug/checkout etc.) resolve exactly as the frontend already calls them.
+app.use('/api', quizPaymentsRouter);
 app.use('/api/clerk', clerkWebhookRoute);
 app.use('/api/quiz', publicQuizRouter);
 app.use('/api/user', userRouter);

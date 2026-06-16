@@ -16,6 +16,46 @@ interface CreateCheckoutSessionParams {
 }
 
 /**
+ * Recomputes the price for a price_calculator quiz from trusted server-side
+ * data (the quiz's question/option pricing config + the lead's stored
+ * answers). This MUST be the source of truth for what gets charged —
+ * never trust a client-supplied amount, since it can be edited via devtools
+ * or by hitting the checkout API directly with an arbitrary value.
+ *
+ * Mirrors the calculatePriceTotal() logic in
+ * frontend/components/quiz-taker/QuizRunner.tsx — keep both in sync if the
+ * pricing model changes.
+ */
+function computeServerPriceCents(questions: any[], answers: Record<string, any>): number {
+  let totalDollars = 0;
+
+  (questions || []).forEach((q: any) => {
+    if (q.type === 'range_input') {
+      const rangeValue = answers?.[q.id];
+      if (rangeValue !== undefined && rangeValue !== null && typeof rangeValue === 'number') {
+        totalDollars += rangeValue * (q.value_per_unit ?? 0);
+      }
+    } else {
+      const answerValue = answers?.[q.id];
+      if (answerValue) {
+        const selectedIds = Array.isArray(answerValue) ? answerValue : [answerValue];
+        selectedIds.forEach((id: any) => {
+          const option = (q.options || []).find((o: any) => o.id === id);
+          if (option && typeof option.value === 'number') {
+            totalDollars += option.value;
+          }
+        });
+      }
+    }
+  });
+
+  // Guard against negative/NaN totals from malformed config or answers
+  if (!Number.isFinite(totalDollars) || totalDollars < 0) totalDollars = 0;
+
+  return Math.round(totalDollars * 100);
+}
+
+/**
  * Creates a Stripe Checkout Session for quiz payment
  * Stores a pending payment record in quiz_payments
  * Returns the Checkout URL
@@ -34,10 +74,11 @@ export async function createCheckoutSession(
   } = params;
 
   try {
-    // Get quiz details to get owner info
+    // Get quiz details — including pricing config, since the price MUST be
+    // recomputed server-side rather than trusted from the client request.
     const { data: quiz, error: quizError } = await supabase
       .from('quizzes')
-      .select('id, user_id')
+      .select('id, user_id, questions, mode')
       .eq('id', quizId)
       .single();
 
@@ -45,15 +86,39 @@ export async function createCheckoutSession(
       throw new Error('Quiz not found');
     }
 
-    // Get lead details for customer info
+    // Get lead details for customer info + their stored answers.
+    // Scope by quiz_id too — without this, a caller could pass any lead_id
+    // belonging to a completely different quiz/owner and create a checkout
+    // session (and Stripe customer_email prefill) for someone else's lead.
     const { data: lead, error: leadError } = await supabase
       .from('leads')
-      .select('id, email, name')
+      .select('id, email, name, answers, quiz_id')
       .eq('id', leadId)
+      .eq('quiz_id', quizId)
       .single();
 
     if (leadError || !lead) {
       throw new Error('Lead not found');
+    }
+
+    // SECURITY: never trust the client-supplied amountCents. Recompute the
+    // charge from the quiz's question/option pricing config and the lead's
+    // already-stored answers — both of which are server-controlled. This
+    // closes a critical price-tampering hole where a caller could POST any
+    // amount_cents value (e.g. 1) directly to the checkout endpoint.
+    const serverAmountCents = computeServerPriceCents(quiz.questions as any[], lead.answers as Record<string, any>);
+
+    if (serverAmountCents !== amountCents) {
+      log.warn('[Payments] Client amount_cents did not match server-computed price — using server value', {
+        quizId,
+        leadId,
+        clientAmountCents: amountCents,
+        serverAmountCents,
+      });
+    }
+
+    if (serverAmountCents <= 0) {
+      throw new Error('Computed payment amount is invalid (must be greater than zero)');
     }
 
     // Create Stripe Checkout Session
@@ -64,7 +129,7 @@ export async function createCheckoutSession(
         {
           price_data: {
             currency: currency.toLowerCase(),
-            unit_amount: amountCents,
+            unit_amount: serverAmountCents,
             product_data: {
               name: `Quiz Payment: ${quiz.id}`,
               description: 'Payment collected from quiz completion'
@@ -90,7 +155,7 @@ export async function createCheckoutSession(
         quiz_id: quizId,
         lead_id: leadId,
         stripe_session_id: session.id,
-        amount_cents: amountCents,
+        amount_cents: serverAmountCents,
         currency: currency.toLowerCase(),
         status: 'pending',
         metadata: {

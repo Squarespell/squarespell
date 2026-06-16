@@ -45,6 +45,16 @@ export const deletionLimiter = new Ratelimit({
   ...(redis ? {} : { ephemeralCache: new Map() }),
 });
 
+// Quiz checkout session creation: 10 per minute per IP per quiz — public,
+// unauthenticated endpoint that calls out to Stripe, so needs abuse protection.
+export const checkoutLimiter = new Ratelimit({
+  redis: redis as any,
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
+  prefix: 'ratelimit:checkout',
+  analytics: true,
+  ...(redis ? {} : { ephemeralCache: new Map() }),
+});
+
 export function getClientIp(req: any): string {
   return ((req.headers['x-forwarded-for'] as string) || req.ip || 'unknown').split(',')[0].trim();
 }

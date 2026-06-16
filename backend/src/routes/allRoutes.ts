@@ -44,6 +44,25 @@ function normalizeUrl(input: string): string {
   return url;
 }
 
+// Allowed redirect hosts for post-checkout success/cancel URLs. Quiz pages
+// and embeds are always served from our own domains, so a success_url or
+// cancel_url pointing anywhere else is either a bug or an attempt to use our
+// Stripe checkout as an open redirect to a phishing page after payment.
+function isAllowedRedirectUrl(rawUrl: string): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost') return false;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host === 'squarespell.com' ||
+      host.endsWith('.squarespell.com') ||
+      host === 'localhost'
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Calculate lead score from answers and quiz structure.
  */
@@ -215,7 +234,7 @@ setInterval(function() {
 }, 30 * 60 * 1000);
 
 // ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
-import { previewLimiter, leadLimiter, publicQuizLimiter, getClientIp } from '../services/rateLimiter';
+import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, getClientIp } from '../services/rateLimiter';
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
   // Rate limit via Redis-backed Upstash limiter (replaces in-memory Map)
@@ -2857,13 +2876,31 @@ export const quizPaymentsRouter = Router();
 // POST /api/public/quiz/:slug/checkout - Create checkout session for payment
 quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
   try {
+    // Rate limit: 10 checkout attempts per minute per IP per quiz
+    const checkoutIp = getClientIp(req);
+    const { success: checkoutRlOk } = await checkoutLimiter.limit('checkout:' + checkoutIp + ':' + req.params.slug);
+    if (!checkoutRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
+
     const { lead_id, amount_cents, currency = 'usd', success_url, cancel_url } = req.body;
 
-    if (!lead_id || !amount_cents || !success_url || !cancel_url) {
+    if (!lead_id || !success_url || !cancel_url) {
       return res.status(400).json({
-        error: 'lead_id, amount_cents, success_url, and cancel_url are required'
+        error: 'lead_id, success_url, and cancel_url are required'
       });
     }
+
+    // SECURITY: success_url/cancel_url are passed straight through to Stripe
+    // and the customer is redirected there immediately after a real payment.
+    // Without an allowlist check, an attacker could pass arbitrary URLs to
+    // turn our own Stripe checkout into an open redirect / phishing vector
+    // against a paying customer. Restrict to our own domains.
+    if (!isAllowedRedirectUrl(success_url) || !isAllowedRedirectUrl(cancel_url)) {
+      return res.status(400).json({ error: 'success_url and cancel_url must point to a squarespell.com domain' });
+    }
+
+    // amount_cents (if sent by the client) is informational only — the
+    // actual charge is always recomputed server-side in createCheckoutSession
+    // from the quiz's pricing config + the lead's stored answers.
 
     // Get the quiz by slug to verify it exists and get quiz_id
     const { data: quiz, error: quizError } = await supabase
@@ -2879,7 +2916,7 @@ quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
     const result = await quizPaymentsService.createCheckoutSession({
       quizId: quiz.id,
       leadId: lead_id,
-      amountCents: amount_cents,
+      amountCents: amount_cents ?? 0,
       currency: currency,
       successUrl: success_url,
       cancelUrl: cancel_url
