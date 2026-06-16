@@ -9,7 +9,7 @@ import {
   initiateDeletionRequest, confirmAndExecuteDeletion,
   getCookieConsentConfig,
 } from '../services/gdprCompliance';
-import { deletionLimiter } from '../services/rateLimiter';
+import { deletionLimiter, safeLimit } from '../services/rateLimiter';
 
 export var gdprRouter = Router();
 export var publicGdprRouter = Router();
@@ -46,7 +46,7 @@ gdprRouter.post('/delete-request', requireAuth, attachUser, async function(req: 
 gdprRouter.post('/confirm-delete', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     // Rate limit: 5 confirm attempts per hour per user to prevent token brute-force
-    var { success: allowed } = await deletionLimiter.limit(req.userId!);
+    var { success: allowed } = await safeLimit(deletionLimiter, req.userId!);
     if (!allowed) return res.status(429).json({ error: 'Too many requests. Try again later.' });
 
     var { token } = req.body;

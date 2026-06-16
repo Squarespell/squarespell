@@ -327,12 +327,12 @@ setInterval(function() {
 }, 30 * 60 * 1000);
 
 // ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
-import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, processOtherLimiter, getClientIp } from '../services/rateLimiter';
+import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, processOtherLimiter, getClientIp, safeLimit } from '../services/rateLimiter';
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
   // Rate limit via Redis-backed Upstash limiter (replaces in-memory Map)
   const ip = getClientIp(req);
-  const { success: previewRlOk } = await previewLimiter.limit('preview:' + ip);
+  const { success: previewRlOk } = await safeLimit(previewLimiter, 'preview:' + ip);
   if (!previewRlOk) return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
 
   const { url } = req.body;
@@ -373,7 +373,7 @@ previewRouter.post('/preview-generate', async (req, res) => {
 // ── Stage 1 → Stage 2: Analyze the site and return 5 onboarding questions ───
 previewRouter.post('/preview-analyze', async (req, res) => {
   const ip = getClientIp(req);
-  const { success: analyzeRlOk } = await previewLimiter.limit('analyze:' + ip);
+  const { success: analyzeRlOk } = await safeLimit(previewLimiter, 'analyze:' + ip);
   if (!analyzeRlOk) return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
 
   const { url } = req.body;
@@ -596,7 +596,7 @@ publicQuizRouter.get('/:slug', async (req, res) => {
 publicQuizRouter.post('/:slug/event', async (req, res) => {
   // Rate limit: 30 events per minute per IP per quiz
   var eventIp = getClientIp(req);
-  var { success: eventRlOk } = await publicQuizLimiter.limit('event:' + eventIp + ':' + req.params.slug);
+  var { success: eventRlOk } = await safeLimit(publicQuizLimiter, 'event:' + eventIp + ':' + req.params.slug);
   if (!eventRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
 
   const { event_type, session_id, metadata } = req.body;
@@ -613,7 +613,7 @@ publicQuizRouter.post('/:slug/process-other', async (req, res) => {
   // Rate limit: 10 per minute per IP per quiz — this calls out to an LLM and
   // was previously completely unprotected (unmetered cost/abuse vector).
   var processOtherIp = getClientIp(req);
-  var { success: processOtherRlOk } = await processOtherLimiter.limit('process-other:' + processOtherIp + ':' + req.params.slug);
+  var { success: processOtherRlOk } = await safeLimit(processOtherLimiter, 'process-other:' + processOtherIp + ':' + req.params.slug);
   if (!processOtherRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
 
   const { free_text, available_outcomes } = req.body;
@@ -627,7 +627,7 @@ export const leadsRouter = Router();
 leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   // Rate limit: 3 leads per minute per IP per quiz
   var leadIp = getClientIp(req);
-  var { success: leadRlOk } = await leadLimiter.limit('lead:' + leadIp + ':' + req.params.slug);
+  var { success: leadRlOk } = await safeLimit(leadLimiter, 'lead:' + leadIp + ':' + req.params.slug);
   if (!leadRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
 
   const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId, website, cf_turnstile_response } = req.body;
@@ -1121,7 +1121,7 @@ leadsRouter.post('/gdpr/delete-request', async (req, res) => {
 
   // Rate limit: 3 requests per hour per IP
   var gdprIp = ((req.headers['x-forwarded-for'] as string) || req.ip || 'unknown').split(',')[0].trim();
-  var { success: rlSuccess } = await (await import('../services/rateLimiter')).leadLimiter.limit('gdpr:' + gdprIp);
+  var { success: rlSuccess } = await safeLimit(leadLimiter, 'gdpr:' + gdprIp);
   if (!rlSuccess) return res.status(429).json({ error: 'Too many requests. Please try again later.' });
 
   try {
@@ -3037,7 +3037,7 @@ quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
   try {
     // Rate limit: 10 checkout attempts per minute per IP per quiz
     const checkoutIp = getClientIp(req);
-    const { success: checkoutRlOk } = await checkoutLimiter.limit('checkout:' + checkoutIp + ':' + req.params.slug);
+    const { success: checkoutRlOk } = await safeLimit(checkoutLimiter, 'checkout:' + checkoutIp + ':' + req.params.slug);
     if (!checkoutRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
 
     const { lead_id, amount_cents, currency = 'usd', success_url, cancel_url } = req.body;
