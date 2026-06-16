@@ -102,16 +102,33 @@ function calculateLeadScore(quiz: any, answers: Record<number, number>): number 
 
 /**
  * Server-side scoring/outcome/qualification recomputation for lead
- * submissions. Mirrors calculateScore()/calculateOutcome() in
- * frontend/components/quiz-taker/QuizRunner.tsx exactly (including the
- * answers-keyed-by-question-id format that's actually used on the wire —
- * NOT the index-keyed format calculateLeadScore() above assumes, which is
- * unused dead code).
+ * submissions.
  *
- * This MUST be the source of truth for outcome_id / qualified / path_taken
- * — never trust those fields verbatim from the client request body, since
- * a caller can otherwise submit any outcome_id (e.g. always "best result")
- * or fake qualified:true regardless of their actual answers.
+ * CRITICAL FIX: this previously mirrored calculateScore()/calculateOutcome()
+ * in frontend/components/quiz-taker/QuizRunner.tsx — but QuizRunner.tsx is
+ * dead code, never rendered by any live route. The REAL live quiz pages
+ * (app/quiz/[slug]/page.tsx and app/embed/[slug]/EmbedQuizClient.tsx) send a
+ * completely different wire format:
+ *   - `answers` is keyed by the question's ARRAY INDEX (e.g. "0", "1"), not
+ *     by `question.id`.
+ *   - Each value is the selected option's ARRAY INDEX (e.g. 2), not an
+ *     `option.id` string.
+ *   - Outcome score ranges are read by the frontend as `o.minScore`/
+ *     `o.maxScore` (or snake_case `min_score`/`max_score`), not
+ *     `o.score_range.min/max`.
+ * Because of that mismatch, this function always computed score=0 and never
+ * matched an outcome range for 100% of real traffic, silently falling back
+ * to `outcomes[0]` — meaning every lead for every scored quiz was recorded
+ * (and had outcome-triggered emails/automations fired) under the FIRST
+ * outcome in the array regardless of the visitor's actual answers, while the
+ * visitor's own browser correctly showed their real personalized result.
+ * Fixed to read the real wire format first, falling back to the id-keyed
+ * shape defensively in case any other caller ever uses it.
+ *
+ * This MUST remain the source of truth for outcome_id / qualified /
+ * path_taken — never trust those fields verbatim from the client request
+ * body, since a caller can otherwise submit any outcome_id (e.g. always
+ * "best result") or fake qualified:true regardless of their actual answers.
  */
 function computeServerScoreAndOutcome(quiz: any, answers: Record<string, any>): {
   score: number;
@@ -122,22 +139,37 @@ function computeServerScoreAndOutcome(quiz: any, answers: Record<string, any>): 
   const outcomes = (quiz?.outcomes as any[]) || [];
 
   let score = 0;
-  questions.forEach((q: any) => {
-    const ans = answers?.[q.id];
+  questions.forEach((q: any, qIdx: number) => {
+    // Real wire format: answers["<questionIndex>"] = <optionIndex>
+    let ans = answers?.[qIdx];
+    if (ans === undefined && q?.id !== undefined) {
+      // Defensive fallback for a hypothetical id-keyed caller.
+      ans = answers?.[q.id];
+    }
     if (ans === undefined || ans === null) return;
+
     const selected = Array.isArray(ans) ? ans : [ans];
-    selected.forEach((id: any) => {
-      const opt = (q.options || []).find((o: any) => o.id === id);
-      const value = opt?.score_value ?? opt?.score;
+    selected.forEach((val: any) => {
+      let opt: any;
+      const isIndexLike = typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val));
+      if (isIndexLike) {
+        opt = (q.options || [])[Number(val)];
+      }
+      if (!opt) {
+        opt = (q.options || []).find((o: any) => o.id === val);
+      }
+      const value = opt?.score ?? opt?.score_value;
       if (typeof value === 'number' && Number.isFinite(value)) score += value;
     });
   });
 
   if (!Number.isFinite(score)) score = 0;
 
-  const matched = outcomes.find(
-    (o: any) => score >= (o?.score_range?.min ?? -Infinity) && score <= (o?.score_range?.max ?? Infinity)
-  );
+  const matched = outcomes.find((o: any) => {
+    const min = o?.minScore ?? o?.min_score ?? o?.score_range?.min ?? -Infinity;
+    const max = o?.maxScore ?? o?.max_score ?? o?.score_range?.max ?? Infinity;
+    return score >= min && score <= max;
+  });
 
   return {
     score,
@@ -807,7 +839,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       quiz_id: quiz.id,
       lead_email: email,
       lead_name: name,
-      outcome_id: outcome_id,
+      outcome_id: resolvedOutcomeId,
       score: leadData?.lead_score ?? null,
       answers: answers,
     }).catch(function(e: any) {
@@ -823,8 +855,8 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   // Send result email to the LEAD (not the owner). Includes download-report link.
   if (leadId && email && canEmail) {
     try {
-      const matchedOutcome = outcome_id && quiz.outcomes
-        ? (quiz.outcomes as any[]).find((o: any) => o.id === outcome_id)
+      const matchedOutcome = resolvedOutcomeId && quiz.outcomes
+        ? (quiz.outcomes as any[]).find((o: any) => o.id === resolvedOutcomeId)
         : null;
       if (matchedOutcome) {
         const reportEnabled = (quiz.settings as any)?.report_enabled === true;
@@ -856,16 +888,16 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     log.info('[GDPR] Skipping result email - no consent', { email });
   }
 
-  if (leadId && email && outcome_id && canEmail) {
+  if (leadId && email && resolvedOutcomeId && canEmail) {
     enqueueSequenceEmails(
       leadId,
       quiz.id,
-      outcome_id,
+      resolvedOutcomeId,
       leadData?.lead_score ?? null,
       [],
       (quiz as any).mode || null,
     ).catch((e: any) => log.info('[EmailSeq] enqueue failed', { err: e?.message }));
-  } else if (!canEmail && outcome_id) {
+  } else if (!canEmail && resolvedOutcomeId) {
     log.info('[GDPR] Skipping sequence emails - no consent', { email });
   }
 
@@ -876,13 +908,13 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       const { data: quizMeta } = await supabase.from('quizzes').select('title,slug,mode').eq('id', quiz.id).single();
       const webhookPayload = {
         event: 'lead.captured',
-        lead: { name: name ?? '', email, outcome_id: outcome_id ?? '', answers: answers ?? {}, captured_at: new Date().toISOString() },
+        lead: { name: name ?? '', email, outcome_id: resolvedOutcomeId ?? '', answers: answers ?? {}, captured_at: new Date().toISOString() },
         quiz: { id: quiz.id, title: quizMeta?.title ?? '', slug: quizMeta?.slug ?? '' },
       };
 
       // Determine outcome title for tags
-      const matchedOutcomeForTag = outcome_id && quiz.outcomes
-        ? (quiz.outcomes as any[]).find(function(o: any) { return o.id === outcome_id; })
+      const matchedOutcomeForTag = resolvedOutcomeId && quiz.outcomes
+        ? (quiz.outcomes as any[]).find(function(o: any) { return o.id === resolvedOutcomeId; })
         : null;
       const outcomeTags = matchedOutcomeForTag ? ['sq:' + (quizMeta?.slug ?? ''), 'outcome:' + (matchedOutcomeForTag.title || 'unknown')] : ['sq:' + (quizMeta?.slug ?? '')];
 
@@ -965,8 +997,8 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       }
 
       // Find matched outcome for context
-      const matchedOutcome = outcome_id && quiz.outcomes
-        ? (quiz.outcomes as any[]).find((o: any) => o.id === outcome_id)
+      const matchedOutcome = resolvedOutcomeId && quiz.outcomes
+        ? (quiz.outcomes as any[]).find((o: any) => o.id === resolvedOutcomeId)
         : null;
 
       if (answersSummary.length > 0) {
