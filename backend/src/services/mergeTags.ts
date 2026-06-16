@@ -46,6 +46,22 @@ var CAMEL_ALIASES: Record<string, string> = {
   ctaUrl: 'cta_url',
 };
 
+// HTML-escape a merge-tag value before it's spliced into an email body.
+// Merge tags pull from lead-controlled data (name, free-text "answer:"
+// values) and quiz-config data that may originate from AI generation or a
+// scraped URL (outcome title/description, quiz name). None of that is
+// guaranteed to be free of "<", ">", "&", quotes, etc., so every resolved
+// value MUST be escaped — otherwise a single malicious answer/option label
+// becomes live HTML/JS in an email sent to real recipients.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function resolveTag(tag: string, ctx: MergeContext): string {
   const trimmed = tag.trim();
   if (trimmed.startsWith('answer:')) {
@@ -62,7 +78,7 @@ function resolveTag(tag: string, ctx: MergeContext): string {
 export function applyMergeTags(input: string, ctx: MergeContext): string {
   if (!input) return '';
   return input.replace(/\{\{([^}]+)\}\}/g, (_m: string, tag: string) => {
-    return resolveTag(tag, ctx);
+    return escapeHtml(resolveTag(tag, ctx));
   });
 }
 

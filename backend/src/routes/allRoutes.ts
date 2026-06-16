@@ -30,6 +30,7 @@ import { Resend } from 'resend';
 import { UAParser } from 'ua-parser-js';
 import { validateEmail } from '../services/emailValidator';
 import { validateName } from '../services/nameValidator';
+import { isTurnstileConfigured, verifyTurnstileToken } from '../services/turnstile';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -42,6 +43,20 @@ function normalizeUrl(input: string): string {
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   new URL(url);
   return url;
+}
+
+// HTML-escape values before splicing them into hand-built notification
+// email HTML strings. Lead name/email are validated by validateName/
+// validateEmail (which already exclude HTML metacharacters), but quiz
+// titles can come from AI generation or a scraped URL with no such
+// guarantee — escape everything as defense-in-depth.
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // Allowed redirect hosts for post-checkout success/cancel URLs. Quiz pages
@@ -234,7 +249,7 @@ setInterval(function() {
 }, 30 * 60 * 1000);
 
 // ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
-import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, getClientIp } from '../services/rateLimiter';
+import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, processOtherLimiter, getClientIp } from '../services/rateLimiter';
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
   // Rate limit via Redis-backed Upstash limiter (replaces in-memory Map)
@@ -517,6 +532,12 @@ publicQuizRouter.post('/:slug/event', async (req, res) => {
   res.json({ tracked: true });
 });
 publicQuizRouter.post('/:slug/process-other', async (req, res) => {
+  // Rate limit: 10 per minute per IP per quiz — this calls out to an LLM and
+  // was previously completely unprotected (unmetered cost/abuse vector).
+  var processOtherIp = getClientIp(req);
+  var { success: processOtherRlOk } = await processOtherLimiter.limit('process-other:' + processOtherIp + ':' + req.params.slug);
+  if (!processOtherRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
+
   const { free_text, available_outcomes } = req.body;
   if (!free_text || !available_outcomes) return res.status(400).json({ error: 'free_text and available_outcomes required' });
   try { res.json(await processOtherAnswer(free_text, available_outcomes)); }
@@ -531,8 +552,27 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   var { success: leadRlOk } = await leadLimiter.limit('lead:' + leadIp + ':' + req.params.slug);
   if (!leadRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
 
-  const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId } = req.body;
+  const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId, website, cf_turnstile_response } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
+
+  // Honeypot: the frontend renders a hidden "website" field that real users
+  // never see or fill in. The frontend already collects this and sends it
+  // (QuizRunner.tsx), but the backend never checked it — so it was purely
+  // decorative. Bots that auto-fill every field on the form trip this.
+  if (typeof website === 'string' && website.trim().length > 0) {
+    return res.status(400).json({ error: 'Invalid submission' });
+  }
+
+  // Cloudflare Turnstile: verify the challenge token server-side. No-op
+  // (always passes) when TURNSTILE_SECRET_KEY isn't configured — see
+  // services/turnstile.ts. Without this check the widget was decorative
+  // too: a bot could simply omit the token and submit anyway.
+  if (isTurnstileConfigured()) {
+    const turnstileOk = await verifyTurnstileToken(cf_turnstile_response, leadIp);
+    if (!turnstileOk) {
+      return res.status(400).json({ error: 'Bot verification failed' });
+    }
+  }
 
   // Reject malformed / disposable emails (C-Lead-Quality fix)
   const emailCheck = validateEmail(email);
@@ -639,7 +679,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
           from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
           to: notifyEmail,
           subject: `New lead captured: ${name || email}`,
-          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${name || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${email}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${quizInfo?.title || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
+          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(name) || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(email)}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(quizInfo?.title) || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
         });
       }
     } catch (e) { log.info('Email notification failed:', { detail: e }); }

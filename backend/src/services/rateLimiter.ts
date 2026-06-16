@@ -55,6 +55,18 @@ export const checkoutLimiter = new Ratelimit({
   ...(redis ? {} : { ephemeralCache: new Map() }),
 });
 
+// process-other: free-text "other" answer classification calls out to an
+// LLM (processOtherAnswer) and was previously completely unrated-limited —
+// 10 per minute per IP per quiz keeps cost/abuse bounded while still
+// allowing normal quiz-taking traffic through.
+export const processOtherLimiter = new Ratelimit({
+  redis: redis as any,
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
+  prefix: 'ratelimit:process-other',
+  analytics: true,
+  ...(redis ? {} : { ephemeralCache: new Map() }),
+});
+
 export function getClientIp(req: any): string {
   return ((req.headers['x-forwarded-for'] as string) || req.ip || 'unknown').split(',')[0].trim();
 }
