@@ -32,11 +32,34 @@ async function getHeaders(fresh?: boolean): Promise<Record<string, string>> {
   return headers;
 }
 
+// Without a timeout, a hung connection (dead Wi-Fi, server stuck) leaves any
+// caller's `await api.xyz(...)` pending forever — no error ever surfaces, so
+// loading/submitting UI states (e.g. a quiz's "Getting your results..."
+// button) would spin indefinitely with no feedback or way to retry.
+const REQUEST_TIMEOUT_MS = 20000;
+
+function fetchWithTimeout(url: string, options?: RequestInit): Promise<Response> {
+  var controller = new AbortController();
+  var timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function req(path: string, options?: RequestInit) {
-  var res = await fetch(API_URL + path, { ...options, headers: await getHeaders() });
+  var res: Response;
+  try {
+    res = await fetchWithTimeout(API_URL + path, { ...options, headers: await getHeaders() });
+  } catch (err: any) {
+    if (err?.name === 'AbortError') throw new Error('Request timed out. Please check your connection and try again.');
+    throw err;
+  }
   // One-shot retry on 401: force a fresh token and try once more
   if (res.status === 401 && _getTokenFresh) {
-    res = await fetch(API_URL + path, { ...options, headers: await getHeaders(true) });
+    try {
+      res = await fetchWithTimeout(API_URL + path, { ...options, headers: await getHeaders(true) });
+    } catch (err: any) {
+      if (err?.name === 'AbortError') throw new Error('Request timed out. Please check your connection and try again.');
+      throw err;
+    }
   }
   var data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');

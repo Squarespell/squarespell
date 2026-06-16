@@ -1,6 +1,15 @@
 'use client';
 import { useState } from 'react';
 
+// CRITICAL FIX: this previously fetched a relative '/api/public/quiz/...'
+// path, which resolves against the Next.js frontend's own origin
+// (app.squarespell.com). That route only exists on the separate Express
+// backend (squarespell-api.onrender.com) — see
+// backend/src/routes/allRoutes.ts's `quizPaymentsRouter.post('/public/quiz/:slug/checkout', ...)`.
+// Every "Pay Now" click was therefore hitting a 404 on the frontend host and
+// silently failing the entire payment flow for any payment-enabled quiz.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+
 interface PaymentStepProps {
   amountCents: number;
   currency?: string;
@@ -52,7 +61,7 @@ export default function PaymentStep({
       const cancelUrl = baseUrl + '?payment_status=cancelled';
 
       // Create checkout session
-      const response = await fetch(`/api/public/quiz/${slug}/checkout`, {
+      const response = await fetch(`${API_URL}/api/public/quiz/${slug}/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

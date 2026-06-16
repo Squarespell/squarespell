@@ -111,6 +111,7 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [leadId, setLeadId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const turnstileWidgetRef = useRef<string | null>(null);
 
   const questions: any[] = quiz.questions ?? [];
@@ -270,6 +271,7 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
     if (settings.gdpr_consent_enabled && !gdprConsent) return;
 
     setSubmitting(true);
+    setSubmitError(null);
     const resolved = calculateOutcome();
     const submission_id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const gdprText = settings.gdpr_consent_text || 'I agree to receive communications from this business';
@@ -297,25 +299,54 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
 
     const timeToCompletMs = quizStartedAt ? Date.now() - quizStartedAt : undefined;
 
-    const result = await api.submitLead(slug, {
-      name,
-      email,
-      answers,
-      outcome_id: resolved?.id,
-      submission_id,
-      consent: gdprConsent,
-      consent_text: gdprConsent ? gdprText : null,
-      website,
-      quiz_started_at: quizStartedAt,
-      time_to_complete_ms: timeToCompletMs,
-      cf_turnstile_response: turnstileResponse,
-      calculated_price: quizMode === 'price_calculator' ? calculatedPrice : undefined,
-      ...qualificationData
-    });
+    // Submitting the lead is the one call that MUST succeed before we show
+    // results — if it throws (network loss, rate limit, validation/bot
+    // rejection, server error), we need to tell the user and let them retry
+    // rather than leaving the button stuck on "Getting your results..."
+    // forever with no feedback (the previous behavior: this whole function
+    // had zero error handling, so any thrown error here just silently
+    // aborted with submitting stuck true).
+    let result: any;
+    try {
+      result = await api.submitLead(slug, {
+        name,
+        email,
+        answers,
+        outcome_id: resolved?.id,
+        submission_id,
+        consent: gdprConsent,
+        consent_text: gdprConsent ? gdprText : null,
+        website,
+        quiz_started_at: quizStartedAt,
+        time_to_complete_ms: timeToCompletMs,
+        cf_turnstile_response: turnstileResponse,
+        calculated_price: quizMode === 'price_calculator' ? calculatedPrice : undefined,
+        ...qualificationData
+      });
+    } catch (err: any) {
+      setSubmitError(
+        err?.message === 'Failed to fetch' || !navigator.onLine
+          ? "Couldn't reach the server — check your connection and try again."
+          : err?.message || 'Something went wrong submitting your answers. Please try again.'
+      );
+      setSubmitting(false);
+      return;
+    }
 
-    await api.trackEvent(slug, { event_type: 'complete', session_id: 'anon' });
-    postToParent('lead_captured', { email });
-    postToParent('complete', { outcome_id: resolved?.id, lead_email: email });
+    // Analytics/parent-frame notifications are best-effort — a failure here
+    // (rate limit, network blip) must NOT block the user from seeing their
+    // results, since the lead above was already captured successfully.
+    try {
+      await api.trackEvent(slug, { event_type: 'complete', session_id: 'anon' });
+    } catch (err) {
+      console.warn('Failed to track quiz completion event:', err);
+    }
+    try {
+      postToParent('lead_captured', { email });
+      postToParent('complete', { outcome_id: resolved?.id, lead_email: email });
+    } catch (err) {
+      console.warn('Failed to post completion message to parent frame:', err);
+    }
 
     if (result?.lead_id) {
       setLeadId(result.lead_id);
@@ -910,6 +941,11 @@ export default function QuizRunner({ quiz, slug }: { quiz: any; slug: string }) 
           </div>
         )}
         <button onClick={submitLead} disabled={submitDisabled} style={{ background: submitDisabled ? '#666' : accent, color: '#0a0f05', width: '100%', padding: '16px', borderRadius: 20, border: 'none', fontWeight: 700, fontSize: 16, marginTop: 8, cursor: submitDisabled ? 'not-allowed' : 'pointer', opacity: submitDisabled ? 0.6 : 1 }}>{submitting ? 'Getting your results...' : 'Get My Results'}</button>
+        {submitError && (
+          <p role="alert" style={{ fontSize: 13, color: '#e05c5c', marginTop: 10, lineHeight: 1.5 }}>
+            {submitError}
+          </p>
+        )}
         {current.consent_text && <p style={{ fontSize: 12, opacity: 0.4, marginTop: 8 }}>{current.consent_text}</p>}
       </div></div>
     );
