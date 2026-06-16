@@ -151,7 +151,7 @@ function CreateTestForm({
     borderRadius: 10,
     fontSize: 13.5,
     color: C.TEXT,
-    fontFamily: '"Poppins",system-ui,sans-serif',
+    fontFamily: '"Inter",system-ui,sans-serif',
     outline: 'none',
     width: '100%',
   };
@@ -445,7 +445,7 @@ function TestCard({
                         background: 'none', border: '1px solid ' + C.BORDER,
                         borderRadius: 8, padding: '5px 12px', fontSize: 11,
                         fontWeight: 600, color: C.TEXT_MUTED, cursor: 'pointer',
-                        fontFamily: '"Poppins",system-ui,sans-serif',
+                        fontFamily: '"Inter",system-ui,sans-serif',
                       }}
                     >
                       Declare winner

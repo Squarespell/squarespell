@@ -95,7 +95,7 @@ const CSS = `
 
   background: var(--bg);
   color: var(--text);
-  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }

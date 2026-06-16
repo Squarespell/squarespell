@@ -89,7 +89,7 @@ export default function TemplatesGalleryPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Poppins', system-ui, sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* Header */}
       <header style={{

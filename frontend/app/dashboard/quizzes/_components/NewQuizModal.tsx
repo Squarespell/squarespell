@@ -868,7 +868,7 @@ const styles = `
   overflow: hidden;
   overscroll-behavior: contain;
   color: #1A1A1A;
-  font-family: "Poppins", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   animation: sq-pop 180ms ease-out;
 }
 @keyframes sq-pop { from { transform: translateY(8px) scale(0.98); opacity: 0 } to { transform: none; opacity: 1 } }

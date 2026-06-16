@@ -357,7 +357,7 @@ function SquarespaceConnect({ token }: { token: string | null }) {
               style={{
                 flex: 1, padding: '10px 14px', border: '1px solid ' + C.BORDER,
                 borderRadius: 10, fontSize: 13.5, color: C.TEXT, outline: 'none',
-                fontFamily: '"Poppins",system-ui,sans-serif',
+                fontFamily: '"Inter",system-ui,sans-serif',
               }}
             />
             <button type="button" onClick={handleConnect} disabled={connecting || !siteUrl.trim()}

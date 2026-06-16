@@ -134,7 +134,7 @@ function PricingEmbedInner() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        html, body { background: transparent !important; font-family: 'Poppins', system-ui, sans-serif; color: #1A1A1A; }
+        html, body { background: transparent !important; font-family: 'Inter', system-ui, sans-serif; color: #1A1A1A; }
         button { cursor: pointer; font-family: inherit; border: none; }
 
         @keyframes sq-spin { to { transform: rotate(360deg); } }

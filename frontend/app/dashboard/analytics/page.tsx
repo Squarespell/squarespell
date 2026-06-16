@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
               padding: '11px 20px', background: 'transparent',
               color: C.TEXT, border: '1px solid ' + C.BORDER,
               borderRadius: 8, fontSize: 13, fontWeight: 600,
-              textDecoration: 'none', fontFamily: '"Poppins",system-ui,sans-serif',
+              textDecoration: 'none', fontFamily: '"Inter",system-ui,sans-serif',
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -260,7 +260,7 @@ export default function AnalyticsPage() {
                   fontSize: 12.5,
                   fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: '"Poppins",system-ui,sans-serif',
+                  fontFamily: '"Inter",system-ui,sans-serif',
                   transition: 'all 0.15s ease',
                   whiteSpace: 'nowrap',
                 }}
@@ -286,7 +286,7 @@ export default function AnalyticsPage() {
               style={{
                 padding: '6px 10px', borderRadius: 6, border: '1px solid ' + C.BORDER,
                 background: C.BG, color: C.TEXT, fontSize: 12.5,
-                fontFamily: '"Poppins",system-ui,sans-serif', outline: 'none',
+                fontFamily: '"Inter",system-ui,sans-serif', outline: 'none',
               }}
             />
             <label style={{ fontSize: 12, color: C.TEXT_MUTED, fontWeight: 600 }}>To</label>
@@ -298,7 +298,7 @@ export default function AnalyticsPage() {
               style={{
                 padding: '6px 10px', borderRadius: 6, border: '1px solid ' + C.BORDER,
                 background: C.BG, color: C.TEXT, fontSize: 12.5,
-                fontFamily: '"Poppins",system-ui,sans-serif', outline: 'none',
+                fontFamily: '"Inter",system-ui,sans-serif', outline: 'none',
               }}
             />
             <button
@@ -308,7 +308,7 @@ export default function AnalyticsPage() {
                 padding: '6px 16px', borderRadius: 6, border: 'none',
                 background: customFrom ? C.ACCENT : C.BORDER, color: '#fff',
                 fontSize: 12.5, fontWeight: 600, cursor: customFrom ? 'pointer' : 'default',
-                fontFamily: '"Poppins",system-ui,sans-serif',
+                fontFamily: '"Inter",system-ui,sans-serif',
               }}
             >
               Apply

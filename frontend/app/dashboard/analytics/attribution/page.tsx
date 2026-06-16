@@ -177,7 +177,7 @@ function QuizRow({
               background: 'none', border: '1px solid ' + C.BORDER,
               borderRadius: 6, padding: '4px 10px', fontSize: 11,
               fontWeight: 600, color: C.TEXT_MUTED, cursor: 'pointer',
-              fontFamily: '"Poppins",system-ui,sans-serif',
+              fontFamily: '"Inter",system-ui,sans-serif',
             }}
           >
             View

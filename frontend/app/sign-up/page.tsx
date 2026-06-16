@@ -145,13 +145,13 @@ function SignUpContent() {
     border: '1.5px solid #E4E3E0',
     borderRadius: '12px', padding: '0 16px',
     fontSize: '15px', color: '#1A1A1A',
-    fontFamily: '"Poppins", system-ui, sans-serif',
+    fontFamily: '"Inter", system-ui, sans-serif',
     outline: 'none', boxSizing: 'border-box',
     transition: 'border-color 0.15s',
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Poppins", system-ui, sans-serif', padding: '40px 24px' }}>
+    <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", system-ui, sans-serif', padding: '40px 24px' }}>
       <div style={{ width: '100%', maxWidth: '420px' }}>
 
         {/* Logo */}
@@ -188,7 +188,7 @@ function SignUpContent() {
               background: googleLoading ? '#F0F0F0' : '#FFFFFF',
               border: '1.5px solid #E4E3E0',
               borderRadius: '12px', color: '#1A1A1A', fontSize: '15px', fontWeight: 600,
-              fontFamily: '"Poppins",system-ui,sans-serif',
+              fontFamily: '"Inter",system-ui,sans-serif',
               cursor: googleLoading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
               transition: 'all 0.15s', marginBottom: '12px',
@@ -206,7 +206,7 @@ function SignUpContent() {
               background: appleLoading ? '#F0F0F0' : '#FFFFFF',
               border: '1.5px solid #E4E3E0',
               borderRadius: '12px', color: '#1A1A1A', fontSize: '15px', fontWeight: 600,
-              fontFamily: '"Poppins",system-ui,sans-serif',
+              fontFamily: '"Inter",system-ui,sans-serif',
               cursor: appleLoading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
               transition: 'all 0.15s', marginBottom: '12px',
@@ -237,7 +237,7 @@ function SignUpContent() {
               <button type="submit" disabled={loading} style={{
                 width: '100%', height: '52px', background: ACC, color: '#FFFFFF',
                 border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 700,
-                fontFamily: '"Poppins", system-ui, sans-serif',
+                fontFamily: '"Inter", system-ui, sans-serif',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s',
               }}>
@@ -275,7 +275,7 @@ function SignUpContent() {
               <button type="submit" disabled={loading || code.length < 6} style={{
                 width: '100%', height: '52px', background: code.length >= 6 ? ACC : 'rgba(13,115,119,0.3)',
                 color: '#FFFFFF', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 700,
-                fontFamily: '"Poppins", system-ui, sans-serif',
+                fontFamily: '"Inter", system-ui, sans-serif',
                 cursor: loading || code.length < 6 ? 'not-allowed' : 'pointer',
               }}>
                 {loading ? 'Verifying...' : 'Verify & continue →'}

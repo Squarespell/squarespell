@@ -7,7 +7,7 @@
  */
 export var DASHBOARD_COLORS = {
   // Font
-  FONT: "'Poppins', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+  FONT: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 
   // Backgrounds - Untitled UI gray scale
   BG: '#FFFFFF',

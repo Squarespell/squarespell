@@ -51,7 +51,7 @@ export default function TemplateDetailPage() {
 
   if (!template) {
     return (
-      <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Poppins', system-ui, sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: COLORS.text }}>Template not found</h1>
           <p style={{ fontSize: 15, color: COLORS.muted, margin: '8px 0 24px' }}>This template does not exist or has been removed.</p>
@@ -62,7 +62,7 @@ export default function TemplateDetailPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Poppins', system-ui, sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* Header */}
       <header style={{

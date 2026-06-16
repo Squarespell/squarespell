@@ -212,7 +212,7 @@ function PricingInner() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         html { font-size: 16px; }
-        body { font-family: 'Poppins', system-ui, sans-serif; background: #F7F7F5; color: #1A1A1A; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #F7F7F5; color: #1A1A1A; }
         button { cursor: pointer; font-family: inherit; }
         :root {
           --acc: #0f7377; --acc-dark: #0B6165; --acc-bg: rgba(13,115,119,0.06);

@@ -401,7 +401,7 @@ export default function QuizzesPage() {
                       fontSize: 12,
                       fontWeight: 600,
                       transition: 'all 0.2s ease',
-                      fontFamily: '"Poppins",system-ui,sans-serif',
+                      fontFamily: '"Inter",system-ui,sans-serif',
                     }}
                   >
                     {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -420,7 +420,7 @@ export default function QuizzesPage() {
                   background: C.BG,
                   color: C.TEXT,
                   fontSize: 12,
-                  fontFamily: '"Poppins",system-ui,sans-serif',
+                  fontFamily: '"Inter",system-ui,sans-serif',
                   cursor: 'pointer',
                 }}
               >
@@ -455,7 +455,7 @@ export default function QuizzesPage() {
                     background: C.BG,
                     color: C.TEXT,
                     fontSize: 12,
-                    fontFamily: '"Poppins",system-ui,sans-serif',
+                    fontFamily: '"Inter",system-ui,sans-serif',
                   }}
                 />
                 {searchText && (
@@ -548,7 +548,7 @@ export default function QuizzesPage() {
                     cursor: 'pointer',
                     fontSize: 12,
                     fontWeight: 600,
-                    fontFamily: '"Poppins",system-ui,sans-serif',
+                    fontFamily: '"Inter",system-ui,sans-serif',
                   }}
                 >
                   {duplicatingId === 'bulk' ? 'Duplicating...' : 'Duplicate'}
@@ -565,7 +565,7 @@ export default function QuizzesPage() {
                     cursor: 'pointer',
                     fontSize: 12,
                     fontWeight: 600,
-                    fontFamily: '"Poppins",system-ui,sans-serif',
+                    fontFamily: '"Inter",system-ui,sans-serif',
                   }}
                 >
                   {deleting ? 'Deleting...' : 'Delete'}
@@ -581,7 +581,7 @@ export default function QuizzesPage() {
                     cursor: 'pointer',
                     fontSize: 12,
                     fontWeight: 600,
-                    fontFamily: '"Poppins",system-ui,sans-serif',
+                    fontFamily: '"Inter",system-ui,sans-serif',
                   }}
                 >
                   Cancel
@@ -823,7 +823,7 @@ export default function QuizzesPage() {
                                       cursor: 'pointer',
                                       fontSize: 12,
                                       textAlign: 'left',
-                                      fontFamily: '"Poppins",system-ui,sans-serif',
+                                      fontFamily: '"Inter",system-ui,sans-serif',
                                       borderBottom: idx < 5 ? '1px solid ' + C.BORDER : 'none',
                                     }}
                                     onMouseEnter={function(e) {
@@ -862,7 +862,7 @@ export default function QuizzesPage() {
                             color: currentPage === 1 ? C.TEXT_MUTED : C.TEXT,
                             cursor: currentPage === 1 ? 'default' : 'pointer',
                             fontSize: 12,
-                            fontFamily: '"Poppins",system-ui,sans-serif',
+                            fontFamily: '"Inter",system-ui,sans-serif',
                           }}
                         >
                           «
@@ -881,7 +881,7 @@ export default function QuizzesPage() {
                                 color: currentPage === pageNum ? '#fff' : C.TEXT,
                                 cursor: 'pointer',
                                 fontSize: 12,
-                                fontFamily: '"Poppins",system-ui,sans-serif',
+                                fontFamily: '"Inter",system-ui,sans-serif',
                               }}
                             >
                               {pageNum}
@@ -899,7 +899,7 @@ export default function QuizzesPage() {
                             color: currentPage === totalPages ? C.TEXT_MUTED : C.TEXT,
                             cursor: currentPage === totalPages ? 'default' : 'pointer',
                             fontSize: 12,
-                            fontFamily: '"Poppins",system-ui,sans-serif',
+                            fontFamily: '"Inter",system-ui,sans-serif',
                           }}
                         >
                           »

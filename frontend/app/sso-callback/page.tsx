@@ -13,7 +13,7 @@ export default function SSOCallback() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Poppins", system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", system-ui, sans-serif' }}>
       <AuthenticateWithRedirectCallback
         afterSignInUrl="/dashboard"
         afterSignUpUrl="/dashboard"

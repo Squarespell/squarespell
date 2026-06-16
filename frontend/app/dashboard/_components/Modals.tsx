@@ -60,7 +60,7 @@ function Sheet({
         justifyContent: 'center',
         zIndex: 100,
         padding: '24px 16px',
-        fontFamily: '"Poppins", system-ui, sans-serif',
+        fontFamily: '"Inter", system-ui, sans-serif',
       }}
     >
       <div

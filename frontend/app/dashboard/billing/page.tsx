@@ -564,7 +564,7 @@ export default function BillingPage() {
                           style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             padding: '8px 12px', borderRadius: 8, border: '1px solid ' + C.BORDER,
-                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"Poppins",system-ui,sans-serif',
+                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"Inter",system-ui,sans-serif',
                             transition: 'border-color 0.15s',
                           }}
                           onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
@@ -611,7 +611,7 @@ export default function BillingPage() {
                           style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             padding: '8px 12px', borderRadius: 8, border: '1px solid ' + C.BORDER,
-                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"Poppins",system-ui,sans-serif',
+                            background: C.ELEVATED, cursor: 'pointer', fontSize: 12, fontFamily: '"Inter",system-ui,sans-serif',
                             transition: 'border-color 0.15s',
                           }}
                           onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
@@ -769,7 +769,7 @@ export default function BillingPage() {
                           fontSize: 14,
                           fontWeight: 700,
                           cursor: 'pointer',
-                          fontFamily: '"Poppins",system-ui,sans-serif',
+                          fontFamily: '"Inter",system-ui,sans-serif',
                           transition: 'all .15s',
                           opacity: checkoutLoading === p.id ? 0.5 : 1,
                         }}

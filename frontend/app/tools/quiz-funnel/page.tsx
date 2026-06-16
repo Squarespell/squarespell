@@ -7,7 +7,7 @@ import { QUIZ_TEMPLATE_CATALOG } from '@/lib/quiz/templates'
 
 /* ─── tokens ─── */
 const A='#0f7377',AH='#0b6165',AL='#e8f5f5',T='#0d1117',M='#6b7280',B='#e5e7eb',S='#f9fafb',W='#ffffff'
-const F="'Poppins', system-ui, sans-serif"
+const F="'Inter', system-ui, sans-serif"
 const sh={sm:'0 1px 3px rgba(0,0,0,.07)',md:'0 4px 16px rgba(0,0,0,.08)',lg:'0 12px 40px rgba(0,0,0,.10)',xl:'0 24px 64px rgba(0,0,0,.13)'}
 
 /* ─── tiny helpers ─── */

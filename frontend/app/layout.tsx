@@ -1,10 +1,22 @@
 'use client';
 import { ClerkProvider, useAuth } from '@clerk/nextjs';
 import { useEffect } from 'react';
+import { Inter } from 'next/font/google';
 import { setAuthToken } from '../lib/api';
 import { startKeepAlive } from '../lib/keepAlive';
 import { ToastProvider } from '../lib/toast';
 import './globals.css';
+
+// Self-hosted, optimized loading (no render-blocking Google Fonts request).
+// Inter is the platform's primary typeface — see SQUARESPELL-SYSTEM-DESIGN.md
+// typography section for rationale. Exposed as --font-inter and consumed by
+// the --font / --font-body CSS variables in globals.css.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 function AuthTokenSync() {
   const { getToken, isSignedIn, isLoaded } = useAuth();
@@ -48,8 +60,7 @@ function Footer() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <head><link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></head>
+      <html lang="en" className={inter.variable}>
         <body>
           <ToastProvider>
           <AuthTokenSync />

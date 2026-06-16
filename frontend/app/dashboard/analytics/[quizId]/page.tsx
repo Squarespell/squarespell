@@ -136,7 +136,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
               background: 'rgba(0,0,0,0.04)',
               border: '1px solid rgba(0,0,0,0.1)',
               color: 'rgba(0,0,0,0.5)',
-              fontFamily: '"Poppins",system-ui,sans-serif',
+              fontFamily: '"Inter",system-ui,sans-serif',
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

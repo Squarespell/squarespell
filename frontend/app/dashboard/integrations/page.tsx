@@ -193,7 +193,7 @@ var inputStyle: React.CSSProperties = {
   borderRadius: 8,
   fontSize: 13,
   color: C.TEXT,
-  fontFamily: '"Poppins",system-ui,sans-serif',
+  fontFamily: '"Inter",system-ui,sans-serif',
   outline: 'none',
 };
 

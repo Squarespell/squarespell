@@ -891,7 +891,7 @@ export function TryFlowInner({
   const brandBorder = 'rgba(0,0,0,0.10)';
   const brandFont = brand?.font_family && brand.font_family !== 'sans-serif'
     ? `'${brand.font_family}', system-ui, sans-serif`
-    : "'Poppins', system-ui, sans-serif";
+    : "'Inter', system-ui, sans-serif";
   const brandName = brand?.site_name || domain.replace(/\.[^.]+$/, '').replace(/^\w/, c => c.toUpperCase());
   // Real navigation links scraped from the website (falls back to generic)
   const navLinks: string[] = (brand?.business as any)?.nav_links?.length > 0

@@ -13,7 +13,7 @@ export default function NotFound() {
         minHeight: '100svh',
         background: '#F7F7F5',
         color: '#1A1A1A',
-        fontFamily: '"Poppins", system-ui, sans-serif',
+        fontFamily: '"Inter", system-ui, sans-serif',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

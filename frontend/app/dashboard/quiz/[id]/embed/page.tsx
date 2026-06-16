@@ -56,7 +56,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
   );
 
   if (!quiz) return (
-    <div style={{ background:'#F7F7F5', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'#1A1A1A', fontFamily:'Poppins, sans-serif' }}>
+    <div style={{ background:'#F7F7F5', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'#1A1A1A', fontFamily:'Inter, sans-serif' }}>
       <p>Quiz not found.</p>
     </div>
   );
@@ -66,7 +66,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-        body{font-family:'Poppins',system-ui,sans-serif;background:#F7F7F5;color:#1A1A1A}
+        body{font-family:'Inter',system-ui,sans-serif;background:#F7F7F5;color:#1A1A1A}
         :root{--acc:#0f7377;--g1:rgba(0,0,0,.055);--g2:rgba(0,0,0,.034);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.058);--t1:#1A1A1A;--t3:rgba(26,26,26,.42);--t4:rgba(26,26,26,.22)}
       `}</style>
 
@@ -91,7 +91,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
             </div>
             <button
               onClick={() => copy(embedScript, 'script')}
-              style={{ background: copied ? 'rgba(45,106,79,.15)' : 'var(--acc)', color: copied ? '#2D6A4F' : '#FFFFFF', border: copied ? '.5px solid rgba(45,106,79,.3)' : 'none', borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'Poppins, sans-serif', transition:'all .2s', whiteSpace:'nowrap' }}
+              style={{ background: copied ? 'rgba(45,106,79,.15)' : 'var(--acc)', color: copied ? '#2D6A4F' : '#FFFFFF', border: copied ? '.5px solid rgba(45,106,79,.3)' : 'none', borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'Inter, sans-serif', transition:'all .2s', whiteSpace:'nowrap' }}
             >
               {copied ? 'Copied!' : 'Copy code'}
             </button>
@@ -137,7 +137,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
             </div>
             <button
               onClick={() => copy(quizUrl, 'full')}
-              style={{ background: copiedFull ? 'rgba(45,106,79,.15)' : 'var(--g1)', color: copiedFull ? '#2D6A4F' : 'var(--t1)', border: `.5px solid ${copiedFull ? 'rgba(45,106,79,.3)' : 'var(--b1)'}`, borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'Poppins, sans-serif', transition:'all .2s', whiteSpace:'nowrap' }}
+              style={{ background: copiedFull ? 'rgba(45,106,79,.15)' : 'var(--g1)', color: copiedFull ? '#2D6A4F' : 'var(--t1)', border: `.5px solid ${copiedFull ? 'rgba(45,106,79,.3)' : 'var(--b1)'}`, borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'Inter, sans-serif', transition:'all .2s', whiteSpace:'nowrap' }}
             >
               {copiedFull ? 'Copied!' : 'Copy URL'}
             </button>

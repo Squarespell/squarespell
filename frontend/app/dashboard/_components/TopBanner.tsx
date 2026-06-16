@@ -185,7 +185,7 @@ export function TopBanner({ token, announcement }: TopBannerProps) {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 14,
-        fontFamily: '"Poppins",system-ui,sans-serif',
+        fontFamily: '"Inter",system-ui,sans-serif',
         fontSize: 13.5,
         lineHeight: 1.5,
         color: s.text,

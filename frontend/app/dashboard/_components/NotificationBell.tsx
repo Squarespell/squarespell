@@ -223,7 +223,7 @@ export function NotificationBell() {
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 12, color: C.ACCENT, fontWeight: 600,
-                  fontFamily: '"Poppins",system-ui,sans-serif',
+                  fontFamily: '"Inter",system-ui,sans-serif',
                   padding: '4px 8px',
                 }}
               >

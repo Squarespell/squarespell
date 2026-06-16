@@ -81,7 +81,7 @@ export default function DashboardError({
                 fontSize: 14,
                 fontWeight: 700,
                 cursor: 'pointer',
-                fontFamily: '"Poppins", system-ui, sans-serif',
+                fontFamily: '"Inter", system-ui, sans-serif',
               }}
             >
               Try again
@@ -99,7 +99,7 @@ export default function DashboardError({
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                fontFamily: '"Poppins", system-ui, sans-serif',
+                fontFamily: '"Inter", system-ui, sans-serif',
               }}
             >
               Back to overview

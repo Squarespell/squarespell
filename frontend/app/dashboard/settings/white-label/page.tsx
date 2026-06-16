@@ -162,7 +162,7 @@ export default function WhiteLabelSettingsPage() {
     borderRadius: 10,
     fontSize: 13.5,
     color: C.TEXT,
-    fontFamily: '"Poppins",system-ui,sans-serif',
+    fontFamily: '"Inter",system-ui,sans-serif',
     outline: 'none',
     width: '100%',
     boxSizing: 'border-box',

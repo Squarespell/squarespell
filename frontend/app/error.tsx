@@ -34,7 +34,7 @@ export default function GlobalError({
         minHeight: '100svh',
         background: '#F7F7F5',
         color: '#1A1A1A',
-        fontFamily: '"Poppins", system-ui, sans-serif',
+        fontFamily: '"Inter", system-ui, sans-serif',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -82,7 +82,7 @@ export default function GlobalError({
               border: 0,
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: '"Poppins", system-ui, sans-serif',
+              fontFamily: '"Inter", system-ui, sans-serif',
               cursor: 'pointer',
             }}
           >
