@@ -562,11 +562,26 @@ export default function QuizPage() {
         signal: controller.signal,
       }).then(function(r) {
         clearTimeout(timeoutId);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+        if (!r.ok) {
+          // 4xx responses (bad email, invalid name, missing fields, etc.) are
+          // deterministic validation failures, not transient backend issues —
+          // retrying the exact same payload three times wastes ~2s and then
+          // still ends up showing a generic "Something went wrong" instead of
+          // the specific, actionable reason the server already gave us (e.g.
+          // "Name contains invalid characters"). Only 5xx/network-style
+          // failures are worth retrying; surface 4xx immediately as a
+          // non-retryable error carrying the real server message.
+          return r.json().catch(function() { return {}; }).then(function(body) {
+            var err: any = new Error(body?.error || ('HTTP ' + r.status));
+            err.status = r.status;
+            err.nonRetryable = r.status >= 400 && r.status < 500;
+            throw err;
+          });
+        }
         return r;
       }).catch(function(err) {
         clearTimeout(timeoutId);
-        if (n < maxAttempts) {
+        if (!err.nonRetryable && n < maxAttempts) {
           var delay = n === 1 ? 600 : 1500;
           return new Promise(function(resolve) { setTimeout(resolve, delay); }).then(function() {
             return attempt(n + 1);
@@ -591,8 +606,8 @@ export default function QuizPage() {
       if (window.parent !== window) {
         window.parent.postMessage({ source: 'squarespell', type: 'complete', outcome_id: o?.id }, '*');
       }
-    }).catch(function() {
-      setLeadError('Something went wrong. Please try again.');
+    }).catch(function(err) {
+      setLeadError(err && err.nonRetryable && err.message ? err.message : 'Something went wrong. Please try again.');
     }).finally(function() {
       setSubmitting(false);
     });
