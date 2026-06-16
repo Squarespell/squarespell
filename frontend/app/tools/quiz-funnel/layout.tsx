@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 
-var SITE = 'https://squarespell.com';
+// NOTE: this page is served from app.squarespell.com (see middleware.ts —
+// the bare squarespell.com domain is a separate Squarespace-hosted marketing
+// site, not this Next.js app). Canonical/OG URLs must point at the host that
+// actually serves this route, or search engines and social scrapers will
+// resolve them to the wrong site.
+var SITE = 'https://app.squarespell.com';
 var PATH = '/tools/quiz-funnel';
 var FULL = SITE + PATH;
 
@@ -36,21 +41,16 @@ export var metadata: Metadata = {
       'Build AI-powered quiz funnels for your Squarespace site in under 2 minutes. Segment visitors, capture emails, and convert 3× more leads.',
     siteName: 'Squarespell Quiz',
     locale: 'en_US',
-    images: [
-      {
-        url: SITE + '/og-quiz-funnel.png',
-        width: 1200,
-        height: 630,
-        alt: 'Squarespell Quiz AI Quiz Funnel Builder — create quizzes that capture leads on Squarespace',
-      },
-    ],
+    // NOTE: og-quiz-funnel.png referenced previously does not exist anywhere
+    // in /public, which means every social share of this page was rendering
+    // a broken image. Omitting `images` until a real 1200x630 OG asset is
+    // designed and added is safer than shipping a dead link.
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AI Quiz Funnels for Squarespace — Capture 3× More Leads',
     description:
       'Build AI-powered quiz funnels in under 2 minutes. Segment visitors, capture emails, convert more leads.',
-    images: [SITE + '/og-quiz-funnel.png'],
   },
   robots: {
     index: true,
@@ -58,9 +58,6 @@ export var metadata: Metadata = {
     'max-image-preview': 'large',
     'max-snippet': -1,
     'max-video-preview': -1,
-  },
-  other: {
-    'google-site-verification': '',
   },
 };
 

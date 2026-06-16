@@ -1,4 +1,6 @@
-'use client';
+import type { Metadata } from 'next';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
 /**
  * Root route on app.squarespell.com.
@@ -6,35 +8,23 @@
  * Signed-in users go to the dashboard. Everyone else goes to the quiz-funnel
  * marketing landing page (the de-facto home of the app subdomain), where the
  * hero URL input drops them into the no-login quiz builder.
+ *
+ * This is a server component (not 'use client') so the redirect happens
+ * before any HTML ships — no client-side "Redirecting…" flash, and it lets
+ * this route export real metadata, which the previous client-side version
+ * structurally could not do.
  */
 
-import { useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+export const metadata: Metadata = {
+  title: 'Squarespell Quiz — AI Quiz Funnels for Squarespace',
+  description:
+    'Turn website visitors into segmented leads with AI-generated quiz funnels. Build a branded quiz from any URL in minutes, capture leads, and route them with personalized results — no login required to try it.',
+  alternates: {
+    canonical: 'https://app.squarespell.com/',
+  },
+};
 
 export default function HomePage() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    router.replace(isSignedIn ? '/dashboard' : '/tools/quiz-funnel');
-  }, [isLoaded, isSignedIn, router]);
-
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#F7F7F5',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: "'Poppins', system-ui, sans-serif",
-        color: 'rgba(26,26,26,0.35)',
-        fontSize: 13,
-      }}
-    >
-      Redirecting…
-    </div>
-  );
+  const { userId } = auth();
+  redirect(userId ? '/dashboard' : '/tools/quiz-funnel');
 }
