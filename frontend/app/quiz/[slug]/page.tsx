@@ -264,6 +264,8 @@ export default function QuizPage() {
   var [couponCopied, setCouponCopied] = useState(false);
   var [resultEmail, setResultEmail] = useState('');
   var [resultEmailSent, setResultEmailSent] = useState(false);
+  var [resultEmailSending, setResultEmailSending] = useState(false);
+  var [resultEmailError, setResultEmailError] = useState('');
   var [linkCopied, setLinkCopied] = useState(false);
   var [totalScore, setTotalScore] = useState(0);
   var [leadError, setLeadError] = useState('');
@@ -1369,19 +1371,35 @@ export default function QuizPage() {
                         flex: 1, padding: '10px 14px', border: '1px solid ' + brandBorder, borderRadius: 8,
                         fontSize: 14, fontFamily: brandFont, color: brandText, outline: 'none',
                       }} />
-                    <button type="button" onClick={function() {
+                    <button type="button" disabled={resultEmailSending} onClick={function() {
                       if (!resultEmail.trim() || !resultEmail.includes('@') || !quiz) return;
+                      setResultEmailSending(true);
+                      setResultEmailError('');
                       fetch(API + '/api/quiz/' + slug + '/lead', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: resultEmail, first_name: '', outcome_id: outcome?.id }),
-                      }).catch(function() {});
-                      setResultEmailSent(true);
+                      }).then(function(r) {
+                        if (!r.ok) {
+                          return r.json().catch(function() { return {}; }).then(function(body) {
+                            throw new Error(body?.error || ('HTTP ' + r.status));
+                          });
+                        }
+                        setResultEmailSent(true);
+                      }).catch(function(err) {
+                        setResultEmailError((err && err.message) || 'Something went wrong. Please try again.');
+                      }).finally(function() {
+                        setResultEmailSending(false);
+                      });
                     }} style={{
                       padding: '10px 20px', background: brandPrimary, color: brandBg, border: 0,
-                      borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: brandFont,
-                    }}>Send</button>
+                      borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: resultEmailSending ? 'default' : 'pointer',
+                      fontFamily: brandFont, opacity: resultEmailSending ? 0.6 : 1,
+                    }}>{resultEmailSending ? 'Sending…' : 'Send'}</button>
                   </div>
+                  {resultEmailError && (
+                    <div style={{ marginTop: 8, fontSize: 12, color: '#DC2626' }}>{resultEmailError}</div>
+                  )}
                 </div>
               )}
               {showEmailResults && resultEmailSent && (
