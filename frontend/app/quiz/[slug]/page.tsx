@@ -241,6 +241,19 @@ export default function QuizPage() {
   var [quiz, setQuiz] = useState<Quiz | null>(null);
   var [stage, setStage] = useState<Stage>('loading');
   var [error, setError] = useState('');
+  // Several layout sections below (split question layout, the grid/card
+  // answer layout, and the before/after comparison) use a hardcoded
+  // `gridTemplateColumns: '1fr 1fr'` with no responsive fallback, which was
+  // found during real-device mobile QA to squeeze content into unusably
+  // narrow columns on phone-width screens. Track viewport width here so
+  // those sections can collapse to a single column below ~640px.
+  var [isMobile, setIsMobile] = useState(false);
+  useEffect(function() {
+    function checkWidth() { setIsMobile(window.innerWidth < 640); }
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+    return function() { window.removeEventListener('resize', checkWidth); };
+  }, []);
   var [qIdx, setQIdx] = useState(0);
   var [answers, setAnswers] = useState<Record<number, number>>({});
   var [email, setEmail] = useState('');
@@ -708,7 +721,7 @@ export default function QuizPage() {
                 <div style={{
                   background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 16,
                   overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
-                  display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 360,
+                  display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', minHeight: isMobile ? 'auto' : 360,
                 }}>
                   {/* Left: media */}
                   <div style={{
@@ -838,7 +851,7 @@ export default function QuizPage() {
                   {/* Answer options — layout-aware */}
                   {isGrid ? (
                     /* Grid / Full-background layout */
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                       {currentQ.options.map(function(opt, oi) {
                         var optImg = getOptionImage(opt);
                         var picked = answers[qIdx] === oi;
@@ -1308,7 +1321,7 @@ export default function QuizPage() {
               {/* Before / After comparison */}
               {showBeforeAfter && (outcome.beforeText || outcome.before_text) && (outcome.afterText || outcome.after_text) && (
                 <div style={{
-                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
+                  display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12,
                 }}>
                   <div style={{
                     background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 14,
