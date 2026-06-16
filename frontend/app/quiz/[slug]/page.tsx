@@ -515,6 +515,13 @@ export default function QuizPage() {
     fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(function() { /* silent fail */ });
   }, [stage, webhookUrl]);
 
+  // Lead submission is the conversion-critical gate of the entire funnel, so
+  // it gets the same retry-with-backoff + per-attempt timeout hardening as
+  // the quiz-load fetch above (see retryToken comment). Previously this had
+  // no timeout at all (a hung/slow backend left the button on "Loading..."
+  // forever with no recovery) and no response.ok check (an HTTP error would
+  // still fall into the success branch and silently show a result as if the
+  // lead had been saved).
   var submitLead = useCallback(function() {
     if (!quiz) return;
     if (!email.trim() || !email.includes('@')) {
@@ -524,17 +531,39 @@ export default function QuizPage() {
     setSubmitting(true);
     setLeadError('');
     var o = getOutcome(quiz, answers);
-    fetch(API + '/api/quiz/' + slug + '/lead', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: firstName,
-        email: email,
-        answers: answers,
-        outcome_id: o?.id,
-        session_id: sessionIdRef.current,
-      }),
-    }).then(function() {
+    var maxAttempts = 3;
+
+    function attempt(n: number): Promise<any> {
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function() { controller.abort(); }, 8000);
+      return fetch(API + '/api/quiz/' + slug + '/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: firstName,
+          email: email,
+          answers: answers,
+          outcome_id: o?.id,
+          session_id: sessionIdRef.current,
+        }),
+        signal: controller.signal,
+      }).then(function(r) {
+        clearTimeout(timeoutId);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r;
+      }).catch(function(err) {
+        clearTimeout(timeoutId);
+        if (n < maxAttempts) {
+          var delay = n === 1 ? 600 : 1500;
+          return new Promise(function(resolve) { setTimeout(resolve, delay); }).then(function() {
+            return attempt(n + 1);
+          });
+        }
+        throw err;
+      });
+    }
+
+    attempt(1).then(function() {
       setOutcome(o);
       setStage('result');
       fetch(API + '/api/quiz/' + slug + '/event', {

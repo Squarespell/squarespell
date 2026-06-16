@@ -373,20 +373,47 @@ export default function EmbedQuizClient({
     setLeadError('');
     const o = getOutcome(answers);
     const consentText = quiz.settings?.gdpr_consent_text || 'I agree to receive communications from this business';
+
+    // Lead submission is the conversion-critical gate of the embed widget,
+    // so it gets retry-with-backoff + a per-attempt timeout instead of a
+    // single unprotected fetch. Previously a hung/slow backend left the
+    // button on "Unlocking..." forever with no recovery, and the missing
+    // response.ok check meant an HTTP error response would still fall into
+    // the success branch and silently show a result as if the lead had
+    // been saved.
+    const maxAttempts = 3;
+    async function attempt(n: number): Promise<void> {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      try {
+        const r = await fetch(`${API}/api/quiz/${quiz.slug}/lead`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: firstName,
+            email,
+            answers,
+            outcome_id: o?.id,
+            session_id: sessionIdRef.current,
+            consent: gdprRequired ? gdprConsent : undefined,
+            consent_text: gdprRequired && gdprConsent ? consentText : undefined,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (n < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, n === 1 ? 600 : 1500));
+          return attempt(n + 1);
+        }
+        throw err;
+      }
+    }
+
     try {
-      await fetch(`${API}/api/quiz/${quiz.slug}/lead`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: firstName,
-          email,
-          answers,
-          outcome_id: o?.id,
-          session_id: sessionIdRef.current,
-          consent: gdprRequired ? gdprConsent : undefined,
-          consent_text: gdprRequired && gdprConsent ? consentText : undefined,
-        }),
-      });
+      await attempt(1);
       setOutcome(o);
       setStage('result');
       trackEvent('complete', { outcome_id: o?.id });
