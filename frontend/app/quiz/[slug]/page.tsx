@@ -25,6 +25,7 @@ import { useParams } from 'next/navigation';
 
 import { addUtmParams, quizUtm } from '@/lib/urls';
 import generatePdfReport from './generatePdfReport';
+import QuizRenderer from '@/components/quiz-taker/QuizRenderer';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -701,814 +702,177 @@ export default function QuizPage() {
   }
   if (!quiz) return null;
 
+  /* ---------- adapt local handlers to QuizRenderer's prop contract ---------- */
+  var handleCopyLink = function() {
+    var ta = document.createElement('textarea');
+    ta.value = window.location.href;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    setLinkCopied(true);
+    setTimeout(function() { setLinkCopied(false); }, 2000);
+  };
+
+  var handleCopyCoupon = function() {
+    var code = outcome?.couponCode || outcome?.coupon_code || '';
+    var ta = document.createElement('textarea');
+    ta.value = code;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    setCouponCopied(true);
+    setTimeout(function() { setCouponCopied(false); }, 2000);
+  };
+
+  var handleSendResultEmail = function() {
+    if (!resultEmail.trim() || !resultEmail.includes('@') || !quiz) return;
+    setResultEmailSending(true);
+    setResultEmailError('');
+    fetch(API + '/api/quiz/' + slug + '/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: resultEmail, first_name: '', outcome_id: outcome?.id }),
+    }).then(function(r) {
+      if (!r.ok) {
+        return r.json().catch(function() { return {}; }).then(function(body) {
+          throw new Error(body?.error || ('HTTP ' + r.status));
+        });
+      }
+      setResultEmailSent(true);
+    }).catch(function(err) {
+      setResultEmailError((err && err.message) || 'Something went wrong. Please try again.');
+    }).finally(function() {
+      setResultEmailSending(false);
+    });
+  };
+
+  var handleCancelCountdown = function() {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setCountdown(-1);
+  };
+
+  var handleDownloadPdf = function() {
+    if (pdfGenerating || !quiz) return;
+    setPdfGenerating(true);
+    try {
+      var questions = quiz.questions || [];
+      var questionResults: Array<{ questionText: string; chosenAnswer: string; score: number; maxScore: number }> = [];
+      var maxPossible = 0;
+      Object.keys(answers).forEach(function(k) {
+        var qi = parseInt(k);
+        var q = questions[qi];
+        if (!q) return;
+        var chosenIdx = answers[qi];
+        var chosenOpt = q.options[chosenIdx];
+        var qMaxScore = 0;
+        q.options.forEach(function(opt) {
+          var s = opt.score || 0;
+          if (s > qMaxScore) qMaxScore = s;
+        });
+        maxPossible += qMaxScore;
+        questionResults.push({
+          questionText: q.text || q.question || 'Question ' + (qi + 1),
+          chosenAnswer: chosenOpt ? chosenOpt.text : '',
+          score: chosenOpt ? (chosenOpt.score || 0) : 0,
+          maxScore: qMaxScore,
+        });
+      });
+      var oc = outcome || getOutcome(quiz, answers);
+      generatePdfReport({
+        quizTitle: quiz.title || 'Quiz Report',
+        quizDescription: quiz.description,
+        respondentName: firstName || 'Quiz Taker',
+        respondentEmail: email || '',
+        outcomeName: oc ? oc.title : '',
+        outcomeDescription: oc ? oc.description : '',
+        totalScore: totalScore,
+        maxPossibleScore: maxPossible,
+        questionResults: questionResults,
+        tips: oc?.tips || [],
+        ctaText: oc?.ctaText || oc?.cta_text || quiz.settings?.cta_text || '',
+        ctaUrl: oc?.ctaUrl || oc?.cta_url || quiz.settings?.cta_url || '',
+        couponCode: oc?.couponCode || oc?.coupon_code || '',
+        couponLabel: oc?.couponLabel || oc?.coupon_label || '',
+        testimonialQuote: oc?.testimonialQuote || oc?.testimonial_quote || '',
+        testimonialAuthor: oc?.testimonialAuthor || oc?.testimonial_author || '',
+        beforeText: oc?.beforeText || oc?.before_text || '',
+        afterText: oc?.afterText || oc?.after_text || '',
+        bookingUrl: oc?.bookingUrl || oc?.booking_url || '',
+        bookingText: oc?.bookingText || oc?.booking_text || '',
+        brandPrimary: brandPrimary,
+        brandName: brandName || quiz.title || 'Quiz',
+        brandFont: brandFont,
+        logoUrl: logoUrl,
+        generatedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      });
+      setTimeout(function() { setPdfGenerating(false); }, 2000);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      setPdfGenerating(false);
+    }
+  };
+
   return (
     <>
       {metaDescription && <meta name="description" content={metaDescription} />}
 
       <style dangerouslySetInnerHTML={{ __html: "\n@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');\n*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }\nhtml, body { height: 100%; }\nbody {\n  font-family: " + brandFont + ";\n  background: " + brandBg + ";\n  color: " + brandText + ";\n}\n*:focus-visible { outline: 2px solid " + brandPrimary + "; outline-offset: 2px; }\n@keyframes sq-slide-in-fwd { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-slide-in-back { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-fade-in { from { opacity: 0; } to { opacity: 1; } }\n" + customCss + "\n" }} />
 
-      <div style={{
-        containerType: 'inline-size' as any,
-        minHeight: '100svh',
-        background: brandBg,
-        color: brandText,
-        padding: '28px 20px 40px',
-        fontFamily: brandFont,
-      }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 22 }}>
-
-          {/* ============= QUESTION STAGE ============= */}
-          {stage === 'question' && currentQ && (
-            <div key={'q-' + qIdx} style={{
-              animation: transitionType === 'none' ? 'none' :
-                transitionType === 'fade' ? 'sq-fade-in 0.35s ease-out' :
-                transDir.current === 'forward' ? 'sq-slide-in-fwd 0.35s ease-out' : 'sq-slide-in-back 0.35s ease-out',
-            }}>
-              {/* Header */}
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
-                {logoUrl && <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><img src={logoUrl} alt="" style={{ maxHeight: 48, maxWidth: 180, objectFit: 'contain' }} /></div>}
-                {brandName && !logoUrl && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary }}>{brandName}</div>}
-                <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15 }}>{quiz.title}</div>
-                {quiz.description && <div style={{ fontSize: 14, opacity: 0.64, lineHeight: 1.55 }}>{quiz.description}</div>}
-              </div>
-
-              {/* Question card */}
-              {isSplit ? (
-                /* ---- SPLIT LAYOUT ---- */
-                <div style={{
-                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 16,
-                  overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
-                  display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', minHeight: isMobile ? 'auto' : 360,
-                }}>
-                  {/* Left: media */}
-                  <div style={{
-                    background: '#0a0a0a',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    position: 'relative', overflow: 'hidden',
-                  }}>
-                    {qMediaUrl && (qMediaType === 'video' || /youtube\.com|youtu\.be|vimeo\.com/.test(qMediaUrl)) ? (function() {
-                      var ytM = qMediaUrl!.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
-                      var viM = qMediaUrl!.match(/(?:vimeo\.com\/)(\d+)/);
-                      var eUrl = ytM ? 'https://www.youtube.com/embed/' + ytM[1] : viM ? 'https://player.vimeo.com/video/' + viM[1] : '';
-                      return eUrl
-                        ? <iframe src={eUrl} style={{ width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                        : <video src={qMediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
-                    })() : qMediaUrl ? (
-                      <img src={qMediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                        <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                      </div>
-                    )}
-                  </div>
-                  {/* Right: question + answers */}
-                  <div style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    {timeRemaining !== null && (
-                      <div style={{
-                        position: 'absolute', top: 22, right: 22,
-                        width: 56, height: 56, borderRadius: '50%',
-                        background: timeRemaining < 5 ? '#ff6b5b26' : brandPrimary + '14',
-                        color: timeRemaining < 5 ? '#ff6b5b' : brandPrimary,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 18, fontWeight: 700,
-                      }}>{timeRemaining}s</div>
-                    )}
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary, marginBottom: 8 }}>
-                      Question {String(qIdx + 1).padStart(2, '0')}
-                    </div>
-                    <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.22, marginBottom: 6 }}>
-                      {currentQ.text || currentQ.question}
-                    </div>
-                    {currentQ.subtitle && (
-                      <div style={{ fontSize: 13, opacity: 0.6, marginBottom: 16, lineHeight: 1.5 }}>{currentQ.subtitle}</div>
-                    )}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
-                      {currentQ.options.map(function(opt, oi) {
-                        var optImg = getOptionImage(opt);
-                        var picked = answers[qIdx] === oi;
-                        return (
-                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
-                            onMouseEnter={function() { setHoverOpt(oi); }}
-                            onMouseLeave={function() { setHoverOpt(null); }}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
-                              padding: '12px 14px', background: picked ? brandPrimary + '14' : brandBg,
-                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
-                              borderRadius: 12, fontFamily: brandFont, fontSize: 14, color: brandText,
-                              cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
-                              transform: hoverOpt === oi ? 'translateY(-1px)' : 'none',
-                            }}>
-                            <div style={{
-                              width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-                              background: picked ? brandPrimary : brandBorder,
-                              color: picked ? brandBg : brandText,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 11, fontWeight: 700,
-                            }}>{LETTERS[oi]}</div>
-                            {optImg && <img src={optImg} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />}
-                            <div style={{ flex: 1 }}>{opt.text}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {qIdx > 0 && (
-                      <button type="button" onClick={goBack} style={{ marginTop: 16, fontSize: 12, opacity: 0.5, cursor: 'pointer', background: 'none', border: 'none', fontFamily: brandFont, color: brandText }}>
-                        ← Previous question
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                /* ---- ALL OTHER LAYOUTS ---- */
-                <div style={{
-                  position: 'relative', background: brandSurface,
-                  border: '1px solid ' + brandBorder, borderRadius: 18,
-                  padding: '26px 22px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
-                }}>
-                  {timeRemaining !== null && (
-                    <div style={{
-                      position: 'absolute', top: 22, right: 22,
-                      width: 56, height: 56, borderRadius: '50%',
-                      background: timeRemaining < 5 ? '#ff6b5b26' : brandPrimary + '14',
-                      color: timeRemaining < 5 ? '#ff6b5b' : brandPrimary,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 18, fontWeight: 700, fontFamily: "'Inter', monospace",
-                    }}>{timeRemaining}s</div>
-                  )}
-
-                  {/* Progress */}
-                  {showProgressBar && (
-                    <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, opacity: 0.55, marginBottom: 10, letterSpacing: '0.02em' }}>
-                        <span>Question {qIdx + 1} of {totalQs}</span>
-                        <span>{progress}%</span>
-                      </div>
-                      <div style={{ height: 3, background: brandBorder, borderRadius: 100, overflow: 'hidden', marginBottom: 22 }}>
-                        <div style={{ height: '100%', background: brandPrimary, borderRadius: 100, transition: 'width 0.45s cubic-bezier(0.16,1,0.3,1)', width: progress + '%' }} />
-                      </div>
-                    </>
-                  )}
-
-                  {/* Question label + text */}
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: brandPrimary, marginBottom: 8 }}>
-                    Question {String(qIdx + 1).padStart(2, '0')}
-                  </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.22, marginBottom: currentQ.subtitle ? 6 : 20 }}>
-                    {currentQ.text || currentQ.question}
-                  </div>
-                  {currentQ.subtitle && (
-                    <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 20, lineHeight: 1.5 }}>{currentQ.subtitle}</div>
-                  )}
-
-                  {/* Question media */}
-                  {qMediaUrl && qMediaType && (
-                    <QuestionMedia mediaUrl={qMediaUrl} mediaType={qMediaType} brandPrimary={brandPrimary} />
-                  )}
-
-                  {/* Answer options — layout-aware */}
-                  {isGrid ? (
-                    /* Grid / Full-background layout */
-                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
-                      {currentQ.options.map(function(opt, oi) {
-                        var optImg = getOptionImage(opt);
-                        var picked = answers[qIdx] === oi;
-                        return (
-                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
-                            onMouseEnter={function() { setHoverOpt(oi); }}
-                            onMouseLeave={function() { setHoverOpt(null); }}
-                            style={{
-                              display: 'flex', flexDirection: 'column', alignItems: 'stretch',
-                              padding: 0, background: picked ? brandPrimary + '14' : brandBg,
-                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
-                              borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
-                              fontFamily: brandFont, color: brandText,
-                              transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
-                              transform: hoverOpt === oi ? 'translateY(-2px)' : 'none',
-                              boxShadow: hoverOpt === oi ? '0 4px 16px rgba(0,0,0,0.06)' : picked ? '0 0 0 1px ' + brandPrimary : 'none',
-                              textAlign: 'center',
-                            }}>
-                            {/* Image area */}
-                            <div style={{
-                              width: '100%', height: isFullBg ? 140 : 110,
-                              background: optImg ? 'transparent' : 'rgba(0,0,0,0.03)',
-                              position: 'relative', overflow: 'hidden',
-                            }}>
-                              {optImg ? (
-                                <img src={optImg} alt={opt.text || ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                              ) : (
-                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#98A2B3' }}>
-                                  <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                                </div>
-                              )}
-                              {isFullBg && optImg && (
-                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.6))' }} />
-                              )}
-                              {isFullBg && optImg && (
-                                <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, color: '#fff', fontSize: 13, fontWeight: 600, textAlign: 'center', padding: '0 8px', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
-                                  {opt.text}
-                                </div>
-                              )}
-                            </div>
-                            {/* Text below image (unless fullBg which shows text over image) */}
-                            {!isFullBg && (
-                              <div style={{ padding: '8px 10px', width: '100%', display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left' }}>
-                                <div style={{
-                                  width: 20, height: 20, borderRadius: 5, flexShrink: 0,
-                                  background: picked ? brandPrimary : brandBorder,
-                                  color: picked ? brandBg : brandText,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontSize: 9, fontWeight: 700,
-                                }}>{LETTERS[oi]}</div>
-                                <div style={{ fontSize: 12, fontWeight: 500 }}>{opt.text}</div>
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : isThumbnail ? (
-                    /* Thumbnail layout — image + letter + text + description row */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {currentQ.options.map(function(opt, oi) {
-                        var optImg = getOptionImage(opt);
-                        var picked = answers[qIdx] === oi;
-                        return (
-                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
-                            onMouseEnter={function() { setHoverOpt(oi); }}
-                            onMouseLeave={function() { setHoverOpt(null); }}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
-                              padding: '10px 14px', background: picked ? brandPrimary + '14' : brandBg,
-                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
-                              borderRadius: 12, fontFamily: brandFont, fontSize: 14, color: brandText,
-                              cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
-                              transform: hoverOpt === oi ? 'translateY(-1px)' : 'none',
-                              boxShadow: hoverOpt === oi ? '0 3px 12px rgba(0,0,0,0.05)' : 'none',
-                            }}>
-                            {/* Thumbnail */}
-                            <div style={{
-                              width: 52, height: 52, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
-                              background: optImg ? 'transparent' : 'rgba(0,0,0,0.04)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              {optImg ? (
-                                <img src={optImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#98A2B3" strokeWidth={1.5}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
-                              )}
-                            </div>
-                            <div style={{
-                              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-                              background: picked ? brandPrimary : brandBorder,
-                              color: picked ? brandBg : brandText,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 10, fontWeight: 700,
-                            }}>{LETTERS[oi]}</div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600 }}>{opt.text}</div>
-                              {(opt as any).explanation && <div style={{ fontSize: 12, opacity: 0.55, marginTop: 2, lineHeight: 1.4 }}>{(opt as any).explanation}</div>}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    /* Default list layout */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {currentQ.options.map(function(opt, oi) {
-                        var optImg = getOptionImage(opt);
-                        var picked = answers[qIdx] === oi;
-                        return (
-                          <button key={opt.id + oi} type="button" onClick={function() { pickOption(oi); }}
-                            onMouseEnter={function() { setHoverOpt(oi); }}
-                            onMouseLeave={function() { setHoverOpt(null); }}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
-                              padding: '14px 16px', background: picked ? brandPrimary + '14' : brandBg,
-                              border: '1.5px solid ' + (picked ? brandPrimary : hoverOpt === oi ? brandPrimary : brandBorder),
-                              borderRadius: 12, fontFamily: brandFont, fontSize: 14, color: brandText,
-                              cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
-                              transform: hoverOpt === oi ? 'translateY(-1px)' : 'none',
-                            }}>
-                            <div style={{
-                              width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-                              background: picked ? brandPrimary : brandBorder,
-                              color: picked ? brandBg : brandText,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 11, fontWeight: 700,
-                            }}>{LETTERS[oi]}</div>
-                            {optImg && <img src={optImg} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />}
-                            <div style={{ flex: 1 }}>{opt.text}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Previous button */}
-                  {qIdx > 0 && (
-                    <button type="button" onClick={goBack} style={{
-                      marginTop: 16, fontSize: 12, opacity: 0.5, cursor: 'pointer',
-                      background: 'none', border: 'none', fontFamily: brandFont, color: brandText,
-                    }}>
-                      ← Previous question
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ============= LEAD GATE ============= */}
-          {stage === 'leadgate' && (
-            <div style={{
-              background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
-              padding: '40px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.025em', marginBottom: 8 }}>
-                {quiz.leadGate?.headline || 'Your result is ready'}
-              </div>
-              <div style={{ fontSize: 14, opacity: 0.64, marginBottom: 22 }}>
-                {quiz.leadGate?.subtext || 'Enter your email to see it'}
-              </div>
-
-              <div style={{ textAlign: 'left', marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 6 }}>
-                  First name <span style={{ opacity: 0.5, fontWeight: 500 }}>(optional)</span>
-                </label>
-                <input value={firstName} onChange={function(e) { setFirstName(e.target.value); }}
-                  style={{
-                    width: '100%', padding: '13px 14px', background: brandBg,
-                    border: '1.5px solid ' + brandBorder, borderRadius: 12,
-                    fontFamily: brandFont, fontSize: 14, color: brandText, outline: 'none',
-                  }} />
-              </div>
-              <div style={{ textAlign: 'left', marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 6 }}>
-                  Email
-                </label>
-                <input type="email" value={email} placeholder="you@yoursite.com"
-                  onChange={function(e) { setEmail(e.target.value); }}
-                  onKeyDown={function(e) { if (e.key === 'Enter') submitLead(); }}
-                  style={{
-                    width: '100%', padding: '13px 14px', background: brandBg,
-                    border: '1.5px solid ' + brandBorder, borderRadius: 12,
-                    fontFamily: brandFont, fontSize: 14, color: brandText, outline: 'none',
-                  }} />
-              </div>
-
-              {consentRequired && (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, textAlign: 'left', marginTop: 8 }}>
-                  <input type="checkbox" checked={consentGiven} onChange={function(e) { setConsentGiven(e.target.checked); }}
-                    style={{ marginTop: 3, width: 16, height: 16, cursor: 'pointer', accentColor: brandPrimary }} />
-                  <span style={{ fontSize: 12, color: brandText, opacity: 0.7, lineHeight: 1.4 }}>
-                    I agree to the {privacyPolicyUrl ? (
-                      <a href={privacyPolicyUrl} target="_blank" rel="noopener noreferrer" style={{ color: brandPrimary, textDecoration: 'underline' }}>privacy policy</a>
-                    ) : 'privacy policy'} and consent to having my data processed.
-                  </span>
-                </div>
-              )}
-
-              <button type="button" onClick={submitLead} disabled={submitting || !email.trim() || (consentRequired && !consentGiven)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  width: '100%', padding: '14px 22px', marginTop: 10,
-                  background: brandPrimary, color: brandBg, border: 0, borderRadius: 100,
-                  fontFamily: brandFont, fontSize: 14, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-                  transition: 'transform 0.2s', opacity: submitting || !email.trim() || (consentRequired && !consentGiven) ? 0.5 : 1,
-                }}>
-                {submitting ? 'Loading...' : (quiz.leadGate?.buttonText || 'Show my result')}
-              </button>
-              {leadError && <div style={{ fontSize: 12, color: '#d44', marginTop: 8, textAlign: 'center' }}>{leadError}</div>}
-            </div>
-          )}
-
-          {/* ============= SUBMITTED (check inbox) ============= */}
-          {stage === 'submitted' && (
-            <div style={{
-              background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
-              padding: '40px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 16 }}>✉️</div>
-              <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800 }}>Check your inbox</h2>
-              <p style={{ margin: '0 0 6px', color: '#444', fontSize: 14 }}>
-                We just emailed your personalized report to <strong>{email}</strong>.
-              </p>
-              <p style={{ margin: '0 0 24px', color: '#777', fontSize: 14 }}>
-                Don't see it in a minute? Check <strong>Promotions</strong> or <strong>Spam</strong>.
-              </p>
-              <button type="button" onClick={function() { setStage('result'); }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '10px 18px', background: brandPrimary, color: brandBg,
-                  border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
-                  cursor: 'pointer',
-                }}>
-                View results now →
-              </button>
-            </div>
-          )}
-
-          {/* ============= RESULT ============= */}
-          {stage === 'result' && outcome && (
-            <div ref={resultCardRef} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Main outcome card */}
-              <div style={{
-                background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 18,
-                padding: '36px 28px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
-              }}>
-                <div style={{
-                  display: 'inline-block', padding: '6px 12px',
-                  background: brandPrimary + '1a', color: brandPrimary,
-                  borderRadius: 100, fontSize: 11, fontWeight: 700,
-                  letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
-                }}>Your result</div>
-
-                {/* Outcome image */}
-                {(outcome.imageUrl || outcome.image_url) && (
-                  <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 16, maxWidth: 400, margin: '0 auto 16px' }}>
-                    <img src={outcome.imageUrl || outcome.image_url} alt="" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', display: 'block' }} />
-                  </div>
-                )}
-
-                <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>
-                  {outcome.title}
-                </div>
-                <div style={{ fontSize: 15, opacity: 0.72, lineHeight: 1.6, marginBottom: 20 }}>
-                  {outcome.description}
-                </div>
-
-                {/* Actionable tips — always on */}
-                {outcome.tips && outcome.tips.length > 0 && outcome.tips.some(function(t) { return t.trim(); }) && (
-                  <div style={{ textAlign: 'left', background: brandPrimary + '08', borderRadius: 12, padding: '18px 22px', marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: brandPrimary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Based on your answers, we recommend</div>
-                    {outcome.tips.filter(function(t) { return t.trim(); }).map(function(tip, i) {
-                      return (
-                        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < (outcome.tips || []).length - 1 ? 8 : 0 }}>
-                          <span style={{ fontSize: 14, color: brandPrimary, fontWeight: 700, marginTop: 1 }}>✓</span>
-                          <span style={{ fontSize: 14, lineHeight: 1.5, color: brandText }}>{tip}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Score breakdown */}
-                {showScoreBreakdown && totalScore > 0 && (
-                  <div style={{ background: '#F9FAFB', borderRadius: 10, padding: '14px 18px', marginBottom: 20, textAlign: 'left' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: brandText, opacity: 0.6 }}>Your score</span>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: brandPrimary }}>{totalScore} pts</span>
-                    </div>
-                    <div style={{ height: 8, background: '#E5E7EB', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: brandPrimary, borderRadius: 4, width: Math.min(100, (totalScore / Math.max(1, (quiz.questions || []).length * 10)) * 100) + '%', transition: 'width 0.8s ease' }} />
-                    </div>
-                  </div>
-                )}
-
-                {/* CTA button */}
-                {(outcome.ctaUrl || outcome.cta_url) ? (
-                  <a href={addUtmParams(
-                    prefillSchedulingUrl(outcome.ctaUrl || outcome.cta_url || '', outcome.cta_type, firstName, email),
-                    quizUtm(slug, outcome.title)
-                  )} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                    <button type="button" style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
-                      border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
-                      cursor: 'pointer',
-                    }}>
-                      {outcome.ctaText || outcome.cta_text || quiz.settings?.cta_text || 'Get my plan'} →
-                    </button>
-                  </a>
-                ) : quiz.settings?.cta_url ? (
-                  <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                    <button type="button" style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
-                      border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
-                      cursor: 'pointer',
-                    }}>
-                      {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
-                    </button>
-                  </a>
-                ) : (
-                  <button type="button" style={{
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
-                    border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
-                    cursor: 'pointer',
-                  }}>
-                    {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
-                  </button>
-                )}
-
-                {/* Booking CTA */}
-                {showBooking && (outcome.bookingUrl || outcome.booking_url) && (
-                  <a href={outcome.bookingUrl || outcome.booking_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', marginTop: 10 }}>
-                    <button type="button" style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      width: '100%', padding: '12px 20px', background: 'transparent', color: brandPrimary,
-                      border: '2px solid ' + brandPrimary, borderRadius: 100, fontFamily: brandFont, fontSize: 13, fontWeight: 700,
-                      cursor: 'pointer',
-                    }}>
-                      {outcome.bookingText || outcome.booking_text || 'Book a free call'} →
-                    </button>
-                  </a>
-                )}
-
-                {/* Social sharing */}
-                {showSocialSharing && (
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
-                    {[
-                      { name: 'Twitter', icon: '𝕏', getUrl: function() { return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent('I got "' + outcome.title + '"! Take the quiz: ' + window.location.href); } },
-                      { name: 'Facebook', icon: 'f', getUrl: function() { return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href); } },
-                      { name: 'LinkedIn', icon: 'in', getUrl: function() { return 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(window.location.href); } },
-                    ].map(function(s) {
-                      return (
-                        <a key={s.name} href={s.getUrl()} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                          <button type="button" style={{
-                            width: 38, height: 38, borderRadius: '50%', border: '1px solid ' + brandBorder, background: brandSurface,
-                            color: brandText, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }} title={'Share on ' + s.name}>{s.icon}</button>
-                        </a>
-                      );
-                    })}
-                    <button type="button" onClick={function() {
-                      var ta = document.createElement('textarea');
-                      ta.value = window.location.href;
-                      document.body.appendChild(ta);
-                      ta.select();
-                      document.execCommand('copy');
-                      document.body.removeChild(ta);
-                      setLinkCopied(true);
-                      setTimeout(function() { setLinkCopied(false); }, 2000);
-                    }} style={{
-                      height: 38, borderRadius: 100, border: '1px solid ' + brandBorder, background: linkCopied ? brandPrimary + '1a' : brandSurface,
-                      color: linkCopied ? brandPrimary : brandText, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: '0 14px',
-                    }}>
-                      {linkCopied ? 'Copied!' : 'Copy link'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Coupon code card */}
-              {showCoupon && (outcome.couponCode || outcome.coupon_code) && (
-                <div style={{
-                  background: brandPrimary + '0d', border: '2px dashed ' + brandPrimary + '40', borderRadius: 14,
-                  padding: '22px 24px', textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: brandText, opacity: 0.7, marginBottom: 6 }}>
-                    {outcome.couponLabel || outcome.coupon_label || 'Special offer for you'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 22, fontWeight: 800, color: brandPrimary, letterSpacing: '0.08em', fontFamily: 'monospace' }}>
-                      {outcome.couponCode || outcome.coupon_code}
-                    </span>
-                    <button type="button" onClick={function() {
-                      var ta = document.createElement('textarea');
-                      ta.value = outcome.couponCode || outcome.coupon_code || '';
-                      document.body.appendChild(ta);
-                      ta.select();
-                      document.execCommand('copy');
-                      document.body.removeChild(ta);
-                      setCouponCopied(true);
-                      setTimeout(function() { setCouponCopied(false); }, 2000);
-                    }} style={{
-                      padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                      background: couponCopied ? brandPrimary : brandSurface, color: couponCopied ? brandBg : brandPrimary,
-                      border: '1px solid ' + brandPrimary, cursor: 'pointer', transition: 'all 0.2s',
-                    }}>
-                      {couponCopied ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Product recommendations */}
-              {showProducts && outcome.products && outcome.products.length > 0 && (
-                <div style={{
-                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 14,
-                  padding: '22px 24px',
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: brandText, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Recommended for you</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {outcome.products.map(function(p, i) {
-                      var imgUrl = p.imageUrl || p.image_url;
-                      return (
-                        <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <div style={{
-                            display: 'flex', gap: 14, alignItems: 'center', padding: '12px 14px',
-                            border: '1px solid ' + brandBorder, borderRadius: 10, cursor: 'pointer',
-                            transition: 'box-shadow 0.2s',
-                          }}>
-                            {imgUrl && <img src={imgUrl} alt="" style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />}
-                            <div style={{ flex: 1, textAlign: 'left' }}>
-                              <div style={{ fontSize: 14, fontWeight: 700, color: brandText }}>{p.title}</div>
-                              {p.price && <div style={{ fontSize: 15, fontWeight: 800, color: brandPrimary, marginTop: 2 }}>{p.price}</div>}
-                            </div>
-                            <span style={{ fontSize: 18, color: brandPrimary }}>→</span>
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Testimonial */}
-              {showTestimonial && (outcome.testimonialQuote || outcome.testimonial_quote) && (
-                <div style={{
-                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 14,
-                  padding: '24px 28px', textAlign: 'center', fontStyle: 'italic',
-                }}>
-                  <div style={{ fontSize: 36, lineHeight: 1, color: brandPrimary, opacity: 0.3, marginBottom: 8 }}>"</div>
-                  <div style={{ fontSize: 15, lineHeight: 1.6, color: brandText, marginBottom: 12 }}>
-                    {outcome.testimonialQuote || outcome.testimonial_quote}
-                  </div>
-                  {(outcome.testimonialAuthor || outcome.testimonial_author) && (
-                    <div style={{ fontSize: 12, fontWeight: 600, color: brandText, opacity: 0.5, fontStyle: 'normal' }}>
-                      — {outcome.testimonialAuthor || outcome.testimonial_author}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Before / After comparison */}
-              {showBeforeAfter && (outcome.beforeText || outcome.before_text) && (outcome.afterText || outcome.after_text) && (
-                <div style={{
-                  display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12,
-                }}>
-                  <div style={{
-                    background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 14,
-                    padding: '20px 18px', textAlign: 'center',
-                  }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Where you are now</div>
-                    <div style={{ fontSize: 14, lineHeight: 1.5, color: '#7F1D1D' }}>{outcome.beforeText || outcome.before_text}</div>
-                  </div>
-                  <div style={{
-                    background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 14,
-                    padding: '20px 18px', textAlign: 'center',
-                  }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Where you could be</div>
-                    <div style={{ fontSize: 14, lineHeight: 1.5, color: '#14532D' }}>{outcome.afterText || outcome.after_text}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Email me my results */}
-              {showEmailResults && !email && !resultEmailSent && (
-                <div style={{
-                  background: brandSurface, border: '1px solid ' + brandBorder, borderRadius: 14,
-                  padding: '20px 24px', textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: brandText, marginBottom: 10 }}>Want a copy of your results?</div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="email" placeholder="your@email.com" value={resultEmail}
-                      onChange={function(e) { setResultEmail(e.target.value); }}
-                      style={{
-                        flex: 1, padding: '10px 14px', border: '1px solid ' + brandBorder, borderRadius: 8,
-                        fontSize: 14, fontFamily: brandFont, color: brandText, outline: 'none',
-                      }} />
-                    <button type="button" disabled={resultEmailSending} onClick={function() {
-                      if (!resultEmail.trim() || !resultEmail.includes('@') || !quiz) return;
-                      setResultEmailSending(true);
-                      setResultEmailError('');
-                      fetch(API + '/api/quiz/' + slug + '/lead', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: resultEmail, first_name: '', outcome_id: outcome?.id }),
-                      }).then(function(r) {
-                        if (!r.ok) {
-                          return r.json().catch(function() { return {}; }).then(function(body) {
-                            throw new Error(body?.error || ('HTTP ' + r.status));
-                          });
-                        }
-                        setResultEmailSent(true);
-                      }).catch(function(err) {
-                        setResultEmailError((err && err.message) || 'Something went wrong. Please try again.');
-                      }).finally(function() {
-                        setResultEmailSending(false);
-                      });
-                    }} style={{
-                      padding: '10px 20px', background: brandPrimary, color: brandBg, border: 0,
-                      borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: resultEmailSending ? 'default' : 'pointer',
-                      fontFamily: brandFont, opacity: resultEmailSending ? 0.6 : 1,
-                    }}>{resultEmailSending ? 'Sending…' : 'Send'}</button>
-                  </div>
-                  {resultEmailError && (
-                    <div style={{ marginTop: 8, fontSize: 12, color: '#DC2626' }}>{resultEmailError}</div>
-                  )}
-                </div>
-              )}
-              {showEmailResults && resultEmailSent && (
-                <div style={{
-                  background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 14,
-                  padding: '14px 24px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#16A34A',
-                }}>
-                  Results sent to {resultEmail || email}!
-                </div>
-              )}
-
-              {/* Countdown timer before redirect */}
-              {showCountdownTimer && redirectUrl && countdown > 0 && (
-                <div style={{
-                  textAlign: 'center', fontSize: 12, color: brandText, opacity: 0.5,
-                  padding: '8px 0',
-                }}>
-                  Redirecting in {countdown}s... <button type="button" onClick={function() { if (countdownRef.current) clearInterval(countdownRef.current); setCountdown(-1); }}
-                    style={{ background: 'none', border: 'none', color: brandPrimary, cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>Cancel</button>
-                </div>
-              )}
-
-              {/* PDF Download */}
-              {showPdfDownload && (
-                <div style={{ textAlign: 'center', paddingTop: 4 }}>
-                  <button type="button" disabled={pdfGenerating} onClick={function() {
-                    if (pdfGenerating || !quiz) return;
-                    setPdfGenerating(true);
-                    try {
-                      var questions = quiz.questions || [];
-                      var questionResults: Array<{ questionText: string; chosenAnswer: string; score: number; maxScore: number }> = [];
-                      var maxPossible = 0;
-                      Object.keys(answers).forEach(function(k) {
-                        var qIdx = parseInt(k);
-                        var q = questions[qIdx];
-                        if (!q) return;
-                        var chosenIdx = answers[qIdx];
-                        var chosenOpt = q.options[chosenIdx];
-                        var qMaxScore = 0;
-                        q.options.forEach(function(opt) {
-                          var s = opt.score || 0;
-                          if (s > qMaxScore) qMaxScore = s;
-                        });
-                        maxPossible += qMaxScore;
-                        questionResults.push({
-                          questionText: q.text || q.question || 'Question ' + (qIdx + 1),
-                          chosenAnswer: chosenOpt ? chosenOpt.text : '',
-                          score: chosenOpt ? (chosenOpt.score || 0) : 0,
-                          maxScore: qMaxScore,
-                        });
-                      });
-                      var oc = outcome || getOutcome(quiz, answers);
-                      generatePdfReport({
-                        quizTitle: quiz.title || 'Quiz Report',
-                        quizDescription: quiz.description,
-                        respondentName: firstName || 'Quiz Taker',
-                        respondentEmail: email || '',
-                        outcomeName: oc ? oc.title : '',
-                        outcomeDescription: oc ? oc.description : '',
-                        totalScore: totalScore,
-                        maxPossibleScore: maxPossible,
-                        questionResults: questionResults,
-                        tips: oc?.tips || [],
-                        ctaText: oc?.ctaText || oc?.cta_text || quiz.settings?.cta_text || '',
-                        ctaUrl: oc?.ctaUrl || oc?.cta_url || quiz.settings?.cta_url || '',
-                        couponCode: oc?.couponCode || oc?.coupon_code || '',
-                        couponLabel: oc?.couponLabel || oc?.coupon_label || '',
-                        testimonialQuote: oc?.testimonialQuote || oc?.testimonial_quote || '',
-                        testimonialAuthor: oc?.testimonialAuthor || oc?.testimonial_author || '',
-                        beforeText: oc?.beforeText || oc?.before_text || '',
-                        afterText: oc?.afterText || oc?.after_text || '',
-                        bookingUrl: oc?.bookingUrl || oc?.booking_url || '',
-                        bookingText: oc?.bookingText || oc?.booking_text || '',
-                        brandPrimary: brandPrimary,
-                        brandName: brandName || quiz.title || 'Quiz',
-                        brandFont: brandFont,
-                        logoUrl: logoUrl,
-                        generatedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                      });
-                      setTimeout(function() { setPdfGenerating(false); }, 2000);
-                    } catch(err) {
-                      console.error('PDF generation failed:', err);
-                      setPdfGenerating(false);
-                    }
-                  }} data-pdf-trigger="true" style={{
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    padding: '12px 24px', background: brandSurface, color: brandText,
-                    border: '1px solid ' + brandBorder, borderRadius: 100,
-                    fontFamily: brandFont, fontSize: 13, fontWeight: 600, cursor: pdfGenerating ? 'wait' : 'pointer',
-                    opacity: pdfGenerating ? 0.6 : 1, transition: 'all 0.2s',
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    {pdfGenerating ? 'Generating PDF...' : 'Download PDF Report'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Branding footer */}
-          {showBranding && (
-            <div style={{ textAlign: 'center', marginTop: 22, fontSize: 11, opacity: 0.45 }}>
-              <a href="https://squarespell.com" target="_top" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                Powered by Squarespell Quiz
-              </a>
-            </div>
-          )}
-        </div>
+      <div style={{ minHeight: '100svh' }}>
+        <QuizRenderer
+          quiz={quiz as any}
+          slug={slug}
+          stage={stage as any}
+          isMobile={isMobile}
+          qIdx={qIdx}
+          answers={answers}
+          outcome={outcome}
+          totalScore={totalScore}
+          timeRemaining={timeRemaining}
+          hoverOpt={hoverOpt}
+          setHoverOpt={setHoverOpt}
+          transitioning={transitioning}
+          transDir={transDir.current}
+          pickOption={pickOption}
+          goBack={goBack}
+          firstName={firstName}
+          setFirstName={setFirstName}
+          email={email}
+          setEmail={setEmail}
+          consentGiven={consentGiven}
+          setConsentGiven={setConsentGiven}
+          submitting={submitting}
+          submitLead={submitLead}
+          leadError={leadError}
+          onViewResultsNow={function() { setStage('result'); }}
+          resultEmail={resultEmail}
+          setResultEmail={setResultEmail}
+          resultEmailSending={resultEmailSending}
+          resultEmailSent={resultEmailSent}
+          resultEmailError={resultEmailError}
+          onSendResultEmail={handleSendResultEmail}
+          linkCopied={linkCopied}
+          onCopyLink={handleCopyLink}
+          couponCopied={couponCopied}
+          onCopyCoupon={handleCopyCoupon}
+          countdown={countdown}
+          onCancelCountdown={handleCancelCountdown}
+          pdfGenerating={pdfGenerating}
+          onDownloadPdf={handleDownloadPdf}
+          shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
+          isProPlan={isProPlan}
+        />
       </div>
     </>
   );
 }
+
+/* ============================================================================
+ * The legacy inline JSX below has been fully replaced by <QuizRenderer />
+ * above (frontend/components/quiz-taker/QuizRenderer.tsx). Kept removed —
+ * see that file for the canonical question/leadgate/submitted/result markup,
+ * which is now shared with the quiz-funnel builder's Stage 4 preview.
+ * ========================================================================= */
+/* Legacy inline JSX removed — see QuizRenderer.tsx for the canonical markup. */

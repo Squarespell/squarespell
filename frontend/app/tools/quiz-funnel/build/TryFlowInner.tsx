@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { publicQuizUrl, embedSnippet, APP_URL } from '@/lib/urls';
 import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '@/lib/quiz/templates';
 import { blocksToLegacy } from '@/lib/quiz/blocks';
+import QuizRenderer, { RendererQuiz, RendererStage } from '@/components/quiz-taker/QuizRenderer';
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
@@ -2273,112 +2274,62 @@ export function TryFlowInner({
                   <div className="s4-site-title">{quiz?.title || 'Find your perfect match'}</div>
                   <div className="s4-site-sub">{quiz?.description || 'Answer a few questions and get a personalized recommendation.'}</div>
 
-                  <div className="s4-quiz">
-                    {!s4ShowResult && !s4LeadGate ? (
-                      <>
-                        <div className="s4-quiz-prog">
-                          <span>Question {s4Idx + 1} of {totalQs || 10}</span>
-                          <span>{s4Pct}%</span>
-                        </div>
-                        <div className="s4-quiz-bar"><div className="s4-quiz-fill" style={{ width: `${s4Pct}%` }} /></div>
-                        <div className="s4-quiz-qlabel">Question {String(s4Idx + 1).padStart(2, '0')}</div>
-                        <div className="s4-quiz-q">{quiz?.questions[s4Idx]?.text || 'Loading...'}</div>
-                        <div className="s4-quiz-opts">
-                          {quiz?.questions[s4Idx]?.options.map(function(o, oi) {
-                            var ans = s4Answers[s4Idx];
-                            var isPicked = Array.isArray(ans) ? ans.indexOf(oi) >= 0 : ans === oi;
-                            return (
-                              <button
-                                key={o.id + oi}
-                                className={'s4-quiz-opt' + (isPicked ? ' picked' : '')}
-                                onClick={function() { s4Pick(oi); }}
-                                type="button"
-                              >
-                                <div className="s4-quiz-opt-letter">{LETTERS[oi]}</div>
-                                <div>{o.text}</div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {quiz?.questions[s4Idx]?.type === 'multiple' && (
-                          <button
-                            className="btn btn-primary btn-block"
-                            style={{ marginTop: 12 }}
-                            onClick={function() { s4Advance(); }}
-                            disabled={!Array.isArray(s4Answers[s4Idx]) || (s4Answers[s4Idx] as number[]).length === 0}
-                            type="button"
-                          >
-                            Next
-                          </button>
-                        )}
-                        {s4Idx > 0 && (
-                          <span className="s4-quiz-back" onClick={s4Back}>{'\u2190'} Previous question</span>
-                        )}
-                      </>
-                    ) : s4LeadGate ? (
-                      <div className="s4-lead-gate">
-                        <div className="s4-lead-gate-icon">
-                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="2" y="4" width="20" height="16" rx="2" />
-                            <path d="M22 7l-10 7L2 7" />
-                          </svg>
-                        </div>
-                        <div className="s4-lead-gate-title">Your personalized recommendation is ready!</div>
-                        <div className="s4-lead-gate-sub">Enter your email to unlock your custom {brandName} recommendation and get exclusive tips.</div>
-                        <input
-                          className="s4-lead-gate-input"
-                          type="email"
-                          placeholder="you@example.com"
-                          value={s4Email}
-                          onChange={(e) => setS4Email(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && s4Email.includes('@')) s4SubmitLead(); }}
-                        />
-                        <button
-                          className="s4-lead-gate-btn"
-                          onClick={s4SubmitLead}
-                          type="button"
-                          disabled={!s4Email.includes('@')}
-                        >
-                          See my recommendation
-                        </button>
-                        <div className="s4-lead-gate-skip" onClick={s4SubmitLead}>Skip for now</div>
-                        <div className="s4-lead-gate-privacy">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                          {' '}We respect your privacy. Unsubscribe anytime.
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="s4-quiz-result">
-                        <div className="s4-quiz-result-badge">{'\u2728'} Your personalized result</div>
-                        <div className="s4-quiz-result-title">{s4Outcome?.title || 'Your result'}</div>
-                        <div className="s4-quiz-result-desc">{s4Outcome?.description || ''}</div>
-                        <a
-                          className="s4-quiz-result-cta"
-                          href={safeCtaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => { if (!safeCtaUrl || safeCtaUrl === '#') e.preventDefault(); }}
-                        >
-                          {s4Outcome?.ctaText || 'Get my personalized plan'} {'\u2192'}
-                        </a>
-                        <div className="s4-quiz-result-share">
-                          <span className="s4-share-label">Share your result:</span>
-                          <button className="s4-share-btn" type="button" title="Share on X" onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I got "${s4Outcome?.title}" on the ${brandName} quiz!`)}&url=${encodeURIComponent(`https://${domain}`)}`, '_blank')}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                          </button>
-                          <button className="s4-share-btn" type="button" title="Share on Facebook" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://${domain}`)}`, '_blank')}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                          </button>
-                          <button className="s4-share-btn" type="button" title="Copy link" onClick={() => { navigator.clipboard?.writeText(`https://${domain}/quiz`); }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                          </button>
-                        </div>
-                        <div style={{ marginTop: 14 }}>
-                          <span className="s4-quiz-result-restart" onClick={resetS4}>{'\u21A9'} Take the quiz again</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {quiz && quiz.questions && quiz.questions.length > 0 ? (
+                    <QuizRenderer
+                      quiz={quiz as unknown as RendererQuiz}
+                      slug={quizSlug}
+                      stage={(s4LeadGate ? 'leadgate' : s4ShowResult ? 'result' : 'question') as RendererStage}
+                      isMobile={s4Device === 'mobile'}
+                      qIdx={s4Idx}
+                      answers={(function() {
+                        // QuizRenderer only supports single-select answers (matching
+                        // the live quiz page's actual capability). Flatten any
+                        // multi-select array down to its first pick for preview purposes.
+                        var out: Record<number, number> = {};
+                        Object.entries(s4Answers).forEach(function([k, v]) {
+                          out[Number(k)] = Array.isArray(v) ? (v[0] ?? 0) : v;
+                        });
+                        return out;
+                      })()}
+                      outcome={s4Outcome as any}
+                      totalScore={0}
+                      timeRemaining={null}
+                      hoverOpt={null}
+                      setHoverOpt={() => {}}
+                      transitioning={false}
+                      transDir="forward"
+                      pickOption={s4Pick}
+                      goBack={s4Back}
+                      firstName=""
+                      setFirstName={() => {}}
+                      email={s4Email}
+                      setEmail={setS4Email}
+                      consentGiven={true}
+                      setConsentGiven={() => {}}
+                      submitting={false}
+                      submitLead={s4SubmitLead}
+                      leadError=""
+                      onViewResultsNow={() => { setS4LeadGate(false); setS4ShowResult(true); }}
+                      resultEmail=""
+                      setResultEmail={() => {}}
+                      resultEmailSending={false}
+                      resultEmailSent={false}
+                      resultEmailError=""
+                      onSendResultEmail={() => {}}
+                      linkCopied={false}
+                      onCopyLink={() => { if (typeof navigator !== 'undefined') navigator.clipboard?.writeText(`https://${domain}/quiz`); }}
+                      couponCopied={false}
+                      onCopyCoupon={() => {}}
+                      countdown={-1}
+                      onCancelCountdown={() => {}}
+                      pdfGenerating={false}
+                      onDownloadPdf={() => {}}
+                      shareUrl={`https://${domain}/quiz`}
+                      isProPlan={true}
+                    />
+                  ) : (
+                    <div style={{ padding: '40px 0', textAlign: 'center', fontSize: 14, opacity: 0.6 }}>Loading...</div>
+                  )}
                 </div>
               </div>
               </div>
