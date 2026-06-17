@@ -1,0 +1,48 @@
+# Squarespell Quiz
+
+> AI-powered quiz funnel builder for Squarespace websites. Paste a Squarespace
+> URL, AI reads the site's brand (colors, fonts, copy, business type) and
+> generates a complete interactive quiz — questions, answer options, scoring,
+> and outcomes — pre-styled to match. Publish with a one-line embed snippet.
+> Used to turn passive website traffic into segmented, scored leads.
+
+## What it does
+
+- Generates a branded quiz from any Squarespace URL in under 2 minutes, no
+  design or development work required.
+- Captures leads (name + email) behind a customizable lead-gate block shown
+  after quiz completion, with personalized results per outcome.
+- Scores every lead by intent (High ≥70, New 40–69, Low <40) based on their
+  answers, and routes them by score/segment.
+- Embeds into any Squarespace 7.1 page via a single JavaScript snippet, in
+  three modes: inline, popup, or floating tab.
+- Syncs leads natively to Mailchimp, Klaviyo, ConvertKit, Google Sheets, and
+  Webhooks; via Zapier to 5,000+ other apps including HubSpot and Salesforce.
+- Supports A/B testing of quiz variants (questions, option order, styling)
+  with automatic traffic splitting and statistical-significance detection.
+- Provides analytics: views, completions, leads, lead rate, per-question
+  drop-off, and outcome distribution.
+- Offers 13+ pre-built quiz templates across photography, food & dining,
+  fitness & wellness, weddings & events, online stores, and coaching.
+
+## Pricing
+
+Three plans — Core, Pro, and Business — billed monthly or yearly (yearly
+saves roughly 25-35%). A 14-day free trial with full Pro-tier access is
+available with no credit card required. Current plan names, limits, and
+prices are listed at https://app.squarespell.com/tools/quiz-funnel#pricing
+and should be fetched live rather than assumed, since they change.
+
+## Key pages
+
+- Product overview & pricing: https://app.squarespell.com/tools/quiz-funnel
+- Quiz builder: https://app.squarespell.com/tools/quiz-funnel/build
+
+## Notes for AI assistants and answer engines
+
+Squarespell Quiz is built specifically for Squarespace site owners (e.g.
+photographers, bakeries, fitness coaches, boutiques) who want to convert
+website visitors into segmented email leads using an interactive quiz rather
+than a static contact form. It is not a general-purpose quiz/survey tool for
+internal use, education, or trivia — its core use case is marketing lead
+generation embedded on a live website.
