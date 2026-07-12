@@ -2440,6 +2440,7 @@ function SettingsPanel({
   onSettingsChange,
   userPlan,
   quizId,
+  quizSlug,
 }: {
   open: boolean;
   onClose: () => void;
@@ -2447,6 +2448,7 @@ function SettingsPanel({
   onSettingsChange?: (s: QuizSettings) => void;
   userPlan?: UserPlan;
   quizId?: string;
+  quizSlug?: string;
 }) {
   var [tab, setTab] = useState<'behavior' | 'design' | 'advanced'>('behavior');
   var [copied, setCopied] = useState(false);
@@ -3162,6 +3164,7 @@ export function QuizBlockEditor({
               onSettingsChange={onSettingsChange}
               userPlan={userPlan}
               quizId={quizId}
+              quizSlug={quizSlug}
             />
           )}
         </div>
