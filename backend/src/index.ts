@@ -276,5 +276,18 @@ app.listen(PORT, () => {
         .catch(function() { /* silent — non-critical cleanup */ });
     }, DIGEST_CHECK_MS);
     log.info('Preview cache cleanup scheduler enabled (every 30 min)');
+
+    // Supabase keepalive — free tier pauses after 7 days of no DB traffic.
+    // Run a lightweight query every 4 days so the project stays ACTIVE_HEALTHY.
+    var SUPABASE_KEEPALIVE_MS = 4 * 24 * 60 * 60 * 1000; // 4 days
+    setInterval(async function() {
+      try {
+        await supabase.from('users').select('id').limit(1);
+        log.info('[Keepalive] Supabase ping OK');
+      } catch (e: any) {
+        log.warn('[Keepalive] Supabase ping failed', { err: String(e) });
+      }
+    }, SUPABASE_KEEPALIVE_MS);
+    log.info('Supabase keepalive enabled (every 4 days)');
   }
 });
