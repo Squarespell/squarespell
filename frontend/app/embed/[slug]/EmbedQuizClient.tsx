@@ -1234,8 +1234,9 @@ export default function EmbedQuizClient({
                     );
                   }
 
-                  /* Grid layout (2x2) */
-                  if (layout === 'grid') {
+                  /* Grid layout (2x2) — only when at least one option has an image;
+                     fall through to text list otherwise to avoid empty grey boxes */
+                  if (layout === 'grid' && hasImages) {
                     return (
                       <div className="sq-opts-grid">
                         {currentQ.options.map(function(opt, oi) {
