@@ -2628,10 +2628,10 @@ function SettingsPanel({
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Embed Code</div>
               <div style={{ background: '#1D2939', borderRadius: 8, padding: 14, fontFamily: 'monospace', fontSize: 11, color: '#E5E7EB', lineHeight: 1.6, wordBreak: 'break-all' as const, marginBottom: 12 }}>
-                {'<iframe src="https://quiz.squarespell.com/embed/' + (quizId || 'your-slug') + '" width="100%" height="600"></iframe>'}
+                {'<iframe src="https://quiz.squarespell.com/embed/' + (quizSlug || quizId || 'your-slug') + '" width="100%" height="700" frameborder="0" style="border:none;display:block;"></iframe>'}
               </div>
               <button type="button" onClick={function() {
-                var code = '<iframe src="https://quiz.squarespell.com/embed/' + (quizId || 'your-slug') + '" width="100%" height="600"></iframe>';
+                var code = '<iframe src="https://quiz.squarespell.com/embed/' + (quizSlug || quizId || 'your-slug') + '" width="100%" height="700" frameborder="0" style="border:none;display:block;"></iframe>';
                 var onSuccess = function() {
                   setCopied(true);
                   setTimeout(function() { setCopied(false); }, 2000);
