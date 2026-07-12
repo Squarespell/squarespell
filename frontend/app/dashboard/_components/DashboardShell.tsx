@@ -183,7 +183,7 @@ function isEditorRoute(pathname: string): boolean {
   if (pathname === '/dashboard/editor' || pathname.startsWith('/dashboard/editor/')) return true;
   if (pathname === '/dashboard') return false;
   var knownPrefixes = [
-    '/dashboard/quizzes', '/dashboard/leads', '/dashboard/analytics',
+    '/dashboard/quizzes', '/dashboard/quiz', '/dashboard/leads', '/dashboard/analytics',
     '/dashboard/integrations', '/dashboard/billing', '/dashboard/settings',
     '/dashboard/team', '/dashboard/emails', '/dashboard/segmentation',
     '/dashboard/automations', '/dashboard/commerce', '/dashboard/templates',

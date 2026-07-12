@@ -539,7 +539,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
             var sp = statusPill(test.status);
             var totalImpressions = test.stats?.reduce((s, st) => s + st.impressions, 0) || 0;
             var totalConversions = test.stats?.reduce((s, st) => s + st.conversions, 0) || 0;
-            var overallRate = totalImpressions > 0 ? (totalConversions / totalImpressions * 100) : 0;
+            var overallRate = totalImpressions > 0 ? (totalConversions / totalImpressions * 100) : null;
 
             return (
               <div key={test.id} style={{ ...cardStyle, overflow: 'hidden' }} className="ab-card">
@@ -593,7 +593,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                   {[
                     { label: 'Total Impressions', value: totalImpressions.toLocaleString() },
                     { label: 'Total Conversions', value: totalConversions.toLocaleString() },
-                    { label: 'Overall Conv. Rate', value: overallRate.toFixed(1) + '%' },
+                    { label: 'Overall Conv. Rate', value: overallRate !== null ? overallRate.toFixed(1) + '%' : '—' },
                   ].map((stat, si) => (
                     <div key={si} style={{
                       padding: '14px 24px',
@@ -616,7 +616,7 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                     var isWinner = test.winner_variant_id === variant.variant_id;
                     var impressions = stat?.impressions ?? 0;
                     var conversions = stat?.conversions ?? 0;
-                    var rate = impressions > 0 ? (conversions / impressions * 100) : 0;
+                    var rate = impressions > 0 ? (conversions / impressions * 100) : null;
 
                     return (
                       <div key={variant.variant_id} className="ab-row" style={{
@@ -680,8 +680,8 @@ export default function ABTestingPage({ params }: { params: { id: string } }) {
                           </div>
                           <div style={{ textAlign: 'right', minWidth: 70 }}>
                             <div style={{ fontSize: 11, color: C.GRAY_400, fontFamily: C.FONT, marginBottom: 2 }}>Conv.</div>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: rate > 0 ? C.ACCENT : C.GRAY_400, fontFamily: C.FONT, fontVariantNumeric: 'tabular-nums' }}>
-                              {rate.toFixed(1)}%
+                            <div style={{ fontSize: 14, fontWeight: 700, color: rate !== null && rate > 0 ? C.ACCENT : C.GRAY_400, fontFamily: C.FONT, fontVariantNumeric: 'tabular-nums' }}>
+                              {rate !== null ? rate.toFixed(1) + '%' : '—'}
                             </div>
                           </div>
                         </div>
