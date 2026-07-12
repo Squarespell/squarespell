@@ -57,11 +57,19 @@ export async function attachUser(
 
   try {
     // Look up by clerk_user_id (text), not id (uuid)
-    const { data: existing } = await supabase
+    const { data: existing, error: lookupError } = await supabase
       .from('users')
       .select('id, clerk_user_id, plan, created_at, last_login_at')
       .eq('clerk_user_id', req.userId)
       .single();
+
+    // PGRST116 = "no rows returned" (normal for new users). Any other error
+    // is a transient network/Supabase outage — fail open so the server
+    // doesn't hard-500 during Render cold-starts.
+    if (lookupError && lookupError.code !== 'PGRST116') {
+      log.warn('attachUser: Supabase lookup failed, continuing without dbUserId', { err: lookupError.message });
+      return next();
+    }
 
     if (existing) {
       req.dbUserId = existing.id;
@@ -96,8 +104,10 @@ export async function attachUser(
       .single();
 
     if (error) {
-      log.error('User insert error:', { err: error.message });
-      return res.status(500).json({ error: 'Failed to create user: ' + error.message });
+      // Transient network error during insert — fail open so the request doesn't
+      // hard-500. The user record will be created on the next successful request.
+      log.error('User insert error (fail-open):', { err: error.message });
+      return next();
     }
 
     req.dbUserId = newUser?.id;
