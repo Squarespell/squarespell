@@ -150,6 +150,11 @@ export default async function EmbedPage({ params }: { params: { slug: string } }
     return <ErrorView />;
   }
 
+  // Ensure slug is always present — the backend /api/quiz/:slug endpoint
+  // returns the quiz without a slug field, causing quiz.slug to be undefined
+  // in EmbedQuizClient which then builds broken URLs like /api/quiz/undefined/lead.
+  if (!quiz.slug) quiz.slug = params.slug;
+
   // Derive branding from quiz settings (matches the main /quiz/[slug] logic)
   const brand = quiz.branding;
   const brandBg = brand?.colors?.background || '#ffffff';
