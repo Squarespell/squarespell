@@ -133,5 +133,19 @@ export function useDashboardAuth(): { token: string | null; status: AuthStatus }
     return () => { cancelled = true; };
   }, [isLoaded, isSignedIn, getToken, router]);
 
+  // Proactively refresh the token every 50 s to stay ahead of Clerk's ~60 s
+  // rotation. Without this, the stored `token` state goes stale and every
+  // downstream API call (quizzes, notifications, etc.) gets a 401.
+  useEffect(() => {
+    if (status !== 'ready') return;
+    const interval = setInterval(async () => {
+      try {
+        const t = await getToken();
+        if (t) setToken(t);
+      } catch {}
+    }, 50_000);
+    return () => clearInterval(interval);
+  }, [status, getToken]);
+
   return { token, status };
 }
