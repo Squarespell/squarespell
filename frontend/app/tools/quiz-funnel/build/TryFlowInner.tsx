@@ -1143,8 +1143,10 @@ export function TryFlowInner({
         </div>
       </div>
 
-      {/* ============ STAGE 2: ONBOARDING (single white-card layout) ============ */}
+      {/* ============ STAGE 2: ONBOARDING ============ */}
       <div className={`stage${stage === 2 ? ' active' : ''}`} id="stage-2">
+        {/* Topbar hidden for brand substep — logo lives in left panel */}
+        {(s2SubStep !== 'brand' || loading || !sessionToken) && (
         <div className="topbar">
           <div className="brand">
             <div className="brand-mark">
@@ -1163,6 +1165,7 @@ export function TryFlowInner({
             </button>
           </div>
         </div>
+        )}
 
         {/* Error state - single white card, centered */}
         {!loading && !sessionToken && errorMsg && (
@@ -1201,147 +1204,147 @@ export function TryFlowInner({
           </div>
         )}
 
-        {/* Loaded state — single white card sub-steps */}
-        {!loading && sessionToken && (
-          <div className="s2-card-wrap">
-            <div className="s2-card">
-
-                {/* 2a: Brand analysis results */}
-                {s2SubStep === 'brand' && (
-                  <div className="s2-substep" key="brand">
-                    <div className="s2-brand-badge">
-                      <SvgCheck size={14} />
-                      SITE ANALYZED
-                    </div>
-                    <h1 className="s2-brand-title">
-                      We analyzed your brand<br />
-                      <span className="s2-brand-title-acc">{brand?.site_name || domain}</span>
-                    </h1>
-                    <p className="s2-brand-sub">Here is what we detected from your website. Edit anything that does not look right.</p>
-
-                    <div className="s2-brand-details">
-                      {/* Business type */}
-                      <div className="s2-detail-row">
-                        <div className="s2-detail-icon s2-detail-icon-type">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                        </div>
-                        <div className="s2-detail-content">
-                          <div className="s2-detail-label">Business type</div>
-                          {editingTag === 'type' ? (
-                            <input
-                              ref={editInputRef}
-                              className="s2-detail-input"
-                              value={editValues['type'] || ''}
-                              onChange={function(e) { setEditValues(function(p) { return { ...p, type: e.target.value }; }); }}
-                              onBlur={function() { commitEditTag('type'); }}
-                              onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('type'); if (e.key === 'Escape') setEditingTag(null); }}
-                            />
-                          ) : (
-                            <div className="s2-detail-value">{brand?.business?.type || 'Unknown'}</div>
-                          )}
-                        </div>
-                        {editingTag !== 'type' && (
-                          <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('type', brand?.business?.type || ''); }}>Edit</button>
-                        )}
-                      </div>
-
-                      {/* Audience */}
-                      <div className="s2-detail-row">
-                        <div className="s2-detail-icon s2-detail-icon-audience">
-                          <SvgUsers size={18} />
-                        </div>
-                        <div className="s2-detail-content">
-                          <div className="s2-detail-label">Audience</div>
-                          {editingTag === 'audience' ? (
-                            <input
-                              ref={editInputRef}
-                              className="s2-detail-input"
-                              value={editValues['audience'] || ''}
-                              onChange={function(e) { setEditValues(function(p) { return { ...p, audience: e.target.value }; }); }}
-                              onBlur={function() { commitEditTag('audience'); }}
-                              onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('audience'); if (e.key === 'Escape') setEditingTag(null); }}
-                            />
-                          ) : (
-                            <div className="s2-detail-value">{brand?.business?.audience || 'Unknown'}</div>
-                          )}
-                        </div>
-                        {editingTag !== 'audience' && (
-                          <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('audience', brand?.business?.audience || ''); }}>Edit</button>
-                        )}
-                      </div>
-
-                      {/* Tone */}
-                      <div className="s2-detail-row">
-                        <div className="s2-detail-icon s2-detail-icon-tone">
-                          <SvgSpark size={18} />
-                        </div>
-                        <div className="s2-detail-content">
-                          <div className="s2-detail-label">Tone</div>
-                          {editingTag === 'tone' ? (
-                            <input
-                              ref={editInputRef}
-                              className="s2-detail-input"
-                              value={editValues['tone'] || ''}
-                              onChange={function(e) { setEditValues(function(p) { return { ...p, tone: e.target.value }; }); }}
-                              onBlur={function() { commitEditTag('tone'); }}
-                              onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('tone'); if (e.key === 'Escape') setEditingTag(null); }}
-                            />
-                          ) : (
-                            <div className="s2-detail-value">{brand?.business?.tone || 'Unknown'}</div>
-                          )}
-                        </div>
-                        {editingTag !== 'tone' && (
-                          <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('tone', brand?.business?.tone || ''); }}>Edit</button>
-                        )}
-                      </div>
-
-                      {/* Brand colors */}
-                      <div className="s2-detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                          <div className="s2-detail-icon s2-detail-icon-colors">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12c0 2.76 1.12 5.26 2.93 7.07L12 22z"/></svg>
-                          </div>
-                          <div className="s2-detail-label" style={{ marginBottom: 0 }}>Brand colors</div>
-                        </div>
-                        <div className="s2-color-palette">
-                          {brand?.colors?.primary && (
-                            <div className="s2-color-chip">
-                              <div className="s2-color-dot" style={{ background: brand.colors.primary }}></div>
-                              <span className="s2-color-label">{brand.colors.primary}</span>
-                            </div>
-                          )}
-                          {brand?.colors?.background && (
-                            <div className="s2-color-chip">
-                              <div className="s2-color-dot" style={{ background: brand.colors.background }}></div>
-                              <span className="s2-color-label">{brand.colors.background}</span>
-                            </div>
-                          )}
-                          {brand?.colors?.text && (
-                            <div className="s2-color-chip">
-                              <div className="s2-color-dot" style={{ background: brand.colors.text }}></div>
-                              <span className="s2-color-label">{brand.colors.text}</span>
-                            </div>
-                          )}
-                          {brand?.colors?.accent && (
-                            <div className="s2-color-chip">
-                              <div className="s2-color-dot" style={{ background: brand.colors.accent }}></div>
-                              <span className="s2-color-label">{brand.colors.accent}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="s2-continue-btn"
-                      onClick={function() { setS2SubStep('choose'); }}
-                    >
-                      Continue
-                      <SvgArrowRight size={16} />
-                    </button>
+        {/* Brand substep — full-viewport split panel, no scroll */}
+        {!loading && sessionToken && s2SubStep === 'brand' && (
+          <div className="s2-split-wrap">
+            {/* LEFT: dark teal brand showcase */}
+            <div className="s2-left-panel">
+              <div className="s2-left-logo">
+                <div className="brand-mark">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
+                </div>
+                Squarespell
+              </div>
+              <div className="s2-left-body">
+                <div className="s2-left-analyzing">Analyzed</div>
+                <div className="s2-left-site-name">{brand?.site_name || domain}</div>
+                {brand?.business?.type && (
+                  <div className="s2-left-type-chip">{brand.business.type}</div>
+                )}
+                {(brand?.colors?.primary || brand?.colors?.background || brand?.colors?.text || brand?.colors?.accent) && (
+                  <div className="s2-left-colors">
+                    {brand?.colors?.primary && <div className="s2-left-swatch" style={{ background: brand.colors.primary }} />}
+                    {brand?.colors?.background && <div className="s2-left-swatch" style={{ background: brand.colors.background }} />}
+                    {brand?.colors?.text && <div className="s2-left-swatch" style={{ background: brand.colors.text }} />}
+                    {brand?.colors?.accent && <div className="s2-left-swatch" style={{ background: brand.colors.accent }} />}
                   </div>
                 )}
+              </div>
+              <div className="s2-left-footer">
+                <div className="s2-left-step-dots">
+                  <span className="s2-left-dot active" />
+                  <span className="s2-left-dot" />
+                  <span className="s2-left-dot" />
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: white confirmation panel */}
+            <div className="s2-right-panel">
+              <div className="s2-right-inner s2-substep">
+                <div className="s2-brand-badge">
+                  <SvgCheck size={14} />
+                  SITE ANALYZED
+                </div>
+                <h1 className="s2-brand-title">
+                  Confirm your <span className="s2-brand-title-acc">brand details</span>
+                </h1>
+                <p className="s2-brand-sub">Edit anything that does not look right before we build your quiz.</p>
+
+                <div className="s2-brand-details">
+                  {/* Business type */}
+                  <div className="s2-detail-row">
+                    <div className="s2-detail-icon s2-detail-icon-type">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    </div>
+                    <div className="s2-detail-content">
+                      <div className="s2-detail-label">Business type</div>
+                      {editingTag === 'type' ? (
+                        <input
+                          ref={editInputRef}
+                          className="s2-detail-input"
+                          value={editValues['type'] || ''}
+                          onChange={function(e) { setEditValues(function(p) { return { ...p, type: e.target.value }; }); }}
+                          onBlur={function() { commitEditTag('type'); }}
+                          onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('type'); if (e.key === 'Escape') setEditingTag(null); }}
+                        />
+                      ) : (
+                        <div className="s2-detail-value">{brand?.business?.type || 'Unknown'}</div>
+                      )}
+                    </div>
+                    {editingTag !== 'type' && (
+                      <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('type', brand?.business?.type || ''); }}>Edit</button>
+                    )}
+                  </div>
+
+                  {/* Audience */}
+                  <div className="s2-detail-row">
+                    <div className="s2-detail-icon s2-detail-icon-audience">
+                      <SvgUsers size={18} />
+                    </div>
+                    <div className="s2-detail-content">
+                      <div className="s2-detail-label">Audience</div>
+                      {editingTag === 'audience' ? (
+                        <input
+                          ref={editInputRef}
+                          className="s2-detail-input"
+                          value={editValues['audience'] || ''}
+                          onChange={function(e) { setEditValues(function(p) { return { ...p, audience: e.target.value }; }); }}
+                          onBlur={function() { commitEditTag('audience'); }}
+                          onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('audience'); if (e.key === 'Escape') setEditingTag(null); }}
+                        />
+                      ) : (
+                        <div className="s2-detail-value">{brand?.business?.audience || 'Unknown'}</div>
+                      )}
+                    </div>
+                    {editingTag !== 'audience' && (
+                      <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('audience', brand?.business?.audience || ''); }}>Edit</button>
+                    )}
+                  </div>
+
+                  {/* Tone */}
+                  <div className="s2-detail-row">
+                    <div className="s2-detail-icon s2-detail-icon-tone">
+                      <SvgSpark size={18} />
+                    </div>
+                    <div className="s2-detail-content">
+                      <div className="s2-detail-label">Tone</div>
+                      {editingTag === 'tone' ? (
+                        <input
+                          ref={editInputRef}
+                          className="s2-detail-input"
+                          value={editValues['tone'] || ''}
+                          onChange={function(e) { setEditValues(function(p) { return { ...p, tone: e.target.value }; }); }}
+                          onBlur={function() { commitEditTag('tone'); }}
+                          onKeyDown={function(e) { if (e.key === 'Enter') commitEditTag('tone'); if (e.key === 'Escape') setEditingTag(null); }}
+                        />
+                      ) : (
+                        <div className="s2-detail-value">{brand?.business?.tone || 'Unknown'}</div>
+                      )}
+                    </div>
+                    {editingTag !== 'tone' && (
+                      <button type="button" className="s2-detail-edit" onClick={function() { startEditTag('tone', brand?.business?.tone || ''); }}>Edit</button>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="s2-continue-btn"
+                  onClick={function() { setS2SubStep('choose'); }}
+                >
+                  Continue
+                  <SvgArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Choose/Building substeps — white card layout */}
+        {!loading && sessionToken && s2SubStep !== 'brand' && (
+          <div className="s2-card-wrap">
+            <div className="s2-card">
 
                 {/* 2b: Quiz style selector */}
                 {s2SubStep === 'choose' && (
