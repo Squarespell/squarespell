@@ -74,6 +74,10 @@ export interface QuizBlockEditorProps {
   quizId?: string;
   quizSlug?: string;
   saveState?: SaveState;
+  /** When provided, renders a "Publish" button in the topbar that calls this. */
+  onPublish?: () => void;
+  /** Label for the publish button (default: "Publish") */
+  publishLabel?: string;
 }
 
 var API_BASE = (typeof window !== 'undefined' && (window as any).__NEXT_PUBLIC_API_URL)
@@ -2859,6 +2863,8 @@ export function QuizBlockEditor({
   quizId,
   quizSlug,
   saveState,
+  onPublish,
+  publishLabel = 'Publish',
 }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
@@ -3103,6 +3109,26 @@ export function QuizBlockEditor({
               </svg>
               Settings
             </button>
+
+            {/* Publish button — only shown when onPublish prop is provided */}
+            {onPublish && (
+              <>
+                <div style={{ width: 1, height: 20, background: C.BORDER, margin: '0 4px' }} />
+                <button type="button" onClick={onPublish}
+                  style={{
+                    height: 34, padding: '0 16px', borderRadius: 8,
+                    background: '#0f3d38', border: 'none',
+                    color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
+                    letterSpacing: '-0.01em',
+                  }}
+                  onMouseEnter={function(e) { e.currentTarget.style.opacity = '0.88'; }}
+                  onMouseLeave={function(e) { e.currentTarget.style.opacity = '1'; }}
+                >
+                  {publishLabel}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
