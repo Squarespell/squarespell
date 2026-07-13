@@ -533,8 +533,8 @@ function ScoreBadge({ score, onChange }: { score: number; onChange: (s: number) 
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  QuestionTextEditor — contentEditable div replacing <textarea>       */
-/*  No height jump. Hover = faint teal border. Focus = solid ring.     */
+/*  QuestionTextEditor — auto-resize textarea (replaces contentEditable)*/
+/*  Fixes delete-word bug. Hover = faint teal border. Focus = ring.    */
 /* ------------------------------------------------------------------ */
 function QuestionTextEditor({
   value,
@@ -547,51 +547,72 @@ function QuestionTextEditor({
   placeholder?: string;
   style?: React.CSSProperties;
 }) {
-  var ref = useRef<HTMLDivElement>(null);
-  var isFocused = useRef(false);
+  var ref = useRef<HTMLTextAreaElement>(null);
   var [hovering, setHovering] = useState(false);
   var [focused, setFocused] = useState(false);
 
-  // Sync props → DOM only when not actively editing (preserves cursor).
+  // Auto-resize height to content on every render
   useEffect(function() {
-    if (ref.current && !isFocused.current) {
-      var cur = ref.current.innerText;
-      if (cur !== (value || '')) {
-        ref.current.innerText = value || '';
-      }
+    if (ref.current) {
+      ref.current.style.height = 'auto';
+      ref.current.style.height = ref.current.scrollHeight + 'px';
     }
   });
 
   return (
     <div
-      ref={ref}
-      contentEditable
-      suppressContentEditableWarning
-      data-qte-placeholder={placeholder || 'Enter your question here...'}
+      style={{ position: 'relative', width: '100%' }}
       onMouseEnter={function() { setHovering(true); }}
       onMouseLeave={function() { setHovering(false); }}
-      onFocus={function() { isFocused.current = true; setFocused(true); }}
-      onBlur={function(e) {
-        isFocused.current = false;
-        setFocused(false);
-        onChange((e.currentTarget as HTMLDivElement).innerText || '');
-      }}
-      onInput={function(e) { onChange((e.currentTarget as HTMLDivElement).innerText || ''); }}
-      onClick={function(e) { e.stopPropagation(); }}
-      style={Object.assign({}, style, {
-        outline: 'none',
-        cursor: 'text',
-        whiteSpace: 'pre-wrap' as const,
-        wordBreak: 'break-word' as const,
-        border: '1.5px solid ' + (focused ? C.ACCENT : hovering ? 'rgba(15,115,119,0.25)' : 'transparent'),
-        borderRadius: 8,
-        padding: '6px 10px',
-        margin: '-6px -10px',
-        background: focused ? '#fff' : hovering ? 'rgba(15,115,119,0.03)' : 'transparent',
-        boxShadow: focused ? '0 0 0 3px rgba(15,115,119,0.08)' : 'none',
-        transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
-      })}
-    />
+    >
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={function(e) { onChange(e.target.value); }}
+        onFocus={function() { setFocused(true); }}
+        onBlur={function() { setFocused(false); }}
+        onClick={function(e) { e.stopPropagation(); }}
+        placeholder={placeholder || 'Enter your question here...'}
+        rows={1}
+        style={Object.assign({}, style, {
+          display: 'block',
+          width: '100%',
+          boxSizing: 'border-box' as const,
+          resize: 'none' as const,
+          overflow: 'hidden' as const,
+          outline: 'none',
+          cursor: 'text',
+          border: '1.5px solid ' + (focused ? C.ACCENT : hovering ? 'rgba(15,115,119,0.25)' : 'transparent'),
+          borderRadius: 8,
+          padding: '6px 34px 6px 10px',
+          background: focused ? '#fff' : hovering ? 'rgba(15,115,119,0.03)' : 'transparent',
+          boxShadow: focused ? '0 0 0 3px rgba(15,115,119,0.08)' : 'none',
+          transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
+          fontFamily: 'inherit',
+          lineHeight: '1.3',
+          color: 'inherit',
+          fontWeight: 'inherit',
+          fontSize: 'inherit',
+          letterSpacing: 'inherit',
+          minHeight: 40,
+        })}
+      />
+      {/* Pencil icon — appears on hover to hint text is editable */}
+      <div style={{
+        position: 'absolute',
+        top: 9,
+        right: 10,
+        opacity: hovering && !focused ? 0.55 : 0,
+        transition: 'opacity 0.15s',
+        color: C.ACCENT,
+        pointerEvents: 'none',
+        lineHeight: 1,
+      }}>
+        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+        </svg>
+      </div>
+    </div>
   );
 }
 
@@ -701,21 +722,34 @@ function AnswerRow({
         />
       )}
 
-      {/* Editable text */}
-      <input
-        type="text"
-        value={opt.text || ''}
-        onChange={function(e) { onChangeText(e.target.value); }}
-        onClick={function(e) { e.stopPropagation(); }}
-        onFocus={function() { setInputFocused(true); }}
-        onBlur={function() { setInputFocused(false); }}
-        placeholder="Type answer..."
-        style={{
-          flex: 1, border: 'none', background: 'transparent',
-          fontSize: 15, color: C.TEXT, outline: 'none',
-          fontFamily: C.FONT, padding: '4px 0', cursor: 'text',
-        }}
-      />
+      {/* Editable text — wrapped for pencil overlay */}
+      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+        <input
+          type="text"
+          value={opt.text || ''}
+          onChange={function(e) { onChangeText(e.target.value); }}
+          onClick={function(e) { e.stopPropagation(); }}
+          onFocus={function() { setInputFocused(true); }}
+          onBlur={function() { setInputFocused(false); }}
+          placeholder="Type answer..."
+          style={{
+            width: '100%', border: 'none', background: 'transparent',
+            fontSize: 15, color: C.TEXT, outline: 'none',
+            fontFamily: C.FONT, padding: '4px 0', cursor: 'text',
+          }}
+        />
+        {/* Pencil hint — visible on row hover, hidden while typing */}
+        <div style={{
+          position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+          opacity: hover && !inputFocused ? 0.5 : 0,
+          transition: 'opacity 0.12s', color: C.ACCENT,
+          pointerEvents: 'none', lineHeight: 1,
+        }}>
+          <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+          </svg>
+        </div>
+      </div>
 
       {/* Score badge */}
       <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
@@ -1182,14 +1216,25 @@ function ThumbnailAnswerRow({
         )}
       </div>
 
-      {/* Text */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      {/* Text — wrapped for pencil overlay */}
+      <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
         <input type="text" value={opt.text || ''} onChange={function(e) { onChangeText(e.target.value); }}
           onClick={function(e) { e.stopPropagation(); }}
           onFocus={function() { setInputFocused(true); }}
           onBlur={function() { setInputFocused(false); }}
           placeholder="Answer..."
           style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT, cursor: 'text' }} />
+        {/* Pencil hint */}
+        <div style={{
+          position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+          opacity: hover && !inputFocused ? 0.5 : 0,
+          transition: 'opacity 0.12s', color: C.ACCENT,
+          pointerEvents: 'none', lineHeight: 1,
+        }}>
+          <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+          </svg>
+        </div>
       </div>
 
       {/* Score */}
@@ -3300,11 +3345,8 @@ export function QuizBlockEditor({
       {/* Spin animation */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes spin { to { transform: rotate(360deg); } }
-        [data-qte-placeholder]:empty::before {
-          content: attr(data-qte-placeholder);
-          color: rgba(0,0,0,0.28);
-          pointer-events: none;
-        }
+        textarea::placeholder { color: rgba(0,0,0,0.28); }
+        .sq-answer-row input::placeholder { color: rgba(0,0,0,0.28); }
       ` }} />
     </div>
   );
