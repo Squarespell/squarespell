@@ -2869,7 +2869,7 @@ export function QuizBlockEditor({
   var history = useHistory(initialBlocks);
   var blocks = history.current;
   var [selectedId, setSelectedId] = useState<string | null>(null);
-  var [settingsOpen, setSettingsOpen] = useState(false);
+  var [settingsOpen, setSettingsOpen] = useState(true);
   var [showSkipLogic, setShowSkipLogic] = useState(false);
   var prevBlocksRef = useRef(initialBlocks);
 
