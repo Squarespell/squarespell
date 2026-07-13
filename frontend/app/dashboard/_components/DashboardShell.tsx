@@ -579,7 +579,7 @@ export function DashboardShell({
           >
             {icons.logo}
           </div>
-          <span style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, letterSpacing: '-0.02em' }}>
+          <span style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, letterSpacing: '-0.03em' }}>
             Squarespell Quiz
           </span>
         </Link>
