@@ -210,7 +210,9 @@ export default function EmbedQuizClient({
   const brandSurface = quiz.branding?.colors?.surface || brandBg;
   const brandBorder = 'rgba(0,0,0,0.10)';
   const brandName = quiz.branding?.site_name || '';
-  const showBranding = quiz.settings?.show_branding !== false;
+  const PAID_PLANS = ['core', 'starter', 'growth', 'pro', 'business', 'agency'];
+  const ownerPlan: string = (quiz as any).owner_plan || 'free';
+  const showBranding = !PAID_PLANS.includes(ownerPlan);
 
   /** Detect YouTube/Vimeo and return embed URL, or empty string for direct video */
   function getVideoEmbedUrl(url: string): string {
@@ -1416,7 +1418,7 @@ export default function EmbedQuizClient({
                         </div>
                       )}
                       {leadError && <div className="sq-err">{leadError}</div>}
-                      <button className="sq-btn sq-btn-lead" onClick={submitLead} disabled={submitting || !email.trim()} type="button">
+                      <button className="sq-btn sq-btn-lead" onClick={submitLead} disabled={submitting} type="button">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         {submitting ? 'Unlocking...' : (quiz.leadGate?.buttonText || 'Unlock my result')}
                       </button>
