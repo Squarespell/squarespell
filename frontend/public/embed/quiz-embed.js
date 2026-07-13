@@ -129,12 +129,14 @@
       // NEVER use loading="lazy" — the iframe starts small, so the browser
       // thinks it's off-screen and defers loading forever (height-0 deadlock).
       iframe.loading = 'eager';
+      iframe.setAttribute('allowtransparency', 'true');
       iframe.style.height = (fixedHeight && fixedHeight !== 'auto') ? fixedHeight + 'px' : '600px';
       iframe.style.display = 'block';
       iframe.style.margin = '0';
       iframe.style.padding = '0';
       iframe.style.verticalAlign = 'top';
       iframe.style.overflow = 'hidden';
+      iframe.style.background = 'transparent';
 
       var fallback = document.createElement('div');
       fallback.className = 'squarespell-fallback';

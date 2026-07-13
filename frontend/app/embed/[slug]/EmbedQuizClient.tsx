@@ -434,12 +434,12 @@ export default function EmbedQuizClient({
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         body {
           font-family: ${brandFont};
-          background: ${brandBg};
+          background: transparent;
           color: ${brandText};
         }
         .sq-root {
           container-type: inline-size;
-          background: ${brandBg};
+          background: transparent;
           color: ${brandText};
           padding: 28px 20px 40px;
           font-family: ${brandFont};
