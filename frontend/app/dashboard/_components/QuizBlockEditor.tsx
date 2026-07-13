@@ -2086,6 +2086,10 @@ function QuestionCanvas({
   var [showVideoPicker, setShowVideoPicker] = useState(false);
   var imageBtnRef = useRef<HTMLButtonElement>(null);
   var videoBtnRef = useRef<HTMLButtonElement>(null);
+  // Split layout media panel refs + hover state
+  var splitImageBtnRef = useRef<HTMLButtonElement>(null);
+  var splitVideoBtnRef = useRef<HTMLButtonElement>(null);
+  var [splitMediaHover, setSplitMediaHover] = useState(false);
 
   function updateOptionText(idx: number, text: string) {
     var newOpts = block.options.map(function(o, i) {
@@ -2141,17 +2145,23 @@ function QuestionCanvas({
   /* ---- SPLIT LAYOUT ---- */
   if (isSplit) {
     return (
+      <>
       <div style={{
         maxWidth: 820, width: '100%', background: '#fff', borderRadius: 16,
         overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
         display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 400,
       }}>
-        {/* Left: media */}
-        <div style={{
-          background: block.mediaUrl ? 'transparent' : 'linear-gradient(135deg, #1D2939, #344054)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          position: 'relative', overflow: 'hidden',
-        }}>
+        {/* Left: media panel — click to add image or video */}
+        <div
+          style={{
+            background: block.mediaUrl ? 'transparent' : 'linear-gradient(135deg, #1D2939, #344054)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'relative', overflow: 'hidden',
+          }}
+          onMouseEnter={function() { setSplitMediaHover(true); }}
+          onMouseLeave={function() { setSplitMediaHover(false); }}
+        >
+          {/* Media display */}
           {block.mediaUrl && block.mediaType === 'video' ? (function() {
             var ytM = block.mediaUrl!.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
             var viM = block.mediaUrl!.match(/(?:vimeo\.com\/)(\d+)/);
@@ -2162,14 +2172,85 @@ function QuestionCanvas({
           })() : block.mediaUrl ? (
             <img src={block.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          ) : (
-            <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-              <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 8px' }}>
+          ) : null}
+
+          {/* Empty state — Image + Video upload buttons */}
+          {!block.mediaUrl && (
+            <div style={{ textAlign: 'center', padding: '0 24px' }}>
+              <svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 10px', color: 'rgba(255,255,255,0.35)' }}>
                 <rect x={3} y={3} width={18} height={18} rx={2} />
                 <circle cx={8.5} cy={8.5} r={1.5} />
                 <polyline points="21 15 16 10 5 21" />
               </svg>
-              <div style={{ fontSize: 12, fontWeight: 600 }}>Add media via toolbar</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 14, fontWeight: 500 }}>
+                Add image or video
+              </div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                <button ref={splitImageBtnRef} type="button"
+                  onClick={function(e) { e.stopPropagation(); setShowVideoPicker(false); setShowImagePicker(function(v) { return !v; }); }}
+                  style={{
+                    padding: '7px 14px', borderRadius: 7,
+                    background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)',
+                    color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                  }}>
+                  <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x={3} y={3} width={18} height={18} rx={2}/><circle cx={8.5} cy={8.5} r={1.5}/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  Image
+                </button>
+                <button ref={splitVideoBtnRef} type="button"
+                  onClick={function(e) { e.stopPropagation(); setShowImagePicker(false); setShowVideoPicker(function(v) { return !v; }); }}
+                  style={{
+                    padding: '7px 14px', borderRadius: 7,
+                    background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)',
+                    color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                  }}>
+                  <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="23 7 16 12 23 17 23 7"/><rect x={1} y={5} width={15} height={14} rx={2}/>
+                  </svg>
+                  Video
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Hover overlay when media is present — change or remove */}
+          {block.mediaUrl && splitMediaHover && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'rgba(0,0,0,0.52)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              <button ref={splitImageBtnRef} type="button"
+                onClick={function(e) { e.stopPropagation(); setShowVideoPicker(false); setShowImagePicker(true); }}
+                style={{
+                  padding: '7px 20px', borderRadius: 7,
+                  background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
+                  color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}>
+                Change Image
+              </button>
+              <button ref={splitVideoBtnRef} type="button"
+                onClick={function(e) { e.stopPropagation(); setShowImagePicker(false); setShowVideoPicker(true); }}
+                style={{
+                  padding: '7px 20px', borderRadius: 7,
+                  background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
+                  color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}>
+                Change Video
+              </button>
+              <button type="button"
+                onClick={function(e) { e.stopPropagation(); onChange(Object.assign({}, block, { mediaUrl: undefined, mediaType: undefined }) as QuestionBlock); }}
+                style={{
+                  padding: '5px 20px', borderRadius: 7,
+                  background: 'transparent', border: 'none',
+                  color: 'rgba(255,120,120,0.9)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}>
+                Remove
+              </button>
             </div>
           )}
         </div>
@@ -2215,6 +2296,23 @@ function QuestionCanvas({
           </button>
         </div>
       </div>
+
+      {/* Media pickers for split layout */}
+      {showImagePicker && (
+        <ImagePicker
+          onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'image' }) as QuestionBlock); setShowImagePicker(false); }}
+          onClose={function() { setShowImagePicker(false); }}
+          anchorRef={splitImageBtnRef}
+        />
+      )}
+      {showVideoPicker && (
+        <VideoPicker
+          onSelect={function(url) { onChange(Object.assign({}, block, { mediaUrl: url, mediaType: 'video' }) as QuestionBlock); setShowVideoPicker(false); }}
+          onClose={function() { setShowVideoPicker(false); }}
+          anchorRef={splitVideoBtnRef}
+        />
+      )}
+      </>
     );
   }
 
