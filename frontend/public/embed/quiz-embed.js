@@ -4,15 +4,15 @@
  *
  * Usage (Code Block):
  *   <div data-squarespell-quiz="YOUR_SLUG"></div>
- *   <script src="https://app.squarespell.com/embed.js" async></script>
+ *   <script src="https://quiz.squarespell.com/embed/quiz-embed.js" async></script>
  *
  * Legacy usage still supported:
- *   <script src="https://app.squarespell.com/embed.js" data-quiz="YOUR_SLUG" async></script>
+ *   <script src="https://quiz.squarespell.com/embed/quiz-embed.js" data-quiz="YOUR_SLUG" async></script>
  */
 (function () {
   'use strict';
 
-  var BASE_URL = 'https://app.squarespell.com';
+  var BASE_URL = 'https://quiz.squarespell.com';
   var EMBED_VERSION = '2.3.1';
   var INIT_ATTR = 'data-squarespell-init';
 
@@ -289,8 +289,8 @@
     messageListenerAttached = true;
 
     window.addEventListener('message', function (e) {
-      // Validate origin
-      if (e.origin !== BASE_URL) return;
+      // Validate origin — accept both quiz.squarespell.com and legacy app.squarespell.com
+      if (e.origin !== BASE_URL && e.origin !== 'https://app.squarespell.com') return;
 
       var d = e.data;
       if (!d || d.source !== 'squarespell') return;
