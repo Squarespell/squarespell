@@ -418,7 +418,7 @@ export function TryFlowInner({
   }, [mode, urlParam, goAnalyze]);
 
   /* ======================== STAGE 2 -> STAGE 3 ======================== */
-  var handleCreateFromTemplate = useCallback(function(templateId: string) {
+  var handleCreateFromTemplate = useCallback(async function(templateId: string) {
     var tpl = QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === templateId; });
     if (!tpl) return;
     setBuildingQuiz(true);
@@ -434,6 +434,28 @@ export function TryFlowInner({
         leadGate: legacy.leadGate,
         settings: {},
       };
+
+      // If user is logged in, save directly and open full dashboard editor
+      const brandingPayload = brand
+        ? { colors: brand.colors, font_family: brand.font_family, site_name: brand.site_name }
+        : undefined;
+      try {
+        const saved = await api.createQuiz({
+          title: normalizedQuiz.title,
+          description: normalizedQuiz.description,
+          questions: normalizedQuiz.questions,
+          outcomes: normalizedQuiz.outcomes,
+          settings: normalizedQuiz.settings || {},
+          branding: brandingPayload,
+        });
+        if (saved?.id) {
+          router.push(`/dashboard/${saved.id}`);
+          return;
+        }
+      } catch {
+        // Not logged in — fall through to stage 3
+      }
+
       setQuiz(normalizedQuiz);
       setSelectedIdx(0);
       setStage(3);
@@ -447,7 +469,7 @@ export function TryFlowInner({
     } finally {
       setBuildingQuiz(false);
     }
-  }, []);
+  }, [brand, router]);
 
   const buildQuiz = useCallback(async () => {
     if (!sessionToken) return;
@@ -479,11 +501,33 @@ export function TryFlowInner({
         leadGate: data.quiz?.leadGate,
         settings: data.quiz?.settings,
       };
+
+      // If user is logged in, save directly to their account and open the full dashboard editor
+      const brandingPayload = brand
+        ? { colors: brand.colors, font_family: brand.font_family, site_name: brand.site_name }
+        : undefined;
+      try {
+        const saved = await api.createQuiz({
+          title: normalizedQuiz.title,
+          description: normalizedQuiz.description,
+          questions: normalizedQuiz.questions,
+          outcomes: normalizedQuiz.outcomes,
+          settings: normalizedQuiz.settings || {},
+          branding: brandingPayload,
+        });
+        if (saved?.id) {
+          router.push(`/dashboard/${saved.id}`);
+          return;
+        }
+      } catch {
+        // Not logged in — fall through to simplified stage 3 editor below
+      }
+
+      // Anonymous user: go to simplified in-funnel editor
       setQuiz(normalizedQuiz);
       setClaimToken(data.claim_token || '');
       setSelectedIdx(0);
       setStage(3);
-      // Scroll to top of page and editor panel
       window.scrollTo({ top: 0, behavior: 'instant' });
       setTimeout(() => {
         document.getElementById('stage-3')?.scrollIntoView({ behavior: 'instant', block: 'start' });
@@ -507,7 +551,7 @@ export function TryFlowInner({
     } finally {
       setBuildingQuiz(false);
     }
-  }, [sessionToken, brand, url]);
+  }, [sessionToken, brand, url, router]);
 
   var handlePickGenerate = useCallback(function() {
     setS2SubStep('building');
