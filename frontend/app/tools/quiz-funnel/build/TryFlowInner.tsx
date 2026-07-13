@@ -1152,7 +1152,7 @@ export function TryFlowInner({
             <div className="brand-mark">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
             </div>
-            SQUARESPELL <span className="brand-acc">QUIZ</span>
+            SQUARESPELL<span className="brand-acc" style={{ marginLeft: 6 }}>QUIZ</span>
           </div>
           <div className="s2-step-dots">
             <span className={`s2-step-dot${s2SubStep === 'brand' ? ' active' : (s2SubStep === 'choose' || s2SubStep === 'building') ? ' done' : ''}`} />
@@ -1192,7 +1192,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
+                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-dark-skel s2-dark-skel-label shimmer"></div>
@@ -1242,7 +1242,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
+                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Analyzed</div>
@@ -1379,7 +1379,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
+                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Your brand</div>
@@ -1486,7 +1486,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
+                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2403,7 +2403,7 @@ export function TryFlowInner({
               <div className="brand-mark">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
               </div>
-              SQUARESPELL <span className="brand-acc">QUIZ</span>
+              SQUARESPELL<span className="brand-acc" style={{ marginLeft: 6 }}>QUIZ</span>
             </div>
 
             <div className="s5-banner">
@@ -2460,7 +2460,7 @@ export function TryFlowInner({
             <div className="brand-mark">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
             </div>
-            SQUARESPELL <span className="brand-acc">QUIZ</span>
+            SQUARESPELL<span className="brand-acc" style={{ marginLeft: 6 }}>QUIZ</span>
           </div>
           <div className="top-right">
             <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>founder@{domain}</span>
