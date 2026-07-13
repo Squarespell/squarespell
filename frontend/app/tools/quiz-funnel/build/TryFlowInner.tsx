@@ -21,6 +21,7 @@ interface Option {
   id: string;
   text: string;
   score?: number;
+  imageUrl?: string;
 }
 interface Question {
   id: string;
@@ -29,6 +30,9 @@ interface Question {
   subtitle?: string;
   options: Option[];
   next_question_rules?: Array<{ if_answer: string; goto: string }>;
+  mediaUrl?: string;
+  mediaType?: string; // 'image' | 'video'
+  answerLayout?: string; // 'list' | 'grid' | 'splitLayout'
 }
 interface Outcome {
   id: string;
@@ -535,7 +539,15 @@ export function TryFlowInner({
     if (mode === 'authed' ? !authedQuizId : !claimToken) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setSaveStatus('saving');
+    // Capture brand at schedule time so the timeout closure uses the right value
+    const brandSnapshot = brand;
     saveTimerRef.current = setTimeout(async () => {
+      // Include branding so the embed quiz can apply the user's detected brand
+      // colors. Previously branding was never sent, so quiz.branding was always
+      // null and the embed fell back to the default #0a0a0a palette.
+      const brandingPayload = brandSnapshot
+        ? { colors: brandSnapshot.colors, font_family: brandSnapshot.font_family, site_name: brandSnapshot.site_name }
+        : undefined;
       try {
         if (mode === 'authed' && authedQuizId) {
           await api.updateQuiz(authedQuizId, {
@@ -543,6 +555,7 @@ export function TryFlowInner({
             questions: nextQuiz.questions,
             outcomes: nextQuiz.outcomes,
             settings: nextQuiz.settings,
+            branding: brandingPayload,
           });
         } else {
           await fetch(`${API}/api/preview-quiz/${claimToken}`, {
@@ -553,6 +566,7 @@ export function TryFlowInner({
               questions: nextQuiz.questions,
               outcomes: nextQuiz.outcomes,
               settings: nextQuiz.settings,
+              branding: brandingPayload,
             }),
           });
         }
@@ -562,7 +576,7 @@ export function TryFlowInner({
         setSaveStatus('idle');
       }
     }, 700);
-  }, [mode, authedQuizId, claimToken]);
+  }, [mode, authedQuizId, claimToken, brand]);
 
   const updateQuiz = useCallback((next: Quiz) => {
     setQuiz(next);
@@ -586,6 +600,20 @@ export function TryFlowInner({
   var updateQuestionType = function(qi: number, type: string) {
     if (!quiz) return;
     var qs = quiz.questions.map(function(q, i) { return i === qi ? { ...q, type: type } : q; });
+    updateQuiz({ ...quiz, questions: qs });
+  };
+  var updateQuestionMedia = function(qi: number, field: 'mediaUrl' | 'mediaType' | 'answerLayout' | 'subtitle', value: string) {
+    if (!quiz) return;
+    var qs = quiz.questions.map(function(q, i) { return i === qi ? { ...q, [field]: value || undefined } : q; });
+    updateQuiz({ ...quiz, questions: qs });
+  };
+  var updateOptionImage = function(qi: number, oi: number, imageUrl: string) {
+    if (!quiz) return;
+    var qs = quiz.questions.map(function(q, i) {
+      if (i !== qi) return q;
+      var opts = q.options.map(function(o, j) { return j === oi ? { ...o, imageUrl: imageUrl || undefined } : o; });
+      return { ...q, options: opts };
+    });
     updateQuiz({ ...quiz, questions: qs });
   };
   const updateOptionText = (qi: number, oi: number, text: string) => {
@@ -1654,6 +1682,60 @@ export function TryFlowInner({
                   </div>
 
                   <div className="edit-group">
+                    <div className="edit-group-label">Question subtitle</div>
+                    <input
+                      className="field-input"
+                      value={currentQ.subtitle || ''}
+                      onChange={(e) => updateQuestionMedia(selectedIdx, 'subtitle', e.target.value)}
+                      placeholder="Optional subtitle / hint text"
+                    />
+                  </div>
+
+                  <div className="edit-group">
+                    <div className="edit-group-label">Question media</div>
+                    <div className="type-toggle-row" style={{ marginBottom: 8 }}>
+                      {(['none', 'image', 'video'] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          className={'type-toggle-btn' + ((!currentQ.mediaType && t === 'none') || currentQ.mediaType === t ? ' active' : '')}
+                          onClick={() => updateQuestionMedia(selectedIdx, 'mediaType', t === 'none' ? '' : t)}
+                          style={{ flex: 1, fontSize: 12 }}
+                        >
+                          {t === 'none' ? 'None' : t === 'image' ? '🖼 Image' : '▶ Video'}
+                        </button>
+                      ))}
+                    </div>
+                    {currentQ.mediaType && currentQ.mediaType !== '' && (
+                      <input
+                        className="field-input"
+                        value={currentQ.mediaUrl || ''}
+                        onChange={(e) => updateQuestionMedia(selectedIdx, 'mediaUrl', e.target.value)}
+                        placeholder={currentQ.mediaType === 'video' ? 'YouTube / Vimeo URL or direct .mp4' : 'Image URL (.jpg, .png, .webp)'}
+                        style={{ marginTop: 6 }}
+                      />
+                    )}
+                    {currentQ.mediaType && currentQ.mediaType !== '' && (
+                      <>
+                        <div className="edit-group-label" style={{ marginTop: 10 }}>Layout</div>
+                        <div className="type-toggle-row">
+                          {([['list', 'List'], ['grid', 'Grid'], ['splitLayout', 'Split']] as const).map(([val, label]) => (
+                            <button
+                              key={val}
+                              type="button"
+                              className={'type-toggle-btn' + ((!currentQ.answerLayout && val === 'list') || currentQ.answerLayout === val ? ' active' : '')}
+                              onClick={() => updateQuestionMedia(selectedIdx, 'answerLayout', val === 'list' ? '' : val)}
+                              style={{ flex: 1, fontSize: 12 }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="edit-group">
                     <div className="edit-group-label">
                       <span>Answers</span>
                       <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{currentQ.options.length} / 6</span>
@@ -1712,6 +1794,15 @@ export function TryFlowInner({
                               <SvgTrash />
                             </button>
                           </div>
+                          {currentQ.mediaType && currentQ.mediaType !== '' && (
+                            <input
+                              className="answer-input"
+                              value={o.imageUrl || ''}
+                              onChange={(e) => updateOptionImage(selectedIdx, oi, e.target.value)}
+                              placeholder="Option image URL (optional)"
+                              style={{ marginTop: 6, fontSize: 12 }}
+                            />
+                          )}
                           <div className="answer-branch-row">
                             <select
                               className="answer-branch-select"
