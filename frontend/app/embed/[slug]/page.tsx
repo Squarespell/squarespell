@@ -155,6 +155,33 @@ export default async function EmbedPage({ params }: { params: { slug: string } }
   // in EmbedQuizClient which then builds broken URLs like /api/quiz/undefined/lead.
   if (!quiz.slug) quiz.slug = params.slug;
 
+  // Merge mediaUrl / mediaType / answerLayout / subtitle from settings.editor_blocks
+  // into the legacy questions[] when those fields are missing.
+  //
+  // Root cause: the QuizBlockEditor saves both editor_blocks (in settings) and
+  // a legacy questions[] in parallel. Race conditions or stale saves can leave
+  // questions[] behind while editor_blocks stays up-to-date. The embed reads
+  // from questions[], so it would miss the video/image even though the
+  // dashboard editor shows it correctly (the editor reads from editor_blocks).
+  const editorBlocks: any[] = (quiz.settings as any)?.editor_blocks ?? [];
+  if (editorBlocks.length > 0) {
+    const blockById = new Map<string, any>();
+    editorBlocks.forEach((b: any) => {
+      if (b.type === 'question' && b.id) blockById.set(b.id, b);
+    });
+    quiz.questions = quiz.questions.map((q) => {
+      const blk = blockById.get(q.id);
+      if (!blk) return q;
+      return {
+        ...q,
+        mediaUrl:     (q as any).mediaUrl     ?? blk.mediaUrl     ?? undefined,
+        mediaType:    (q as any).mediaType     ?? blk.mediaType    ?? undefined,
+        answerLayout: (q as any).answerLayout  ?? blk.answerLayout ?? undefined,
+        subtitle:     (q as any).subtitle      ?? blk.subtitle     ?? undefined,
+      };
+    });
+  }
+
   // Derive branding from quiz settings (matches the main /quiz/[slug] logic)
   const brand = quiz.branding;
   const brandBg = brand?.colors?.background || '#ffffff';

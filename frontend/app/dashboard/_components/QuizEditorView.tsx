@@ -351,6 +351,40 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
     }
   }, [quiz, initialBlocksReady]);
 
+  // One-time backfill: if editor_blocks has richer question data (e.g. mediaUrl /
+  // mediaType) that the legacy questions[] is missing, push an immediate save so
+  // the embed and other consumers reading questions[] get the correct data.
+  // This fixes the race where the block editor saved editor_blocks correctly but
+  // a stale questions[] save from an older path left those fields blank.
+  var syncBackfillDoneRef = useRef(false);
+  useEffect(function() {
+    if (!initialBlocksReady || !resolvedId || syncBackfillDoneRef.current) return;
+    if (editorBlocks.length === 0) return;
+    var legacy = blocksToLegacy(editorBlocks);
+    var rawQuestions: any[] = (quiz?.questions as any[]) || [];
+    var needsSync = legacy.questions.some(function(lq: any, i: number) {
+      var raw = rawQuestions[i];
+      if (!raw) return false;
+      return (lq.mediaUrl && !raw.mediaUrl) ||
+             (lq.mediaType && !raw.mediaType) ||
+             (lq.answerLayout && !raw.answerLayout) ||
+             (lq.subtitle && !raw.subtitle);
+    });
+    if (!needsSync) return;
+    syncBackfillDoneRef.current = true;
+    var mergedSettings = Object.assign({}, quiz?.settings || {}, { editor_blocks: editorBlocks });
+    api.updateQuiz(resolvedId, {
+      questions: legacy.questions,
+      outcomes: legacy.outcomes,
+      settings: mergedSettings,
+    }).then(function() {
+      console.log('[block-editor] Backfilled legacy questions from editor_blocks (mediaUrl/mediaType/answerLayout)');
+    }).catch(function(err: any) {
+      console.error('[block-editor] Backfill sync failed:', err);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBlocksReady, resolvedId]);
+
   // Quiz settings state
   var [quizSettings, setQuizSettings] = useState<QuizSettings>({});
   var settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
