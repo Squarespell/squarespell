@@ -267,6 +267,7 @@ export function TryFlowInner({
   const [brand, setBrand] = useState<Brand | null>(initialBrand);
   const [sessionToken, setSessionToken] = useState('');
   const [claimToken, setClaimToken] = useState('');
+  const [pendingQuizAuth, setPendingQuizAuth] = useState(false);
 
   // Stage 2 - sub-step flow: 'brand' -> 'choose' -> 'building'
   var [s2SubStep, setS2SubStep] = useState<'brand' | 'choose' | 'building'>('brand');
@@ -453,11 +454,12 @@ export function TryFlowInner({
           return;
         }
       } catch {
-        // Not logged in — fall through to stage 3
+        // Not logged in — show auth gate
       }
 
       setQuiz(normalizedQuiz);
       setSelectedIdx(0);
+      setPendingQuizAuth(true);
       setStage(3);
       window.scrollTo({ top: 0, behavior: 'instant' });
       setTimeout(function() {
@@ -523,10 +525,11 @@ export function TryFlowInner({
         // Not logged in — fall through to simplified stage 3 editor below
       }
 
-      // Anonymous user: go to simplified in-funnel editor
+      // Anonymous user: show auth gate (full editor requires account)
       setQuiz(normalizedQuiz);
       setClaimToken(data.claim_token || '');
       setSelectedIdx(0);
+      setPendingQuizAuth(true);
       setStage(3);
       window.scrollTo({ top: 0, behavior: 'instant' });
       setTimeout(() => {
@@ -1602,6 +1605,76 @@ export function TryFlowInner({
 
       {/* ============ STAGE 3: EDITOR ============ */}
       <div className={`stage${stage === 3 ? ' active' : ''}`} id="stage-3">
+
+        {/* Auth gate — shown when quiz is built but user is not signed in */}
+        {pendingQuizAuth && (
+          <div className="s2-split-wrap">
+            {/* LEFT: teal panel with quiz summary */}
+            <div className="s2-left-panel">
+              <div className="s2-left-logo">
+                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
+                </div>
+                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
+              </div>
+              <div className="s2-left-body">
+                <div className="s2-left-analyzing">Quiz ready</div>
+                <div className="s2-left-site-name">{quiz?.title || 'Your quiz'}</div>
+                {quiz && (
+                  <div className="s2-left-type-chip">{quiz.questions.length} questions · {quiz.outcomes?.length || 0} outcomes</div>
+                )}
+              </div>
+              <div className="s2-left-footer">
+                <div className="s2-left-step-dots">
+                  <span className="s2-left-dot done" />
+                  <span className="s2-left-dot done" />
+                  <span className="s2-left-dot active" />
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: sign-up prompt */}
+            <div className="s2-right-panel">
+              <div className="s2-right-inner" style={{ textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: '#f0faf7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0f3d38" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: 10, lineHeight: 1.2 }}>Your quiz is ready!</h1>
+                <p style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 32, lineHeight: 1.5, maxWidth: 380, margin: '0 auto 32px' }}>
+                  Create a free account to open it in the full editor — add images, set outcomes, customize design, and publish.
+                </p>
+                <button
+                  type="button"
+                  className="s2-continue-btn"
+                  style={{ maxWidth: 300, animation: 'none' }}
+                  onClick={goSignUp}
+                >
+                  Create free account
+                  <SvgArrowRight size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ marginTop: 14, width: '100%', maxWidth: 300 }}
+                  onClick={function() { const params = new URLSearchParams({ from: 'try', url }); if (claimToken) params.set('claim', claimToken); if (typeof window !== 'undefined') { window.location.href = `${APP_URL}/sign-in?${params.toString()}`; } }}
+                >
+                  Already have an account? Sign in
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ marginTop: 8, width: '100%', maxWidth: 300, fontSize: 13, color: 'var(--text-muted)' }}
+                  onClick={function() { setPendingQuizAuth(false); }}
+                >
+                  Preview quiz first
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Editor — only shown when not in auth gate */}
+        {!pendingQuizAuth && (<>
         <div className="s3-top">
           <div className="s3-top-left">
             <button
@@ -2269,6 +2342,7 @@ export function TryFlowInner({
             <SvgCheck size={14} /> {editorToast}
           </div>
         )}
+        </>)}
       </div>
 
       {/* ============ STAGE 4: VISITOR PREVIEW (REBUILT per prototype-v4) ============
