@@ -32,7 +32,7 @@ export default function QuizFunnelPage(){
             <div style={{width:30,height:30,background:A,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#fff"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#fff"/><circle cx="17" cy="18" r="2" fill="#fff"/></svg>
             </div>
-            <span style={{fontSize:15,fontWeight:800,color:T,letterSpacing:'-.02em'}}>Squarespell <span style={{color:A}}>Quiz</span></span>
+            <span style={{fontSize:18,fontWeight:700,color:T,letterSpacing:'-0.03em'}}>Squarespell<span style={{color:A,marginLeft:4}}>Quiz</span></span>
           </Link>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
             <Link href="/sign-in" style={{fontSize:13,fontWeight:600,color:M,textDecoration:'none',padding:'7px 14px'}}>Sign in</Link>
