@@ -1189,40 +1189,43 @@ export function TryFlowInner({
 
       {/* ============ STAGE 2: ONBOARDING ============ */}
       <div className={`stage${stage === 2 ? ' active' : ''}`} id="stage-2">
-        {/* Topbar only for error state — all other states use split panel with integrated logo */}
+        {/* Error state — split panel (no topbar, logo integrated in left panel) */}
         {!loading && !sessionToken && errorMsg && (
-        <div className="topbar">
-          <div className="brand">
-            <div className="brand-mark">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-            </div>
-            SQUARESPELL<span className="brand-acc" style={{ marginLeft: 6 }}>QUIZ</span>
-          </div>
-          <div className="s2-step-dots">
-            <span className={`s2-step-dot${s2SubStep === 'brand' ? ' active' : (s2SubStep === 'choose' || s2SubStep === 'building') ? ' done' : ''}`} />
-            <span className={`s2-step-dot${s2SubStep === 'choose' ? ' active' : s2SubStep === 'building' ? ' done' : ''}`} />
-            <span className={`s2-step-dot${s2SubStep === 'building' ? ' active' : ''}`} />
-          </div>
-          <div className="top-right">
-            <button className="btn btn-ghost" onClick={function() { if (s2SubStep === 'choose') { setS2SubStep('brand'); } else { setStage(1); } }}>
-              {s2SubStep === 'choose' ? 'Back' : 'Start over'}
-            </button>
-          </div>
-        </div>
-        )}
-
-        {/* Error state - single white card, centered */}
-        {!loading && !sessionToken && errorMsg && (
-          <div className="s2-card-wrap">
-            <div className="s2-card s2-error-card">
-              <div className="s2-error-icon" style={{ marginBottom: 20 }}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+          <div className="s2-split-wrap">
+            <div className="s2-left-panel">
+              <div className="s2-left-logo">
+                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
+                </div>
+                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
               </div>
-              <div className="s2-error-title" style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Something went wrong</div>
-              <div className="s2-error-msg" style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 28, maxWidth: 400, lineHeight: 1.5 }}>{errorMsg}</div>
-              <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); goAnalyze(url); }}>
-                <SvgRefresh /> Try again
-              </button>
+              <div className="s2-left-body">
+                <div className="s2-left-analyzing">Error</div>
+                <div className="s2-left-site-name">{domain || 'Your site'}</div>
+                <div className="s2-left-type-chip">Could not analyze</div>
+              </div>
+              <div className="s2-left-footer">
+                <div className="s2-left-step-dots">
+                  <span className="s2-left-dot active" />
+                  <span className="s2-left-dot" />
+                  <span className="s2-left-dot" />
+                </div>
+              </div>
+            </div>
+            <div className="s2-right-panel">
+              <div className="s2-right-inner">
+                <div className="s2-error-icon" style={{ marginBottom: 20 }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>Something went wrong</div>
+                <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 28, maxWidth: 400, lineHeight: 1.5 }}>{errorMsg}</div>
+                <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); goAnalyze(url); }}>
+                  <SvgRefresh /> Try again
+                </button>
+                <button type="button" className="btn btn-ghost" style={{ marginTop: 14, width: '100%', maxWidth: 280 }} onClick={function() { setErrorMsg(''); setStage(1); }}>
+                  ← Try a different URL
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1236,7 +1239,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
+                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-dark-skel s2-dark-skel-label shimmer"></div>
@@ -1286,7 +1289,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
+                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Analyzed</div>
@@ -1423,7 +1426,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
+                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Your brand</div>
@@ -1530,7 +1533,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>QUIZ</span>
+                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2447,7 +2450,7 @@ export function TryFlowInner({
               <div className="brand-mark">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
               </div>
-              SQUARESPELL<span className="brand-acc" style={{ marginLeft: 6 }}>QUIZ</span>
+              <span>SQUARESPELL<span className="brand-acc" style={{ marginLeft: 4 }}>QUIZ</span></span>
             </div>
 
             <div className="s5-banner">
@@ -2504,7 +2507,7 @@ export function TryFlowInner({
             <div className="brand-mark">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
             </div>
-            SQUARESPELL<span className="brand-acc" style={{ marginLeft: 6 }}>QUIZ</span>
+            <span>SQUARESPELL<span className="brand-acc" style={{ marginLeft: 4 }}>QUIZ</span></span>
           </div>
           <div className="top-right">
             <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>founder@{domain}</span>
