@@ -1384,6 +1384,42 @@ export const FLOW_CSS = `
     border-radius: 3px;
     background: rgba(255,255,255,0.85);
   }
+  .s2-left-dot.done {
+    background: rgba(255,255,255,0.55);
+  }
+  /* Pulsing dot for building state */
+  .s2-left-build-pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.7);
+    animation: s2BuildPulse 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes s2BuildPulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  /* Dark shimmer skeletons for left panel (on dark teal bg) */
+  .s2-dark-skel {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .s2-dark-skel::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; bottom: 0;
+    width: 60%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+  .s2-dark-skel-label { width: 70px; height: 10px; border-radius: 4px; }
+  .s2-dark-skel-title { width: 75%; height: 28px; border-radius: 8px; }
+  .s2-dark-skel-chip { width: 110px; height: 26px; border-radius: 100px; }
+  .s2-dark-skel-dot { width: 32px; height: 32px; border-radius: 50%; margin-bottom: 0; }
 
   /* RIGHT: white confirmation panel */
   .s2-right-panel {

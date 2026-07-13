@@ -1145,14 +1145,14 @@ export function TryFlowInner({
 
       {/* ============ STAGE 2: ONBOARDING ============ */}
       <div className={`stage${stage === 2 ? ' active' : ''}`} id="stage-2">
-        {/* Topbar hidden for brand substep — logo lives in left panel */}
-        {(s2SubStep !== 'brand' || loading || !sessionToken) && (
+        {/* Topbar only for error state — all other states use split panel with integrated logo */}
+        {!loading && !sessionToken && errorMsg && (
         <div className="topbar">
           <div className="brand">
             <div className="brand-mark">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
             </div>
-            Squarespell <span className="brand-acc">Quiz</span>
+            SQUARESPELL <span className="brand-acc">QUIZ</span>
           </div>
           <div className="s2-step-dots">
             <span className={`s2-step-dot${s2SubStep === 'brand' ? ' active' : (s2SubStep === 'choose' || s2SubStep === 'building') ? ' done' : ''}`} />
@@ -1183,23 +1183,52 @@ export function TryFlowInner({
           </div>
         )}
 
-        {/* Loading skeleton - single white card */}
+        {/* Loading skeleton — split panel (mirrors the brand substep layout) */}
         {loading && (
-          <div className="s2-card-wrap">
-            <div className="s2-card s2-skel-card">
-              <div className="analysis-status" style={{ textAlign: 'left', marginBottom: 24 }}>
-                <div className="analysis-spinner" style={{ margin: '0 0 14px' }}></div>
-                <div className="analysis-text">Reading your website...</div>
-                <div className="analysis-detail">Extracting brand, copy, and offers</div>
+          <div className="s2-split-wrap">
+            {/* LEFT: dark teal panel with logo + shimmer placeholders */}
+            <div className="s2-left-panel">
+              <div className="s2-left-logo">
+                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
+                </div>
+                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
               </div>
-              <div className="s2-skel-badge shimmer"></div>
-              <div className="s2-skel-h1 shimmer"></div>
-              <div className="s2-skel-h2 shimmer"></div>
-              <div className="s2-skel-p shimmer"></div>
-              <div className="s2-skel-row shimmer"></div>
-              <div className="s2-skel-row shimmer"></div>
-              <div className="s2-skel-row shimmer"></div>
-              <div className="s2-skel-btn shimmer"></div>
+              <div className="s2-left-body">
+                <div className="s2-dark-skel s2-dark-skel-label shimmer"></div>
+                <div className="s2-dark-skel s2-dark-skel-title shimmer"></div>
+                <div className="s2-dark-skel s2-dark-skel-chip shimmer"></div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                  <div className="s2-dark-skel s2-dark-skel-dot shimmer"></div>
+                  <div className="s2-dark-skel s2-dark-skel-dot shimmer"></div>
+                  <div className="s2-dark-skel s2-dark-skel-dot shimmer"></div>
+                </div>
+              </div>
+              <div className="s2-left-footer">
+                <div className="s2-left-step-dots">
+                  <span className="s2-left-dot active" />
+                  <span className="s2-left-dot" />
+                  <span className="s2-left-dot" />
+                </div>
+              </div>
+            </div>
+            {/* RIGHT: white panel with spinner + skeleton cards */}
+            <div className="s2-right-panel">
+              <div className="s2-right-inner">
+                <div className="analysis-status" style={{ marginBottom: 28 }}>
+                  <div className="analysis-spinner" style={{ margin: '0 0 14px' }}></div>
+                  <div className="analysis-text">Reading your website...</div>
+                  <div className="analysis-detail">Extracting brand, copy, and offers</div>
+                </div>
+                <div className="s2-skel-badge shimmer"></div>
+                <div className="s2-skel-h1 shimmer"></div>
+                <div className="s2-skel-h2 shimmer"></div>
+                <div className="s2-skel-p shimmer"></div>
+                <div className="s2-skel-row shimmer"></div>
+                <div className="s2-skel-row shimmer"></div>
+                <div className="s2-skel-row shimmer"></div>
+                <div className="s2-skel-btn shimmer"></div>
+              </div>
             </div>
           </div>
         )}
@@ -1210,10 +1239,10 @@ export function TryFlowInner({
             {/* LEFT: dark teal brand showcase */}
             <div className="s2-left-panel">
               <div className="s2-left-logo">
-                <div className="brand-mark">
+                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                Squarespell
+                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Analyzed</div>
@@ -1341,122 +1370,184 @@ export function TryFlowInner({
           </div>
         )}
 
-        {/* Choose/Building substeps — white card layout */}
-        {!loading && sessionToken && s2SubStep !== 'brand' && (
-          <div className="s2-card-wrap">
-            <div className="s2-card">
+        {/* Choose substep — split panel */}
+        {!loading && sessionToken && s2SubStep === 'choose' && (
+          <div className="s2-split-wrap">
+            {/* LEFT: brand summary + step 2 active */}
+            <div className="s2-left-panel">
+              <div className="s2-left-logo">
+                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
+                </div>
+                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
+              </div>
+              <div className="s2-left-body">
+                <div className="s2-left-analyzing">Your brand</div>
+                <div className="s2-left-site-name">{brand?.site_name || domain}</div>
+                {brand?.business?.type && (
+                  <div className="s2-left-type-chip">{brand.business.type}</div>
+                )}
+                {(brand?.colors?.primary || brand?.colors?.background || brand?.colors?.text || brand?.colors?.accent) && (
+                  <div className="s2-left-colors">
+                    {brand?.colors?.primary && <div className="s2-left-swatch" style={{ background: brand.colors.primary }} />}
+                    {brand?.colors?.background && <div className="s2-left-swatch" style={{ background: brand.colors.background }} />}
+                    {brand?.colors?.text && <div className="s2-left-swatch" style={{ background: brand.colors.text }} />}
+                    {brand?.colors?.accent && <div className="s2-left-swatch" style={{ background: brand.colors.accent }} />}
+                  </div>
+                )}
+              </div>
+              <div className="s2-left-footer">
+                <div className="s2-left-step-dots">
+                  <span className="s2-left-dot done" />
+                  <span className="s2-left-dot active" />
+                  <span className="s2-left-dot" />
+                </div>
+              </div>
+            </div>
 
-                {/* 2b: Quiz style selector */}
-                {s2SubStep === 'choose' && (
-                  <div className="s2-substep" key="choose">
-                    <div className="s2-choose-label">Step 2 of 2</div>
-                    <h1 className="s2-choose-title">Choose your quiz style</h1>
-                    <p className="s2-choose-sub">We will build it using your brand and content. You can edit everything after.</p>
+            {/* RIGHT: quiz style selector */}
+            <div className="s2-right-panel">
+              <div className="s2-right-inner s2-substep">
+                <div className="s2-choose-label">Step 2 of 2</div>
+                <h1 className="s2-choose-title">Choose your quiz style</h1>
+                <p className="s2-choose-sub">We will build it using your brand and content. You can edit everything after.</p>
 
-                    <div className="s2-path-options">
-                      {/* AI Custom path */}
-                      <div
-                        className={'s2-path-card' + (pickChoice === 'ai' ? ' selected' : '')}
-                        onClick={function() { setPickChoice('ai'); }}
-                      >
-                        <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
-                        <div className="s2-path-icon s2-path-icon-ai"><SvgBolt size={18} /></div>
-                        <div className="s2-path-content">
-                          <div className="s2-path-name">AI-generated quiz</div>
-                          <div className="s2-path-desc">Custom quiz built from your website content, audience, and offers</div>
-                        </div>
-                        <div className="s2-path-badge s2-path-badge-rec">Recommended</div>
-                      </div>
-
-                      {/* Template path */}
-                      <div
-                        className={'s2-path-card' + (pickChoice !== 'ai' ? ' selected' : '')}
-                        onClick={function() {
-                          if (pickChoice === 'ai') {
-                            var firstMatch = matchedTemplates[0];
-                            setPickChoice(firstMatch ? firstMatch.id : 'tpl');
-                          }
-                        }}
-                      >
-                        <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
-                        <div className="s2-path-icon s2-path-icon-tpl">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                        </div>
-                        <div className="s2-path-content">
-                          <div className="s2-path-name">Start from a template</div>
-                          <div className="s2-path-desc">Pick a proven quiz structure and customize it</div>
-                        </div>
-                      </div>
+                <div className="s2-path-options">
+                  <div
+                    className={'s2-path-card' + (pickChoice === 'ai' ? ' selected' : '')}
+                    onClick={function() { setPickChoice('ai'); }}
+                  >
+                    <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
+                    <div className="s2-path-icon s2-path-icon-ai"><SvgBolt size={18} /></div>
+                    <div className="s2-path-content">
+                      <div className="s2-path-name">AI-generated quiz</div>
+                      <div className="s2-path-desc">Custom quiz built from your website content, audience, and offers</div>
                     </div>
+                    <div className="s2-path-badge s2-path-badge-rec">Recommended</div>
+                  </div>
 
-                    {/* Selected template name shown inline when in template mode */}
-                    {pickChoice !== 'ai' && pickChoice !== 'tpl' && (
-                      <div className="s2-tpl-selected-info">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                        <span>{QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === pickChoice; })?.name || 'Template'}</span>
-                      </div>
-                    )}
-
-                    {errorMsg && (
-                      <div className="s2-analyze-err" style={{ marginBottom: 16 }}>
-                        <div>{errorMsg}</div>
-                        <button type="button" className="hook-err-retry" onClick={function() { setErrorMsg(''); handlePickGenerate(); }}>
-                          Try again
-                        </button>
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      className="s2-generate-btn"
-                      onClick={handlePickGenerate}
-                      disabled={buildingQuiz || (pickChoice !== 'ai' && pickChoice === 'tpl')}
-                    >
-                      <SvgBolt size={18} />
-                      {pickChoice === 'ai' ? 'Generate my quiz' : 'Use this template'}
-                    </button>
-                    <div className="s2-generate-hint">
-                      {pickChoice === 'ai' ? 'Takes about 30 seconds. You can edit everything after.' : 'Instant setup. You can edit everything after.'}
+                  <div
+                    className={'s2-path-card' + (pickChoice !== 'ai' ? ' selected' : '')}
+                    onClick={function() {
+                      if (pickChoice === 'ai') {
+                        var firstMatch = matchedTemplates[0];
+                        setPickChoice(firstMatch ? firstMatch.id : 'tpl');
+                      }
+                    }}
+                  >
+                    <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
+                    <div className="s2-path-icon s2-path-icon-tpl">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                     </div>
+                    <div className="s2-path-content">
+                      <div className="s2-path-name">Start from a template</div>
+                      <div className="s2-path-desc">Pick a proven quiz structure and customize it</div>
+                    </div>
+                  </div>
+                </div>
+
+                {pickChoice !== 'ai' && pickChoice !== 'tpl' && (
+                  <div className="s2-tpl-selected-info">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span>{QUIZ_TEMPLATE_CATALOG.find(function(t) { return t.id === pickChoice; })?.name || 'Template'}</span>
                   </div>
                 )}
 
-                {/* 2c: Building progress steps */}
-                {s2SubStep === 'building' && (
-                  <div className="s2-substep" key="building">
-                    <h1 className="s2-build-title">Building your quiz</h1>
-                    <p className="s2-build-sub">
-                      {pickChoice === 'ai'
-                        ? 'AI is crafting a custom quiz from your website content...'
-                        : 'Setting up your template with your brand...'}
-                    </p>
-
-                    <div className="s2-progress-steps">
-                      {[
-                        { label: 'Analyzing your content', detail: 'Reading pages, copy, and offers' },
-                        { label: 'Crafting questions', detail: 'Building engaging quiz questions' },
-                        { label: 'Designing outcomes', detail: 'Creating personalized result paths' },
-                        { label: 'Applying your brand', detail: 'Styling with your colors and fonts' },
-                      ].map(function(step, i) {
-                        var isDone = buildStep > i;
-                        var isActive = buildStep === i;
-                        return (
-                          <div key={i} className={'s2-progress-step' + (isDone ? ' done' : '') + (isActive ? ' active' : '')}>
-                            <div className="s2-progress-check">
-                              {isDone && <SvgCheck size={14} />}
-                              {isActive && <div className="s2-progress-spinner"></div>}
-                            </div>
-                            <div className="s2-progress-text">
-                              <div className="s2-progress-label">{step.label}</div>
-                              <div className="s2-progress-detail">{step.detail}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                {errorMsg && (
+                  <div className="s2-analyze-err" style={{ marginBottom: 16 }}>
+                    <div>{errorMsg}</div>
+                    <button type="button" className="hook-err-retry" onClick={function() { setErrorMsg(''); handlePickGenerate(); }}>Try again</button>
                   </div>
                 )}
 
+                <button
+                  type="button"
+                  className="s2-generate-btn"
+                  onClick={handlePickGenerate}
+                  disabled={buildingQuiz || (pickChoice !== 'ai' && pickChoice === 'tpl')}
+                >
+                  <SvgBolt size={18} />
+                  {pickChoice === 'ai' ? 'Generate my quiz' : 'Use this template'}
+                </button>
+                <div className="s2-generate-hint">
+                  {pickChoice === 'ai' ? 'Takes about 30 seconds. You can edit everything after.' : 'Instant setup. You can edit everything after.'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Building substep — split panel */}
+        {!loading && sessionToken && s2SubStep === 'building' && (
+          <div className="s2-split-wrap">
+            {/* LEFT: brand summary + all dots active */}
+            <div className="s2-left-panel">
+              <div className="s2-left-logo">
+                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
+                </div>
+                SQUARESPELL <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span>
+              </div>
+              <div className="s2-left-body">
+                <div className="s2-left-analyzing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div className="s2-left-build-pulse" />
+                  Building
+                </div>
+                <div className="s2-left-site-name">{brand?.site_name || domain}</div>
+                {brand?.business?.type && (
+                  <div className="s2-left-type-chip">{brand.business.type}</div>
+                )}
+                {(brand?.colors?.primary || brand?.colors?.background || brand?.colors?.text || brand?.colors?.accent) && (
+                  <div className="s2-left-colors">
+                    {brand?.colors?.primary && <div className="s2-left-swatch" style={{ background: brand.colors.primary }} />}
+                    {brand?.colors?.background && <div className="s2-left-swatch" style={{ background: brand.colors.background }} />}
+                    {brand?.colors?.text && <div className="s2-left-swatch" style={{ background: brand.colors.text }} />}
+                    {brand?.colors?.accent && <div className="s2-left-swatch" style={{ background: brand.colors.accent }} />}
+                  </div>
+                )}
+              </div>
+              <div className="s2-left-footer">
+                <div className="s2-left-step-dots">
+                  <span className="s2-left-dot done" />
+                  <span className="s2-left-dot done" />
+                  <span className="s2-left-dot active" />
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: progress steps */}
+            <div className="s2-right-panel">
+              <div className="s2-right-inner s2-substep">
+                <h1 className="s2-build-title">Building your quiz</h1>
+                <p className="s2-build-sub">
+                  {pickChoice === 'ai'
+                    ? 'AI is crafting a custom quiz from your website content...'
+                    : 'Setting up your template with your brand...'}
+                </p>
+                <div className="s2-progress-steps">
+                  {[
+                    { label: 'Analyzing your content', detail: 'Reading pages, copy, and offers' },
+                    { label: 'Crafting questions', detail: 'Building engaging quiz questions' },
+                    { label: 'Designing outcomes', detail: 'Creating personalized result paths' },
+                    { label: 'Applying your brand', detail: 'Styling with your colors and fonts' },
+                  ].map(function(step, i) {
+                    var isDone = buildStep > i;
+                    var isActive = buildStep === i;
+                    return (
+                      <div key={i} className={'s2-progress-step' + (isDone ? ' done' : '') + (isActive ? ' active' : '')}>
+                        <div className="s2-progress-check">
+                          {isDone && <SvgCheck size={14} />}
+                          {isActive && <div className="s2-progress-spinner"></div>}
+                        </div>
+                        <div className="s2-progress-text">
+                          <div className="s2-progress-label">{step.label}</div>
+                          <div className="s2-progress-detail">{step.detail}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -2312,7 +2403,7 @@ export function TryFlowInner({
               <div className="brand-mark">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
               </div>
-              Squarespell <span className="brand-acc">Quiz</span>
+              SQUARESPELL <span className="brand-acc">QUIZ</span>
             </div>
 
             <div className="s5-banner">
@@ -2369,7 +2460,7 @@ export function TryFlowInner({
             <div className="brand-mark">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
             </div>
-            Squarespell <span className="brand-acc">Quiz</span>
+            SQUARESPELL <span className="brand-acc">QUIZ</span>
           </div>
           <div className="top-right">
             <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>founder@{domain}</span>
