@@ -441,7 +441,7 @@ export default function EmbedQuizClient({
           container-type: inline-size;
           background: ${brandBg};
           color: ${brandText};
-          padding: 20px 16px 28px;
+          padding: 28px 20px 40px;
           font-family: ${brandFont};
         }
         .sq-inner {
@@ -449,7 +449,7 @@ export default function EmbedQuizClient({
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 22px;
         }
         .sq-head {
           text-align: center;
@@ -481,7 +481,7 @@ export default function EmbedQuizClient({
           background: ${brandSurface};
           border: 1px solid ${brandBorder};
           border-radius: 18px;
-          padding: 20px 18px;
+          padding: 26px 22px;
           box-shadow: 0 8px 30px rgba(0,0,0,0.04);
         }
         .sq-timer {
@@ -596,7 +596,7 @@ export default function EmbedQuizClient({
         .sq-q-video-wrap {
           position: relative;
           width: 100%;
-          height: 200px;
+          aspect-ratio: 16 / 9;
           border-radius: 12px;
           overflow: hidden;
           margin-bottom: 18px;
@@ -647,7 +647,7 @@ export default function EmbedQuizClient({
         }
         .sq-opt-grid-img-area {
           width: 100%;
-          height: 90px;
+          height: 150px;
           position: relative;
           overflow: hidden;
         }
