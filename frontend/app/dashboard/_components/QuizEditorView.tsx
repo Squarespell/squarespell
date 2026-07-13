@@ -43,11 +43,114 @@ interface DbQuiz {
 }
 
 
-function EditorLoading({ label }: { label: string }) {
+function EditorLoading({ label: _label }: { label: string }) {
+  // Full-viewport skeleton matching the QuizBlockEditor layout:
+  // [Left 280px flow panel] [Main: topbar 56px + canvas] [Right 380px settings panel]
   return (
-    <DashboardShell title="Quiz editor">
-      <div style={{ color: C.TEXT_MUTED, fontSize: 14, padding: '48px 0' }}>{label}</div>
-    </DashboardShell>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: C.FONT }}>
+      <style>{`
+        @keyframes qe-shimmer {
+          0%   { background-position: -600px 0; }
+          100% { background-position:  600px 0; }
+        }
+        .qe-sk {
+          background: linear-gradient(90deg, ${C.GRAY_200} 25%, ${C.GRAY_100} 50%, ${C.GRAY_200} 75%);
+          background-size: 600px 100%;
+          animation: qe-shimmer 1.4s ease-in-out infinite;
+          border-radius: 6px;
+        }
+      `}</style>
+
+      {/* Left: Question Flow Panel — 280px */}
+      <div style={{ width: 280, minWidth: 280, background: C.SURFACE, borderRight: '1px solid ' + C.BORDER, display: 'flex', flexDirection: 'column', padding: '16px 12px', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
+          <div className="qe-sk" style={{ height: 14, width: 110 }} />
+          <div className="qe-sk" style={{ height: 28, width: 28, borderRadius: 7 }} />
+        </div>
+        {[88, 72, 95, 80, 65].map(function(w, i) {
+          return (
+            <div key={i} style={{ background: C.GRAY_50, border: '1px solid ' + C.BORDER, borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="qe-sk" style={{ width: 22, height: 22, borderRadius: 6, flexShrink: 0 }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <div className="qe-sk" style={{ height: 11, width: w + '%' }} />
+                <div className="qe-sk" style={{ height: 9, width: Math.round(w * 0.6) + '%' }} />
+              </div>
+            </div>
+          );
+        })}
+        <div className="qe-sk" style={{ height: 36, borderRadius: 8, marginTop: 4 }} />
+      </div>
+
+      {/* Main area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Topbar — 56px */}
+        <div style={{ height: 56, minHeight: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', borderBottom: '1px solid ' + C.BORDER, background: C.SURFACE }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="qe-sk" style={{ height: 18, width: 18, borderRadius: 4 }} />
+            <div className="qe-sk" style={{ height: 14, width: 80 }} />
+            <div className="qe-sk" style={{ height: 10, width: 55 }} />
+          </div>
+          <div className="qe-sk" style={{ height: 10, width: 45 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="qe-sk" style={{ height: 30, width: 30, borderRadius: 6 }} />
+            <div className="qe-sk" style={{ height: 30, width: 30, borderRadius: 6 }} />
+            <div style={{ width: 1, height: 20, background: C.BORDER, margin: '0 2px' }} />
+            <div className="qe-sk" style={{ height: 34, width: 75, borderRadius: 8 }} />
+            <div className="qe-sk" style={{ height: 34, width: 90, borderRadius: 8 }} />
+          </div>
+        </div>
+
+        {/* Canvas */}
+        <div style={{ flex: 1, background: C.GRAY_50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
+          <div style={{ background: C.SURFACE, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', width: '100%', maxWidth: 560, padding: '40px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="qe-sk" style={{ height: 10, width: 65 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="qe-sk" style={{ height: 22, width: '90%' }} />
+              <div className="qe-sk" style={{ height: 22, width: '65%' }} />
+            </div>
+            {[75, 60, 80, 50].map(function(w, i) {
+              return (
+                <div key={i} style={{ border: '1.5px solid ' + C.BORDER, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="qe-sk" style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0 }} />
+                  <div className="qe-sk" style={{ height: 12, width: w + '%' }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Settings Panel — 380px */}
+      <div style={{ width: 380, background: C.SURFACE, borderLeft: '1px solid ' + C.BORDER, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: 48, display: 'flex', alignItems: 'center', borderBottom: '1px solid ' + C.BORDER, padding: '0 20px', gap: 20 }}>
+          {[70, 55, 70].map(function(w, i) {
+            return <div key={i} className="qe-sk" style={{ height: 12, width: w, borderRadius: 4 }} />;
+          })}
+        </div>
+        <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {[70, 85, 60, 78, 65, 72].map(function(w, i) {
+            var sub = [50, 60, 45, 55, 40, 48][i];
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div className="qe-sk" style={{ height: 12, width: w + '%' }} />
+                  <div className="qe-sk" style={{ height: 9, width: sub + '%' }} />
+                </div>
+                <div className="qe-sk" style={{ width: 40, height: 22, borderRadius: 11, flexShrink: 0 }} />
+              </div>
+            );
+          })}
+          <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="qe-sk" style={{ height: 12, width: '55%' }} />
+            <div className="qe-sk" style={{ height: 40, borderRadius: 8 }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="qe-sk" style={{ height: 12, width: '45%' }} />
+            <div className="qe-sk" style={{ height: 40, borderRadius: 8 }} />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
