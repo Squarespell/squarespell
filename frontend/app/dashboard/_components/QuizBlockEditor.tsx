@@ -532,6 +532,69 @@ function ScoreBadge({ score, onChange }: { score: number; onChange: (s: number) 
 /*  Answer Option Row — hover controls                                 */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  QuestionTextEditor — contentEditable div replacing <textarea>       */
+/*  No height jump. Hover = faint teal border. Focus = solid ring.     */
+/* ------------------------------------------------------------------ */
+function QuestionTextEditor({
+  value,
+  onChange,
+  placeholder,
+  style,
+}: {
+  value: string;
+  onChange: (text: string) => void;
+  placeholder?: string;
+  style?: React.CSSProperties;
+}) {
+  var ref = useRef<HTMLDivElement>(null);
+  var isFocused = useRef(false);
+  var [hovering, setHovering] = useState(false);
+  var [focused, setFocused] = useState(false);
+
+  // Sync props → DOM only when not actively editing (preserves cursor).
+  useEffect(function() {
+    if (ref.current && !isFocused.current) {
+      var cur = ref.current.innerText;
+      if (cur !== (value || '')) {
+        ref.current.innerText = value || '';
+      }
+    }
+  });
+
+  return (
+    <div
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      data-qte-placeholder={placeholder || 'Enter your question here...'}
+      onMouseEnter={function() { setHovering(true); }}
+      onMouseLeave={function() { setHovering(false); }}
+      onFocus={function() { isFocused.current = true; setFocused(true); }}
+      onBlur={function(e) {
+        isFocused.current = false;
+        setFocused(false);
+        onChange((e.currentTarget as HTMLDivElement).innerText || '');
+      }}
+      onInput={function(e) { onChange((e.currentTarget as HTMLDivElement).innerText || ''); }}
+      onClick={function(e) { e.stopPropagation(); }}
+      style={Object.assign({}, style, {
+        outline: 'none',
+        cursor: 'text',
+        whiteSpace: 'pre-wrap' as const,
+        wordBreak: 'break-word' as const,
+        border: '1.5px solid ' + (focused ? C.ACCENT : hovering ? 'rgba(15,115,119,0.25)' : 'transparent'),
+        borderRadius: 8,
+        padding: '6px 10px',
+        margin: '-6px -10px',
+        background: focused ? '#fff' : hovering ? 'rgba(15,115,119,0.03)' : 'transparent',
+        boxShadow: focused ? '0 0 0 3px rgba(15,115,119,0.08)' : 'none',
+        transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
+      })}
+    />
+  );
+}
+
 function AnswerRow({
   opt,
   index,
@@ -556,6 +619,7 @@ function AnswerRow({
   onMoveDown: () => void;
 }) {
   var [hover, setHover] = useState(false);
+  var [inputFocused, setInputFocused] = useState(false);
   var [showPicker, setShowPicker] = useState(false);
   var [thumbHover, setThumbHover] = useState(false);
   var thumbRef = useRef<HTMLDivElement>(null);
@@ -568,8 +632,9 @@ function AnswerRow({
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '12px 16px', borderRadius: 10,
-        background: hover ? '#F9FAFB' : '#fff',
-        border: '1px solid ' + C.BORDER,
+        background: '#fff',
+        border: inputFocused ? '1.5px solid ' + C.ACCENT : '1px solid ' + C.BORDER,
+        boxShadow: inputFocused ? '0 0 0 3px rgba(15,115,119,0.08)' : 'none',
         transition: 'all 0.12s',
         position: 'relative',
       }}
@@ -642,36 +707,42 @@ function AnswerRow({
         value={opt.text || ''}
         onChange={function(e) { onChangeText(e.target.value); }}
         onClick={function(e) { e.stopPropagation(); }}
+        onFocus={function() { setInputFocused(true); }}
+        onBlur={function() { setInputFocused(false); }}
         placeholder="Type answer..."
         style={{
           flex: 1, border: 'none', background: 'transparent',
           fontSize: 15, color: C.TEXT, outline: 'none',
-          fontFamily: C.FONT, padding: '4px 0',
+          fontFamily: C.FONT, padding: '4px 0', cursor: 'text',
         }}
       />
 
       {/* Score badge */}
       <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
 
-      {/* Hover actions */}
-      {hover && (
-        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <button type="button" disabled={index === 0} onClick={function(e) { e.stopPropagation(); onMoveUp(); }}
-            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index === 0 ? 'default' : 'pointer', color: index === 0 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="18 15 12 9 6 15" /></svg>
-          </button>
-          <button type="button" disabled={index >= total - 1} onClick={function(e) { e.stopPropagation(); onMoveDown(); }}
-            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index >= total - 1 ? 'default' : 'pointer', color: index >= total - 1 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </button>
-          <button type="button" disabled={total <= 2} onClick={function(e) { e.stopPropagation(); onDelete(); }}
-            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: total <= 2 ? 'default' : 'pointer', color: total <= 2 ? C.BORDER : '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onMouseEnter={function(e) { if (total > 2) e.currentTarget.style.background = '#FEF2F2'; }}
-            onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
-          </button>
-        </div>
-      )}
+      {/* Actions — always in DOM at fixed size so input width never shifts.
+           Visible on hover, hidden while typing so nothing distracts editing. */}
+      <div style={{
+        display: 'flex', gap: 2, flexShrink: 0,
+        opacity: hover && !inputFocused ? 1 : 0,
+        pointerEvents: hover && !inputFocused ? 'auto' : 'none',
+        transition: 'opacity 0.12s',
+      }}>
+        <button type="button" disabled={index === 0} onClick={function(e) { e.stopPropagation(); onMoveUp(); }}
+          style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index === 0 ? 'default' : 'pointer', color: index === 0 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="18 15 12 9 6 15" /></svg>
+        </button>
+        <button type="button" disabled={index >= total - 1} onClick={function(e) { e.stopPropagation(); onMoveDown(); }}
+          style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index >= total - 1 ? 'default' : 'pointer', color: index >= total - 1 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </button>
+        <button type="button" disabled={total <= 2} onClick={function(e) { e.stopPropagation(); onDelete(); }}
+          style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: total <= 2 ? 'default' : 'pointer', color: total <= 2 ? C.BORDER : '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onMouseEnter={function(e) { if (total > 2) e.currentTarget.style.background = '#FEF2F2'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -1044,6 +1115,7 @@ function ThumbnailAnswerRow({
   onMoveDown: () => void;
 }) {
   var [hover, setHover] = useState(false);
+  var [inputFocused, setInputFocused] = useState(false);
   var [thumbHover, setThumbHover] = useState(false);
   var [showPicker, setShowPicker] = useState(false);
   var thumbRef = useRef<HTMLDivElement>(null);
@@ -1114,32 +1186,38 @@ function ThumbnailAnswerRow({
       <div style={{ flex: 1, minWidth: 0 }}>
         <input type="text" value={opt.text || ''} onChange={function(e) { onChangeText(e.target.value); }}
           onClick={function(e) { e.stopPropagation(); }}
+          onFocus={function() { setInputFocused(true); }}
+          onBlur={function() { setInputFocused(false); }}
           placeholder="Answer..."
-          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT }} />
+          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT, cursor: 'text' }} />
       </div>
 
       {/* Score */}
       <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
 
-      {/* Hover actions */}
-      {hover && (
-        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <button type="button" disabled={index === 0} onClick={function(e) { e.stopPropagation(); onMoveUp(); }}
-            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index === 0 ? 'default' : 'pointer', color: index === 0 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="18 15 12 9 6 15" /></svg>
-          </button>
-          <button type="button" disabled={index >= total - 1} onClick={function(e) { e.stopPropagation(); onMoveDown(); }}
-            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index >= total - 1 ? 'default' : 'pointer', color: index >= total - 1 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </button>
-          <button type="button" disabled={total <= 2} onClick={function(e) { e.stopPropagation(); onDelete(); }}
-            style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: total <= 2 ? 'default' : 'pointer', color: total <= 2 ? C.BORDER : '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onMouseEnter={function(e) { if (total > 2) e.currentTarget.style.background = '#FEF2F2'; }}
-            onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
-          </button>
-        </div>
-      )}
+      {/* Actions — always in DOM at fixed size so input width never shifts.
+           Visible on hover, hidden while typing so nothing distracts editing. */}
+      <div style={{
+        display: 'flex', gap: 2, flexShrink: 0,
+        opacity: hover && !inputFocused ? 1 : 0,
+        pointerEvents: hover && !inputFocused ? 'auto' : 'none',
+        transition: 'opacity 0.12s',
+      }}>
+        <button type="button" disabled={index === 0} onClick={function(e) { e.stopPropagation(); onMoveUp(); }}
+          style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index === 0 ? 'default' : 'pointer', color: index === 0 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="18 15 12 9 6 15" /></svg>
+        </button>
+        <button type="button" disabled={index >= total - 1} onClick={function(e) { e.stopPropagation(); onMoveDown(); }}
+          style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index >= total - 1 ? 'default' : 'pointer', color: index >= total - 1 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </button>
+        <button type="button" disabled={total <= 2} onClick={function(e) { e.stopPropagation(); onDelete(); }}
+          style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: total <= 2 ? 'default' : 'pointer', color: total <= 2 ? C.BORDER : '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onMouseEnter={function(e) { if (total > 2) e.currentTarget.style.background = '#FEF2F2'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; }}>
+          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -2094,21 +2172,14 @@ function QuestionCanvas({
           <div style={{ fontSize: 11, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
             Question {String(questionNum).padStart(2, '0')}
           </div>
-          <textarea value={block.text || ''} onChange={function(e) {
-              onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
-              e.target.style.height = 'auto';
-              e.target.style.height = e.target.scrollHeight + 'px';
-            }}
+          <QuestionTextEditor
+            value={block.text || ''}
+            onChange={function(t) { onChange(Object.assign({}, block, { text: t }) as QuestionBlock); }}
             placeholder="Your question..."
-            onClick={function(e) { e.stopPropagation(); }}
-            ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
             style={{
-              fontSize: 22, fontWeight: 700, color: C.TEXT, border: 'none', outline: 'none',
-              background: 'transparent', resize: 'none', fontFamily: C.FONT,
-              lineHeight: 1.3, marginBottom: 20, width: '100%',
-              overflow: 'hidden', minHeight: 36,
+              fontSize: 22, fontWeight: 700, color: C.TEXT, fontFamily: C.FONT,
+              lineHeight: 1.3, marginBottom: 20, width: '100%', minHeight: 36,
             }}
-            rows={1}
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
             {block.options.map(function(opt, oi) {
@@ -2151,24 +2222,14 @@ function QuestionCanvas({
         <div style={{ fontSize: 11, fontWeight: 700, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
           Question {String(questionNum).padStart(2, '0')} of {totalQuestions}
         </div>
-        <textarea
+        <QuestionTextEditor
           value={block.text || ''}
-          onChange={function(e) {
-            onChange(Object.assign({}, block, { text: e.target.value }) as QuestionBlock);
-            e.target.style.height = 'auto';
-            e.target.style.height = e.target.scrollHeight + 'px';
-          }}
-          onClick={function(e) { e.stopPropagation(); }}
-          onFocus={function(e) { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-          ref={function(el) { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
+          onChange={function(t) { onChange(Object.assign({}, block, { text: t }) as QuestionBlock); }}
           placeholder="Enter your question here..."
           style={{
             width: '100%', fontSize: 26, fontWeight: 700, color: C.TEXT,
-            border: 'none', outline: 'none', background: 'transparent',
-            resize: 'none', fontFamily: C.FONT, lineHeight: 1.3,
-            overflow: 'hidden', minHeight: 40,
+            fontFamily: C.FONT, lineHeight: 1.3, minHeight: 40,
           }}
-          rows={1}
         />
         {block.subtitle && (
           <div style={{ fontSize: 14, color: C.TEXT_MUTED, marginTop: -4, marginBottom: 8 }}>{block.subtitle}</div>
@@ -3237,7 +3298,14 @@ export function QuizBlockEditor({
       )}
 
       {/* Spin animation */}
-      <style dangerouslySetInnerHTML={{ __html: '@keyframes spin { to { transform: rotate(360deg); } }' }} />
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin { to { transform: rotate(360deg); } }
+        [data-qte-placeholder]:empty::before {
+          content: attr(data-qte-placeholder);
+          color: rgba(0,0,0,0.28);
+          pointer-events: none;
+        }
+      ` }} />
     </div>
   );
 }
