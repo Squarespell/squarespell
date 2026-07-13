@@ -533,8 +533,8 @@ function ScoreBadge({ score, onChange }: { score: number; onChange: (s: number) 
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  QuestionTextEditor — auto-resize textarea (replaces contentEditable)*/
-/*  Fixes delete-word bug. Hover = faint teal border. Focus = ring.    */
+/*  QuestionTextEditor — auto-resize textarea, CSS-based hover/focus   */
+/*  Using CSS :hover/:focus-within avoids React state mouse-event bugs  */
 /* ------------------------------------------------------------------ */
 function QuestionTextEditor({
   value,
@@ -548,10 +548,8 @@ function QuestionTextEditor({
   style?: React.CSSProperties;
 }) {
   var ref = useRef<HTMLTextAreaElement>(null);
-  var [hovering, setHovering] = useState(false);
-  var [focused, setFocused] = useState(false);
 
-  // Auto-resize height to content on every render
+  // Auto-resize: CSS handles hover so DOM height changes won't break it
   useEffect(function() {
     if (ref.current) {
       ref.current.style.height = 'auto';
@@ -560,21 +558,19 @@ function QuestionTextEditor({
   });
 
   return (
-    <div
-      style={{ position: 'relative', width: '100%' }}
-      onMouseEnter={function() { setHovering(true); }}
-      onMouseLeave={function() { setHovering(false); }}
-    >
+    <div className="qte-wrap" style={{ position: 'relative', width: '100%' }}>
       <textarea
         ref={ref}
+        className="qte-ta"
         value={value}
         onChange={function(e) { onChange(e.target.value); }}
-        onFocus={function() { setFocused(true); }}
-        onBlur={function() { setFocused(false); }}
         onClick={function(e) { e.stopPropagation(); }}
         placeholder={placeholder || 'Enter your question here...'}
         rows={1}
-        style={Object.assign({}, style, {
+        style={{
+          /* Typography from caller (fontWeight:700, fontSize:26, etc.) spread first */
+          ...style,
+          /* Structural overrides — never touch typography */
           display: 'block',
           width: '100%',
           boxSizing: 'border-box' as const,
@@ -582,31 +578,16 @@ function QuestionTextEditor({
           overflow: 'hidden' as const,
           outline: 'none',
           cursor: 'text',
-          border: '1.5px solid ' + (focused ? C.ACCENT : hovering ? 'rgba(15,115,119,0.25)' : 'transparent'),
           borderRadius: 8,
           padding: '6px 34px 6px 10px',
-          background: focused ? '#fff' : hovering ? 'rgba(15,115,119,0.03)' : 'transparent',
-          boxShadow: focused ? '0 0 0 3px rgba(15,115,119,0.08)' : 'none',
-          transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
-          fontFamily: 'inherit',
-          lineHeight: '1.3',
-          color: 'inherit',
-          fontWeight: 'inherit',
-          fontSize: 'inherit',
-          letterSpacing: 'inherit',
           minHeight: 40,
-        })}
+          transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
+        }}
       />
-      {/* Pencil icon — appears on hover to hint text is editable */}
-      <div style={{
-        position: 'absolute',
-        top: 9,
-        right: 10,
-        opacity: hovering && !focused ? 0.55 : 0,
-        transition: 'opacity 0.15s',
-        color: C.ACCENT,
-        pointerEvents: 'none',
-        lineHeight: 1,
+      {/* Pencil icon — CSS controls visibility via .qte-pencil rules */}
+      <div className="qte-pencil" style={{
+        position: 'absolute', top: 9, right: 10,
+        color: C.ACCENT, pointerEvents: 'none', lineHeight: 1,
       }}>
         <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
@@ -639,8 +620,6 @@ function AnswerRow({
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
-  var [hover, setHover] = useState(false);
-  var [inputFocused, setInputFocused] = useState(false);
   var [showPicker, setShowPicker] = useState(false);
   var [thumbHover, setThumbHover] = useState(false);
   var thumbRef = useRef<HTMLDivElement>(null);
@@ -648,15 +627,12 @@ function AnswerRow({
   return (
     <div
       className="sq-answer-row"
-      onMouseEnter={function() { setHover(true); }}
-      onMouseLeave={function() { setHover(false); }}
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '12px 16px', borderRadius: 10,
         background: '#fff',
-        border: inputFocused ? '1.5px solid ' + C.ACCENT : '1px solid ' + C.BORDER,
-        boxShadow: inputFocused ? '0 0 0 3px rgba(15,115,119,0.08)' : 'none',
-        transition: 'all 0.12s',
+        /* Border/shadow handled by CSS .sq-answer-row rules */
+        transition: 'border-color 0.12s, box-shadow 0.12s',
         position: 'relative',
       }}
     >
@@ -722,15 +698,13 @@ function AnswerRow({
         />
       )}
 
-      {/* Editable text — wrapped for pencil overlay */}
+      {/* Editable text — flex:1 gets full remaining space (actions are absolute) */}
       <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
         <input
           type="text"
           value={opt.text || ''}
           onChange={function(e) { onChangeText(e.target.value); }}
           onClick={function(e) { e.stopPropagation(); }}
-          onFocus={function() { setInputFocused(true); }}
-          onBlur={function() { setInputFocused(false); }}
           placeholder="Type answer..."
           style={{
             width: '100%', border: 'none', background: 'transparent',
@@ -738,12 +712,10 @@ function AnswerRow({
             fontFamily: C.FONT, padding: '4px 0', cursor: 'text',
           }}
         />
-        {/* Pencil hint — visible on row hover, hidden while typing */}
-        <div style={{
+        {/* Pencil hint — CSS .sq-ans-pencil controls visibility */}
+        <div className="sq-ans-pencil" style={{
           position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-          opacity: hover && !inputFocused ? 0.5 : 0,
-          transition: 'opacity 0.12s', color: C.ACCENT,
-          pointerEvents: 'none', lineHeight: 1,
+          color: C.ACCENT, pointerEvents: 'none', lineHeight: 1,
         }}>
           <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
@@ -751,16 +723,15 @@ function AnswerRow({
         </div>
       </div>
 
-      {/* Score badge */}
+      {/* Score badge — always visible, actions overlay it on hover */}
       <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
 
-      {/* Actions — always in DOM at fixed size so input width never shifts.
-           Visible on hover, hidden while typing so nothing distracts editing. */}
-      <div style={{
-        display: 'flex', gap: 2, flexShrink: 0,
-        opacity: hover && !inputFocused ? 1 : 0,
-        pointerEvents: hover && !inputFocused ? 'auto' : 'none',
-        transition: 'opacity 0.12s',
+      {/* Actions — absolutely positioned so they don't compress the input.
+           CSS .sq-ans-actions shows on hover, hides on focus-within. */}
+      <div className="sq-ans-actions" style={{
+        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+        display: 'flex', gap: 2,
+        background: '#fff', padding: '0 2px', borderRadius: 4,
       }}>
         <button type="button" disabled={index === 0} onClick={function(e) { e.stopPropagation(); onMoveUp(); }}
           style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index === 0 ? 'default' : 'pointer', color: index === 0 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1148,22 +1119,19 @@ function ThumbnailAnswerRow({
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
-  var [hover, setHover] = useState(false);
-  var [inputFocused, setInputFocused] = useState(false);
   var [thumbHover, setThumbHover] = useState(false);
   var [showPicker, setShowPicker] = useState(false);
   var thumbRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
-      onMouseEnter={function() { setHover(true); }}
-      onMouseLeave={function() { setHover(false); }}
+      className="sq-answer-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 14,
         padding: '14px 16px', borderRadius: 10,
-        border: '1px solid ' + C.BORDER,
-        background: hover ? '#F9FAFB' : '#fff',
-        transition: 'all 0.12s',
+        background: '#fff',
+        transition: 'border-color 0.12s, box-shadow 0.12s',
+        position: 'relative',
       }}
     >
       {/* Answer image picker */}
@@ -1216,20 +1184,16 @@ function ThumbnailAnswerRow({
         )}
       </div>
 
-      {/* Text — wrapped for pencil overlay */}
+      {/* Text — flex:1, actions are absolute so no layout competition */}
       <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
         <input type="text" value={opt.text || ''} onChange={function(e) { onChangeText(e.target.value); }}
           onClick={function(e) { e.stopPropagation(); }}
-          onFocus={function() { setInputFocused(true); }}
-          onBlur={function() { setInputFocused(false); }}
           placeholder="Answer..."
           style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT, cursor: 'text' }} />
-        {/* Pencil hint */}
-        <div style={{
+        {/* Pencil hint — CSS .sq-ans-pencil controls visibility */}
+        <div className="sq-ans-pencil" style={{
           position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-          opacity: hover && !inputFocused ? 0.5 : 0,
-          transition: 'opacity 0.12s', color: C.ACCENT,
-          pointerEvents: 'none', lineHeight: 1,
+          color: C.ACCENT, pointerEvents: 'none', lineHeight: 1,
         }}>
           <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
@@ -1240,13 +1204,11 @@ function ThumbnailAnswerRow({
       {/* Score */}
       <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
 
-      {/* Actions — always in DOM at fixed size so input width never shifts.
-           Visible on hover, hidden while typing so nothing distracts editing. */}
-      <div style={{
-        display: 'flex', gap: 2, flexShrink: 0,
-        opacity: hover && !inputFocused ? 1 : 0,
-        pointerEvents: hover && !inputFocused ? 'auto' : 'none',
-        transition: 'opacity 0.12s',
+      {/* Actions — absolutely positioned, CSS .sq-ans-actions controls visibility */}
+      <div className="sq-ans-actions" style={{
+        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+        display: 'flex', gap: 2,
+        background: '#fff', padding: '0 2px', borderRadius: 4,
       }}>
         <button type="button" disabled={index === 0} onClick={function(e) { e.stopPropagation(); onMoveUp(); }}
           style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', cursor: index === 0 ? 'default' : 'pointer', color: index === 0 ? C.BORDER : C.TEXT_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3345,8 +3307,48 @@ export function QuizBlockEditor({
       {/* Spin animation */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes spin { to { transform: rotate(360deg); } }
-        textarea::placeholder { color: rgba(0,0,0,0.28); }
+
+        /* ── Question text editor (qte-*) ────────────────────────── */
+        .qte-ta {
+          border: 1.5px solid transparent;
+          background: transparent;
+        }
+        .qte-wrap:hover .qte-ta {
+          border-color: rgba(15,115,119,0.25);
+          background: rgba(15,115,119,0.03);
+        }
+        .qte-wrap:focus-within .qte-ta {
+          border-color: #0f7377 !important;
+          background: #fff !important;
+          box-shadow: 0 0 0 3px rgba(15,115,119,0.08);
+        }
+        .qte-pencil { opacity: 0; transition: opacity 0.15s; }
+        .qte-wrap:hover:not(:focus-within) .qte-pencil { opacity: 0.55; }
+        .qte-ta::placeholder { color: rgba(0,0,0,0.28); }
+
+        /* ── Answer rows (sq-answer-row) ─────────────────────────── */
+        .sq-answer-row {
+          border: 1.5px solid #EAECF0;
+        }
+        .sq-answer-row:hover {
+          border-color: rgba(15,115,119,0.35) !important;
+        }
+        .sq-answer-row:focus-within {
+          border-color: #0f7377 !important;
+          box-shadow: 0 0 0 3px rgba(15,115,119,0.08) !important;
+        }
         .sq-answer-row input::placeholder { color: rgba(0,0,0,0.28); }
+
+        /* Pencil: hidden by default, shows on row-hover (not when typing) */
+        .sq-ans-pencil { opacity: 0; transition: opacity 0.12s; }
+        .sq-answer-row:hover:not(:focus-within) .sq-ans-pencil { opacity: 0.5; }
+
+        /* Actions: hidden by default, overlay score badge on row-hover */
+        .sq-ans-actions { opacity: 0; pointer-events: none; transition: opacity 0.12s; }
+        .sq-answer-row:hover:not(:focus-within) .sq-ans-actions {
+          opacity: 1 !important;
+          pointer-events: auto !important;
+        }
       ` }} />
     </div>
   );
