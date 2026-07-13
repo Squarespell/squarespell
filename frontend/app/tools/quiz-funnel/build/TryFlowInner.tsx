@@ -1201,7 +1201,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
+                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Error</div>
@@ -1243,7 +1243,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
+                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-dark-skel s2-dark-skel-label shimmer"></div>
@@ -1293,7 +1293,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
+                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Analyzed</div>
@@ -1430,7 +1430,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
+                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Your brand</div>
@@ -1537,7 +1537,7 @@ export function TryFlowInner({
                 <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
                 </div>
-                <span>SQUARESPELL<span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>QUIZ</span></span>
+                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1620,6 +1620,21 @@ export function TryFlowInner({
             saveState="idle"
             onPublish={goSignUp}
             publishLabel="Save & Publish"
+            onPreview={function() {
+              // Convert current editorBlocks → legacy quiz format so stage 4
+              // renders the user's edited version, not the original AI output.
+              var legacy = blocksToLegacy(editorBlocks);
+              setQuiz(function(prev) {
+                return Object.assign({}, prev, {
+                  questions: legacy.questions,
+                  outcomes: legacy.outcomes,
+                });
+              });
+              setS4Idx(0);
+              setS4Answers({});
+              setS4ShowResult(false);
+              setStage(4);
+            }}
           />
         )}
       </div>
@@ -1803,7 +1818,7 @@ export function TryFlowInner({
               <div className="brand-mark">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
               </div>
-              <span>SQUARESPELL<span className="brand-acc" style={{ marginLeft: 4 }}>QUIZ</span></span>
+              <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
             </div>
 
             <div className="s5-banner">
@@ -1860,7 +1875,7 @@ export function TryFlowInner({
             <div className="brand-mark">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
             </div>
-            <span>SQUARESPELL<span className="brand-acc" style={{ marginLeft: 4 }}>QUIZ</span></span>
+            <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
           </div>
           <div className="top-right">
             <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>founder@{domain}</span>

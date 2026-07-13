@@ -78,6 +78,9 @@ export interface QuizBlockEditorProps {
   onPublish?: () => void;
   /** Label for the publish button (default: "Publish") */
   publishLabel?: string;
+  /** When provided, overrides the default preview behaviour (opening /quiz/:slug).
+   *  Use this in the anonymous URL funnel where there is no slug yet. */
+  onPreview?: () => void;
 }
 
 var API_BASE = (typeof window !== 'undefined' && (window as any).__NEXT_PUBLIC_API_URL)
@@ -2865,6 +2868,7 @@ export function QuizBlockEditor({
   saveState,
   onPublish,
   publishLabel = 'Publish',
+  onPreview,
 }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
@@ -3048,7 +3052,9 @@ export function QuizBlockEditor({
 
             {/* Preview */}
             <button type="button" onClick={function() {
-              if (quizSlug) {
+              if (onPreview) {
+                onPreview();
+              } else if (quizSlug) {
                 window.open('/quiz/' + quizSlug, '_blank');
               } else if (quizId) {
                 window.open('/quiz/' + quizId, '_blank');
