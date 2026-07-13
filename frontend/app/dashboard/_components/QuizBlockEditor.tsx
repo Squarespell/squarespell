@@ -623,12 +623,21 @@ function AnswerRow({
   var [showPicker, setShowPicker] = useState(false);
   var [thumbHover, setThumbHover] = useState(false);
   var thumbRef = useRef<HTMLDivElement>(null);
+  var taRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea when answer text changes
+  useEffect(function() {
+    if (taRef.current) {
+      taRef.current.style.height = 'auto';
+      taRef.current.style.height = taRef.current.scrollHeight + 'px';
+    }
+  }, [opt.text]);
 
   return (
     <div
       className="sq-answer-row"
       style={{
-        display: 'flex', alignItems: 'center', gap: 12,
+        display: 'flex', alignItems: 'flex-start', gap: 12,
         padding: '12px 16px', borderRadius: 10,
         background: '#fff',
         /* Border/shadow handled by CSS .sq-answer-row rules */
@@ -636,9 +645,10 @@ function AnswerRow({
         position: 'relative',
       }}
     >
-      {/* Letter badge */}
+      {/* Letter badge — marginTop aligns center with first text line */}
       <span style={{
         width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+        marginTop: 2,
         background: C.ACCENT_LIGHT, color: C.ACCENT,
         fontSize: 12, fontWeight: 700,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -698,23 +708,27 @@ function AnswerRow({
         />
       )}
 
-      {/* Editable text — flex:1 gets full remaining space (actions are absolute) */}
+      {/* Editable text — auto-resize textarea so long answers never clip */}
       <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <input
-          type="text"
+        <textarea
+          ref={taRef}
+          className="sq-ans-ta"
           value={opt.text || ''}
           onChange={function(e) { onChangeText(e.target.value); }}
           onClick={function(e) { e.stopPropagation(); }}
           placeholder="Type answer..."
+          rows={1}
           style={{
             width: '100%', border: 'none', background: 'transparent',
             fontSize: 15, color: C.TEXT, outline: 'none',
-            fontFamily: C.FONT, padding: '4px 0', cursor: 'text',
+            fontFamily: C.FONT, padding: '4px 22px 4px 0', cursor: 'text',
+            resize: 'none', overflow: 'hidden', display: 'block',
+            lineHeight: 1.4, boxSizing: 'border-box',
           }}
         />
         {/* Pencil hint — CSS .sq-ans-pencil controls visibility */}
         <div className="sq-ans-pencil" style={{
-          position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+          position: 'absolute', right: 0, top: 5,
           color: C.ACCENT, pointerEvents: 'none', lineHeight: 1,
         }}>
           <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -723,8 +737,10 @@ function AnswerRow({
         </div>
       </div>
 
-      {/* Score badge — always visible, actions overlay it on hover */}
-      <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
+      {/* Score badge — marginTop aligns with first textarea line */}
+      <div style={{ flexShrink: 0, marginTop: 2 }}>
+        <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
+      </div>
 
       {/* Actions — absolutely positioned so they don't compress the input.
            CSS .sq-ans-actions shows on hover, hides on focus-within. */}
@@ -1122,12 +1138,20 @@ function ThumbnailAnswerRow({
   var [thumbHover, setThumbHover] = useState(false);
   var [showPicker, setShowPicker] = useState(false);
   var thumbRef = useRef<HTMLDivElement>(null);
+  var thumbTaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(function() {
+    if (thumbTaRef.current) {
+      thumbTaRef.current.style.height = 'auto';
+      thumbTaRef.current.style.height = thumbTaRef.current.scrollHeight + 'px';
+    }
+  }, [opt.text]);
 
   return (
     <div
       className="sq-answer-row"
       style={{
-        display: 'flex', alignItems: 'center', gap: 14,
+        display: 'flex', alignItems: 'flex-start', gap: 14,
         padding: '14px 16px', borderRadius: 10,
         background: '#fff',
         transition: 'border-color 0.12s, box-shadow 0.12s',
@@ -1184,15 +1208,27 @@ function ThumbnailAnswerRow({
         )}
       </div>
 
-      {/* Text — flex:1, actions are absolute so no layout competition */}
+      {/* Text — auto-resize textarea so long answers never clip */}
       <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
-        <input type="text" value={opt.text || ''} onChange={function(e) { onChangeText(e.target.value); }}
+        <textarea
+          ref={thumbTaRef}
+          className="sq-ans-ta"
+          value={opt.text || ''}
+          onChange={function(e) { onChangeText(e.target.value); }}
           onClick={function(e) { e.stopPropagation(); }}
           placeholder="Answer..."
-          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none', fontFamily: C.FONT, cursor: 'text' }} />
+          rows={1}
+          style={{
+            width: '100%', border: 'none', background: 'transparent',
+            fontSize: 14, fontWeight: 600, color: C.TEXT, outline: 'none',
+            fontFamily: C.FONT, cursor: 'text',
+            resize: 'none', overflow: 'hidden', display: 'block',
+            padding: '0 22px 0 0', lineHeight: 1.4, boxSizing: 'border-box',
+          }}
+        />
         {/* Pencil hint — CSS .sq-ans-pencil controls visibility */}
         <div className="sq-ans-pencil" style={{
-          position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+          position: 'absolute', right: 0, top: 2,
           color: C.ACCENT, pointerEvents: 'none', lineHeight: 1,
         }}>
           <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -1202,7 +1238,9 @@ function ThumbnailAnswerRow({
       </div>
 
       {/* Score */}
-      <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
+      <div style={{ flexShrink: 0, marginTop: 2 }}>
+        <ScoreBadge score={opt.score || 0} onChange={onChangeScore} />
+      </div>
 
       {/* Actions — absolutely positioned, CSS .sq-ans-actions controls visibility */}
       <div className="sq-ans-actions" style={{
@@ -3436,6 +3474,8 @@ export function QuizBlockEditor({
           box-shadow: 0 0 0 3px rgba(15,115,119,0.08) !important;
         }
         .sq-answer-row input::placeholder { color: rgba(0,0,0,0.28); }
+        .sq-ans-ta { -webkit-appearance: none; appearance: none; }
+        .sq-ans-ta::placeholder { color: rgba(0,0,0,0.28); }
 
         /* Pencil: hidden by default, shows on row-hover (not when typing) */
         .sq-ans-pencil { opacity: 0; transition: opacity 0.12s; }
