@@ -1,353 +1,364 @@
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ===== SQUARESPELL – SECTION 4: FIVE LAYOUTS ===== */
-.sq-fl *, .sq-fl *::before, .sq-fl *::after {
-  box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif;
-}
 .sq-fl {
-  background: #ffffff;
-  padding: 80px 20px 96px;
-  text-align: center;
+  padding: 96px 32px;
+  font-family: 'Poppins', sans-serif;
+  box-sizing: border-box;
 }
+.sq-fl *, .sq-fl *::before, .sq-fl *::after { box-sizing: border-box; margin: 0; padding: 0; }
 .sq-fl-inner { max-width: 860px; margin: 0 auto; }
 
-.sq-fl-kicker {
-  font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
-  text-transform: uppercase; color: #0f7377; margin-bottom: 14px; display: block;
+/* Header */
+.sq-fl-head { text-align: center; margin-bottom: 44px; }
+.sq-fl-eyebrow {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #0f7377; background: rgba(15,115,119,0.08);
+  padding: 6px 16px; border-radius: 100px; margin-bottom: 14px;
 }
-.sq-fl-h {
-  font-size: clamp(28px, 4vw, 42px); font-weight: 700; color: #111827;
-  line-height: 1.15; margin-bottom: 16px;
+.sq-fl-title {
+  font-size: clamp(30px, 4vw, 48px); font-weight: 600;
+  color: #111827; margin: 0 0 12px;
+  letter-spacing: -0.025em; line-height: 1.15;
 }
-.sq-fl-sub {
-  font-size: 16px; color: #6b7280; line-height: 1.6;
-  max-width: 480px; margin: 0 auto 44px;
-}
+.sq-fl-sub { font-size: 17px; color: #6b7280; font-weight: 400; margin: 0 auto; line-height: 1.6; max-width: 520px; }
 
 /* Tabs */
 .sq-fl-tabs {
   display: flex; justify-content: center; gap: 8px;
-  flex-wrap: wrap; margin-bottom: 28px;
+  flex-wrap: wrap; margin-bottom: 24px;
 }
 .sq-fl-tab {
   padding: 7px 16px; border-radius: 100px;
-  border: 1.5px solid #e5e7eb; background: white;
+  border: 1.5px solid #e8ecf0; background: white;
   color: #6b7280; font-size: 13px; font-weight: 500;
   cursor: pointer; transition: all 0.2s; outline: none;
+  font-family: 'Poppins', sans-serif;
 }
 .sq-fl-tab:hover { border-color: #0f7377; color: #0f7377; }
 .sq-fl-tab.sq-on { background: #0f7377; border-color: #0f7377; color: white; }
 
-/* Browser */
-.sq-fl-browser {
-  border-radius: 12px; overflow: hidden;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.11), 0 4px 16px rgba(0,0,0,0.07);
-  border: 1px solid #e5e7eb;
+/* Card */
+.sq-fl-card {
+  background: white; border-radius: 20px;
+  border: 1px solid #e8ecf0; overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  opacity: 0; transform: translateY(36px);
+  transition: opacity 0.65s ease 0.2s, transform 0.65s ease 0.2s;
 }
+.sq-fl-card.sq-vis { opacity: 1; transform: translateY(0); }
+
+/* Browser chrome */
 .sq-fl-chrome {
-  background: #f3f4f6; border-bottom: 1px solid #e5e7eb;
-  padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+  background: #e8e8e8; border-bottom: 1px solid #d0d0d0;
+  padding: 9px 12px; display: flex; align-items: center; flex-shrink: 0;
 }
+.sq-fl-dots { display: block; flex-shrink: 0; width: 52px; height: 12px; }
 .sq-fl-url {
-  flex: 1; background: white; border-radius: 6px; padding: 4px 10px;
-  font-size: 11px; color: #9ca3af; text-align: left; border: 1px solid #e5e7eb;
+  flex: 1; background: white; border-radius: 5px;
+  font-size: 10px; color: #9ca3af;
+  padding: 3px 10px; margin-left: 8px;
+  border: 1px solid #e0e0e0; font-family: monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
 }
-.sq-fl-canvas {
-  background: white; height: 430px; overflow: hidden; position: relative;
-}
+
+/* Canvas */
+.sq-fl-canvas { height: 340px; overflow: hidden; position: relative; }
 .sq-fl-panel {
   position: absolute; inset: 0; opacity: 0; pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease; display: flex;
 }
 .sq-fl-panel.sq-on { opacity: 1; pointer-events: auto; }
 
-/* Image palette */
-.sq-ca { background: linear-gradient(150deg,#f5e8d0 0%,#e4ceaa 55%,#d0b088 100%); }
-.sq-cb { background: linear-gradient(150deg,#e8edf4 0%,#ccd4e2 55%,#b0bdd0 100%); }
-.sq-cc { background: linear-gradient(150deg,#eedacc 0%,#d4b89a 55%,#b89070 100%); }
-.sq-cd { background: linear-gradient(150deg,#3c3028 0%,#241c14 55%,#140e08 100%); }
+/* Footer label */
+.sq-fl-footer {
+  padding: 15px 22px; border-top: 1px solid #f3f4f6;
+  display: flex; align-items: center; gap: 10px;
+}
+.sq-fl-f-badge {
+  font-size: 10px; font-weight: 600; color: #0f7377;
+  background: rgba(15,115,119,0.08); padding: 3px 10px;
+  border-radius: 100px; white-space: nowrap; flex-shrink: 0;
+}
+.sq-fl-f-desc { font-size: 13px; color: #6b7280; line-height: 1.5; }
 
-/* Shared quiz elements */
+/* Image colors — brand palette only */
+.sq-img-lg { background: linear-gradient(135deg, #d5e3e0, #c0d3ce); }
+.sq-img-sm { background: #e5e7eb; }
+
+/* Shared quiz chrome */
 .sq-prog { height: 3px; background: #f3f4f6; border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
 .sq-prog-fill { width: 20%; height: 100%; background: #0f7377; border-radius: 2px; }
-.sq-step { font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; }
-.sq-qtxt { font-size: 15px; font-weight: 600; color: #111827; line-height: 1.3; }
-.sq-qsub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
-.sq-pts { font-size: 9px; color: #9ca3af; background: #f9fafb; padding: 2px 6px; border-radius: 4px; border: 1px solid #e5e7eb; white-space: nowrap; flex-shrink: 0; }
-.sq-ltr { width: 20px; height: 20px; border-radius: 50%; background: #f3f4f6; color: #6b7280; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sq-step { font-size: 8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; }
+.sq-qtxt { font-size: 13px; font-weight: 600; color: #111827; line-height: 1.3; }
+.sq-qsub { font-size: 9px; color: #9ca3af; margin-top: 2px; }
+.sq-pts { font-size: 8px; color: #9ca3af; background: #f9fafb; padding: 2px 6px; border-radius: 4px; border: 1px solid #e5e7eb; white-space: nowrap; flex-shrink: 0; }
+.sq-ltr { width: 18px; height: 18px; border-radius: 50%; background: #f3f4f6; color: #6b7280; font-size: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .sq-rsel .sq-ltr { background: #0f7377; color: white; }
+.sq-rsel { border-color: #0f7377 !important; background: rgba(15,115,119,0.04) !important; }
 
 /* LAYOUT 1 – LIST */
-.sq-l1 { display: flex; flex-direction: column; height: 100%; }
-.sq-l1-head { padding: 18px 24px 14px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
+.sq-l1 { display: flex; flex-direction: column; flex: 1; background: white; }
+.sq-l1-top { padding: 18px 22px 14px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
 .sq-l1-rows { flex: 1; overflow: hidden; padding: 10px 18px; display: flex; flex-direction: column; gap: 7px; }
-.sq-l1-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #e5e7eb; cursor: pointer; transition: border-color 0.15s; }
-.sq-l1-row:hover { border-color: #0f7377; }
-.sq-l1-row.sq-rsel { border-color: #0f7377; background: #f0fafa; }
+.sq-l1-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #e5e7eb; }
 .sq-l1-th { width: 36px; height: 36px; border-radius: 5px; flex-shrink: 0; }
-.sq-l1-lbl { flex: 1; font-size: 12px; color: #374151; text-align: left; }
+.sq-l1-lbl { flex: 1; font-size: 11px; color: #374151; text-align: left; }
 
 /* LAYOUT 2 – GRID */
-.sq-l2 { display: flex; flex-direction: column; height: 100%; }
-.sq-l2-head { padding: 16px 22px 10px; flex-shrink: 0; }
+.sq-l2 { display: flex; flex-direction: column; flex: 1; background: white; }
+.sq-l2-top { padding: 16px 22px 10px; flex-shrink: 0; }
 .sq-l2-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; padding: 0 16px 16px; }
-.sq-l2-cell { display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; border: 1.5px solid #e5e7eb; cursor: pointer; }
-.sq-l2-cell:hover { border-color: #0f7377; }
+.sq-l2-cell { display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; border: 1.5px solid #e5e7eb; }
 .sq-l2-img { flex: 1; }
 .sq-l2-lbl { padding: 5px 8px; font-size: 9px; font-weight: 500; color: #374151; text-align: center; background: white; border-top: 1px solid #f3f4f6; }
 
 /* LAYOUT 3 – THUMBNAILS */
-.sq-l3 { display: flex; flex-direction: column; height: 100%; }
-.sq-l3-hero { height: 110px; flex-shrink: 0; }
-.sq-l3-q { padding: 12px 22px 10px; font-size: 13px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
-.sq-l3-rows { flex: 1; overflow: hidden; padding: 8px 16px; display: flex; flex-direction: column; gap: 5px; }
-.sq-l3-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid #e5e7eb; cursor: pointer; }
-.sq-l3-row:hover { border-color: #0f7377; }
-.sq-l3-row.sq-rsel { border-color: #0f7377; background: #f0fafa; }
-.sq-l3-th { width: 54px; height: 54px; border-radius: 7px; flex-shrink: 0; }
-.sq-l3-lbl { flex: 1; font-size: 11px; color: #374151; text-align: left; }
+.sq-l3 { display: flex; flex-direction: column; flex: 1; background: white; }
+.sq-l3-hero { height: 104px; flex-shrink: 0; }
+.sq-l3-q { padding: 10px 22px 8px; font-size: 12px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
+.sq-l3-rows { flex: 1; overflow: hidden; padding: 7px 16px; display: flex; flex-direction: column; gap: 5px; }
+.sq-l3-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid #e5e7eb; }
+.sq-l3-th { width: 52px; height: 52px; border-radius: 6px; flex-shrink: 0; }
+.sq-l3-lbl { flex: 1; font-size: 10px; color: #374151; text-align: left; }
 
 /* LAYOUT 4 – FULL BACKGROUND */
-.sq-l4 { display: flex; flex-direction: column; height: 100%; }
-.sq-l4-head { padding: 14px 22px 10px; flex-shrink: 0; }
+.sq-l4 { display: flex; flex-direction: column; flex: 1; background: white; }
+.sq-l4-top { padding: 14px 22px 10px; flex-shrink: 0; }
 .sq-l4-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; padding: 0 14px 14px; }
-.sq-l4-cell { border-radius: 8px; overflow: hidden; position: relative; cursor: pointer; border: 2px solid transparent; }
-.sq-l4-cell:hover { border-color: #0f7377; }
+.sq-l4-cell { border-radius: 8px; overflow: hidden; position: relative; }
 .sq-l4-bg { position: absolute; inset: 0; }
 .sq-l4-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 55%); }
-.sq-l4-lbl { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 8px 7px; display: flex; align-items: center; gap: 5px; }
-.sq-l4-badge { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.45); color: white; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.sq-l4-txt { font-size: 9px; color: white; font-weight: 500; }
+.sq-l4-lbl { position: absolute; bottom: 0; left: 0; right: 0; padding: 7px 7px 6px; display: flex; align-items: center; gap: 4px; }
+.sq-l4-badge { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; font-size: 7px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sq-l4-txt { font-size: 8px; color: white; font-weight: 500; }
 
 /* LAYOUT 5 – SPLIT */
-.sq-l5 { display: flex; height: 100%; }
-.sq-l5-img { width: 44%; flex-shrink: 0; overflow: hidden; }
+.sq-l5 { display: flex; flex: 1; background: white; }
+.sq-l5-img { width: 44%; flex-shrink: 0; }
 .sq-l5-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.sq-l5-q { padding: 16px 16px 12px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
+.sq-l5-q { padding: 16px 14px 12px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
 .sq-l5-rows { flex: 1; overflow: hidden; padding: 8px 12px; display: flex; flex-direction: column; gap: 5px; }
-.sq-l5-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; border: 1.5px solid #e5e7eb; cursor: pointer; }
-.sq-l5-row:hover { border-color: #0f7377; }
-.sq-l5-row.sq-rsel { border-color: #0f7377; background: #f0fafa; }
-.sq-l5-th { width: 30px; height: 30px; border-radius: 5px; flex-shrink: 0; }
-.sq-l5-lbl { flex: 1; font-size: 10px; color: #374151; text-align: left; line-height: 1.3; }
+.sq-l5-row { display: flex; align-items: center; gap: 8px; padding: 6px 7px; border-radius: 7px; border: 1.5px solid #e5e7eb; }
+.sq-l5-th { width: 28px; height: 28px; border-radius: 4px; flex-shrink: 0; }
+.sq-l5-lbl { flex: 1; font-size: 9px; color: #374151; text-align: left; line-height: 1.3; }
 
 /* Scroll reveal */
-.sq-fl-rv { opacity: 0; transform: translateY(28px); transition: opacity 0.6s ease, transform 0.6s ease; }
-.sq-fl-rv.sq-vis { opacity: 1; transform: none; }
-.sq-d1 { transition-delay: 0.12s; }
-.sq-d2 { transition-delay: 0.26s; }
+.sq-fl-rv { opacity: 0; transform: translateY(36px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.sq-fl-rv.sq-vis { opacity: 1; transform: translateY(0); }
+.sq-fl-rv.sq-d1 { transition-delay: 0.12s; }
 
 @media (max-width: 600px) {
-  .sq-fl-h { font-size: 26px; }
-  .sq-fl-canvas { height: 360px; }
+  .sq-fl { padding: 64px 20px; }
+  .sq-fl-canvas { height: 300px; }
   .sq-fl-tab { font-size: 11px; padding: 6px 12px; }
 }
 </style>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
 
 <div class="sq-fl">
   <div class="sq-fl-inner">
 
     <div class="sq-fl-rv">
-      <span class="sq-fl-kicker">The Editor</span>
-      <h2 class="sq-fl-h">Five layouts. One quiz.</h2>
-      <p class="sq-fl-sub">Pick the answer style that fits your brand. Switch anytime, no rebuilding required.</p>
+      <div class="sq-fl-head">
+        <div class="sq-fl-eyebrow">The Editor</div>
+        <h2 class="sq-fl-title">Five layouts. One quiz.</h2>
+        <p class="sq-fl-sub">Pick the answer style that fits your brand. Switch anytime, no rebuilding required.</p>
+      </div>
     </div>
 
     <div class="sq-fl-rv sq-d1">
       <div class="sq-fl-tabs">
-        <button class="sq-fl-tab sq-on" data-i="1">List</button>
-        <button class="sq-fl-tab" data-i="2">Grid</button>
-        <button class="sq-fl-tab" data-i="3">Image Thumbnails</button>
-        <button class="sq-fl-tab" data-i="4">Full Background</button>
-        <button class="sq-fl-tab" data-i="5">Split</button>
+        <button class="sq-fl-tab sq-on" data-i="1" data-lbl="List" data-desc="A small image beside each answer row. Clean, scannable, and great for text-heavy options.">List</button>
+        <button class="sq-fl-tab" data-i="2" data-lbl="Grid" data-desc="A 2x2 image grid with captions below. Puts your visuals front and center.">Grid</button>
+        <button class="sq-fl-tab" data-i="3" data-lbl="Image Thumbnails" data-desc="Large square thumbnails paired with answer text. Easy to read at a glance.">Image Thumbnails</button>
+        <button class="sq-fl-tab" data-i="4" data-lbl="Full Background" data-desc="Full-bleed photos with overlaid labels. Immersive and visually striking.">Full Background</button>
+        <button class="sq-fl-tab" data-i="5" data-lbl="Split" data-desc="A hero image on the left, question and answers on the right. Elegant two-panel layout.">Split</button>
       </div>
-    </div>
 
-    <div class="sq-fl-rv sq-d2">
-      <div class="sq-fl-browser">
+      <div class="sq-fl-card" id="sq-fl-card">
+        <!-- Browser chrome -->
         <div class="sq-fl-chrome">
-          <svg width="52" height="12" viewBox="0 0 52 12" xmlns="http://www.w3.org/2000/svg">
+          <svg class="sq-fl-dots" viewBox="0 0 52 12" xmlns="http://www.w3.org/2000/svg">
             <circle cx="6" cy="6" r="5" fill="#ff5f57"/>
             <circle cx="24" cy="6" r="5" fill="#febc2e"/>
             <circle cx="42" cy="6" r="5" fill="#28c840"/>
           </svg>
-          <div class="sq-fl-url">squarespell.com/quiz/interior-style</div>
+          <span class="sq-fl-url">squarespell.com/quiz/interior-style</span>
         </div>
 
+        <!-- Canvas -->
         <div class="sq-fl-canvas">
 
-          <!-- LIST -->
+          <!-- ── LIST ── -->
           <div class="sq-fl-panel sq-on" id="sq-p1">
             <div class="sq-l1">
-              <div class="sq-l1-head">
+              <div class="sq-l1-top">
                 <div class="sq-prog"><div class="sq-prog-fill"></div></div>
                 <div class="sq-step">Question 01 of 5</div>
                 <div class="sq-qtxt">Which room feels most like home to you?</div>
-                <div class="sq-qsub">Where you spend the most time says a lot about your style.</div>
+                <div class="sq-qsub">Where you spend the most time reveals your true design style.</div>
               </div>
               <div class="sq-l1-rows">
                 <div class="sq-l1-row sq-rsel">
-                  <div class="sq-l1-th sq-ca"></div>
+                  <div class="sq-l1-th sq-img-sm"></div>
                   <div class="sq-ltr">A</div>
-                  <div class="sq-l1-lbl">A sunlit living room with plants</div>
+                  <div class="sq-l1-lbl">A sunlit living room filled with plants and warm textiles</div>
                   <div class="sq-pts">+4pts</div>
                 </div>
                 <div class="sq-l1-row">
-                  <div class="sq-l1-th sq-cb"></div>
+                  <div class="sq-l1-th sq-img-sm"></div>
                   <div class="sq-ltr">B</div>
-                  <div class="sq-l1-lbl">A sleek kitchen with clean counters</div>
+                  <div class="sq-l1-lbl">A sleek kitchen with clean counters and thoughtful storage</div>
                   <div class="sq-pts">+3pts</div>
                 </div>
                 <div class="sq-l1-row">
-                  <div class="sq-l1-th sq-cc"></div>
+                  <div class="sq-l1-th sq-img-sm"></div>
                   <div class="sq-ltr">C</div>
-                  <div class="sq-l1-lbl">A cozy reading nook with textures</div>
+                  <div class="sq-l1-lbl">A cozy reading nook layered with books, rugs, and textures</div>
                   <div class="sq-pts">+2pts</div>
                 </div>
                 <div class="sq-l1-row">
-                  <div class="sq-l1-th sq-cd"></div>
+                  <div class="sq-l1-th sq-img-sm"></div>
                   <div class="sq-ltr">D</div>
-                  <div class="sq-l1-lbl">A bold dining statement</div>
+                  <div class="sq-l1-lbl">A bold dining room that makes a statement of every meal</div>
                   <div class="sq-pts">+1pt</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- GRID -->
+          <!-- ── GRID ── -->
           <div class="sq-fl-panel" id="sq-p2">
             <div class="sq-l2">
-              <div class="sq-l2-head">
+              <div class="sq-l2-top">
                 <div class="sq-prog"><div class="sq-prog-fill"></div></div>
                 <div class="sq-step">Question 01 of 5</div>
                 <div class="sq-qtxt">Which room feels most like home to you?</div>
               </div>
               <div class="sq-l2-grid">
                 <div class="sq-l2-cell">
-                  <div class="sq-l2-img sq-ca"></div>
-                  <div class="sq-l2-lbl">Sunlit living room</div>
+                  <div class="sq-l2-img sq-img-lg"></div>
+                  <div class="sq-l2-lbl">Sunlit living room with plants</div>
                 </div>
                 <div class="sq-l2-cell">
-                  <div class="sq-l2-img sq-cb"></div>
-                  <div class="sq-l2-lbl">Sleek kitchen</div>
+                  <div class="sq-l2-img sq-img-lg"></div>
+                  <div class="sq-l2-lbl">Sleek kitchen, clean counters</div>
                 </div>
                 <div class="sq-l2-cell">
-                  <div class="sq-l2-img sq-cc"></div>
-                  <div class="sq-l2-lbl">Cozy reading nook</div>
+                  <div class="sq-l2-img sq-img-lg"></div>
+                  <div class="sq-l2-lbl">Cozy reading nook with textures</div>
                 </div>
                 <div class="sq-l2-cell">
-                  <div class="sq-l2-img sq-cd"></div>
-                  <div class="sq-l2-lbl">Bold dining statement</div>
+                  <div class="sq-l2-img sq-img-lg"></div>
+                  <div class="sq-l2-lbl">Bold dining room statement</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- THUMBNAILS -->
+          <!-- ── THUMBNAILS ── -->
           <div class="sq-fl-panel" id="sq-p3">
             <div class="sq-l3">
-              <div class="sq-l3-hero sq-ca"></div>
+              <div class="sq-l3-hero sq-img-lg"></div>
               <div class="sq-l3-q">Which room feels most like home to you?</div>
               <div class="sq-l3-rows">
                 <div class="sq-l3-row sq-rsel">
-                  <div class="sq-l3-th sq-ca"></div>
+                  <div class="sq-l3-th sq-img-sm"></div>
                   <div class="sq-ltr">A</div>
-                  <div class="sq-l3-lbl">A sunlit living room with plants</div>
+                  <div class="sq-l3-lbl">A sunlit living room filled with plants and warm textiles</div>
                   <div class="sq-pts">+4pts</div>
                 </div>
                 <div class="sq-l3-row">
-                  <div class="sq-l3-th sq-cb"></div>
+                  <div class="sq-l3-th sq-img-sm"></div>
                   <div class="sq-ltr">B</div>
-                  <div class="sq-l3-lbl">A sleek kitchen with clean counters</div>
+                  <div class="sq-l3-lbl">A sleek kitchen with clean counters and thoughtful storage</div>
                   <div class="sq-pts">+3pts</div>
                 </div>
                 <div class="sq-l3-row">
-                  <div class="sq-l3-th sq-cc"></div>
+                  <div class="sq-l3-th sq-img-sm"></div>
                   <div class="sq-ltr">C</div>
-                  <div class="sq-l3-lbl">A cozy reading nook with textures</div>
+                  <div class="sq-l3-lbl">A cozy reading nook layered with books, rugs, and textures</div>
                   <div class="sq-pts">+2pts</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- FULL BACKGROUND -->
+          <!-- ── FULL BACKGROUND ── -->
           <div class="sq-fl-panel" id="sq-p4">
             <div class="sq-l4">
-              <div class="sq-l4-head">
+              <div class="sq-l4-top">
                 <div class="sq-prog"><div class="sq-prog-fill"></div></div>
                 <div class="sq-step">Question 01 of 5</div>
                 <div class="sq-qtxt">Which room feels most like home to you?</div>
               </div>
               <div class="sq-l4-grid">
                 <div class="sq-l4-cell">
-                  <div class="sq-l4-bg sq-ca"></div>
+                  <div class="sq-l4-bg sq-img-lg"></div>
                   <div class="sq-l4-grad"></div>
                   <div class="sq-l4-lbl">
                     <div class="sq-l4-badge">A</div>
-                    <div class="sq-l4-txt">A sunlit living room</div>
+                    <div class="sq-l4-txt">Sunlit living room with plants</div>
                   </div>
                 </div>
                 <div class="sq-l4-cell">
-                  <div class="sq-l4-bg sq-cb"></div>
+                  <div class="sq-l4-bg sq-img-lg"></div>
                   <div class="sq-l4-grad"></div>
                   <div class="sq-l4-lbl">
                     <div class="sq-l4-badge">B</div>
-                    <div class="sq-l4-txt">A sleek kitchen</div>
+                    <div class="sq-l4-txt">Sleek kitchen, clean counters</div>
                   </div>
                 </div>
                 <div class="sq-l4-cell">
-                  <div class="sq-l4-bg sq-cc"></div>
+                  <div class="sq-l4-bg sq-img-lg"></div>
                   <div class="sq-l4-grad"></div>
                   <div class="sq-l4-lbl">
                     <div class="sq-l4-badge">C</div>
-                    <div class="sq-l4-txt">A cozy reading nook</div>
+                    <div class="sq-l4-txt">Cozy reading nook with textures</div>
                   </div>
                 </div>
                 <div class="sq-l4-cell">
-                  <div class="sq-l4-bg sq-cd"></div>
+                  <div class="sq-l4-bg sq-img-lg"></div>
                   <div class="sq-l4-grad"></div>
                   <div class="sq-l4-lbl">
                     <div class="sq-l4-badge">D</div>
-                    <div class="sq-l4-txt">A bold dining statement</div>
+                    <div class="sq-l4-txt">Bold dining room statement</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- SPLIT -->
+          <!-- ── SPLIT ── -->
           <div class="sq-fl-panel" id="sq-p5">
             <div class="sq-l5">
-              <div class="sq-l5-img sq-ca"></div>
+              <div class="sq-l5-img sq-img-lg"></div>
               <div class="sq-l5-right">
                 <div class="sq-l5-q">
                   <div class="sq-prog"><div class="sq-prog-fill"></div></div>
                   <div class="sq-step">Question 01 of 5</div>
-                  <div class="sq-qtxt">Which room feels most like home?</div>
+                  <div class="sq-qtxt">Which room feels most like home to you?</div>
                 </div>
                 <div class="sq-l5-rows">
                   <div class="sq-l5-row sq-rsel">
-                    <div class="sq-l5-th sq-ca"></div>
+                    <div class="sq-l5-th sq-img-sm"></div>
                     <div class="sq-ltr">A</div>
-                    <div class="sq-l5-lbl">A sunlit living room with plants</div>
+                    <div class="sq-l5-lbl">A sunlit living room filled with plants and warm textiles</div>
                   </div>
                   <div class="sq-l5-row">
-                    <div class="sq-l5-th sq-cb"></div>
+                    <div class="sq-l5-th sq-img-sm"></div>
                     <div class="sq-ltr">B</div>
-                    <div class="sq-l5-lbl">A sleek kitchen with clean counters</div>
+                    <div class="sq-l5-lbl">A sleek kitchen with clean counters and thoughtful storage</div>
                   </div>
                   <div class="sq-l5-row">
-                    <div class="sq-l5-th sq-cc"></div>
+                    <div class="sq-l5-th sq-img-sm"></div>
                     <div class="sq-ltr">C</div>
-                    <div class="sq-l5-lbl">A cozy reading nook</div>
+                    <div class="sq-l5-lbl">A cozy reading nook layered with books, rugs, and textures</div>
                   </div>
                   <div class="sq-l5-row">
-                    <div class="sq-l5-th sq-cd"></div>
+                    <div class="sq-l5-th sq-img-sm"></div>
                     <div class="sq-ltr">D</div>
-                    <div class="sq-l5-lbl">A bold dining statement</div>
+                    <div class="sq-l5-lbl">A bold dining room that makes a statement of every meal</div>
                   </div>
                 </div>
               </div>
@@ -355,7 +366,14 @@
           </div>
 
         </div><!-- /canvas -->
-      </div><!-- /browser -->
+
+        <!-- Footer label (updates per tab) -->
+        <div class="sq-fl-footer">
+          <span class="sq-fl-f-badge" id="sq-f-badge">List</span>
+          <span class="sq-fl-f-desc" id="sq-f-desc">A small image beside each answer row. Clean, scannable, and great for text-heavy options.</span>
+        </div>
+
+      </div><!-- /card -->
     </div><!-- /rv -->
 
   </div><!-- /inner -->
@@ -364,18 +382,28 @@
 <script>
 (function () {
   function init() {
-    var tabs = document.querySelectorAll('.sq-fl-tab');
+    var tabs   = document.querySelectorAll('.sq-fl-tab');
     var panels = document.querySelectorAll('.sq-fl-panel');
+    var card   = document.getElementById('sq-fl-card');
+    var badge  = document.getElementById('sq-f-badge');
+    var desc   = document.getElementById('sq-f-desc');
     var cur = 1, paused = false, autoTimer;
 
     function show(n) {
       cur = n;
+      var activeTab;
       tabs.forEach(function (t) {
-        t.classList.toggle('sq-on', +t.getAttribute('data-i') === n);
+        var on = +t.getAttribute('data-i') === n;
+        t.classList.toggle('sq-on', on);
+        if (on) activeTab = t;
       });
       panels.forEach(function (p, i) {
         p.classList.toggle('sq-on', i + 1 === n);
       });
+      if (activeTab && badge && desc) {
+        badge.textContent = activeTab.getAttribute('data-lbl');
+        desc.textContent  = activeTab.getAttribute('data-desc');
+      }
     }
 
     tabs.forEach(function (t) {
@@ -390,16 +418,23 @@
       if (!paused) show((cur % 5) + 1);
     }, 2800);
 
+    /* Scroll reveal */
     var reveals = document.querySelectorAll('.sq-fl-rv');
     if ('IntersectionObserver' in window) {
       var obs = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
-          if (e.isIntersecting) { e.target.classList.add('sq-vis'); obs.unobserve(e.target); }
+          if (e.isIntersecting) {
+            e.target.classList.add('sq-vis');
+            obs.unobserve(e.target);
+          }
         });
-      }, { threshold: 0.12 });
+      }, { threshold: 0.1 });
       reveals.forEach(function (r) { obs.observe(r); });
+      /* card has its own reveal class */
+      if (card) obs.observe(card);
     } else {
       reveals.forEach(function (r) { r.classList.add('sq-vis'); });
+      if (card) card.classList.add('sq-vis');
     }
   }
 
