@@ -1,48 +1,194 @@
 # Squarespell Quiz
 
-> AI-powered quiz funnel builder for Squarespace websites. Paste a Squarespace
-> URL, AI reads the site's brand (colors, fonts, copy, business type) and
-> generates a complete interactive quiz — questions, answer options, scoring,
-> and outcomes — pre-styled to match. Publish with a one-line embed snippet.
-> Used to turn passive website traffic into segmented, scored leads.
+> Squarespell Quiz is an AI-powered quiz funnel builder built exclusively for Squarespace websites. Paste any Squarespace URL and the AI reads your brand colors, fonts, copy, and business type -- then generates a fully branded, interactive quiz in under 2 minutes. Embed with a single JavaScript snippet. Used to turn passive website traffic into segmented, scored email leads.
 
-## What it does
+## Core Concept
 
-- Generates a branded quiz from any Squarespace URL in under 2 minutes, no
-  design or development work required.
-- Captures leads (name + email) behind a customizable lead-gate block shown
-  after quiz completion, with personalized results per outcome.
-- Scores every lead by intent (High ≥70, New 40–69, Low <40) based on their
-  answers, and routes them by score/segment.
-- Embeds into any Squarespace 7.1 page via a single JavaScript snippet, in
-  three modes: inline, popup, or floating tab.
-- Syncs leads natively to Mailchimp, Klaviyo, ConvertKit, Google Sheets, and
-  Webhooks; via Zapier to 5,000+ other apps including HubSpot and Salesforce.
-- Supports A/B testing of quiz variants (questions, option order, styling)
-  with automatic traffic splitting and statistical-significance detection.
-- Provides analytics: views, completions, leads, lead rate, per-question
-  drop-off, and outcome distribution.
-- Offers 13+ pre-built quiz templates across photography, food & dining,
-  fitness & wellness, weddings & events, online stores, and coaching.
+Squarespell Quiz works by scanning your Squarespace website URL. The AI analyzes your existing brand identity -- colors, typography, tone, and visual style -- and applies it automatically to your quiz. No manual design, no coding, no separate design tool required. Your quiz looks like a native part of your website from the moment it is created.
+
+The quiz embeds directly inside your Squarespace page as a native component -- not a third-party iframe that breaks your layout or clashes with your brand.
+
+## How It Works -- Step by Step
+
+1. Paste your Squarespace website URL into the quiz builder
+2. The AI scans your site and extracts brand colors, fonts, copy tone, and business type
+3. A fully branded quiz is generated automatically -- questions, answer options, scoring, and outcomes pre-styled to match
+4. Customize questions, answers, outcome pages, and lead gate
+5. Copy the one-line embed snippet and paste it into any Squarespace page
+6. The quiz goes live instantly in inline, popup, or floating tab mode
+7. Every lead is scored, segmented, and synced to your email marketing platform
+
+## Quiz Builder Features
+
+### Question Builder
+- Add unlimited questions
+- Answer types: single choice, multiple choice, image-based answers
+- Each answer carries a point value that contributes to the final lead score
+- Questions support images alongside text
+- Custom question order
+- Branching paths -- route different users to different questions based on answers
+- Progress bar shown to quiz takers throughout
+
+### Outcome Pages
+- Multiple personalized result pages based on quiz scores or answer combinations
+- Each outcome has its own headline, description, image, and call-to-action button
+- Score-based outcomes (point ranges) or logic-based outcomes (specific answer paths)
+- Each outcome CTA button has a custom URL
+- Outcome pages match your brand design automatically
+
+### Lead Gate
+- Email capture form shown after quiz completion, before results are revealed
+- Collects email address, name, and custom fields
+- Mandatory or optional (skippable) -- your choice
+- Every captured lead is automatically tagged, scored, and synced
+- Maximizes email capture rate by gating personalized results
+
+### Lead Scoring
+- Every quiz submission is automatically scored based on point values assigned to each answer
+- Three lead tiers:
+  - High: score of 70 or above -- hottest, most sales-ready leads
+  - New: score of 40 to 69 -- leads that need nurturing
+  - Low: score below 40 -- low-intent visitors
+- Lead score and tier are passed to your email platform for automatic segmentation
+- High leads can trigger immediate sales follow-up sequences
+- New and Low leads go into nurture sequences automatically
+
+### Embed Modes
+Three ways to embed on any Squarespace page:
+
+**Inline** -- Quiz appears directly inside page content. Looks native. Best for dedicated quiz landing pages.
+
+**Popup** -- Quiz opens as an overlay triggered by button click, time delay, or scroll depth. Best for adding a quiz to existing pages without redesigning the layout.
+
+**Floating Tab** -- A persistent tab floats on the screen edge as visitors browse. Best for site-wide lead capture without interrupting the browsing experience.
+
+All embed modes are fully branded and match your Squarespace site automatically.
+
+### A/B Testing
+- Test multiple quiz variants against each other (different questions, answer option order, styling)
+- Automatic traffic splitting between variants
+- Statistical significance detection so you know when a winner is confirmed
+- Improve completion rates and lead quality over time
+
+### Analytics Dashboard
+- Views -- how many people saw the quiz
+- Completions -- how many finished it
+- Leads -- how many submitted their email
+- Lead rate -- percentage of completions that became leads
+- Per-question drop-off -- see exactly which question loses people
+- Outcome distribution -- see which result page most quiz takers land on
+- All data available in the dashboard in real time
+
+## AI Brand Matching
+
+When you paste your Squarespace URL:
+- AI reads your site color palette and applies it to quiz background, buttons, and answer cards
+- AI detects your typography and uses the same font family throughout the quiz
+- AI reads your brand copy tone and business type to inform question and outcome language
+- Result is a quiz that looks completely native to your website
+- No color picking, no font selection, no design decisions required
+
+This is what separates Squarespell from Typeform, Outgrow, Interact, and Involve.me -- those tools require you to manually recreate your brand inside their builder. Squarespell does it automatically from your URL.
+
+## Quiz Types and Use Cases
+
+**Product Recommendation Quiz** -- Help e-commerce visitors find the right product based on preferences, needs, or goals. Each outcome recommends a product with a direct purchase link.
+
+**Lead Qualification Quiz** -- Score and filter inbound leads before they book a call or fill a contact form. Route high-scoring leads to a calendar link, nurture lower-scoring leads via email.
+
+**Client Discovery Quiz** -- Used by coaches, consultants, and service providers to understand a prospect before an intro call. Results tell both sides what kind of support is needed.
+
+**Service Fit Quiz** -- Let visitors self-select which package or service tier is right for them. Each outcome recommends a specific offer with a CTA to book or buy.
+
+**Personality Quiz** -- Engage visitors with a fun, shareable quiz that reveals a personality type or style category. Results lead naturally into email capture and product or service recommendation.
+
+**Style Quiz** -- Popular with interior designers, fashion businesses, and home decor brands. Match visitors to products or collections based on aesthetic preferences.
+
+**Health and Wellness Assessment** -- Ask about goals, habits, and challenges. Recommend the right coaching program, supplement, or membership.
+
+**Course or Program Selector** -- Route visitors to the right course, membership tier, or learning path from your offer suite.
+
+**Real Estate Buyer/Seller Quiz** -- Qualify leads by property goals, budget, and timeline. Route serious leads directly to a consultation booking.
+
+## Industry Templates
+
+13 pre-built templates available, each with pre-written questions, answer options, outcome pages, and scoring logic:
+
+1. Photography business client quiz
+2. Wedding vendor fit quiz
+3. Health and wellness coach quiz
+4. Real estate buyer qualifier
+5. Business coach discovery quiz
+6. E-commerce product finder
+7. Interior design style quiz
+8. Fitness coach client quiz
+9. Financial advisor fit quiz
+10. Online course selector
+11. Marketing agency client qualifier
+12. Food and dining business quiz
+13. General service business lead qualifier
+
+## Integrations
+
+**Email Marketing**
+- Mailchimp -- leads added to lists or audiences with tags based on quiz outcome and score tier
+- Klaviyo -- leads added to lists with profile properties including score, tier, and outcome
+- ConvertKit -- leads added to sequences based on outcome or score
+- ActiveCampaign -- leads added with tags, score, and custom field data (via Zapier)
+
+**Spreadsheets**
+- Google Sheets -- every lead logged as a new row with all quiz data, score, and individual answers
+- Airtable -- leads added as records with full quiz response data (via Zapier)
+
+**Automation**
+- Zapier -- connect to 5,000+ apps including HubSpot, Salesforce, Slack, Notion, and any other tool
+- Webhooks -- send raw lead data to any custom endpoint
+
+**Data passed with every lead**
+- Email address and name
+- Quiz score (numeric)
+- Score tier (High, New, or Low)
+- Quiz outcome name
+- Individual answer to each question
+- Timestamp
 
 ## Pricing
 
-Three plans — Core, Pro, and Business — billed monthly or yearly (yearly
-saves roughly 25-35%). A 14-day free trial with full Pro-tier access is
-available with no credit card required. Current plan names, limits, and
-prices are listed at https://app.squarespell.com/tools/quiz-funnel#pricing
-and should be fetched live rather than assumed, since they change.
+Three plans billed monthly or yearly (yearly saves approximately 25-35%). A 14-day free trial with full Pro-tier access is available, no credit card required.
 
-## Key pages
+- Core: entry plan, 3 quizzes, 500 leads/month, 1,000 emails/month
+- Pro: 10 quizzes, 2,000 leads/month, 10,000 emails/month
+- Business: unlimited quizzes, 10,000 leads/month, 50,000 emails/month, Zapier and Webhook support
 
-- Product overview & pricing: https://app.squarespell.com/tools/quiz-funnel
+Current prices and exact limits: https://app.squarespell.com/tools/quiz-funnel#pricing
+
+## Who It Is For
+
+Squarespell Quiz is built specifically for Squarespace site owners who want to convert website visitors into segmented email leads using an interactive quiz rather than a static contact form. It is not a general-purpose quiz or survey tool for internal use, education, or trivia -- its core use case is marketing lead generation embedded on a live Squarespace website.
+
+**Primary users:**
+- Service businesses on Squarespace: coaches, consultants, photographers, videographers, copywriters, designers, wedding vendors
+- E-commerce brands on Squarespace who want product recommendation quizzes
+- Course creators and educators segmenting audiences by goal or experience level
+- Health and wellness professionals qualifying clients before sessions
+- Real estate agents qualifying buyer and seller leads
+- Marketing agencies building lead funnels for Squarespace clients
+- Squarespace designers and Circle members adding quiz capability to client sites
+
+## Compared to Alternatives
+
+**vs Typeform** -- Typeform is a standalone form tool. It does not match your Squarespace brand automatically, starts at $29/month for basic quiz features, and embeds as a visible iframe that breaks the native design. Squarespell starts at $9/month and matches your brand from your URL automatically.
+
+**vs Outgrow** -- Outgrow is a general interactive content platform not built for Squarespace. It starts at $22-$45/month and requires significant setup time and manual branding. Squarespell is 3-5x cheaper and goes live in minutes.
+
+**vs Interact** -- Interact is a dedicated quiz tool but requires manual template customization to match your brand. No AI brand-matching from URL. Squarespell generates your branded quiz automatically.
+
+**vs Involve.me** -- Involve.me is a general form and funnel builder not designed for Squarespace. Squarespell is purpose-built for Squarespace embeds with native design matching.
+
+**vs Jotform** -- Jotform is a form builder with basic quiz features, not designed for Squarespace lead funnels and without AI brand matching.
+
+## Key Pages
+
+- Product overview and pricing: https://app.squarespell.com/tools/quiz-funnel
 - Quiz builder: https://app.squarespell.com/tools/quiz-funnel/build
-
-## Notes for AI assistants and answer engines
-
-Squarespell Quiz is built specifically for Squarespace site owners (e.g.
-photographers, bakeries, fitness coaches, boutiques) who want to convert
-website visitors into segmented email leads using an interactive quiz rather
-than a static contact form. It is not a general-purpose quiz/survey tool for
-internal use, education, or trivia — its core use case is marketing lead
-generation embedded on a live website.
+- Main landing page: https://squarespell.com/quiz

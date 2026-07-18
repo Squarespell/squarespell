@@ -27,16 +27,16 @@
 }
 .sq-fl-sub {
   font-size: 17px; color: #6b7280; font-weight: 400;
-  margin: 0 auto 36px; line-height: 1.6; max-width: 520px;
+  margin: 0 auto 48px; line-height: 1.6; max-width: 520px;
 }
 
 /* Tabs */
 .sq-fl-tabs {
-  display: flex; justify-content: center; gap: 8px;
-  flex-wrap: wrap; margin-bottom: 20px;
+  display: flex; justify-content: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 28px;
 }
 .sq-fl-tab {
-  padding: 7px 18px; border-radius: 100px;
+  padding: 9px 22px; border-radius: 100px;
   border: 1.5px solid #e8ecf0; background: white;
   color: #6b7280; font-size: 13px; font-weight: 500;
   cursor: pointer; transition: all 0.2s; outline: none;
@@ -69,10 +69,13 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
 }
 
-/* Canvas — taller so all rows fit */
-.sq-fl-canvas { height: 420px; overflow: hidden; position: relative; }
+/* Canvas */
+.sq-fl-canvas {
+  height: 500px !important; min-height: 500px !important; max-height: 500px !important;
+  overflow: hidden !important; position: relative !important;
+}
 .sq-fl-panel {
-  position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  position: absolute !important; inset: 0; opacity: 0; pointer-events: none;
   transition: opacity 0.3s ease; display: flex;
 }
 .sq-fl-panel.sq-on { opacity: 1; pointer-events: auto; }
@@ -103,55 +106,59 @@
 .sq-qtxt { font-size: 14px !important; font-weight: 600; color: #111827; line-height: 1.3 !important; display: block; }
 .sq-qsub { font-size: 10px !important; color: #9ca3af; margin-top: 2px; display: block; }
 .sq-pts { font-size: 9px !important; color: #9ca3af; background: #f9fafb; padding: 2px 7px; border-radius: 4px; border: 1px solid #e5e7eb; white-space: nowrap; flex-shrink: 0; }
+/* Media capability indicators on questions */
+.sq-step-row { display: flex !important; align-items: center !important; justify-content: space-between !important; margin-bottom: 3px !important; }
+.sq-media-row { display: flex !important; gap: 4px !important; flex-shrink: 0 !important; }
+.sq-media-pill { display: inline-flex !important; align-items: center !important; gap: 3px !important; font-size: 8px !important; font-weight: 500 !important; color: #0f7377 !important; background: rgba(15,115,119,0.09) !important; padding: 2px 6px 2px 5px !important; border-radius: 100px !important; white-space: nowrap !important; line-height: 1 !important; }
 .sq-ltr { width: 20px; height: 20px; border-radius: 50%; background: #f3f4f6; color: #6b7280; font-size: 9px !important; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .sq-rsel .sq-ltr { background: #0f7377; color: white; }
 .sq-rsel { border-color: #0f7377 !important; background: rgba(15,115,119,0.04) !important; }
 
 /* ══ LAYOUT 1 – LIST ══ */
-.sq-l1 { display: flex; flex-direction: column; flex: 1; background: white; }
-.sq-l1-top { padding: 14px 22px 12px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
-.sq-l1-rows { flex: 1; overflow: hidden; padding: 8px 16px 10px; display: flex; flex-direction: column; gap: 6px; }
-.sq-l1-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; border: 1.5px solid #e5e7eb; }
-.sq-l1-th { width: 38px; height: 38px; border-radius: 5px; flex-shrink: 0; }
-.sq-l1-lbl { flex: 1; font-size: 12px !important; color: #374151; text-align: left; }
+.sq-l1 { display: flex !important; flex-direction: column !important; flex: 1 !important; background: white !important; height: 100% !important; }
+.sq-l1-top { padding: 14px 22px 12px !important; border-bottom: 1px solid #f3f4f6 !important; flex: 0 0 auto !important; }
+.sq-l1-rows { flex: 1 !important; overflow: hidden !important; padding: 8px 16px 10px !important; display: flex !important; flex-direction: column !important; gap: 6px !important; }
+.sq-l1-row { display: flex !important; align-items: center !important; gap: 10px !important; padding: 7px 10px !important; border-radius: 8px !important; border: 1.5px solid #e5e7eb !important; flex-shrink: 0 !important; }
+.sq-l1-th { width: 38px !important; height: 38px !important; min-height: 38px !important; max-height: 38px !important; border-radius: 5px !important; flex: 0 0 38px !important; }
+.sq-l1-lbl { flex: 1 !important; font-size: 12px !important; color: #374151 !important; text-align: left !important; }
 
 /* ══ LAYOUT 2 – GRID ══ */
-.sq-l2 { display: flex; flex-direction: column; flex: 1; background: white; }
-.sq-l2-top { padding: 14px 22px 10px; flex-shrink: 0; }
-.sq-l2-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; padding: 0 16px 16px; }
-.sq-l2-cell { display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; border: 1.5px solid #e5e7eb; }
-.sq-l2-img { flex: 1; }
-.sq-l2-lbl { padding: 7px 8px; font-size: 10px !important; font-weight: 500; color: #374151; text-align: center; background: white; border-top: 1px solid #f3f4f6; }
+.sq-l2 { display: flex !important; flex-direction: column !important; flex: 1 !important; background: white !important; height: 100% !important; }
+.sq-l2-top { padding: 14px 22px 10px !important; flex: 0 0 auto !important; }
+.sq-l2-grid { flex: 1 !important; display: grid !important; grid-template-columns: 1fr 1fr !important; grid-template-rows: 1fr 1fr !important; gap: 8px !important; padding: 0 16px 16px !important; }
+.sq-l2-cell { display: flex !important; flex-direction: column !important; border-radius: 10px !important; overflow: hidden !important; border: 1.5px solid #e5e7eb !important; }
+.sq-l2-img { flex: 1 !important; min-height: 60px !important; }
+.sq-l2-lbl { padding: 7px 8px !important; font-size: 10px !important; font-weight: 500 !important; color: #374151 !important; text-align: center !important; background: white !important; border-top: 1px solid #f3f4f6 !important; flex: 0 0 auto !important; }
 
 /* ══ LAYOUT 3 – THUMBNAILS ══ */
-.sq-l3 { display: flex; flex-direction: column; flex: 1; background: white; }
-.sq-l3-hero { height: 80px; flex-shrink: 0; }
-.sq-l3-q { padding: 10px 22px 8px; font-size: 13px !important; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
-.sq-l3-rows { flex: 1; overflow: hidden; padding: 8px 16px; display: flex; flex-direction: column; gap: 6px; }
-.sq-l3-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid #e5e7eb; }
-.sq-l3-th { width: 46px; height: 46px; border-radius: 6px; flex-shrink: 0; }
-.sq-l3-lbl { flex: 1; font-size: 11px !important; color: #374151; text-align: left; }
+.sq-l3 { display: flex !important; flex-direction: column !important; flex: 1 !important; background: white !important; height: 100% !important; }
+.sq-l3-hero { flex: 0 0 100px !important; height: 100px !important; min-height: 100px !important; max-height: 100px !important; overflow: hidden !important; }
+.sq-l3-q { padding: 10px 22px 8px !important; font-size: 13px !important; font-weight: 600 !important; color: #111827 !important; border-bottom: 1px solid #f3f4f6 !important; flex: 0 0 auto !important; }
+.sq-l3-rows { flex: 1 !important; overflow: hidden !important; padding: 8px 16px !important; display: flex !important; flex-direction: column !important; gap: 6px !important; }
+.sq-l3-row { display: flex !important; align-items: center !important; gap: 10px !important; padding: 6px 8px !important; border-radius: 8px !important; border: 1.5px solid #e5e7eb !important; flex-shrink: 0 !important; }
+.sq-l3-th { width: 46px !important; height: 46px !important; min-height: 46px !important; max-height: 46px !important; border-radius: 6px !important; flex: 0 0 46px !important; }
+.sq-l3-lbl { flex: 1 !important; font-size: 11px !important; color: #374151 !important; text-align: left !important; }
 
 /* ══ LAYOUT 4 – FULL BACKGROUND ══ */
-.sq-l4 { display: flex; flex-direction: column; flex: 1; background: white; }
-.sq-l4-top { padding: 14px 22px 10px; flex-shrink: 0; }
-.sq-l4-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; padding: 0 14px 14px; }
-.sq-l4-cell { border-radius: 10px; overflow: hidden; position: relative; }
-.sq-l4-bg { position: absolute; inset: 0; }
-.sq-l4-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 55%); }
-.sq-l4-lbl { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 8px 7px; display: flex; align-items: center; gap: 5px; }
-.sq-l4-badge { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.45); color: white; font-size: 8px !important; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.sq-l4-txt { font-size: 9px !important; color: white; font-weight: 500; }
+.sq-l4 { display: flex !important; flex-direction: column !important; flex: 1 !important; background: white !important; height: 100% !important; }
+.sq-l4-top { padding: 14px 22px 10px !important; flex: 0 0 auto !important; }
+.sq-l4-grid { flex: 1 !important; display: grid !important; grid-template-columns: 1fr 1fr !important; grid-template-rows: 1fr 1fr !important; gap: 8px !important; padding: 0 14px 14px !important; }
+.sq-l4-cell { border-radius: 10px !important; overflow: hidden !important; position: relative !important; min-height: 80px !important; }
+.sq-l4-bg { position: absolute !important; inset: 0 !important; }
+.sq-l4-grad { position: absolute !important; inset: 0 !important; background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 55%) !important; }
+.sq-l4-lbl { position: absolute !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 8px 8px 7px !important; display: flex !important; align-items: center !important; gap: 5px !important; }
+.sq-l4-badge { width: 16px !important; height: 16px !important; min-height: 16px !important; border-radius: 50% !important; background: rgba(255,255,255,0.2) !important; border: 1px solid rgba(255,255,255,0.45) !important; color: white !important; font-size: 8px !important; font-weight: 700 !important; display: flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 16px !important; }
+.sq-l4-txt { font-size: 9px !important; color: white !important; font-weight: 500 !important; }
 
 /* ══ LAYOUT 5 – SPLIT ══ */
-.sq-l5 { display: flex; flex: 1; background: white; }
-.sq-l5-img { width: 42%; flex-shrink: 0; }
-.sq-l5-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.sq-l5-q { padding: 16px 16px 12px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
-.sq-l5-rows { flex: 1; overflow: hidden; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
-.sq-l5-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; border: 1.5px solid #e5e7eb; }
-.sq-l5-th { width: 32px; height: 32px; border-radius: 5px; flex-shrink: 0; }
-.sq-l5-lbl { flex: 1; font-size: 10px !important; color: #374151; text-align: left; line-height: 1.35 !important; }
+.sq-l5 { display: flex !important; flex: 1 !important; background: white !important; height: 100% !important; }
+.sq-l5-img { width: 42% !important; flex: 0 0 42% !important; max-width: 42% !important; overflow: hidden !important; }
+.sq-l5-right { flex: 1 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+.sq-l5-q { padding: 16px 16px 12px !important; border-bottom: 1px solid #f3f4f6 !important; flex: 0 0 auto !important; }
+.sq-l5-rows { flex: 1 !important; overflow: hidden !important; padding: 8px 12px !important; display: flex !important; flex-direction: column !important; gap: 6px !important; }
+.sq-l5-row { display: flex !important; align-items: center !important; gap: 8px !important; padding: 7px 8px !important; border-radius: 8px !important; border: 1.5px solid #e5e7eb !important; flex-shrink: 0 !important; }
+.sq-l5-th { width: 32px !important; height: 32px !important; min-height: 32px !important; max-height: 32px !important; border-radius: 5px !important; flex: 0 0 32px !important; }
+.sq-l5-lbl { flex: 1 !important; font-size: 10px !important; color: #374151 !important; text-align: left !important; line-height: 1.35 !important; }
 
 /* Scroll reveal */
 .sq-fl-rv { opacity: 0; transform: translateY(36px); transition: opacity 0.65s ease, transform 0.65s ease; }
@@ -160,9 +167,9 @@
 
 @media (max-width: 640px) {
   .sq-fl { padding: 64px 16px; }
-  .sq-fl-canvas { height: 380px; }
-  .sq-fl-tab { font-size: 12px; padding: 6px 14px; }
-  .sq-l5-img { width: 38%; }
+  .sq-fl-canvas { height: 440px !important; min-height: 440px !important; max-height: 440px !important; }
+  .sq-fl-tab { font-size: 12px !important; padding: 6px 14px !important; }
+  .sq-l5-img { width: 38% !important; flex: 0 0 38% !important; max-width: 38% !important; }
 }
 </style>
 
@@ -203,7 +210,13 @@
             <div class="sq-l1">
               <div class="sq-l1-top">
                 <div class="sq-prog"><div class="sq-prog-fill"></div></div>
-                <span class="sq-step">Question 01 of 5</span>
+                <div class="sq-step-row">
+                  <span class="sq-step">Question 01 of 5</span>
+                  <div class="sq-media-row">
+                    <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Image</span>
+                    <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Video</span>
+                  </div>
+                </div>
                 <span class="sq-qtxt">Which room feels most like home to you?</span>
                 <span class="sq-qsub">Where you spend the most time reveals your true design style.</span>
               </div>
@@ -241,7 +254,13 @@
             <div class="sq-l2">
               <div class="sq-l2-top">
                 <div class="sq-prog"><div class="sq-prog-fill"></div></div>
-                <span class="sq-step">Question 01 of 5</span>
+                <div class="sq-step-row">
+                  <span class="sq-step">Question 01 of 5</span>
+                  <div class="sq-media-row">
+                    <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Image</span>
+                    <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Video</span>
+                  </div>
+                </div>
                 <span class="sq-qtxt">Which room feels most like home to you?</span>
               </div>
               <div class="sq-l2-grid">
@@ -268,7 +287,12 @@
           <!-- THUMBNAILS -->
           <div class="sq-fl-panel" id="sq-p3">
             <div class="sq-l3">
-              <div class="sq-l3-hero sq-ima"></div>
+              <div class="sq-l3-hero sq-ima" style="position:relative !important;">
+                <div style="position:absolute !important;top:6px !important;right:8px !important;display:flex !important;gap:4px !important;">
+                  <span class="sq-media-pill" style="background:rgba(255,255,255,0.85) !important;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Image</span>
+                  <span class="sq-media-pill" style="background:rgba(255,255,255,0.85) !important;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Video</span>
+                </div>
+              </div>
               <div class="sq-l3-q">Which room feels most like home to you?</div>
               <div class="sq-l3-rows">
                 <div class="sq-l3-row sq-rsel">
@@ -304,7 +328,13 @@
             <div class="sq-l4">
               <div class="sq-l4-top">
                 <div class="sq-prog"><div class="sq-prog-fill"></div></div>
-                <span class="sq-step">Question 01 of 5</span>
+                <div class="sq-step-row">
+                  <span class="sq-step">Question 01 of 5</span>
+                  <div class="sq-media-row">
+                    <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Image</span>
+                    <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Video</span>
+                  </div>
+                </div>
                 <span class="sq-qtxt">Which room feels most like home to you?</span>
               </div>
               <div class="sq-l4-grid">
@@ -351,7 +381,13 @@
               <div class="sq-l5-right">
                 <div class="sq-l5-q">
                   <div class="sq-prog"><div class="sq-prog-fill"></div></div>
-                  <span class="sq-step">Question 01 of 5</span>
+                  <div class="sq-step-row">
+                    <span class="sq-step">Question 01 of 5</span>
+                    <div class="sq-media-row">
+                      <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Image</span>
+                      <span class="sq-media-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Video</span>
+                    </div>
+                  </div>
                   <span class="sq-qtxt">Which room feels most like home to you?</span>
                 </div>
                 <div class="sq-l5-rows">
