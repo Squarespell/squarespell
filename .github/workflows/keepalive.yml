@@ -1,0 +1,16 @@
+name: Keep Render Backend Alive
+
+on:
+  schedule:
+    # Ping every 10 minutes to prevent Render cold starts
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render backend
+        run: |
+          curl -sf https://squarespell-api.onrender.com/api/keepalive \
+            -o /dev/null -w "Status: %{http_code}\n" || echo "Ping failed (backend may be starting)"
