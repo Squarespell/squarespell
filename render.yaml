@@ -72,6 +72,8 @@ services:
         sync: false
       - key: BACKEND_URL
         sync: false
+      - key: RENDER_EXTERNAL_URL
+        value: https://squarespell-api.onrender.com
     healthCheckPath: /health
     autoDeploy: true
 
@@ -214,27 +216,24 @@ services:
       - key: CRON_SECRET
         sync: false
 
-  # Cron job: keep-alive ping every 10 minutes to prevent cold starts
+  # Cron job: keep-alive ping every 10 minutes to prevent cold starts.
+  # Uses no build step — pure node built-in https, no npm install needed.
   - type: cron
     name: squarespell-keep-alive
     runtime: node
     region: oregon
     plan: starter
     schedule: "*/10 * * * *"
-    rootDir: backend
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: echo "no build needed"
     startCommand: >
       node -e "
         const https = require('https');
-        const url = process.env.BACKEND_URL || 'https://squarespell-api.onrender.com';
+        const url = 'https://squarespell-api.onrender.com';
         const req = https.request(url + '/health', { method: 'GET' }, (res) => {
           let body = '';
           res.on('data', c => body += c);
-          res.on('end', () => { console.log('Health:', res.statusCode); process.exit(0); });
+          res.on('end', () => { console.log('Keep-alive OK:', res.statusCode, body); process.exit(0); });
         });
-        req.on('error', (e) => { console.error(e); process.exit(1); });
+        req.on('error', (e) => { console.error('Keep-alive FAILED:', e.message); process.exit(1); });
         req.end();
       "
-    envVars:
-      - key: BACKEND_URL
-        sync: false
