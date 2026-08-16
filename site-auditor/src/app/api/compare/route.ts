@@ -8,7 +8,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { runComparison } from '@/lib/audit/compare';
+import { runComparison, MAX_COMPETITORS } from '@/lib/audit/compare';
 import { normaliseInput, prettyHost } from '@/lib/audit/url';
 import {
   checkRateLimit,
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     ? raw
         .filter((u): u is string => typeof u === 'string' && u.trim().length > 0 && u.length < 2000)
         .map((u) => u.trim())
-        .slice(0, 3)
+        .slice(0, MAX_COMPETITORS)
     : [];
   if (!competitors.length) {
     return Response.json({ error: 'Add at least one competitor address.' }, { status: 400 });
@@ -72,7 +72,9 @@ export async function POST(req: NextRequest) {
   // Leave headroom inside the function limit for the crawl to wind down and the
   // result to be written.
   const deadline = Date.now() + 46_000;
-  const comparison = await runComparison(report, targets, deadline);
+  // Goal-aware ranking only (Part 13 of the competitor-intelligence brief):
+  // never changes what a dimension says, only which ones surface in `top`.
+  const comparison = await runComparison(report, targets, deadline, report.businessContext?.goal);
 
   await saveComparison(token, comparison);
   await trackEvent(
@@ -82,6 +84,7 @@ export async function POST(req: NextRequest) {
       competitors: comparison.competitors.length,
       read: comparison.competitors.filter((c) => c.ok).length,
       yours: comparison.you.overall,
+      intelligenceDimensions: comparison.intelligence?.all.length ?? 0,
     },
     token,
     requesterHash

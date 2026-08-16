@@ -718,10 +718,27 @@ export function ReportDocument({ report }: { report: AuditReport }) {
   }
 
   if (comparison && comparison.competitors.some((c) => c.ok)) {
+    // Competitive snapshot (Part 23 of the competitor-intelligence brief):
+    // three short, evidence-only lines from the same deterministic engine
+    // Compare.tsx reads, not a second competitor report. Absent entirely
+    // when there was not enough crawled data on both sides to build it
+    // (`intelligence` is undefined), which the primary comparison table
+    // below still renders regardless.
+    const intel = comparison.intelligence;
+    const snapshotLines: Array<{ label: string; detail: string }> = [];
+    if (intel?.all[0]) snapshotLines.push({ label: 'Strongest difference', detail: intel.all[0].detail });
+    if (intel?.gaps[0]) snapshotLines.push({ label: 'Biggest gap', detail: intel.gaps[0].detail });
+    if (intel?.opportunities[0]) snapshotLines.push({ label: 'Biggest opportunity', detail: intel.opportunities[0].detail });
+
     analysis.push({
       kind: 'atom',
       key: 'comparison',
-      height: BLOCK_CHROME + NOTE_LINE * 2 + (comparison.competitors.length + 1) * TABLE_ROW + NOTE_LINE * 2,
+      height:
+        BLOCK_CHROME +
+        NOTE_LINE * 2 +
+        (comparison.competitors.length + 1) * TABLE_ROW +
+        NOTE_LINE * 2 +
+        snapshotLines.length * NOTE_LINE * 2,
       node: (first) => (
         <View style={first ? undefined : s.rule} wrap={false}>
           <Text style={s.sectionTitle}>How you compare</Text>
@@ -748,6 +765,17 @@ export function ReportDocument({ report }: { report: AuditReport }) {
             ))}
           </View>
           <Text style={[s.sectionNote, { marginTop: 8 }]}>{comparison.verdict}</Text>
+          {snapshotLines.length > 0 && (
+            <View style={{ marginTop: 10 }}>
+              <Text style={s.factK}>Competitive snapshot</Text>
+              {snapshotLines.map((l) => (
+                <Text key={l.label} style={[s.sectionNote, { marginTop: 4 }]}>
+                  <Text style={{ color: INK_0 }}>{l.label}: </Text>
+                  {l.detail}
+                </Text>
+              ))}
+            </View>
+          )}
         </View>
       ),
     });

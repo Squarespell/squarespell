@@ -21,7 +21,8 @@
 
 import { runAudit, AuditError, type AuditConfig } from './pipeline';
 import { prettyHost, normaliseInput } from './url';
-import { CATEGORIES, type AuditReport, type CategoryId } from './types';
+import { CATEGORIES, type AuditReport, type CategoryId, type UserGoal } from './types';
+import type { PageType } from './pagetype';
 
 /** Categories that mean the same thing on any platform. */
 const COMPARABLE: CategoryId[] = ['tech', 'onpage', 'perf', 'aeo', 'conv', 'schema', 'a11y', 'sec', 'mobile', 'social'];
@@ -63,6 +64,320 @@ export interface Comparison {
   competitors: CompetitorScore[];
   /** One sentence on where this leaves you. */
   verdict: string;
+  /**
+   * Competitive Intelligence Engine output (see `buildCompetitiveIntelligence`
+   * below). Optional because a comparison saved before this shipped, or one
+   * where every competitor was unreadable, has nothing to build it from.
+   */
+  intelligence?: CompetitiveIntelligence;
+}
+
+/* ------------------------------------------------------------------ *
+ * Competitive Intelligence Engine
+ *
+ * Deliberately not a second crawl, not a second extractor, not a second AI
+ * call. `runComparison` above already runs the full `runAudit` pipeline
+ * against each competitor (through the same hardened `safeFetch`/crawler
+ * every primary audit uses, just with a smaller page budget), which already
+ * produces `understanding`, `findings` and `faq` for them. This section only
+ * reads what that pipeline already computed and lines it up against yours.
+ *
+ * Every dimension here is evidence based, in the sense Part 14 of the brief
+ * means it: presence or absence of something actually crawled, never a
+ * claim about traffic, rankings, conversions or revenue, which this tool has
+ * no data to support.
+ * ------------------------------------------------------------------ */
+
+export type CompetitiveVerdict =
+  | 'ahead'
+  | 'behind'
+  | 'competitor_advantage'
+  | 'open_opportunity'
+  | 'no_clear_difference';
+
+export interface CompetitiveDimension {
+  /** Stable id, e.g. `trust-testimonials`, `pages-service`. Not shown to the reader. */
+  key: string;
+  label: string;
+  verdict: CompetitiveVerdict;
+  /** Plain-English, evidence-only sentence. Never a number invented for effect. */
+  detail: string;
+  /** Whether `businessContext.goal` makes this dimension more relevant right now. */
+  goalRelevant: boolean;
+  /**
+   * Ranking weight only, never rendered. Bigger differences and open ground
+   * rank higher; a fully tied dimension ranks lowest so `top` is never
+   * padded with "no clear difference" filler.
+   */
+  weight: number;
+}
+
+export interface CompetitiveIntelligence {
+  /** Hosts that had enough crawled pages to be compared at all. */
+  comparedAgainst: string[];
+  /** Every computed dimension, most relevant first. */
+  all: CompetitiveDimension[];
+  /** The top 5 of `all` (Part 16 of the brief): default view, before "view all". */
+  top: CompetitiveDimension[];
+  strengths: CompetitiveDimension[];
+  gaps: CompetitiveDimension[];
+  opportunities: CompetitiveDimension[];
+  /** States crawl coverage on both sides plainly, so the comparison is never presented as more complete than it is. */
+  coverageNote: string;
+}
+
+/** Same goal-relevance principle as `opportunity.ts` (`GOAL_RELEVANT_CATEGORIES`), applied to dimension keys instead of finding categories. Ranking only, never changes a verdict. */
+const GOAL_RELEVANT_DIMENSIONS: Record<UserGoal, string[]> = {
+  get_more_customers: ['trust-phone', 'trust-testimonials', 'trust-credentials', 'pages-contact'],
+  get_more_leads: ['trust-phone', 'trust-testimonials', 'pages-contact', 'category-conv'],
+  get_more_sales: ['services', 'pages-product', 'trust-testimonials', 'category-conv'],
+  get_more_bookings: ['trust-phone', 'trust-testimonials', 'pages-service', 'category-conv'],
+  get_more_traffic: ['category-aeo', 'category-onpage', 'faq-coverage'],
+  improve_website: ['category-tech', 'category-perf', 'category-a11y'],
+  look_more_professional: ['trust-credentials', 'trust-testimonials', 'category-onpage'],
+  beat_competitors: ['category-aeo', 'faq-coverage', 'services'],
+  improve_ai_visibility: ['faq-coverage', 'category-aeo', 'category-schema'],
+  improve_performance: ['category-perf'],
+  not_sure: [],
+};
+
+/** Checks (Finding ids) used as binary trust signals. A finding with this id means the signal is ABSENT: the check exists specifically to flag its absence (see checks/conv.ts). */
+const TRUST_CHECKS: Array<{ key: string; id: string; label: string }> = [
+  { key: 'trust-phone', id: 'CONV-001', label: 'a visible phone number' },
+  { key: 'trust-testimonials', id: 'CONV-040', label: 'testimonials, reviews or client proof' },
+  { key: 'trust-credentials', id: 'CONV-042', label: 'credentials, guarantees or trust markers' },
+];
+
+const IMPORTANT_PAGE_TYPES: Array<{ key: string; type: PageType; label: string }> = [
+  { key: 'pages-service', type: 'service', label: 'a dedicated service page' },
+  { key: 'pages-product', type: 'product', label: 'dedicated product pages' },
+  { key: 'pages-contact', type: 'contact', label: 'a dedicated contact page' },
+  { key: 'pages-about', type: 'about', label: 'a dedicated about page' },
+];
+
+function hasFinding(report: AuditReport, checkId: string): boolean {
+  return report.findings.some((f) => f.id === checkId);
+}
+
+function binaryDimension(
+  key: string,
+  label: string,
+  yourHas: boolean,
+  theirHas: boolean,
+  goal: UserGoal | undefined
+): CompetitiveDimension {
+  const goalRelevant = Boolean(goal && GOAL_RELEVANT_DIMENSIONS[goal]?.includes(key));
+  if (yourHas === theirHas) {
+    return yourHas
+      ? {
+          key,
+          label,
+          verdict: 'no_clear_difference',
+          detail: `Both your site and this competitor have ${label}.`,
+          goalRelevant,
+          weight: 1,
+        }
+      : {
+          key,
+          label,
+          verdict: 'open_opportunity',
+          detail: `Neither your site nor this competitor appears to have ${label}. Adding it first could be an advantage nobody else has claimed.`,
+          goalRelevant,
+          weight: 3,
+        };
+  }
+  return yourHas
+    ? {
+        key,
+        label,
+        verdict: 'ahead',
+        detail: `Your site has ${label}; this competitor does not appear to.`,
+        goalRelevant,
+        weight: 4,
+      }
+    : {
+        key,
+        label,
+        verdict: 'competitor_advantage',
+        detail: `This competitor has ${label}; your site does not appear to.`,
+        goalRelevant,
+        weight: 4,
+      };
+}
+
+const COUNT_GAP_FLOOR = 2;
+
+function countDimension(
+  key: string,
+  label: string,
+  yourCount: number,
+  theirCount: number,
+  noun: string,
+  goal: UserGoal | undefined
+): CompetitiveDimension {
+  const goalRelevant = Boolean(goal && GOAL_RELEVANT_DIMENSIONS[goal]?.includes(key));
+  const gap = yourCount - theirCount;
+  if (Math.abs(gap) < COUNT_GAP_FLOOR) {
+    return {
+      key,
+      label,
+      verdict: 'no_clear_difference',
+      detail: `You have ${yourCount} ${noun}, close to this competitor's ${theirCount}.`,
+      goalRelevant,
+      weight: 1,
+    };
+  }
+  return gap > 0
+    ? {
+        key,
+        label,
+        verdict: 'ahead',
+        detail: `You have ${yourCount} ${noun}, against ${theirCount} for this competitor.`,
+        goalRelevant,
+        weight: Math.min(5, 2 + gap),
+      }
+    : {
+        key,
+        label,
+        verdict: 'behind',
+        detail: `This competitor has ${theirCount} ${noun}, against ${yourCount} for you.`,
+        goalRelevant,
+        weight: Math.min(5, 2 - gap),
+      };
+}
+
+/**
+ * Builds the competitive intelligence for one already-audited competitor.
+ * `theirs` is a full `AuditReport`, the direct result of `runAudit` inside
+ * `runComparison`, so nothing here re-crawls or re-extracts anything.
+ */
+function dimensionsFor(
+  youCategories: Partial<Record<CategoryId, number>>,
+  report: AuditReport,
+  theirs: AuditReport,
+  scored: CompetitorScore,
+  goal: UserGoal | undefined
+): CompetitiveDimension[] {
+  const dims: CompetitiveDimension[] = [];
+
+  /* ---- reuse the comparable category scores compare.ts already computed,
+     keyed by CategoryId (not the display label `aheadOn`/`behindOn` already
+     collapsed to) so goal relevance can actually match against it. ---- */
+  for (const id of COMPARABLE) {
+    const mine = youCategories[id];
+    const theirScore = scored.categories[id];
+    if (mine === undefined || theirScore === undefined) continue;
+    const label = CATEGORIES[id].label;
+    const key = `category-${id}`;
+    const goalRelevant = Boolean(goal && GOAL_RELEVANT_DIMENSIONS[goal]?.includes(key));
+    if (theirScore - mine >= MEANINGFUL_GAP) {
+      dims.push({
+        key,
+        label,
+        verdict: 'behind',
+        detail: `This competitor scores meaningfully higher than you on ${label.toLowerCase()}.`,
+        goalRelevant,
+        weight: 4,
+      });
+    } else if (mine - theirScore >= MEANINGFUL_GAP) {
+      dims.push({
+        key,
+        label,
+        verdict: 'ahead',
+        detail: `You score meaningfully higher than this competitor on ${label.toLowerCase()}.`,
+        goalRelevant,
+        weight: 4,
+      });
+    }
+  }
+
+  /* ---- trust signals (conv.ts checks, already comparable across platforms) ---- */
+  for (const t of TRUST_CHECKS) {
+    dims.push(binaryDimension(t.key, t.label, !hasFinding(report, t.id), !hasFinding(theirs, t.id), goal));
+  }
+
+  /* ---- important page coverage (understanding.ts) ---- */
+  if (report.understanding && theirs.understanding) {
+    for (const p of IMPORTANT_PAGE_TYPES) {
+      const yourHas = (report.understanding.pages.byType[p.type] ?? 0) > 0;
+      const theirHas = (theirs.understanding.pages.byType[p.type] ?? 0) > 0;
+      dims.push(binaryDimension(p.key, p.label, yourHas, theirHas, goal));
+    }
+
+    /* ---- named services, a coverage count rather than a presence check ---- */
+    dims.push(
+      countDimension(
+        'services',
+        'Named services',
+        report.understanding.services.length,
+        theirs.understanding.services.length,
+        'named services',
+        goal
+      )
+    );
+  }
+
+  /* ---- customer-question coverage (aeo/gaps.ts), only when both sides ran it ---- */
+  if (report.faq?.ran && theirs.faq?.ran) {
+    dims.push(
+      countDimension(
+        'faq-coverage',
+        'Customer questions answered',
+        report.faq.answered.length,
+        theirs.faq.answered.length,
+        'customer questions answered on the site',
+        goal
+      )
+    );
+  }
+
+  return dims;
+}
+
+/**
+ * Combines dimensions across every competitor that could actually be read,
+ * ranks them, and splits strengths / gaps / opportunities the way Part 21 of
+ * the brief wants the report section to read. Returns `undefined` when no
+ * competitor produced a usable audit, so the caller never attaches an empty
+ * or misleading intelligence block.
+ */
+export function buildCompetitiveIntelligence(
+  report: AuditReport,
+  audited: Array<{ scored: CompetitorScore; theirs: AuditReport }>,
+  goal: UserGoal | undefined
+): CompetitiveIntelligence | undefined {
+  // A competitor read for only a page or two is not enough to compare
+  // understanding or trust signals against confidently, even though its
+  // category scores (already coverage-aware in comparableScore) are still
+  // meaningful. Below this floor, skip it entirely rather than presenting a
+  // thin read as equivalent to a real one (Part 9 of the brief).
+  const usable = audited.filter((a) => a.theirs.coverage.pagesCrawled >= 2);
+  if (!usable.length) return undefined;
+
+  const youCategories = comparableScore(report).categories;
+  const all = usable.flatMap((a) => dimensionsFor(youCategories, report, a.theirs, a.scored, goal));
+  if (!all.length) return undefined;
+
+  const ranked = [...all].sort((a, b) => {
+    const goalBoost = (b.goalRelevant ? 1 : 0) - (a.goalRelevant ? 1 : 0);
+    if (goalBoost !== 0) return goalBoost;
+    return b.weight - a.weight;
+  });
+
+  const yourPages = report.coverage.pagesCrawled;
+  const coverageNote = usable
+    .map((a) => `${a.theirs.host}: ${a.theirs.coverage.pagesCrawled} pages read, against ${yourPages} of yours`)
+    .join('. ');
+
+  return {
+    comparedAgainst: usable.map((a) => a.theirs.host),
+    all: ranked,
+    top: ranked.slice(0, 5),
+    strengths: ranked.filter((d) => d.verdict === 'ahead'),
+    gaps: ranked.filter((d) => d.verdict === 'behind' || d.verdict === 'competitor_advantage'),
+    opportunities: ranked.filter((d) => d.verdict === 'open_opportunity'),
+    coverageNote: coverageNote ? `${coverageNote}.` : '',
+  };
 }
 
 /**
@@ -96,15 +411,25 @@ function comparableScore(report: AuditReport): {
 
 const MEANINGFUL_GAP = 8;
 
+/**
+ * Hard cap on how many competitors any single comparison ever crawls
+ * (Part 26 of the competitor-intelligence brief: "no crawl explosion").
+ * Applies to both the score table below and the intelligence engine built
+ * from the same crawl, there is deliberately only ever one crawl per
+ * competitor no matter how many things read its result.
+ */
+export const MAX_COMPETITORS = 2;
+
 export async function runComparison(
   report: AuditReport,
   competitorUrls: string[],
-  deadline: number
+  deadline: number,
+  goal?: UserGoal
 ): Promise<Comparison> {
   const you = comparableScore(report);
 
   const results = await Promise.all(
-    competitorUrls.slice(0, 3).map(async (raw): Promise<CompetitorScore> => {
+    competitorUrls.slice(0, MAX_COMPETITORS).map(async (raw): Promise<{ scored: CompetitorScore; theirs: AuditReport | null }> => {
       const url = normaliseInput(raw) || raw;
       const host = prettyHost(url);
       const base: CompetitorScore = {
@@ -121,10 +446,17 @@ export async function runComparison(
 
       const remaining = deadline - Date.now();
       if (remaining < 8_000) {
-        return { ...base, error: 'We ran out of time before we could read this one.' };
+        return { scored: { ...base, error: 'We ran out of time before we could read this one.' }, theirs: null };
       }
 
       try {
+        // The one and only crawl of this competitor. Goes through
+        // `runAudit`, the exact same pipeline (and therefore the exact same
+        // `safeFetch` SSRF/redirect/DNS-rebinding protections) the primary
+        // audit uses, just budgeted smaller (COMPETITOR_CONFIG). Its full
+        // result, understanding, findings and all, feeds both the score
+        // table below and `buildCompetitiveIntelligence` (Part 6/26 of the
+        // brief: reuse the extraction, never crawl twice).
         const theirs = await runAudit(url, () => {}, {
           ...COMPETITOR_CONFIG,
           totalBudgetMs: Math.min(COMPETITOR_CONFIG.totalBudgetMs, remaining - 3_000),
@@ -142,16 +474,19 @@ export async function runComparison(
         }
 
         return {
-          ...base,
-          ok: true,
-          platform: theirs.squarespace.isSquarespace
-            ? `Squarespace ${theirs.squarespace.version}`
-            : 'Another platform',
-          overall: scored.overall,
-          categories: scored.categories,
-          pagesRead: theirs.coverage.pagesCrawled,
-          aheadOn,
-          behindOn,
+          scored: {
+            ...base,
+            ok: true,
+            platform: theirs.squarespace.isSquarespace
+              ? `Squarespace ${theirs.squarespace.version}`
+              : 'Another platform',
+            overall: scored.overall,
+            categories: scored.categories,
+            pagesRead: theirs.coverage.pagesCrawled,
+            aheadOn,
+            behindOn,
+          },
+          theirs,
         };
       } catch (e: any) {
         const message =
@@ -160,16 +495,26 @@ export async function runComparison(
               ? 'Their site refuses automated requests, which also blocks search and AI crawlers.'
               : e.message
             : 'We could not read this site.';
-        return { ...base, error: message };
+        return { scored: { ...base, error: message }, theirs: null };
       }
     })
+  );
+
+  const scoredResults = results.map((r) => r.scored);
+  // Part 5 of the brief: a competitor that failed must degrade gracefully,
+  // never take the primary report down with it. Every failure above is
+  // already caught inside the per-competitor promise, so this line can only
+  // ever filter, never throw.
+  const audited = results.filter(
+    (r): r is { scored: CompetitorScore; theirs: AuditReport } => r.theirs !== null
   );
 
   return {
     ranAt: new Date().toISOString(),
     you: { host: report.host, ...you },
-    competitors: results,
-    verdict: comparisonVerdict(you.overall, results),
+    competitors: scoredResults,
+    verdict: comparisonVerdict(you.overall, scoredResults),
+    intelligence: buildCompetitiveIntelligence(report, audited, goal),
   };
 }
 

@@ -31,7 +31,8 @@ import { buildWebsiteDoctor } from '../src/lib/audit/doctor';
 import type { AuditContext } from '../src/lib/audit/context';
 import { finding, fail } from '../src/lib/audit/context';
 import { applyNarrative, NARRATIVE } from '../src/lib/audit/narrative';
-import { comparisonVerdict } from '../src/lib/audit/compare';
+import { comparisonVerdict, buildCompetitiveIntelligence } from '../src/lib/audit/compare';
+import type { CompetitorScore } from '../src/lib/audit/compare';
 import type { CheckResult, PageData, AuditReport, Finding } from '../src/lib/audit/types';
 import { diffReports } from '../src/lib/audit/diff';
 
@@ -1083,6 +1084,142 @@ console.log('\nComparison verdict');
     { url: 'https://x', host: 'x', ok: false, platform: 'unknown', overall: 0, categories: {}, pagesRead: 0, aheadOn: [], behindOn: [], error: 'no' },
   ]);
   assert('says nothing was read rather than inventing a comparison', /could not read/.test(none), none);
+}
+
+/* ------------------------------------------------------------------ *
+ * Competitive Intelligence Engine (compare.ts).
+ *
+ * `buildCompetitiveIntelligence` is a pure function over already-crawled
+ * `AuditReport`s, no network involved, so the fixtures below are hand-built
+ * reports rather than live crawls. This exercises Part 24 of the
+ * competitor-intelligence brief as far as that is possible offline:
+ * coverage floor, graceful degrade, goal-aware ranking (order only, never
+ * verdicts), determinism, and the top/all relationship.
+ * ------------------------------------------------------------------ */
+
+console.log('\nCompetitive intelligence engine');
+{
+  const category = (id: string, score: number): any => ({
+    id,
+    label: { tech: 'Technical SEO', onpage: 'On-page SEO', perf: 'Performance', aeo: 'AI search readiness', conv: 'Conversion', schema: 'Structured data', a11y: 'Accessibility', sec: 'Security', mobile: 'Mobile', social: 'Social' }[id],
+    score,
+    weight: 1,
+    applicableChecks: 1,
+    criticalFailures: 0,
+    findingCount: 0,
+  });
+
+  const baseCategories = ['tech', 'onpage', 'perf', 'aeo', 'conv', 'schema', 'a11y', 'sec', 'mobile', 'social'].map((id) =>
+    category(id, 80)
+  );
+
+  function auditReport(overrides: any = {}): any {
+    return {
+      id: 'r1',
+      inputUrl: 'https://you.example',
+      finalUrl: 'https://you.example',
+      host: 'you.example',
+      siteName: 'You',
+      createdAt: new Date(0).toISOString(),
+      squarespace: { isSquarespace: true, confidence: 1, version: '7.1', versionConfidence: 1, signals: [], siteStatus: 'live', context: null, editor: { fluid: 1, classic: 0, ratio: 1 }, features: {} },
+      score: { overall: 80, grade: 'B', categories: baseCategories, gated: false },
+      findings: [],
+      strengths: [],
+      quickWins: [],
+      coverage: { pagesCrawled: 6, pagesDiscovered: 6, checksRun: 1, checksApplicable: 1, sitemapUrls: 0, imagesProbed: 0, assetsProbed: 0, durationMs: 0, aiUsed: false },
+      pageSummaries: [],
+      ...overrides,
+    };
+  }
+
+  const scoredFrom = (report: any, host: string): CompetitorScore => ({
+    url: `https://${host}`,
+    host,
+    ok: true,
+    platform: 'Another platform',
+    overall: 80,
+    categories: Object.fromEntries(report.score.categories.map((c: any) => [c.id, c.score])),
+    pagesRead: report.coverage.pagesCrawled,
+    aheadOn: [],
+    behindOn: [],
+  });
+
+  const you = auditReport({
+    understanding: {
+      services: [{ name: 'a', hasOwnPage: true }, { name: 'b', hasOwnPage: true }, { name: 'c', hasOwnPage: false }],
+      pages: { byType: { home: 1, service: 2, contact: 1, about: 1 } },
+    },
+    faq: { ran: true, answered: new Array(6).fill({}), gaps: [], partial: [], missing: [], opportunities: [], existingQuestionHeadings: 0, hasFaqSchema: false, profile: {} },
+  });
+
+  assert('no usable competitors produces no intelligence block', buildCompetitiveIntelligence(you, [], undefined) === undefined);
+
+  const thinCompetitor = auditReport({ host: 'thin.example', coverage: { ...you.coverage, pagesCrawled: 1 } });
+  assert(
+    'a competitor crawled below the coverage floor (Part 9) is excluded entirely',
+    buildCompetitiveIntelligence(you, [{ scored: scoredFrom(thinCompetitor, 'thin.example'), theirs: thinCompetitor }], undefined) === undefined
+  );
+
+  const bareCompetitor = auditReport({ host: 'bare.example' }); // no understanding, no faq
+  const bareIntel = buildCompetitiveIntelligence(you, [{ scored: scoredFrom(bareCompetitor, 'bare.example'), theirs: bareCompetitor }], undefined);
+  assert(
+    'a competitor with no understanding or faq still degrades gracefully rather than crashing',
+    bareIntel !== undefined
+  );
+
+  const richCompetitor = auditReport({
+    host: 'rich.example',
+    findings: [{ id: 'CONV-001', category: 'conv', severity: 'high', confidence: 'high', title: '', detail: '', evidence: [], affectedUrls: [], affectedCount: 0, applicableCount: 0 }],
+    understanding: {
+      services: [{ name: 'a', hasOwnPage: true }],
+      pages: { byType: { home: 1 } },
+    },
+    faq: { ran: true, answered: new Array(1).fill({}), gaps: [], partial: [], missing: [], opportunities: [], existingQuestionHeadings: 0, hasFaqSchema: false, profile: {} },
+  });
+  const audited = [{ scored: scoredFrom(richCompetitor, 'rich.example'), theirs: richCompetitor }];
+
+  const intel = buildCompetitiveIntelligence(you, audited, undefined);
+  assert('a usable competitor produces a populated intelligence block', Boolean(intel && intel.all.length > 0));
+  assert('comparedAgainst names the competitor host', intel?.comparedAgainst.includes('rich.example') === true);
+  assert('coverageNote states both page counts, never presented as equally complete', /rich\.example: 6 pages read, against 6 of yours/.test(intel?.coverageNote || ''));
+  assert('you having a phone number they lack shows as ahead, in observable language', intel?.all.some((d) => d.verdict === 'ahead' && /phone number/.test(d.detail)) === true);
+  assert('nothing invents traffic, rankings or revenue claims', !intel?.all.some((d) => /traffic|ranks? higher|converts? better|more money|revenue/i.test(d.detail)));
+  assert('service-count gap (3 vs 1) shows you ahead, not a fake single score', intel?.all.some((d) => d.key === 'services' && d.verdict === 'ahead') === true);
+  assert('top is capped at 5', (intel?.top.length ?? 99) <= 5);
+  assert('top is a strict prefix of all in the same order', JSON.stringify(intel?.top) === JSON.stringify(intel?.all.slice(0, 5)));
+  assert('no single fabricated "competitor score" field exists on the result', !('score' in (intel || {})) && !('competitorScore' in (intel || {})));
+
+  const intelAgain = buildCompetitiveIntelligence(you, audited, undefined);
+  assert('identical inputs produce identical output (determinism)', JSON.stringify(intel) === JSON.stringify(intelAgain));
+
+  const intelWithGoal = buildCompetitiveIntelligence(you, audited, 'get_more_bookings');
+  const sameVerdicts =
+    intel &&
+    intelWithGoal &&
+    JSON.stringify([...intel.all].map((d) => [d.key, d.verdict]).sort()) ===
+      JSON.stringify([...intelWithGoal.all].map((d) => [d.key, d.verdict]).sort());
+  assert('a goal changes ranking at most, never the underlying verdicts (Part 13)', Boolean(sameVerdicts));
+  assert(
+    'goal-relevant dimensions are marked as such only when a goal is supplied',
+    intel?.all.every((d) => d.goalRelevant === false) === true
+  );
+  assert(
+    'with a goal, at least one relevant dimension is flagged goal-relevant',
+    intelWithGoal?.all.some((d) => d.goalRelevant) === true
+  );
+
+  const twoCompetitors = [
+    { scored: scoredFrom(richCompetitor, 'rich.example'), theirs: richCompetitor },
+    { scored: scoredFrom(bareCompetitor, 'bare.example'), theirs: bareCompetitor },
+  ];
+  const twoIntel = buildCompetitiveIntelligence(you, twoCompetitors, undefined);
+  assert('two competitors both contribute dimensions', twoIntel?.comparedAgainst.length === 2);
+  assert(
+    'strengths, gaps and opportunities partition all without overlap or loss',
+    twoIntel !== undefined &&
+      twoIntel.strengths.length + twoIntel.gaps.length + twoIntel.opportunities.length <=
+        twoIntel.all.length
+  );
 }
 
 /* ------------------------------------------------------------------ *

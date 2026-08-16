@@ -1328,6 +1328,15 @@ p { margin: 0; }
 .cmp-ahead { color: var(--crit-700); }
 .cmp-behind { color: var(--ink-4); }
 
+/* ---- competitive intelligence (Compare.tsx) ---------------------
+   Reuses .changes/.detail-k/.caveat from elsewhere in the report, the
+   only genuinely new thing is the lime "open opportunity" glyph. */
+.cmp-intel { margin-top: var(--s5); }
+.cmp-intel-bucket { margin-top: var(--s4); }
+.cmp-intel-bucket .changes { margin-top: var(--s1h); }
+.cmp-intel-toggle { margin-top: var(--s4); }
+.glyph-opportunity { background: var(--accent); border-radius: 50%; }
+
 @media (max-width: 640px) {
   .cmp-plat { display: none; }
   .cmp-diff { font-size: var(--fs-11); }
