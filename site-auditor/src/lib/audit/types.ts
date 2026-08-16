@@ -365,9 +365,16 @@ export interface AuditReport {
   understanding?: import('./understanding').WebsiteUnderstanding;
   /** Findings grouped, prioritised and framed as business opportunities. See opportunity.ts. */
   opportunities?: import('./opportunity').OpportunityReport;
+  /**
+   * Same opportunities, re-ranked using `businessContext.goal` as a
+   * transparent top-up layer (BASE PRIORITY + GOAL RELEVANCE = FINAL
+   * PRIORITY). Identical ranking to `opportunities` when no goal was
+   * supplied. See opportunity.ts `applyGoalAwareness`.
+   */
+  goalAwareOpportunities?: import('./opportunity').GoalAwareOpportunityReport;
   /** Same opportunities, re-framed as diagnosis/cause/prescription. See doctor.ts. */
   doctor?: import('./doctor').Diagnosis[];
-  /** Optional user-supplied business context, accepted and stored, not yet used by any engine. */
+  /** Optional user-supplied business context, accepted and stored. `goal` drives goalAwareOpportunities; `businessDescription`/`targetAudience` inform the AI interpretation layer (ai/interpret.ts) when a model call is made. */
   businessContext?: BusinessContext;
   /** What changed since the most recent previous audit of this host, when one exists. See diff.ts. */
   diff?: import('./diff').ReportDiff;

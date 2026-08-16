@@ -37,7 +37,7 @@
  *     than being renamed into a bullet point titled "opportunity."
  */
 
-import type { CheckResult, Evidence, Finding, Severity } from './types';
+import type { BusinessContext, CheckResult, Evidence, Finding, Severity, UserGoal } from './types';
 import { CATEGORIES } from './types';
 import type { WebsiteUnderstanding } from './understanding';
 
@@ -97,6 +97,35 @@ export interface OpportunityReport {
 /** Slice any priority-ranked opportunity list to a caller-chosen size (3 / 5 / 10 / ...). */
 export function topOpportunities(report: OpportunityReport, n: number): Opportunity[] {
   return report.ranked.slice(0, Math.max(0, n));
+}
+
+/**
+ * `Opportunity` plus the goal-aware layer: BASE PRIORITY (the severity/
+ * evidence-driven score every user gets, goal or no goal), GOAL RELEVANCE
+ * (how directly this opportunity's category serves the user's stated goal),
+ * and FINAL PRIORITY (the two combined). Everything on `Opportunity` itself —
+ * `priority`, `priorityScore`, `findingIds`, evidence — is untouched; this is
+ * strictly additive re-ranking, never a rewrite of the underlying facts.
+ */
+export interface GoalAwareOpportunity extends Opportunity {
+  /** Identical to `priorityScore` — kept as its own field so the goal layer is auditable: you can see exactly what moved and by how much. */
+  basePriorityScore: number;
+  /** 0-100. 50 is neutral (no goal, or a goal this category has no particular bearing on). */
+  goalRelevanceScore: number;
+  goalRelevanceReason: string;
+  /** `basePriorityScore` nudged within its own priority tier's band by goal relevance. Never crosses a tier boundary — see PRIORITY_BANDS. */
+  finalPriorityScore: number;
+}
+
+export interface GoalAwareOpportunityReport {
+  all: GoalAwareOpportunity[];
+  criticalIssues: GoalAwareOpportunity[];
+  quickWins: GoalAwareOpportunity[];
+  /** `all`, ranked by `finalPriorityScore`. */
+  ranked: GoalAwareOpportunity[];
+  top: GoalAwareOpportunity[];
+  /** The goal this ranking was computed for, or null when no goal was supplied (in which case ranking is identical to the base report). */
+  goal: UserGoal | null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -258,7 +287,6 @@ const GROUPS: GroupDef[] = [
  * Scoring
  * ------------------------------------------------------------------ */
 
-const SEVERITY_BASE: Record<Severity, number> = { critical: 90, high: 65, medium: 35, low: 12, info: 4 };
 const SEVERITY_PRIORITY: Record<Severity, PriorityLevel> = {
   critical: 'critical',
   high: 'high',
@@ -267,6 +295,23 @@ const SEVERITY_PRIORITY: Record<Severity, PriorityLevel> = {
   info: 'low',
 };
 const CONFIDENCE_MULTIPLIER: Record<OpportunityConfidence, number> = { high: 1.0, medium: 0.85, low: 0.65 };
+
+/**
+ * Strict, non-overlapping score bands per priority tier. This is what makes
+ * "critical always outranks everything else" a structural guarantee rather
+ * than a coincidence of an additive formula: every bonus below (group size,
+ * page importance, conversion relevance, and — in `applyGoalAwareness` — goal
+ * relevance) can only move a score *within* its own tier's band. A maxed-out
+ * 'high' opportunity can reach 84, never 85; a minimally-scored 'critical'
+ * can never fall below 85. Sorting by score can therefore never let a lower
+ * tier beat a higher one, by construction, not by luck.
+ */
+const PRIORITY_BANDS: Record<PriorityLevel, [number, number]> = {
+  critical: [85, 100],
+  high: [55, 84],
+  medium: [25, 54],
+  low: [0, 24],
+};
 
 /** Which opportunity categories are on the path to this site's stated primary conversion. */
 const CONVERSION_RELEVANCE: Record<string, OpportunityCategory[]> = {
@@ -307,6 +352,9 @@ function mapEffort(findings: Finding[]): EffortLevel {
   return worst === 'quick' ? 'low' : worst === 'medium' ? 'medium' : 'high';
 }
 
+/** Sum of every bonus component at its maximum, used to normalise the raw bonus into a 0-1 "strength" before mapping into the tier's band. */
+const MAX_BONUS = 15 /* group */ + 12 /* page */ + 10 /* conversion */;
+
 function priorityScore(
   category: OpportunityCategory,
   findings: Finding[],
@@ -315,7 +363,6 @@ function priorityScore(
   affectedPages: string[],
   understanding: WebsiteUnderstanding
 ): number {
-  const base = SEVERITY_BASE[maxSeverity(findings)];
   const groupBonus = Math.min(15, (findings.length - 1) * 5);
   const importantUrls = new Set(understanding.pages.important.map((p) => p.url));
   const touchesImportantPage = affectedPages.some((u) => importantUrls.has(u));
@@ -324,12 +371,15 @@ function priorityScore(
   const relevantCategories = CONVERSION_RELEVANCE[understanding.primaryConversion.value ?? 'none'] ?? [];
   const conversionBoost = relevantCategories.includes(category) ? 10 : 0;
 
-  let score = (base + groupBonus + pageBoost + conversionBoost) * CONFIDENCE_MULTIPLIER[confidence];
-  // A critical-priority opportunity never scores low enough to be crowded out
-  // of the top of the list by confidence weighting alone — the label is the
-  // floor, and the ranking score respects the same floor.
-  if (priority === 'critical') score = Math.max(score, 85);
-  return Math.round(Math.max(0, Math.min(100, score)));
+  // 0-1: how strong the evidence for this opportunity is, independent of
+  // severity (severity already picked the tier via `priority`). Confidence
+  // scales this down further — a low-confidence group lands near the bottom
+  // of its own tier, never outside it (see PRIORITY_BANDS comment).
+  const strength = (Math.min(MAX_BONUS, groupBonus + pageBoost + conversionBoost) / MAX_BONUS) * CONFIDENCE_MULTIPLIER[confidence];
+
+  const [lo, hi] = PRIORITY_BANDS[priority];
+  const score = lo + strength * (hi - lo);
+  return Math.round(Math.max(lo, Math.min(hi, score)));
 }
 
 function inferOwner(group: GroupDef | null, effort: EffortLevel): OpportunityOwner {
@@ -442,4 +492,120 @@ export function buildOpportunities(results: CheckResult[], understanding: Websit
     ranked,
     top: ranked.slice(0, 5),
   };
+}
+
+/* ------------------------------------------------------------------ *
+ * Goal-aware prioritisation
+ *
+ * A transparent top-up layer over the report `buildOpportunities` already
+ * produced — see FINDINGS → UNDERSTANDING → OPPORTUNITIES → GOAL-AWARE
+ * PRIORITISATION in the brief. It never re-computes `priority` or the
+ * underlying findings, and it structurally cannot let goal relevance
+ * outrank severity: see the PRIORITY_BANDS comment above. Each opportunity's
+ * `finalPriorityScore` is only ever nudged within its own severity tier.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Which opportunity categories directly serve each stated goal. Reuses the
+ * existing `UserGoal` enum (types.ts) rather than inventing a parallel one —
+ * a fixed, auditable table, same design choice as `GROUPS` above: you can
+ * read exactly why "get more bookings" favours squarespace-setup findings
+ * (booking embeds are usually a Squarespace scheduling configuration issue).
+ */
+const GOAL_RELEVANT_CATEGORIES: Record<UserGoal, OpportunityCategory[]> = {
+  get_more_customers: ['conversion', 'trust', 'content'],
+  get_more_leads: ['conversion', 'trust', 'content'],
+  get_more_sales: ['conversion', 'trust', 'performance'],
+  get_more_bookings: ['conversion', 'trust', 'squarespace-setup'],
+  get_more_traffic: ['search-visibility', 'content', 'technical'],
+  improve_website: ['performance', 'accessibility', 'technical'],
+  look_more_professional: ['trust', 'content', 'accessibility'],
+  beat_competitors: ['search-visibility', 'content', 'conversion'],
+  improve_ai_visibility: ['search-visibility', 'content'],
+  improve_performance: ['performance', 'technical'],
+  not_sure: [],
+};
+
+/** Plain-English label for a goal, used in both `goalRelevanceReason` and the AI interpretation layer. */
+export const GOAL_LABELS: Record<UserGoal, string> = {
+  get_more_customers: 'getting more customers',
+  get_more_leads: 'getting more leads',
+  get_more_sales: 'getting more sales',
+  get_more_bookings: 'getting more bookings',
+  get_more_traffic: 'getting more traffic',
+  improve_website: 'improving the website overall',
+  look_more_professional: 'looking more professional',
+  beat_competitors: 'beating competitors',
+  improve_ai_visibility: 'improving AI search visibility',
+  improve_performance: 'improving performance',
+  not_sure: 'your stated goal',
+};
+
+function goalRelevance(category: OpportunityCategory, goal: UserGoal): { score: number; reason: string } {
+  const relevant = GOAL_RELEVANT_CATEGORIES[goal] ?? [];
+  const label = GOAL_LABELS[goal] ?? 'your stated goal';
+  if (relevant.includes(category)) {
+    return { score: 85, reason: `Directly relevant to ${label}.` };
+  }
+  // Security/privacy is foundational regardless of what the user says they
+  // want, so it is never treated as "irrelevant" the way an unrelated
+  // category is — it gets a higher neutral floor than the generic case.
+  if (category === 'security') {
+    return { score: 60, reason: 'Security and privacy issues matter regardless of your stated goal.' };
+  }
+  return { score: 35, reason: `Not directly tied to ${label}, but still worth addressing.` };
+}
+
+/** How much of a tier's own band width goal relevance is allowed to move a score. Deliberately small: goal relevance orders *within* a tier, it does not restructure it. */
+const GOAL_BONUS_WEIGHT = 0.18;
+
+/**
+ * Layers the user's stated goal on top of the deterministic opportunity
+ * ranking. With no goal (or a `businessContext` that never set one), every
+ * opportunity gets a neutral `goalRelevanceScore` of 50 and `finalPriorityScore`
+ * equal to `basePriorityScore` — the ranking is byte-identical to `report.ranked`,
+ * so this is safe to call unconditionally and a missing/old `businessContext`
+ * never produces a different order than before this feature existed.
+ */
+export function applyGoalAwareness(
+  report: OpportunityReport,
+  businessContext: BusinessContext | undefined,
+  _understanding: WebsiteUnderstanding
+): GoalAwareOpportunityReport {
+  const goal = businessContext?.goal ?? null;
+
+  const all: GoalAwareOpportunity[] = report.all.map((o) => {
+    const basePriorityScore = o.priorityScore;
+
+    if (!goal) {
+      return {
+        ...o,
+        basePriorityScore,
+        goalRelevanceScore: 50,
+        goalRelevanceReason: 'No goal was supplied, so ranking is based on severity and evidence alone.',
+        finalPriorityScore: basePriorityScore,
+      };
+    }
+
+    const { score: goalRelevanceScore, reason: goalRelevanceReason } = goalRelevance(o.category, goal);
+
+    const [lo, hi] = PRIORITY_BANDS[o.priority];
+    const width = hi - lo;
+    const position = width > 0 ? (basePriorityScore - lo) / width : 0;
+    // The nudge is centred on 0 at a neutral (50) relevance score, so a goal
+    // that has nothing to do with this opportunity's category can lower its
+    // position within the tier but, like every other bonus in this file,
+    // never move it into a different tier.
+    const nudge = ((goalRelevanceScore - 50) / 50) * GOAL_BONUS_WEIGHT;
+    const newPosition = Math.max(0, Math.min(1, position + nudge));
+    const finalPriorityScore = Math.round(lo + newPosition * width);
+
+    return { ...o, basePriorityScore, goalRelevanceScore, goalRelevanceReason, finalPriorityScore };
+  });
+
+  const ranked = [...all].sort((a, b) => b.finalPriorityScore - a.finalPriorityScore);
+  const criticalIssues = ranked.filter((o) => o.isCriticalIssue);
+  const quickWins = ranked.filter((o) => o.isQuickWin);
+
+  return { all, criticalIssues, quickWins, ranked, top: ranked.slice(0, 5), goal };
 }

@@ -28,7 +28,7 @@ import { buildProfile } from './aeo/profile';
 import { templateQuestions } from './aeo/questions';
 import { analyseQuestions } from './aeo/gaps';
 import { buildUnderstanding } from './understanding';
-import { buildOpportunities } from './opportunity';
+import { buildOpportunities, applyGoalAwareness } from './opportunity';
 import { buildWebsiteDoctor } from './doctor';
 import { applyNarrative } from './narrative';
 import { buildVerdict } from './verdict';
@@ -137,9 +137,10 @@ export async function runAudit(
   emit: (e: ProgressEvent) => void,
   config: AuditConfig = DEFAULT_CONFIG,
   // Optional, additive: nothing downstream requires this. It is validated
-  // (see sanitiseBusinessContext) and attached verbatim to the finished
-  // report so it persists with it, ready for a goal-aware prioritisation
-  // pass (Part 18 of the brief) to read later. Not consumed anywhere yet.
+  // (see sanitiseBusinessContext), attached verbatim to the finished report
+  // so it persists with it, and its `goal` (if set) drives the goal-aware
+  // re-ranking below (`applyGoalAwareness`, opportunity.ts) as a top-up layer
+  // that can never override severity-driven priority.
   businessContext?: BusinessContext
 ): Promise<AuditReport> {
   const started = Date.now();
@@ -451,6 +452,10 @@ export async function runAudit(
   /* -------------------- 8. score -------------------- */
   emit({ type: 'stage', stage: 'score', label: 'Calculating your score', pct: 86 });
 
+  // Sanitised once, reused by both the goal-aware ranking below and the
+  // field persisted on the report — see sanitiseBusinessContext above.
+  const sanitisedBusinessContext = sanitiseBusinessContext(businessContext);
+
   // Structured "what is this website" summary, built from data every step
   // above already produced. See understanding.ts for why this exists.
   const understanding = buildUnderstanding(ctx, profile, results);
@@ -458,6 +463,12 @@ export async function runAudit(
   // list. See opportunity.ts. Reads `results` (not just `findings` below)
   // because it needs each check's `unscored` flag to grade confidence.
   const opportunities = buildOpportunities(results, understanding);
+  // Goal-aware re-ranking layered strictly on top of the deterministic
+  // opportunities above. With no businessContext.goal this is byte-identical
+  // ranking to `opportunities` — see opportunity.ts `applyGoalAwareness` for
+  // why goal relevance can never move an opportunity out of its
+  // severity-determined priority tier.
+  const goalAwareOpportunities = applyGoalAwareness(opportunities, sanitisedBusinessContext, understanding);
 
   const score = scoreAudit(results);
   const findings = prioritise(results.flatMap((r) => r.findings));
@@ -466,7 +477,7 @@ export async function runAudit(
     .map((r) => r.strength!)
     .slice(0, 8);
   // Diagnostic re-framing of the same opportunities — see doctor.ts.
-  const doctor = buildWebsiteDoctor(opportunities, findings);
+  const doctor = buildWebsiteDoctor(opportunities, findings, goalAwareOpportunities);
 
   const pageSummaries = htmlPages.map((p) => {
     const pageFindings = findings.filter((f) => f.affectedUrls.includes(p.url));
@@ -510,8 +521,9 @@ export async function runAudit(
     faq: ctx.aeo,
     understanding,
     opportunities,
+    goalAwareOpportunities,
     doctor,
-    businessContext: sanitiseBusinessContext(businessContext),
+    businessContext: sanitisedBusinessContext,
     opportunity: classifyOpportunity(findings, score.overall, squarespace),
   };
 

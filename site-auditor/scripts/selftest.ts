@@ -26,7 +26,7 @@ import { templateQuestions } from '../src/lib/audit/aeo/questions';
 import { analyseQuestions } from '../src/lib/audit/aeo/gaps';
 import { classifyPageType } from '../src/lib/audit/pagetype';
 import { buildUnderstanding } from '../src/lib/audit/understanding';
-import { buildOpportunities } from '../src/lib/audit/opportunity';
+import { buildOpportunities, applyGoalAwareness } from '../src/lib/audit/opportunity';
 import { buildWebsiteDoctor } from '../src/lib/audit/doctor';
 import type { AuditContext } from '../src/lib/audit/context';
 import { finding, fail } from '../src/lib/audit/context';
@@ -601,6 +601,131 @@ function high(id: string, category: CheckResult['category'], urls: string[] = []
 }
 
 /* ------------------------------------------------------------------ *
+ * Goal-aware prioritisation
+ * ------------------------------------------------------------------ */
+
+console.log('\nGoal-aware prioritisation');
+
+{
+  // Fixture used across every goal-awareness case below: one critical
+  // technical finding, one high conversion finding, one high performance
+  // finding. Deliberately mixed categories so a goal can be relevant to some
+  // and not others.
+  const scenarioResults = () => [
+    critical('TECH-030', 'tech'),
+    high('CONV-021', 'conv', ['https://example.com/']),
+    high('PERF-010', 'perf'),
+  ];
+  const understanding = baseUnderstanding();
+  const baseReport = buildOpportunities(scenarioResults(), understanding);
+
+  {
+    // No businessContext at all: ranking must be byte-identical to the base
+    // report — this is what makes it safe to call unconditionally, including
+    // for every old report that predates this feature.
+    const goalAware = applyGoalAwareness(baseReport, undefined, understanding);
+    assert('with no businessContext, goal is null', goalAware.goal === null);
+    assert(
+      'with no businessContext, ranking order is identical to the base report',
+      JSON.stringify(goalAware.ranked.map((o) => o.id)) === JSON.stringify(baseReport.ranked.map((o) => o.id))
+    );
+    assert(
+      'with no businessContext, every finalPriorityScore equals basePriorityScore',
+      goalAware.all.every((o) => o.finalPriorityScore === o.basePriorityScore)
+    );
+  }
+
+  {
+    // businessDescription/targetAudience alone (no goal) must not move the
+    // ranking either — they inform the AI narrative layer only, never the
+    // deterministic Opportunity Engine.
+    const withDescriptionOnly = applyGoalAwareness(baseReport, { businessDescription: 'A boutique dog grooming studio.' }, understanding);
+    const withAudienceOnly = applyGoalAwareness(baseReport, { targetAudience: 'Local pet owners' }, understanding);
+    assert('businessDescription alone does not set a goal', withDescriptionOnly.goal === null);
+    assert('targetAudience alone does not set a goal', withAudienceOnly.goal === null);
+    assert(
+      'businessDescription alone does not change ranking order',
+      JSON.stringify(withDescriptionOnly.ranked.map((o) => o.id)) === JSON.stringify(baseReport.ranked.map((o) => o.id))
+    );
+  }
+
+  const GOALS_UNDER_TEST = ['get_more_customers', 'get_more_sales', 'get_more_bookings', 'improve_performance', 'not_sure'] as const;
+
+  for (const goal of GOALS_UNDER_TEST) {
+    const goalAware = applyGoalAwareness(baseReport, { goal }, understanding);
+    const run2 = applyGoalAwareness(baseReport, { goal }, understanding);
+
+    assert(`[${goal}] findings/evidence are unchanged from the base report`, goalAware.all.every((o, i) => {
+      const base = baseReport.all[i];
+      return o.findingIds.join(',') === base.findingIds.join(',') && JSON.stringify(o.evidence) === JSON.stringify(base.evidence);
+    }));
+    assert(`[${goal}] the priority label is unchanged from the base report`, goalAware.all.every((o, i) => o.priority === baseReport.all[i].priority));
+    assert(`[${goal}] the critical issue count is unchanged`, goalAware.criticalIssues.length === baseReport.criticalIssues.length);
+    assert(
+      `[${goal}] the critical technical finding still ranks first — goal relevance never outranks severity`,
+      goalAware.ranked[0]?.priority === 'critical',
+      `got: ${goalAware.ranked[0]?.priority} (${goalAware.ranked[0]?.id})`
+    );
+    assert(
+      `[${goal}] every finalPriorityScore stays within its own priority tier's band`,
+      goalAware.all.every((o) => {
+        if (o.priority === 'critical') return o.finalPriorityScore >= 85 && o.finalPriorityScore <= 100;
+        if (o.priority === 'high') return o.finalPriorityScore >= 55 && o.finalPriorityScore <= 84;
+        if (o.priority === 'medium') return o.finalPriorityScore >= 25 && o.finalPriorityScore <= 54;
+        return o.finalPriorityScore >= 0 && o.finalPriorityScore <= 24;
+      })
+    );
+    assert(
+      `[${goal}] every goalRelevanceScore is a sane 0-100 number, never NaN`,
+      goalAware.all.every((o) => Number.isFinite(o.goalRelevanceScore) && o.goalRelevanceScore >= 0 && o.goalRelevanceScore <= 100)
+    );
+    assert(
+      `[${goal}] goal relevance is deterministic across repeated runs`,
+      JSON.stringify(goalAware.ranked.map((o) => [o.id, o.finalPriorityScore, o.goalRelevanceScore])) ===
+        JSON.stringify(run2.ranked.map((o) => [o.id, o.finalPriorityScore, o.goalRelevanceScore]))
+    );
+  }
+
+  {
+    // The hard requirement, stated explicitly in the brief: "A low-confidence
+    // inference must never outrank a high-confidence critical technical
+    // problem simply because AI thinks it sounds interesting" — extended
+    // here to goals. Pick a goal maximally relevant to the *other* opportunities'
+    // categories (conversion, performance) and irrelevant to the critical
+    // one's category (technical is not in get_more_sales' relevant list).
+    const goalAware = applyGoalAwareness(baseReport, { goal: 'get_more_sales' }, understanding);
+    const criticalOpp = goalAware.all.find((o) => o.priority === 'critical')!;
+    const highOpps = goalAware.all.filter((o) => o.priority === 'high');
+    assert('the critical opportunity is not the one the goal favours', criticalOpp.goalRelevanceScore < 85);
+    assert('at least one high opportunity is favoured by the goal', highOpps.some((o) => o.goalRelevanceScore >= 85));
+    assert(
+      'even a goal-favoured high opportunity cannot outscore a goal-disfavoured critical one',
+      highOpps.every((o) => o.finalPriorityScore < criticalOpp.finalPriorityScore)
+    );
+  }
+
+  {
+    // Website Doctor becomes goal-aware too: a diagnosis whose source
+    // opportunity is strongly relevant to the goal gets a goalNote; one that
+    // is not, does not. Never claims a lost outcome — see doctor.ts comment.
+    const goalAware = applyGoalAwareness(baseReport, { goal: 'get_more_bookings' }, understanding);
+    const findings = scenarioResults().flatMap((r) => r.findings);
+    const diagnoses = buildWebsiteDoctor(baseReport, findings, goalAware);
+    const relevantId = goalAware.all.find((o) => o.goalRelevanceScore >= 85)?.id;
+    const irrelevantId = goalAware.all.find((o) => o.goalRelevanceScore < 85)?.id;
+    assert('a goal-relevant diagnosis gets a goalNote', !!diagnoses.find((d) => d.id === relevantId)?.goalNote);
+    assert('a goal-irrelevant diagnosis has no goalNote', !diagnoses.find((d) => d.id === irrelevantId)?.goalNote);
+    assert(
+      'the goalNote never claims a measured outcome (no lost/gained bookings claim)',
+      !diagnoses.some((d) => d.goalNote && /lost|gained|will (get|increase)/i.test(d.goalNote))
+    );
+
+    const withoutGoal = buildWebsiteDoctor(baseReport, findings);
+    assert('with no goal-aware report supplied, no diagnosis has a goalNote', withoutGoal.every((d) => !d.goalNote));
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Report diff
  * ------------------------------------------------------------------ */
 
@@ -692,6 +817,83 @@ function findingFixture(id: string, severity: Finding['severity'], overrides: Pa
   const current = reportFixture({ findings: [], understanding: baseUnderstanding({ confident: true, businessType: { value: 'photographer', confidence: 'high', source: 'text' } }) });
   const diff = diffReports(current, previous);
   assert('diffing against a pre-understanding report does not throw and omits business-signal changes', diff.businessSignalChanges.length === 0);
+  assert(
+    'an old previous report (no opportunities/businessContext/understanding on that side) leaves the new goal-aware diff fields empty rather than guessed at',
+    diff.topOpportunityCategoryChange === null &&
+      diff.goalChange === null &&
+      diff.importantPageChanges.added.length === 0 &&
+      diff.importantPageChanges.removed.length === 0
+  );
+}
+
+function opportunityFixture(id: string, category: string, overrides: Partial<any> = {}) {
+  return {
+    id,
+    title: `${id} title`,
+    summary: 'synthetic',
+    category,
+    findingIds: [id],
+    affectedPages: [],
+    evidence: [],
+    businessRelevance: 'synthetic',
+    priority: 'high',
+    priorityScore: 60,
+    effort: 'low',
+    confidence: 'high',
+    recommendedAction: 'do it',
+    owner: 'you',
+    isQuickWin: false,
+    isCriticalIssue: false,
+    ...overrides,
+  };
+}
+function opportunityReportFixture(top: any) {
+  return { all: [top], criticalIssues: [], quickWins: [], ranked: [top], top: [top] };
+}
+
+{
+  // Structured top-opportunity change: a category shift, not a prose diff —
+  // the explicit example from the brief ("Performance" -> "Conversion friction").
+  const previous = reportFixture({ opportunities: opportunityReportFixture(opportunityFixture('performance:PERF-010', 'performance')) as any });
+  const current = reportFixture({ opportunities: opportunityReportFixture(opportunityFixture('conversion:CONV-021', 'conversion')) as any });
+  const diff = diffReports(current, previous);
+  assert(
+    'a change in the #1 opportunity category is represented as a structured change, not just compared titles',
+    diff.topOpportunityCategoryChange?.from.category === 'performance' && diff.topOpportunityCategoryChange?.to.category === 'conversion',
+    JSON.stringify(diff.topOpportunityCategoryChange)
+  );
+}
+
+{
+  // Structured goal change, keyed on the stable UserGoal value.
+  const previous = reportFixture({ businessContext: { goal: 'get_more_traffic' } });
+  const current = reportFixture({ businessContext: { goal: 'get_more_bookings' } });
+  const diff = diffReports(current, previous);
+  assert(
+    'a change in stated goal between audits is captured structurally',
+    diff.goalChange?.from === 'get_more_traffic' && diff.goalChange?.to === 'get_more_bookings',
+    JSON.stringify(diff.goalChange)
+  );
+}
+
+{
+  // Structured important-page changes, keyed on URL.
+  const prevU = baseUnderstanding({ pages: { total: 1, byType: { home: 1 }, important: [{ url: 'https://example.com/', type: 'home', title: 'Home' }] } });
+  const curU = baseUnderstanding({
+    pages: {
+      total: 2,
+      byType: { home: 1, contact: 1 },
+      important: [
+        { url: 'https://example.com/', type: 'home', title: 'Home' },
+        { url: 'https://example.com/contact', type: 'contact', title: 'Contact' },
+      ],
+    },
+  });
+  const previous = reportFixture({ understanding: prevU as any });
+  const current = reportFixture({ understanding: curU as any });
+  const diff = diffReports(current, previous);
+  assert('a page that newly matters is recorded as added', diff.importantPageChanges.added.includes('https://example.com/contact'));
+  assert('nothing was removed in this case', diff.importantPageChanges.removed.length === 0);
 }
 
 /* ------------------------------------------------------------------ *

@@ -16,7 +16,8 @@
  */
 
 import type { Finding } from './types';
-import type { OpportunityReport, EffortLevel, OpportunityOwner, PriorityLevel } from './opportunity';
+import type { OpportunityReport, GoalAwareOpportunityReport, EffortLevel, OpportunityOwner, PriorityLevel } from './opportunity';
+import { GOAL_LABELS } from './opportunity';
 
 export interface Diagnosis {
   id: string;
@@ -40,10 +41,24 @@ export interface Diagnosis {
   affectedPages: string[];
   /** The Opportunity this diagnosis was built from, for cross-referencing. */
   sourceOpportunityId: string;
+  /**
+   * Set only when a goal-aware report was supplied and this diagnosis's
+   * source opportunity is strongly relevant to the stated goal (see
+   * opportunity.ts `applyGoalAwareness`). Always an observation about
+   * relevance, never a claim about outcomes the audit has no data for —
+   * e.g. never "this is costing you bookings," only "this is on the path to
+   * the booking goal you told us about."
+   */
+  goalNote?: string;
 }
 
-export function buildWebsiteDoctor(opportunities: OpportunityReport, allFindings: Finding[]): Diagnosis[] {
+export function buildWebsiteDoctor(
+  opportunities: OpportunityReport,
+  allFindings: Finding[],
+  goalAware?: GoalAwareOpportunityReport
+): Diagnosis[] {
   const byId = new Map(allFindings.map((f) => [f.id, f] as const));
+  const goalById = goalAware?.goal ? new Map(goalAware.all.map((o) => [o.id, o] as const)) : null;
 
   return opportunities.all.map((o) => {
     const sourceFindings = o.findingIds.map((id) => byId.get(id)).filter((f): f is Finding => Boolean(f));
@@ -51,6 +66,12 @@ export function buildWebsiteDoctor(opportunities: OpportunityReport, allFindings
     // finding behind the diagnosis — a single finding is the diagnosis, not a
     // factor contributing to it.
     const likelyContributingFactors = sourceFindings.length > 1 ? sourceFindings.map((f) => f.title) : [];
+
+    const goalMatch = goalById?.get(o.id);
+    const goalNote =
+      goalAware?.goal && goalMatch && goalMatch.goalRelevanceScore >= 85
+        ? `This is directly on the path to your stated goal of ${GOAL_LABELS[goalAware.goal] ?? goalAware.goal} — currently ranked ${goalMatch.priority} priority based on what was actually found, not on the goal itself.`
+        : undefined;
 
     return {
       id: o.id,
@@ -64,6 +85,7 @@ export function buildWebsiteDoctor(opportunities: OpportunityReport, allFindings
       priority: o.priority,
       affectedPages: o.affectedPages,
       sourceOpportunityId: o.id,
+      goalNote,
     };
   });
 }
