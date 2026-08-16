@@ -6,7 +6,8 @@ import type { PsiResult } from '@/lib/audit/perf/psi';
 import type { Opportunity, GoalAwareOpportunity } from '@/lib/audit/opportunity';
 import { GOAL_LABELS } from '@/lib/audit/opportunity';
 import type { Diagnosis } from '@/lib/audit/doctor';
-import type { WebsiteUnderstanding, ConversionType } from '@/lib/audit/understanding';
+import type { WebsiteUnderstanding, ConversionType, UnderstandingConfidence } from '@/lib/audit/understanding';
+import type { GrowthAction, GrowthActionType, GrowthAreaKey } from '@/lib/audit/growth';
 import { Compare } from './Compare';
 import { LeadCapture } from './LeadCapture';
 
@@ -54,6 +55,49 @@ const CONVERSION_PHRASE: Record<ConversionType, string> = {
   'contact-form': 'an enquiry',
   none: 'a conversion',
 };
+
+const GA_TYPE_LABEL: Record<GrowthActionType, string> = {
+  fix: 'Fix',
+  create: 'Create',
+  improve: 'Improve',
+  protect: 'Protect',
+  exploit: 'Exploit',
+};
+
+/* Deterministic "expected movement" copy for a GrowthAction: a verb keyed by
+   `type` plus an object keyed by `area`, both fields growth.ts already
+   computes. No new data, no revenue or outcome claims — matches the
+   register growth.ts itself writes in (see its OWNER_LABEL/EFFORT_LABEL
+   precedent one file over in opportunity.ts). Approved in the Growth
+   Intelligence Design Specification, section 7. */
+const GA_MOVEMENT_VERB: Record<GrowthActionType, string> = {
+  fix: 'Removes friction in',
+  create: 'Builds',
+  improve: 'Strengthens',
+  protect: 'Maintains',
+  exploit: 'Extends',
+};
+const GA_MOVEMENT_OBJECT: Record<GrowthAreaKey, string> = {
+  content: 'search and AI visibility for the pages that answer real questions',
+  conversion: 'conversion readiness, the path from visit to enquiry',
+  trust: 'the trust signals a new visitor looks for before acting',
+  'customer-questions': 'how many real customer questions the site answers',
+  offer: 'how clearly the site states what it offers and to whom',
+  visibility: 'how easily search engines and AI assistants can find and read the site',
+  competitive: 'your position against the competitors you are being measured against',
+};
+function movementPhrase(action: GrowthAction): string {
+  return `${GA_MOVEMENT_VERB[action.type]} ${GA_MOVEMENT_OBJECT[action.area]}.`;
+}
+
+/** Plain-language confidence, never a number — there is no 0-100 confidence
+    score anywhere in understanding.ts to show, and inventing one would be
+    exactly the fabricated metric the brief prohibits. */
+function confidenceWord(confidence: UnderstandingConfidence): string {
+  if (confidence === 'observed' || confidence === 'high') return 'High confidence';
+  if (confidence === 'medium') return 'Based on observed signals';
+  return 'Based on limited signals';
+}
 
 function bandColour(score: number): string {
   if (score >= 80) return 'var(--ok-700)';
@@ -406,6 +450,90 @@ function DoctorRow({ d, index }: { d: Diagnosis; index: number }) {
   );
 }
 
+/**
+ * One Growth Intelligence recommended action. Same disclosure mechanics and
+ * DOM shape as `OpportunityRow`/`DoctorRow` on purpose (reuses `.opp`/
+ * `.opp-row`/`.opp-title`/`.opp-side`/`.detail*` verbatim) — this is the same
+ * underlying opportunity/doctor/competitor data, read through growth.ts's
+ * synthesis layer, so a reader who already learned those rows' interaction
+ * pattern three sections down should not have to learn a second one here.
+ */
+function GrowthActionRow({
+  action,
+  defaultOpen,
+  auditToken,
+}: {
+  action: GrowthAction;
+  defaultOpen: boolean;
+  auditToken?: string;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <article className={`opp growth-action${open ? ' open' : ''}`}>
+      <button
+        className="opp-row"
+        aria-expanded={open}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          if (next) track('growth_action_expanded', { title: action.title, type: action.type }, auditToken);
+        }}
+      >
+        <span className={`glyph glyph-${action.priority}`} aria-hidden="true" />
+        <span className={`ga-tag${action.type === 'exploit' ? ' ga-tag-exploit' : ''}`}>
+          {GA_TYPE_LABEL[action.type]}
+        </span>
+        <span className="opp-title">{action.title}</span>
+        <span className="opp-side">
+          <span className={`chip chip-${action.priority}`}>{SEV_LABEL[action.priority]}</span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="detail">
+          <p className="detail-lead">{action.why}</p>
+
+          {action.evidence.length > 0 && (
+            <div className="detail-part">
+              <div className="detail-k">Evidence</div>
+              <div className="evidence">
+                <table>
+                  <tbody>
+                    {action.evidence.map((e, i) => (
+                      <tr key={i}>
+                        <td className="k">{e.label}</td>
+                        <td>{e.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="detail-part">
+            <div className="detail-k">Expected movement</div>
+            <p>{movementPhrase(action)}</p>
+          </div>
+
+          <p className="detail-effort" style={{ marginTop: 'var(--s4)' }}>
+            {OPP_EFFORT_LABEL[action.effort]} &middot; {OWNER_LABEL[action.owner]}
+          </p>
+
+          {action.relatedOpportunityId && (
+            <div className="detail-part">
+              <a className="growth-more" href={`#${action.relatedOpportunityId}`}>
+                View details
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
 export function Report({ report, onReset }: { report: AuditReport; onReset: () => void }) {
   const [filter, setFilter] = useState<'all' | Severity>('all');
   const [active, setActive] = useState<string>('summary');
@@ -501,10 +629,37 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
      never ran, so the section below is gated on presence like every other
      optional section here. */
   const growth = report.growthIntelligence;
-  const growthFix = useMemo(() => growth?.recommendedActions.filter((a) => a.type === 'fix').slice(0, 3) ?? [], [growth]);
-  const growthCreate = useMemo(() => growth?.recommendedActions.filter((a) => a.type === 'create').slice(0, 3) ?? [], [growth]);
-  const growthExploit = growth?.recommendedActions.find((a) => a.type === 'exploit');
-  const growthProtect = growth?.recommendedActions.find((a) => a.type === 'protect');
+
+  /* Now/Next/Later — the same technique `opportunityGroups` above already
+     uses (a plain filter on the existing `priority` field), applied to
+     growth.recommendedActions instead of oppReport.ranked. Not a new
+     ranking or grouping algorithm: `recommendedActions` is already
+     priority-ranked by growth.ts, so order within each band is preserved.
+     Band boundaries per the approved design spec: Now = critical/high,
+     Next = medium, Later = low. */
+  const growthBands = useMemo(() => {
+    if (!growth) return [];
+    const list = growth.recommendedActions;
+    const bands = [
+      { key: 'now', label: 'Now', note: 'Critical or high priority, worth doing first.', items: list.filter((a) => a.priority === 'critical' || a.priority === 'high') },
+      { key: 'next', label: 'Next', note: 'Medium priority, worth doing once Now is clear.', items: list.filter((a) => a.priority === 'medium') },
+      { key: 'later', label: 'Later', note: 'Lower priority, worth doing when there is time.', items: list.filter((a) => a.priority === 'low') },
+    ];
+    return bands.filter((b) => b.items.length > 0);
+  }, [growth]);
+
+  /* Which growth areas are relevant to the visitor's stated goal, read
+     straight off `GrowthAction.goalRelevant` (already computed by
+     growth.ts) rather than re-deriving a goal-to-area mapping here. */
+  const growthGoalAreas = useMemo(() => {
+    if (!growth) return [];
+    const keys = new Set(growth.recommendedActions.filter((a) => a.goalRelevant).map((a) => a.area));
+    return growth.growthAreas.filter((a) => keys.has(a.key));
+  }, [growth]);
+
+  const growthConfidence = report.understanding
+    ? confidenceWord(report.understanding.primaryConversion.confidence)
+    : null;
 
   /* Sidebar reflects where you actually are in the document. */
   useEffect(() => {
@@ -777,61 +932,74 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
 
           {/* ---------------------------------------- growth intelligence */}
           {growth && growth.recommendedActions.length > 0 && (
-            <section id="growth" className="section">
-              <div className="section-head">
-                <h2>Your growth opportunities</h2>
+            <section id="growth" className="section growth-section">
+              <div className="growth-head">
                 <span className="eyebrow">Start here</span>
+                <h2>
+                  Your website has {growth.recommendedActions.length} growth{' '}
+                  {growth.recommendedActions.length === 1 ? 'opportunity' : 'opportunities'}
+                </h2>
+                <p className="growth-head-sub">{growth.growthSummary}</p>
+                {goal && goal !== 'not_sure' && (
+                  <p className="growth-head-goal">Based on your goal: {GOAL_LABELS[goal] ?? goal}</p>
+                )}
               </div>
-              <p className="section-note">{growth.growthSummary}</p>
 
-              {growthFix.length > 0 && (
-                <div className="growth-group">
-                  <div className="detail-k">Three things to fix</div>
+              {report.understanding && (
+                <dl className="growth-summary">
+                  <div>
+                    <dt>What we understand</dt>
+                    <dd>
+                      {report.understanding.confident && report.understanding.businessType.value
+                        ? `A ${report.understanding.businessType.value}`
+                        : 'Not confidently identified from what was crawled.'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>How you convert</dt>
+                    <dd>Built around {CONVERSION_PHRASE[report.understanding.primaryConversion.value ?? 'none']}.</dd>
+                  </div>
+                  <div>
+                    <dt>Biggest opportunity</dt>
+                    <dd>{growth.startHere[0]?.title ?? 'Nothing urgent found.'}</dd>
+                  </div>
+                  {growthConfidence && (
+                    <div>
+                      <dt>Confidence</dt>
+                      <dd>{growthConfidence}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+
+              {growthBands.map((band) => (
+                <div key={band.key}>
+                  <div className={`group-head${band.key === 'now' ? ' growth-band-now' : ''}`}>
+                    <span className="eyebrow">{band.label}</span>
+                    <span className="group-count">{band.items.length}</span>
+                    <span className="group-note">{band.note}</span>
+                  </div>
+                  {band.items.map((a, i) => (
+                    <GrowthActionRow
+                      key={`${band.key}:${a.title}`}
+                      action={a}
+                      defaultOpen={band.key === 'now' && i === 0}
+                      auditToken={report.id}
+                    />
+                  ))}
+                </div>
+              ))}
+
+              {goal && goal !== 'not_sure' && growthGoalAreas.length > 0 && (
+                <div className="growth-goal-align">
+                  <div className="detail-k">Your goal: {GOAL_LABELS[goal] ?? goal}</div>
                   <ul className="changes">
-                    {growthFix.map((a) => (
-                      <li key={a.title}>
-                        <span className="glyph glyph-high" aria-hidden="true" />
-                        <span>{a.title}</span>
+                    {growthGoalAreas.map((a) => (
+                      <li key={a.key}>
+                        <span className="glyph glyph-ok" aria-hidden="true" />
+                        <span>{a.label}</span>
                       </li>
                     ))}
-                  </ul>
-                </div>
-              )}
-
-              {growthCreate.length > 0 && (
-                <div className="growth-group">
-                  <div className="detail-k">Things to build</div>
-                  <ul className="changes">
-                    {growthCreate.map((a) => (
-                      <li key={a.title}>
-                        <span className="glyph glyph-opportunity" aria-hidden="true" />
-                        <span>{a.title}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {growthExploit && (
-                <div className="growth-group">
-                  <div className="detail-k">A competitive opportunity</div>
-                  <ul className="changes">
-                    <li>
-                      <span className="glyph glyph-opportunity" aria-hidden="true" />
-                      <span>{growthExploit.title}</span>
-                    </li>
-                  </ul>
-                </div>
-              )}
-
-              {growthProtect && (
-                <div className="growth-group">
-                  <div className="detail-k">An advantage to protect</div>
-                  <ul className="changes">
-                    <li>
-                      <span className="glyph glyph-ok" aria-hidden="true" />
-                      <span>{growthProtect.title}</span>
-                    </li>
                   </ul>
                 </div>
               )}

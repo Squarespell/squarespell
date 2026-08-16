@@ -1337,14 +1337,95 @@ p { margin: 0; }
 .cmp-intel-toggle { margin-top: var(--s4); }
 .glyph-opportunity { background: var(--accent); border-radius: 50%; }
 
-/* ---- growth intelligence (Report.tsx "Your growth opportunities") ----
-   Same borrowed classes as .cmp-intel above: .section/.changes/.detail-k are
-   already established elsewhere in the report, nothing new needed but
-   group spacing and the "see more" link. */
-.growth-group { margin-top: var(--s4); }
-.growth-group .changes { margin-top: var(--s1h); }
+/* ---- growth intelligence (Report.tsx "Your website has N growth
+   opportunities") -------------------------------------------------
+   Reuses almost everything already in this file: .group-head/.group-note
+   for the Now/Next/Later bands (identical to the Opportunities section's
+   Fix-first/Next/Later), .opp/.opp-row/.opp-title/.opp-side/.detail* for
+   the action rows (GrowthActionRow renders the same markup OpportunityRow
+   does), .changes for the goal-alignment checklist, .detail-k for labels.
+   What's genuinely new: the header block, the summary-fact grid, and the
+   action-type tag. No new colour, no card, no shadow. */
+/* Extra top padding beyond the shared `.section` (48px): this is the one
+   place in the report meant to read as an opening beat rather than a
+   continuation of whatever came before it (QA pass, P0 — the design spec
+   asked for this but the CSS never actually added it). Specificity via the
+   compound selector, not !important, so it reliably wins over `.section`. */
+.section.growth-section { padding-top: var(--s20); }
+
+.growth-head { max-width: var(--prose-max); }
+/* No character cap: the headline's length varies with the action count
+   ("1 growth opportunity" to "7 growth opportunities"), so a fixed ch-width
+   forced an arbitrary mid-phrase break instead of wrapping only where the
+   content actually needs it (QA pass, P0). Sized up to the existing --fs-34
+   token (already used for the entry page's own h1) so it reads as the
+   deliberate headline moment the design spec asked for, not a slightly
+   bigger section title (QA pass, P1). */
+.growth-head h2 { margin-top: var(--s3); font-size: var(--fs-34); letter-spacing: var(--ls-lg); line-height: 1.1; }
+.growth-head-sub { margin-top: var(--s4); font-size: var(--fs-14); line-height: var(--lh-prose); color: var(--ink-2); }
+.growth-head-goal { margin-top: var(--s2h); font-size: var(--fs-13); color: var(--ink-3); }
+
+.growth-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s6) var(--s8);
+  margin: var(--s8) 0 0;
+  padding: var(--s5) 0;
+  border-top: var(--hairline) solid var(--line-2);
+  border-bottom: var(--hairline) solid var(--line-2);
+}
+.growth-summary dt { font-size: var(--fs-12); color: var(--ink-4); margin-bottom: var(--s1h); }
+.growth-summary dd { margin: 0; font-size: var(--fs-14); color: var(--ink-1); line-height: var(--lh-prose); }
+
+/* Action-type tag (Fix/Create/Improve/Protect/Exploit). Neutral for four of
+   the five types, same treatment as `.chip-quiet`; `exploit` alone picks up
+   the one accent in this section, because it is the single action type that
+   only exists when there is real, evidenced ground to claim over a
+   competitor (see growth.ts's four-way competitor mapping) — everywhere
+   else stays monochrome, same restraint the rest of the report already
+   holds itself to. */
+.ga-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  font-family: var(--sans);
+  font-size: var(--fs-10);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: var(--bg-sunk);
+  color: var(--ink-3);
+}
+.ga-tag-exploit { background: var(--accent-tint); color: var(--accent-hover); }
+
+.growth-goal-align { margin-top: var(--s8); padding-top: var(--s5); border-top: var(--hairline) solid var(--line-2); }
+.growth-goal-align .changes { margin-top: var(--s1h); }
+
 .growth-more { display: inline-block; margin-top: var(--s5); font-size: var(--fs-13); color: var(--ink-1); text-decoration: none; border-bottom: var(--hairline) solid var(--line-1); }
 .growth-more:hover { color: var(--accent); border-color: var(--accent); }
+
+/* "Now" is the one band meant to read as urgent at a glance (QA pass, P1) —
+   its count alone gets bumped off the shared muted `--ink-4` so a scanning
+   eye registers "6" as weight, not as a footnote. No new colour, no change
+   to Next/Later or to the identical bands the Opportunities section uses. */
+.growth-band-now .group-count { color: var(--ink-1); font-weight: var(--w-medium); }
+
+@media (max-width: 860px) {
+  .growth-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .growth-summary { grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
+  .growth-head h2 { font-size: var(--fs-26); }
+}
+
+/* A wrapped action title otherwise leaves its priority chip stranded on the
+   first line, disconnected from the row it belongs to (QA pass, P1).
+   Scoped to `.growth-action` only — the shared `.opp-row` used by the
+   Opportunities and Website Doctor sections is untouched. */
+@media (max-width: 720px) {
+  .growth-action .opp-row { flex-wrap: wrap; row-gap: var(--s1h); }
+  .growth-action .opp-side { flex-basis: 100%; margin-top: 2px; }
+}
 
 @media (max-width: 640px) {
   .cmp-plat { display: none; }
