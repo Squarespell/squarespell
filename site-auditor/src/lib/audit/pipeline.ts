@@ -30,6 +30,7 @@ import { analyseQuestions } from './aeo/gaps';
 import { buildUnderstanding } from './understanding';
 import { buildOpportunities, applyGoalAwareness } from './opportunity';
 import { buildWebsiteDoctor } from './doctor';
+import { buildGrowthIntelligence } from './growth';
 import { applyNarrative } from './narrative';
 import { buildVerdict } from './verdict';
 import { count } from './context';
@@ -562,6 +563,14 @@ export async function runAudit(
     businessContext: sanitisedBusinessContext,
     opportunity: classifyOpportunity(findings, score.overall, squarespace),
   };
+
+  // Growth Intelligence: pure synthesis over everything already on `report`
+  // above, no new crawl or check. Built after the object literal so every
+  // field it reads (opportunities, understanding, faq, doctor,
+  // businessContext) already exists. Competitor data is not available yet at
+  // this point (comparison is user-triggered after the report renders) —
+  // see `saveComparison` in db.ts for where this is recomputed once it is.
+  report.growthIntelligence = buildGrowthIntelligence(report);
 
   // Interpretation is part of the deterministic result, not an AI add-on. The
   // report is complete and readable at this point whether or not a model is

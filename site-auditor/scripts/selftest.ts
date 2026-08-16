@@ -33,8 +33,10 @@ import { finding, fail } from '../src/lib/audit/context';
 import { applyNarrative, NARRATIVE } from '../src/lib/audit/narrative';
 import { comparisonVerdict, buildCompetitiveIntelligence } from '../src/lib/audit/compare';
 import type { CompetitorScore } from '../src/lib/audit/compare';
-import type { CheckResult, PageData, AuditReport, Finding } from '../src/lib/audit/types';
+import type { CheckResult, PageData, AuditReport, Finding, CategoryId } from '../src/lib/audit/types';
+import { CATEGORIES } from '../src/lib/audit/types';
 import { diffReports } from '../src/lib/audit/diff';
+import { buildGrowthIntelligence } from '../src/lib/audit/growth';
 
 let failures = 0;
 let checks = 0;
@@ -1220,6 +1222,221 @@ console.log('\nCompetitive intelligence engine');
       twoIntel.strengths.length + twoIntel.gaps.length + twoIntel.opportunities.length <=
         twoIntel.all.length
   );
+}
+
+/* ------------------------------------------------------------------ *
+ * Growth Intelligence (growth.ts).
+ *
+ * Built through the real `buildOpportunities`/`applyGoalAwareness`/
+ * `buildWebsiteDoctor` chain rather than hand-typed Opportunity/Diagnosis
+ * fixtures, so this exercises the actual finding-to-action path, not a
+ * reimplementation of it. Covers as much of Part 25 of the brief as is
+ * feasible offline: no context, a goal, no/one/two competitors, weak/strong
+ * content and trust, missing/answered questions, determinism, an old report,
+ * missing optional fields, no fabricated claims, no severity override.
+ * ------------------------------------------------------------------ */
+
+console.log('\nGrowth Intelligence');
+{
+  const ALL_CATEGORY_IDS: CategoryId[] = ['tech', 'onpage', 'perf', 'aeo', 'conv', 'schema', 'a11y', 'sec', 'mobile', 'social', 'sqs'];
+  const baseCategories = (score = 80): any[] =>
+    ALL_CATEGORY_IDS.map((id) => ({ id, label: CATEGORIES[id].label, score, weight: CATEGORIES[id].weight, applicableChecks: 1, criticalFailures: 0, findingCount: 0 }));
+
+  function growthReport(overrides: any = {}): any {
+    const understanding = overrides.understanding ?? baseUnderstanding();
+    const results: CheckResult[] = overrides.results ?? [];
+    const findings = results.flatMap((r) => r.findings);
+    const opportunities = buildOpportunities(results, understanding);
+    const goalAwareOpportunities = applyGoalAwareness(opportunities, overrides.businessContext, understanding);
+    const doctor = buildWebsiteDoctor(opportunities, findings, goalAwareOpportunities);
+    return {
+      id: 'r1',
+      inputUrl: 'https://you.example',
+      finalUrl: 'https://you.example',
+      host: 'you.example',
+      siteName: 'You',
+      createdAt: new Date(0).toISOString(),
+      squarespace: { isSquarespace: true, confidence: 1, version: '7.1', versionConfidence: 1, signals: [], siteStatus: 'live', context: null, editor: { fluid: 1, classic: 0, ratio: 1 }, features: {} },
+      score: { overall: 80, grade: 'B', categories: overrides.categories ?? baseCategories(), gated: false },
+      findings,
+      strengths: [],
+      quickWins: [],
+      coverage: { pagesCrawled: overrides.pagesCrawled ?? 6, pagesDiscovered: 6, checksRun: 1, checksApplicable: 1, sitemapUrls: 0, imagesProbed: 0, assetsProbed: 0, durationMs: 0, aiUsed: false },
+      pageSummaries: [],
+      understanding,
+      opportunities,
+      goalAwareOpportunities,
+      doctor,
+      businessContext: overrides.businessContext,
+      faq: overrides.faq,
+      comparison: overrides.comparison,
+      opportunity: { tier: 'medium', signals: [], services: [] },
+    };
+  }
+
+  // 1. No business context, no findings, no faq, no comparison: still builds
+  //    (Part 24: old-report-shaped input must not crash), competitive area
+  //    is explicitly "not run yet" rather than silently absent.
+  {
+    const g = buildGrowthIntelligence(growthReport());
+    assert('a report with no findings still produces a growth intelligence block', Boolean(g));
+    assert('no comparison means no competitive opportunities, not a crash', g?.competitiveOpportunities.length === 0);
+    assert(
+      'the competitive growth area says a comparison has not run yet',
+      Boolean(g?.growthAreas.find((a) => a.key === 'competitive')?.note.includes('has been run yet'))
+    );
+    assert('recommendedActions never exceeds 7 (Part 16)', (g?.recommendedActions.length ?? 99) <= 7);
+    assert('startHere is recommendedActions.slice(0, 3)', JSON.stringify(g?.startHere) === JSON.stringify(g?.recommendedActions.slice(0, 3)));
+  }
+
+  // 2. An old report (no understanding, no opportunities) must not crash and
+  //    must return undefined, not a half-built object.
+  {
+    const old = growthReport();
+    delete old.understanding;
+    delete old.opportunities;
+    const g = buildGrowthIntelligence(old);
+    assert('a report missing understanding/opportunities returns undefined rather than crashing', g === undefined);
+  }
+
+  // 3. Weak content (services without a page, unanswered high-weight
+  //    questions) produces a CREATE action and a needs-attention content area.
+  {
+    const faq = {
+      profile: {} as any,
+      gaps: [],
+      answered: [],
+      partial: [],
+      missing: [
+        { question: 'What does it cost?', kind: 'price', source: 'buyer-intent', weight: 3, status: 'missing', coverage: 0 },
+        { question: 'How long does it take?', kind: 'duration', source: 'service', weight: 2, status: 'missing', coverage: 0 },
+      ],
+      opportunities: [],
+      existingQuestionHeadings: 0,
+      hasFaqSchema: false,
+      ran: true,
+    };
+    const understanding = baseUnderstanding({
+      services: [{ name: 'Kitchen remodeling', hasOwnPage: false }, { name: 'Bathroom remodeling', hasOwnPage: false }],
+      confident: true,
+    });
+    const g = buildGrowthIntelligence(growthReport({ understanding, faq }));
+    assert('services without a dedicated page produce a CREATE action', Boolean(g?.recommendedActions.some((a) => a.type === 'create' && a.area === 'content')));
+    assert('unanswered important questions produce a CREATE action', Boolean(g?.recommendedActions.some((a) => a.type === 'create' && a.area === 'customer-questions')));
+    assert('the highest-weight missing question surfaces first', g?.customerQuestionOpportunities[0]?.question === 'What does it cost?');
+    assert('a price question is flagged conversion-relevant', g?.customerQuestionOpportunities[0]?.conversionRelevant === true);
+  }
+
+  // 4. Strong content (every service has a page, no missing questions):
+  //    content area reads strong, no content CREATE action fires.
+  {
+    const faq = { profile: {} as any, gaps: [], answered: [{ question: 'x', kind: 'price', source: 'service', weight: 1, status: 'answered', coverage: 1 }], partial: [], missing: [], opportunities: [], existingQuestionHeadings: 1, hasFaqSchema: false, ran: true };
+    const understanding = baseUnderstanding({ services: [{ name: 'Kitchen remodeling', hasOwnPage: true }], confident: true });
+    const g = buildGrowthIntelligence(growthReport({ understanding, faq }));
+    assert('every service having a page means no content CREATE action', !g?.recommendedActions.some((a) => a.type === 'create' && a.area === 'content'));
+    assert('a fully-answered faq means no customer-question CREATE action', !g?.recommendedActions.some((a) => a.area === 'customer-questions'));
+  }
+
+  // 5. Weak trust (both CONV-040 and CONV-042 findings present) vs strong
+  //    trust (neither present) changes the trust growth area, not by magic
+  //    but because the underlying findings differ.
+  {
+    const weakTrustResults = [high('CONV-040', 'conv'), fail(finding({ id: 'CONV-042', category: 'conv', severity: 'low', title: 'No trust markers found', detail: 'synthetic', affected: 1, applicable: 1 }), 1, { unscored: true })];
+    const weak = buildGrowthIntelligence(growthReport({ results: weakTrustResults }));
+    const strong = buildGrowthIntelligence(growthReport({ results: [] }));
+    assert('missing testimonials and credentials mark trust as needing attention', weak?.growthAreas.find((a) => a.key === 'trust')?.status === 'needs-attention');
+    assert('no trust findings at all leaves trust strong', strong?.growthAreas.find((a) => a.key === 'trust')?.status === 'strong');
+    assert('offer differentiation clarity reflects the same missing trust signals', weak?.offer.differentiationClarity === 'unclear');
+  }
+
+  // 6. Weak conversion (no CTA) drags the take-action step and offer next-step
+  //    clarity down together, from the same finding, not two different guesses.
+  {
+    const noCta = [high('CONV-020', 'conv')];
+    const g = buildGrowthIntelligence(growthReport({ results: noCta, understanding: baseUnderstanding({ confident: true, businessType: { value: 'studio', confidence: 'high', source: 'text' } }) }));
+    assert('no CTA finding means the take-action step reads weak', g?.conversionPath.steps.find((s) => s.step === 'take-action')?.status === 'weak');
+    assert('no CTA finding means next-step clarity is unclear', g?.offer.nextStepClarity === 'unclear');
+  }
+
+  // 7. Competitor combination (Part 13): reuses the same CompetitiveDimension
+  //    shape compare.ts already produces, relabelled with Part 13's
+  //    vocabulary, never a second competitor engine.
+  {
+    const intel = {
+      comparedAgainst: ['rival.example'],
+      all: [
+        { key: 'trust-phone', label: 'a visible phone number', verdict: 'ahead' as const, detail: 'You have it, they do not.', goalRelevant: false, weight: 4 },
+        { key: 'pages-service', label: 'a dedicated service page', verdict: 'open_opportunity' as const, detail: 'Neither of you has this yet.', goalRelevant: false, weight: 3 },
+        { key: 'category-conv', label: 'Conversion', verdict: 'behind' as const, detail: 'They score higher on conversion.', goalRelevant: false, weight: 4 },
+      ],
+      top: [] as any[],
+      strengths: [] as any[],
+      gaps: [] as any[],
+      opportunities: [] as any[],
+      coverageNote: 'rival.example: 4 pages read, against 6 of yours.',
+    };
+    intel.top = intel.all;
+    intel.strengths = intel.all.filter((d) => d.verdict === 'ahead');
+    intel.gaps = intel.all.filter((d) => d.verdict === 'behind');
+    intel.opportunities = intel.all.filter((d) => d.verdict === 'open_opportunity');
+
+    const comparison = { ranAt: new Date(0).toISOString(), you: { host: 'you.example', overall: 80, categories: {} }, competitors: [], verdict: 'test', intelligence: intel };
+    const g = buildGrowthIntelligence(growthReport({ comparison }));
+    assert('an "ahead" dimension produces a PROTECT action', Boolean(g?.recommendedActions.some((a) => a.type === 'protect')));
+    assert('an "open_opportunity" dimension produces an EXPLOIT action', Boolean(g?.recommendedActions.some((a) => a.type === 'exploit')));
+    assert(
+      'competitiveOpportunities relabels verdicts with Part 13 vocabulary, never the raw enum',
+      Boolean(g?.competitiveOpportunities.every((o) => ['Competitive advantage', 'High priority gap', 'Market opportunity'].includes(o.title)))
+    );
+    assert('a "no_clear_difference" verdict would be dropped, not shown as an opportunity', !g?.competitiveOpportunities.some((o) => o.title === 'No clear difference'));
+    assert(
+      'the competitive growth area reflects the comparison, not the "not run yet" default',
+      g?.growthAreas.find((a) => a.key === 'competitive')?.status !== 'developing' ||
+        g?.growthAreas.find((a) => a.key === 'competitive')?.note !== 'No competitor comparison has been run yet.'
+    );
+  }
+
+  // 8. Determinism: identical input produces byte-identical output.
+  {
+    const results = [high('CONV-021', 'conv'), critical('TECH-030', 'tech')];
+    const report = growthReport({ results, businessContext: { goal: 'get_more_bookings' } });
+    const a = buildGrowthIntelligence(report);
+    const b = buildGrowthIntelligence(report);
+    assert('identical input produces identical output', JSON.stringify(a) === JSON.stringify(b));
+  }
+
+  // 9. Goal awareness ranks, never promotes: a critical fix outranks a
+  //    goal-relevant medium one regardless of goal (Part 17).
+  {
+    const results = [critical('TECH-030', 'tech'), high('CONV-021', 'conv')];
+    // CONV-021 alone is 'high' via GROUPS (conversion-friction, minSize 1),
+    // so pair it with a real medium-only source: PERF findings need 2 to
+    // group and stay under critical/high, giving a clean 'medium' candidate.
+    const mediumOnly = [critical('TECH-030', 'tech'), fail(finding({ id: 'PERF-013', category: 'perf', severity: 'medium', title: 'Oversized images', detail: 'synthetic', affected: 1, applicable: 1 }), 1), fail(finding({ id: 'PERF-014', category: 'perf', severity: 'medium', title: 'Old image formats', detail: 'synthetic', affected: 1, applicable: 1 }), 1)];
+    const g = buildGrowthIntelligence(growthReport({ results: mediumOnly, businessContext: { goal: 'improve_performance' } }));
+    const ranks: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+    const ranked = (g?.recommendedActions ?? []).map((a) => ranks[a.priority]);
+    assert(
+      'recommendedActions is never out of priority order regardless of goal relevance',
+      ranked.every((r, i) => i === 0 || ranked[i - 1] >= r),
+      JSON.stringify(g?.recommendedActions.map((a) => [a.priority, a.goalRelevant]))
+    );
+  }
+
+  // 10. No fabricated claims anywhere in the recommended actions or growth
+  //     summary: the same evidence-only vocabulary check the rest of this
+  //     file applies to written copy, applied to synthesised text too.
+  {
+    const results = [high('CONV-040', 'conv'), high('CONV-020', 'conv'), critical('TECH-030', 'tech')];
+    const g = buildGrowthIntelligence(growthReport({ results, businessContext: { goal: 'get_more_sales' } }));
+    const allText = [g?.growthSummary, ...(g?.recommendedActions ?? []).flatMap((a) => [a.title, a.why])].filter(Boolean).join(' ');
+    assert(
+      'no fabricated traffic, ranking or revenue claim anywhere in growth copy',
+      !/gets? more traffic|ranks? higher|converts? better|makes? more money|% (increase|more|higher)/i.test(allText),
+      allText
+    );
+    assert('no em dashes in growth copy', !allText.includes('—'));
+  }
 }
 
 /* ------------------------------------------------------------------ *

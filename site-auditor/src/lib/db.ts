@@ -12,6 +12,7 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'node:crypto';
 import type { AuditReport } from './audit/types';
+import { buildGrowthIntelligence } from './audit/growth';
 
 // The `auditor` schema is not the default `public` one, so the generic
 // parameters differ from the plain SupabaseClient type. Infer it instead.
@@ -251,7 +252,16 @@ export async function savePerf(token: string, perf: AuditReport['perf']): Promis
   }
 }
 
-/** Attaches a competitor comparison to a saved audit, same rule as savePerf. */
+/**
+ * Attaches a competitor comparison to a saved audit, same rule as savePerf.
+ *
+ * Also recomputes `growthIntelligence`: it was built once when the audit
+ * completed, before any competitor data existed, so its competitive fields
+ * were necessarily empty. `buildGrowthIntelligence` is a pure function over
+ * the report, no new crawl or check, so redoing it here just lets the
+ * already-computed comparison flow into the competitive parts of growth
+ * intelligence (Part 13 of the brief) without a second database write path.
+ */
 export async function saveComparison(token: string, comparison: AuditReport['comparison']): Promise<void> {
   const client = db();
   if (!client) return;
@@ -260,6 +270,7 @@ export async function saveComparison(token: string, comparison: AuditReport['com
     const report = (data?.report || null) as AuditReport | null;
     if (!report) return;
     report.comparison = comparison;
+    report.growthIntelligence = buildGrowthIntelligence(report);
     await client.from('audits').update({ report }).eq('share_token', token);
   } catch (e) {
     console.error('[db] saveComparison failed', e);

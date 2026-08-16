@@ -495,10 +495,22 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
   const businessDescription = report.businessContext?.businessDescription;
   const targetAudience = report.businessContext?.targetAudience;
 
+  /* Growth Intelligence (growth.ts): a synthesis layer over everything else
+     on this page, not a new set of facts. `undefined` on any report saved
+     before this shipped, or one whose opportunity/understanding engines
+     never ran, so the section below is gated on presence like every other
+     optional section here. */
+  const growth = report.growthIntelligence;
+  const growthFix = useMemo(() => growth?.recommendedActions.filter((a) => a.type === 'fix').slice(0, 3) ?? [], [growth]);
+  const growthCreate = useMemo(() => growth?.recommendedActions.filter((a) => a.type === 'create').slice(0, 3) ?? [], [growth]);
+  const growthExploit = growth?.recommendedActions.find((a) => a.type === 'exploit');
+  const growthProtect = growth?.recommendedActions.find((a) => a.type === 'protect');
+
   /* Sidebar reflects where you actually are in the document. */
   useEffect(() => {
     const ids = [
       'summary',
+      'growth',
       'health',
       'opportunities',
       'doctor',
@@ -573,6 +585,7 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
             {(
               [
                 ['summary', 'Overview'],
+                ...(growth && growth.recommendedActions.length > 0 ? [['growth', 'Growth opportunities']] : []),
                 ['health', 'Website health'],
                 ...(oppReport && oppReport.all.length > 0 ? [['opportunities', 'Opportunities']] : []),
                 ...(report.doctor && report.doctor.length > 0 ? [['doctor', 'Website Doctor']] : []),
@@ -761,6 +774,73 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
               </div>
             </div>
           </section>
+
+          {/* ---------------------------------------- growth intelligence */}
+          {growth && growth.recommendedActions.length > 0 && (
+            <section id="growth" className="section">
+              <div className="section-head">
+                <h2>Your growth opportunities</h2>
+                <span className="eyebrow">Start here</span>
+              </div>
+              <p className="section-note">{growth.growthSummary}</p>
+
+              {growthFix.length > 0 && (
+                <div className="growth-group">
+                  <div className="detail-k">Three things to fix</div>
+                  <ul className="changes">
+                    {growthFix.map((a) => (
+                      <li key={a.title}>
+                        <span className="glyph glyph-high" aria-hidden="true" />
+                        <span>{a.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {growthCreate.length > 0 && (
+                <div className="growth-group">
+                  <div className="detail-k">Things to build</div>
+                  <ul className="changes">
+                    {growthCreate.map((a) => (
+                      <li key={a.title}>
+                        <span className="glyph glyph-opportunity" aria-hidden="true" />
+                        <span>{a.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {growthExploit && (
+                <div className="growth-group">
+                  <div className="detail-k">A competitive opportunity</div>
+                  <ul className="changes">
+                    <li>
+                      <span className="glyph glyph-opportunity" aria-hidden="true" />
+                      <span>{growthExploit.title}</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              {growthProtect && (
+                <div className="growth-group">
+                  <div className="detail-k">An advantage to protect</div>
+                  <ul className="changes">
+                    <li>
+                      <span className="glyph glyph-ok" aria-hidden="true" />
+                      <span>{growthProtect.title}</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              <a className="growth-more" href="#opportunities">
+                See the full analysis
+              </a>
+            </section>
+          )}
 
           <dl className="facts">
             <div className="fact">

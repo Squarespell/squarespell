@@ -590,6 +590,7 @@ export function ReportDocument({ report }: { report: AuditReport }) {
   const faq = report.faq;
   const perf = report.perf;
   const comparison = report.comparison;
+  const growth = report.growthIntelligence;
 
   /*
    * Only the findings worth reading in full get a full block.
@@ -657,6 +658,35 @@ export function ReportDocument({ report }: { report: AuditReport }) {
       </View>
     ),
   });
+
+  if (growth && growth.recommendedActions.length > 0) {
+    // Growth Action Plan (Part 20 of the growth-intelligence brief): the
+    // same `recommendedActions` the web report's "Your growth opportunities"
+    // section shows, capped tighter here on purpose. Five lines, not a
+    // second copy of the full opportunity list a few pages later.
+    const actions = growth.recommendedActions.slice(0, 5);
+    analysis.push({
+      kind: 'rows',
+      key: 'growth',
+      chrome: BLOCK_CHROME + NOTE_LINE,
+      rowHeight: QUESTION_ROW,
+      count: actions.length,
+      node: (first, from, to, continued) => (
+        <View style={first ? undefined : s.rule}>
+          <Text style={s.sectionTitle}>Growth action plan{continued ? ', continued' : ''}</Text>
+          <Text style={s.sectionNote}>{growth.growthSummary}</Text>
+          <View style={{ marginTop: 8 }}>
+            {actions.slice(from, to).map((a) => (
+              <View style={s.qRow} key={a.title}>
+                <Text style={s.qTag}>{a.type}</Text>
+                <Text style={s.qText}>{a.title}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      ),
+    });
+  }
 
   if (report.strengths.length > 0) {
     // Moved forward from the back of the report, where it sat under the

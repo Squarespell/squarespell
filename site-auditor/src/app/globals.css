@@ -1337,6 +1337,15 @@ p { margin: 0; }
 .cmp-intel-toggle { margin-top: var(--s4); }
 .glyph-opportunity { background: var(--accent); border-radius: 50%; }
 
+/* ---- growth intelligence (Report.tsx "Your growth opportunities") ----
+   Same borrowed classes as .cmp-intel above: .section/.changes/.detail-k are
+   already established elsewhere in the report, nothing new needed but
+   group spacing and the "see more" link. */
+.growth-group { margin-top: var(--s4); }
+.growth-group .changes { margin-top: var(--s1h); }
+.growth-more { display: inline-block; margin-top: var(--s5); font-size: var(--fs-13); color: var(--ink-1); text-decoration: none; border-bottom: var(--hairline) solid var(--line-1); }
+.growth-more:hover { color: var(--accent); border-color: var(--accent); }
+
 @media (max-width: 640px) {
   .cmp-plat { display: none; }
   .cmp-diff { font-size: var(--fs-11); }

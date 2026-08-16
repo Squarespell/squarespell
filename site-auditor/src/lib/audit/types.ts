@@ -374,6 +374,16 @@ export interface AuditReport {
   goalAwareOpportunities?: import('./opportunity').GoalAwareOpportunityReport;
   /** Same opportunities, re-framed as diagnosis/cause/prescription. See doctor.ts. */
   doctor?: import('./doctor').Diagnosis[];
+  /**
+   * Findings, understanding, doctor, customer questions and competitor
+   * intelligence combined into one growth-focused view: what's working,
+   * what's missing, what a competitor does differently, what to do first.
+   * Pure synthesis over the fields above, no new crawl or check. Computed
+   * once when the audit completes and recomputed (never re-crawled) when a
+   * comparison is run, so the competitive angle appears without a schema
+   * change. See growth.ts.
+   */
+  growthIntelligence?: import('./growth').GrowthIntelligence;
   /** Optional user-supplied business context, accepted and stored. `goal` drives goalAwareOpportunities; `businessDescription`/`targetAudience` inform the AI interpretation layer (ai/interpret.ts) when a model call is made. */
   businessContext?: BusinessContext;
   /** What changed since the most recent previous audit of this host, when one exists. See diff.ts. */
