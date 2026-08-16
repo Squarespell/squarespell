@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState, type ReactElement } from 'react';
-import type { AuditReport, ProgressEvent } from '@/lib/audit/types';
+import type { AuditReport, BusinessContext, ProgressEvent, UserGoal } from '@/lib/audit/types';
 import { Report } from './Report';
 import {
   IconSeo,
@@ -19,6 +19,23 @@ import {
 } from './Icons';
 
 type Phase = 'idle' | 'running' | 'done' | 'error';
+
+/* Same UserGoal values the backend already accepts (types.ts) and the
+   report already renders (GOAL_LABELS, opportunity.ts) — this is a display
+   label set for the dropdown only, not a second source of truth. */
+const GOAL_OPTIONS: Array<{ value: UserGoal; label: string }> = [
+  { value: 'get_more_customers', label: 'Get more customers' },
+  { value: 'get_more_leads', label: 'Get more leads' },
+  { value: 'get_more_sales', label: 'Get more sales' },
+  { value: 'get_more_bookings', label: 'Get more bookings' },
+  { value: 'get_more_traffic', label: 'Get more traffic' },
+  { value: 'improve_website', label: 'Improve the website overall' },
+  { value: 'look_more_professional', label: 'Look more professional' },
+  { value: 'beat_competitors', label: 'Beat competitors' },
+  { value: 'improve_ai_visibility', label: 'Improve AI search visibility' },
+  { value: 'improve_performance', label: 'Improve performance' },
+  { value: 'not_sure', label: 'Not sure yet' },
+];
 
 const STAGES = [
   { key: 'validate', label: 'Checking the address' },
@@ -276,6 +293,14 @@ const WHY_STATS = [
   { n: '2.5x', body: 'faster growth for sites that fix 20+ SEO best practices.', src: 'Backlinko' },
 ];
 
+function track(name: string, props: Record<string, unknown>) {
+  try {
+    navigator.sendBeacon?.('/api/event', new Blob([JSON.stringify({ name, props })], { type: 'application/json' }));
+  } catch {
+    /* analytics is never load bearing */
+  }
+}
+
 function hostFrom(input: string): string {
   try {
     const withScheme = /^https?:\/\//i.test(input) ? input : `https://${input}`;
@@ -302,6 +327,17 @@ export function Auditor({
   const [error, setError] = useState<{ message: string; hint?: string; code?: string } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  /* Optional pre-audit context (Part 3 of the personalization brief). Every
+     one of these stays empty unless the visitor deliberately opens the panel
+     and types into it, so the request body sent below is byte-identical to
+     the URL-only path when they don't. */
+  const [showContext, setShowContext] = useState(false);
+  const [bizDescription, setBizDescription] = useState('');
+  const [audience, setAudience] = useState('');
+  const [goal, setGoal] = useState<UserGoal | ''>('');
+  const [competitor1, setCompetitor1] = useState('');
+  const [competitor2, setCompetitor2] = useState('');
+
   const reset = useCallback(() => {
     abortRef.current?.abort();
     setPhase('idle');
@@ -310,6 +346,12 @@ export function Auditor({
     setPct(0);
     setDetail('');
     setUrl('');
+    setShowContext(false);
+    setBizDescription('');
+    setAudience('');
+    setGoal('');
+    setCompetitor1('');
+    setCompetitor2('');
     window.history.replaceState(null, '', '/');
   }, []);
 
@@ -341,11 +383,40 @@ export function Auditor({
 
       let sawTerminal = false;
 
+      // Only present in the request body when the visitor actually opened
+      // the panel and typed something. An untouched panel, or one that was
+      // never opened, sends undefined here, so the request is unchanged from
+      // the URL-only path — the server already treats a missing
+      // businessContext as "no context supplied" throughout the pipeline.
+      const businessContext: BusinessContext | undefined = (() => {
+        const ctx: BusinessContext = {};
+        if (bizDescription.trim()) ctx.businessDescription = bizDescription.trim();
+        if (audience.trim()) ctx.targetAudience = audience.trim();
+        if (goal) ctx.goal = goal;
+        const competitorUrls = [competitor1, competitor2].map((u) => u.trim()).filter(Boolean);
+        if (competitorUrls.length) ctx.competitorUrls = competitorUrls;
+        return Object.keys(ctx).length ? ctx : undefined;
+      })();
+
+      if (businessContext) {
+        track('context_provided', {
+          hasDescription: Boolean(businessContext.businessDescription),
+          hasAudience: Boolean(businessContext.targetAudience),
+          hasGoal: Boolean(businessContext.goal),
+          competitorCount: businessContext.competitorUrls?.length ?? 0,
+        });
+      }
+
       try {
         const res = await fetch('/api/audit', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ url: value, utm, referrer: document.referrer || undefined }),
+          body: JSON.stringify({
+            url: value,
+            utm,
+            referrer: document.referrer || undefined,
+            businessContext,
+          }),
           signal: controller.signal,
         });
 
@@ -410,7 +481,7 @@ export function Auditor({
         setPhase('error');
       }
     },
-    [url]
+    [url, bizDescription, audience, goal, competitor1, competitor2]
   );
 
   /* ---------------------------------------------------------- report */
@@ -507,6 +578,88 @@ export function Auditor({
                   Audit My Site &mdash; It&rsquo;s Free
                 </button>
               </form>
+
+              <button
+                type="button"
+                className="context-toggle"
+                onClick={() => {
+                  const next = !showContext;
+                  setShowContext(next);
+                  if (next) track('context_panel_opened', {});
+                }}
+                aria-expanded={showContext}
+              >
+                {showContext ? 'Hide personalization' : 'Want a more personalized report? (optional)'}
+              </button>
+
+              {showContext && (
+                <div className="context-panel">
+                  <p className="context-lead">
+                    Tell us a little about the site and the report will focus on what matters most
+                    for it. Skip anything you would rather not answer, none of this is required to
+                    run the free audit.
+                  </p>
+                  <div className="context-field">
+                    <label htmlFor="ctx-desc">What does your business do?</label>
+                    <textarea
+                      id="ctx-desc"
+                      value={bizDescription}
+                      onChange={(e) => setBizDescription(e.target.value.slice(0, 500))}
+                      placeholder="e.g. We run a small pottery studio and sell handmade ceramics."
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="context-field">
+                    <label htmlFor="ctx-audience">Who are you trying to reach?</label>
+                    <input
+                      id="ctx-audience"
+                      type="text"
+                      value={audience}
+                      onChange={(e) => setAudience(e.target.value.slice(0, 300))}
+                      placeholder="e.g. Local customers looking for gifts"
+                      maxLength={300}
+                    />
+                  </div>
+                  <div className="context-field">
+                    <label htmlFor="ctx-goal">What is your main website goal?</label>
+                    <select
+                      id="ctx-goal"
+                      value={goal}
+                      onChange={(e) => setGoal(e.target.value as UserGoal | '')}
+                    >
+                      <option value="">Select a goal (optional)</option>
+                      {GOAL_OPTIONS.map((g) => (
+                        <option key={g.value} value={g.value}>
+                          {g.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="context-field">
+                    <label>Competitor websites (optional)</label>
+                    <div className="context-competitors">
+                      <input
+                        type="text"
+                        value={competitor1}
+                        onChange={(e) => setCompetitor1(e.target.value)}
+                        placeholder="competitor.com"
+                        aria-label="Competitor website 1"
+                      />
+                      <input
+                        type="text"
+                        value={competitor2}
+                        onChange={(e) => setCompetitor2(e.target.value)}
+                        placeholder="another-competitor.com"
+                        aria-label="Competitor website 2"
+                      />
+                    </div>
+                  </div>
+                  <p className="context-note">
+                    We never fetch these competitor sites at this stage. This only shapes how your
+                    own report is written.
+                  </p>
+                </div>
+              )}
 
               {error && (
                 <p style={{ fontSize: 10, lineHeight: 1.5, color: 'var(--rd-red)', margin: '-12px 0 20px', maxWidth: 347 }} role="alert">

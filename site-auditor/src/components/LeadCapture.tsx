@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { AuditReport } from '@/lib/audit/types';
+import { GOAL_LABELS } from '@/lib/audit/opportunity';
 
 const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/squarespell-info/30min';
 const SERVICES_URL =
@@ -25,7 +26,7 @@ function track(name: string, props: Record<string, unknown>, auditToken?: string
  * the evidence behind them are already visible above. This asks for an address
  * only where there is a real reason to give one.
  */
-export function LeadCapture({ report }: { report: AuditReport }) {
+export function LeadCapture({ report, services }: { report: AuditReport; services?: string[] }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -42,8 +43,18 @@ export function LeadCapture({ report }: { report: AuditReport }) {
   const critical = report.findings.filter((f) => f.severity === 'critical').length;
   const high = report.findings.filter((f) => f.severity === 'high').length;
 
-  const headline =
-    critical > 0
+  // `services` is the deterministic category → service mapping read off the
+  // opportunities themselves (Report.tsx `relevantServices`), so it falls
+  // back to the older, coarser `report.opportunity.services` list only when
+  // the caller did not supply one, never invented here.
+  const relevantServices = services ?? report.opportunity.services;
+
+  const goal = report.businessContext?.goal;
+  const goalPhrase = goal && goal !== 'not_sure' ? GOAL_LABELS[goal] : null;
+
+  const headline = goalPhrase
+    ? `Want help ${goalPhrase}?`
+    : critical > 0
       ? `You have ${critical} critical issue${critical === 1 ? ' that needs' : 's that need'} fixing`
       : high > 0
         ? `${high} high-priority issue${high === 1 ? '' : 's'} are holding this site back`
@@ -95,10 +106,10 @@ export function LeadCapture({ report }: { report: AuditReport }) {
       <h2>{headline}</h2>
       <p>{body}</p>
 
-      {report.opportunity.services.length > 0 && (
+      {relevantServices.length > 0 && (
         <p style={{ fontSize: 14, color: 'var(--ink-3)' }}>
           Based on what we found, the areas most worth your attention are:{' '}
-          {report.opportunity.services.join(', ').toLowerCase()}.
+          {relevantServices.join(', ').toLowerCase()}.
         </p>
       )}
 

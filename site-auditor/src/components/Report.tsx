@@ -459,6 +459,20 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
     return groups.filter((g) => g.items.length > 0);
   }, [oppReport]);
 
+  /* Service matching (Part 11): the deterministic category → service mapping
+     already lives on each Opportunity (opportunity.ts `squarespellService`),
+     so this only reads it, in ranked order, deduplicated. Falls back to the
+     legacy `report.opportunity.services` list (pre-dates the Opportunity
+     Engine) when there is no opportunity report at all, so an old saved
+     report still shows a relevant service rather than nothing. */
+  const relevantServices = useMemo(() => {
+    const fromOpportunities = (oppReport?.top ?? [])
+      .map((o) => o.squarespellService)
+      .filter((s): s is string => Boolean(s));
+    const deduped = Array.from(new Set(fromOpportunities));
+    return deduped.length ? deduped : report.opportunity.services;
+  }, [oppReport, report.opportunity.services]);
+
   const healthBands = useMemo(() => {
     const cats = report.score.categories;
     return {
@@ -472,6 +486,14 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
   const snapshot = useMemo(() => snapshotSentence(report.understanding), [report.understanding]);
   const goalSentence = goal && goal !== 'not_sure' ? `Your stated goal: ${GOAL_LABELS[goal] ?? goal}.` : null;
   const strongestSignal = report.strengths[0];
+
+  /* What the visitor typed themselves, shown verbatim and kept visually
+     distinct from `snapshot` above (which the audit inferred). Neither one
+     is allowed to blend into the other: this is a direct quote of user
+     input, not a claim the audit is making. Only rendered when at least one
+     field was actually supplied, so a URL-only audit shows nothing here. */
+  const businessDescription = report.businessContext?.businessDescription;
+  const targetAudience = report.businessContext?.targetAudience;
 
   /* Sidebar reflects where you actually are in the document. */
   useEffect(() => {
@@ -700,6 +722,14 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
                 </div>
               )}
 
+              {(businessDescription || targetAudience) && (
+                <div className="snapshot snapshot-you">
+                  <div className="detail-k">In your words</div>
+                  {businessDescription && <p>&ldquo;{businessDescription}&rdquo;</p>}
+                  {targetAudience && <p>Reaching: {targetAudience}</p>}
+                </div>
+              )}
+
               {oppReport && oppReport.top.length > 0 && (
                 <div className="snapshot-top">
                   <div className="detail-k">Your biggest opportunities</div>
@@ -819,8 +849,9 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
                 </span>
               </div>
               <p className="section-note">
-                Related findings grouped into what actually matters, not a list of failed checks.
-                Ordered so the first thing you read is the thing most worth fixing first.
+                {goal && goal !== 'not_sure'
+                  ? `Based on your goal of ${GOAL_LABELS[goal] ?? goal}, your highest priority opportunities are ranked first below.`
+                  : 'Related findings grouped into what actually matters, not a list of failed checks. Ordered so the first thing you read is the thing most worth fixing first.'}
               </p>
               {opportunityGroups.map((g) => (
                 <div key={g.key}>
@@ -834,6 +865,12 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
                   ))}
                 </div>
               ))}
+              <p className="mini-cta">
+                <span>Want these issues fixed?</span>
+                <a href="#next" onClick={() => track('cta_clicked', { cta: 'mini_opportunities' }, report.id)}>
+                  See how Squarespell can help
+                </a>
+              </p>
             </section>
           )}
 
@@ -853,6 +890,12 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
               {report.doctor.map((d, i) => (
                 <DoctorRow key={d.id} d={d} index={i} />
               ))}
+              <p className="mini-cta">
+                <span>Need help improving your Squarespace website?</span>
+                <a href="#next" onClick={() => track('cta_clicked', { cta: 'mini_doctor' }, report.id)}>
+                  Talk to a Squarespace specialist
+                </a>
+              </p>
             </section>
           )}
 
@@ -1110,7 +1153,7 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
 
           {/* ------------------------------------------------- next */}
           <div id="next">
-            <LeadCapture report={report} />
+            <LeadCapture report={report} services={relevantServices} />
           </div>
 
           <p className="method">

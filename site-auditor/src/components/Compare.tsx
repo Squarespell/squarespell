@@ -13,7 +13,16 @@ import type { Comparison } from '@/lib/audit/compare';
  * before it does it.
  */
 export function Compare({ report }: { report: AuditReport }) {
-  const [urls, setUrls] = useState<string[]>(['', '']);
+  // If competitors were named up front (Auditor.tsx's optional context
+  // panel), start from those instead of a blank form. Still nothing is run
+  // automatically: this only saves retyping what the visitor already told
+  // us, the comparison itself still needs its own Compare click.
+  const suppliedCompetitors = report.businessContext?.competitorUrls;
+  const [urls, setUrls] = useState<string[]>(
+    suppliedCompetitors && suppliedCompetitors.length > 0
+      ? suppliedCompetitors.slice(0, 3)
+      : ['', '']
+  );
   const [state, setState] = useState<'idle' | 'running' | 'done' | 'error'>(
     report.comparison ? 'done' : 'idle'
   );

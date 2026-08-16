@@ -50,8 +50,15 @@ import type {
  * fetched, in a later phase) expand the audit's own attack surface. Silently
  * drops anything malformed rather than erroring the whole audit over
  * optional, non-essential input.
+ *
+ * Competitor URLs are validated and deduplicated here (format, same-domain
+ * mistakes, repeats) but never fetched — that stays a deliberate boundary
+ * until a dedicated competitor-intelligence phase. `auditedUrl`, when given,
+ * is the site actually being audited, so "the user pasted their own site as
+ * a competitor" is caught the same way `/api/compare` already catches it,
+ * rather than silently carrying a self-comparison through to the report.
  */
-function sanitiseBusinessContext(input?: BusinessContext): BusinessContext | undefined {
+export function sanitiseBusinessContext(input?: BusinessContext, auditedUrl?: string): BusinessContext | undefined {
   if (!input || typeof input !== 'object') return undefined;
   const out: BusinessContext = {};
   if (typeof input.businessDescription === 'string' && input.businessDescription.trim()) {
@@ -72,10 +79,36 @@ function sanitiseBusinessContext(input?: BusinessContext): BusinessContext | und
     out.customGoal = input.customGoal.trim().slice(0, 200);
   }
   if (Array.isArray(input.competitorUrls)) {
-    out.competitorUrls = input.competitorUrls
-      .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
-      .slice(0, 5)
-      .map((u) => u.trim().slice(0, 500));
+    const auditedHost = auditedUrl ? prettyHost(auditedUrl) : undefined;
+    const seenHosts = new Set<string>();
+    const cleaned: string[] = [];
+    for (const raw of input.competitorUrls) {
+      if (typeof raw !== 'string' || !raw.trim()) continue;
+      const normalised = normaliseInput(raw.trim().slice(0, 500));
+      if (!normalised) continue;
+      // Reject anything that isn't a plain http(s) address before it is
+      // stored. These are never fetched in this phase, but a bare string
+      // like `javascript:...` or `file:...` still has no business sitting in
+      // a field that a later competitor-intelligence phase will eventually
+      // read and fetch, so the same protocol check `canonicalise` (url.ts)
+      // already applies to every crawled link applies here too.
+      let protocol: string;
+      try {
+        protocol = new URL(normalised).protocol;
+      } catch {
+        continue;
+      }
+      if (protocol !== 'http:' && protocol !== 'https:') continue;
+      const host = prettyHost(normalised);
+      // Not a real, dotted hostname (rejects junk like "asdf" or "localhost").
+      if (!host || !host.includes('.')) continue;
+      if (auditedHost && host === auditedHost) continue;
+      if (seenHosts.has(host)) continue;
+      seenHosts.add(host);
+      cleaned.push(normalised);
+      if (cleaned.length >= 5) break;
+    }
+    if (cleaned.length) out.competitorUrls = cleaned;
   }
   return Object.keys(out).length ? out : undefined;
 }
@@ -454,7 +487,10 @@ export async function runAudit(
 
   // Sanitised once, reused by both the goal-aware ranking below and the
   // field persisted on the report — see sanitiseBusinessContext above.
-  const sanitisedBusinessContext = sanitiseBusinessContext(businessContext);
+  // `first.finalUrl` is the site actually reached, after any redirect, so a
+  // competitor URL entered as a redirect target of the same site is still
+  // caught as a same-domain mistake.
+  const sanitisedBusinessContext = sanitiseBusinessContext(businessContext, first.finalUrl);
 
   // Structured "what is this website" summary, built from data every step
   // above already produced. See understanding.ts for why this exists.

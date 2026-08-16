@@ -18,6 +18,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import type { AuditReport, Finding, Severity } from '../audit/types';
 import type { Opportunity } from '../audit/opportunity';
+import { GOAL_LABELS } from '../audit/opportunity';
 import { nextSteps } from '../audit/verdict';
 import {
   SERIF_REGULAR,
@@ -93,6 +94,18 @@ const OPP_EFFORT_LABEL: Record<Opportunity['effort'], string> = {
   medium: 'Medium effort',
   high: 'Larger project',
 };
+
+/**
+ * The cover page has a fixed height and an already-calibrated layout, so
+ * user-supplied free text (businessDescription up to 500 chars,
+ * targetAudience up to 300) is capped for display here rather than trusting
+ * the stored length, the same caution the block-packing pages take with
+ * finding text further down this file.
+ */
+function truncate(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max - 1).trimEnd() + '…';
+}
 
 function bandColour(score: number): string {
   if (score >= 80) return ACCENT;
@@ -558,6 +571,21 @@ export function ReportDocument({ report }: { report: AuditReport }) {
   const oppReport = report.goalAwareOpportunities ?? report.opportunities;
   const topOpportunities = oppReport?.top.slice(0, 3) ?? [];
   const steps = topOpportunities.length > 0 ? [] : nextSteps(report);
+
+  // Part 8 of the personalization brief: the PDF should reflect the same
+  // context the web report does. Nothing here is fetched or inferred, only
+  // read straight off `report.businessContext` and, for the two free-text
+  // fields, capped to protect the cover page's fixed layout. Absent for any
+  // audit that supplied none of this, so an old or context-free report's
+  // cover page is unchanged.
+  const bizGoal = report.businessContext?.goal;
+  const bizGoalLabel = bizGoal && bizGoal !== 'not_sure' ? GOAL_LABELS[bizGoal] : null;
+  const bizDescription = report.businessContext?.businessDescription
+    ? truncate(report.businessContext.businessDescription, 220)
+    : null;
+  const bizAudience = report.businessContext?.targetAudience
+    ? truncate(report.businessContext.targetAudience, 140)
+    : null;
   const created = new Date(report.createdAt);
   const faq = report.faq;
   const perf = report.perf;
@@ -852,7 +880,24 @@ export function ReportDocument({ report }: { report: AuditReport }) {
             <Text style={s.factK}>Checks applied</Text>
             <Text style={s.factV}>{report.coverage.checksApplicable}</Text>
           </View>
+          {bizGoalLabel && (
+            <View style={s.fact}>
+              <Text style={s.factK}>Goal</Text>
+              <Text style={s.factV}>{bizGoalLabel}</Text>
+            </View>
+          )}
         </View>
+
+        {(bizDescription || bizAudience) && (
+          <View style={{ marginTop: 10 }}>
+            {bizDescription && <Text style={s.sectionNote}>&ldquo;{bizDescription}&rdquo;</Text>}
+            {bizAudience && (
+              <Text style={[s.sectionNote, { marginTop: bizDescription ? 2 : 5 }]}>
+                Reaching: {bizAudience}
+              </Text>
+            )}
+          </View>
+        )}
 
         {topOpportunities.length > 0 && (
           <View style={s.rule}>

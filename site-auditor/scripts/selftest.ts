@@ -988,6 +988,63 @@ console.log('\nCopy');
 }
 
 /* ------------------------------------------------------------------ *
+ * Business context intake (Part 13 of the personalization brief):
+ * `sanitiseBusinessContext` (pipeline.ts) is the single point every field
+ * the visitor can type passes through before it reaches the report, the
+ * AI prompt or the PDF, so this is tested directly rather than through a
+ * live crawl. `require`d, same as packBlocks below, to sidestep pulling in
+ * pipeline.ts's own heavier transitive imports (crawler, safeFetch) at the
+ * top of this file.
+ * ------------------------------------------------------------------ */
+console.log('\nBusiness context intake');
+{
+  const { sanitiseBusinessContext } = require('../src/lib/audit/pipeline');
+
+  assert('no context at all produces no businessContext (URL-only audit is unchanged)', sanitiseBusinessContext(undefined) === undefined);
+  assert('an empty object produces no businessContext', sanitiseBusinessContext({}) === undefined);
+
+  const full = sanitiseBusinessContext({
+    businessDescription: '  We run a small pottery studio.  ',
+    targetAudience: '  Local gift shoppers  ',
+    goal: 'get_more_bookings',
+    competitorUrls: ['competitor-one.com', 'competitor-two.com'],
+  });
+  assert('businessDescription survives, trimmed', full?.businessDescription === 'We run a small pottery studio.');
+  assert('targetAudience survives, trimmed', full?.targetAudience === 'Local gift shoppers');
+  assert('a known goal survives', full?.goal === 'get_more_bookings');
+  assert('competitor URLs survive', full?.competitorUrls?.length === 2);
+
+  assert('an unknown goal is dropped rather than stored as free text', sanitiseBusinessContext({ goal: 'win_the_lottery' as any })?.goal === undefined);
+  assert('whitespace-only description is dropped', sanitiseBusinessContext({ businessDescription: '   ' })?.businessDescription === undefined);
+
+  const overlong = sanitiseBusinessContext({ businessDescription: 'x'.repeat(900), targetAudience: 'y'.repeat(900) });
+  assert('an overlong description is capped, not rejected outright', overlong?.businessDescription?.length === 500);
+  assert('an overlong audience is capped, not rejected outright', overlong?.targetAudience?.length === 300);
+
+  const junkCompetitors = sanitiseBusinessContext({ competitorUrls: ['not a url', 'localhost', '   ', 'https://valid-competitor.com'] });
+  assert('an invalid competitor URL is dropped rather than crashing the audit', junkCompetitors?.competitorUrls?.length === 1);
+  assert('the one valid competitor URL still survives alongside junk', junkCompetitors?.competitorUrls?.[0].includes('valid-competitor.com'));
+
+  const badProtocol = sanitiseBusinessContext({ competitorUrls: ['javascript://alert(1)', 'ftp://files.example.com', 'https://valid-competitor.com'] });
+  assert('a non-http(s) competitor URL is dropped, only the http(s) one survives', badProtocol?.competitorUrls?.length === 1 && badProtocol.competitorUrls[0].includes('valid-competitor.com'));
+
+  const dupeCompetitors = sanitiseBusinessContext({ competitorUrls: ['dupe.com', 'www.dupe.com', 'https://dupe.com/'] });
+  assert('duplicate competitors (with/without www, with/without scheme) collapse to one', dupeCompetitors?.competitorUrls?.length === 1);
+
+  const tooMany = sanitiseBusinessContext({ competitorUrls: ['a.com', 'b.com', 'c.com', 'd.com', 'e.com', 'f.com', 'g.com'] });
+  assert('competitor URLs are capped at 5', tooMany?.competitorUrls?.length === 5);
+
+  const selfAsCompetitor = sanitiseBusinessContext(
+    { competitorUrls: ['my-own-site.com', 'https://www.my-own-site.com/pricing', 'a-real-competitor.com'] },
+    'https://my-own-site.com/'
+  );
+  assert(
+    'a visitor naming their own site as a competitor is caught, not carried through as a self-comparison',
+    selfAsCompetitor?.competitorUrls?.length === 1 && selfAsCompetitor.competitorUrls[0].includes('a-real-competitor.com')
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Comparison verdict wording
  * ------------------------------------------------------------------ */
 

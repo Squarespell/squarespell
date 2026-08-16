@@ -1100,6 +1100,17 @@ p { margin: 0; }
   color: var(--ink-3);
 }
 
+/* What the visitor typed themselves (Report.tsx `businessDescription` /
+   `targetAudience`), set apart from the deterministic `snapshot` sentence
+   above it with a left rule, so a quote of their own words never reads as a
+   claim the audit itself is making. */
+.snapshot-you {
+  padding-left: var(--s3);
+  border-left: var(--hairline) solid var(--line-2);
+}
+.snapshot-you p { font-style: italic; }
+.snapshot-you p + p { font-style: normal; }
+
 /* ---- what changed ---------------------------------------------- */
 
 .changes { list-style: none; margin: var(--s4) 0 0; padding: 0; }
@@ -1387,6 +1398,25 @@ p { margin: 0; }
   color: var(--ink-2);
 }
 
+/* ---- contextual, mid-report CTAs (Part 9 of the personalization brief) --
+   Deliberately smaller and quieter than the closing .cta below: a single
+   line under the section it relates to, not a second sales pitch. Links
+   down to the same #next section rather than duplicating a form here. */
+.mini-cta {
+  margin-top: var(--s5);
+  padding: var(--s3) var(--s4);
+  border: var(--hairline) solid var(--line-2);
+  border-radius: var(--r-md);
+  font-size: var(--fs-13);
+  color: var(--ink-2);
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+.mini-cta a { color: var(--ink-0); text-decoration: none; border-bottom: var(--hairline) solid var(--accent); white-space: nowrap; }
+.mini-cta a:hover { color: var(--accent); }
+
 /* ---- next steps --------------------------------------------- */
 
 .cta { margin-top: var(--s16); padding-top: var(--s5); border-top: var(--hairline) solid var(--line-1); }
@@ -1555,6 +1585,22 @@ p { margin: 0; }
 .rd .stars { color: #ffc800; font-size: 13px; letter-spacing: 2px; line-height: 1; }
 .rd .rating-text { font-size: 8px; color: #f0f0f0; }
 .rd .trusted { font-size: 8px; color: #b7b7b7; line-height: 1.3; }
+
+/* Optional pre-audit personalization panel (Auditor.tsx). Collapsed by
+   default so the URL-only path stays exactly as fast and frictionless as
+   before; opening it never blocks or slows the audit itself. */
+.rd .context-toggle { background: transparent; border: 0; padding: 0; margin: 0 0 20px; font-size: 8px; font-weight: 700; color: var(--rd-lime); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-family: inherit; }
+.rd .context-toggle:hover { color: var(--rd-lime2); }
+.rd .context-panel { width: 347px; max-width: 100%; border: 1px solid #2c2d2e; border-radius: 5px; background: #0e0f10; padding: 14px 14px 16px; margin: -6px 0 20px; display: flex; flex-direction: column; gap: 10px; }
+.rd .context-lead { font-size: 8px; color: #b7b7b7; line-height: 1.4; margin: 0; }
+.rd .context-field { display: flex; flex-direction: column; gap: 4px; }
+.rd .context-field label { font-size: 7px; font-weight: 700; letter-spacing: .3px; color: #e7e7e7; text-transform: uppercase; }
+.rd .context-field input, .rd .context-field select, .rd .context-field textarea { width: 100%; background: #161718; border: 1px solid #2c2d2e; border-radius: 4px; padding: 7px 8px; color: var(--rd-text); font-size: 8px; font-family: inherit; outline: 0; }
+.rd .context-field input::placeholder, .rd .context-field textarea::placeholder { color: #6d6d6d; }
+.rd .context-field textarea { resize: vertical; min-height: 44px; }
+.rd .context-field select { appearance: auto; }
+.rd .context-competitors { display: flex; flex-direction: column; gap: 6px; }
+.rd .context-note { font-size: 7px; color: #7a7a7a; line-height: 1.4; margin: 0; }
 
 .rd .report-card { border: 1px solid #2c2d2f; border-radius: 4px; background: linear-gradient(135deg, #161718, #0e0f10 60%, #111212); padding: 24px 22px 20px; box-shadow: 0 0 35px rgba(0,0,0,.45); }
 .rd .report-head { display: flex; justify-content: space-between; align-items: flex-start; }

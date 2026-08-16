@@ -14,6 +14,8 @@ const ALLOWED = new Set([
   'print_clicked',
   'category_opened',
   'lead_form_opened',
+  'context_panel_opened',
+  'context_provided',
 ]);
 
 export async function POST(req: NextRequest) {
