@@ -70,7 +70,7 @@ export function buildWebsiteDoctor(
     const goalMatch = goalById?.get(o.id);
     const goalNote =
       goalAware?.goal && goalMatch && goalMatch.goalRelevanceScore >= 85
-        ? `This is directly on the path to your stated goal of ${GOAL_LABELS[goalAware.goal] ?? goalAware.goal} — currently ranked ${goalMatch.priority} priority based on what was actually found, not on the goal itself.`
+        ? `This is directly on the path to your stated goal of ${GOAL_LABELS[goalAware.goal] ?? goalAware.goal}, currently ranked ${goalMatch.priority} priority based on what was actually found, not on the goal itself.`
         : undefined;
 
     return {

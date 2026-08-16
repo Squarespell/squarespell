@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AuditReport, Finding, Severity } from '@/lib/audit/types';
 import type { PsiResult } from '@/lib/audit/perf/psi';
-import { nextSteps } from '@/lib/audit/verdict';
+import type { Opportunity, GoalAwareOpportunity } from '@/lib/audit/opportunity';
+import { GOAL_LABELS } from '@/lib/audit/opportunity';
+import type { Diagnosis } from '@/lib/audit/doctor';
+import type { WebsiteUnderstanding, ConversionType } from '@/lib/audit/understanding';
 import { Compare } from './Compare';
 import { LeadCapture } from './LeadCapture';
 
@@ -26,6 +29,32 @@ const EFFORT_LABEL: Record<Finding['effort'], string> = {
   project: 'A planned piece of work',
 };
 
+/* Opportunities/diagnoses use a coarser three-step effort scale — see
+   opportunity.ts. Kept as time-free adjectives on purpose there, so this
+   mirrors that rather than forcing a fake minute estimate onto a group of
+   findings that individually take different amounts of time. */
+const OPP_EFFORT_LABEL: Record<Opportunity['effort'], string> = {
+  low: 'Low effort',
+  medium: 'Medium effort',
+  high: 'Larger project',
+};
+
+const OWNER_LABEL: Record<Opportunity['owner'], string> = {
+  you: 'You can do this yourself',
+  designer: 'Best suited to a designer',
+  developer: 'Best suited to a developer',
+  marketer: 'Best suited to marketing or copy',
+  seo: 'Best suited to SEO work',
+  squarespell: 'We recommend expert help for this',
+};
+
+const CONVERSION_PHRASE: Record<ConversionType, string> = {
+  purchase: 'a purchase',
+  booking: 'a booking',
+  'contact-form': 'an enquiry',
+  none: 'a conversion',
+};
+
 function bandColour(score: number): string {
   if (score >= 80) return 'var(--ok-700)';
   if (score >= 60) return 'var(--high-700)';
@@ -38,6 +67,20 @@ function bandWord(score: number): string {
   if (score >= 60) return 'needs work';
   if (score >= 40) return 'weak';
   return 'poor';
+}
+
+/**
+ * One plain-English sentence describing what the site appears to be, built
+ * only from `understanding` and only when there is enough signal to trust it
+ * (`confident`). Never states a business type below that bar rather than
+ * guessing — see understanding.ts for what `confident` requires.
+ */
+function snapshotSentence(u: WebsiteUnderstanding | undefined): string | null {
+  if (!u || !u.confident) return null;
+  const subject = u.businessType.value ? `a ${u.businessType.value}` : 'a business';
+  const location = u.location.value && u.location.confidence !== 'low' ? ` in ${u.location.value}` : '';
+  const conv = CONVERSION_PHRASE[u.primaryConversion.value ?? 'none'];
+  return `You appear to run ${subject}${location} on Squarespace, built around ${conv}.`;
 }
 
 function track(name: string, props: Record<string, unknown>, auditToken?: string) {
@@ -175,6 +218,194 @@ function FindingRow({
   );
 }
 
+/**
+ * One opportunity, shown as a diagnosis-style disclosure row — the same
+ * open/closed mechanics as `FindingRow`, but framed as "what this means"
+ * rather than "what failed." The first two in a list default open so the
+ * highest-value information is visible without a click; the rest match
+ * `FindingRow`'s collapsed-by-default behaviour so a long list never forces
+ * the browser to render every evidence table at once.
+ */
+function OpportunityRow({
+  opp,
+  index,
+  goalNote,
+  auditToken,
+}: {
+  opp: Opportunity;
+  index: number;
+  goalNote?: string;
+  auditToken?: string;
+}) {
+  const [open, setOpen] = useState(index < 2);
+
+  return (
+    <article className={`opp${open ? ' open' : ''}`} id={opp.id}>
+      <button
+        className="opp-row"
+        aria-expanded={open}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          if (next) track('opportunity_expanded', { id: opp.id, priority: opp.priority }, auditToken);
+        }}
+      >
+        <span className={`glyph glyph-${opp.priority}`} aria-hidden="true" />
+        <span className="opp-title">{opp.title}</span>
+        <span className="opp-side">
+          {opp.isQuickWin && <span className="chip chip-ok">Quick win</span>}
+          <span className={`chip chip-${opp.priority}`}>{SEV_LABEL[opp.priority]}</span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="detail">
+          <p className="detail-lead">{opp.summary}</p>
+
+          <div className="detail-part">
+            <div className="detail-k">Why it matters</div>
+            <p>{opp.businessRelevance}</p>
+          </div>
+
+          {opp.evidence.length > 0 && (
+            <div className="detail-part">
+              <div className="detail-k">Evidence</div>
+              <div className="evidence">
+                <table>
+                  <tbody>
+                    {opp.evidence.map((e, i) => (
+                      <tr key={i}>
+                        <td className="k">{e.label}</td>
+                        <td>{e.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="detail-part">
+            <div className="detail-k">Recommended action</div>
+            <p>{opp.recommendedAction}</p>
+            <p className="detail-effort">
+              {OPP_EFFORT_LABEL[opp.effort]} &middot; {OWNER_LABEL[opp.owner]}
+            </p>
+          </div>
+
+          {opp.affectedPages.length > 0 && (
+            <div className="detail-part">
+              <div className="detail-k">Affected pages</div>
+              <div className="urls">
+                {opp.affectedPages.map((u) => (
+                  <a key={u} href={u} target="_blank" rel="noopener noreferrer nofollow">
+                    {(() => {
+                      try {
+                        return new URL(u).pathname === '/' ? u.replace(/^https?:\/\//, '') : new URL(u).pathname;
+                      } catch {
+                        return u;
+                      }
+                    })()}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {goalNote && (
+            <div className="detail-part">
+              <p className="caveat goal-note">{goalNote}</p>
+            </div>
+          )}
+
+          {opp.confidence !== 'high' && (
+            <div className="detail-part">
+              <p className="caveat">
+                {opp.confidence === 'low'
+                  ? 'Built partly from a signal we are less certain about. Worth confirming by eye before treating this as settled.'
+                  : 'Reasonably confident, though not every signal behind this is a direct measurement.'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
+/**
+ * One Website Doctor diagnosis. Same disclosure mechanics as
+ * `OpportunityRow` — this is a re-framing of the same data, not a second
+ * source of findings, so it deliberately looks like the same kind of row.
+ */
+function DoctorRow({ d, index }: { d: Diagnosis; index: number }) {
+  const [open, setOpen] = useState(index < 1);
+
+  return (
+    <article className={`opp${open ? ' open' : ''}`} id={`doc-${d.id}`}>
+      <button className="opp-row" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span className={`glyph glyph-${d.priority}`} aria-hidden="true" />
+        <span className="opp-title">{d.diagnosis}</span>
+        <span className="opp-side">
+          <span className={`chip chip-${d.priority}`}>{SEV_LABEL[d.priority]}</span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="detail">
+          {d.evidence.length > 0 && (
+            <div className="detail-part">
+              <div className="detail-k">Evidence</div>
+              <div className="evidence">
+                <table>
+                  <tbody>
+                    {d.evidence.map((e, i) => (
+                      <tr key={i}>
+                        <td className="k">{e.label}</td>
+                        <td>{e.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {d.likelyContributingFactors.length > 0 && (
+            <div className="detail-part">
+              <div className="detail-k">Likely contributing factors</div>
+              <ul className="factors">
+                {d.likelyContributingFactors.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="detail-part">
+            <div className="detail-k">Why it matters</div>
+            <p>{d.impact}</p>
+          </div>
+
+          <div className="detail-part">
+            <div className="detail-k">Prescription</div>
+            <p>{d.prescription}</p>
+            <p className="detail-effort">
+              {OPP_EFFORT_LABEL[d.effort]} &middot; {OWNER_LABEL[d.owner]}
+            </p>
+          </div>
+
+          {d.goalNote && (
+            <div className="detail-part">
+              <p className="caveat goal-note">{d.goalNote}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
 export function Report({ report, onReset }: { report: AuditReport; onReset: () => void }) {
   const [filter, setFilter] = useState<'all' | Severity>('all');
   const [active, setActive] = useState<string>('summary');
@@ -184,12 +415,6 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
     const c: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
     for (const f of report.findings) c[f.severity]++;
     return c;
-  }, [report.findings]);
-
-  const byCategory = useMemo(() => {
-    const map = new Map<string, Finding[]>();
-    for (const f of report.findings) map.set(f.category, [...(map.get(f.category) || []), f]);
-    return map;
   }, [report.findings]);
 
   const visible = useMemo(
@@ -204,9 +429,65 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
     })).filter((g) => g.items.length > 0);
   }, [visible]);
 
+  /* ------------------------------------------------------------ *
+   * Opportunities / Website Doctor / What Changed — all optional,
+   * all built from data the backend already computed (opportunity.ts,
+   * doctor.ts, diff.ts). Every one of these is undefined on a report
+   * saved before that phase shipped, so every section below is gated
+   * on presence rather than assumed to exist.
+   * ------------------------------------------------------------ */
+  const oppReport = report.goalAwareOpportunities ?? report.opportunities;
+  const goal = report.businessContext?.goal;
+
+  const goalNoteById = useMemo(() => {
+    const map = new Map<string, string>();
+    if (report.goalAwareOpportunities?.goal) {
+      for (const o of report.goalAwareOpportunities.all as GoalAwareOpportunity[]) {
+        if (o.goalRelevanceScore >= 85) map.set(o.id, o.goalRelevanceReason);
+      }
+    }
+    return map;
+  }, [report.goalAwareOpportunities]);
+
+  const opportunityGroups = useMemo(() => {
+    const list = oppReport?.ranked ?? [];
+    const groups = [
+      { key: 'fix-first', label: 'Fix first', note: 'Critical, affects how the site works or is found at all.', items: list.filter((o) => o.priority === 'critical') },
+      { key: 'next', label: 'Next', note: 'High-value, worth doing once the fix-first list is clear.', items: list.filter((o) => o.priority === 'high') },
+      { key: 'later', label: 'Later', note: 'Smaller improvements, worth doing when there is time.', items: list.filter((o) => o.priority === 'medium' || o.priority === 'low') },
+    ];
+    return groups.filter((g) => g.items.length > 0);
+  }, [oppReport]);
+
+  const healthBands = useMemo(() => {
+    const cats = report.score.categories;
+    return {
+      healthy: cats.filter((c) => c.score >= 80).length,
+      attention: cats.filter((c) => c.score >= 60 && c.score < 80).length,
+      critical: cats.filter((c) => c.score < 60).length,
+      total: cats.length,
+    };
+  }, [report.score.categories]);
+
+  const snapshot = useMemo(() => snapshotSentence(report.understanding), [report.understanding]);
+  const goalSentence = goal && goal !== 'not_sure' ? `Your stated goal: ${GOAL_LABELS[goal] ?? goal}.` : null;
+  const strongestSignal = report.strengths[0];
+
   /* Sidebar reflects where you actually are in the document. */
   useEffect(() => {
-    const ids = ['summary', 'start', 'questions', 'speed', 'compare', 'categories', 'findings', 'working', 'next'];
+    const ids = [
+      'summary',
+      'health',
+      'opportunities',
+      'doctor',
+      'changed',
+      'questions',
+      'speed',
+      'compare',
+      'findings',
+      'working',
+      'next',
+    ];
     const obs = new IntersectionObserver(
       (entries) => {
         const hit = entries
@@ -223,7 +504,6 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
     return () => obs.disconnect();
   }, []);
 
-  const steps = useMemo(() => nextSteps(report), [report]);
   const faq = report.faq;
 
   /* Google's own measurement. Deliberately fetched after the report is on
@@ -270,8 +550,11 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
             <span className="eyebrow side-label">Report</span>
             {(
               [
-                ['summary', 'Verdict'],
-                ['start', 'Start here'],
+                ['summary', 'Overview'],
+                ['health', 'Website health'],
+                ...(oppReport && oppReport.all.length > 0 ? [['opportunities', 'Opportunities']] : []),
+                ...(report.doctor && report.doctor.length > 0 ? [['doctor', 'Website Doctor']] : []),
+                ...(report.diff?.hasPrevious ? [['changed', 'What changed']] : []),
                 // Only listed when the section is actually on the page. A nav
                 // item that scrolls nowhere is worse than a shorter nav.
                 ...(faq?.ran && faq.opportunities.length > 0
@@ -279,14 +562,15 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
                   : []),
                 ['speed', 'Real speed'],
                 ['compare', 'Competitors'],
-                ['categories', 'Categories'],
-                ['findings', 'Findings'],
+                ['findings', 'All findings'],
                 ...(report.strengths.length > 0 ? [['working', 'What works']] : []),
                 ['next', 'Get help'],
               ] as string[][]
             ).map(([id, label]) => (
               <a key={id} href={`#${id}`} className={`side-link${active === id ? ' on' : ''}`}>
                 <span>{label}</span>
+                {id === 'opportunities' && oppReport && <span className="side-count">{oppReport.all.length}</span>}
+                {id === 'doctor' && report.doctor && <span className="side-count">{report.doctor.length}</span>}
                 {id === 'questions' && faq?.ran && (
                 <span className="side-count">{faq.opportunities.length}</span>
               )}
@@ -354,7 +638,7 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
             </div>
           </header>
 
-          {/* ---------------------------------------------- summary */}
+          {/* ---------------------------------------------- executive summary */}
           <section id="summary" className="verdict">
             <div>
               <div className="score-value" style={{ color: bandColour(score) }}>
@@ -409,6 +693,33 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
                 );
               })()}
 
+              {(snapshot || goalSentence) && (
+                <div className="snapshot">
+                  {snapshot && <p>{snapshot}</p>}
+                  {goalSentence && <p>{goalSentence}</p>}
+                </div>
+              )}
+
+              {oppReport && oppReport.top.length > 0 && (
+                <div className="snapshot-top">
+                  <div className="detail-k">Your biggest opportunities</div>
+                  <ol className="snapshot-list">
+                    {oppReport.top.slice(0, 3).map((o) => (
+                      <li key={o.id}>
+                        <a href={`#${o.id}`}>{o.title}</a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {strongestSignal && (
+                <p className="snapshot-strength">
+                  <span className="glyph glyph-ok" aria-hidden="true" />
+                  <span>{strongestSignal}</span>
+                </p>
+              )}
+
               <div className="tally">
                 {SEV_ORDER.filter((s) => counts[s] > 0).map((s) => (
                   <span className="tally-item" key={s}>
@@ -462,34 +773,138 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
             )}
           </dl>
 
-          {/* ------------------------------------------- start here */}
-          {steps.length > 0 && (
-            <section id="start" className="section">
+          {/* ------------------------------------------- website health */}
+          <section id="health" className="section">
+            <div className="section-head">
+              <h2>Website health</h2>
+              <span className="eyebrow">Weighted by commercial impact</span>
+            </div>
+            <p className="section-note">
+              {healthBands.healthy} of {healthBands.total} areas are healthy
+              {healthBands.attention > 0 ? `, ${healthBands.attention} need attention` : ''}
+              {healthBands.critical > 0 ? `, and ${healthBands.critical} are critical` : ''}.
+            </p>
+            <table className="cats">
+              <tbody>
+                {report.score.categories.map((c) => (
+                  <tr key={c.id}>
+                    <td className="cat-name">{c.label}</td>
+                    <td className="cat-issues">
+                      {c.findingCount === 0 ? 'clear' : `${c.findingCount} issue${c.findingCount === 1 ? '' : 's'}`}
+                    </td>
+                    <td className="cat-bar">
+                      <div className="cat-bar-track">
+                        <div
+                          className="cat-bar-fill"
+                          style={{ width: `${c.score}%`, background: bandColour(c.score) }}
+                        />
+                      </div>
+                    </td>
+                    <td className="cat-score" style={{ color: bandColour(c.score) }}>
+                      {c.score}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          {/* ------------------------------------------ opportunities */}
+          {oppReport && opportunityGroups.length > 0 && (
+            <section id="opportunities" className="section">
               <div className="section-head">
-                <h2>Start here</h2>
+                <h2>Biggest opportunities</h2>
                 <span className="eyebrow">
-                  {steps.length === 1 ? 'The single highest-value move' : `${steps.length} highest-value moves, in order`}
+                  {goal && goal !== 'not_sure' ? `ranked for ${GOAL_LABELS[goal] ?? goal}` : 'ranked by severity and evidence'}
                 </span>
               </div>
-              <ol className="plan">
-                {steps.map((f, i) => (
-                  <li className="plan-row" key={f.id}>
-                    <span className="plan-n num">{String(i + 1).padStart(2, '0')}</span>
-                    <div className="plan-body">
-                      <a className="plan-title" href={`#${f.id}`}>
-                        {f.title}
-                      </a>
-                      <p>{f.narrative?.action}</p>
-                      <div className="plan-meta">
-                        <span className={`glyph glyph-${f.severity}`} aria-hidden="true" />
-                        <span>{SEV_LABEL[f.severity]}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{EFFORT_LABEL[f.effort]}</span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <p className="section-note">
+                Related findings grouped into what actually matters, not a list of failed checks.
+                Ordered so the first thing you read is the thing most worth fixing first.
+              </p>
+              {opportunityGroups.map((g) => (
+                <div key={g.key}>
+                  <div className="group-head">
+                    <span className="eyebrow">{g.label}</span>
+                    <span className="group-count">{g.items.length}</span>
+                    <span className="group-note">{g.note}</span>
+                  </div>
+                  {g.items.map((o, i) => (
+                    <OpportunityRow key={o.id} opp={o} index={i} goalNote={goalNoteById.get(o.id)} auditToken={report.id} />
+                  ))}
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* ----------------------------------------------- doctor */}
+          {report.doctor && report.doctor.length > 0 && (
+            <section id="doctor" className="section">
+              <div className="section-head">
+                <h2>Website Doctor</h2>
+                <span className="eyebrow">Diagnosis, cause and prescription</span>
+              </div>
+              <p className="section-note">
+                The same opportunities above, read the way a diagnosis is read: what appears to be
+                wrong, what the evidence shows, what likely contributes to it, and what to do about
+                it. Contributing factors are correlation, findings that occur together, not a
+                confirmed cause.
+              </p>
+              {report.doctor.map((d, i) => (
+                <DoctorRow key={d.id} d={d} index={i} />
+              ))}
+            </section>
+          )}
+
+          {/* ----------------------------------------------- changed */}
+          {report.diff?.hasPrevious && (
+            <section id="changed" className="section">
+              <div className="section-head">
+                <h2>What changed since your last audit</h2>
+                <span className="eyebrow">
+                  {report.diff.daysSincePrevious} {report.diff.daysSincePrevious === 1 ? 'day' : 'days'} ago
+                </span>
+              </div>
+              <div className="tally">
+                {report.diff.resolvedIssues.length > 0 && (
+                  <span className="tally-item">
+                    <span className="glyph glyph-ok" aria-hidden="true" />
+                    <span className="tally-n">{report.diff.resolvedIssues.length}</span>
+                    <span>Resolved</span>
+                  </span>
+                )}
+                {report.diff.newIssues.length > 0 && (
+                  <span className="tally-item">
+                    <span className="glyph glyph-critical" aria-hidden="true" />
+                    <span className="tally-n">{report.diff.newIssues.length}</span>
+                    <span>New</span>
+                  </span>
+                )}
+                {report.diff.worsened.length > 0 && (
+                  <span className="tally-item">
+                    <span className="glyph glyph-high" aria-hidden="true" />
+                    <span className="tally-n">{report.diff.worsened.length}</span>
+                    <span>Worsened</span>
+                  </span>
+                )}
+                {report.diff.improved.length > 0 && (
+                  <span className="tally-item">
+                    <span className="glyph glyph-medium" aria-hidden="true" />
+                    <span className="tally-n">{report.diff.improved.length}</span>
+                    <span>Improved</span>
+                  </span>
+                )}
+              </div>
+              {report.diff.summary.length > 0 && (
+                <ul className="changes">
+                  {report.diff.summary.map((line, i) => (
+                    <li key={i}>
+                      <span className="glyph glyph-low" aria-hidden="true" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           )}
 
@@ -634,41 +1049,10 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
           {/* ----------------------------------------- competitors */}
           <Compare report={report} />
 
-          {/* ------------------------------------------- categories */}
-          <section id="categories" className="section">
-            <div className="section-head">
-              <h2>Categories</h2>
-              <span className="eyebrow">Weighted by commercial impact</span>
-            </div>
-            <table className="cats">
-              <tbody>
-                {report.score.categories.map((c) => (
-                  <tr key={c.id}>
-                    <td className="cat-name">{c.label}</td>
-                    <td className="cat-issues">
-                      {c.findingCount === 0 ? 'clear' : `${c.findingCount} issue${c.findingCount === 1 ? '' : 's'}`}
-                    </td>
-                    <td className="cat-bar">
-                      <div className="cat-bar-track">
-                        <div
-                          className="cat-bar-fill"
-                          style={{ width: `${c.score}%`, background: bandColour(c.score) }}
-                        />
-                      </div>
-                    </td>
-                    <td className="cat-score" style={{ color: bandColour(c.score) }}>
-                      {c.score}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-
           {/* --------------------------------------------- findings */}
           <section id="findings" className="section">
             <div className="section-head">
-              <h2>Findings</h2>
+              <h2>All findings</h2>
               <div className="filters">
                 {(['all', ...SEV_ORDER] as const)
                   .filter((s) => s === 'all' || counts[s] > 0)
@@ -683,6 +1067,10 @@ export function Report({ report, onReset }: { report: AuditReport; onReset: () =
                   ))}
               </div>
             </div>
+            <p className="section-note">
+              Every check we ran, in full. The sections above already group these into what matters,
+              this is the complete list underneath.
+            </p>
 
             {grouped.length === 0 ? (
               <p className="section-note">Nothing in this group.</p>

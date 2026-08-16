@@ -941,7 +941,7 @@ p { margin: 0; }
 
 /* The evidence is the part of the report nobody else shows, so it gets
    the mono face and room to breathe, and none of the box drawing. */
-.evidence { margin-top: var(--s1h); }
+.evidence { margin-top: var(--s1h); max-width: 100%; overflow-x: auto; }
 .evidence table { width: 100%; border-collapse: collapse; }
 .evidence td {
   padding: var(--s2) var(--s4) var(--s2) 0;
@@ -1011,9 +1011,117 @@ p { margin: 0; }
   margin-bottom: 2px;
 }
 
+/* ---- opportunities / website doctor --------------------------
+   Same disclosure mechanics as .finding — deliberately, since these are
+   the same underlying data re-framed, not a different kind of thing.
+   `.group-head` already exists for the findings-by-severity grouping;
+   `.group-note` adds the one-line explanation of what a tier means,
+   which findings-by-severity never needed because "Critical" speaks
+   for itself but "Fix first" benefits from a reason why. */
+
+.opp { border-bottom: var(--hairline) solid var(--line-3); }
+
+.opp-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s3) 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.opp-row .glyph { align-self: center; }
+.opp-row:hover .opp-title { color: var(--ink-0); }
+.opp-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+.opp-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-15);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--ls-sm);
+  color: var(--ink-1);
+  transition: color 0.12s ease;
+}
+.opp.open .opp-title { color: var(--ink-0); }
+.opp-side { display: flex; align-items: baseline; gap: var(--s2); flex: none; }
+
+.group-note {
+  font-size: var(--fs-12);
+  color: var(--ink-4);
+  margin-left: auto;
+}
+
+.factors { list-style: none; margin: 0; padding: 0; }
+.factors li {
+  position: relative;
+  padding: var(--s1) 0 var(--s1) var(--s4);
+  font-size: var(--fs-14);
+  line-height: var(--lh-prose);
+  color: var(--ink-2);
+}
+.factors li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.7em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+
+.goal-note { color: var(--accent-hover) !important; }
+
+/* ---- executive snapshot ---------------------------------------
+   The plain-English "what is this site, what should I do" lines sit
+   inside .verdict-copy, above the severity tally, so the score, the
+   sentence and the top opportunities read as one thought. */
+
+.snapshot { margin-top: var(--s4); }
+.snapshot p { font-size: var(--fs-14); line-height: var(--lh-prose); color: var(--ink-2); max-width: var(--prose-max); }
+.snapshot p + p { margin-top: var(--s1h); }
+
+.snapshot-top { margin-top: var(--s4); }
+.snapshot-list { list-style: decimal; margin: var(--s1h) 0 0; padding-left: var(--s4); }
+.snapshot-list li { font-size: var(--fs-13); line-height: var(--lh-prose); padding: 2px 0; }
+.snapshot-list a { color: var(--ink-1); text-decoration: none; border-bottom: var(--hairline) solid var(--line-1); }
+.snapshot-list a:hover { color: var(--accent); border-color: var(--accent); }
+
+.snapshot-strength {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  font-size: var(--fs-13);
+  color: var(--ink-3);
+}
+
+/* ---- what changed ---------------------------------------------- */
+
+.changes { list-style: none; margin: var(--s4) 0 0; padding: 0; }
+.changes li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  border-bottom: var(--hairline) solid var(--line-3);
+  font-size: var(--fs-13);
+  line-height: var(--lh-prose);
+  color: var(--ink-2);
+}
+.changes li .glyph { align-self: center; }
+
 /* ---- start here ---------------------------------------------
    A numbered sequence, not three cards. The numeral does the work a
-   card border would otherwise be doing. */
+   card border would otherwise be doing. Currently unused (the "Start
+   here" section was superseded by the goal-aware Opportunities section
+   above, which reads from opportunity.ts rather than raw findings) —
+   left in place rather than deleted in case a future section wants the
+   same numbered-list treatment. */
 
 .plan { list-style: none; margin: 0; padding: 0; counter-reset: step; }
 .plan-row {
@@ -1336,7 +1444,12 @@ p { margin: 0; }
    ============================================================ */
 
 @media (max-width: 1040px) {
-  .report { grid-template-columns: 1fr; gap: var(--s6); }
+  /* minmax(0, 1fr), not a bare 1fr: without the 0 floor, a grid item won't
+     shrink below its content's intrinsic width, so one wide table (a long
+     unbroken evidence label, say) stretches this whole column past the
+     viewport instead of wrapping or scrolling inside its own box. The
+     desktop rule above already gets this right; this is the same guard. */
+  .report { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
   .sidebar { position: static; display: none; }
 }
 
@@ -1352,11 +1465,18 @@ p { margin: 0; }
   .field input { height: 40px; }
   .btn { width: 100%; height: 40px; }
   .finding-side { gap: var(--s2); }
+  .opp-side { gap: var(--s1h); }
+  .group-note { display: none; }
+  .snapshot-list { padding-left: var(--s5); }
+  /* A long URL-shaped label (a page path used as evidence, say) otherwise
+     forces this column to nowrap-stay-wide, which is exactly the kind of
+     content this table cannot control the length of. */
+  .evidence td.k { white-space: normal; width: auto; }
 }
 
 @media print {
   .topbar, .rep-actions, .cta, .filters, .footer, .sidebar { display: none !important; }
-  .report { grid-template-columns: 1fr; }
+  .report { grid-template-columns: minmax(0, 1fr); }
   .detail { display: block !important; }
   body { font-size: 11px; }
 }

@@ -110,7 +110,7 @@ const EMPTY_DIFF: ReportDiff = {
   topOpportunityCategoryChange: null,
   goalChange: null,
   importantPageChanges: { added: [], removed: [] },
-  summary: ['This is the first audit of this site — there is nothing to compare it against yet.'],
+  summary: ['This is the first audit of this site, so there is nothing to compare it against yet.'],
 };
 
 export function diffReports(current: AuditReport, previous: AuditReport | null | undefined): ReportDiff {

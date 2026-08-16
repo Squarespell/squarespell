@@ -17,6 +17,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import type { AuditReport, Finding, Severity } from '../audit/types';
+import type { Opportunity } from '../audit/opportunity';
 import { nextSteps } from '../audit/verdict';
 import {
   SERIF_REGULAR,
@@ -82,6 +83,15 @@ const SEV_LABEL: Record<Severity, string> = {
   medium: 'Medium',
   low: 'Low',
   info: 'Note',
+};
+
+/* Opportunities use a coarser three-step effort scale than Finding.effort —
+   see opportunity.ts. Mirrors the label set the web report uses (Report.tsx)
+   so the PDF and the page tell the same story in the same words. */
+const OPP_EFFORT_LABEL: Record<Opportunity['effort'], string> = {
+  low: 'Low effort',
+  medium: 'Medium effort',
+  high: 'Larger project',
 };
 
 function bandColour(score: number): string {
@@ -537,7 +547,17 @@ export function splitFindings(findings: Finding[]): { detailed: Finding[]; liste
 export function ReportDocument({ report }: { report: AuditReport }) {
   const counts: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
   for (const f of report.findings) counts[f.severity]++;
-  const steps = nextSteps(report);
+  // Opportunities, not raw findings: the same source the web report reads
+  // (report.goalAwareOpportunities, falling back to report.opportunities),
+  // so "Start here" tells the same story in both places. `nextSteps` still
+  // exists and is still used by the deterministic AI-fallback narrative
+  // (verdict.ts) — this only changes what the PDF's own cover page reads
+  // from. A report saved before the Opportunity Engine shipped has neither
+  // field, so this falls back to the old finding-based list rather than
+  // rendering an empty "Start here".
+  const oppReport = report.goalAwareOpportunities ?? report.opportunities;
+  const topOpportunities = oppReport?.top.slice(0, 3) ?? [];
+  const steps = topOpportunities.length > 0 ? [] : nextSteps(report);
   const created = new Date(report.createdAt);
   const faq = report.faq;
   const perf = report.perf;
@@ -834,7 +854,29 @@ export function ReportDocument({ report }: { report: AuditReport }) {
           </View>
         </View>
 
-        {steps.length > 0 && (
+        {topOpportunities.length > 0 && (
+          <View style={s.rule}>
+            <Text style={s.sectionTitle}>Biggest opportunities</Text>
+            <Text style={s.sectionNote}>
+              {topOpportunities.length === 1
+                ? 'The single highest-value move.'
+                : `${topOpportunities.length} highest-value moves, in order.`}
+            </Text>
+            {topOpportunities.map((o, i) => (
+              <View style={s.step} key={o.id}>
+                <Text style={s.stepN}>{String(i + 1).padStart(2, '0')}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.stepTitle}>{o.title}</Text>
+                  <Text style={s.stepBody}>{o.recommendedAction}</Text>
+                  <Text style={s.stepMeta}>
+                    {SEV_LABEL[o.priority]} · {OPP_EFFORT_LABEL[o.effort]}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+        {topOpportunities.length === 0 && steps.length > 0 && (
           <View style={s.rule}>
             <Text style={s.sectionTitle}>Start here</Text>
             <Text style={s.sectionNote}>

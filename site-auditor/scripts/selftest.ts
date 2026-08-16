@@ -913,6 +913,63 @@ console.log('\nCopy');
   assert('no machine pluralisation in titles', !titles.some((t) => /\(s\)/.test(t)),
     titles.filter((t) => /\(s\)/.test(t)).join(', '));
   assert('no em dashes in our own copy', !details.some((d) => /—/.test(d)));
+
+  // Same house-style rule, extended to the Opportunity Engine / Website
+  // Doctor / diff engine copy — these are a separate, hand-written string
+  // table (GROUPS in opportunity.ts) that the finding-level check above
+  // never exercises. An em dash slipped into a GROUPS entry once already
+  // (production for a full phase before anyone noticed, because nothing
+  // rendered it), so every group is triggered here at least once.
+  {
+    const everyGroupResults = [
+      high('CONV-040', 'conv'), // trust-gap
+      high('CONV-020', 'conv'), // conversion-friction
+      high('AEO-030', 'aeo'), // information-gap
+      high('PERF-777', 'perf'), // performance-health
+      critical('TECH-777', 'tech'), // technical-health
+      high('AEO-001', 'aeo'), // search-visibility
+      high('SQS-777', 'sqs'), // squarespace-setup
+      high('A11Y-777', 'a11y'), // accessibility-gaps
+      high('SEC-777', 'sec'), // security-privacy
+      critical('WILDCARD-999', 'onpage'), // fallback path (matches no group)
+    ];
+    const u = baseUnderstanding();
+    const oppReport = buildOpportunities(everyGroupResults, u);
+    const goalAware = applyGoalAwareness(oppReport, { goal: 'get_more_bookings' }, u);
+    const doctorReport = buildWebsiteDoctor(oppReport, everyGroupResults.flatMap((r) => r.findings), goalAware);
+
+    const oppCopy = oppReport.all.flatMap((o) => [o.title, o.summary, o.businessRelevance, o.recommendedAction]);
+    const goalCopy = goalAware.all.map((o) => o.goalRelevanceReason);
+    const doctorCopy = doctorReport.flatMap((d) => [d.diagnosis, d.impact, d.prescription, d.goalNote ?? '']);
+
+    assert(
+      'every opportunity group produces at least one opportunity (full copy coverage)',
+      oppReport.all.length === everyGroupResults.length,
+      `got ${oppReport.all.length} opportunities from ${everyGroupResults.length} triggered groups`
+    );
+    assert('no em dashes in Opportunity Engine copy', !oppCopy.some((c) => /—/.test(c)), oppCopy.filter((c) => /—/.test(c)).join(' | '));
+    assert('no em dashes in goal-relevance copy', !goalCopy.some((c) => /—/.test(c)), goalCopy.filter((c) => /—/.test(c)).join(' | '));
+    assert('no em dashes in Website Doctor copy', !doctorCopy.some((c) => /—/.test(c)), doctorCopy.filter((c) => /—/.test(c)).join(' | '));
+
+    const diffNoPrevious = diffReports(reportFixture({ findings: [] }), null);
+    const diffWithChanges = diffReports(
+      reportFixture({
+        findings: [],
+        understanding: baseUnderstanding({ businessType: { value: 'photographer', confidence: 'high', source: 'text' }, primaryConversion: { value: 'booking', confidence: 'observed', evidence: 'x' } }),
+        opportunities: oppReport,
+        businessContext: { goal: 'get_more_bookings' },
+      }),
+      reportFixture({
+        findings: [],
+        understanding: baseUnderstanding({ primaryConversion: { value: 'contact-form', confidence: 'observed', evidence: 'y' } }),
+        opportunities: buildOpportunities([critical('OTHER-1', 'perf')], baseUnderstanding()),
+        businessContext: { goal: 'get_more_traffic' },
+      })
+    );
+    const diffCopy = [...diffNoPrevious.summary, ...diffWithChanges.summary, ...diffWithChanges.businessSignalChanges];
+    assert('no em dashes in report-diff copy', !diffCopy.some((c) => /—/.test(c)), diffCopy.filter((c) => /—/.test(c)).join(' | '));
+  }
+
   // Narrative is attached by the narrative layer, not by the checks, so the
   // invariant to test here is coverage: every id a check can emit must have
   // copy waiting for it, either inline or in the map.
