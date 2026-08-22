@@ -1,16 +1,28 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { AuditReport, BusinessContext, ProgressEvent, UserGoal } from '@/lib/audit/types';
 import { Report } from './Report';
 import { HeroSection } from '@/components/landing/hero-section';
-import { ProgressSection } from '@/components/landing/progress-section';
 import { TrustLogos } from '@/components/landing/trust-logos';
 import { HowItWorksSection } from '@/components/landing/how-it-works-section';
 import { FeaturesSection } from '@/components/landing/features-section';
 import { SampleReportSection } from '@/components/landing/sample-report-section';
 import { StatsSection } from '@/components/landing/stats-section';
 import { CtaSection } from '@/components/landing/cta-section';
+
+/**
+ * Same dynamic-import boundary as Report.tsx: the in-progress screen is
+ * also part of the shadcn/Tailwind dashboard now (per explicit request --
+ * "one consistent premium SaaS dashboard design system" across the whole
+ * post-audit experience), so it's lazy-loaded the same way, keeping
+ * dashboard.css and shadcn out of the homepage's own bundle.
+ */
+const ProgressPanel = dynamic(() => import('@/components/dashboard/progress-panel').then((m) => m.ProgressPanel), {
+  ssr: false,
+  loading: () => <div className="frame" style={{ padding: 'var(--s20) 0', textAlign: 'center', color: 'var(--ink-3)' }}>Starting your audit…</div>,
+});
 
 type Phase = 'idle' | 'running' | 'done' | 'error';
 
@@ -212,7 +224,7 @@ export function Auditor({
 
   /* -------------------------------------------------------- progress */
   if (phase === 'running') {
-    return <ProgressSection host={hostFrom(url)} pct={pct} stage={stage} detail={detail} />;
+    return <ProgressPanel host={hostFrom(url)} pct={pct} stage={stage} detail={detail} />;
   }
 
   /* ----------------------------------------------------------- entry */

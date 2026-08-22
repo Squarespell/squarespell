@@ -1,0 +1,262 @@
+/**
+ * Tailwind CSS, scoped to the post-audit dashboard only.
+ *
+ * Deliberately NOT imported from layout.tsx or globals.css. It's imported
+ * exclusively by src/components/dashboard/dashboard-shell.tsx, which is
+ * itself loaded via next/dynamic from Auditor.tsx's `running`/`done`
+ * branches — so this stylesheet, and its JS, never ship on the initial
+ * load of `/`, `/privacy`, `/squarespace-seo-issues`, or Chrome.tsx.
+ *
+ * Preflight (Tailwind's global element reset) is intentionally excluded —
+ * only the theme and utilities layers are imported. Utility classes are
+ * opt-in (nothing renders unless a component literally writes
+ * className="flex gap-4"), so nothing here can visually affect an element
+ * outside the dashboard tree, even though this file is bundled globally
+ * once loaded. All shadcn tokens are scoped under .dashboard-root rather
+ * than :root for the same reason — belt and suspenders.
+ */
+/* Explicit layer order so a custom `base` layer (added below) sits between
+   theme and utilities -- matching where Tailwind's own preflight normally
+   lives, so any Tailwind utility class a component applies (bg-primary,
+   text-*, px-4, ...) still wins over the base reset, exactly like preflight
+   is designed to be overridable. Without this, `base` would default to the
+   *last*-referenced (and therefore highest-priority) layer, letting it
+   silently override every utility class in the dashboard. */
+@layer theme, base, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+}
+
+.dashboard-root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --success: oklch(0.65 0.16 145);
+  --warning: oklch(0.75 0.16 75);
+  --error: oklch(0.577 0.245 27.325);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.dashboard-root.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* `@theme inline` (above) only teaches Tailwind's utility generator what
+   token backs each `--color-*` name -- it deliberately does NOT emit those
+   names as real, inheritable CSS custom properties (that's what makes
+   "inline" different from plain `@theme`, and exactly why it was chosen:
+   plain `@theme` always emits to :root, which would leak the dashboard's
+   tokens page-wide and defeat the .dashboard-root scoping). That's invisible
+   for ordinary utility classes (bg-primary etc. still work, since Tailwind
+   bakes the resolved value straight into the utility rule), but shadcn's
+   chart components (chart.tsx's ChartStyle, history-chart.tsx) work by
+   writing literal `var(--color-chart-1)` / `var(--color-success)` /
+   `var(--color-destructive)` into SVG stroke/fill attributes at runtime --
+   with no real property to resolve, `stroke` silently became `none` (an
+   invisible line) and `fill` fell back to SVG's default black (bars that
+   rendered, but always black instead of green/red). Re-declared here as
+   plain, scoped custom properties so those direct var() references have
+   something to resolve to, without reintroducing a :root leak. */
+.dashboard-root {
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-destructive: var(--destructive);
+}
+
+/* Minimal, scoped reset -- NOT Tailwind preflight, and only inside .dashboard-root,
+   so it can never affect anything outside the dashboard tree. */
+.dashboard-root, .dashboard-root *, .dashboard-root *::before, .dashboard-root *::after {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+/* Preflight also strips default <ul>/<ol> markers and spacing -- without it,
+   every plain list in the dashboard (sidebar nav, progress steps, findings
+   footnotes, ...) was rendering a native bullet, since none of these
+   components pass list-none explicitly. */
+.dashboard-root ul,
+.dashboard-root ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dashboard-root {
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+/* Preflight normally neutralizes native form-element UA styling (buttons/
+   inputs otherwise keep a platform background + text color instead of
+   inheriting the page's -- this was hiding accordion trigger titles behind
+   a near-invisible near-white-on-grey button face). Reproduce just the
+   color/font part, scoped to .dashboard-root and placed in `layer(base)` so
+   any Tailwind utility class a component applies (bg-primary, text-*, ...)
+   still overrides it, same as real preflight. Deliberately NOT touching
+   padding/margin/border-radius here -- those are handled per-component by
+   Tailwind utility classes already, and resetting them unlayered would risk
+   a specificity fight with those utilities. */
+@layer base {
+  .dashboard-root button,
+  .dashboard-root input,
+  .dashboard-root select,
+  .dashboard-root textarea {
+    font: inherit;
+    color: inherit;
+    background-color: transparent;
+    letter-spacing: inherit;
+  }
+  .dashboard-root button {
+    cursor: pointer;
+    text-transform: none;
+  }
+  /* Same story for <a>: native link color/underline otherwise shows through
+     wherever a component (e.g. the header's PDF link) wraps a Button whose
+     variant doesn't set its own explicit text color -- outline/ghost/link
+     variants rely on inheriting the surrounding text color, same as
+     Tailwind's own preflight assumes. */
+  .dashboard-root a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+}
+
+/* Small hand-written animation set standing in for the tailwindcss-animate
+   plugin (not installed, to keep the dashboard's dependency footprint
+   minimal) -- covers what Radix's data-state attributes need for
+   Accordion/Sheet/Dialog/DropdownMenu/Tooltip open+close transitions. */
+@keyframes accordion-down { from { height: 0; } to { height: var(--radix-accordion-content-height); } }
+@keyframes accordion-up { from { height: var(--radix-accordion-content-height); } to { height: 0; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes slide-in-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes slide-out-to-right { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@keyframes slide-in-from-left { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes slide-out-to-left { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes slide-in-from-top { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes slide-out-to-top { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+@keyframes slide-in-from-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes slide-out-to-bottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes zoom-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes zoom-out { from { transform: scale(1); opacity: 1; } to { transform: scale(0.95); opacity: 0; } }
+
+.dashboard-root .animate-accordion-down { animation: accordion-down 0.2s ease-out; }
+.dashboard-root .animate-accordion-up { animation: accordion-up 0.2s ease-out; }
+.dashboard-root [data-state='open'].animate-in,
+.dashboard-root [data-state='open'][data-slot$='overlay'] { animation: fade-in 0.15s ease-out; }
+.dashboard-root [data-state='closed'].animate-out,
+.dashboard-root [data-state='closed'][data-slot$='overlay'] { animation: fade-out 0.15s ease-in; }
+.dashboard-root [data-slot='sheet-content'][data-state='open'] { animation: slide-in-from-right 0.3s ease-out, fade-in 0.3s ease-out; }
+.dashboard-root [data-slot='sheet-content'][data-state='closed'] { animation: slide-out-to-right 0.3s ease-in, fade-out 0.3s ease-in; }
+.dashboard-root [data-slot='dropdown-menu-content'][data-state='open'],
+.dashboard-root [data-slot='popover-content'][data-state='open'],
+.dashboard-root [data-slot='tooltip-content'][data-state='delayed-open'] { animation: zoom-in 0.1s ease-out, fade-in 0.1s ease-out; }
