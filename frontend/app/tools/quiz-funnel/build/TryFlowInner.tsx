@@ -15,6 +15,10 @@ export type TryFlowMode = 'preview' | 'authed';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
+// Hard-abort long-running preview requests (analyze + build) so the UI never
+// waits forever on a hung/slow backend (e.g. Render's free tier cold-starting).
+export const PREVIEW_REQUEST_TIMEOUT_MS = 75000;
+
 /* ========================================================================= */
 /* Types                                                                     */
 /* ========================================================================= */
@@ -351,7 +355,7 @@ export function TryFlowInner({
     // Hard abort after 75s so the button doesn't stay disabled forever if the
     // backend never responds.
     const ac = new AbortController();
-    const killTimer = window.setTimeout(() => ac.abort(), 75000);
+    const killTimer = window.setTimeout(() => ac.abort(), PREVIEW_REQUEST_TIMEOUT_MS);
 
     // eslint-disable-next-line no-console
     console.info('[squarespell] analyze start', { url: normalized, api: API });
@@ -381,9 +385,15 @@ export function TryFlowInner({
       setBrand(data.brand ?? null);
       setSessionToken(data.session_token);
       setUrl(normalized);
-      // Match templates based on scraped business type
+      // Match templates based on scraped business type. If nothing scores
+      // above the threshold (or there's no detected business type at all),
+      // fall back to the full catalog so "Start from a template" always has
+      // a real template to offer — otherwise picking that path selects a
+      // non-existent placeholder id and the "Use this template" button gets
+      // silently disabled with no explanation.
       var bizType = data.brand?.business?.type || '';
-      setMatchedTemplates(matchTemplatesToBusiness(bizType));
+      var matched = matchTemplatesToBusiness(bizType);
+      setMatchedTemplates(matched.length > 0 ? matched : QUIZ_TEMPLATE_CATALOG);
       setPickChoice('ai');
       setS2SubStep('brand');
       setBuildStep(0);
@@ -478,6 +488,12 @@ export function TryFlowInner({
     if (!sessionToken) return;
     setBuildingQuiz(true);
     setErrorMsg('');
+
+    // Hard abort after 75s so the "Building your quiz…" screen doesn't spin
+    // forever if the backend hangs or never responds (mirrors goAnalyze above).
+    const ac = new AbortController();
+    const killTimer = window.setTimeout(() => ac.abort(), PREVIEW_REQUEST_TIMEOUT_MS);
+
     try {
       const payload: Record<string, string> = {
         goal: 'capture_leads',
@@ -490,6 +506,7 @@ export function TryFlowInner({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_token: sessionToken, answers: payload }),
+        signal: ac.signal,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -551,8 +568,21 @@ export function TryFlowInner({
         }));
       } catch {}
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to build quiz.');
+      // On timeout, a server error, or any other failure, drop the visitor
+      // back onto the "choose" screen with a visible error so they can see
+      // what happened and retry — instead of leaving the "Building your
+      // quiz…" spinner running forever (it is gated purely on
+      // s2SubStep === 'building', so nothing else ever recovers it).
+      if (err?.name === 'AbortError') {
+        setErrorMsg(
+          "That took too long. Our server may be waking up - please try again in a moment.",
+        );
+      } else {
+        setErrorMsg(err.message || 'Failed to build quiz.');
+      }
+      setS2SubStep('choose');
     } finally {
+      window.clearTimeout(killTimer);
       setBuildingQuiz(false);
     }
   }, [sessionToken, brand, url, router]);
