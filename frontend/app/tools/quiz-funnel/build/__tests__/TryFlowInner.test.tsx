@@ -393,3 +393,155 @@ describe('template picker selection integrity', () => {
     expect(blockTexts).not.toContain('What moment matters most to you on your big day?');
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* 6. Keyboard operability of the quiz-style + template pickers        */
+/* ------------------------------------------------------------------ */
+describe('keyboard operability of the quiz style / template pickers', () => {
+  it('selects "Start from a template" and a specific template using only keyboard events', async () => {
+    // Same no-match/full-catalog setup as the mouse-driven tests above — the
+    // point here isn't the matching logic, it's that the exact same
+    // selections can be made with a keyboard: Tab (simulated via .focus(),
+    // since jsdom does not implement real Tab traversal) to reach a card,
+    // then Enter/Space to activate it. No fireEvent.click is used anywhere
+    // in this test.
+    const noMatchBody = {
+      session_token: 'session-kbd',
+      brand: {
+        site_name: 'Keyboard Test Business',
+        business: { type: 'zzz_no_such_category_zzz', audience: '', tone: '' },
+        colors: {},
+      },
+    };
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) return jsonResponse(200, noMatchBody) as any;
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+
+    render(<TryFlowInner mode="preview" />);
+    const continueBtn = await screen.findByText('Continue', {}, { timeout: 3000 });
+    await act(async () => {
+      fireEvent.click(continueBtn);
+    });
+    await screen.findByText('Start from a template');
+
+    // The "Start from a template" path card must be a real, Tab-reachable
+    // control (tabIndex 0), not a bare div only operable by mouse.
+    const templateCard = screen.getByText('Start from a template').closest('.s2-path-card') as HTMLElement;
+    expect(templateCard.tabIndex).toBe(0);
+    expect(templateCard.getAttribute('role')).toBe('radio');
+
+    await act(async () => {
+      templateCard.focus();
+    });
+    expect(document.activeElement).toBe(templateCard);
+
+    // Activate with Enter (not a click) — should switch into template mode
+    // without auto-selecting anything, same as the mouse path.
+    await act(async () => {
+      fireEvent.keyDown(templateCard, { key: 'Enter' });
+    });
+
+    await screen.findByText(/no template matched your site/i);
+    expect(templateCard.getAttribute('aria-checked')).toBe('true');
+
+    const menuOption = screen.getByText('Menu Recommendation Quiz').closest('.s2-tpl-picker-item') as HTMLElement;
+    expect(menuOption.tabIndex).toBe(0);
+    expect(menuOption.getAttribute('role')).toBe('radio');
+
+    await act(async () => {
+      menuOption.focus();
+    });
+    expect(document.activeElement).toBe(menuOption);
+
+    // Activate with Space this time — the other key native controls treat
+    // as "activate".
+    await act(async () => {
+      fireEvent.keyDown(menuOption, { key: ' ' });
+    });
+
+    await waitFor(() => {
+      expect(menuOption.getAttribute('aria-checked')).toBe('true');
+      const infoNode = document.querySelector('.s2-tpl-selected-info');
+      expect(infoNode?.textContent).toContain('Menu Recommendation Quiz');
+    });
+
+    const useTemplateBtn = screen.getByText('Use this template').closest('button')!;
+    expect(useTemplateBtn.hasAttribute('disabled')).toBe(false);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* 7. Stale template match after editing Business type                 */
+/* ------------------------------------------------------------------ */
+describe('template match recomputation after editing Business type', () => {
+  it('recomputes matchedTemplates/noTemplateMatch when Business type is edited on the confirm screen', async () => {
+    // 'photography' has strong keyword overlap with exactly one catalog
+    // template (tags include 'photography', category is 'Photography', and
+    // the exact-match bonus applies too), so the initial scrape produces a
+    // real, specific, non-"no match" result — unlike the
+    // zzz_no_such_category_zzz sentinel used elsewhere in this file, which
+    // is reserved for proving the "nothing matched" full-catalog fallback.
+    // That contrast is what makes this a real regression test: if the
+    // picker is never recomputed after the edit, it would keep showing the
+    // stale 'photography' match (and its "Pick a template..." copy) instead
+    // of picking up the sentinel's "no match" fallback.
+    const photographyBody = {
+      session_token: 'session-photo',
+      brand: {
+        site_name: 'Test Photography Co',
+        business: { type: 'photography', audience: 'engaged couples', tone: 'warm' },
+        colors: {},
+      },
+    };
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) return jsonResponse(200, photographyBody) as any;
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+
+    render(<TryFlowInner mode="preview" />);
+
+    // Land on the "brand" substep (Confirm your brand details) — analyze
+    // auto-runs on mount because searchParamsValue already has a url.
+    await screen.findByText('Business type');
+
+    // Edit Business type to the sentinel this PR's own tests use for "no
+    // template will match anything in the catalog".
+    const editButtons = screen.getAllByText('Edit');
+    await act(async () => {
+      fireEvent.click(editButtons[0]); // Business type is the first detail row
+    });
+    const input = document.querySelector('.s2-detail-input') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'zzz_no_such_category_zzz' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+    });
+
+    // The edit committed (this text also appears in the left-panel chip, so
+    // scope the check to the detail row's own value element).
+    await waitFor(() => {
+      expect(document.querySelector('.s2-detail-value')?.textContent).toBe('zzz_no_such_category_zzz');
+    });
+
+    // Proceed to the template picker.
+    await act(async () => {
+      fireEvent.click(screen.getByText('Continue'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByText('Start from a template'));
+    });
+
+    // The picker must reflect the EDITED type — full-catalog fallback with
+    // the "nothing matched" copy — not the original, specific 'photography'
+    // match. Before the fix, matchedTemplates/noTemplateMatch were only ever
+    // computed once in goAnalyze()'s success handler, so this would still
+    // show the stale 'photography' match: just "Photography Style Quiz"
+    // under "Pick a template to start from" copy, with no full-catalog
+    // fallback and no "no template matched" messaging.
+    await screen.findByText(/no template matched your site/i);
+    expect(screen.getByText('Menu Recommendation Quiz')).toBeTruthy();
+    expect(screen.getByText('Fitness Goal Quiz')).toBeTruthy();
+    expect(document.querySelectorAll('.s2-tpl-picker-item').length).toBeGreaterThan(1);
+  });
+});

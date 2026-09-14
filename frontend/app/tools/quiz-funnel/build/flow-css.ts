@@ -1727,6 +1727,10 @@ export const FLOW_CSS = `
     background: rgba(15,115,119,0.02);
     box-shadow: 0 0 0 3px rgba(15,115,119,0.06);
   }
+  .s2-path-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
   .s2-path-radio {
     width: 20px;
     height: 20px;
@@ -1845,6 +1849,10 @@ export const FLOW_CSS = `
   .s2-tpl-picker-item.selected {
     border-color: var(--accent);
     background: rgba(15,115,119,0.04);
+  }
+  .s2-tpl-picker-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   .s2-tpl-picker-name {
     font-size: 13px;

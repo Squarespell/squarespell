@@ -130,6 +130,20 @@ function templateSubtitle(tpl: QuizTemplateData, businessType: string): string {
 }
 
 /* ========================================================================= */
+/* Keyboard activation for div-based radio-style controls                    */
+/* ========================================================================= */
+// Fires `action` on Enter or Space, mirroring native button/radio activation
+// keys, and prevents the page from scrolling on Space. Used by the
+// role="radio" cards below so they're operable from the keyboard, not just
+// via onClick.
+function onActivateKey(e: React.KeyboardEvent, action: () => void) {
+  if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+    e.preventDefault();
+    action();
+  }
+}
+
+/* ========================================================================= */
 /* SVG icons                                                                 */
 /* ========================================================================= */
 const SvgArrowRight = ({ size = 16 }: { size?: number }) => (
@@ -308,6 +322,7 @@ export function TryFlowInner({
   const commitEditTag = (tagKey: string) => {
     const newValue = (editValues[tagKey] || '').trim();
     if (newValue && brand) {
+      const prevType = brand.business?.type;
       setBrand({
         ...brand,
         business: {
@@ -315,6 +330,25 @@ export function TryFlowInner({
           [tagKey]: newValue,
         },
       });
+      // Business type drives which catalog templates are offered in the
+      // "Start from a template" picker (see matchTemplatesToBusiness() /
+      // goAnalyze()'s success handler, which does this same computation on
+      // the initial scrape). Editing it afterward needs to recompute the
+      // match the same way, or the picker keeps showing stale results for
+      // the old type. Audience/tone edits don't affect matching.
+      if (tagKey === 'type' && newValue !== prevType) {
+        var matched = matchTemplatesToBusiness(newValue);
+        var isNoMatch = matched.length === 0;
+        setMatchedTemplates(isNoMatch ? QUIZ_TEMPLATE_CATALOG : matched);
+        setNoTemplateMatch(isNoMatch);
+        // If a specific template was already selected, it may no longer be
+        // a sensible choice against the recomputed list — drop back to
+        // template-mode-with-nothing-selected rather than leaving a
+        // stale/invalid selection in place.
+        setPickChoice(function(prev) {
+          return prev !== 'ai' && prev !== 'tpl' ? 'tpl' : prev;
+        });
+      }
     }
     setEditingTag(null);
   };
@@ -1496,10 +1530,14 @@ export function TryFlowInner({
                 <h1 className="s2-choose-title">Choose your quiz style</h1>
                 <p className="s2-choose-sub">We will build it using your brand and content. You can edit everything after.</p>
 
-                <div className="s2-path-options">
+                <div className="s2-path-options" role="radiogroup" aria-label="Quiz style">
                   <div
                     className={'s2-path-card' + (pickChoice === 'ai' ? ' selected' : '')}
+                    role="radio"
+                    aria-checked={pickChoice === 'ai'}
+                    tabIndex={0}
                     onClick={function() { setPickChoice('ai'); }}
+                    onKeyDown={function(e) { onActivateKey(e, function() { setPickChoice('ai'); }); }}
                   >
                     <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
                     <div className="s2-path-icon s2-path-icon-ai"><SvgBolt size={18} /></div>
@@ -1512,12 +1550,22 @@ export function TryFlowInner({
 
                   <div
                     className={'s2-path-card' + (pickChoice !== 'ai' ? ' selected' : '')}
+                    role="radio"
+                    aria-checked={pickChoice !== 'ai'}
+                    tabIndex={0}
                     onClick={function() {
                       if (pickChoice === 'ai') {
                         // Switch into template mode without auto-selecting one —
                         // the user picks a specific template from the list below.
                         setPickChoice('tpl');
                       }
+                    }}
+                    onKeyDown={function(e) {
+                      onActivateKey(e, function() {
+                        if (pickChoice === 'ai') {
+                          setPickChoice('tpl');
+                        }
+                      });
                     }}
                   >
                     <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
@@ -1538,13 +1586,17 @@ export function TryFlowInner({
                         ? "No template matched your site — pick one to start from"
                         : 'Pick a template to start from'}
                     </div>
-                    <div className="s2-tpl-picker-list">
+                    <div className="s2-tpl-picker-list" role="radiogroup" aria-label="Quiz template">
                       {matchedTemplates.map(function(tpl) {
                         return (
                           <div
                             key={tpl.id}
                             className={'s2-tpl-picker-item' + (pickChoice === tpl.id ? ' selected' : '')}
+                            role="radio"
+                            aria-checked={pickChoice === tpl.id}
+                            tabIndex={0}
                             onClick={function() { setPickChoice(tpl.id); }}
+                            onKeyDown={function(e) { onActivateKey(e, function() { setPickChoice(tpl.id); }); }}
                           >
                             <div className="s2-tpl-picker-name">{tpl.name}</div>
                             <div className="s2-tpl-picker-cat">{tpl.category}</div>
