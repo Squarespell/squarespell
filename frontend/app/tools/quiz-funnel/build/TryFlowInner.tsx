@@ -282,7 +282,10 @@ export function TryFlowInner({
   // Stage 2 - pick choice (AI custom vs template)
   const [pickChoice, setPickChoice] = useState<string>('ai');
   const [matchedTemplates, setMatchedTemplates] = useState<QuizTemplateData[]>([]);
-  var [showAllTemplates, setShowAllTemplates] = useState(false);
+  // True when matchTemplatesToBusiness() found nothing and matchedTemplates
+  // fell back to the full catalog — used to avoid implying a match/recommendation
+  // that didn't actually happen in the template picker copy below.
+  var [noTemplateMatch, setNoTemplateMatch] = useState(false);
 
   // Stage 2 - inline editing of AI-detected tags
   const [editingTag, setEditingTag] = useState<string | null>(null);
@@ -388,16 +391,16 @@ export function TryFlowInner({
       // Match templates based on scraped business type. If nothing scores
       // above the threshold (or there's no detected business type at all),
       // fall back to the full catalog so "Start from a template" always has
-      // a real template to offer — otherwise picking that path selects a
-      // non-existent placeholder id and the "Use this template" button gets
-      // silently disabled with no explanation.
+      // real templates to offer. Either way the user picks one explicitly
+      // from the template picker below — nothing is ever auto-selected.
       var bizType = data.brand?.business?.type || '';
       var matched = matchTemplatesToBusiness(bizType);
-      setMatchedTemplates(matched.length > 0 ? matched : QUIZ_TEMPLATE_CATALOG);
+      var isNoMatch = matched.length === 0;
+      setMatchedTemplates(isNoMatch ? QUIZ_TEMPLATE_CATALOG : matched);
+      setNoTemplateMatch(isNoMatch);
       setPickChoice('ai');
       setS2SubStep('brand');
       setBuildStep(0);
-      setShowAllTemplates(false);
       setStage(2);
       // eslint-disable-next-line no-console
       console.info('[squarespell] advanced to Stage 2');
@@ -1511,8 +1514,9 @@ export function TryFlowInner({
                     className={'s2-path-card' + (pickChoice !== 'ai' ? ' selected' : '')}
                     onClick={function() {
                       if (pickChoice === 'ai') {
-                        var firstMatch = matchedTemplates[0];
-                        setPickChoice(firstMatch ? firstMatch.id : 'tpl');
+                        // Switch into template mode without auto-selecting one —
+                        // the user picks a specific template from the list below.
+                        setPickChoice('tpl');
                       }
                     }}
                   >
@@ -1526,6 +1530,30 @@ export function TryFlowInner({
                     </div>
                   </div>
                 </div>
+
+                {pickChoice !== 'ai' && (
+                  <div className="s2-tpl-picker">
+                    <div className="s2-tpl-picker-label">
+                      {noTemplateMatch
+                        ? "No template matched your site — pick one to start from"
+                        : 'Pick a template to start from'}
+                    </div>
+                    <div className="s2-tpl-picker-list">
+                      {matchedTemplates.map(function(tpl) {
+                        return (
+                          <div
+                            key={tpl.id}
+                            className={'s2-tpl-picker-item' + (pickChoice === tpl.id ? ' selected' : '')}
+                            onClick={function() { setPickChoice(tpl.id); }}
+                          >
+                            <div className="s2-tpl-picker-name">{tpl.name}</div>
+                            <div className="s2-tpl-picker-cat">{tpl.category}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {pickChoice !== 'ai' && pickChoice !== 'tpl' && (
                   <div className="s2-tpl-selected-info">

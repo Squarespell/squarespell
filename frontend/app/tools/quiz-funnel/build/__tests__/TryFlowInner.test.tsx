@@ -2,7 +2,7 @@
  * Regression tests for the Stage 1 -> Stage 2 -> Stage 3 "build a quiz"
  * flow in TryFlowInner.tsx.
  *
- * Covers two bugs found in a production audit:
+ * Covers bugs found in a production audit:
  *
  * 1. buildQuiz() (POST /api/preview-build-quiz, the "Building your quiz..."
  *    step) had no request timeout, and on any failure it set an error
@@ -17,6 +17,16 @@
  *    id ('tpl') that doesn't exist in the catalog. `handleCreateFromTemplate`
  *    silently returned (`if (!tpl) return;`) and the "Use this template"
  *    button was left disabled with no explanation — a dead end.
+ *
+ * 3. Fixing (2) by falling back to the full catalog uncovered a follow-on bug:
+ *    the "Start from a template" card's onClick auto-selected
+ *    `matchedTemplates[0]` the instant it was clicked, with no picker shown —
+ *    so a no-match business silently got the catalog's first, unrelated
+ *    template (e.g. a wedding-photography quiz) with zero indication nothing
+ *    actually matched. The fix replaces the auto-select with a real,
+ *    individually-clickable template picker that never proceeds without an
+ *    explicit choice, whether templates were matched or the catalog fell
+ *    back to showing everything.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -49,7 +59,13 @@ vi.mock('@/lib/api', () => ({
 // can assert Stage 3 was reached with real data, without rendering them.
 vi.mock('@/app/dashboard/_components/QuizBlockEditor', () => ({
   QuizBlockEditor: (props: any) => (
-    <div data-testid="quiz-block-editor" data-block-count={props.blocks?.length ?? 0} />
+    <div
+      data-testid="quiz-block-editor"
+      data-block-count={props.blocks?.length ?? 0}
+      // Expose each question block's text so tests can prove *which* template's
+      // content actually reached the editor, not just that some template did.
+      data-block-texts={JSON.stringify((props.blocks || []).map((b: any) => b.text).filter(Boolean))}
+    />
   ),
 }));
 vi.mock('@/components/quiz-taker/QuizRenderer', () => ({
@@ -245,13 +261,13 @@ describe('buildQuiz() timeout', () => {
 /* 4. No matching template                                             */
 /* ------------------------------------------------------------------ */
 describe('template pick with no matched templates', () => {
-  it('falls back to a usable template instead of a silent no-op', async () => {
+  it('shows a real picker with no auto-selection, and only proceeds once the user explicitly picks one', async () => {
     const noMatchBody = {
       session_token: 'session-456',
       brand: {
         site_name: 'Totally Unrecognizable Business',
         // A business type with no keyword overlap with any catalog template
-        // -> matchTemplatesToBusiness() returns [].
+        // -> matchTemplatesToBusiness() returns [] -> full-catalog fallback.
         business: { type: 'zzz_no_such_category_zzz', audience: '', tone: '' },
         colors: {},
       },
@@ -272,28 +288,108 @@ describe('template pick with no matched templates', () => {
       fireEvent.click(screen.getByText('Start from a template'));
     });
 
-    // The generate button must be a real, clickable path — not disabled with
-    // no explanation.
-    const useTemplateBtn = screen.getByText('Use this template').closest('button')!;
-    expect(useTemplateBtn.hasAttribute('disabled')).toBe(false);
+    // Clicking the "Start from a template" path card must NOT silently pick
+    // a template on its own — nothing is selected yet, so "Use this template"
+    // stays disabled and no "selected" pill is shown.
+    const useTemplateBtn = () => screen.getByText('Use this template').closest('button')!;
+    expect(useTemplateBtn().hasAttribute('disabled')).toBe(true);
+    expect(document.querySelector('.s2-tpl-selected-info')).toBeNull();
 
-    // A concrete template name is shown (the fallback picked a real catalog
-    // entry), not the placeholder / blank state.
+    // Instead, real, individually-clickable, distinct choices are shown, and
+    // the copy makes clear nothing was actually matched/recommended.
+    await screen.findByText(/no template matched your site/i);
+    const photoOption = screen.getByText('Photography Style Quiz');
+    const menuOption = screen.getByText('Menu Recommendation Quiz');
+    expect(photoOption).toBeTruthy();
+    expect(menuOption).toBeTruthy();
+
+    // Explicitly pick a template (not the catalog's first entry) from the
+    // picker — this is the only thing that should ever set the selection.
+    await act(async () => {
+      fireEvent.click(menuOption.closest('.s2-tpl-picker-item')!);
+    });
+
+    expect(useTemplateBtn().hasAttribute('disabled')).toBe(false);
     await waitFor(() => {
       const infoNode = document.querySelector('.s2-tpl-selected-info');
-      expect(infoNode).toBeTruthy();
-      expect(infoNode?.textContent).not.toBe('');
-      expect(infoNode?.textContent).not.toBe('Template');
+      expect(infoNode?.textContent).toContain('Menu Recommendation Quiz');
     });
 
     await act(async () => {
-      fireEvent.click(useTemplateBtn);
+      fireEvent.click(useTemplateBtn());
     });
 
     // Clicking through actually creates a quiz (Stage 3), proving the path
-    // is real and not a dead end.
+    // is real and not a dead end, and it's the template the user picked.
     await waitFor(() => {
       expect(screen.getByTestId('quiz-block-editor')).toBeTruthy();
     });
+    const editor = screen.getByTestId('quiz-block-editor');
+    const blockTexts: string[] = JSON.parse(editor.getAttribute('data-block-texts') || '[]');
+    expect(blockTexts).toContain('What kind of dining experience are you in the mood for?');
+    expect(blockTexts).not.toContain('What moment matters most to you on your big day?');
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* 5. Selecting a non-first template actually opens that template      */
+/* ------------------------------------------------------------------ */
+describe('template picker selection integrity', () => {
+  it('opens the specific template that was clicked, not the catalog\'s first entry', async () => {
+    // Same no-match fallback setup as above (full catalog offered), but here
+    // we specifically prove the click->selection->editor pipeline is wired
+    // per-card and not hardcoded to matchedTemplates[0] / QUIZ_TEMPLATE_CATALOG[0]
+    // ("Photography Style Quiz") — the exact failure the PR review flagged:
+    // every choice silently opened the first catalog template regardless of
+    // which card was clicked.
+    const noMatchBody = {
+      session_token: 'session-789',
+      brand: {
+        site_name: 'Another Unrecognizable Business',
+        business: { type: 'zzz_no_such_category_zzz', audience: '', tone: '' },
+        colors: {},
+      },
+    };
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) return jsonResponse(200, noMatchBody) as any;
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+
+    render(<TryFlowInner mode="preview" />);
+    const continueBtn = await screen.findByText('Continue', {}, { timeout: 3000 });
+    await act(async () => {
+      fireEvent.click(continueBtn);
+    });
+    await screen.findByText('Start from a template');
+    await act(async () => {
+      fireEvent.click(screen.getByText('Start from a template'));
+    });
+
+    // Pick the third catalog entry ("Fitness Goal Quiz"), deliberately not
+    // index 0 ("Photography Style Quiz").
+    const fitnessOption = await screen.findByText('Fitness Goal Quiz');
+    await act(async () => {
+      fireEvent.click(fitnessOption.closest('.s2-tpl-picker-item')!);
+    });
+
+    await waitFor(() => {
+      const infoNode = document.querySelector('.s2-tpl-selected-info');
+      expect(infoNode?.textContent).toContain('Fitness Goal Quiz');
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Use this template').closest('button')!);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quiz-block-editor')).toBeTruthy();
+    });
+
+    // The editor must contain the fitness template's own content, not the
+    // first catalog entry's (photography) content.
+    const editor = screen.getByTestId('quiz-block-editor');
+    const blockTexts: string[] = JSON.parse(editor.getAttribute('data-block-texts') || '[]');
+    expect(blockTexts.some((t) => /fitness|workout|goal/i.test(t))).toBe(true);
+    expect(blockTexts).not.toContain('What moment matters most to you on your big day?');
   });
 });
