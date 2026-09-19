@@ -19,7 +19,13 @@ Vercel, Render, the root domain, the marketplace, or live Stripe.
 
 ## One-time server setup (as root in the Hostinger web console)
 
-    curl -fsSL https://raw.githubusercontent.com/Squarespell/squarespell/<COMMIT>/infra/hostinger/scripts/host-baseline.sh | bash
+    curl -fsSL -o /root/host-baseline.sh https://raw.githubusercontent.com/Squarespell/squarespell/<COMMIT>/infra/hostinger/scripts/host-baseline.sh
+    sha256sum /root/host-baseline.sh    # must equal the SHA-256 recorded by the passing CI run for <COMMIT>
+    bash -n /root/host-baseline.sh
+    bash /root/host-baseline.sh
+
+Never pipe a downloaded script into a shell. Download it, verify the checksum, syntax-check it, then run it.
+Scripts are invoked with bash explicitly (files created through the GitHub web editor are not marked executable).
 
 Applies hostname, UTC, security updates, unattended upgrades, UFW (22/80/443 only), fail2ban, Docker Engine and
 Compose, the squarespell user and /srv/squarespell-quiz/{staging,backups}. Root and password SSH are NOT changed.
@@ -30,8 +36,8 @@ restricting root/password SSH. Members of the docker group are root-equivalent; 
 
     sudo -iu squarespell
     git clone https://github.com/Squarespell/squarespell.git /srv/squarespell-quiz/staging/repo   # first time only
-    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/gen-env.sh
-    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/set-secret.sh CLERK_SECRET_KEY    # prompts silently
+    bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/gen-env.sh
+    bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/set-secret.sh CLERK_SECRET_KEY    # prompts silently
 
 gen-env.sh generates the database, JWT, encryption and cron secrets straight into the owner-only .env.
 set-secret.sh accepts one value at a time with no echo and refuses live Stripe keys.
@@ -43,7 +49,7 @@ Do not change the root, www, nameservers, email records or squarespell.com.
 
 ## Deploy an exact commit
 
-    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh <full-40-char-sha>
+    bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh <full-40-char-sha>
 
 Builds on the VPS, starts db, applies the full migration chain (SUPABASE_SCHEMA.sql, migrations 002-031, the
 20260415 email automation file) to the EMPTY staging database, starts all services, waits for health and readiness.
@@ -63,15 +69,15 @@ Clerk TEST session token read from the environment. Confirm no published databas
 
 ## Rollback
 
-    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh rollback
+    bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh rollback
 
 Redeploys the previous commit recorded in .deploy-history. Migrations are forward-only and are not reverted;
 migration 031 is additive. To reset staging completely: stop the stack, remove the pgdata volume, redeploy.
 
 ## Backups and restore test (temporary, on-server)
 
-    scripts/backup.sh              # encrypted dump in /srv/squarespell-quiz/backups, outside the database volume
-    scripts/restore-validate.sh    # restores the newest dump into quiz_restore_test, checks it, drops it
+    bash scripts/backup.sh         # encrypted dump in /srv/squarespell-quiz/backups, outside the database volume
+    bash scripts/restore-validate.sh # restores the newest dump into quiz_restore_test, checks it, drops it
 
 An INDEPENDENT off-server encrypted backup destination is still required before production. Do not treat the
 on-server dumps or Hostinger weekly backups as sufficient.
