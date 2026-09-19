@@ -1,0 +1,84 @@
+# Hostinger STAGING - deployment and rollback runbook (Squarespell Quiz)
+
+Scope: STAGING only (staging.squarespellquiz.com, api-staging.squarespellquiz.com) on the Hostinger KVM 2 VPS
+squarespell-quiz-us-1 (Ubuntu 24.04 LTS, United States - Boston). Nothing here touches production, Supabase,
+Vercel, Render, the root domain, the marketplace, or live Stripe.
+
+## Architecture (matches the repository; no second application)
+
+- proxy: Caddy, ports 80/443 only, automatic HTTPS for the two staging hosts. /api/cron/* is blocked publicly.
+- frontend: Next.js 14 (frontend/), Clerk. NEXT_PUBLIC_* values are baked in at image build.
+- backend: Express API (backend/), port 3001 internal. Health: /api/health and /api/health/ready.
+- db + rest + gateway: the API talks to Supabase through supabase-js (PostgREST). Staging reproduces that on a
+  private PostgreSQL 16 container with PostgREST and a small internal gateway that strips /rest/v1.
+  db, rest, gateway, worker and scheduler are on an internal-only Docker network. No database port is published.
+- worker: drains the email queue over HTTP (POST /api/cron/process-email-queue). The repository has no separate
+  queue process; the in-process timer is disabled on the API (DISABLE_INPROCESS_EMAIL_QUEUE=true) so it runs once.
+- scheduler: runs the render.yaml crons over HTTP (scheduled sends, lifecycle, weekly digest, monthly report,
+  preview-cache cleanup) using CRON_SECRET. Email-sending jobs stay off unless SCHEDULER_ENABLE_EMAIL_JOBS=true.
+
+## One-time server setup (as root in the Hostinger web console)
+
+    curl -fsSL https://raw.githubusercontent.com/Squarespell/squarespell/<COMMIT>/infra/hostinger/scripts/host-baseline.sh | bash
+
+Applies hostname, UTC, security updates, unattended upgrades, UFW (22/80/443 only), fail2ban, Docker Engine and
+Compose, the squarespell user and /srv/squarespell-quiz/{staging,backups}. Root and password SSH are NOT changed.
+Add a PUBLIC key for squarespell (SQUARESPELL_PUBKEY), test key login from a second session, and only then consider
+restricting root/password SSH. Members of the docker group are root-equivalent; keep that group to squarespell.
+
+## Secrets (never in git, chat or logs)
+
+    sudo -iu squarespell
+    git clone https://github.com/Squarespell/squarespell.git /srv/squarespell-quiz/staging/repo   # first time only
+    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/gen-env.sh
+    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/set-secret.sh CLERK_SECRET_KEY    # prompts silently
+
+gen-env.sh generates the database, JWT, encryption and cron secrets straight into the owner-only .env.
+set-secret.sh accepts one value at a time with no echo and refuses live Stripe keys.
+
+## DNS (staging only)
+
+Two A records, TTL 300: staging.squarespellquiz.com and api-staging.squarespellquiz.com -> the VPS IPv4.
+Do not change the root, www, nameservers, email records or squarespell.com.
+
+## Deploy an exact commit
+
+    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh <full-40-char-sha>
+
+Builds on the VPS, starts db, applies the full migration chain (SUPABASE_SCHEMA.sql, migrations 002-031, the
+20260415 email automation file) to the EMPTY staging database, starts all services, waits for health and readiness.
+Re-running skips migrations already recorded in ops.applied_migrations.
+
+## Verify
+
+    docker compose ps            # from the compose directory, or use deploy.sh output
+    curl -sS https://api-staging.squarespellquiz.com/api/health
+    curl -sS https://api-staging.squarespellquiz.com/api/health/ready
+    node scripts/smoke/smoke.mjs --base-url https://api-staging.squarespellquiz.com --frontend-url https://staging.squarespellquiz.com --allow-live
+
+The smoke script needs --allow-live because the host contains squarespellquiz.com; it uses the P1-SMOKE tag and a
+Clerk TEST session token read from the environment. Confirm no published database ports:
+
+    ss -ltnp | grep -E ':(5432|3000|3001|3100)\b' || echo "no published internal ports"
+
+## Rollback
+
+    /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh rollback
+
+Redeploys the previous commit recorded in .deploy-history. Migrations are forward-only and are not reverted;
+migration 031 is additive. To reset staging completely: stop the stack, remove the pgdata volume, redeploy.
+
+## Backups and restore test (temporary, on-server)
+
+    scripts/backup.sh              # encrypted dump in /srv/squarespell-quiz/backups, outside the database volume
+    scripts/restore-validate.sh    # restores the newest dump into quiz_restore_test, checks it, drops it
+
+An INDEPENDENT off-server encrypted backup destination is still required before production. Do not treat the
+on-server dumps or Hostinger weekly backups as sufficient.
+
+## Known differences from production
+
+- Database is PostgreSQL + PostgREST, not Supabase (no Supabase Auth; the app uses Clerk). RLS is present; the API
+  uses a service_role JWT signed with the staging PGRST_JWT_SECRET.
+- Rate limiting uses Upstash when configured; leave it empty for staging unless a staging database is created.
+- Staging is served with X-Robots-Tag noindex.
