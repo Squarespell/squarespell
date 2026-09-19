@@ -1,6 +1,8 @@
 # Squarespell Quiz - Phase 1 Results (Stabilize current production)
 
-Prepared 19 September 2026 against Relaunch Master Plan Revision 3.0, on branch `p1/stabilize-production` (draft PR, not merged, nothing deployed). Scope: the Squarespell Quiz SaaS repository only (`squarespellquiz.com` product; Next.js on Vercel, Express on Render, Supabase Postgres, Clerk, Stripe, Resend, Anthropic). Nothing on `squarespell.com`, WordPress/WooCommerce, DNS, Stripe objects, Clerk settings, production environment variables or any live database was read or changed by this work.
+Prepared 19 September 2026 against Relaunch Master Plan Revision 3.0, on branch `p1/stabilize-production` (draft PR, not merged, nothing deployed). Scope: the Squarespell Quiz SaaS repository only (`squarespellquiz.com` product; Next.js on Vercel, Express on Render, Supabase Postgres, Clerk, Stripe, Resend, Anthropic). Nothing on `squarespell.com`, WordPress/WooCommerce, DNS, Stripe objects, Clerk settings, production environment variables or any live database was changed by this work. Read-only exceptions, all documented: environment-variable names and service settings shown in the Vercel and Render dashboards (values masked and never read), and one catalog-only query on the production database (policy names, column types, function signatures; no row data) used for the migration review in section 18.
+
+**Update 4 (19 Sep 2026):** adds cloud verification in GitHub Actions (section 17), the migration 016/031 review (section 18) and the Render job classification (section 19). Owner infrastructure decision: no additional Render service or cron is created; verification runs in GitHub Actions now and the permanent staging API is built on Hostinger in Phase 3.
 
 **Evidence labels.** *Verified* = reproduced by a hermetic test in this PR or read directly in the code at the cited `file:line` on `main` (67dd18d). *Inference* = follows from verified code but depends on production state that was not inspected. *Unavailable* = needs a live dashboard/database not inspected here (the Vercel and Render variable presence has since been filled in by the coordinator's read-only pass, section 3.1) and is listed under "Remaining production configuration actions".
 
@@ -322,7 +324,7 @@ One honest caveat: a run that executed the backend suite and the frontend suite 
 
 Pre-existing failures on `main`: none (every baseline command passed), so there are no regressions to separate from pre-existing failures; all 57 baseline backend tests and 7 baseline frontend tests still pass unchanged.
 
-**Smoke test.** `scripts/smoke/smoke.mjs` (documented in `scripts/smoke/README.md`) exercises health, readiness, auth, create, save, publish, hosted link, embed, lead submit, lead visible, analytics and cleanup, tags everything `P1-SMOKE`, and refuses hosts containing `squarespell.com`, `squarespellquiz.com` or `onrender.com` unless `--allow-live` is given. Its hermetic self-test passes 13/13 steps against the in-process API. **It has not been run against any deployed environment.**
+**Smoke test.** `scripts/smoke/smoke.mjs` (documented in `scripts/smoke/README.md`) exercises health, readiness, auth, create, save, publish, hosted link, embed, lead submit, lead visible, analytics and cleanup, tags everything `P1-SMOKE`, and refuses hosts containing `squarespell.com`, `squarespellquiz.com` or `onrender.com` unless `--allow-live` is given. Its hermetic self-test passes 13/13 steps against the in-process API. **It now also passes 13/13 steps against a temporary API on a real PostgreSQL database inside GitHub Actions (section 17). It has not been run against any deployed environment (staging or production).**
 
 ### 9.1 Preview smoke test (coordinator, read-only, Vercel Preview of this branch)
 
@@ -427,7 +429,7 @@ Claims about Clerk's product below are from vendor documentation as understood a
 1. Production schema state unknown (D02/D27, section 11.1) - blocks any claim that lead capture works in production.
 2. Pilot accounts need plans (section 11.2) - all trial-expired owners are locked out by design.
 3. Quiz billing cannot be enabled until Phase 2 approves names and prices.
-4. No staging API exists to smoke-test against: the Vercel Preview of this branch calls the production API, which blocks the preview origin by CORS (section 9.1), and the production API still runs the pre-fix backend.
+4. Authenticated browser testing remains blocked until a proper staging API exists on Hostinger (Phase 3): the Vercel Preview of this branch calls the production API, which blocks the preview origin by CORS (section 9.1), and the production API still runs the pre-fix backend. API, migration and smoke verification now run in GitHub Actions (section 17); nothing was changed in production CORS or environment variables.
 5. Clerk remains a development instance until Phases 2-3 (section 13).
 6. Owner decisions listed in sections 8 and 11 (F10, F13, Upstash, Sentry, plan for expired accounts).
 
@@ -439,7 +441,7 @@ Claims about Clerk's product below are from vendor documentation as understood a
 | Tenant isolation proven | **Met in hermetic tests** (>80 authenticated routes attacked, 27 tables snapshotted); not verified against production data or RLS. |
 | Lead -> result -> dashboard -> analytics loop works | **Met in hermetic tests**; **not verified in production** (schema/plan state unknown). |
 | Billing safe to re-enable later | **Met in code**; deliberately not re-enabled. |
-| Health checks, structured/safe logging, explicit failure states, repeatable smoke test | **Met** (smoke test not yet run against a deployment). |
+| Health checks, structured/safe logging, explicit failure states, repeatable smoke test | **Met** (the smoke test passes in GitHub Actions against a temporary API; it has not yet run against a deployed staging or production environment). |
 | Configuration ownership mapped | **Partly met**: names, owners and gaps mapped; `presence in live dashboards` is now filled from the coordinator's read-only inspection of Vercel and Render (section 3.1); GitHub secrets, Stripe, Clerk and Supabase dashboards were not re-inspected. |
 | Clerk production path and user reconciliation planned | **Met** (documentation only, by design). |
 | Production verified | **Not met** - requires the owner actions in section 11. |
@@ -447,7 +449,62 @@ Claims about Clerk's product below are from vendor documentation as understood a
 **Overall: NOT YET MET (conditional).** Gates that remain, exactly:
 1. **Migration `031` applied through a controlled step** (read-only diff against the live schema, rehearsal on a copy, then the owner applies it) - production lead capture cannot be trusted before this.
 2. **Deploy of the reviewed backend by the owner** - production still runs `c67fb6d`, whose backend equals `main`'s and therefore contains every defect in section 6.
-3. **A staging/preview API for the smoke test** - `scripts/smoke/smoke.mjs` has never run against a deployment, and the Vercel Preview cannot reach a permissive API (CORS, production Clerk keys).
+3. **Hostinger staging for browser-to-API verification** - the API, migration and smoke checks now pass in GitHub Actions (section 17), but authenticated browser testing and a smoke run against a deployed environment need the Phase 3 staging API; the Vercel Preview cannot reach a permissive API (CORS, production Clerk keys). No Render service is added for this.
 4. **Monitoring/uptime** - an uptime check on `/api/health/ready`, error tracking (no Sentry variable exists) and an always-on instance or external scheduler (no Render crons exist; the Free instance sleeps).
 5. **Clerk production path** - a dedicated production Clerk application and the user reconciliation (sections 13-14); Preview currently shares the development-instance keys.
 Also required before a pilot: plans for trial-expired owners (section 11.2) and `RESEND_WEBHOOK_SECRET`. Do not pilot or migrate until these gates are closed.
+
+
+## 17. Cloud verification in GitHub Actions (no Mac, no sub-agents, nothing deployed)
+
+Workflow: `.github/workflows/p1-verify.yml` (triggers: pull request to `main` and manual dispatch; `permissions: contents: read`; fake credentials generated at run time; no repository secrets, no scheduled jobs, no calls to production services, no deployment). Runs on GitHub-hosted Ubuntu runners.
+
+- **Run analysed:** https://github.com/Squarespell/squarespell/actions/runs/35461291007 - **tested commit `66093ff39f8d8aa48055932fa487f7a762423d09`** - all four jobs succeeded. Later commits on this branch change only this Markdown file and re-run the same workflow.
+- **First run (35460957468, commit `f105f9c`):** the database/migration/API job passed; the backend and frontend jobs failed for CI-environment reasons, not product defects: (a) the repository's configuration-drift guard flagged `RUNNER_TEMP` read by an inline Node script in the workflow (fixed by passing the path as an argument, guard untouched); (b) frontend tests could not start workers on Node 20 (`webidl.util.markAsUncloneable is not a function`, jsdom's bundled undici), fixed by running the frontend job on Node 22. No test was skipped, weakened or changed.
+
+| Check (GitHub Actions) | Result |
+|---|---|
+| Backend tests (vitest) | **19 files, 254 tests passed** |
+| Backend type-check (`tsc --noEmit`) and production build (`npm run build`) | **passed** |
+| Frontend tests (vitest, Node 22) | **2 files, 9 tests passed** |
+| Frontend type-check and production build (`next build`) | **passed** (compiled successfully, 50 static pages) |
+| Temporary PostgreSQL 16 service: complete chain from an empty database (`SUPABASE_SCHEMA.sql`, migrations 002-031, `20260415_email_automation.sql`, applied with `ON_ERROR_STOP`) | **passed** - 49 tables, 33 policy lines; `stripe_webhook_events` exists; lead function has 11 arguments |
+| Migration 031 forward-only guard (no DELETE, UPDATE, TRUNCATE, DROP TABLE, DROP COLUMN, RENAME or type change; only three allow-listed DROPs) | **passed** |
+| Migration 031 upgrade path (chain to 030, then 031) | **passed** - removes or changes exactly three allow-listed objects, adds 41 inventory lines, second run is a no-op, table row counts and a seeded row unchanged, final inventory **identical** to the fresh chain |
+| Original migration 016 on an empty database | **fails as required for the proof:** `ERROR: operator does not exist: text = uuid` (line 251 of the original file); migrations 017-031 are never reached |
+| API start (production mode, fake credentials) on the temporary database via PostgREST v12.2.3 behind a Supabase-style path proxy | **passed** - `GET /api/health` returns `{"ok":true}`, `GET /api/health/ready` returns `{"ok":true,"checks":{"database":"up"}}` |
+| API smoke test (`scripts/smoke/smoke.mjs` against that temporary API) | **13/13 steps passed:** health, readiness, auth (plan pro), create, save/reopen, publish, hosted link, embed runtime (CORS preflight), analytics events, lead submit, lead visible to owner, analytics reflect the run, cleanup |
+| Informational (not a gate): database built with the original 016 (errors tolerated) then completed | differs from the fresh chain only by the five repository A/B policies that the original 016 cannot create |
+
+**Limits of this evidence.** PostgREST stands in for Supabase (no Supabase Auth, Storage or RLS exercised with real roles); Clerk tokens are verified by the real verifier with a local key; Resend, Anthropic and Stripe endpoints point at closed local ports, so email delivery, AI generation and Stripe checkout are not exercised; the browser UI is not exercised; production data was not touched.
+
+**Checks that still require Hostinger staging (Phase 3):** authenticated browser flows (Clerk sign-up, sign-in, sign-out, session expiry, dashboard, editor, publish, hosted link and embed on a real page) against a staging frontend and API with a staging Clerk application; Stripe test-mode checkout and webhook delivery to a real endpoint; real email delivery and bounce webhook; real AI generation, timeouts and cost caps; CORS, cookie and CSP behaviour on the final domains; the worker/scheduler jobs in section 19; backups, restore and uptime monitoring; a migration rehearsal on a copy of production data; Supabase-specific behaviour if Supabase stays until cutover.
+
+**Ready for owner review:** yes - draft PR #63 has passing cloud CI and complete documentation. It is **not** ready to merge or deploy: the gates in section 16 remain open.
+
+## 18. Migration 016 and 031 review
+
+1. **Why 016 was modified.** In the original `016_enable_rls.sql` the A/B-test policies compare `ab_tests.user_id`, which migration 015 defines as TEXT, with `auth.uid()`, which is uuid. PostgreSQL rejects that comparison. The Phase 1 change adds `::text` to those five policy expressions (four on `ab_tests`, one sub-query in `ab_test_assignments`) and a comment; nothing else changed.
+2. **Does an untouched 016 stop a fresh database?** Yes, proven in CI: with the original file the chain stops at 016 with `operator does not exist: text = uuid` and 017-031 are never applied. A runner that ignored errors would silently omit those five policies (the informational CI step shows exactly that).
+3. **Is 031 the complete forward-only change for production?** A read-only catalog query on production (policy names, column types, function signatures, no row data) shows: `ab_tests.user_id` is already text, and production already has all six A/B policies with the same `(auth.uid())::text` expressions under different, hand-made names (for example "Users can view their AB tests"), so **no policy change is needed in production**. Production lacks exactly what 031 adds: table `stripe_webhook_events`, `users.first_name`, `leads.qualified`, `leads.path_taken`, `leads.calculated_price`, the 11-argument `insert_lead_with_limit_check` (production has the 10-argument version), the widened queue status check (production allows only pending, sent, failed) and a nullable `email_sequences.outcome_id` (production is NOT NULL). `preview_drafts` already exists. Statements are no-ops where an object exists. 031 does not, and should not, touch the A/B policies. Only the objects 031 touches and the A/B policies were compared, so other drift cannot be excluded: rehearse on a copy first.
+4. **Same schema and policies on fresh and existing installations?** For every object the application uses, yes: CI shows chain-to-030 plus 031 equals the fresh full chain. Policy **names** differ: fresh databases get the repository-named A/B policies from the corrected 016; production has equivalent hand-made ones (same expressions). The difference is naming only. **Never re-run the corrected 016 on production** (it would add duplicate policies); apply only 031.
+5. **Could 031 remove or change production data?** No, by analysis and by test. There is no DELETE, UPDATE, TRUNCATE, DROP TABLE, DROP COLUMN, RENAME or type change (CI guard). The three DROPs are: the queue status check, replaced by a wider one (existing rows already satisfy it because the old allowed set is a subset); the old lead function, replaced (no data); and a NOT NULL constraint, loosened. New columns receive constant defaults on new columns only. CI proved unchanged row counts and an unchanged seeded row. **Behaviour changes (not data changes):** the lead limit becomes a monthly allowance instead of lifetime, and a repeated submission for the same quiz and email returns the existing lead. Apply in a quiet window (brief locks on the queue table and the function).
+
+**Decision on 016:** keep the correction. Immutable history was preferred, but the original provably prevents a fresh database (staging, the Phase 3 Hostinger PostgreSQL) from completing, and production already matches the corrected expressions. The correction is proven by the full chain in CI. **Migration 031 was not applied to Supabase or any database.**
+
+## 19. Render cron findings (nothing created or activated)
+
+`render.yaml` declares one web service and **five cron services that run six scheduled jobs**; **none exists in the live Render account**. The application also has four cron endpoints that no scheduler triggers at all. All required jobs will later run on the Hostinger worker/scheduler; no Render cron, service or setting was created or changed.
+
+| Job | Schedule | Endpoint | What it does | Classification |
+|---|---|---|---|---|
+| `squarespell-scheduled-sends` | every 5 min | `/api/cron/process-scheduled-sends` | sends scheduled email campaigns | **Required before a paid pilot** |
+| `squarespell-lifecycle-emails` (1 of 2) | daily 09:00 UTC | `/api/cron/trial-reminders` | trial-ending reminders | **Required before a paid pilot** (conversion path) |
+| `squarespell-lifecycle-emails` (2 of 2) | daily 09:00 UTC | `/api/cron/lead-milestones` | owner milestone notifications | Useful but deferrable |
+| `squarespell-weekly-digest` | Mondays 10:00 UTC | `/api/cron/weekly-digest` | weekly owner digest (the in-process trigger never matched a route) | Useful but deferrable |
+| `squarespell-monthly-report` | 1st of month 10:00 UTC | `/api/cron/monthly-report` | monthly owner report | Useful but deferrable |
+| `squarespell-keep-alive` | every 10 min | `/health` ping | stops the Free instance sleeping | **Obsolete or replaced** (GitHub Actions keep-alive and the in-process ping exist; always-on Hostinger removes the need) |
+| no scheduler | - | `/api/cron/process-email-queue` | drains follow-up email sequences | **Required before a paid pilot** (PR #63 adds an in-process drain that only runs while the instance is awake; the worker must own it) |
+| no scheduler | - | `/api/cron/cleanup-gdpr-tokens`, `cleanup-integration-errors`, `cleanup-preview-cache` | prune expired rows | Useful but deferrable (retention hygiene) |
+
+**Do the missing jobs cause harm today?** *Data loss:* no - the jobs only send email or prune expired rows; queues persist. *Billing errors:* no - plan limits and the 14-day trial are enforced in code at request time, and no billing job exists among them. *Security:* no direct exposure from their absence; expired GDPR tokens and old integration errors simply stay longer than intended. Separately, in today's production backend `POST /api/cron/process-email-queue` has no secret check (fixed in PR #63). *Customer-facing:* today production has 0 leads and no paying customers, so nothing visibly fails yet; scheduled campaigns, trial reminders and follow-up sequences would silently not send once real customers exist. **They are not activated.**
