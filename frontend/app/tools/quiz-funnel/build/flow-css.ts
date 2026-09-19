@@ -1727,6 +1727,10 @@ export const FLOW_CSS = `
     background: rgba(15,115,119,0.02);
     box-shadow: 0 0 0 3px rgba(15,115,119,0.06);
   }
+  .s2-path-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
   .s2-path-radio {
     width: 20px;
     height: 20px;
@@ -1811,6 +1815,55 @@ export const FLOW_CSS = `
     animation: s2SlideUp 0.4s var(--ease-spring) both;
   }
   .s2-tpl-selected-info svg { flex-shrink: 0; color: var(--accent); }
+
+  /* Template picker — real, individually-clickable choices (matched or full catalog fallback) */
+  .s2-tpl-picker {
+    margin-bottom: 20px;
+    animation: s2SlideUp 0.4s var(--ease-spring) both;
+  }
+  .s2-tpl-picker-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .s2-tpl-picker-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .s2-tpl-picker-item {
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-spring);
+  }
+  .s2-tpl-picker-item:hover {
+    border-color: rgba(15,115,119,0.25);
+  }
+  .s2-tpl-picker-item.selected {
+    border-color: var(--accent);
+    background: rgba(15,115,119,0.04);
+  }
+  .s2-tpl-picker-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .s2-tpl-picker-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .s2-tpl-picker-cat {
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
 
   /* Generate CTA */
   .s2-generate-btn {
