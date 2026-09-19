@@ -580,7 +580,8 @@ jobs:
           set -euo pipefail
           uid=$(docker run --rm --entrypoint id sq-frontend:ci -u)
           [ "$uid" != 0 ] || { echo "::error::frontend image runs as root"; exit 1; }
-          docker run --rm --entrypoint sh sq-frontend:ci -c 'test -d .next && ! ls -A | grep -q "^[.]env"'
+          docker run --rm --entrypoint sh sq-frontend:ci -c 'ls -A; test -d .next'
+          if docker run --rm --entrypoint sh sq-frontend:ci -c 'ls -A' | grep '^[.]env' | grep -v '[.]example$' | grep -q .; then echo "::error::a real env file is inside the frontend image"; exit 1; fi
 
   hostinger-stack:
     name: Hostinger stack - secret generator, migration chain, REST layer, backup and restore
