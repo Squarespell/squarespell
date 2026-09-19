@@ -602,7 +602,7 @@ jobs:
           set -euo pipefail
           R=/srv/squarespell-quiz/staging/repo/infra/hostinger/scripts
           E=/srv/squarespell-quiz/staging/.env
-          out="$("$R/gen-env.sh")"; echo "$out"
+          out="$(bash "$R/gen-env.sh")"; echo "$out"
           [ "$(stat -c %a "$E")" = 600 ] || { echo "::error::env file is not mode 600"; exit 1; }
           for n in POSTGRES_PASSWORD AUTHENTICATOR_PASSWORD PGRST_JWT_SECRET SUPABASE_SERVICE_ROLE_KEY ENCRYPTION_KEY REPORT_SECRET CRON_SECRET; do
             v="$(grep -m1 "^$n=" "$E" | cut -d= -f2-)"
@@ -610,11 +610,11 @@ jobs:
             if echo "$out" | grep -qF "$v"; then echo "::error::$n value was printed"; exit 1; fi
           done
           node -e "const c=require('crypto'),fs=require('fs');const e=Object.fromEntries(fs.readFileSync('$E','utf8').split('\n').filter(l=>/^[A-Z_]+=/.test(l)).map(l=>[l.split('=')[0],l.slice(l.indexOf('=')+1)]));const [h,p,s]=e.SUPABASE_SERVICE_ROLE_KEY.split('.');if(c.createHmac('sha256',e.PGRST_JWT_SECRET).update(h+'.'+p).digest('base64url')!==s)process.exit(1);if(JSON.parse(Buffer.from(p,'base64url')).role!=='service_role')process.exit(1);console.log('service_role JWT signature verifies')"
-          again="$("$R/gen-env.sh")"; echo "$again" | grep -q 'not overwriting'
-          printf '%s\n' 'ops@example.test' | "$R/set-secret.sh" ACME_EMAIL
-          printf '%s\n' 'pk_test_Y2xlcmsuZXhhbXBsZS5jb20k' | "$R/set-secret.sh" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-          printf '%s\n' 'dummy-clerk-secret' | "$R/set-secret.sh" CLERK_SECRET_KEY
-          if printf '%s\n' 'sk_live_dummyvalue' | "$R/set-secret.sh" STRIPE_SECRET_KEY; then echo "::error::set-secret accepted a live Stripe key"; exit 1; fi
+          again="$(bash "$R/gen-env.sh")"; echo "$again" | grep -q 'not overwriting'
+          printf '%s\n' 'ops@example.test' | bash "$R/set-secret.sh" ACME_EMAIL
+          printf '%s\n' 'pk_test_Y2xlcmsuZXhhbXBsZS5jb20k' | bash "$R/set-secret.sh" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+          printf '%s\n' 'dummy-clerk-secret' | bash "$R/set-secret.sh" CLERK_SECRET_KEY
+          if printf '%s\n' 'sk_live_dummyvalue' | bash "$R/set-secret.sh" STRIPE_SECRET_KEY; then echo "::error::set-secret accepted a live Stripe key"; exit 1; fi
           grep -q '^STRIPE_SECRET_KEY=$' "$E"
           [ "$(stat -c %a "$E")" = 600 ]
           echo "PASS secrets are generated, verified, never printed; live Stripe keys refused"
@@ -623,13 +623,13 @@ jobs:
           set -uo pipefail
           D=/srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh
           E=/srv/squarespell-quiz/staging/.env
-          "$D" main 2>&1 | grep -q 'full 40-character'  || { echo "::error::deploy.sh accepted a branch name"; exit 1; }
-          "$D" 70546ee 2>&1 | grep -q 'full 40-character' || { echo "::error::deploy.sh accepted a short SHA"; exit 1; }
-          "$D" rollback 2>&1 | grep -q 'no previous deployment' || { echo "::error::rollback without history was not refused"; exit 1; }
+          bash "$D" main 2>&1 | grep -q 'full 40-character'  || { echo "::error::deploy.sh accepted a branch name"; exit 1; }
+          bash "$D" 70546ee 2>&1 | grep -q 'full 40-character' || { echo "::error::deploy.sh accepted a short SHA"; exit 1; }
+          bash "$D" rollback 2>&1 | grep -q 'no previous deployment' || { echo "::error::rollback without history was not refused"; exit 1; }
           sed -i 's|^STRIPE_SECRET_KEY=.*|STRIPE_SECRET_KEY=sk_live_dummyvalue|' "$E"
-          "$D" 0123456789abcdef0123456789abcdef01234567 2>&1 | grep -q 'live Stripe key' || { echo "::error::live key guard failed"; exit 1; }
+          bash "$D" 0123456789abcdef0123456789abcdef01234567 2>&1 | grep -q 'live Stripe key' || { echo "::error::live key guard failed"; exit 1; }
           sed -i 's|^STRIPE_SECRET_KEY=.*|STRIPE_SECRET_KEY=|' "$E"
-          chmod 644 "$E"; "$D" 0123456789abcdef0123456789abcdef01234567 2>&1 | grep -q 'mode 600' || { echo "::error::mode guard failed"; exit 1; }
+          chmod 644 "$E"; bash "$D" 0123456789abcdef0123456789abcdef01234567 2>&1 | grep -q 'mode 600' || { echo "::error::mode guard failed"; exit 1; }
           chmod 600 "$E"
           echo "PASS deploy.sh refuses branch names, short SHAs, live Stripe keys and a loose env file"
       - name: Database from empty, full migration chain incl. 031, REST layer through the gateway
@@ -640,10 +640,10 @@ jobs:
           DC="docker compose --env-file $E -f $B/docker-compose.staging.yml"
           $DC up -d db
           for _ in $(seq 1 60); do [ "$($DC ps --format '{{.Health}}' db)" = healthy ] && break; sleep 2; done
-          "$B/scripts/migrate.sh" | tee "$RUNNER_TEMP/migrate1.log"
+          bash "$B/scripts/migrate.sh" | tee "$RUNNER_TEMP/migrate1.log"
           grep -q '^apply  031_schema_reconciliation.sql' "$RUNNER_TEMP/migrate1.log"
           grep -q '031 present' "$RUNNER_TEMP/migrate1.log"
-          "$B/scripts/migrate.sh" | tee "$RUNNER_TEMP/migrate2.log"
+          bash "$B/scripts/migrate.sh" | tee "$RUNNER_TEMP/migrate2.log"
           if grep -q '^apply ' "$RUNNER_TEMP/migrate2.log"; then echo "::error::second run re-applied migrations"; exit 1; fi
           $DC up -d rest gateway
           KEY="$(grep -m1 '^SUPABASE_SERVICE_ROLE_KEY=' "$E" | cut -d= -f2-)"
@@ -664,12 +664,12 @@ jobs:
         run: |
           set -euo pipefail
           B=/srv/squarespell-quiz/staging/repo/infra/hostinger/scripts
-          "$B/backup.sh"
+          bash "$B/backup.sh"
           f="$(ls -1 /srv/squarespell-quiz/backups/quiz_staging_*.dump.enc | head -n 1)"
           [ "$(stat -c %a "$f")" = 600 ]
           [ "$(stat -c %a /srv/squarespell-quiz/backups/.backup.key)" = 600 ]
           if head -c 5 "$f" | grep -q PGDMP; then echo "::error::backup is not encrypted"; exit 1; fi
-          "$B/restore-validate.sh"
+          bash "$B/restore-validate.sh"
           E=/srv/squarespell-quiz/staging/.env
           DC="docker compose --env-file $E -f $B/../docker-compose.staging.yml"
           [ "$($DC exec -T db psql -U postgres -At -c "select count(*) from pg_database where datname='quiz_restore_test'")" = 0 ]
