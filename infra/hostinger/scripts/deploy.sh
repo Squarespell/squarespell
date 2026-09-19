@@ -37,16 +37,16 @@ echo "== build $TARGET =="
 
 echo "== database =="
 "${DC[@]}" up -d db
-for i in $(seq 1 60); do
+for _ in $(seq 1 60); do
   [ "$("${DC[@]}" ps --format '{{.Health}}' db)" = healthy ] && break
   sleep 2
 done
 [ "$("${DC[@]}" ps --format '{{.Health}}' db)" = healthy ] || die "database did not become healthy"
-"$REPO/infra/hostinger/scripts/migrate.sh"
+bash "$REPO/infra/hostinger/scripts/migrate.sh"
 
 echo "== services =="
 "${DC[@]}" up -d --remove-orphans
-for i in $(seq 1 60); do
+for _ in $(seq 1 60); do
   st="$("${DC[@]}" ps --format '{{.Service}}={{.Health}}' backend frontend 2>/dev/null | tr '\n' ' ')"
   case "$st" in *backend=healthy*frontend=healthy*|*frontend=healthy*backend=healthy*) break;; esac
   sleep 5
