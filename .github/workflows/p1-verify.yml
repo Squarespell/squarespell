@@ -55,7 +55,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Install from lockfile
@@ -253,9 +253,9 @@ jobs:
           GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
           GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO service_role;
           EOF
-          node - <<'EOF'
+          node - "$RUNNER_TEMP" <<'EOF'
           const crypto = require('crypto'), fs = require('fs');
-          const tmp = process.env.RUNNER_TEMP;
+          const tmp = process.argv[process.argv.length - 1];
           const kp = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
           fs.writeFileSync(tmp + '/clerk_public.pem', kp.publicKey.export({ type: 'spki', format: 'pem' }));
           const b = (x) => Buffer.from(x).toString('base64url');
