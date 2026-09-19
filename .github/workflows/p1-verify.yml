@@ -623,15 +623,20 @@ jobs:
           set -uo pipefail
           D=/srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh
           E=/srv/squarespell-quiz/staging/.env
-          bash "$D" main 2>&1 | grep -q 'full 40-character'  || { echo "::error::deploy.sh accepted a branch name"; exit 1; }
-          bash "$D" 70546ee 2>&1 | grep -q 'full 40-character' || { echo "::error::deploy.sh accepted a short SHA"; exit 1; }
-          bash "$D" rollback 2>&1 | grep -q 'no previous deployment' || { echo "::error::rollback without history was not refused"; exit 1; }
+          SHA=0123456789abcdef0123456789abcdef01234567
+          expect() {
+            out="$(bash "$D" "$1" 2>&1 || true)"
+            if grep -q "$2" <<< "$out"; then echo "PASS $3"; else echo "::error::FAIL $3 (output: $out)"; exit 1; fi
+          }
+          expect main 'full 40-character' "branch name refused"
+          expect 70546ee 'full 40-character' "short SHA refused"
+          expect rollback 'no previous deployment' "rollback without history refused"
           sed -i 's|^STRIPE_SECRET_KEY=.*|STRIPE_SECRET_KEY=sk_live_dummyvalue|' "$E"
-          bash "$D" 0123456789abcdef0123456789abcdef01234567 2>&1 | grep -q 'live Stripe key' || { echo "::error::live key guard failed"; exit 1; }
+          expect "$SHA" 'live Stripe key' "live Stripe key refused"
           sed -i 's|^STRIPE_SECRET_KEY=.*|STRIPE_SECRET_KEY=|' "$E"
-          chmod 644 "$E"; bash "$D" 0123456789abcdef0123456789abcdef01234567 2>&1 | grep -q 'mode 600' || { echo "::error::mode guard failed"; exit 1; }
+          chmod 644 "$E"
+          expect "$SHA" 'mode 600' "loose env file refused"
           chmod 600 "$E"
-          echo "PASS deploy.sh refuses branch names, short SHAs, live Stripe keys and a loose env file"
       - name: Database from empty, full migration chain incl. 031, REST layer through the gateway
         run: |
           set -euo pipefail
