@@ -43,8 +43,9 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_leads_user_quiz
   ON leads(user_id, quiz_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_quiz_created
   ON analytics_events(quiz_id, created_at DESC);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_user_created
-  ON analytics_events(user_id, created_at DESC);
+-- Phase 1: analytics_events has no user_id column, so this index could never be created and made the
+-- whole migration fail on a fresh database. Removed; idx_analytics_quiz_created above covers the queries.
+-- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_user_created ON analytics_events(user_id, created_at DESC);
 
 -- 4. Email queue retry columns (H5)
 ALTER TABLE email_sequence_queue
