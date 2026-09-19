@@ -701,9 +701,9 @@ jobs:
             sudo ufw status verbose | sed '/^$/d'
             sudo cat /etc/fail2ban/jail.d/sshd.local /etc/apt/apt.conf.d/20auto-upgrades /etc/docker/daemon.json
             id squarespell
-            stat -c '%a %U:%G %n' /srv/squarespell-quiz /srv/squarespell-quiz/staging /srv/squarespell-quiz/backups /home/squarespell/.ssh /home/squarespell/.ssh/authorized_keys
+            sudo stat -c '%a %U:%G %n' /srv/squarespell-quiz /srv/squarespell-quiz/staging /srv/squarespell-quiz/backups /home/squarespell/.ssh /home/squarespell/.ssh/authorized_keys
             grep -c '^127.0.1.1 squarespell-quiz-us-1' /etc/hosts
-            wc -l < /home/squarespell/.ssh/authorized_keys
+            sudo cat /home/squarespell/.ssh/authorized_keys | wc -l
             systemctl is-active docker fail2ban unattended-upgrades
             docker --version
             docker compose version
@@ -718,7 +718,7 @@ jobs:
           diff "$RUNNER_TEMP/snap1.txt" "$RUNNER_TEMP/snap2.txt" && echo "PASS second run left the system state identical"
           [ "$(hostnamectl --static)" = squarespell-quiz-us-1 ]
           [ "$(timedatectl show -p Timezone --value)" = UTC ]
-          [ "$(wc -l < /home/squarespell/.ssh/authorized_keys)" -eq 1 ]
+          [ "$(sudo cat /home/squarespell/.ssh/authorized_keys | wc -l)" -eq 1 ]
           [ "$(grep -c '^127.0.1.1 squarespell-quiz-us-1' /etc/hosts)" -eq 1 ]
           sudo ufw status | grep -q '^Status: active'
           allowed="$(sudo ufw status | grep ALLOW | grep -Ev '^(22|80|443)/tcp( [(]v6[)])? ' || true)"
