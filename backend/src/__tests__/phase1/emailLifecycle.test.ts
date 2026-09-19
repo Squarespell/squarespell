@@ -160,3 +160,20 @@ describe('follow-up sequences (email_sequence_queue)', () => {
     expect((await statuses())[0].status).toBe('failed');
   });
 });
+
+describe('GDPR deletion e-mail', () => {
+  it('the confirmation link in the deletion e-mail points at the API host (the Next.js app has no /api/gdpr route) and completes the deletion', async () => {
+    const owner = await makeUser({ plan: 'pro' });
+    const quiz = await makeQuiz(owner, { slug: 'gdpr-del' });
+    await (await api()).post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'forget@customer.example' })).expect(201);
+    resetOutbox();
+    await (await api()).post('/api/gdpr/delete-request').set('X-Forwarded-For', nextIp()).send({ email: 'forget@customer.example', quiz_slug: quiz.slug }).expect(200);
+    const mail = outbox.find((m) => String(m.to) === 'forget@customer.example')!;
+    const href = mail.html!.match(/href="([^"]+confirm-delete[^"]+)"/)![1];
+    expect(href.startsWith(process.env.BACKEND_URL!)).toBe(true);
+    const u = new URL(href);
+    const done = await (await api()).get(u.pathname + u.search);
+    expect(done.status).toBe(200);
+    expect(await sql(`select 1 from leads where email='forget@customer.example'`)).toHaveLength(0);
+  });
+});

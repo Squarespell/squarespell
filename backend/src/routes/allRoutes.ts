@@ -1187,7 +1187,7 @@ leadsRouter.post('/gdpr/delete-request', async (req, res) => {
 
     // Send verification email (if Resend is configured)
     if (resend) {
-      var confirmUrl = APP_URL + '/api/gdpr/confirm-delete?token=' + deleteToken;
+      var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
       await resend.emails.send({
         from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
         to: email,
