@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import { ownsQuiz } from '../utils/ownership';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import {
@@ -19,7 +20,7 @@ export var publicRichResultsRouter = Router();
 richResultsRouter.get('/:quizId/outcomes/:outcomeId/blocks', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     var { data: quiz } = await supabase
-      .from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.userId).single();
+      .from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
     var blocks = await getResultBlocks(req.params.quizId, req.params.outcomeId);
     res.json(blocks);
@@ -30,7 +31,7 @@ richResultsRouter.get('/:quizId/outcomes/:outcomeId/blocks', requireAuth, attach
 richResultsRouter.post('/:quizId/outcomes/:outcomeId/blocks', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     var { data: quiz } = await supabase
-      .from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.userId).single();
+      .from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
 
     var { block_type, block_order, config } = req.body;
@@ -51,6 +52,9 @@ richResultsRouter.post('/:quizId/outcomes/:outcomeId/blocks', requireAuth, attac
 // PATCH /api/quizzes/:quizId/outcomes/:outcomeId/blocks/:blockId
 richResultsRouter.patch('/:quizId/outcomes/:outcomeId/blocks/:blockId', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsQuiz(req.params.quizId, req.dbUserId))) return res.status(404).json({ error: 'Quiz not found' });
+    var { data: existingBlock } = await supabase.from('result_page_blocks').select('id').eq('id', req.params.blockId).eq('quiz_id', req.params.quizId).maybeSingle();
+    if (!existingBlock) return res.status(404).json({ error: 'Block not found' });
     var { block_type, block_order, config } = req.body;
     var result = await upsertResultBlock({
       id: req.params.blockId,
@@ -68,6 +72,9 @@ richResultsRouter.patch('/:quizId/outcomes/:outcomeId/blocks/:blockId', requireA
 // DELETE /api/quizzes/:quizId/outcomes/:outcomeId/blocks/:blockId
 richResultsRouter.delete('/:quizId/outcomes/:outcomeId/blocks/:blockId', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsQuiz(req.params.quizId, req.dbUserId))) return res.status(404).json({ error: 'Quiz not found' });
+    var { data: blockToDelete } = await supabase.from('result_page_blocks').select('id').eq('id', req.params.blockId).eq('quiz_id', req.params.quizId).maybeSingle();
+    if (!blockToDelete) return res.status(404).json({ error: 'Block not found' });
     var result = await deleteResultBlock(req.params.blockId);
     if (result.error) return res.status(500).json({ error: result.error.message });
     res.json({ success: true });
@@ -77,6 +84,7 @@ richResultsRouter.delete('/:quizId/outcomes/:outcomeId/blocks/:blockId', require
 // PUT /api/quizzes/:quizId/outcomes/:outcomeId/blocks/reorder
 richResultsRouter.put('/:quizId/outcomes/:outcomeId/blocks/reorder', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsQuiz(req.params.quizId, req.dbUserId))) return res.status(404).json({ error: 'Quiz not found' });
     var { block_ids } = req.body;
     if (!block_ids || !Array.isArray(block_ids)) return res.status(400).json({ error: 'block_ids array required' });
     await reorderResultBlocks(req.params.quizId, req.params.outcomeId, block_ids);

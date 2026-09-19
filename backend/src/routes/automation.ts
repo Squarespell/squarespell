@@ -15,7 +15,7 @@ automationRouter.get('/', requireAuth, attachUser, async function(req: Authentic
     var { data, error } = await supabase
       .from('email_automation_rules')
       .select('*')
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .order('created_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
     res.json(data || []);
@@ -35,7 +35,7 @@ automationRouter.post('/', requireAuth, attachUser, async function(req: Authenti
     var { data, error } = await supabase
       .from('email_automation_rules')
       .insert({
-        user_id: req.userId,
+        user_id: req.dbUserId,
         name: name,
         trigger_config: trigger_config,
         action_config: action_config,
@@ -65,7 +65,7 @@ automationRouter.patch('/:id', requireAuth, attachUser, async function(req: Auth
       .from('email_automation_rules')
       .update(updateObj)
       .eq('id', req.params.id)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .select()
       .single();
     if (error) return res.status(400).json({ error: error.message });
@@ -82,7 +82,7 @@ automationRouter.delete('/:id', requireAuth, attachUser, async function(req: Aut
       .from('email_automation_rules')
       .delete()
       .eq('id', req.params.id)
-      .eq('user_id', req.userId);
+      .eq('user_id', req.dbUserId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err: any) {
@@ -98,7 +98,7 @@ automationRouter.get('/:id/log', requireAuth, attachUser, async function(req: Au
       .from('email_automation_rules')
       .select('id')
       .eq('id', req.params.id)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .single();
     if (!rule) return res.status(404).json({ error: 'Rule not found' });
 

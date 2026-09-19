@@ -27,7 +27,7 @@ extendedFeaturesRouter.get('/quizzes/:id/custom-css', requireAuth, attachUser, a
 extendedFeaturesRouter.put('/quizzes/:id/custom-css', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     var { css } = req.body;
-    var result = await saveCustomCss(req.params.id, req.userId!, css || '');
+    var result = await saveCustomCss(req.params.id, req.dbUserId!, css || '');
     if (result.error) return res.status(400).json({ error: result.error.message });
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
@@ -70,7 +70,7 @@ extendedFeaturesRouter.post('/validate-answer', async function(req, res) {
 extendedFeaturesRouter.get('/analytics/:quizId/embed-performance', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     var { data: quiz } = await supabase
-      .from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.userId).single();
+      .from('quizzes').select('id').eq('id', req.params.quizId).eq('user_id', req.dbUserId).single();
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
     var days = parseInt(req.query.days as string) || 30;
     var stats = await getEmbedPerformanceStats(req.params.quizId, days);

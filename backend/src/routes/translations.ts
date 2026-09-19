@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import { ownsQuiz } from '../utils/ownership';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import {
@@ -23,7 +24,7 @@ translationsRouter.get('/:quizId/translations', requireAuth, attachUser, async f
       .from('quizzes')
       .select('id')
       .eq('id', req.params.quizId)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .single();
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
 
@@ -37,6 +38,7 @@ translationsRouter.get('/:quizId/translations', requireAuth, attachUser, async f
 // GET /api/quizzes/:quizId/translations/:lang — get specific translation
 translationsRouter.get('/:quizId/translations/:lang', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsQuiz(req.params.quizId, req.dbUserId))) return res.status(404).json({ error: 'Quiz not found' });
     var translation = await getTranslation(req.params.quizId, req.params.lang);
     if (!translation) return res.status(404).json({ error: 'Translation not found' });
     res.json(translation);
@@ -52,7 +54,7 @@ translationsRouter.put('/:quizId/translations/:lang', requireAuth, attachUser, a
       .from('quizzes')
       .select('id')
       .eq('id', req.params.quizId)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .single();
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
 
@@ -63,7 +65,7 @@ translationsRouter.put('/:quizId/translations/:lang', requireAuth, attachUser, a
       req.params.quizId,
       req.params.lang,
       translations,
-      req.userId
+      req.dbUserId
     );
     if (result.error) return res.status(400).json({ error: result.error.message });
     res.json(result.data);
@@ -79,7 +81,7 @@ translationsRouter.delete('/:quizId/translations/:lang', requireAuth, attachUser
       .from('quizzes')
       .select('id')
       .eq('id', req.params.quizId)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .single();
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
 

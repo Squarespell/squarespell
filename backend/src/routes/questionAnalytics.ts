@@ -92,7 +92,7 @@ questionAnalyticsRouter.get('/:quizId/funnel', requireAuth, attachUser, async fu
       .from('quizzes')
       .select('id')
       .eq('id', req.params.quizId)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .single();
 
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
@@ -114,7 +114,7 @@ questionAnalyticsRouter.get('/:quizId/question/:index/distribution', requireAuth
       .from('quizzes')
       .select('id')
       .eq('id', req.params.quizId)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .single();
 
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });

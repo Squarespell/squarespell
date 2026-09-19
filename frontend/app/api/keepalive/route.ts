@@ -14,8 +14,10 @@ const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onre
 
 export async function GET(request: Request): Promise<Response> {
   // Validate the request is from Vercel Cron (not a random caller).
+  // Fail closed: with CRON_SECRET unset the expected header would be the literal "Bearer undefined".
+  const secret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return new Response('Unauthorized', { status: 401 });
   }
 

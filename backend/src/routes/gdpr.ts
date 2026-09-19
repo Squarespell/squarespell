@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import { ownedQuizIds } from '../utils/ownership';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import {
   recordConsent, getConsentHistory, exportUserData,
@@ -19,7 +20,7 @@ export var publicGdprRouter = Router();
 // GET /api/gdpr/consent/:email — consent history for a lead
 gdprRouter.get('/consent/:email', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
-    var history = await getConsentHistory(req.params.email);
+    var history = await getConsentHistory(req.params.email, await ownedQuizIds(req.dbUserId));
     res.json(history);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -27,7 +28,7 @@ gdprRouter.get('/consent/:email', requireAuth, attachUser, async function(req: A
 // GET /api/gdpr/export/:email — export all data for a lead (right to access)
 gdprRouter.get('/export/:email', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
-    var data = await exportUserData(req.params.email, req.userId!);
+    var data = await exportUserData(req.params.email, req.dbUserId!, await ownedQuizIds(req.dbUserId));
     res.json(data);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -37,7 +38,7 @@ gdprRouter.post('/delete-request', requireAuth, attachUser, async function(req: 
   try {
     var { email } = req.body;
     if (!email) return res.status(400).json({ error: 'email required' });
-    var result = await initiateDeletionRequest(email, req.userId!);
+    var result = await initiateDeletionRequest(email, req.dbUserId!);
     res.json({ request_id: result.request_id, message: 'Deletion request created. Confirm to execute.' });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -46,14 +47,14 @@ gdprRouter.post('/delete-request', requireAuth, attachUser, async function(req: 
 gdprRouter.post('/confirm-delete', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     // Rate limit: 5 confirm attempts per hour per user to prevent token brute-force
-    var { success: allowed } = await safeLimit(deletionLimiter, req.userId!);
+    var { success: allowed } = await safeLimit(deletionLimiter, req.dbUserId!);
     if (!allowed) return res.status(429).json({ error: 'Too many requests. Try again later.' });
 
     var { token } = req.body;
     if (!token) return res.status(400).json({ error: 'token required' });
 
     // Pass userId so service can verify ownership of the deletion request
-    var result = await confirmAndExecuteDeletion(token, req.userId!);
+    var result = await confirmAndExecuteDeletion(token, req.dbUserId!);
     if (!result.success) return res.status(404).json({ error: 'Invalid or expired token' });
     res.json(result);
   } catch (err: any) { res.status(500).json({ error: err.message }); }

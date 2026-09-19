@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import crypto from 'crypto';
+import { requireCronSecret } from '../middleware/cronAuth';
 import { log } from '../lib/logger';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, getPlanLimits, isTrialActive } from '../middleware/planGuard';
@@ -2492,6 +2493,7 @@ stripeRouter.get('/invoices', requireAuth, attachUser, async (req: Authenticated
 
 // ── Cron: Weekly Digest ───────────────────────────────────────────────────────
 export const cronRouter = Router();
+cronRouter.use(requireCronSecret); // fail-closed for every /api/cron/* route (process-email-queue previously had no check)
 cronRouter.post('/process-email-queue', async (_req, res) => {
   try {
     const result = await processEmailQueue();
@@ -2731,6 +2733,7 @@ cronRouter.post('/weekly-digest', async (req, res) => {
 
 // ── Cron: Lifecycle Emails (onboarding + trial + win-back) ──────────────────
 export const trialReminderRouter = Router();
+trialReminderRouter.use(requireCronSecret);
 trialReminderRouter.post('/trial-reminders', async (req, res) => {
   var cronSecret = req.headers['x-cron-secret'];
   if (cronSecret !== process.env.CRON_SECRET) {

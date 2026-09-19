@@ -26,7 +26,7 @@ export async function requireAuth(
 ) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized', code: 'auth_required' });
   }
 
   const token = authHeader.substring(7);
@@ -37,18 +37,39 @@ export async function requireAuth(
       // Optional: PEM public key for networkless verification (Clerk "JWT key").
       // When unset (production default) Clerk's JWKS endpoint is used.
       ...(process.env.CLERK_JWT_KEY ? { jwtKey: process.env.CLERK_JWT_KEY } : {}),
+      // Optional override of the Clerk Backend API base URL (proxy / test double).
+      ...(process.env.CLERK_API_URL ? { apiUrl: process.env.CLERK_API_URL } : {}),
     });
 
     if (!payload?.sub) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Invalid token', code: 'token_invalid' });
     }
 
     req.userId = payload.sub;
     next();
   } catch (err: any) {
-    log.error('Token verification failed:', { err: err.message || err });
-    return res.status(401).json({ error: 'Invalid token' });
+    const reason: string = err?.reason || '';
+    // Never log the token itself; only the classification.
+    if (reason === 'token-expired') {
+      return res.status(401).json({ error: 'Session expired', code: 'token_expired' });
+    }
+    // Errors raised while *obtaining the verification key* (Clerk unreachable, secret key rejected/missing)
+    // are outages or misconfiguration, not a bad token: answer 503 so clients retry instead of signing users out.
+    const providerFailure =
+      reason.startsWith('jwk-remote') || reason.startsWith('jwk-failed') || reason === 'secret-key-missing' ||
+      err instanceof TypeError || /fetch failed|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|Clerk Secret Key is invalid/i.test(String(err?.message));
+    if (providerFailure) {
+      log.error('Clerk verification unavailable', { reason: reason || undefined, err: err?.message });
+      return res.status(503).json({ error: 'Authentication service temporarily unavailable', code: 'auth_provider_unavailable' });
+    }
+    log.warn('Token verification failed', { reason: reason || undefined });
+    return res.status(401).json({ error: 'Invalid token', code: 'token_invalid' });
   }
+}
+
+function dbUnavailable(res: Response, detail?: string) {
+  log.error('attachUser: database unavailable', { err: detail });
+  return res.status(503).json({ error: 'Service temporarily unavailable', code: 'db_unavailable' });
 }
 
 export async function attachUser(
@@ -59,19 +80,20 @@ export async function attachUser(
   if (!req.userId) return next();
 
   try {
-    // Look up by clerk_user_id (text), not id (uuid)
-    const { data: existing, error: lookupError } = await supabase
+    const lookup = () => supabase
       .from('users')
       .select('id, clerk_user_id, plan, created_at, last_login_at')
       .eq('clerk_user_id', req.userId)
       .single();
 
-    // PGRST116 = "no rows returned" (normal for new users). Any other error
-    // is a transient network/Supabase outage — fail open so the server
-    // doesn't hard-500 during Render cold-starts.
+    // Look up by clerk_user_id (text), not id (uuid)
+    const { data: existing, error: lookupError } = await lookup();
+
+    // PGRST116 = "no rows returned" (normal for new users). Any other error is an outage or a
+    // schema problem. Continuing without a database user id (the previous "fail open") let requests
+    // run with req.dbUserId undefined, so answer explicitly instead.
     if (lookupError && lookupError.code !== 'PGRST116') {
-      log.warn('attachUser: Supabase lookup failed, continuing without dbUserId', { err: lookupError.message });
-      return next();
+      return dbUnavailable(res, lookupError.message);
     }
 
     if (existing) {
@@ -91,8 +113,8 @@ export async function attachUser(
     try {
       const clerkUser = await clerkClient.users.getUser(req.userId);
       email = clerkUser.emailAddresses?.[0]?.emailAddress || '';
-    } catch (e) {
-      log.info('Clerk lookup failed, continuing without email:', { detail: e });
+    } catch (e: any) {
+      log.info('Clerk lookup failed, continuing without email', { err: e?.message });
     }
 
     const { data: newUser, error } = await supabase
@@ -107,17 +129,24 @@ export async function attachUser(
       .single();
 
     if (error) {
-      // Transient network error during insert — fail open so the request doesn't
-      // hard-500. The user record will be created on the next successful request.
-      log.error('User insert error (fail-open):', { err: error.message });
-      return next();
+      // 23505 = unique violation: a parallel request (the dashboard fires several at once on first
+      // login) created the row first. Use that row instead of failing.
+      if (error.code === '23505') {
+        const { data: raced, error: reErr } = await lookup();
+        if (raced && !reErr) {
+          req.dbUserId = raced.id;
+          (req as any).userPlan = raced.plan || 'free';
+          return next();
+        }
+      }
+      return dbUnavailable(res, error.message);
     }
 
     req.dbUserId = newUser?.id;
     (req as any).userPlan = 'free';
     next();
   } catch (err: any) {
-    log.error('attachUser error:', { err: err.message });
-    return res.status(500).json({ error: 'Auth error: ' + err.message });
+    log.error('attachUser error', { err: err.message });
+    return res.status(500).json({ error: 'Authentication error', code: 'auth_error' });
   }
 }

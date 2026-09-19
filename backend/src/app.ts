@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import './lib/asyncErrors';
+import * as Sentry from '@sentry/node';
 import publicReportRouter from './routes/publicReport';
 import express from 'express';
 import cors from 'cors';
@@ -158,6 +160,23 @@ app.use('/api/public', publicExtendedRouter);
 app.use('/api/teams', teamsRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+// Readiness: verifies the database answers. Details are logged, never returned.
+async function readiness(_req: express.Request, res: express.Response) {
+  let database: 'up' | 'down' = 'down';
+  try {
+    const { error } = await Promise.race([
+      supabase.from('users').select('id').limit(1),
+      new Promise<{ error: Error }>((resolve) => setTimeout(() => resolve({ error: new Error('timeout') }), 4000)),
+    ]);
+    if (!error) database = 'up';
+    else log.error('readiness: database check failed', { err: (error as any).message });
+  } catch (err: any) {
+    log.error('readiness: database check threw', { err: err?.message });
+  }
+  res.status(database === 'up' ? 200 : 503).json({ ok: database === 'up', checks: { database } });
+}
+app.get('/health/ready', readiness);
+app.get('/api/health/ready', readiness);
 
 // Dashboard activity feed — returns recent leads + emails as activity items
 app.get('/api/dashboard/activity', requireAuth, attachUser, async (req: any, res) => {
@@ -199,5 +218,18 @@ app.get('/api/dashboard/activity', requireAuth, attachUser, async (req: any, res
   }
 });
 
+
+// Final error handler: always JSON, never a stack trace or raw provider message.
+// Registered after every route so errors forwarded by lib/asyncErrors land here.
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) return next(err);
+  log.error('unhandled route error', { err, method: req.method, path: req.path });
+  const status = Number.isInteger(err?.status) && err.status >= 400 && err.status < 600 ? err.status : 500;
+  if (status >= 500) Sentry.captureException(err); // no-op when Sentry is not initialised
+  res.status(status).json({
+    error: status >= 500 ? 'Internal server error' : (err?.message || 'Request failed'),
+    code: status >= 500 ? 'internal_error' : 'request_error',
+  });
+});
 
 export default app;

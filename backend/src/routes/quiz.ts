@@ -153,7 +153,11 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
       .select()
       .single();
 
-    if (legacyError) return res.status(500).json({ error: legacyError.message });
+    if (legacyError) {
+      // PGRST116: no row matched id + owner -> not found (or not yours); never a 500.
+      if (legacyError.code === 'PGRST116') return res.status(404).json({ error: 'Quiz not found' });
+      return res.status(500).json({ error: legacyError.message });
+    }
     res.json(legacyData);
   } catch (err: any) {
     log.error('Quiz patch error:', { err: err });
@@ -216,8 +220,9 @@ router.post('/:id/publish', async (req: AuthenticatedRequest, res) => {
 });
 
 router.delete('/:id', async (req: AuthenticatedRequest, res) => {
-  const { error } = await supabase.from('quizzes').update({ status: 'archived' }).eq('id', req.params.id).eq('user_id', req.dbUserId);
+  const { data, error } = await supabase.from('quizzes').update({ status: 'archived' }).eq('id', req.params.id).eq('user_id', req.dbUserId).select('id');
   if (error) return res.status(500).json({ error: error.message });
+  if (!data || data.length === 0) return res.status(404).json({ error: 'Quiz not found' });
   res.json({ success: true });
 });
 
@@ -652,7 +657,7 @@ router.post('/:id/generate-email', async (req: AuthenticatedRequest, res) => {
       .from('quizzes')
       .select('title, outcomes, brand')
       .eq('id', quizId)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .single();
     if (qErr || !quiz) return res.status(404).json({ error: 'Quiz not found' });
 

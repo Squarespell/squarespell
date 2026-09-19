@@ -3,7 +3,7 @@
  * user B (a different paying customer) then attacks every authenticated route
  * with A's identifiers. No response may reveal A's data and no A row may change.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import { getApp, makeUser, makeQuiz, bearer, TestUser } from '../helpers/testkit';
 import { listRoutes } from '../helpers/routes';
@@ -17,20 +17,21 @@ const TABLES = [
   'quizzes', 'leads', 'integrations', 'email_campaigns', 'email_sequences', 'ab_tests', 'saved_templates', 'lead_tags',
   'lead_tag_assignments', 'lead_segments', 'auto_tag_rules', 'email_automation_rules', 'teams', 'team_members', 'team_quizzes',
   'notifications', 'result_page_blocks', 'quiz_translations', 'squarespace_connections', 'squarespace_products',
-  'product_outcome_mappings', 'api_keys', 'quiz_payments', 'users',
+  'product_outcome_mappings', 'api_keys', 'quiz_payments', 'users', 'partial_completions', 'consent_records', 'quiz_question_events',
 ];
 
 async function snapshot(): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
   for (const t of TABLES) {
-    const rows = await sql<any>(`select * from ${t} order by 1`);
+    const rows = await sql<any>(t === 'users' ? `select id, clerk_user_id, email, plan, quiz_count, brand_kit, lead_addon from users order by 1` : `select * from ${t} order by 1`);
     out[t] = JSON.stringify(rows);
   }
   return out;
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   await resetData();
+  ids = {};
   A = await makeUser({ plan: 'business', email: `a-${MARK}@victim.example` });
   B = await makeUser({ plan: 'business', email: 'attacker@other.example' });
   const quiz = await makeQuiz(A, { title: `Quiz ${MARK}`, status: 'live', slug: 'a-private-quiz' });
@@ -56,6 +57,10 @@ beforeAll(async () => {
   const conn = (await sql<any>(`insert into squarespace_connections (user_id, site_id, api_key_encrypted, site_title) values ($1,'site1','enc',$2) returning id`, [A.id, `Site ${MARK}`]))[0];
   ids.connection = conn.id;
   ids.product = (await sql<any>(`insert into squarespace_products (connection_id, user_id, squarespace_id, name) values ($1,$2,'p1',$3) returning id`, [conn.id, A.id, `Prod ${MARK}`]))[0].id;
+  await sql(`insert into product_outcome_mappings (quiz_id, outcome_id, product_id, custom_headline) values ($1,'low',$2,$3)`, [quiz.id, ids.product, `Headline ${MARK}`]);
+  await sql(`insert into partial_completions (quiz_id, session_id, answers, email, name) values ($1,'sess-a','{}'::jsonb,$2,$3)`, [quiz.id, `partial-${MARK}@victim.example`, `Partial ${MARK}`]);
+  await sql(`insert into consent_records (lead_id, email, quiz_id, consent_type, consent_given) values ($1,$2,$3,'marketing',true)`, [ids.lead, ids.leadEmail, quiz.id]);
+  await sql(`insert into quiz_question_events (quiz_id, session_id, question_index, event_type, answer_data) values ($1,'sess-a',0,'answer',$2::jsonb)`, [quiz.id, JSON.stringify({ v: MARK })]);
   await sql(`insert into api_keys (user_id, key_hash, key_prefix, name) values ($1,'hash','sq_live_x',$2)`, [A.id, `Key ${MARK}`]);
   await sql(`insert into quiz_payments (quiz_id, lead_id, amount_cents) values ($1,$2,4200)`, [quiz.id, ids.lead]);
   await sql(`update users set brand_kit = $2::jsonb where id=$1`, [A.id, JSON.stringify({ site_name: MARK })]).catch(() => {});
@@ -100,7 +105,7 @@ const SKIP = new Set([
 ]);
 
 describe('tenant isolation sweep: B calls every authenticated route with A\'s ids', () => {
-  it('no response discloses A\'s data', async () => {
+  it('no response discloses A\'s data (read routes)', async () => {
     const app = await getApp();
     const routes = listRoutes(app).filter((r) => r.handlers.includes('requireAuth') && r.path.includes(':') && !SKIP.has(`${r.method} ${r.path}`));
     expect(routes.length).toBeGreaterThan(80);
