@@ -1,6 +1,7 @@
 import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
+import { isUuid } from '../utils/ownership';
 
 const r = Router();
 
@@ -46,6 +47,7 @@ r.get('/unsubscribe', async (req, res) => {
     .from('email_unsubscribes')
     .select('id')
     .eq('email', email.toLowerCase())
+    .limit(1)
     .maybeSingle();
 
   if (existing) {
@@ -103,11 +105,20 @@ r.post('/unsubscribe', async (req, res) => {
   const normalized = email.trim().toLowerCase();
 
   // Upsert into unsubscribes table
+  // email_unsubscribes is (tenant_id, email, reason) with UNIQUE(tenant_id, email) - the previous upsert wrote
+  // columns that do not exist (quiz_id, source) and conflicted on a constraint that does not exist, so every
+  // unsubscribe (including RFC 8058 one-click) failed. The tenant is the quiz owner when known, else 'global';
+  // suppression checks match on email across tenants, so either way the address stops receiving mail.
+  let tenantId = 'global';
+  if (quizId && isUuid(quizId)) {
+    const { data: q } = await supabase.from('quizzes').select('user_id').eq('id', quizId).maybeSingle();
+    if (q?.user_id) tenantId = q.user_id;
+  }
   const { error } = await supabase
     .from('email_unsubscribes')
     .upsert(
-      { email: normalized, quiz_id: quizId || null, source: isOneClick ? 'one_click' : 'web' },
-      { onConflict: 'email' }
+      { tenant_id: tenantId, email: normalized, reason: isOneClick ? 'one_click' : 'web' },
+      { onConflict: 'tenant_id,email' }
     );
 
   if (error) {
@@ -141,6 +152,7 @@ r.get('/unsubscribe/status', async (req, res) => {
     .from('email_unsubscribes')
     .select('id, created_at')
     .eq('email', email)
+    .limit(1)
     .maybeSingle();
 
   res.json({ unsubscribed: !!data, since: data?.created_at || null });

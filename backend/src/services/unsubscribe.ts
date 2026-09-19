@@ -33,6 +33,7 @@ export async function isUnsubscribed(email: string): Promise<boolean> {
     .from('email_unsubscribes')
     .select('id')
     .eq('email', email.trim().toLowerCase())
+    .limit(1) // several tenants may hold a row for the same address; maybeSingle() alone errors (=> "not unsubscribed") on >1 row
     .maybeSingle();
   return !!data;
 }

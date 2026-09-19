@@ -170,7 +170,7 @@ async function executeSendEmail(
 
   var unsubUrl = buildUnsubscribeUrl(payload.lead_email);
 
-  await resend.emails.send({
+  const sendResult: any = await resend.emails.send({
     from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
     to: payload.lead_email,
     subject: subject,
@@ -179,6 +179,7 @@ async function executeSendEmail(
       '<p style="margin-top:32px;font-size:12px;color:#888"><a href="' + unsubUrl + '" style="color:#888">Unsubscribe</a></p></div>',
     headers: buildUnsubscribeHeaders(payload.lead_email),
   });
+  if (sendResult?.error) throw new Error(sendResult.error.message || 'automation email rejected by provider'); // Resend v3 does not throw
 }
 
 async function executeAddTag(rule: AutomationRule, payload: EventPayload): Promise<void> {

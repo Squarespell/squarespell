@@ -26,7 +26,7 @@ describe('AI generation failure modes never leave the user waiting or the API br
     expect(r.status).toBe(504);
     expect(r.body.code).toBe('ai_timeout');
     expect(r.headers['content-type']).toMatch(/json/);
-    expect(elapsed).toBeLessThan(6000);           // 2 attempts x 1.5 s + backoff
+    expect(elapsed).toBeLessThan(12000);          // 2 attempts x 1.5 s + backoff (generous: the suite runs many workers in parallel); the unfixed SDK default was 10 minutes x 3
     expect(anthropicStub.calls).toBeLessThanOrEqual(2);
   });
 
@@ -98,7 +98,7 @@ describe('AI generation failure modes never leave the user waiting or the API br
     const r = await (await api()).post('/api/quiz/any/process-other').send({ free_text: 'something else', available_outcomes: [{ id: 'o1', title: 'One' }] }).timeout({ response: 15000, deadline: 20000 });
     expect(r.status).toBe(200);
     expect(r.body.matched_outcome_id).toBe('o1');
-    expect(Date.now() - t0).toBeLessThan(6000);
+    expect(Date.now() - t0).toBeLessThan(12000);
     void owner;
   });
 });

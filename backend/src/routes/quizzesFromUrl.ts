@@ -23,10 +23,11 @@ import { log } from '../lib/logger';
 
 import { Router } from 'express';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
+import { checkQuizAllowance } from '../middleware/planGuard';
+import { respondIfAiError } from '../lib/aiErrors';
 import { supabase } from '../db/supabaseClient';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import {
-  generateOnboardingQuestions,
   analyzeBusinessProfile,
   generateTailoredQuiz,
 } from '../services/claudeService';
@@ -74,14 +75,18 @@ async function getDailyAllowance(dbUserId: string): Promise<number> {
       .eq('id', dbUserId)
       .single();
     const plan = (data?.plan ?? 'free').toLowerCase();
+    // Current plan names (core / pro / business) plus the legacy aliases still stored on old accounts.
     switch (plan) {
+      case 'business':
       case 'agency':
       case 'pro':
         return 50;
+      case 'core':
       case 'starter':
       case 'growth':
         return 25;
       case 'free':
+      case 'trial':
       default:
         return 10;
     }
@@ -111,7 +116,7 @@ async function checkAndIncrementRate(
 /* ------------------------------------------------------------------ */
 /* POST /from-url                                                      */
 /* ------------------------------------------------------------------ */
-router.post('/from-url', async (req: AuthenticatedRequest, res) => {
+router.post('/from-url', checkQuizAllowance, async (req: AuthenticatedRequest, res) => {
   const userId = req.dbUserId;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
@@ -165,11 +170,9 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
     log.info(`[FromUrl] user=${userId} scraping ${normalizedUrl}`);
     const brand = await scrapeBrand(normalizedUrl);
 
-    // Run AI analysis + onboarding questions in parallel (mirrors /preview-analyze)
-    const [_onboarding, businessProfile] = await Promise.all([
-      generateOnboardingQuestions(normalizedUrl, brand),
-      analyzeBusinessProfile(normalizedUrl, brand),
-    ]);
+    // The 5 onboarding questions are only shown in the public funnel; this flow never used them, so the
+    // extra paid model call was wasted spend. One profile call + one generation call per request.
+    const businessProfile = await analyzeBusinessProfile(normalizedUrl, brand);
 
     // Merge AI-analyzed profile into the brand object so the generator has context.
     // Then let the user's overrides from the Review step win (if they provided any).
@@ -231,6 +234,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
 
     log.info(`[FromUrl] building quiz for ${normalizedUrl}`);
     const quiz = await generateTailoredQuiz(normalizedUrl, brand, onboardingPairs);
+    const aiFallback = quiz?.generated_by === 'fallback';
 
     // Direct insert into quizzes table with user_id
     const { data: inserted, error: insertErr } = await supabase
@@ -247,6 +251,7 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
           ...(quiz.settings ?? {}),
           website_url: normalizedUrl,
           source: 'from-url-modal',
+          ...(aiFallback ? { generated_by: 'fallback' } : {}),
           user_topic: cleanTopic || null,
           template_id: cleanTemplateId,
         },
@@ -260,19 +265,15 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
       return res.status(500).json({ error: insertErr.message });
     }
 
-    // Increment plan counter (best-effort; don't fail the request)
-    // Skip if the atomic guard already incremented
-    if (!(req as any).quizCountIncrementedAtomically) {
-      supabase.rpc('increment_quiz_count', { uid: userId }).then(
-        () => {},
-        (e: any) => console.warn('[FromUrl] increment_quiz_count failed:', e),
-      );
-    }
+    // Increment the plan counter now that the quiz exists (checkQuizAllowance does not consume quota).
+    const { error: incErr } = await supabase.rpc('increment_quiz_count', { uid: userId });
+    if (incErr) log.warn('[FromUrl] increment_quiz_count failed', { err: incErr.message });
 
     log.info(`[FromUrl] SUCCESS quiz_id=${inserted.id} slug=${inserted.slug}`);
     return res.status(201).json({
       quiz: inserted,
       brand,
+      ...(aiFallback ? { ai_fallback: true, warning: 'The AI service was unavailable, so a generic starter quiz was created. Regenerate or edit it before publishing.' } : {}),
     });
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
@@ -286,9 +287,13 @@ router.post('/from-url', async (req: AuthenticatedRequest, res) => {
         hostname: err.hostname,
       });
     }
+    if (respondIfAiError(res, err, 'from-url')) return;
     log.error('[FromUrl] Failed:', { err: err });
-    return res.status(500).json({ error: err.message ?? 'Generation failed' });
+    return res.status(500).json({ error: 'Generation failed', code: 'generation_failed' });
   }
 });
+
+/** Exposed for tests: the daily AI-generation allowance for a database user id. */
+export const checkDailyAllowanceForTest = getDailyAllowance;
 
 export default router;

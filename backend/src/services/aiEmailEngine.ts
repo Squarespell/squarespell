@@ -17,11 +17,11 @@
  * Code-style: var, function(){}, string concatenation (project convention).
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { createAnthropic } from '../lib/anthropicClient';
 import { log } from '../lib/logger';
 
 var anthropic = process.env.ANTHROPIC_API_KEY
-  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  ? createAnthropic(process.env.ANTHROPIC_API_KEY)
   : null;
 
 // ---------------------------------------------------------------------------

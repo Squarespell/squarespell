@@ -140,6 +140,12 @@ describe('mode 5 - public funnel: analyze -> build -> claim (and save-preview)',
 });
 
 describe('duplicate', () => {
+  it('a duplicate on a limited plan consumes exactly one quiz slot (it was counted twice)', async () => {
+    const u = await makeUser({ plan: 'core', quizCount: 1 });
+    const q = await makeQuiz(u);
+    await (await api()).post(`/api/quizzes/${q.id}/duplicate`).set(bearer(u)).expect(201);
+    expect((await sql<any>(`select quiz_count from users where id=$1`, [u.id]))[0].quiz_count).toBe(2);
+  });
   it('duplicates only your own quiz as a new draft with a new slug', async () => {
     const u = await makeUser({ plan: 'pro' });
     const q = await makeQuiz(u, { title: 'Original' });

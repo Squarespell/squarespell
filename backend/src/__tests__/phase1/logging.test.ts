@@ -7,6 +7,7 @@ function capture(fn: () => void): string {
   const o = vi.spyOn(process.stdout, 'write').mockImplementation((s: any) => { lines.push(String(s)); return true; });
   const e = vi.spyOn(process.stderr, 'write').mockImplementation((s: any) => { lines.push(String(s)); return true; });
   const prev = process.env.LOG_LEVEL;
+  process.env.LOG_LEVEL = 'debug';
   try { fn(); } finally { o.mockRestore(); e.mockRestore(); process.env.LOG_LEVEL = prev; }
   return lines.join('');
 }

@@ -55,11 +55,12 @@ describe('lead submission', () => {
     const { quiz } = await liveQuiz();
     const app = await api();
     const url = `/api/quiz/${quiz.slug}/lead`;
-    expect((await app.post(url).send({ name: 'Ada' })).status).toBe(400);
-    expect((await app.post(url).send(lead({ email: 'not-an-email' }))).status).toBe(400);
-    expect((await app.post(url).send(lead({ email: 'x@mailinator.com' }))).status).toBe(400);
-    expect((await app.post(url).send(lead({ website: 'http://spam.example' }))).status).toBe(400);
-    expect((await app.post(url).send(lead({ name: 'asdf' }))).status).toBe(400);
+    const post = (body: any) => app.post(url).set('X-Forwarded-For', nextIp()).send(body);
+    expect((await post({ name: 'Ada' })).status).toBe(400);
+    expect((await post(lead({ email: 'not-an-email' }))).status).toBe(400);
+    expect((await post(lead({ email: 'x@mailinator.com' }))).status).toBe(400);
+    expect((await post(lead({ website: 'http://spam.example' }))).status).toBe(400);
+    expect((await post(lead({ name: 'asdf' }))).status).toBe(400);
     expect((await app.post('/api/quiz/nope/lead').set('X-Forwarded-For', nextIp()).send(lead())).status).toBe(404);
     expect(await sql(`select 1 from leads`)).toHaveLength(0);
   });

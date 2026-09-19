@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import { requireCronSecret } from '../middleware/cronAuth';
+import { respondIfAiError } from '../lib/aiErrors';
+import { resolvePlanPrice, priceIdToPlanName, isKnownPlan, PlanMappingError } from '../services/billingPlans';
 import { log } from '../lib/logger';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
-import { guardQuizCreation, getPlanLimits, isTrialActive } from '../middleware/planGuard';
+import { guardQuizCreation, checkQuizAllowance, requireFeature, effectivePlan, getPlanLimits, isTrialActive } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
@@ -166,10 +168,13 @@ function computeServerScoreAndOutcome(quiz: any, answers: Record<string, any>): 
 
   if (!Number.isFinite(score)) score = 0;
 
+  // Same rule as the browser (frontend/app/quiz/[slug]/page.tsx getOutcome): an outcome only matches when BOTH
+  // bounds are defined; otherwise fall through to the next outcome, and finally to outcomes[0]. The old
+  // "missing bound = infinity" rule let an unbounded outcome win here while the visitor saw a different result.
   const matched = outcomes.find((o: any) => {
-    const min = o?.minScore ?? o?.min_score ?? o?.score_range?.min ?? -Infinity;
-    const max = o?.maxScore ?? o?.max_score ?? o?.score_range?.max ?? Infinity;
-    return score >= min && score <= max;
+    const min = o?.minScore ?? o?.min_score ?? o?.score_range?.min;
+    const max = o?.maxScore ?? o?.max_score ?? o?.score_range?.max;
+    return min !== undefined && max !== undefined && score >= min && score <= max;
   });
 
   return {
@@ -204,17 +209,20 @@ function getScoreLabel(score: number | null, quiz: any): string {
 
 // ── Generate ──────────────────────────────────────────────────────────────────
 export const generateRouter = Router();
-generateRouter.post('/generate', requireAuth, attachUser, guardQuizCreation, async (req: AuthenticatedRequest, res) => {
+generateRouter.post('/generate', requireAuth, attachUser, checkQuizAllowance, async (req: AuthenticatedRequest, res) => {
   const { url, business_type, goal } = req.body;
   if (!url || !business_type || !goal) return res.status(400).json({ error: 'url, business_type, and goal required' });
   let normalizedUrl: string;
   try { normalizedUrl = normalizeUrl(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
   try { res.json(await generateQuiz(normalizedUrl, business_type, goal)); }
-  catch (err: any) { res.status(500).json({ error: err.message ?? 'Generation failed' }); }
+  catch (err: any) {
+    if (respondIfAiError(res, err, 'generate')) return;
+    res.status(500).json({ error: 'Generation failed', code: 'generation_failed' });
+  }
 });
 
 // ── Save Preview Quiz (for users coming from /try → sign-up) ─────────────────
-generateRouter.post('/save-preview', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+generateRouter.post('/save-preview', requireAuth, attachUser, checkQuizAllowance, async (req: AuthenticatedRequest, res) => {
   try {
     const { quiz, brand, url } = req.body;
     if (!quiz || !url) return res.status(400).json({ error: 'quiz and url required' });
@@ -248,6 +256,7 @@ generateRouter.post('/save-preview', requireAuth, attachUser, async (req: Authen
     }).select('id, slug').single();
 
     if (error) throw error;
+    await supabase.rpc('increment_quiz_count', { uid: userId });
     res.json({ saved: true, quiz_id: data.id, slug: data.slug });
   } catch (err: any) {
     log.error('save-preview error:', { err: err });
@@ -366,8 +375,9 @@ previewRouter.post('/preview-generate', async (req, res) => {
         hostname: err.hostname,
       });
     }
+    if (respondIfAiError(res, err, 'preview-generate')) return;
     log.error('[Preview] Generation failed:', { err: err });
-    res.status(500).json({ error: err.message ?? 'Preview generation failed' });
+    res.status(500).json({ error: 'Preview generation failed', code: 'generation_failed' });
   }
 });
 
@@ -426,8 +436,9 @@ previewRouter.post('/preview-analyze', async (req, res) => {
         hostname: err.hostname,
       });
     }
+    if (respondIfAiError(res, err, 'preview-analyze')) return;
     log.error('[PreviewAnalyze] Failed:', { err: err });
-    res.status(500).json({ error: err.message ?? 'Analyze failed' });
+    res.status(500).json({ error: 'Analyze failed', code: 'analyze_failed' });
   }
 });
 
@@ -468,8 +479,9 @@ previewRouter.post('/preview-build-quiz', async (req, res) => {
 
     res.json({ quiz, brand: session.brand, claim_token: claimToken, url: session.url });
   } catch (err: any) {
+    if (respondIfAiError(res, err, 'preview-build-quiz')) return;
     log.error('[PreviewBuildQuiz] Failed:', { err: err });
-    res.status(500).json({ error: err.message ?? 'Quiz build failed' });
+    res.status(500).json({ error: 'Quiz build failed', code: 'build_failed' });
   }
 });
 
@@ -490,7 +502,7 @@ previewRouter.get('/preview-quiz/:token', async (req, res) => {
 });
 
 // ── Claim a preview quiz (save from Supabase draft to quizzes for authenticated user) ──
-previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+previewRouter.post('/claim-quiz', requireAuth, attachUser, checkQuizAllowance, async (req: AuthenticatedRequest, res) => {
   try {
     const { claim_token, quiz: bodyQuiz, brand: bodyBrand, url: bodyUrl } = req.body;
     const userId = req.dbUserId;
@@ -536,6 +548,8 @@ previewRouter.post('/claim-quiz', requireAuth, attachUser, async (req: Authentic
       log.error('[Claim] Supabase insert error:', { err: saveErr });
       throw saveErr;
     }
+
+    await supabase.rpc('increment_quiz_count', { uid: userId });
 
     // Mark draft as claimed
     if (claim_token) await markDraftClaimed(claim_token, userId);
@@ -601,13 +615,30 @@ publicQuizRouter.post('/:slug/event', async (req, res) => {
   if (!eventRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
 
   const { event_type, session_id, metadata } = req.body;
-  const { data: quiz } = await supabase.from('quizzes').select('id').eq('slug', req.params.slug).single();
+  // Only the event names the quiz runtime actually emits; anything else is rejected instead of stored.
+  if (typeof event_type !== 'string' || !/^(view|start|complete|cta_click|share|question_\d{1,3}_(view|answer|skip|back))$/.test(event_type)) {
+    return res.status(400).json({ error: 'Unknown event_type', code: 'invalid_event_type' });
+  }
+  if (session_id !== undefined && (typeof session_id !== 'string' || session_id.length > 100)) {
+    return res.status(400).json({ error: 'Invalid session_id', code: 'invalid_session_id' });
+  }
+  const { data: quiz } = await supabase.from('quizzes').select('id').eq('slug', req.params.slug).eq('status', 'live').maybeSingle();
   if (!quiz) return res.status(404).json({ error: 'Not found' });
   const userAgent = req.headers['user-agent'] || '';
   const isBot = /bot|crawl|spider|slurp|facebookexternalhit|bingpreview|googlebot|yandex|baiduspider|duckduckbot|semrush|ahrefs|mj12bot|petalbot|bytespider|gptbot|claudebot|applebot|twitterbot|linkedinbot|whatsapp|telegrambot|headless|phantom|puppeteer|playwright|selenium/i.test(userAgent);
-  const eventMeta = { ...(metadata ?? {}), ...(isBot ? { is_bot: true } : {}) };
-  await supabase.from('analytics_events').insert({ quiz_id: quiz.id, event_type, session_id, metadata: eventMeta });
-  if (event_type === 'view') await supabase.rpc('increment_view_count', { qid: quiz.id });
+  // view / start / complete are once-per-session milestones: a reload, React double-effect or client retry must not double-count.
+  if (session_id && (event_type === 'view' || event_type === 'start' || event_type === 'complete')) {
+    const { data: already } = await supabase.from('analytics_events').select('id').eq('quiz_id', quiz.id).eq('session_id', session_id).eq('event_type', event_type).limit(1).maybeSingle();
+    if (already) return res.json({ tracked: true, duplicate: true });
+  }
+  const eventMeta = { ...(metadata && typeof metadata === 'object' ? metadata : {}), ...(isBot ? { is_bot: true } : {}) };
+  const { error: eventErr } = await supabase.from('analytics_events').insert({ quiz_id: quiz.id, event_type, session_id, metadata: eventMeta });
+  if (eventErr) {
+    log.error('[Events] insert failed', { err: eventErr.message });
+    return res.status(503).json({ error: 'Event not recorded', code: 'db_unavailable' });
+  }
+  // Bots are stored (flagged) for the dashboard's exclude_bots filter but must not inflate the public view counter.
+  if (event_type === 'view' && !isBot) await supabase.rpc('increment_view_count', { qid: quiz.id });
   res.json({ tracked: true });
 });
 publicQuizRouter.post('/:slug/process-other', async (req, res) => {
@@ -668,7 +699,13 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
 
   const { data: quiz } = await supabase.from('quizzes').select('id,user_id,title,questions,outcomes,branding,settings,mode').eq('slug', req.params.slug).eq('status', 'live').single();
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-  const { data: owner } = await supabase.from('users').select('plan,brand_kit,lead_addon,created_at').eq('id', quiz.user_id).single();
+  const { data: owner, error: ownerErr } = await supabase.from('users').select('plan,brand_kit,lead_addon,created_at').eq('id', quiz.user_id).single();
+  // A failed owner lookup used to be treated as "free plan, 0 leads allowed" and answered 403 "Lead limit reached",
+  // silently rejecting real customers' leads. Say what happened instead.
+  if (ownerErr) {
+    log.error('[Leads] owner lookup failed', { err: ownerErr.message, code: ownerErr.code });
+    return res.status(503).json({ error: 'Service temporarily unavailable. Please try again.', code: 'db_unavailable' });
+  }
 
   // Block lead collection when the quiz owner's trial has expired
   const ownerPlan = owner?.plan ?? 'free';
@@ -679,7 +716,9 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     });
   }
 
-  const baseLimits = getPlanLimits(ownerPlan);
+  // New sign-ups are stored as plan 'free' and are on the 14-day trial: they get the trial allowance, not the 0-lead
+  // free limit. Every lead of every in-trial account was being refused with "Lead limit reached".
+  const baseLimits = getPlanLimits(effectivePlan(ownerPlan, owner?.created_at).plan);
   const leadLimit = getEffectiveLeadLimit(baseLimits, owner?.lead_addon);
 
   const metadata: Record<string, any> = {};
@@ -708,9 +747,8 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   // regardless of their actual answers.
   const submittedAnswers = (answers && typeof answers === 'object') ? answers : {};
   const outcomesConfigured = Array.isArray(quiz.outcomes) && quiz.outcomes.length > 0;
-  const serverScoring = outcomesConfigured
-    ? computeServerScoreAndOutcome(quiz, submittedAnswers)
-    : { score: 0, outcomeId: null as string | null, outcomeRangeMatched: false };
+  const serverScoring = computeServerScoreAndOutcome(quiz, submittedAnswers);
+  const isScoredQuiz = ((quiz.questions as any[]) || []).some((q: any) => (q?.options || []).some((o: any) => Number.isFinite(o?.score ?? o?.score_value)));
 
   const resolvedOutcomeId = outcomesConfigured ? serverScoring.outcomeId : (outcome_id ?? null);
 
@@ -773,7 +811,8 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     p_metadata: metadata,
     p_consent: consent === true,
     p_consent_text: consent ? (consent_text || null) : null,
-    p_lead_limit: leadLimit,
+    p_lead_limit: Number.isFinite(leadLimit) ? leadLimit : null,
+    p_score: isScoredQuiz ? serverScoring.score : null,
   });
 
   if (error) {
@@ -785,6 +824,11 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
 
   var leadData = Array.isArray(leadResult) ? leadResult[0] : leadResult;
   const leadId = leadData?.lead_id;
+  // Repeated submission (client retry after a timeout, double click, same visitor retaking the quiz): the lead already
+  // exists. Answer success with the same id and do NOT count it, notify the owner or email the visitor again.
+  if (leadData?.is_duplicate) {
+    return res.status(200).json({ success: true, lead_id: leadId, duplicate: true });
+  }
   await supabase.rpc('increment_lead_count', { qid: quiz.id });
 
   const { data: ownerUser } = await supabase.from('users').select('email,brand_kit').eq('id', quiz.user_id).single();
@@ -795,14 +839,16 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       const notifyEmail = ownerUser?.email;
       if (notifyEmail) {
         const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
-        await resend.emails.send({
+        const ownerMail = await resend.emails.send({
           from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
           to: notifyEmail,
           subject: `New lead captured: ${name || email}`,
           html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(name) || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(email)}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(quizInfo?.title) || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
         });
+        // Resend v3 reports API failures in the result ({ error }) instead of throwing.
+        if ((ownerMail as any)?.error) throw new Error((ownerMail as any).error.message || 'owner notification rejected');
       }
-    } catch (e) { log.info('Email notification failed:', { detail: e }); }
+    } catch (e: any) { log.warn('Owner lead notification failed', { err: e?.message }); }
   }
 
   // In-app notification (non-blocking)
@@ -1212,7 +1258,7 @@ integrationsRouter.get('/', async (req: AuthenticatedRequest, res) => {
   res.json(decryptedData);
 });
 
-integrationsRouter.post('/', async (req: AuthenticatedRequest, res) => {
+integrationsRouter.post('/', requireFeature('integrations'), async (req: AuthenticatedRequest, res) => {
   const { type, config } = req.body;
   if (!type || !config) return res.status(400).json({ error: 'type and config required' });
   if (type === 'webhook') {
@@ -1912,7 +1958,7 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   var trialEndsAt = (plan === 'free' || plan === 'trial') && user.created_at
     ? new Date(new Date(user.created_at).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString()
     : null;
-  var limits = getPlanLimits(plan);
+  var limits = getPlanLimits(effectivePlan(plan, user.created_at).plan); // in-trial 'free' accounts get trial limits
   // Count leads and emails for the current month
   var monthStart = new Date();
   monthStart.setDate(1);
@@ -2081,15 +2127,7 @@ userRouter.put('/brand-kit', async (req: AuthenticatedRequest, res) => {
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const PRICE_IDS: Record<string,Record<string,string>> = {
-  core: { monthly: process.env.STRIPE_CORE_PRICE_ID!, yearly: process.env.STRIPE_CORE_YEARLY_PRICE_ID! },
-  pro: { monthly: process.env.STRIPE_PRO_PRICE_ID!, yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID! },
-  business: { monthly: process.env.STRIPE_BUSINESS_PRICE_ID!, yearly: process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID! },
-  // Legacy aliases for existing subscribers
-  starter: { monthly: process.env.STRIPE_CORE_PRICE_ID!, yearly: process.env.STRIPE_CORE_YEARLY_PRICE_ID! },
-  growth: { monthly: process.env.STRIPE_CORE_PRICE_ID!, yearly: process.env.STRIPE_CORE_YEARLY_PRICE_ID! },
-  agency: { monthly: process.env.STRIPE_BUSINESS_PRICE_ID!, yearly: process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID! },
-};
+// Plan price ids live in services/billingPlans.ts (read at request time, never defaulted).
 
 // ── Add-on pack price IDs ────────────────────────────────────────────────────
 const LEAD_ADDON_PRICES: Record<string, { priceId: string; leads: number; price: number }> = {
@@ -2105,6 +2143,7 @@ const EMAIL_ADDON_PRICES: Record<string, { priceId: string; emails: number; pric
 
 // Reverse lookup: add-on Stripe price ID → addon key
 function priceIdToAddon(priceId: string): { type: 'lead' | 'email'; key: string } | null {
+  if (!priceId) return null; // an unset add-on env var is '' and must never match "no price"
   for (var k in LEAD_ADDON_PRICES) {
     if (LEAD_ADDON_PRICES[k].priceId === priceId) return { type: 'lead', key: k };
   }
@@ -2134,34 +2173,38 @@ function getEffectiveEmailLimit(planLimits: { emails: number }, emailAddon: any)
   return base;
 }
 
-// Reverse lookup: Stripe price ID → our plan name
+// Reverse lookup: Stripe price ID → our plan name (null when unmapped: callers must treat that as an error, not guess)
 function priceIdToPlan(priceId: string): string | null {
-  for (var plan in PRICE_IDS) {
-    for (var billing in PRICE_IDS[plan]) {
-      if (PRICE_IDS[plan][billing] === priceId) return plan;
-    }
-  }
-  return null;
+  return priceIdToPlanName(priceId);
 }
 
-// Reverse lookup: Stripe price ID → billing interval
-function priceIdToBilling(priceId: string): string | null {
-  for (var plan in PRICE_IDS) {
-    for (var billing in PRICE_IDS[plan]) {
-      if (PRICE_IDS[plan][billing] === priceId) return billing;
-    }
+/** Resolve the price for a plan/billing pair or answer with an explicit error. Returns the price id, or null after responding. */
+function priceOr4xx(res: any, plan: unknown, billing: 'monthly' | 'yearly'): string | null {
+  const r = resolvePlanPrice(plan, billing);
+  if (r.status === 'ok') return r.priceId;
+  if (r.status === 'unknown_plan') {
+    res.status(400).json({ error: 'Invalid plan', code: 'invalid_plan' });
+    return null;
   }
+  // Configuration problem, not a client problem: never fall back to another price.
+  log.error('[Billing] plan price is not configured', { plan: String(plan), billing, envVar: r.envVar });
+  res.status(503).json({ error: 'This plan is not available for purchase right now. Please contact support.', code: 'plan_not_configured' });
   return null;
 }
 
 export const stripeRouter = Router();
 stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   const billing = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
-  const priceId = (PRICE_IDS[req.body.plan] as any)?.[billing];
-  if (!priceId) return res.status(400).json({ error: 'Invalid plan' });
+  const priceId = priceOr4xx(res, req.body.plan, billing);
+  if (!priceId) return;
   const { data: user } = await supabase.from('users').select('email,stripe_customer_id').eq('id', req.dbUserId).single();
-  const session = await stripe.checkout.sessions.create({ mode: 'subscription', payment_method_types: ['card'], customer_email: user?.stripe_customer_id ? undefined : user?.email, customer: user?.stripe_customer_id ?? undefined, line_items: [{ price: priceId, quantity: 1 }], success_url: `${process.env.FRONTEND_URL}/dashboard?upgraded=true`, cancel_url: `${process.env.FRONTEND_URL}/pricing`, metadata: { db_user_id: req.dbUserId!, plan: req.body.plan } });
-  res.json({ url: session.url });
+  try {
+    const session = await stripe.checkout.sessions.create({ mode: 'subscription', payment_method_types: ['card'], customer_email: user?.stripe_customer_id ? undefined : user?.email, customer: user?.stripe_customer_id ?? undefined, line_items: [{ price: priceId, quantity: 1 }], success_url: `${process.env.FRONTEND_URL}/dashboard?upgraded=true`, cancel_url: `${process.env.FRONTEND_URL}/pricing`, metadata: { db_user_id: req.dbUserId!, plan: req.body.plan } });
+    res.json({ url: session.url });
+  } catch (err: any) {
+    log.error('[Billing] create-checkout failed', { err: err?.message });
+    res.status(502).json({ error: 'The payment provider is unavailable. Please try again shortly.', code: 'billing_provider_unavailable' });
+  }
 });
 
 // ── Add-on checkout ──────────────────────────────────────────────────────────
@@ -2241,93 +2284,79 @@ stripeRouter.get('/addons', requireAuth, attachUser, async (req: AuthenticatedRe
   }
 });
 
-stripeRouter.post('/webhook', async (req, res) => {
-  var event: Stripe.Event;
-  try { event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'] as string, process.env.STRIPE_WEBHOOK_SECRET!); }
-  catch { return res.status(400).json({ error: 'Invalid signature' }); }
+/** Throw when a Supabase write failed, so the webhook answers 5xx and Stripe retries instead of losing the change. */
+function must(result: { error: any } | null | undefined, what: string) {
+  if (result && result.error) throw new Error(`${what}: ${result.error.message || result.error.code}`);
+}
 
+// Stripe event handling. Kept separate from the HTTP handler so signature checks, idempotency and error mapping stay obvious.
+async function applyStripeEvent(event: Stripe.Event): Promise<Record<string, unknown>> {
   if (event.type === 'checkout.session.completed') {
-    var s = event.data.object as Stripe.Checkout.Session;
+    const s = event.data.object as Stripe.Checkout.Session;
+    // Shared Stripe account: WooCommerce and other non-Quiz checkouts also emit this event. Only sessions created by
+    // /create-checkout or /create-addon-checkout carry our db_user_id metadata; everything else is not ours.
+    if (!s.metadata?.db_user_id) return { ignored: 'not_a_quiz_checkout' };
 
-    // Handle add-on checkout
-    if (s.metadata?.db_user_id && s.metadata?.addon_type && s.metadata?.addon_key) {
-      var addonField = s.metadata.addon_type === 'lead' ? 'lead_addon' : 'email_addon';
-      var addonValue = {
-        key: s.metadata.addon_key,
-        stripe_sub_id: s.subscription as string,
-        created_at: new Date().toISOString(),
-      };
-      await supabase.from('users').update({
-        [addonField]: addonValue,
-        stripe_customer_id: s.customer as string,
-      }).eq('id', s.metadata.db_user_id);
-      log.info('[StripeWebhook] Add-on activated: ' + s.metadata.addon_key + ' for user ' + s.metadata.db_user_id);
+    if (s.metadata.addon_type && s.metadata.addon_key) {
+      const addonField = s.metadata.addon_type === 'lead' ? 'lead_addon' : 'email_addon';
+      const addonValue = { key: s.metadata.addon_key, stripe_sub_id: s.subscription as string, created_at: new Date().toISOString() };
+      must(await supabase.from('users').update({ [addonField]: addonValue, stripe_customer_id: s.customer as string }).eq('id', s.metadata.db_user_id), 'activate add-on');
+      log.info('[StripeWebhook] Add-on activated', { addon: s.metadata.addon_key });
     }
 
-    // Handle plan checkout
-    if (s.metadata?.db_user_id && s.metadata?.plan) {
-      await supabase.from('users').update({ plan: s.metadata.plan, stripe_customer_id: s.customer as string, stripe_subscription_id: s.subscription as string }).eq('id', s.metadata.db_user_id);
-      // Send payment confirmed / plan upgraded email
-      var { data: paidUser } = await supabase.from('users').select('id,email,first_name').eq('id', s.metadata.db_user_id).single();
+    if (s.metadata.plan) {
+      if (!isKnownPlan(s.metadata.plan)) throw new PlanMappingError('checkout session carries an unknown plan name');
+      must(await supabase.from('users').update({ plan: s.metadata.plan, stripe_customer_id: s.customer as string, stripe_subscription_id: s.subscription as string }).eq('id', s.metadata.db_user_id), 'activate plan');
+      const { data: paidUser } = await supabase.from('users').select('id,email,first_name').eq('id', s.metadata.db_user_id).single();
       if (paidUser) {
         sendPlatformEmail({
           userId: paidUser.id,
           email: paidUser.email,
           emailType: 'payment_confirmed',
           firstName: paidUser.first_name || '',
-          data: { planName: (s.metadata.plan || 'Pro').charAt(0).toUpperCase() + (s.metadata.plan || 'pro').slice(1) },
+          data: { planName: s.metadata.plan.charAt(0).toUpperCase() + s.metadata.plan.slice(1) },
         }).catch(function(err) { log.error('[StripeWebhook] payment_confirmed email failed:', { err: err?.message }); });
       }
     }
+    return {};
   }
 
   if (event.type === 'customer.subscription.updated') {
-    var subUpd = event.data.object as Stripe.Subscription;
-    var prevAttrs = (event.data as any).previous_attributes || {};
-    // Read the current price from the subscription to determine the new plan
-    var currentPriceId = subUpd.items?.data?.[0]?.price?.id || '';
-    var newPlan = priceIdToPlan(currentPriceId);
-
-    // Always sync the plan in our database when the subscription changes
-    if (newPlan) {
-      var { data: upgUser } = await supabase.from('users').select('id,email,first_name,plan').eq('stripe_subscription_id', subUpd.id).single();
-      if (upgUser && upgUser.plan !== newPlan) {
-        var oldPlan = upgUser.plan;
-        await supabase.from('users').update({ plan: newPlan }).eq('id', upgUser.id);
-        log.info('[StripeWebhook] Plan synced: ' + oldPlan + ' → ' + newPlan + ' for user ' + upgUser.id);
-
-        // Send upgrade/change email
-        sendPlatformEmail({
-          userId: upgUser.id,
-          email: upgUser.email,
-          emailType: 'plan_upgraded',
-          firstName: upgUser.first_name || '',
-          data: { planName: newPlan.charAt(0).toUpperCase() + newPlan.slice(1) },
-        }).catch(function(err) { log.error('[StripeWebhook] plan_upgraded email failed:', { err: err?.message }); });
-      }
+    const subUpd = event.data.object as Stripe.Subscription;
+    const { data: upgUser, error: upgErr } = await supabase.from('users').select('id,email,first_name,plan').eq('stripe_subscription_id', subUpd.id).maybeSingle();
+    if (upgErr) throw new Error('lookup subscription owner: ' + upgErr.message);
+    if (!upgUser) return { ignored: 'not_a_quiz_subscription' }; // add-on subscriptions and other products in the shared account
+    const currentPriceId = subUpd.items?.data?.[0]?.price?.id || '';
+    const newPlan = priceIdToPlan(currentPriceId);
+    // A Quiz customer's subscription moved to a price we cannot map: do NOT guess a plan, fail loudly so it is fixed.
+    if (!newPlan) throw new PlanMappingError('subscription price is not mapped to an app plan');
+    if (upgUser.plan !== newPlan) {
+      must(await supabase.from('users').update({ plan: newPlan }).eq('id', upgUser.id), 'sync plan');
+      log.info('[StripeWebhook] Plan synced', { from: upgUser.plan, to: newPlan });
+      sendPlatformEmail({
+        userId: upgUser.id,
+        email: upgUser.email,
+        emailType: 'plan_upgraded',
+        firstName: upgUser.first_name || '',
+        data: { planName: newPlan.charAt(0).toUpperCase() + newPlan.slice(1) },
+      }).catch(function(err) { log.error('[StripeWebhook] plan_upgraded email failed:', { err: err?.message }); });
     }
+    return {};
   }
 
   if (event.type === 'customer.subscription.deleted') {
-    var sub = event.data.object as Stripe.Subscription;
-
-    // Check if this is an add-on subscription being cancelled
-    var subPriceId = sub.items?.data?.[0]?.price?.id || '';
-    var cancelledAddon = priceIdToAddon(subPriceId);
+    const sub = event.data.object as Stripe.Subscription;
+    const cancelledAddon = priceIdToAddon(sub.items?.data?.[0]?.price?.id || '');
     if (cancelledAddon) {
-      // Clear the add-on from the user record
-      var addonCancelField = cancelledAddon.type === 'lead' ? 'lead_addon' : 'email_addon';
-      await supabase.from('users').update({ [addonCancelField]: null }).filter(addonCancelField + '->>stripe_sub_id', 'eq', sub.id);
-      log.info('[StripeWebhook] Add-on cancelled: ' + cancelledAddon.key + ' (sub ' + sub.id + ')');
+      const addonCancelField = cancelledAddon.type === 'lead' ? 'lead_addon' : 'email_addon';
+      must(await supabase.from('users').update({ [addonCancelField]: null }).filter(addonCancelField + '->>stripe_sub_id', 'eq', sub.id), 'clear add-on');
+      log.info('[StripeWebhook] Add-on cancelled', { addon: cancelledAddon.key });
     }
-
-    // Handle main plan subscription cancellation
-    var { data: cancelUser } = await supabase.from('users').select('id,email,first_name').eq('stripe_subscription_id', sub.id).single();
+    const { data: cancelUser, error: cancelErr } = await supabase.from('users').select('id,email,first_name').eq('stripe_subscription_id', sub.id).maybeSingle();
+    if (cancelErr) throw new Error('lookup subscription owner: ' + cancelErr.message);
     if (cancelUser) {
-      await supabase.from('users').update({ plan: 'free', stripe_subscription_id: null }).eq('stripe_subscription_id', sub.id);
-    }
-    if (cancelUser) {
-      var endsAt = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+      must(await supabase.from('users').update({ plan: 'free', stripe_subscription_id: null }).eq('stripe_subscription_id', sub.id), 'downgrade plan');
+      const endsAt = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
       sendPlatformEmail({
         userId: cancelUser.id,
         email: cancelUser.email,
@@ -2336,13 +2365,14 @@ stripeRouter.post('/webhook', async (req, res) => {
         data: { endsAt: endsAt },
       }).catch(function(err) { log.error('[StripeWebhook] subscription_cancelled email failed:', { err: err?.message }); });
     }
+    return {};
   }
 
   if (event.type === 'invoice.payment_failed') {
-    var failedInvoice = event.data.object as Stripe.Invoice;
-    var custId = typeof failedInvoice.customer === 'string' ? failedInvoice.customer : (failedInvoice.customer as any)?.id;
+    const failedInvoice = event.data.object as Stripe.Invoice;
+    const custId = typeof failedInvoice.customer === 'string' ? failedInvoice.customer : (failedInvoice.customer as any)?.id;
     if (custId) {
-      var { data: failUser } = await supabase.from('users').select('id,email,first_name').eq('stripe_customer_id', custId).single();
+      const { data: failUser } = await supabase.from('users').select('id,email,first_name').eq('stripe_customer_id', custId).maybeSingle();
       if (failUser) {
         sendPlatformEmail({
           userId: failUser.id,
@@ -2352,9 +2382,53 @@ stripeRouter.post('/webhook', async (req, res) => {
         }).catch(function(err) { log.error('[StripeWebhook] payment_failed email failed:', { err: err?.message }); });
       }
     }
+    return {};
   }
 
-  res.json({ received: true });
+  return { ignored: 'unhandled_event_type' }; // e.g. events for the marketplace or future features: acknowledge, do nothing
+}
+
+stripeRouter.post('/webhook', async (req, res) => {
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) {
+    log.error('[StripeWebhook] STRIPE_WEBHOOK_SECRET is not configured; refusing events');
+    return res.status(503).json({ error: 'Webhook not configured', code: 'webhook_not_configured' });
+  }
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'] as string, secret);
+  } catch {
+    return res.status(400).json({ error: 'Invalid signature', code: 'invalid_signature' });
+  }
+
+  // Idempotency: claim the event id first (PRIMARY KEY). A second delivery of the same event is acknowledged and skipped.
+  const claim = await supabase.from('stripe_webhook_events').insert({ event_id: event.id, event_type: event.type });
+  if (claim.error) {
+    if (claim.error.code !== '23505') {
+      log.error('[StripeWebhook] idempotency store unavailable', { err: claim.error.message });
+      return res.status(500).json({ error: 'Temporarily unable to process event', code: 'idempotency_store_unavailable' });
+    }
+    const { data: prior } = await supabase.from('stripe_webhook_events').select('processed_at, received_at').eq('event_id', event.id).maybeSingle();
+    const stale = prior && !prior.processed_at && Date.now() - new Date(prior.received_at).getTime() > 2 * 60 * 1000;
+    if (prior && (prior.processed_at || !stale)) return res.json({ received: true, duplicate: true });
+    // A previous attempt died mid-flight (no processed_at, older than 2 minutes): take it over.
+    await supabase.from('stripe_webhook_events').update({ received_at: new Date().toISOString() }).eq('event_id', event.id);
+  }
+
+  try {
+    const outcome = await applyStripeEvent(event);
+    must(await supabase.from('stripe_webhook_events').update({ processed_at: new Date().toISOString() }).eq('event_id', event.id), 'mark event processed');
+    return res.json({ received: true, ...outcome });
+  } catch (err: any) {
+    // Release the claim so Stripe's retry can apply the event.
+    await supabase.from('stripe_webhook_events').delete().eq('event_id', event.id);
+    if (err instanceof PlanMappingError) {
+      log.error('[StripeWebhook] plan mapping missing', { eventType: event.type });
+      return res.status(500).json({ error: 'Plan mapping missing', code: 'plan_mapping_missing' });
+    }
+    log.error('[StripeWebhook] processing failed', { eventType: event.type, err: err?.message });
+    return res.status(500).json({ error: 'Webhook processing failed', code: 'webhook_processing_failed' });
+  }
 });
 stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   const { data: user } = await supabase.from('users').select('stripe_customer_id').eq('id', req.dbUserId).single();
@@ -2367,9 +2441,9 @@ stripeRouter.get('/portal', requireAuth, attachUser, async (req: AuthenticatedRe
 stripeRouter.post('/switch-plan', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
     var targetPlan = req.body.plan;
-    var targetBilling = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
-    var newPriceId = (PRICE_IDS[targetPlan] as any)?.[targetBilling];
-    if (!newPriceId) return res.status(400).json({ error: 'Invalid plan' });
+    var targetBilling: 'monthly' | 'yearly' = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
+    var newPriceId = priceOr4xx(res, targetPlan, targetBilling);
+    if (!newPriceId) return;
 
     var { data: user } = await supabase.from('users').select('stripe_subscription_id,stripe_customer_id,plan').eq('id', req.dbUserId).single();
     if (!user?.stripe_subscription_id) {
@@ -2415,9 +2489,9 @@ stripeRouter.post('/switch-plan', requireAuth, attachUser, async (req: Authentic
 stripeRouter.post('/preview-proration', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
     var targetPlan = req.body.plan;
-    var targetBilling = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
-    var newPriceId = (PRICE_IDS[targetPlan] as any)?.[targetBilling];
-    if (!newPriceId) return res.status(400).json({ error: 'Invalid plan' });
+    var targetBilling: 'monthly' | 'yearly' = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
+    var newPriceId = priceOr4xx(res, targetPlan, targetBilling);
+    if (!newPriceId) return;
 
     var { data: user } = await supabase.from('users').select('stripe_subscription_id,stripe_customer_id,plan').eq('id', req.dbUserId).single();
     if (!user?.stripe_subscription_id) {
@@ -3095,15 +3169,14 @@ quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
 quizPaymentsRouter.post('/webhooks/stripe-quiz-payment', async (req, res) => {
   let event: Stripe.Event;
 
+  // Each Stripe endpoint has its own signing secret; this endpoint may use a dedicated one and falls back to the shared name.
+  const paymentSecret = process.env.STRIPE_QUIZ_PAYMENT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
+  if (!paymentSecret) return res.status(503).json({ error: 'Webhook not configured', code: 'webhook_not_configured' });
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      req.headers['stripe-signature'] as string,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'] as string, paymentSecret);
   } catch (err) {
-    log.error('Webhook signature verification failed:', { err: err });
-    return res.status(400).json({ error: 'Invalid signature' });
+    log.error('Webhook signature verification failed');
+    return res.status(400).json({ error: 'Invalid signature', code: 'invalid_signature' });
   }
 
   try {

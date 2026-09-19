@@ -1,7 +1,7 @@
 import { log } from '../lib/logger';
 import { Router } from 'express';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
-import { guardQuizCreation } from '../middleware/planGuard';
+import { guardQuizCreation, requireFeature, effectivePlan } from '../middleware/planGuard';
 import { supabase } from '../db/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import * as abTesting from '../services/abTesting';
@@ -166,6 +166,15 @@ router.patch('/:id', async (req: AuthenticatedRequest, res) => {
 });
 
 router.post('/:id/publish', async (req: AuthenticatedRequest, res) => {
+  // An expired-trial account cannot collect leads (see /lead), so publishing would put a dead form in front of visitors.
+  const { data: publisher } = await supabase.from('users').select('plan, created_at').eq('id', req.dbUserId).single();
+  if (publisher && effectivePlan(publisher.plan, publisher.created_at).trialExpired && (publisher.plan === 'free' || publisher.plan === 'trial' || !publisher.plan)) {
+    return res.status(403).json({
+      error: 'trial_expired',
+      message: 'Your 14-day trial has ended. Pick a plan to publish quizzes and capture leads.',
+      upgrade_url: `${process.env.FRONTEND_URL}/pricing`,
+    });
+  }
   // M3: Validate quiz has at least 1 question and 1 outcome before publishing
   const { data: quizForValidation } = await supabase
     .from('quizzes').select('questions,outcomes')
@@ -286,7 +295,10 @@ router.post('/:id/duplicate', guardQuizCreation, async (req: AuthenticatedReques
       .single();
     if (error) return res.status(500).json({ error: error.message });
 
-    await supabase.rpc('increment_quiz_count', { uid: req.dbUserId });
+    // The atomic guard already incremented for limited plans; incrementing again double-counted every duplicate.
+    if (!(req as any).quizCountIncrementedAtomically) {
+      await supabase.rpc('increment_quiz_count', { uid: req.dbUserId });
+    }
     res.status(201).json(data);
   } catch (err: any) {
     log.error('Quiz duplicate error:', { err: err });
@@ -343,7 +355,7 @@ router.get('/:id/sequences', async (req: AuthenticatedRequest, res) => {
 });
 
 // POST /api/quizzes/:id/sequences - create a new email sequence
-router.post('/:id/sequences', async (req: AuthenticatedRequest, res) => {
+router.post('/:id/sequences', requireFeature('emailSequences'), async (req: AuthenticatedRequest, res) => {
   try {
     const { name, emails, conditions, enabled } = req.body;
 
@@ -685,7 +697,7 @@ router.post('/:id/generate-email', async (req: AuthenticatedRequest, res) => {
 
 // ── A/B Testing ───────────────────────────────────────────────────────────
 // POST /api/quizzes/:id/ab-tests - create a new A/B test
-router.post('/:id/ab-tests', async (req: AuthenticatedRequest, res) => {
+router.post('/:id/ab-tests', requireFeature('abTesting'), async (req: AuthenticatedRequest, res) => {
   try {
     const quizId = req.params.id;
     const { name, variants } = req.body;
@@ -864,7 +876,7 @@ router.get('/public/ab-test/:testId/assign', async (req, res) => {
 // ── Team Management ────────────────────────────────────────────────────────
 
 // POST /api/teams - Create a new team
-router.post('/teams', async (req: AuthenticatedRequest, res) => {
+router.post('/teams', requireFeature('teamSeats'), async (req: AuthenticatedRequest, res) => {
   try {
     const { name } = req.body;
 

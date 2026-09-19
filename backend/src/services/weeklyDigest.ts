@@ -122,12 +122,13 @@ export async function sendWeeklyDigest(params: WeeklyDigestParams): Promise<bool
 </body>
 </html>`;
 
-    await resend.emails.send({
+    const digestResult: any = await resend.emails.send({
       from: 'Squarespell <digest@squarespell.com>',
       to: userEmail,
       subject: `Weekly Quiz Digest: ${totalLeads} new leads`,
       html
     });
+    if (digestResult?.error) throw new Error(digestResult.error.message || 'digest rejected by provider'); // Resend v3 does not throw
 
     // Log email delivery
     try {

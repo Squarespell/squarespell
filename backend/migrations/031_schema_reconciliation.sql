@@ -60,6 +60,10 @@ ALTER TABLE email_sequence_queue DROP CONSTRAINT IF EXISTS email_sequence_queue_
 ALTER TABLE email_sequence_queue ADD CONSTRAINT email_sequence_queue_status_check
   CHECK (status IN ('pending', 'sent', 'failed', 'retry', 'skipped'));
 
+-- email_sequences: POST /api/quizzes/:id/sequences stores condition-based sequences with outcome_id = NULL
+-- (routes/quiz.ts), but 014 declared the column NOT NULL, so every sequence creation failed with a 500.
+ALTER TABLE email_sequences ALTER COLUMN outcome_id DROP NOT NULL;
+
 -- Stripe webhook idempotency: one row per processed Stripe event id.
 CREATE TABLE IF NOT EXISTS stripe_webhook_events (
   event_id TEXT PRIMARY KEY,

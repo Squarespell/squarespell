@@ -1,8 +1,10 @@
 import { log } from '../lib/logger';
-import Anthropic from '@anthropic-ai/sdk';
+import { createAnthropic } from '../lib/anthropicClient';
 import { buildFallbackQuiz } from './fallbackQuiz';
+import { AiServiceError, toAiError } from '../lib/aiErrors';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Bounded cost and latency: every model call has a hard timeout and at most one retry (see lib/anthropicClient.ts).
+const anthropic = createAnthropic(process.env.ANTHROPIC_API_KEY);
 
 /**
  * Generate mode-specific system prompt for Claude based on quiz mode.
@@ -480,12 +482,17 @@ async function callClaude(
   const systemPrompt = getSystemPromptForMode(mode, quizType, websiteUrl);
   const userPrompt = getUserPromptForMode(mode, siteName, websiteUrl, businessSummary, brandColorPrimary);
 
-  const message = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 8192,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
+  let message: any;
+  try {
+    message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 8192,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+  } catch (err) {
+    throw toAiError(err);
+  }
 
   const raw = message.content
     .filter((b: any) => b.type === 'text')
@@ -505,8 +512,8 @@ async function callClaude(
     log.info(`[Claude] Questions: ${normalized.questions?.length}, Outcomes: ${normalized.outcomes?.length}`);
     return normalized;
   } catch {
-    log.error('[Claude] Parse failed, raw:', { err: raw.substring(0, 500) });
-    throw new Error('Failed to generate quiz. Please try again.');
+    log.error('[Claude] Parse failed', { rawLength: raw.length });
+    throw new AiServiceError('ai_bad_response', 'The AI returned an unusable quiz. Please try again.');
   }
 }
 
@@ -716,8 +723,10 @@ REQUIREMENTS:
     const parsed = JSON.parse(extractJSON(raw));
     return normalizeQuiz(parsed, { websiteUrl, navPages });
   } catch (err: any) {
-    log.error('[Claude] Tailored quiz generation failed for ${siteName}, using fallback quiz. Error:', { err: err?.message || err });
-    return buildFallbackQuiz(brandColorPrimary);
+    log.error('[Claude] Tailored quiz generation failed, using fallback quiz', { err: err?.message || err });
+    // Product decision Q5 (never block the funnel) is kept, but the result is now explicitly marked so callers can
+    // tell the user it is a generic starter quiz and never present it as tailored to their business.
+    return { ...buildFallbackQuiz(brandColorPrimary), generated_by: 'fallback' };
   }
 }
 
