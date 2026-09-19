@@ -214,7 +214,7 @@ Common rules for every stage: no endless loaders (each wait has a visible progre
 
 **Stage 12 - Evidence-based improvements**
 - *Inputs:* funnel events and version history.
-- *Output:* prioritised recommendations ("question 3 loses many visitors - consider shortening it") with an evidence label and sample size; one-click creation of a new draft version.
+- *Output:* prioritised recommendations ("question 3 loses many visitors - consider shortening it") with an evidence label and sample size; creation of a new draft version in a single action.
 - *States:* **success** recommendations; **empty** - "Not enough data yet" with the threshold; **failure** - silently omitted, never invented.
 - *Validation:* a recommendation appears only above a minimum sample and shows the numbers behind it.
 - *Recovery:* dismiss, snooze or apply; applying creates a version that can be compared and restored.
