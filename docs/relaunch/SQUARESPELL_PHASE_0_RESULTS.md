@@ -4,34 +4,57 @@ Prepared 19 September 2026 against Relaunch Master Plan Revision 3.0. Scope: P0.
 
 **Evidence labels:** Verified (observed directly this pass) - Vendor/official documentation (cited) - Recommendation - Hypothesis - Unavailable (could not be accessed; never means zero).
 
-This file is documentation only. Nothing on `squarespell.com`, in DNS, in production code, in any database, in Stripe or in any customer access was changed by this work. The only reads of production systems were public web pages, the public sitemaps, Google Search Console (read-only), Hostinger's own read-only pages, and aggregate-only `SELECT count` queries against the SaaS database.
+This file is documentation only. Nothing on `squarespell.com`, in DNS, in production code, in any database, in Stripe or in any customer access was changed by this work. The only reads of production systems were public web pages, the public sitemaps, Google Search Console (read-only), Hostinger's own read-only pages, and aggregate-only `SELECT count` queries against the SaaS database, plus read-only views of the Stripe and Clerk dashboards after Hussnain signed in manually (no credentials were entered by Claude). Nothing was created, edited, archived or deleted in any account.
+
+**Update 2 (19 Sep 2026):** adds the Stripe and Clerk findings, brand/social conclusions, the service-separation matrix and the Phase 0 exit decision. The WordPress/WooCommerce administration of `squarespell.com` was deliberately not accessed.
 
 ---
 
-## 1. Separation rule and data-separation requirement (architectural requirement)
+## 1. Marketplace and SaaS Separation Architecture
 
-`squarespell.com` and `squarespellquiz.com` are separate products within the Squarespell brand.
+**Binding requirement.** `squarespell.com` and `squarespellquiz.com` are separate websites, products, data systems and SEO properties. The same owner may administer both; service resources, credentials and customer data must stay separate wherever the provider supports it.
 
-- **`squarespell.com`** is the existing marketplace and WordPress/WooCommerce site. It stays live and unchanged.
-- **`squarespellquiz.com`** is the new subscription SaaS. It gets its own application, infrastructure and data store.
+### Product separation
+- **Existing marketplace - `squarespell.com`:** WordPress/WooCommerce on the existing Hostinger shared-hosting plan, with its own database, customers, orders, products, plugins, downloads, media, lifetime licences, analytics, Search Console property, sitemap, content, URLs, email, DNS and backups. It keeps operating unchanged and independently.
+- **New SaaS - `squarespellquiz.com`** (purchased manually by Hussnain, for one year): the new subscription product, operating as a product name under the SQUARESPELL brand. It must eventually have its own website, application, VPS, PostgreSQL database and credentials, authentication application, Stripe products/prices/webhooks, email sender, analytics, Search Console and Bing properties, Tag Manager container where needed, sitemap, robots configuration, structured data, canonicals, backups, monitoring, logs, API credentials, customer accounts, billing records, privacy/legal pages and support process.
 
-**Data-separation requirements (binding on all later phases):**
-1. The `squarespell.com` WordPress/WooCommerce database remains dedicated to the marketplace.
-2. Marketplace customers, orders, plugin licences, downloads and media stay in marketplace systems.
-3. `squarespellquiz.com` uses a separate SaaS PostgreSQL database.
-4. The SaaS database has separate credentials, database users, backups and access controls.
-5. Existing SaaS data may later move from Supabase into the dedicated `squarespellquiz.com` database.
-6. SaaS data is never imported into the `squarespell.com` WordPress database.
-7. Marketplace order/customer data is not copied into the SaaS database without a later explicit migration decision and privacy review.
-8. Any future marketplace-SaaS communication uses an explicit, documented API, referral link or approved import process.
-9. A compromise or failure of the SaaS database must not expose the marketplace database.
-10. Backups and restore procedures stay separate.
-11. Deploying the SaaS must not require modifying the marketplace WordPress codebase.
-12. Each site stays operational when the other is offline.
+### Database separation (binding)
+1. The WordPress/WooCommerce database remains dedicated to `squarespell.com`.
+2. Marketplace customers, orders, licences, downloads and media remain in the marketplace database.
+3. Squarespell Quiz uses a dedicated PostgreSQL database.
+4. Existing quiz SaaS data may later move from its quiz-specific Supabase project into the dedicated Hostinger PostgreSQL database.
+5. SaaS data is never imported into the WordPress database.
+6. Marketplace data is never imported into the SaaS database without a later explicit owner decision, privacy review and documented migration.
+7. Each product has separate database credentials and access controls.
+8. Each product has separate backups and restore procedures.
+9. Each product stays operational if the other is unavailable.
+10. A security incident in one product must not automatically expose the other.
+11. SaaS deployments must not require WordPress changes.
+12. Any future integration uses a documented API, referral link or explicitly approved import.
+13. No cross-database queries.
+14. No shared production API keys.
+15. No shared customer session or authentication database.
 
-**Protected legacy product:** the one-time quiz plugin sold on `squarespell.com` is separate from the SaaS. Its listing, URL, price, licence, download, buyer access, promised updates and support, and wording must not be changed, redirected, unpublished or converted (details in section 8).
+### Account and service separation
+Detailed current-state and target-state matrix: section 10. Principle: if a provider uses one owner login, create or use a distinct project, application, property, account or credential set for Squarespell Quiz. Do not share databases, tables, API keys, analytics properties, Search Console properties, customer records or backups.
 
-**Warning recorded, not acted on:** the SaaS marketing page `/quiz/` and several blog posts are currently hosted inside the marketplace WordPress site. Moving or copying that content to `squarespellquiz.com` is a future decision; this pass changed nothing.
+### SEO separation
+1. `squarespell.com` keeps its SEO property, sitemap, content, URLs and authority; its Search Console history and backlink authority must not be disturbed.
+2. `squarespellquiz.com` gets its own SEO strategy and technical setup: a separate Google Search Console domain property (after DNS verification is separately authorized), a separate Bing Webmaster Tools property, a separate GA4 property and data stream, a Tag Manager container if required, and its own sitemap, robots.txt, canonicals and structured data.
+3. Nothing is copied, duplicated, canonicalised, redirected or removed during Phase 0. A later content-migration phase decides each URL individually: keep, update, copy with substantial adaptation, migrate, merge or retire. Any future redirect needs explicit approval and testing. Existing articles may link to the new product only after the new site is ready and the link change is separately authorized.
+4. The new domain builds its own platform-neutral authority around quizzes, assessments, product finders, calculators, recommendations and lead qualification.
+
+### Lifetime-plugin protection
+The one-time quiz plugin sold through `squarespell.com` is a marketplace product, not the SaaS. Its listing, URL, price, files, licence, download access, update and support promises and wording must not be deleted, unpublished, edited, redirected, converted to a subscription or imported into the SaaS. Its buyers are not SaaS customers, are not contacted, and their private WooCommerce data is not used. Only its public product page is used to document the public promise (section 8).
+
+### Future migration boundaries
+- Content: quiz-related pages that have traffic or backlinks must not simply disappear from `squarespell.com` (rule in section 4).
+- Data: SaaS data may move Supabase to the new dedicated PostgreSQL; marketplace data never moves into the SaaS database without a separate decision.
+- Identity and billing: a dedicated production Clerk application and a separate Stripe account are needed for the SaaS (section 6); existing marketplace records stay where they are.
+- Any future marketplace-SaaS link is a public referral link, a documented API or an approved import.
+
+### Explicitly prohibited (Phase 0 and until separately authorized)
+Accessing WordPress/WooCommerce administration or private data; changing `squarespell.com`, its DNS or nameservers; changing or redirecting the lifetime plugin or any URL; changing canonicals; copying marketplace content, customers or orders; connecting `squarespellquiz.com` to hosting or changing its DNS; purchasing a VPS, domain, trademark, hosting, email service or subscription; creating analytics or Search Console properties, Stripe products/prices/webhooks, Clerk applications, email accounts or social accounts; migrating content; deploying code; starting the redesign; starting Phase 1; merging PR #62.
 
 ---
 
@@ -43,38 +66,35 @@ This file is documentation only. Nothing on `squarespell.com`, in DNS, in produc
 - **Recommendation for Phase 3 only, not purchased:** KVM 2 (2 vCPU / 8 GB / 100 GB NVMe). Observed 24-month checkout Rs. 64,776.00 (Rs. 2,699.00/mo), renewal Rs. 4,099.00/mo; 12-month Rs. 3,199.00/mo; 1-month Rs. 4,399.00. Daily backups are a paid add-on (price not captured) and must be complemented by independent offsite backups.
 - The SaaS VPS must be a **separate** service from the marketplace shared hosting (section 1, rules 3, 4, 10, 12). No DNS, nameserver, auto-renewal, privacy, lock or hosting connection was changed for either domain.
 
+- No trademark, domain, hosting plan, VPS, email service or subscription was purchased in this pass; the planned KVM 2 VPS remains unpurchased.
+
 ---
 
-## 3. Brand and domain clearance (P0.4) - preliminary screening, not legal advice
+## 3. Brand, trademark and social-handle conclusions
 
-Brand: `Squarespell Quiz`. Domain: `squarespellquiz.com`. Method: public web search and logged-out public pages only. Nothing was registered, reserved or purchased.
+Preliminary screening, not legal advice.
 
-| Check | Result | Evidence |
+- **Owner-confirmed (Hussnain; not independently verified by Claude):** SQUARESPELL is registered by Hussnain as a UK trademark, and `SQUARESPELL QUIZ` will be used as a product name under the SQUARESPELL brand. No further UK trademark search is required for Phase 0, so none was run (the UK IPO search sits behind a Cloudflare check).
+- **USPTO:** wordmark search `squarespell` returned **no results**.
+- **WIPO Global Brand Database:** brand-name search "contains squarespell" returned **no results**.
+- **Conclusion:** USPTO and WIPO searches found **no exact SQUARESPELL conflict**.
+- Word searches for `square spell` (4,921 results) and `squarespell quiz` (323 results) matched only the common words SPELL, SQUARE and QUIZ and are not meaningful conflict evidence; they were not reviewed one by one.
+- **SPELLQUIZ:** the USPTO shows two live, registered marks (class 41, online English-language training services) owned by SpellQuiz Inc. (Canada). **SPELLQUIZ is owned by another company and must not be used as the product name.**
+- **Search-result screening (earlier pass):** no third-party "Squarespell Quiz" business found; a separate spelling-test product named SpellQuiz exists. Possible confusion with the SQUARESPACE mark was flagged earlier; manual legal review is recommended for that point, especially outside the UK.
+- The name is **not legally cleared** by this screening.
+
+### Social handles - `squarespellquiz` (public, logged-out or read-only page checks)
+
+| Platform | Result | Evidence |
 |---|---|---|
-| Search-result conflicts, "Squarespell Quiz" | **Clear** | Only Squarespell's own `/quiz` page, repo and listing. |
-| "Squarespell" alone | **Possible conflict** | Looks like the owner's own brand (site, Instagram @squarespell "H&Q Studio", LinkedIn page); mark ownership unconfirmed. |
-| "Square Spell" quiz (variant) | **Clear** | No exact-match product found. |
-| SpellQuiz / Spell Quiz | **Possible conflict** | Existing K-12 spelling-test product (spellquiz.com) plus an Android app; different audience but shared "spell quiz" words. |
-| Confusion with Squarespace (Squarespace, Inc.) | **Possible conflict - the main risk** | "Squarespell" differs from SQUARESPACE by one letter and is used for Squarespace add-ons. No disclaimer found on the homepage. Risk rises if a mark is filed in software classes 9/42. |
-| USPTO trademark search | **Inconclusive** | JS app; not queryable without a browser session. Manual strings: `SQUARESPELL`, `SQUARESPELL QUIZ`, `SPELLQUIZ`, wildcard `SQUARESP*`, classes 9, 35, 41, 42. |
-| UK IPO trademark search | **Inconclusive** | Bot-blocked (HTTP 403) to automated fetch. Same strings, phonetic search on. |
-| WIPO Global Brand Database | **Inconclusive** | JS app. Same strings, phonetic/fuzzy on. |
-| `squarespellquiz.com` domain | **Verified owned** | Appears in the Hostinger portfolio (term unverified, section 2). |
+| X | Probably available (no profile found) | "Unable to show this account" page (also shown for suspended/private accounts) |
+| Instagram | Probably available (no profile found) | "Profile isn't available" |
+| LinkedIn (company URL) | Probably available (no profile found) | "Page not found"; company-name uniqueness not checked |
+| YouTube | Probably available (no channel found) | 404 |
+| TikTok | Probably available (no account found) | "Couldn't find this account" |
+| Facebook | **Inconclusive** | Ambiguous "content isn't available" message |
 
-**Conclusion:** no third-party "Squarespell" or "Squarespell Quiz" business was found, but the three trademark registers were **not actually searched**, so the name is **not cleared**. The one substantive risk is confusion with the SQUARESPACE mark. Recommend a manual register search and a trademark attorney review before investing further in the brand or filing.
-
-### Social handles (logged-out checks; 404 is weak evidence of availability)
-
-| Platform | `@squarespellquiz` | `@squarespell` |
-|---|---|---|
-| X | **Inconclusive** (404) | Inconclusive (404) |
-| Instagram | **Inconclusive** (generic login shell) | Unavailable (exists: "SQUARESPELL, H&Q Studio") |
-| Facebook | **Inconclusive** (generic shell) | Inconclusive |
-| LinkedIn company | **Inconclusive** (404) | Unavailable (page exists) |
-| YouTube | **Inconclusive** (404) | Possible conflict (channel "Muhammad Hussnain" - unconfirmed as the owner's) |
-| TikTok | **Inconclusive** (no readable content) | Inconclusive |
-
-No handle can be declared Clear from logged-out checks. Confirmation requires a logged-in check on each platform.
+Public checks found no active `squarespellquiz` profile on X, Instagram, LinkedIn, YouTube or TikTok, but this does not guarantee availability (reserved names, platform rules and private/suspended accounts are not visible). **No social account has been created or reserved.**
 
 ---
 
@@ -90,7 +110,7 @@ Full inventory: `docs/relaunch/SQUARESPELL_QUIZ_CONTENT_INVENTORY.csv` (29 rows,
 | 3 | WordPress pages (34) | Fetched and scanned |
 | 4 | WordPress products (584 marketplace products in 4 product sitemaps) | Sitemap-listed by URL; the 10 quiz, calculator, form and extension listings matching the search terms were fetched and scanned; other products were matched by URL keyword only |
 | 5 | Media and downloadable files | **Unavailable** - not enumerated (no authenticated media library access; the WordPress REST API was not used) |
-| 6 | Draft/unpublished quiz content | **Unavailable** - requires WordPress admin (access blocked; see section 7) |
+| 6 | Draft/unpublished quiz content | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation** (requires WordPress administration, which is out of bounds) |
 | 7 | Google Search Console pages and queries (90 days, 17 Jun-16 Sep 2026) | **Checked**: site total 847 clicks / 44.6K impressions (reconfirmed); URL-contains-"quiz" filter = 16 URLs, 41 clicks, 2.65K impressions |
 | 8 | Analytics landing-page reports | **Unavailable** - not accessed |
 | 9 | Internal links from `/quiz`, articles, products | Partly checked: inbound links to the legacy product and articles mapped from 106 fetched pages; **no page links to `/quiz/`**; outbound crawl not run |
@@ -135,6 +155,13 @@ Full inventory: `docs/relaunch/SQUARESPELL_QUIZ_CONTENT_INVENTORY.csv` (29 rows,
 4. Legacy plugin pricing/licence inconsistency ($45 selector vs $49 FAQ; "Unlimited Websites" multi-use vs "one licence per site" wording).
 5. Inconsistent plan/trial/feature statements (14-day vs 7-day trial; "Business plan" Code Block requirement; advertised Zapier/REST API possibly not live), plus one 404 still indexed (`/tools/quiz-builder-for-squarespace`) and malformed double-slash/http URL variants indexed.
 
+### Future rule for quiz content and SEO (documentation only)
+- Quiz-related content with existing traffic or backlinks must not simply disappear from `squarespell.com`.
+- Before any article is moved, decide for each URL whether to keep, update, migrate, merge or retire it.
+- A moved page requires a content-equivalent destination on `squarespellquiz.com`, a tested 301 redirect, updated internal links, an updated sitemap and canonical tags, and post-migration Search Console monitoring.
+- Marketplace and lifetime-plugin pages stay on `squarespell.com`.
+- **Nothing was migrated, re-linked, redirected or re-canonicalised in Phase 0.** "Copy later / migrate later" entries in the inventory CSV are recommendations only; the marketplace content list and the SaaS destination proposals remain separate columns and must not trigger any action without a separate instruction.
+
 ---
 
 ## 5. Connector capability matrix (P0.6) - official documentation, September 2026
@@ -164,44 +191,60 @@ Delivery order (Revision 3): **1 Universal HTML, 2 WordPress, 3 Shopify, 4 Squar
 
 ---
 
-## 6. SaaS customer, subscription and data summary (P0.7 - SaaS side only)
+## 6. SaaS accounts, subscriptions and data (P0.7, SaaS side only)
 
-Read-only aggregate `count` queries against the SaaS Supabase project (`omwtmvzdqmxewdswapgq`, previously verified `ACTIVE_HEALTHY`). No names, emails or payment data were retrieved.
+Kept separate from the marketplace (section 7). Sources: read-only aggregate queries on the SaaS Supabase project (`omwtmvzdqmxewdswapgq`), and read-only views of the Stripe and Clerk dashboards after Hussnain signed in manually. No names, emails, payment details, keys, secrets or IDs are recorded.
 
-| Item | Result | Source |
+### 6.1 Application database (Supabase) - verified
+9 users (all with a Clerk id; 8 free, 1 agency plan that looks manually assigned because it has no Stripe link); 0 Stripe customer ids; 0 Stripe subscription ids; 0 plan expiries; 31 quizzes (9 live, 6 draft, 16 archived) owned by 6 users; 0 leads; 0 quiz payments; 1 preview draft; 2 platform email-log rows.
+
+### 6.2 Stripe (read-only; live mode)
+| # | Question | Finding |
 |---|---|---|
-| Application database users | **9** | Verified |
-| Users with a Clerk id | **9 of 9** | Verified |
-| Clerk users (dashboard count) | **Unavailable** - Clerk sign-in required; no credentials entered | - |
-| Users with a Stripe customer id | **0** | Verified |
-| Users with a Stripe subscription id | **0** | Verified |
-| Stripe customers / subscriptions (Stripe dashboard) | **Unavailable** - Stripe sign-in required; no credentials entered | - |
-| Plans held | 8 free, **1 agency** | Verified |
-| Manual plan assignment | **1** (the agency user has no Stripe link) | Verified (inference from no Stripe ids) |
-| Users with a plan expiry date | 0; none expired | Verified |
-| Active / cancelled / failed / past-due subscriptions | **0 in app DB**; Stripe side Unavailable | Partly verified |
-| Trials | **Unavailable** - trial is time-based in code (14 days, `planGuard.ts:11`); no trial rows in data | - |
-| Quizzes | **31** (9 live, 6 draft, 16 archived), owned by 6 distinct users | Verified |
-| Leads / responses | **0** leads; `quiz_payments` 0; `analytics_events` 0 | Verified |
-| Other tables | 1 preview draft; 2 platform email log rows; the rest empty | Verified |
+| 1 | Workspace and mode | **Squarespell Limited** (GBP). **Live mode** (no test or sandbox indicator; the webhooks page offers a switch to a sandbox). |
+| 2 | Marketplace, SaaS or both | **Both.** Marketplace evidence: an active WooCommerce Stripe-gateway webhook, and payment descriptions such as "Squarespell - Order N". SaaS evidence: a "SQUARESPELL QUIZ" webhook and six plan products. |
+| 3 | Aggregate customers | **278** customers in the account. No customer could be identified as a quiz-SaaS customer; the sampled records follow marketplace/guest-checkout patterns. Attribution beyond that would require customer-level inspection, which was not done to avoid personal data. |
+| 4 | Subscriptions | **0 in every status** (active 0, trialling 0, cancelled 0, past due 0); the subscriptions list shows the empty "Create your first subscription" state with all statuses selected. |
+| 5 | Quiz-related products and prices | Six active recurring products created 6 April 2026: **Starter** $19, **Pro** $39, **Agency** $79 (USD, monthly) and **Starter Yearly** $180, **Pro Yearly** $372, **Agency Yearly** $756. The dashboard labels every one "per month", so the yearly interval labelling needs checking. Names are generic. |
+| 6 | Lifetime or one-time quiz products | **None** in the Stripe product catalog. The one-time marketplace plugin is sold through WooCommerce, whose Stripe charges appear as order payments rather than catalog products (inference). |
+| 7 | Webhook endpoints | (a) `forum.squarespell.com/?wc-api=wc_stripe` - **Active** - the WooCommerce gateway (marketplace). (b) "SQUARESPELL QUIZ" - `squarespell-api.onrender.com/api/stripe/webhook` - **Disabled**. |
+| 8 | Live SaaS products, prices, webhooks | Live products and prices exist (the six above); the SaaS webhook exists but is **disabled**, so SaaS billing events would not reach the app. |
+| 9 | Reconciliation with the app database | **Agrees at zero:** the database has 0 Stripe customer ids and 0 subscription ids, and Stripe has 0 subscriptions. Caveat: the 278 Stripe customers are not linked in the app, and 0 quiz payments exist in the app database. |
+| 10 | Evidence of shared configuration | **Yes:** one account and legal entity serves both products, so customers, balance, payouts, disputes, reporting and dashboard access are shared; the marketplace gateway webhook and the SaaS webhook sit in the same account; the SaaS plan products sit beside marketplace payments. |
 
-**Unresolved mismatches / gaps:** (a) Clerk user count cannot be reconciled with the 9 database users until dashboard access; (b) Stripe customers cannot be reconciled with the 0 Stripe ids in the database (any Stripe customer without a database link would be a mismatch); (c) the one agency plan is an unexplained manual assignment; (d) the app shows 0 leads, so any published conversion statistic has no first-party basis.
+**Plan mismatch (verified):** the app's plan catalog is Core/Pro/Business at $12/$19/$35 monthly and $9/$16/$29 billed annually, but live Stripe holds Starter/Pro/Agency at $19/$39/$79 and $180/$372/$756. The public `/quiz` and blog pages quote the Core/Pro/Business prices. Paid checkout on the current plan names therefore cannot be relied on until Phase 1 verifies it.
+
+**Recommended separation (recommendation; Stripe documentation not re-verified this pass):** create a **separate Stripe account for Squarespell Quiz** (the same legal entity is possible), with its own products, prices, restricted API keys, webhook endpoint, statement descriptor and tax settings. Separate products, keys and webhooks inside the present account would **not** be sufficient, because customers, balance, payouts, disputes and reporting stay shared with the marketplace. Leave the present account and its six legacy products untouched until the new account exists; do not attempt separation now. No purchase is expected (accounts are free); the owner decision is which legal entity and who administers it.
+
+### 6.3 Clerk (read-only)
+- One Clerk application named **"Squarespell"** in a **personal Hobby workspace**.
+- **Development instance only; no production environment exists.** The only domain is the development domain `flying-midge-60.clerk.accounts.dev`.
+- Because there is no production instance, the live app must be authenticating against the development instance (inference; environment variables were not viewed). Clerk itself notes that development instances are for internal and test users.
+- Sign-in methods: **email (code and link), Google and Apple enabled; Microsoft disabled.** Password, passkey and phone settings were not confirmed.
+- **12 Clerk users versus 9 application-database users.** Join dates suggest at least three Clerk users have no database row (possible unmatched sign-ins); every database user holds a Clerk id, and no database user appears missing from Clerk, but IDs were not compared. Active-user count was not shown.
+- The application looks dedicated to the quiz SaaS (the marketplace does not use it as far as could be seen).
+- **Conclusion:** a new dedicated production Clerk application for `squarespellquiz.com` will eventually be required (custom domain with DNS records, its own Google and Apple credentials, production keys, allowed origins and webhook, and a plan for moving or re-onboarding the 9-12 development users). **It was not created in Phase 0.**
+
+### 6.4 Trials, mismatches and gaps
+Trials are time-based in code (14 days) with no trial rows; the 1 agency plan is an unexplained manual assignment; the three possible unmatched Clerk users need investigation in Phase 1; any published conversion statistic has no first-party basis (0 leads).
 
 ---
 
-## 7. Marketplace customer and product summary (P0.7 - marketplace side only)
+## 7. Marketplace customer and product summary (P0.7, marketplace side only)
 
-Kept separate from section 6. **Aggregate counts from WordPress/WooCommerce are Unavailable.** The automated permission layer blocked opening `squarespell.com/wp-admin`, and no marketplace admin credentials were provided or entered; Claude did not work around this. To close this, Hussnain (or a designated admin) can export aggregate-only WooCommerce reports (see blockers).
+Kept separate from section 6. To preserve marketplace/SaaS separation, WordPress and WooCommerce administration and private data were **not accessed**, and no WordPress or WooCommerce login was requested.
 
 | Item | Result |
 |---|---|
-| WooCommerce customers | **Unavailable** |
-| Orders for the one-time quiz plugin (single / multi-use) | **Unavailable** |
-| Active downloads | **Unavailable** |
-| Licence records | **Unavailable** (whether a licence-key system exists is unknown) |
-| Refunds | **Unavailable** |
-| Marketplace accounts | **Unavailable** |
-| Product-support commitments | **Verified from public page** - see section 8 |
+| WooCommerce customers | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation.** |
+| Orders for the one-time quiz plugin | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation.** |
+| Active downloads | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation.** |
+| Licence records | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation.** |
+| Refunds | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation.** |
+| Marketplace accounts | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation.** |
+| Product-support commitments | Documented from the public product page only (section 8). |
+
+The shared Stripe account shows combined totals (278 customers, 299 payments) that cannot be attributed to a product without customer-level inspection; those totals are noted as a separation risk, not as a marketplace inventory.
 
 ---
 
@@ -216,7 +259,7 @@ Kept separate from section 6. **Aggregate counts from WordPress/WooCommerce are 
 | Download / delivery | "Delivery: Instant download." Fulfilment mechanism (file host, licence keys) - Unavailable. |
 | Update promise | "Lifetime updates"; page shows "Creator last updated Aug 2026". |
 | Support promise | "Ongoing support"; free installation assistance ("we'll walk you through it step by step or do it for you"); priority email support "within 48 hours". |
-| Known purchasers | **Unavailable** (marketplace access blocked) |
+| Known purchasers | **Unavailable - intentionally excluded to preserve marketplace/SaaS separation.** |
 | Does customer access still work? | **Unverified.** The product page loads (200) and offers add-to-cart; download and licence delivery were not tested because that would require a purchase or admin access. |
 | Technically independent of the SaaS? | **Yes (verified by design):** it is a WooCommerce product, a paste-in-Code-Injection plugin, sold from `squarespell.com`; the SaaS is a separate Next.js/Express/Supabase system with no shared code path. |
 | Other quiz-type listings | Two Common Ninja quiz products and calculator/form listings are third-party vendor products with affiliate links and are outside this entitlement. |
@@ -228,6 +271,12 @@ Kept separate from section 6. **Aggregate counts from WordPress/WooCommerce are 
 - **The exact optional migration offer is Hussnain's decision.** Marketplace buyers have not been assumed to consent to SaaS marketing.
 
 **Open decision for Hussnain:** which price and licence terms are correct (the $45/$49 discrepancy and the "Unlimited Websites" versus "one licence per site" wording) - to be reviewed before any future copy is reused. No change has been made.
+
+**Legacy entitlement policy (recorded):**
+- The one-time quiz plugin remains a `squarespell.com` marketplace product; existing access and promises remain unchanged.
+- It is excluded from the new SaaS subscription database. Buyers are not automatically SaaS customers and will not be contacted without separate authorization.
+- Any later SaaS offer is optional and does not replace the original purchase.
+- The price and licence inconsistency visible on the public page ($45 selector vs $49 FAQ; "Unlimited Websites" vs one licence per site) remains an **unresolved marketplace issue and was not edited**.
 
 ---
 
@@ -266,38 +315,93 @@ Targets are proposals carried from Revision 3 and must be approved. **No outreac
 
 ---
 
-## 10. Unresolved blockers
+## 10. Service separation matrix (current state and target state)
 
-| # | Blocker | What closes it |
+"Verified" = observed this project; "Unverified" = not inspected. Target resources are for `squarespellquiz.com`; nothing below was created in Phase 0. "Before Phase 1" = an action needed before Phase 1 can start.
+
+| Service | Current provider / resource | Used by | Shared? | Target dedicated resource | Data-separation requirement | Migration phase | Action before Phase 1? |
+|---|---|---|---|---|---|---|---|
+| Domains and DNS | `squarespell.com` and its DNS at Hostinger; `squarespellquiz.com` registered at Hostinger, unconnected, DNS untouched; the SaaS app currently runs at `app.squarespell.com`, inside the marketplace domain zone (verified) | Marketplace; SaaS (via subdomain) | **Yes (SaaS lives under the marketplace zone)** | `squarespellquiz.com` zone for site, app and API | No SaaS records in the marketplace zone long-term; no DNS change now | Phase 3 staging DNS; cutover phase for `app.squarespell.com` | No (no DNS change) |
+| Source repository | GitHub `Squarespell/squarespell` (SaaS code, verified); marketplace WordPress code/theme repository unverified | SaaS (marketplace repo unknown) | Unverified | Keep the SaaS repo separate; no WordPress code in it | No WordPress code or marketplace data in the SaaS repo | Ongoing | No |
+| Production hosting | SaaS: Vercel (frontend) and Render (API); marketplace: Hostinger shared hosting (Unlimited Web Hosting) | Each product separately | No | New Hostinger KVM 2 VPS (Docker Compose), separate from the shared plan | Separate servers, users and firewalls | Phase 3 staging, then migration | No |
+| Database | SaaS: Supabase project (9 users, 31 quizzes); marketplace: WordPress/WooCommerce database on shared hosting | Each product separately | No | Dedicated PostgreSQL on the VPS with its own credentials | No cross-database queries; no import either way without an approved migration | Phase 3 staging; migration rehearsal phases | No |
+| Authentication | SaaS: Clerk development instance in a personal Hobby workspace; marketplace: WordPress accounts | Each product separately | No (Clerk is SaaS-only) | New dedicated production Clerk application for `squarespellquiz.com` (custom domain, own Google/Apple credentials) | No shared sessions or auth database | Phase 3 staging; before real users | Decision only (approve creating it later) |
+| Stripe billing | One Stripe account "Squarespell Limited" (live): marketplace WooCommerce payments, six SaaS plan products, both webhooks | Both | **Yes** | Separate Stripe account for Squarespell Quiz: own products, prices, restricted keys, webhook, statement descriptor | No shared customers, keys or webhooks | Phase 1 verifies present setup; new account by Phase 3 | **Owner decision** (separate account and entity); Phase 1 also fixes the plan mismatch and disabled webhook |
+| Transactional email | SaaS sender (Resend per architecture; project and sender domain unverified); marketplace: Hostinger email (Reach 100 subscription) | Unverified | Unverified | Dedicated `squarespellquiz.com` sender domain (SPF/DKIM/DMARC) and its own provider project and API key | Separate sender identity and API keys | Phase 3 | Inventory in Phase 1 |
+| File and media storage | Marketplace: WordPress media and WooCommerce download files on shared hosting; SaaS storage unverified | Each product | Unverified | Dedicated bucket or volume on the VPS | No shared buckets, credentials or files | Phase 3-4 | No |
+| Analytics | Marketplace GA4/Search Console on `squarespell.com` (analytics property not inspected); SaaS analytics unverified | Marketplace; SaaS unknown | Unverified | New GA4 property and data stream; Tag Manager container only if needed | Separate properties and consent settings | When the new site is built | No |
+| Google Search Console | Domain property `sc-domain:squarespell.com` (covers `app.squarespell.com` as a subdomain); no property for `squarespellquiz.com` | Marketplace (and SaaS via subdomain) | **Yes (subdomain coverage)** | New domain property for `squarespellquiz.com` plus Bing Webmaster Tools, after DNS verification is authorized | Separate properties and history | Phase 3 staging or launch | No |
+| Error monitoring and logs | Vercel and Render logs; marketplace host logs; error and uptime tools unverified | Each product | No known sharing | Dedicated monitoring, uptime checks and log storage for the VPS | Separate log stores and alerts | Phase 1 adds monitoring; Phase 3 dedicated | No |
+| Backups | Supabase backups (plan-level, unverified); Hostinger shared-hosting backups (unverified) | Each product | No | Independent offsite backups per product with separate restore runbooks | Separate backups and restore procedures | Phase 3 | No |
+| Secrets and environment variables | Vercel and Render environment variables; WordPress config and WooCommerce keys (values not viewed) | Each product | Not known to be shared | Separate secret stores and production keys per product | No shared production API keys | Phase 3; rotate at cutover | Map configuration ownership in Phase 1 (no secrets exposed) |
+| Customer data | SaaS: 9 app users, 12 Clerk users; marketplace: WooCommerce customers (excluded); Stripe holds both | Each product; Stripe combined | **Yes (Stripe)** | Separate customer stores per product | No import without an approved, privacy-reviewed migration | Ongoing | No |
+| SEO content | `squarespell.com` hosts the marketplace content and also the SaaS `/quiz/` page and five quiz articles | Both | **Yes (SaaS pages on the marketplace site)** | New content on `squarespellquiz.com` | Nothing moved, copied, re-canonicalised or redirected in Phase 0; rule in section 4 | Later authorized content phase (Phase 2 SEO map without redirects first) | No |
+| Existing lifetime plugin customers | WooCommerce on `squarespell.com` (excluded) | Marketplace only | No | Stay on `squarespell.com` | Never imported or converted; optional offers only with separate authorization | None | No |
+| AI provider (Anthropic) | Existing API key in the SaaS environment (unverified) | SaaS | Unverified | Dedicated key and usage limits for the SaaS | No shared keys with other projects | Phase 1 (cost controls) | No |
+| Support email and social accounts | Marketplace support mailbox and existing @squarespell profiles; no `squarespellquiz` accounts | Marketplace | Unverified | Dedicated support address and profiles for the product | Separate inboxes and logins where supported | Before launch | No (none created) |
+
+---
+
+## 11. Unresolved blockers, risks and owner decisions
+
+**Not blockers (closed by design):** private marketplace counts (`Unavailable - intentionally excluded to preserve marketplace/SaaS separation`), UK trademark search (owner confirms the registration; not needed), further trademark searches, WordPress administration data.
+
+**Known risks carried into Phase 1**
+| # | Risk | Where handled |
 |---|---|---|
-| B1 | Trademark registers (USPTO, UK IPO, WIPO) not searchable by automation | Manual searches with strings in section 3, or attorney review |
-| B2 | Social handles Inconclusive on all six platforms | Logged-in checks; possible reservation is a separate purchase-free decision |
-| B3 | Marketplace WooCommerce aggregates Unavailable (access blocked) | Aggregate-only WooCommerce exports (customers, orders for product id 389, downloads, licences, refunds) - or explicit authorization to view the read-only reports |
-| B4 | Clerk and Stripe dashboards require sign-in | Hussnain signs in, or supplies aggregate exports; then reconcile with the 9 users |
-| B5 | Analytics landing pages, backlinks/referrers, media library, draft quiz content Unavailable | Analytics and Search Console Links access; WordPress read access |
-| B6 | Legacy plugin price/licence inconsistency and unknown purchaser count | Owner review of live listing; order count |
-| B7 | Domain term/expiry/auto-renewal not inspected | Read-only look at the domain in hPanel |
-| B8 | Hostinger renewal dates unreconciled (2027-08-18 vs 2027-08-31) | Read-only check |
-| B9 | Owner decisions: brand approval, legacy optional offer, pilot targets/scorecard | Hussnain |
-| B10 | Public claims that need evidence or correction (section 4) | Later authorized content phase; nothing changed now |
-| B11 | Zapier/REST API routes may be unmounted | Code check in Phase 1 |
+| R1 | Stripe holds marketplace and SaaS activity in one account | Owner decision, then a separate account (section 6.2) |
+| R2 | Live Stripe plan products do not match the app's plan catalog | Phase 1 verifies checkout and prices |
+| R3 | The SaaS Stripe webhook is disabled | Phase 1 verifies the billing lifecycle |
+| R4 | Clerk runs only as a development instance; 12 Clerk users vs 9 database users (possible unmatched sign-ins) | Phase 1 investigation; production Clerk app later |
+| R5 | Public claims without evidence (install and speed claims, conversion statistics, `noindex` on `/quiz/`) | Phase 1 fixes critical public-claim defects; content phase for the rest |
+| R6 | Zapier and REST API routes appear not mounted although advertised | Phase 1 code check |
+| R7 | Analytics, backlinks and media Unavailable | Accepted for now |
+| R8 | Confusion risk with the SQUARESPACE mark; Facebook inconclusive; handles unreserved | Legal review recommended; reservation is an owner choice |
+| R9 | Domain term and expiry not inspected (checkout defaulted to 3 years; owner says one year); Hostinger renewal dates unreconciled | Optional read-only check |
+| R10 | Legacy plugin price and licence wording inconsistent | Marketplace owner decision; not edited |
 
-## 11. Can Phase 0 be closed?
+**Decisions Hussnain must make before Phase 1**
+1. Approve a **separate Stripe account** for Squarespell Quiz and choose the legal entity and administrator (creation is a later, separately authorized task).
+2. Approve creating a **dedicated production Clerk application** later, and the approach for the development users (import or re-onboard).
+3. Accept the data deliberately excluded from Phase 0 (private marketplace data) and the Unavailable analytics/backlink data as known risks.
+4. Decide whether to reserve the social handles later (no purchase needed).
+5. Confirm whether legal review of the SQUARESPACE-confusion point is wanted.
 
-**Not yet.** Revision 3 requires that no unknown infrastructure, domain, connector or legacy-entitlement item blocks the pilot. Infrastructure, connector and content evidence are essentially complete, but B1, B3, B4 and B6 leave brand, marketplace and subscription unknowns open. Phase 0 can close once B1-B4 and B6 are resolved, or once Hussnain explicitly accepts them as known risks.
+**Decisions that can wait:** the optional SaaS offer to lifetime-plugin buyers and the plugin price wording (marketplace decisions); the pilot cohort and scorecard approval (needed before Phase 2's "five paying commitments").
 
-## 12. Status board update
+---
+
+## 12. Phase 0 exit decision
+
+Owner-set exit tests, checked against the evidence:
+
+| Test | Status |
+|---|---|
+| Stripe inspected sufficiently to understand the current setup | **Met** (section 6.2) |
+| Service-separation matrix complete | **Met** (section 10) |
+| Clerk findings documented | **Met** (section 6.3) |
+| Brand and social findings documented | **Met** (section 3) |
+| Content inventory remains complete | **Met** (29 rows; unavailable items labelled) |
+| Blockers and owner decisions listed | **Met** (section 11) |
+
+Master plan Phase 0 exit ("no unknown infrastructure, domain, connector or legacy entitlement blocks the pilot"): infrastructure (Hostinger shared plan, no VPS, KVM 2 planned), domain (`squarespellquiz.com` purchased), connectors (matrix in section 5) and legacy entitlement (protected, documented, excluded from the SaaS) are all known.
+
+**Decision: Phase 0 can close**, with the risks R1-R10 and the decisions above carried forward. Approving the pilot cohort and scorecard remains an owner action ahead of Phase 2. **Phase 1 has not been started.**
+
+---
+
+## 13. Status board update
 
 | ID | Task | Status |
 |---|---|---|
 | P0.1 | Adopt Revision 3 | Done |
 | P0.2 | Merge/deploy repair | Done (not rechecked) |
 | P0.3 | Hostinger account/VPS/domain entitlement | Done |
-| P0.4 | Brand/domain evidence | Domain purchased; screening done; register/social checks open (B1, B2) |
-| P0.5 | Content/authority inventory | Done except B5 |
+| P0.4 | Brand/domain evidence | Done (domain purchased; trademark owner-confirmed; USPTO/WIPO no exact conflict; social screening recorded) |
+| P0.5 | Content/authority inventory | Done (unavailable items labelled) |
 | P0.6 | Connector matrix | Done |
-| P0.7 | Customer/subscription/lifetime inventory | SaaS DB counts done; Clerk, Stripe and marketplace Unavailable (B3, B4, B6) |
-| P0.8 | Paid design partners | Preparation done; no contact made |
-| P1 | Stabilize production | Not started; follows Phase 0 closure |
+| P0.7 | Customer/subscription/lifetime inventory | Done for the SaaS side (Stripe, Clerk, database); marketplace side intentionally excluded |
+| P0.8 | Paid design partners | Preparation done; nobody contacted |
+| P1 | Stabilize production | **Next task; not started** |
 
-**Next task:** close blockers B1-B4 and B6, then start **P1 - Stabilize production** (Revision 3 status board). P1 was not started in this work.
+**Exact next task (master plan status board): P1 - Stabilize production.**
