@@ -34,6 +34,9 @@ export async function requireAuth(
   try {
     const payload = await verifyToken(token, {
       secretKey: process.env.CLERK_SECRET_KEY!,
+      // Optional: PEM public key for networkless verification (Clerk "JWT key").
+      // When unset (production default) Clerk's JWKS endpoint is used.
+      ...(process.env.CLERK_JWT_KEY ? { jwtKey: process.env.CLERK_JWT_KEY } : {}),
     });
 
     if (!payload?.sub) {
