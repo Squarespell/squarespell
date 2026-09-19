@@ -31,6 +31,8 @@ export const app = express();
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/clerk/webhook', express.raw({ type: 'application/json' }));
+// Resend (Svix-signed) webhooks: the signature covers the exact raw bytes
+app.use('/api/webhooks/resend', express.raw({ type: 'application/json' }));
 // Quiz-payment Stripe webhook also needs the raw body for signature verification
 app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/json' }));
 

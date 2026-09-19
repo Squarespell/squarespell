@@ -1,0 +1,9 @@
+PHASE 1 - resendWebhook.test.ts against the unmodified webhook handler (worktree at 127a493)
+Command: cd backend && npx vitest run
+Totals: 5 tests, 1 passed, 4 failed, 0 skipped/todo
+
+src/__tests__/phase1/resendWebhook.test.ts  passed=1 failed=4
+   FAIL  POST /api/webhooks/resend rejects unsigned requests (anyone on the internet could otherwise suppress or fabricate delivery events)  -- AssertionError: expected 200 to be 400 // Object.is equality
+   FAIL  POST /api/webhooks/resend rejects a signature made with another secret  -- AssertionError: expected 200 to be 400 // Object.is equality
+   FAIL  POST /api/webhooks/resend refuses to run (503) when RESEND_WEBHOOK_SECRET is not configured  -- AssertionError: expected 200 to be 503 // Object.is equality
+   FAIL  POST /api/webhooks/resend a signed hard bounce and a signed spam complaint suppress the address, and a replay is harmless  -- AssertionError: expected [] to deeply equal [ 'angry@customer.example', …(1) ]

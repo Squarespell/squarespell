@@ -25,6 +25,17 @@ export function buildUnsubscribeHeaders(email: string, quizId?: string): Record<
 }
 
 /**
+ * Add an address to the suppression list. email_unsubscribes is (tenant_id, email, reason) with UNIQUE(tenant_id, email);
+ * platform-level suppressions (bounces, complaints) use the tenant 'global'. isUnsubscribed() matches on email across tenants.
+ */
+export async function suppressEmail(email: string, reason: string, tenantId = 'global'): Promise<{ error: any }> {
+  const { error } = await supabase
+    .from('email_unsubscribes')
+    .upsert({ tenant_id: tenantId, email: email.trim().toLowerCase(), reason }, { onConflict: 'tenant_id,email' });
+  return { error };
+}
+
+/**
  * Check if an email is on the unsubscribe list. Returns true if suppressed.
  */
 export async function isUnsubscribed(email: string): Promise<boolean> {

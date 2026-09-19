@@ -57,6 +57,8 @@ const OWN = {
   STRIPE_EMAIL_5000_PRICE_ID: V('Stripe', 'add-on pack', 'unclear', 'Phase 2 decision', ''),
   STRIPE_EMAIL_10000_PRICE_ID: V('Stripe', 'add-on pack', 'unclear', 'Phase 2 decision', ''),
   // Resend / email
+  RESEND_WEBHOOK_SECRET: V('Resend', 'optional->required (Phase 1): Svix signing secret for /api/webhooks/resend', 'yes', 'YES if the endpoint URL changes', 'unset = the Resend webhook endpoint answers 503'),
+  DISABLE_INPROCESS_EMAIL_QUEUE: V('Render (app config)', 'optional (Phase 1) kill switch for the in-process queue drain', 'yes', 'no', ''),
   RESEND_API_KEY: V('Resend', 'prod (Render)', 'yes (provider/sender domain unverified in Phase 0)', 'YES - new sender domain/key for squarespellquiz.com', ''),
   EMAIL_FROM: V('Resend', 'prod (Render)', 'yes', 'YES - sender on squarespellquiz.com', 'default hello@squarespell.com hard-coded fallback'),
   PLATFORM_EMAIL_FROM: V('Resend', 'prod (Render)', 'yes', 'YES', ''),

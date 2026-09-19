@@ -2,15 +2,38 @@ import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
 import { trackEngagementEvent } from '../services/leadScoring';
+import { suppressEmail } from '../services/unsubscribe';
+import { Webhook } from 'svix';
 
 const r = Router();
+
+/** First recipient address of the event; a message id (no '@') is never treated as an address. */
+function firstAddress(e: any): string | null {
+  const a = e?.data?.to?.[0];
+  return typeof a === 'string' && a.includes('@') ? a : null;
+}
 
 // Resend webhook: delivered, opened, clicked, bounced, complained
 // This route is mounted publicly (no auth) so Resend can POST to it.
 // Docs: https://resend.com/docs/dashboard/webhooks/introduction
 r.post('/resend', async (req, res) => {
+  // Authenticate: Resend signs webhooks with Svix. Without this, anyone could POST fabricated bounce/complaint events.
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) {
+    log.error('[Webhook] RESEND_WEBHOOK_SECRET is not configured; refusing Resend events');
+    return res.status(503).json({ error: 'Webhook not configured', code: 'webhook_not_configured' });
+  }
+  let e: any;
   try {
-    const e = req.body;
+    e = new Webhook(secret).verify(req.body, {
+      'svix-id': req.headers['svix-id'] as string,
+      'svix-timestamp': req.headers['svix-timestamp'] as string,
+      'svix-signature': req.headers['svix-signature'] as string,
+    });
+  } catch {
+    return res.status(400).json({ error: 'Invalid signature', code: 'invalid_signature' });
+  }
+  try {
     const sendId = e?.data?.headers?.['X-Send-Id'];
     const type = (e?.type || '').replace('email.', '');
     if (!sendId || !type) return res.json({ ok: true });
@@ -105,7 +128,7 @@ r.post('/resend', async (req, res) => {
 
     // 4b. Classify bounces and auto-suppress hard bounces + complaints
     if (type === 'bounced') {
-      const recipientEmail = e?.data?.to?.[0] || e?.data?.email_id;
+      const recipientEmail = firstAddress(e);
       // Resend bounce payloads include bounce_type or error codes
       const bounceMessage = (e?.data?.bounce?.message || e?.data?.error?.message || '').toLowerCase();
       const bounceType = e?.data?.bounce?.type || '';
@@ -127,10 +150,9 @@ r.post('/resend', async (req, res) => {
       if (recipientEmail) {
         if (isHard) {
           // Only suppress on hard bounces
-          await supabase.from('email_unsubscribes')
-            .upsert({ email: recipientEmail, source: 'hard_bounce' }, { onConflict: 'email' })
-            .select();
-          log.info(`[Webhook] Hard bounce - suppressed ${recipientEmail}`);
+          const { error: supErr } = await suppressEmail(recipientEmail, 'hard_bounce');
+          if (supErr) log.error('[Webhook] could not suppress hard bounce', { err: supErr.message });
+          else log.info('[Webhook] Hard bounce - suppressed', { email: recipientEmail });
         } else {
           log.info(`[Webhook] Soft bounce for ${recipientEmail} - not suppressing`);
         }
@@ -138,12 +160,11 @@ r.post('/resend', async (req, res) => {
     }
 
     if (type === 'complained') {
-      const recipientEmail = e?.data?.to?.[0] || e?.data?.email_id;
+      const recipientEmail = firstAddress(e);
       if (recipientEmail) {
-        await supabase.from('email_unsubscribes')
-          .upsert({ email: recipientEmail, source: 'spam_complaint' }, { onConflict: 'email' })
-          .select();
-        log.info(`[Webhook] Spam complaint - suppressed ${recipientEmail}`);
+        const { error: supErr } = await suppressEmail(recipientEmail, 'spam_complaint');
+        if (supErr) log.error('[Webhook] could not suppress complaint', { err: supErr.message });
+        else log.info('[Webhook] Spam complaint - suppressed', { email: recipientEmail });
       }
     }
 

@@ -25,6 +25,7 @@ set('STRIPE_SECRET_KEY', 'sk_test_local_fixture');
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('hex');
 process.env.CLERK_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('base64');
 set('RESEND_API_KEY', 're_local_fixture');
+process.env.RESEND_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('base64');
 set('ANTHROPIC_API_KEY', 'sk-ant-local-fixture');
 set('ENCRYPTION_KEY', crypto.randomBytes(32).toString('hex'));
 set('REPORT_SECRET', 'local-report-secret');

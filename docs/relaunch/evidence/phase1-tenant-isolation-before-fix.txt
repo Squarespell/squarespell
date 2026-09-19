@@ -1,0 +1,26 @@
+PHASE 1 - tenantIsolation.test.ts (final version) against commit 127a493 (schema fix only; no route fixes)
+Command: cd backend && npx vitest run src/__tests__/phase1/tenantIsolation.test.ts
+Totals: 9 tests, 5 passed, 4 failed
+
+FAILED  tenant isolation sweep: B calls every authenticated route with A's ids no response discloses A's data (read routes)
+      AssertionError: expected [ …(3) ] to deeply equal []
+FAILED  tenant isolation sweep: B calls every authenticated route with A's ids B's mutating attempts leave every A-owned row untouched
+      AssertionError: expected [ …(4) ] to deeply equal []
+FAILED  explicit tenant-isolation contract (the flows that matter most) B cannot read, update, delete, publish, pause, duplicate or list A's quiz
+      AssertionError: patch /api/quizzes/<uuid> -> 500: expected [ 403, 404 ] to include 500
+FAILED  explicit tenant-isolation contract (the flows that matter most) B cannot read A's leads through any lead endpoint (list, detail, per-quiz list, export, dashboard feed, GDPR export)
+      AssertionError: /api/gdpr/consent/lead-A-PRIVATE-MARKER-7f3a%40victim.example: expected '[{"id":"aa872210-6a81-4ecd-9745-25293…' not to match /A-PRIVATE-MARKER|victim\.ex
+PASSED  explicit tenant-isolation contract (the flows that matter most) B cannot read A's analytics
+PASSED  explicit tenant-isolation contract (the flows that matter most) B cannot list or use A's integrations, brand kit, campaigns, saved templates
+PASSED  explicit tenant-isolation contract (the flows that matter most) slug guessing: a draft/archived quiz is not served publicly; a live quiz never exposes the owner id
+PASSED  explicit tenant-isolation contract (the flows that matter most) unauthenticated access to any resource id -> 401, not data
+PASSED  explicit tenant-isolation contract (the flows that matter most) IDOR probing with non-uuid / SQL-looking ids returns a clean 4xx, never a 500 with database internals
+
+Detail of the leaks / cross-tenant writes reported above (ids masked):
++   "GET /api/leads/<uuid>/tags -> 200 discloses A's data",
++   "GET /api/quizzes/<uuid>/translations/fr -> 200 discloses A's data",
++   "GET /api/gdpr/consent/lead-A-PRIVATE-MARKER-7f3a@victim.example -> 200 discloses A's data",
++   "PATCH /api/quizzes/<uuid>/outcomes/low/blocks/<uuid> -> 200 changed: result_page_blocks",
++   "DELETE /api/quizzes/<uuid>/outcomes/low/blocks/<uuid> -> 200 changed: result_page_blocks",
++   "DELETE /api/commerce/connections/<uuid> -> 500 changed: squarespace_products,product_outcome_mappings",
++   "POST /api/commerce/connections/<uuid>/sync -> 500 changed: squarespace_connections",
