@@ -7,7 +7,7 @@ Prepared 19 September 2026 against Relaunch Master Plan Revision 3.0, on branch 
 **How everything here can be re-run** (no network access to any live service is needed):
 
 ```bash
-cd backend && npm ci && npx vitest run          # 250+ tests: PGlite (real PostgreSQL engine) + local Clerk/Stripe/Resend/Anthropic fakes
+cd backend && npm ci && npx vitest run          # 254 tests: PGlite (real PostgreSQL engine) + local Clerk/Stripe/Resend/Anthropic fakes
 cd backend && npx tsc --noEmit && npm run build # type-check and production build
 cd frontend && npm ci && npx vitest run && npx tsc --noEmit && npm run build
 node scripts/config-inventory.mjs               # names-only configuration inventory (section 3)
@@ -19,7 +19,7 @@ SMOKE_CLERK_TOKEN=... node scripts/smoke/smoke.mjs --base-url <staging api>   # 
 ## 1. Summary and Phase 1 exit status
 
 * **32 defects were reproduced and are fixed in this PR** (3 P0, 24 P1, 5 P2), each with a failing test written first (section 6). A further **24 findings are recorded, not fixed** (section 8, all P2 or owner decisions).
-* The application code that could be exercised without production access now passes **@@BE_AFTER@@** backend tests (baseline on unmodified `main`: 57), frontend 9 tests (baseline 7), `tsc --noEmit` clean in both projects, and both production builds succeed. Pre-existing tests were kept and still pass.
+* The application code that could be exercised without production access now passes **254** backend tests (baseline on unmodified `main`: 57), frontend 9 tests (baseline 7), `tsc --noEmit` clean in both projects, and both production builds succeed. Pre-existing tests were kept and still pass.
 * **Phase 1 exit ("current system is safe enough to pilot and migrate"): NOT YET MET - conditional.** The code-level blockers found are fixed and covered by permanent tests, but the exit also depends on facts only the owner can establish and on actions that must not be taken by a code PR: the production database schema has to be compared with migration `031` and the missing objects applied deliberately, environment variables and webhooks have to be checked against section 3, and the smoke test has to pass against a preview/staging deployment. Until then the honest status is "code ready for review; production readiness unverified" (section 16).
 * The most important discovery: **a free-plan owner's quiz could never have captured a lead.** Inside the 14-day trial the lead route treats the account (stored as plan `free`) as "0 leads allowed" (D01); after day 14 it refuses with `trial_expired`; and on a database built from this repository the lead function cannot even run (D02). Phase 0 found 8 of 9 users on `free` and 0 leads on 9 live quizzes. That is an inference about production (the schema and the owners' trial dates were not inspected), but it is exactly what the code does.
 
@@ -172,34 +172,35 @@ Before this PR **nothing ever drained `email_sequence_queue`** (finding D16): fo
 
 "Before" = the same test run against the unmodified application code (harness enablers only; raw output in `docs/relaunch/evidence/`). "After" = this branch.
 
-| # | Flow / requirement | Test file(s) | Tests | Before fixes | After |
-|---|---|---|---|---|---|
-| 1 | Sign-up (first request creates one user; parallel first requests), sign-in (valid/expired/forged/garbage/missing JWT), sign-out (no token), session expiry, Clerk outage, DB outage during sign-in, Clerk webhook (valid, replay, bad signature, missing headers) | `phase1/auth.test.ts` | 15 | 6 pass / 9 fail | 15 pass |
-| 2 | Protected routes: every GET route that requires auth answers 401 without a token | `auth.test.ts` (route-introspection sweep, >10 routes) | in row 1 | pass | pass |
-| 3 | Creation mode 1 - manual, all five quiz modes; mode 2 - template payload round-trip; mode 3 - URL analysis (success, non-Squarespace 422, invalid URL, template id steering); mode 4 - `/api/generate`; mode 5 - funnel analyze -> build -> edit -> claim once; save-preview; duplicate | `phase1/creationModes.test.ts` | 33 | 22 pass / 9 fail (+1 test added later) | 33 pass |
-| 4 | Plan limits on every creation path (expired trial, core at 5, core 5-then-refused, concurrent creates, trial/pro/business unlimited) | `creationModes.test.ts`, `planEnforcement.test.ts` | in rows 3, 21 | fail on from-url, claim, save-preview | pass |
-| 5 | Save / reopen / edit, optimistic-lock 409, ownership fields immutable, archive/restore | `phase1/publicRuntime.test.ts` | 5 | 4 pass / 1 fail | 5 pass |
-| 6 | Preview (draft is owner-only, never public) and publish (validation, go live, pause, expired-trial refusal) | `publicRuntime.test.ts` | 4 | 3 pass / 1 fail | 4 pass |
-| 7 | Hosted-link runtime (`/api/quiz/:slug`: live only, no owner id, scheduling windows, 404 JSON) | `publicRuntime.test.ts` | 3 | pass | pass |
-| 8 | Embed runtime (CORS for third-party origins, credentialed CORS refused, `vercel.json` framing headers, loader asset) | `publicRuntime.test.ts` | 3 | pass | pass |
-| 9 | Lead submission (validation, honeypot, junk name, disposable e-mail, unknown quiz, GDPR gate, trial in/out, lead cap error shape) | `phase1/leadsAndScoring.test.ts` | 8 | fail (403 "Lead limit reached" / 500) | pass |
-| 10 | Result/outcome calculation (boundaries, forged outcome id, empty answers, hostile values, ties, multi-select, client_qualifier, browser/server parity) | `leadsAndScoring.test.ts` | 9 | fail (schema) | pass |
-| 11 | Lead visible to the owner (list, detail with score label, per-quiz list, export) | `leadsAndScoring.test.ts` | 1 | fail | pass |
-| 12 | Analytics (views/starts/completions once per session, bots, allow-list, per-question drop-off) | `publicRuntime.test.ts` | 5 | 2 pass / 3 fail | 5 pass |
-| 13 | Email lifecycle with a stub: lead confirmation, owner notification, provider error, unsubscribe (link, one-click, resubscribe), sequences (enqueue, send once, CAN-SPAM footer, unsubscribed skip, retry/backoff, max retries), GDPR deletion e-mail | `phase1/emailLifecycle.test.ts`, `phase1/resendWebhook.test.ts` | 12 + 5 | 0 pass / 11 fail; resend webhook 1 pass / 4 fail | 17 pass |
-| 14 | Quiz ownership and tenant isolation - B attacks every authenticated route that takes an id (>80 routes) with A's ids: response leaks, row snapshots of 27 tables, explicit quiz/lead/analytics/integration/brand-kit/campaign/template checks, slug guessing, unauthenticated access, hostile ids | `phase1/tenantIsolation.test.ts`, `phase1/identityKeys.test.ts` | 9 + 8 | 5 pass / 4 fail; identity keys 0 pass / 8 fail | 17 pass |
-| 15 | AI failure, timeout, recovery (hang, 5xx, 429, garbage; bounded time and attempts; fallback flagged; cost bound; anonymous throttle) | `phase1/aiResilience.test.ts` | 9 | 1 pass / 8 fail | 9 pass |
-| 16 | Repeated submission: retry, double click, 4 concurrent, per-IP throttle without Redis | `leadsAndScoring.test.ts` | 3 | fail | pass |
-| 17 | Stripe webhook: missing/wrong/tampered/stale signature, unset secret, idempotent duplicate, replay cannot roll back a plan, unknown types, non-Quiz events, plan sync, **missing plan mapping fails clearly**, unknown plan metadata, cancellation, DB failure -> 5xx and retry works | `phase1/billing.test.ts` | 21 | 8 pass / 13 fail | 21 pass |
-| 18 | Billing configuration: price per plan/period, unset price -> 503, unknown plan -> 400 (incl. `__proto__`), switch-plan, Stripe outage -> 502, documented env names | `billing.test.ts` | in row 17 | fail | pass |
-| 19 | Usage/plan limit table (free 0, core 5, trial/pro unlimited, lead caps, add-ons) and `/api/user/plan` | `phase1/planEnforcement.test.ts` | 3 | pass | pass |
-| 20 | Server-side gating: A/B testing, integrations, sequences, team seats (and regression guard for custom domain / white-label / branding) | `planEnforcement.test.ts` | 5 | 1 pass / 4 fail | pass |
-| 21 | Trial-length consistency (14 vs 7 days) across frontend copy and backend e-mails | `planEnforcement.test.ts` | 1 | fail ("7 days free") | pass |
-| 22 | Health (liveness works with the DB down; readiness 200/503, no leak), cron auth (9 endpoints x 2, unset secret, correct secret), async-error safety, migrations, table/column coverage, required functions | `phase1/foundation.test.ts` | 28 | 19 pass / 9 fail | 28 pass |
-| 23 | Logging redaction | `phase1/logging.test.ts` | 4 | 0 / 4 | 4 pass |
-| 24 | Smoke script (passes end to end, fails with exit 1 on a bad token, refuses live hosts with exit 3, needs env token) | `phase1/smoke.test.ts` | 4 | n/a (new) | 4 pass |
-| 25 | Configuration inventory drift guard | `phase1/configInventory.test.ts` | 2 | n/a (new) | 2 pass |
-| - | Pre-existing suites (validators, preview cache, mini lead app) | 4 files | 57 | 57 pass | 57 pass |
+| # | Flow / requirement | Test file(s) | Before fixes | After |
+|---|---|---|---|---|
+| 1 | Sign-up (first request creates one user; parallel first requests), sign-in (valid / expired / forged / garbage / missing JWT), sign-out (no token), session expiry, Clerk outage, DB outage during sign-in, Clerk webhook (valid, replay, bad signature, missing headers) | `auth.test.ts` | 9 of 15 failed | PASS |
+| 2 | Protected routes: every parameterless GET route that requires auth answers 401 without a token (route-introspection sweep) | `auth.test.ts` | pass | PASS |
+| 3 | Creation mode 1 manual (all five quiz modes, quota +1), mode 2 template payload round-trip, mode 3 URL analysis (success, non-Squarespace 422, invalid URL, template-id steering), mode 4 `/api/generate`, mode 5 funnel analyze -> build -> edit -> claim once, preview-generate, save-preview, duplicate | `creationModes.test.ts` | 9 failed (funnel needs `preview_drafts`; from-url/claim/save-preview unguarded; generate consumes quota) | PASS |
+| 4 | Usage / plan limits on every creation path: expired trial blocked, core blocked at 5, exactly 5 then refused, concurrent creates cannot exceed, trial/pro/business unlimited; limit table (free 0, core 5, trial/pro unlimited, leads 0/1,000/3,000/unlimited, add-ons) | `creationModes.test.ts`, `planEnforcement.test.ts` | from-url, claim, save-preview, duplicate count failed | PASS |
+| 5 | Save / reopen / edit, optimistic-lock 409, ownership/slug/status immutable through the body, archive / restore | `publicRuntime.test.ts` | non-owner PATCH answered 500 | PASS |
+| 6 | Preview (draft owner-only, never public) and publish (validation, go live, pause, expired-trial refusal) | `publicRuntime.test.ts` | expired-trial publish allowed | PASS |
+| 7 | Hosted-link runtime: live only, no owner id, scheduling windows, 404 JSON | `publicRuntime.test.ts` | pass | PASS |
+| 8 | Embed runtime: cross-origin CORS on the public endpoints, no credentialed CORS for arbitrary origins, `vercel.json` framing headers, loader asset | `publicRuntime.test.ts` | pass | PASS |
+| 9 | Lead submission: validation, honeypot, junk name, disposable e-mail, unknown quiz, GDPR gate, in-trial and expired-trial owners, cap error shape, monthly limit | `leadsAndScoring.test.ts` | every submission answered 403 "Lead limit reached" or 500 | PASS |
+| 10 | Result / outcome calculation: inclusive boundaries, forged outcome id ignored, empty answers, hostile values, ties (first match), multi-select, client_qualifier, browser/server parity | `leadsAndScoring.test.ts` | could not run (lead insert failed) | PASS |
+| 11 | Lead visible in the owner dashboard API: list, detail with score label, per-quiz list, export | `leadsAndScoring.test.ts` | 500 | PASS |
+| 12 | Analytics events (views / starts / completions once per session, bots not counted, allow-list, per-question drop-off, funnel) | `publicRuntime.test.ts` | 3 of 5 failed | PASS |
+| 13 | E-mail lifecycle with a stub: lead confirmation, owner notification, provider error, unsubscribe (link, one-click, resubscribe), sequences (enqueue, send once, CAN-SPAM footer, unsubscribed skip, retry/backoff, max retries), GDPR deletion e-mail, Resend delivery webhook | `emailLifecycle.test.ts`, `resendWebhook.test.ts` | 11 of 11 and 4 of 5 failed | PASS |
+| 14 | Quiz ownership and tenant isolation: B attacks every authenticated route that takes an id (>80 routes) with A's ids - response leaks and row snapshots of 27 tables; explicit quiz / lead / analytics / integrations / brand-kit / campaign / template checks; slug guessing; unauthenticated access; hostile ids; owner can actually use the features | `tenantIsolation.test.ts`, `identityKeys.test.ts` | 4 of 9 and 8 of 8 failed | PASS |
+| 15 | AI failure, timeout, recovery: hang, 5xx, 429, garbage; bounded time and attempts; fallback flagged; call-count cost bound; anonymous throttle | `aiResilience.test.ts` | 8 of 9 failed | PASS |
+| 16 | Repeated submission: retry, double click, 4 concurrent, per-IP throttle without Redis | `leadsAndScoring.test.ts` | failed | PASS |
+| 17 | Stripe webhook: missing / wrong / tampered / stale signature, unset secret, idempotent duplicate, replay cannot roll a plan back, unknown types, non-Quiz events, plan sync, **missing plan mapping fails clearly**, unknown plan metadata, cancellation, DB failure -> 5xx and retry applies | `billing.test.ts` | 9 failed | PASS |
+| 18 | Billing configuration: price per plan/period, unset price -> 503, unknown plan -> 400 (incl. `__proto__`), switch-plan, Stripe outage -> 502, documented env names | `billing.test.ts` | 4 failed | PASS |
+| 19 | Server-side gating: A/B testing, integrations, sequences, team seats (regression guard for custom domain, white-label, branding) | `planEnforcement.test.ts` | 4 failed | PASS |
+| 20 | Trial-length consistency (14 vs 7 days) across frontend copy and backend e-mails | `planEnforcement.test.ts` | failed ("7 days free") | PASS |
+| 21 | Health (liveness survives a DB outage; readiness 200 / 503 without detail), cron auth (9 endpoints x 2, unset secret, correct secret), async-error safety, migrations, table/column coverage, required functions | `foundation.test.ts` | 9 of 28 failed | PASS |
+| 22 | Logging redaction | `logging.test.ts` | 4 of 4 failed | PASS |
+| 23 | Smoke script: passes end to end, exit 1 on a bad token, exit 3 for live hosts, needs the env token | `smoke.test.ts` | new | PASS |
+| 24 | Configuration inventory drift guard | `configInventory.test.ts` | new | PASS |
+| 25 | Pre-existing suites (validators, preview cache, mini lead app) | 4 files, 57 tests | pass | PASS |
+
+**Per file (tests now / before fixes pass-fail):** aiResilience 9 / 1-8; auth 15 / 6-9; billing 21 / 8-13; configInventory 2 / new; creationModes 32 / 22-9 (31 tests at that point); emailLifecycle 12 / 0-11 (11 then; the GDPR-link test was added later); foundation 28 / 19-9; identityKeys 8 / 0-8; leadsAndScoring 18 / 2-16; logging 4 / 0-4; planEnforcement 10 / 3-7; publicRuntime 20 / 15-5; resendWebhook 5 / 1-4; smoke 4 / new; tenantIsolation 9 / 5-4; pre-existing 57 / 57-0. **Total now: 254 pass, 0 fail.** The first whole-suite run on unmodified application code (233 tests then) was 139 pass / 94 fail. `identityKeys`, `tenantIsolation` (final version) and `resendWebhook` "before" figures come from targeted runs against earlier commits, documented in the evidence files.
 
 Raw evidence: `docs/relaunch/evidence/phase1-tests-before-fixes.txt` (whole suite before any fix), `phase1-tenant-isolation-before-fix.txt`, `phase1-identity-keys-before-fix.txt`, `phase1-resend-webhook-before-fix.txt`.
 
@@ -244,7 +245,7 @@ Severity: **P0** = another customer's personal data exposed, or the core revenue
 
 ## 7. Fixes included in this PR
 
-Commits (`git log 67dd18d..HEAD`): (1) test harness + `app.ts` split + optional `CLERK_JWT_KEY`; (2) the Phase 1 tests, written before any fix; (3) migrations repaired + `031_schema_reconciliation.sql`; (4) tenant isolation, identity keys, auth codes, health, cron auth, async safety; (5) plan enforcement, lead capture, analytics, e-mail, AI bounds, Stripe safety, log redaction, frontend copy; (6) smoke test, config inventory, queue drain, GDPR link; (7) Resend webhook verification; (8) this document.
+Commits (`git log 67dd18d..HEAD`): (1) test harness (PGlite + local fakes), `app.ts` split, optional `CLERK_JWT_KEY`; (2) the Phase 1 tests, written before any fix; (3) migrations repaired + `031_schema_reconciliation.sql`; (4) tenant isolation, identity keys, auth error codes, health checks, cron auth, async-error safety; (5) plan enforcement, lead capture, analytics, e-mail lifecycle, AI bounds, Stripe safety, log redaction, frontend copy; (6) smoke test, configuration inventory, in-process queue drain, GDPR link; (7) Resend webhook verification, config drift guard, evidence, this document.
 
 Protection added (deliverable 6): (a) `/api/health/ready`; (b) redacting structured logger; (c) explicit failure states: `auth_provider_unavailable`, `db_unavailable`, `ai_timeout|ai_unavailable|ai_rate_limited|ai_bad_response`, `billing_provider_unavailable`, `plan_not_configured`, `plan_mapping_missing`, `webhook_not_configured`, `cron_not_configured`, `token_expired|token_invalid|auth_required`; (d) `scripts/smoke/`; (e) permanent test files listed in section 5.
 
@@ -285,7 +286,19 @@ Protection added (deliverable 6): (a) `/api/health/ready`; (b) redacting structu
 
 All commands run from a fresh clone in a temporary directory outside any project folder; dummy values were used only to isolate the frontend build from Clerk (`NEXT_PUBLIC_API_URL=http://localhost:3001 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<dummy> CLERK_SECRET_KEY=<dummy>`), identically on both sides. No lint tool is configured in either project (nothing to run, nothing skipped).
 
-@@VERIFY_TABLE@@
+| Command | `main` (67dd18d), unmodified | this branch |
+|---|---|---|
+| `cd backend && npm ci` | exit 0 | exit 0 (+1 dev dependency, `@electric-sql/pglite`) |
+| `cd backend && npx vitest run` | 4 files, **57 passed**, 0 failed | 19 files, **254 passed**, 0 failed |
+| `cd backend && npx tsc --noEmit` | exit 0 | exit 0 |
+| `cd backend && npm run build` (`tsc`; tests are excluded from compilation) | exit 0 | exit 0 |
+| `cd frontend && npm ci` | exit 0 | exit 0 |
+| `cd frontend && npx vitest run` | 1 file, **7 passed** | 2 files, **9 passed** |
+| `cd frontend && npx tsc --noEmit` | exit 0 | exit 0 |
+| `cd frontend && npm run build` (`next build`, env above) | exit 0 | exit 0 |
+| Lint | not configured (no script, no ESLint config) | not configured |
+
+One honest caveat: a run that executed the backend suite and the frontend suite **concurrently** made the *pre-existing* frontend test `TryFlowInner.test.tsx > reaches Stage 3` exceed its default 5 s timeout once (6.8 s under CPU load); three sequential re-runs and the recorded sequential run all pass. The backend suite was run several times; the final 254/254 result was stable across runs.
 
 Pre-existing failures on `main`: none (every baseline command passed), so there are no regressions to separate from pre-existing failures; all 57 baseline backend tests and 7 baseline frontend tests still pass unchanged.
 
