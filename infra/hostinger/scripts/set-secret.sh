@@ -16,6 +16,6 @@ case "$NAME" in
 esac
 case "$VALUE" in *"|"*|*$'\n'*) echo "value contains a character this helper cannot store safely"; exit 1;; esac
 TMP="$(mktemp "$ENV.XXXXXX")"
-awk -v n="$NAME" -v v="$VALUE" 'BEGIN{FS=OFS="="} $1==n {print n "=" v; next} {print}' "$ENV" > "$TMP"
+SECRET_VALUE="$VALUE" awk -v n="$NAME" 'BEGIN{FS=OFS="="} $1==n {print n "=" ENVIRON["SECRET_VALUE"]; next} {print}' "$ENV" > "$TMP"
 chmod 600 "$TMP"; mv "$TMP" "$ENV"
 echo "$NAME updated (mode $(stat -c %a "$ENV"))"
