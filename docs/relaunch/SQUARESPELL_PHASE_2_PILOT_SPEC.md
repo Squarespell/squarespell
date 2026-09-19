@@ -1,25 +1,32 @@
 # Squarespell Quiz - Phase 2 Pilot Specification (draft for owner approval)
 
-Status: **DRAFT - Phase 2 is NOT complete.** Prepared 19 September 2026 on branch `p2/paid-pilot-spec` (documentation only). Sources: Relaunch Master Plan Revision 3.0 (sections 4-13), Phase 0 results (merged in PR #62) and the Phase 1 results in draft PR #63, which stays open, draft, unmerged and undeployed; its Hostinger-staging checks remain open for the staging phase.
+Status: **DRAFT - Phase 2 is NOT complete.** Prepared 19 September 2026; **updated 20 September 2026 with the owner's decisions and corrections (section 0)** on branch `p2/paid-pilot-spec` (documentation only). Sources: Relaunch Master Plan Revision 3.0 (sections 4-13), Phase 0 results (merged in PR #62) and the Phase 1 results in draft PR #63, which stays open, draft, unmerged and undeployed; its Hostinger-staging checks remain open for the staging phase.
 
 Nothing here is implemented, published, sent, purchased or deployed. No outreach has been made and no prospect data is used. **Evidence labels:** *Verified* (observed in earlier phases), *Master plan* (Revision 3.0), *Recommendation* (this document's judgment), *Hypothesis* (to be tested in the pilot).
 
-## 0. Summary of what needs your approval
+## 0. Owner decisions and corrections (20 September 2026)
 
-| # | Decision | Recommendation | Section |
-|---|---|---|---|
-| D1 | Primary and secondary segment | Primary: **consultants and small agencies**; secondary: **coaches and course creators** | 2 |
-| D2 | Positioning statement | The statement in section 3 | 3 |
-| D3 | Pilot experience types | Ship **Lead qualifier, Service finder, Assessment/scorecard**; defer the rest | 4 |
-| D4 | Connection promise | Universal publishing guaranteed; honest per-platform steps; Squarespace = guided install, never "silent" | 6 |
-| D5 | Plan names | **Build, Launch, Growth, Agency** (retire Starter/Pro/Agency and Core/Pro/Business) | 7 |
-| D6 | Prices and limits | Launch $29 ($23 annual), Growth $79 ($63), Agency $199 ($159); limits in section 7 | 7 |
-| D7 | Trial and free-tier behaviour | 14-day Growth trial without a card, then Build (never locked out) | 7 |
-| D8 | Design-partner offer | Founding Partner: 40% off for 6 months, paid from day one | 11 |
-| D9 | Scope of the pilot release | The list in section 8.1 and the acceptance criteria in section 5 | 5, 8 |
-| D10 | Brand direction and landing copy | Section 8.3 and 8.4 | 8 |
-| D11 | Event model and privacy boundary | Section 9 | 9 |
-| D12 | SEO page map and content decisions | Section 10 (no page is published, moved or redirected) | 10 |
+### 0.1 Approved by the owner
+- Squarespell Quiz is a **Squarespell Limited** product, and **`squarespellquiz.com`** is its domain.
+- **Primary market:** consultants and boutique agencies. **Secondary market:** coaches and course creators.
+- Positioning around **qualified enquiries and service matching**.
+- **Pilot types:** Lead qualifier, Service finder, Assessment/scorecard.
+- The **Connect website** wording, with truthful platform-specific steps; **universal publishing is the guaranteed baseline**.
+- Plan-name system: **Build, Launch, Growth, Agency**.
+- **Fourteen-day Growth trial without a card.**
+- The event model and the **tenant-scoped privacy boundary**.
+- Brand and landing-page direction **as a working specification**.
+- Protection of the existing marketplace and the one-time/lifetime plugin.
+
+### 0.2 Corrections applied in this revision
+1. **Narrower pilot customer** - a consultant or boutique agency using Squarespell Quiz **on its own lead-generation website**; no client workspaces, white-label client management or large multi-site operations in the pilot (section 2.3).
+2. **One Founding Partner offer** - Growth-level access at **$49 per month**, fixed for six months, paid from the start, 14-day money-back, up to three sites, personal onboarding, two interviews, no long-term contract; **no Agency plan in the pilot** (section 11.3). The $29 / $79 / $199 prices are **post-pilot hypotheses that still require validation** (section 7.2).
+3. **Collected leads are never locked** - the lead-safety policy replaces every earlier "locked leads" statement (section 7.4).
+4. **Launch SEO reduced to 20 pages**; the 93-page map stays as a long-term, evidence-driven roadmap (section 10).
+5. **Connector order** fixed: universal hosted link, iframe and script; guided Squarespace; WordPress; Shopify; Wix; Webflow; Framer (section 6.0).
+
+### 0.3 Still open before any outreach
+Final owner approval of this corrected specification; a reviewed prospect list; authorization to contact anyone; five paying commitments; final acceptance tests; the Hostinger-staging checks carried from Phase 1. Details in sections 12 and 13. **Nothing has been sent, implemented, purchased or deployed.**
 
 ## 1. Identity and guardrails (confirmed by the owner)
 
@@ -34,7 +41,7 @@ Nothing here is implemented, published, sent, purchased or deployed. No outreach
 
 Ratings are qualitative judgments, not measurements. **There is no first-party demand data yet** (the database holds 9 users and 0 leads), so the ranking rests on the master plan's reasoning and on what a small team can reach quickly.
 
-| Criterion | Consultants and small agencies | Coaches and course creators | Beauty, wellness, local | Professional services |
+| Criterion | Consultants and boutique agencies | Coaches and course creators | Beauty, wellness, local | Professional services |
 |---|---|---|---|---|
 | Value of one lead | **High** (retainers, projects) | High (programs, cohorts) | Low to medium (appointments) | High, but regulated |
 | Existing website | Yes, any platform | Yes, often Squarespace/WordPress | Yes, often with a booking tool | Yes |
@@ -42,26 +49,30 @@ Ratings are qualitative judgments, not measurements. **There is no first-party d
 | Clear qualification or recommendation problem | **Yes** - "is this enquiry a fit?" and "which package?" | Yes - program fit, readiness | Yes - treatment finder, but the outcome is a booking in another tool | Yes, but wording limits apply to legal, health and finance topics |
 | Needs catalog synchronization | **No** | No | Often (booking or product data) | No |
 | Realistic path to five paying partners | **Strongest**: Squarespell's readers, designers, consultants and agencies (master plan section 11) | Good: existing coaching-focused articles and templates | Weaker: fragmented, low willingness to pay | Weaker: compliance review slows onboarding |
-| Extra advantage | Agencies multiply: one agency can bring several client sites | Simple funnels, fast learning | - | - |
+| Later opportunity | Boutique agencies may eventually bring client sites - a later Agency-plan capability, not part of the pilot | Simple funnels, fast learning | - | - |
 
 ### 2.2 Recommendation
 
-- **Primary segment: consultants and small agencies** - independent consultants, fractional specialists and studios of roughly 1-20 people (brand, web, marketing, operations, technology) that sell high-value services from an existing website and are overwhelmed by unqualified or unclear enquiries.
+- **Primary segment: consultants and boutique agencies** - independent consultants, fractional specialists and boutique studios of roughly 1-20 people (brand, web, marketing, operations, technology) that sell high-value services from an existing website and are overwhelmed by unqualified or unclear enquiries.
 - **Secondary segment (one only): coaches and course creators** - program-fit, readiness and stage-finder experiences that end in a booking or a list join.
 - **Not the initial target:** ecommerce catalogs (product finders need catalog sync), beauty, wellness and local services (booking integrations, lower lead value), professional services in regulated fields (stricter copy and review), enterprises, and "every small business".
 - **Finding:** the current template catalog (16 templates) is mostly consumer and lifestyle (photography, restaurant, wedding, travel, skincare and similar). Only "Coaching Readiness" and "Video Brand Personality" fit the pilot segment, so the pilot needs a **curated vertical pack** for consultants and agencies (section 4.3). This is a build item, not research.
+
+### 2.3 Initial customer definition (owner-approved correction)
+
+The initial paid-pilot customer is **a consultant or boutique agency using Squarespell Quiz on its own lead-generation website.** The pilot does **not** promise full client workspaces, white-label client management or large multi-site operations; those remain **later Agency-plan capabilities**. The Founding Partner offer's "up to three sites" covers the customer's own properties (for example a main site, a landing-page site or a second brand), not client sites.
 
 ## 3. Lock the paid-pilot promise
 
 ### 3.1 Positioning statement (one statement for approval)
 
-> **For consultants and small agencies who lose time to unqualified enquiries, Squarespell Quiz reads your existing website, drafts a lead-qualification or service-matching experience in your own words for you to review and edit, connects it to your site with the best method your platform supports, records every answer, outcome and consent, and shows which questions and outcomes lead to enquiries worth answering.**
+> **For consultants and boutique agencies who lose time to unqualified enquiries, Squarespell Quiz reads your existing website, drafts a lead-qualification or service-matching experience in your own words for you to review and edit, connects it to your site with the best method your platform supports, records every answer, outcome and consent, and shows which questions and outcomes lead to enquiries worth answering.**
 
 ### 3.2 The promise, broken down
 
 | Part | What we promise |
 |---|---|
-| Who | Consultants and small agencies with an existing website; coaches and course creators second |
+| Who | Consultants and boutique agencies with an existing website; coaches and course creators second |
 | Commercial problem | Too many unsuitable enquiries and unclear package choices, so sales time is wasted |
 | How Squarespell learns | The customer enters their URL; Squarespell reads selected public pages and builds an **editable business profile with sources and confidence**; the customer corrects it. Nothing is invented and nothing is used without review. |
 | What it generates | Questions, scoring or routing logic, outcomes and a call to action for a chosen goal, from an approved plan and a vertical playbook; every draft is editable and must be approved before publish |
@@ -225,18 +236,43 @@ Common rules for every stage: no endless loaders (each wait has a visible progre
 
 The button says **Connect website** on every platform. What follows must state exactly what that platform permits. Universal publishing is the guaranteed baseline. **Verified** means the live page (or a runtime ping from the connected domain) confirms the experience is present. Platform limitations come from the official documentation reviewed in Phase 0 and are re-checked before each connector ships.
 
+### 6.0 Connector order and advertising rule (owner-approved)
+
+| Order | Connector | Pilot status | Advertising rule |
+|---|---|---|---|
+| 1 | Universal **hosted link, iframe and script** | **In the pilot - guaranteed baseline** | Advertise |
+| 2 | **Guided Squarespace installation and verification** | **In the pilot** - for the existing Squarespace audience | Advertise as *guided*; never imply Squarespace allows automatic page insertion |
+| 3 | WordPress plugin and block | After the pilot | **Do not advertise as available** until it works and has completed the necessary review |
+| 4 | Shopify app and theme extension | After pilot evidence | **Do not advertise as available** until it works and has completed App Store review |
+| 5 | Wix | Later | Not advertised |
+| 6 | Webflow | Later | Not advertised |
+| 7 | Framer | Later | Not advertised |
+
+Guided Squarespace support can be available in the pilot **without pretending Squarespace permits automatic insertion**: the customer places a supported Code Block or Code Injection snippet, and Squarespell generates it, guides each step and verifies the live result.
+
 ### 6.1 Universal HTML and custom websites (pilot - guaranteed baseline)
 
 | Item | Specification |
 |---|---|
 | Authorization | None |
-| Installation method | Copy one snippet (an element plus a loader script) into the page or template; or share the hosted link; placement options: inline, popup, floating button, direct link |
+| Installation method | Share the **hosted link**, use an **iframe**, or copy the **script** (an element plus a loader) into the page or template; placement options: inline, popup, floating button, direct link |
 | Customer action | Paste the snippet and publish the site (2 to 4 steps) |
 | Automated action | Generate the snippet, check the domain, monitor the page |
 | Live verification | Load the page and find the element and loader; accept the first runtime ping from the connected domain |
 | Disconnect and recovery | Delete the snippet; the status becomes "Needs attention" then "Disconnected"; warn about content-security-policy and consent-manager blocking |
 
-### 6.2 WordPress (after the pilot: block or shortcode plugin)
+### 6.2 Squarespace (pilot: guided installation and verification)
+
+| Item | Specification |
+|---|---|
+| Authorization | Optional connection of the site for identification; **Squarespace's documented public APIs do not permit inserting content into an ordinary page layout**, so there is no silent insertion |
+| Installation method | The correct snippet for a **Code Block** (page inline) or **Code Injection** (site-wide); both need a Squarespace plan that allows custom code (Core, Plus, Advanced or a legacy Business plan - re-verify before publishing this copy) |
+| Customer action | Copy the snippet, open the page editor, add a Code Block or open Code Injection, paste, save (5 to 8 steps) |
+| Automated action | Identify the site, generate the correct snippet for 7.1 or 7.0, guide each step with screenshots, verify installation |
+| Live verification | Page check as in 6.1 |
+| Disconnect and recovery | The customer removes the snippet; the status flips on the next check; unpublishing the experience shows a graceful "temporarily unavailable" state. Squarespace support does not cover custom code; say so |
+
+### 6.3 WordPress (after the pilot; not advertised until it works and passes review)
 
 | Item | Specification |
 |---|---|
@@ -247,7 +283,7 @@ The button says **Connect website** on every platform. What follows must state e
 | Live verification | Front-end page check as in 6.1 |
 | Disconnect and recovery | Deactivate or uninstall the plugin (uninstall hook); revoke the pairing; the status updates on the next check |
 
-### 6.3 Shopify (after the pilot: theme app extension)
+### 6.4 Shopify (after pilot evidence; not advertised until it works and passes review)
 
 | Item | Specification |
 |---|---|
@@ -257,17 +293,6 @@ The button says **Connect website** on every platform. What follows must state e
 | Automated action | OAuth, deep link, block code, uninstall webhook, live check |
 | Live verification | Storefront page check; not available on checkout pages |
 | Disconnect and recovery | Uninstall the app; blocks left in the theme stop working and the status shows "Needs attention" |
-
-### 6.4 Squarespace (pilot: guided installation)
-
-| Item | Specification |
-|---|---|
-| Authorization | Optional connection of the site for identification; **Squarespace's documented public APIs do not permit inserting content into an ordinary page layout**, so there is no silent insertion |
-| Installation method | The correct snippet for a **Code Block** (page inline) or **Code Injection** (site-wide); both need a Squarespace plan that allows custom code (Core, Plus, Advanced or a legacy Business plan - re-verify before publishing this copy) |
-| Customer action | Copy the snippet, open the page editor, add a Code Block or open Code Injection, paste, save (5 to 8 steps) |
-| Automated action | Identify the site, generate the correct snippet for 7.1 or 7.0, guide each step with screenshots, verify installation |
-| Live verification | Page check as in 6.1 |
-| Disconnect and recovery | The customer removes the snippet; the status flips on the next check; unpublishing the experience shows a graceful "temporarily unavailable" state. Squarespace support does not cover custom code; say so |
 
 ### 6.5 Wix, Webflow and Framer (later; each after its own review)
 
@@ -287,7 +312,7 @@ States: **Not connected**, **Awaiting installation**, **Verified**, **Needs atte
 
 Three names exist today: Stripe holds **Starter, Pro, Agency** (created 6 April 2026); the application uses **Core, Pro, Business** (plus legacy aliases); the master plan proposes **Free/Build, Launch, Growth, Agency**.
 
-**Recommendation: use the master plan's names - Build, Launch, Growth, Agency - everywhere.** Reasons: they describe progression (build it, launch it, grow it); "Core" and "Business" collide with Squarespace's own plan names (Core, Plus, Advanced, Business), which would confuse the acquisition channel and the plan-requirement copy in section 6.4; "Starter/Pro" are generic; one system removes the three-way mismatch.
+**Recommendation: use the master plan's names - Build, Launch, Growth, Agency - everywhere.** Reasons: they describe progression (build it, launch it, grow it); "Core" and "Business" collide with Squarespace's own plan names (Core, Plus, Advanced, Business), which would confuse the acquisition channel and the plan-requirement copy in section 6.2; "Starter/Pro" are generic; one system removes the three-way mismatch.
 
 | Marketing name | Internal plan key | Legacy application key | Stripe today (do not change now) |
 |---|---|---|---|
@@ -298,7 +323,7 @@ Three names exist today: Stripe holds **Starter, Pro, Agency** (created 6 April 
 
 Existing accounts (Verified): 8 on `free` map to Build; 1 manually assigned `agency` account stays as it is until the owner decides. Entitlements are derived from the internal plan key held in the application, never from a Stripe amount; a missing key-to-price mapping fails clearly (already implemented in draft PR #63).
 
-### 7.2 Recommended prices (USD; currency to be confirmed by the owner)
+### 7.2 Post-pilot price hypotheses (USD; still require validation)
 
 | Plan | Monthly | Annual (per month, billed yearly) | Annual total | Annual saving |
 |---|---|---|---|---|
@@ -308,12 +333,12 @@ Existing accounts (Verified): 8 on `free` map to Build; 1 manually assigned `age
 | Agency | **$199** | **$159** | $1,908 | about 20% |
 | Enterprise | custom | custom | custom | later, on demand |
 
-These are the master plan's hypotheses, kept as recommended launch prices; **they remain hypotheses until the pilot shows willingness to pay, AI cost and support cost per activated customer** (master plan economics dashboard).
+These are the master plan's hypotheses. They are **post-pilot pricing hypotheses that still require validation**: they stay unconfirmed until the pilot shows willingness to pay, AI cost and support cost per activated customer (master plan economics dashboard). **During the pilot the only paid offer is the Founding Partner offer (section 11.3); the Agency plan is not offered because client workspaces and multi-site management are not ready.**
 
 ### 7.3 Trial structure
 
-- **Self-serve:** Build is free permanently. Every new account also gets a **14-day Growth trial, no card required**, matching the trial already built and quoted on the public pages (the sign-up page's "7 days" wording was corrected in PR #63). When the trial ends the account moves to **Build and is never locked out**; live experiences above Build's limit become **paused** (kept, unpublished, leads preserved), not deleted. *This replaces the current behaviour in which an expired free account cannot publish or capture leads; it is a later implementation item.*
-- **Design partners:** paid from day one (no trial) with a 14-day money-back promise (proposal, section 11).
+- **Self-serve:** Build is free permanently. Every new account also gets a **14-day Growth trial, no card required**, matching the trial already built and quoted on the public pages (the sign-up page's "7 days" wording was corrected in PR #63). When the trial ends the account moves to **Build and is never locked out**; live experiences above Build's limit become **paused for new visitors** (kept and editable by the owner; results and leads stay visible and exportable), not deleted. *This replaces the current behaviour in which an expired free account cannot publish or capture leads; it is a later implementation item.*
+- **Design partners:** paid from day one (no trial) under the owner-approved Founding Partner offer, with a 14-day money-back promise (section 11.3).
 
 ### 7.4 Limits and entitlements (Recommendation; proposals marked *)
 
@@ -321,7 +346,7 @@ These are the master plan's hypotheses, kept as recommended launch prices; **the
 |---|---|---|---|---|
 | Live experiences | 1 | 3 | 10 | 50 |
 | Completions per month (one account-wide meter) | 25 | 300 | 2,000 | 10,000 |
-| Connected sites | 1 | 1 | 3* | 25* client sites |
+| Connected sites | 1 | 1 | 3* | 25* client sites (a later Agency capability, not offered in the pilot) |
 | Seats | 1 | 1 | 2* | 5* |
 | Full AI drafts per month* | 3 | 15 | 40 | 150 (pooled) |
 | AI edit suggestions | fair use | fair use | fair use | fair use |
@@ -338,12 +363,13 @@ These are the master plan's hypotheses, kept as recommended launch prices; **the
 
 **AI rules.** A full draft (or full regeneration) uses one AI draft; small edit suggestions are fair use. Each plan has a monthly AI budget with spend alerts; failed or duplicate requests are not charged to the customer; cost per published experience is tracked (master plan section 7).
 
-**Grace behaviour when limits are reached.**
-1. Warn at 80% and at 100% of the completion allowance, in the app and by email.
-2. **Never break a published experience and never delete data.** Visitors keep completing it.
-3. Beyond the allowance, leads are still stored but shown as **locked** (count visible, details hidden) until the owner upgrades or the next month begins. Nothing is lost.
-4. Live-experience and site limits are enforced at publish time with an upgrade prompt; existing published experiences are not switched off mid-month.
-5. Optional overage packs may be added after cost data exists (not priced here).
+**Lead-safety policy when limits are reached (owner-approved principle: customer data is never held hostage for an upgrade).**
+1. **Previously collected leads, answers, results and quizzes always remain visible and exportable** (CSV), on every plan, after any downgrade, and after collection is paused. **Nothing is deleted** because a limit is reached. Leads are never hidden, masked or held back.
+2. **Warnings first.** The customer is warned in the app and by email at 80% of the monthly completion allowance, at 100%, and at 80% of the grace allowance. Each warning states how many completions remain and exactly what will happen next.
+3. **A small, documented grace allowance.** After 100%, collection continues for a grace allowance of 10% of the plan's monthly completions (minimum 10): Build +10, Launch +30, Growth +200, Agency +1,000. *(Proposal for owner approval.)*
+4. **After the grace allowance, new lead collection pauses** until the customer upgrades or the next monthly period begins - the customer's choice. The customer is warned clearly **before** collection pauses and again when it does. While paused, visitors can still complete the experience and see their result and call to action; the contact-details step is skipped and no new lead is stored.
+5. Live-experience and site limits are enforced at publish time with an upgrade prompt; experiences already published are not switched off mid-month.
+6. Optional overage packs may be added after cost data exists (not priced here).
 
 **Not promised until verified:** Zapier and API-key access (the code exists but appeared unmounted in Phase 1); A/B testing (a later feature).
 
@@ -356,7 +382,7 @@ Stripe is changed only after approval, in a controlled step: new products named 
 ### 8.1 Pilot release scope (Recommendation, from the master plan's "pilot release" list)
 
 **In the paid pilot:** website analysis with an editable, source-aware profile; goal selection and recommended type; AI draft plus the curated pilot pack; a reliable editor (content, logic, outcomes, style, lead fields) with autosave, validation, recovery and desktop and mobile preview; direct link, inline, popup and floating-button installs; the universal runtime with live-domain verification; the Squarespace guided install; lead capture with consent, CSV, webhook and **one** email/CRM path; core funnel and drop-off analytics; the Stripe subscription lifecycle and usage visibility; retry, cancel, timeout and template fallback.
-**After pilot evidence:** WordPress plugin, Shopify extension, branded reports, deeper integrations, agency workspaces, A/B testing and AI optimization, other native connectors, team roles and localization.
+**After pilot evidence:** WordPress plugin, Shopify extension, branded reports, deeper integrations, agency workspaces, A/B testing and AI optimization, other native connectors, team roles and localization. **Client workspaces, white-label client management and large multi-site operations are later Agency-plan capabilities and are not promised in the pilot.**
 **Deferred:** replacing Clerk; building an email platform or CRM; dozens of formats; browser automation on customer sites; enterprise procurement; a large generic template library.
 
 ### 8.2 Navigation and page specifications
@@ -371,7 +397,7 @@ Stripe is changed only after approval, in a controlled step: new products named 
 | Experiences list | Drafts and published items with type, site, status, completions | **New experience** | empty, loading, filtered-empty, error, paused | card list with the status badge and one overflow menu | list semantics, labelled menus, keyboard row actions |
 | Editor | Edit content, logic, outcomes, design, lead fields; preview; publish | **Publish** (disabled with the reason until valid) | loading, saved, saving, autosave failed, validation errors, conflict, preview test mode | bottom tab bar for sections; preview as a full-screen sheet | keyboard-complete, logic map with a text alternative, error summary linked to fields |
 | Connected Sites | Domains, platform, placements, verification, disconnect | **Connect website** | none, awaiting, verified, needs attention, disconnected | steps as an accordion | step list with progress text; status not by colour alone |
-| Leads | Responses, qualification, consent, export, deletion | **Export CSV** | empty (with install status), loading, error, locked-over-limit | list with a detail sheet | table headers, accessible export and delete confirmation |
+| Leads | Responses, qualification, consent, export, deletion | **Export CSV** | empty (with install status), loading, error, collection paused (existing leads stay visible and exportable) | list with a detail sheet | table headers, accessible export and delete confirmation |
 | Analytics | Funnel, drop-off, outcomes, actions, sources, versions | change the date range or experience | empty (explains why), loading, low-sample, stale | charts collapse to ranked lists | every chart has a data table alternative |
 | Integrations | Webhook, email/CRM, analytics hooks | **Add a webhook** | not connected, connected, failing (with retries), disabled | single column | secrets never displayed after saving; test button with a result message |
 | Billing and usage | Plan, usage meters, invoices, upgrade | **Upgrade** (when near a limit) | trial, active, past due, limit reached, cancelled | meters stack | meters expose value and limit as text |
@@ -408,21 +434,21 @@ Squarespell Quiz reads your existing website, drafts a quiz, assessment or servi
 - *Service finder* - help visitors choose the package that fits, with the reason.
 - *Assessment* - give visitors a useful score and a clear next step in exchange for their details.
 
-**Made for people who sell services.** Consultants, freelancers and small agencies - and coaches and course creators - who already have a website and want better conversations, not more form fills.
+**Made for people who sell services.** Consultants, freelancers and boutique agencies - and coaches and course creators - who already have a website and want better conversations, not more form fills.
 
-**Connect it honestly.** *Any website:* copy one snippet or share a link. *Squarespace:* we generate the right code, guide you through placing it, and check that it is live - Squarespace does not let apps add it for you. *WordPress and Shopify:* dedicated tools are on the way. We tell you exactly what each step involves before you start.
+**Connect it honestly.** *Any website:* copy one snippet or share a link. *Squarespace:* we generate the right code, guide you through placing it, and check that it is live - Squarespace does not let apps add it for you. *WordPress and Shopify:* use the snippet today; dedicated tools are planned and are not yet available. We tell you exactly what each step involves before you start.
 
 **Your leads stay yours.** Answers, outcomes and consent are recorded for you only. Export or delete them whenever you like. We do not reuse your private content.
 
 **Measure what works.** See views, completions, leads and calls to action, the question where people leave, and suggestions based on what your visitors actually do.
 
-**Pricing preview.** Build - free - one live experience. Launch - $29 a month. Growth - $79 a month. Agency - $199 a month. Save about 20% billed yearly. [See full pricing]
+**Pricing.** Start free with Build. Paid plans are being shaped with our founding partners; full pricing is published on the pricing page once it has been validated. [See pricing]
 
 **FAQ**
 - *Do I need to code?* No. Websites that allow custom code can use the snippet we generate.
 - *Will it work on my platform?* Every website can use the snippet or link. Some platforms need a paid plan that allows custom code - we tell you which before you start.
 - *Do you write things I did not approve?* No. You review and approve everything, and we show where website details came from.
-- *What happens if I reach my limit?* Your experience keeps working and your leads are kept safe. We tell you before it happens.
+- *What happens if I reach my limit?* Your existing quizzes, results and leads always stay visible and exportable, and nothing is deleted. We warn you well before your limit, allow a small grace allowance, and only then pause new lead collection unless you upgrade - with a clear notice first.
 - *Who owns the leads?* You do.
 - *Is Squarespell Quiz part of Squarespell?* Yes. Squarespell Limited builds and runs it.
 
@@ -482,41 +508,67 @@ Lead records, answers, consent text and private content are tenant-scoped and ne
 
 The new domain gets its own sitemap, robots configuration, canonicals, structured data, Search Console and Bing properties and GA4 property, created later after DNS verification is authorized. It builds its own platform-neutral authority around quizzes, assessments, product finders, calculators, recommendations and lead qualification. Platform pages state exact steps and limits (section 6). Deferred experience types (product finder, calculator, survey) get pages only when the capability exists, so the site never claims what the product cannot do.
 
-### 10.1 Proposed page map - totals
+### 10.1 Launch wave - 20 excellent pages (owner-approved reduction to 15-20 pages)
 
-**Total pages proposed: 93** (Wave 1 pilot launch: 46; Wave 2 after pilot evidence: 18; Wave 3 later: 29). Wave 1 is the set needed to launch and to support paid design partners.
+**Launch discipline.** No thin, repetitive or AI-generated pages are published merely to reach a page count. Every launch page has a single job, real content, a real screenshot or sample, an owner and a review before publish. Pages are combined where a separate page would be thin. Later pages are added only when evidence (search demand, customer questions, connector availability, pilot results) supports them, and a connector page is published as "available" only when that connector works and has completed any required review.
 
-| Section | Wave 1 (pilot launch) | Wave 2 (after pilot evidence) | Wave 3 (later) | Total |
+| # | Path | Launch page | How it is kept lean |
+|---|---|---|---|
+| 1 | `/` | Homepage | one page, one job |
+| 2 | `/product/how-it-works` | How it works (covers website analysis, editing and publishing in one page) | one page, one job |
+| 3 | `/product/ai-creation` | AI creation | one page, one job |
+| 4 | `/solutions/lead-qualification` | Lead qualification | one page, one job |
+| 5 | `/solutions/service-finder` | Service finder | one page, one job |
+| 6 | `/solutions/assessments-and-scorecards` | Assessments and scorecards | one page, one job |
+| 7 | `/platforms` | Connect your website (hub; also covers the universal hosted link, iframe and script) | combines "Connect website" and "Universal HTML/custom websites" |
+| 8 | `/platforms/squarespace` | Squarespace (guided installation and verification) | one page, one job |
+| 9 | `/platforms/wordpress` | WordPress (states plainly: universal method now, plugin planned, not yet available) | one page, one job |
+| 10 | `/industries/consultants-and-boutique-agencies` | Consultants and boutique agencies | combines "Consultants" and "Agencies" |
+| 11 | `/industries/coaches-and-course-creators` | Coaches and course creators | one page, one job |
+| 12 | `/templates` | Templates (one hub showing the pilot pack; no separate template pages at launch) | one page, one job |
+| 13 | `/examples` | Examples (labelled samples until real, permission-based examples exist) | one page, one job |
+| 14 | `/integrations` | Integrations overview (webhook, CSV, the one email/CRM path) | one page, one job |
+| 15 | `/pricing` | Pricing (Build, the Founding Partner invitation, and validated prices only) | one page, one job |
+| 16 | `/resources` | Blog and resources hub | one page, one job |
+| 17 | `/security` | Security and privacy overview | one page, one job |
+| 18 | `/privacy` | Privacy policy | one page, one job |
+| 19 | `/terms` | Terms | one page, one job |
+| 20 | `/contact` | Contact and support | combines "Contact" and "Support" (a dedicated /support help centre follows in Wave 2) |
+
+### 10.2 Long-term roadmap - 93 pages (Wave 1: 20; Wave 2: 30; Wave 3: 43)
+
+The full map is kept as a **long-term roadmap, not a launch commitment**. Wave 2 follows the pilot evidence; Wave 3 is later and evidence-driven.
+
+| Section | Wave 1 (launch) | Wave 2 (after pilot evidence) | Wave 3 (later, evidence-driven) | Total |
 |---|---|---|---|---|
 | Homepage | 1 | 0 | 0 | 1 |
-| Product | 8 | 0 | 0 | 8 |
+| Product | 2 | 5 | 1 | 8 |
 | Experience types | 3 | 1 | 3 | 7 |
 | Platforms | 3 | 2 | 3 | 8 |
-| Industries | 3 | 2 | 1 | 6 |
-| Templates | 7 | 0 | 16 | 23 |
-| Examples | 0 | 2 | 2 | 4 |
-| Integrations | 4 | 0 | 1 | 5 |
+| Industries | 2 | 1 | 3 | 6 |
+| Templates | 1 | 6 | 16 | 23 |
+| Examples | 1 | 1 | 2 | 4 |
+| Integrations | 1 | 3 | 1 | 5 |
 | Pricing | 1 | 0 | 0 | 1 |
-| Resources | 4 | 2 | 0 | 6 |
-| Documentation | 7 | 2 | 3 | 12 |
-| Comparisons | 0 | 4 | 0 | 4 |
-| Company | 5 | 3 | 0 | 8 |
-| **Total** | **46** | **18** | **29** | **93** |
+| Resources | 1 | 3 | 2 | 6 |
+| Documentation | 0 | 5 | 7 | 12 |
+| Comparisons | 0 | 0 | 4 | 4 |
+| Company | 4 | 3 | 1 | 8 |
+| **Total** | **20** | **30** | **43** | **93** |
 
-
-### 10.2 Every proposed page
+#### Every roadmap page
 
 | Path | Page | Wave |
 |---|---|---|
 | `/` | Homepage | 1 |
-| `/product/how-it-works` | How it works | 1 |
-| `/product/website-analysis` | Website analysis | 1 |
+| `/product/how-it-works` | How it works (covers website analysis, editing and publishing in one page) | 1 |
 | `/product/ai-creation` | AI creation | 1 |
-| `/product/editor-and-logic` | Editor and logic | 1 |
-| `/product/publishing-and-verification` | Publishing and verification | 1 |
-| `/product/lead-capture-and-consent` | Lead capture and consent | 1 |
-| `/product/analytics-and-optimization` | Analytics and optimization | 1 |
-| `/product/outcomes-and-scoring` | Outcomes and scoring | 1 |
+| `/product/website-analysis` | Website analysis (detail page) | 2 |
+| `/product/editor-and-logic` | Editor and logic | 2 |
+| `/product/publishing-and-verification` | Publishing and verification | 2 |
+| `/product/lead-capture-and-consent` | Lead capture and consent | 2 |
+| `/product/analytics-and-optimization` | Analytics and optimization | 2 |
+| `/product/outcomes-and-scoring` | Outcomes and scoring | 3 |
 | `/solutions/lead-qualification` | Lead qualification | 1 |
 | `/solutions/service-finder` | Service finder | 1 |
 | `/solutions/assessments-and-scorecards` | Assessments and scorecards | 1 |
@@ -524,27 +576,27 @@ The new domain gets its own sitemap, robots configuration, canonicals, structure
 | `/solutions/product-finder` | Product finder | 3 |
 | `/solutions/calculators` | Calculators | 3 |
 | `/solutions/surveys` | Personalized surveys | 3 |
-| `/platforms` | Platforms hub | 1 |
-| `/platforms/html` | Any website (HTML) | 1 |
-| `/platforms/squarespace` | Squarespace | 1 |
-| `/platforms/wordpress` | WordPress | 2 |
-| `/platforms/shopify` | Shopify | 2 |
+| `/platforms` | Connect your website (hub; also covers the universal hosted link, iframe and script) | 1 |
+| `/platforms/squarespace` | Squarespace (guided installation and verification) | 1 |
+| `/platforms/wordpress` | WordPress (states plainly: universal method now, plugin planned, not yet available) | 1 |
+| `/platforms/html` | Any website (HTML) - dedicated detail page | 2 |
+| `/platforms/shopify` | Shopify (published only when the connector works and is reviewed) | 2 |
 | `/platforms/wix` | Wix | 3 |
 | `/platforms/webflow` | Webflow | 3 |
 | `/platforms/framer` | Framer | 3 |
-| `/industries` | Industries hub | 1 |
-| `/industries/consultants-and-agencies` | Consultants and agencies | 1 |
+| `/industries` | Industries hub | 2 |
+| `/industries/consultants-and-boutique-agencies` | Consultants and boutique agencies | 1 |
 | `/industries/coaches-and-course-creators` | Coaches and course creators | 1 |
-| `/industries/beauty-wellness-local` | Beauty, wellness and local services | 2 |
-| `/industries/professional-services` | Professional services | 2 |
+| `/industries/beauty-wellness-local` | Beauty, wellness and local services | 3 |
+| `/industries/professional-services` | Professional services | 3 |
 | `/industries/ecommerce` | Ecommerce | 3 |
-| `/templates` | Templates hub | 1 |
-| `/templates/client-fit-qualifier` | Client-fit qualifier | 1 |
-| `/templates/service-package-finder` | Service package finder | 1 |
-| `/templates/website-audit-scorecard` | Website audit scorecard | 1 |
-| `/templates/readiness-assessment` | Readiness assessment | 1 |
-| `/templates/budget-and-timeline-qualifier` | Budget and timeline qualifier | 1 |
-| `/templates/coaching-program-fit` | Coaching program fit | 1 |
+| `/templates` | Templates (one hub showing the pilot pack; no separate template pages at launch) | 1 |
+| `/templates/client-fit-qualifier` | Pilot template: client fit qualifier | 2 |
+| `/templates/service-package-finder` | Pilot template: service package finder | 2 |
+| `/templates/website-audit-scorecard` | Pilot template: website audit scorecard | 2 |
+| `/templates/readiness-assessment` | Pilot template: readiness assessment | 2 |
+| `/templates/budget-and-timeline-qualifier` | Pilot template: budget and timeline qualifier | 2 |
+| `/templates/coaching-program-fit` | Pilot template: coaching program fit | 2 |
 | `/templates/photography-style` | Existing catalog template: photography style | 3 |
 | `/templates/restaurant-menu` | Existing catalog template: restaurant menu | 3 |
 | `/templates/fitness-goal` | Existing catalog template: fitness goal | 3 |
@@ -561,48 +613,48 @@ The new domain gets its own sitemap, robots configuration, canonicals, structure
 | `/templates/video-fitness-challenge` | Existing catalog template: video fitness challenge | 3 |
 | `/templates/video-cooking-style` | Existing catalog template: video cooking style | 3 |
 | `/templates/video-brand-personality` | Existing catalog template: video brand personality | 3 |
-| `/examples` | Examples hub (permission-based, real data only) | 2 |
+| `/examples` | Examples (labelled samples until real, permission-based examples exist) | 1 |
 | `/examples/example-1` | Example 1 (after a design partner approves) | 2 |
 | `/examples/example-2` | Example 2 (after a design partner approves) | 3 |
 | `/examples/example-3` | Example 3 (after a design partner approves) | 3 |
-| `/integrations` | Integrations hub | 1 |
-| `/integrations/webhooks` | Webhooks | 1 |
-| `/integrations/csv-export` | CSV export | 1 |
-| `/integrations/email-crm` | The one shipped email/CRM path | 1 |
+| `/integrations` | Integrations overview (webhook, CSV, the one email/CRM path) | 1 |
+| `/integrations/webhooks` | Webhooks | 2 |
+| `/integrations/csv-export` | CSV export | 2 |
+| `/integrations/email-crm` | The shipped email/CRM path | 2 |
 | `/integrations/zapier` | Zapier (only if verified) | 3 |
-| `/pricing` | Pricing | 1 |
+| `/pricing` | Pricing (Build, the Founding Partner invitation, and validated prices only) | 1 |
 | `/resources` | Blog and resources hub | 1 |
-| `/resources/qualify-leads-with-a-quiz` | Guide: qualifying enquiries with an interactive experience | 1 |
-| `/resources/service-finder-guide` | Guide: helping visitors choose a package | 1 |
-| `/resources/assessment-scorecard-guide` | Guide: building a useful assessment | 1 |
-| `/resources/measuring-your-funnel` | Guide: measuring an interactive funnel | 2 |
-| `/resources/consent-and-lead-data` | Guide: consent and lead data | 2 |
-| `/docs` | Documentation hub | 1 |
-| `/docs/getting-started` | Getting started | 1 |
-| `/docs/install/html` | Install on any website | 1 |
-| `/docs/install/squarespace` | Install on Squarespace | 1 |
-| `/docs/install/wordpress` | Install on WordPress | 2 |
-| `/docs/install/shopify` | Install on Shopify | 2 |
+| `/resources/qualify-leads-with-a-quiz` | Guide: qualifying enquiries with an interactive experience | 2 |
+| `/resources/service-finder-guide` | Guide: helping visitors choose a package | 2 |
+| `/resources/assessment-scorecard-guide` | Guide: building a useful assessment | 2 |
+| `/resources/measuring-your-funnel` | Guide: measuring an interactive funnel | 3 |
+| `/resources/consent-and-lead-data` | Guide: consent and lead data | 3 |
+| `/docs` | Documentation hub | 2 |
+| `/docs/getting-started` | Getting started | 2 |
+| `/docs/install/html` | Install on any website | 2 |
+| `/docs/install/squarespace` | Install on Squarespace | 2 |
+| `/docs/leads-and-consent` | Leads and consent | 2 |
+| `/docs/analytics-events` | Analytics and events | 3 |
+| `/docs/webhooks` | Webhooks | 3 |
+| `/docs/install/wordpress` | Install on WordPress | 3 |
+| `/docs/install/shopify` | Install on Shopify | 3 |
 | `/docs/install/wix` | Install on Wix | 3 |
 | `/docs/install/webflow` | Install on Webflow | 3 |
 | `/docs/install/framer` | Install on Framer | 3 |
-| `/docs/leads-and-consent` | Leads and consent | 1 |
-| `/docs/analytics-events` | Analytics and events | 1 |
-| `/docs/webhooks` | Webhooks | 1 |
-| `/compare` | Comparisons hub | 2 |
-| `/compare/typeform` | Squarespell Quiz vs Typeform | 2 |
-| `/compare/outgrow` | Squarespell Quiz vs Outgrow | 2 |
-| `/compare/interact` | Squarespell Quiz vs Interact | 2 |
-| `/security` | Security | 1 |
-| `/privacy` | Privacy | 1 |
+| `/compare` | Comparisons hub | 3 |
+| `/compare/typeform` | Squarespell Quiz vs Typeform | 3 |
+| `/compare/outgrow` | Squarespell Quiz vs Outgrow | 3 |
+| `/compare/interact` | Squarespell Quiz vs Interact | 3 |
+| `/security` | Security and privacy overview | 1 |
+| `/privacy` | Privacy policy | 1 |
 | `/terms` | Terms | 1 |
-| `/contact` | Contact | 1 |
-| `/support` | Support | 1 |
+| `/contact` | Contact and support | 1 |
+| `/support` | Support / help centre | 2 |
 | `/status` | Status | 2 |
-| `/changelog` | Changelog | 2 |
+| `/changelog` | Changelog | 3 |
 | `/about` | About Squarespell | 2 |
 
-### 10.3 Existing quiz-related content - decisions (documentation only)
+### 10.3 Existing quiz-related content - decisions (documentation only; destinations may sit in later waves and are used only after those pages exist)
 
 Rule (Phase 0): quiz content with traffic or backlinks must not simply disappear from `squarespell.com`. Before any article moves, decide keep, update, migrate, merge or retire for that URL; a moved page needs an equivalent destination on the new domain, a tested 301 redirect, updated internal links, updated sitemap and canonicals, and Search Console monitoring. **Nothing is moved, re-linked or redirected now.** Marketplace and lifetime-plugin pages stay on `squarespell.com`.
 
@@ -627,7 +679,7 @@ Nothing in this section has been sent, posted or scheduled. No private WordPress
 
 ### 11.1 Ideal prospect
 
-An owner or lead of a consultancy, studio or small agency (about 1-20 people) - or a coach or course creator - with **a live website, real visitor traffic, a service offer that is public and understandable, a clear qualification or recommendation problem, the ability to install or test, willingness to give feedback, and willingness to pay from the start.** Not a fit: catalog-driven ecommerce, regulated-advice firms needing legal review, prospects with no site or no traffic, prospects who want it free.
+An owner or lead of a consultancy, studio or boutique agency (about 1-20 people) - or a coach or course creator - with **a live website, real visitor traffic, a service offer that is public and understandable, a clear qualification or recommendation problem, the ability to install or test, willingness to give feedback, and willingness to pay from the start.** Not a fit: catalog-driven ecommerce, regulated-advice firms needing legal review, prospects with no site or no traffic, prospects who want it free. The pilot customer is a consultant or boutique agency using Squarespell Quiz on **its own lead-generation website**; anyone wanting client workspaces, white-label client management or large multi-site operations is told these are later Agency-plan capabilities.
 
 ### 11.2 Qualification questions (asked in a short screening conversation or form)
 
@@ -642,9 +694,21 @@ An owner or lead of a consultancy, studio or small agency (about 1-20 people) - 
 9. Are you willing to pay a discounted founding price from the first day, and to give two short feedback interviews?
 10. May we use aggregated, anonymous results, and - only with your later permission - your story?
 
-### 11.3 Pilot offer (Recommendation for approval)
+### 11.3 Founding Partner offer (owner-approved terms, 20 September 2026; outreach is NOT yet authorized)
 
-**Founding Partner:** Growth plan (or Agency for an agency with three or more client sites) at **40% off for the first six months** - Growth about $47 a month instead of $79; Agency about $119 instead of $199 - billed from day one, with a **14-day money-back promise**, cancel any time, and standard pricing thereafter with 30 days' notice. In return: a 30-minute kick-off, two 30-minute interviews, installation within 14 days, and permission to use **aggregated anonymous** results (private content is never reused). A named case study is optional and separately approved. Personal onboarding and priority support are included. *Numbers are proposals for owner approval; the discount must not be advertised publicly.*
+**One offer only:**
+- **Growth-level access** (the Growth entitlements in section 7.4: 10 live experiences, 2,000 completions a month, up to three sites, no branding, one email/CRM path, advanced analytics)
+- **$49 per month**, **price fixed for the first six months**
+- **Paid from the beginning** - no trial
+- **14-day money-back promise**
+- **Up to three sites** (the customer's own)
+- **Personal onboarding**
+- **Two feedback interviews**
+- **No long-term contract** - cancel any time
+
+**Not offered in the pilot:** the Agency plan, client workspaces, white-label client management and large multi-site operations - these are later Agency-plan capabilities and are not ready.
+**In return:** installation within 14 days and permission to use **aggregated, anonymous** results (private content is never reused); a named case study is optional and separately approved.
+**After the six months:** the standard Growth price applies (post-pilot hypothesis $79 a month, still requiring validation) with at least 30 days' written notice before any change - *wording for owner confirmation*. The offer is not advertised publicly; public plan prices remain post-pilot hypotheses.
 
 ### 11.4 Onboarding structure
 
@@ -685,7 +749,7 @@ Every friction point, support minute and platform-specific problem is logged aga
 >
 > I run Squarespell. We are building Squarespell Quiz: it reads your existing website and drafts a short qualifier or service finder in your own words, helps you add it to your site, and shows which questions lead to enquiries worth answering. You approve everything before it goes live.
 >
-> I am working with a small group of consultants and agencies as founding partners. It is paid from the start at a reduced price, and in return I ask for two short feedback conversations. If you would like to see it on [their site], I can show you in 20 minutes.
+> I am working with a small group of consultants and boutique agencies as founding partners. It is paid from the start at a reduced price, and in return I ask for two short feedback conversations. If you would like to see it on [their site], I can show you in 20 minutes.
 >
 > Worth a look? If not, no problem - just let me know and I will not follow up.
 >
@@ -703,40 +767,35 @@ Every friction point, support minute and platform-specific problem is logged aga
 4. **Funnel:** 15-20 qualified prospects, 5-10 conversations, 5 or more paying commitments.
 5. **Never:** use private WooCommerce customer data, buy contact lists, or message anyone before the owner authorizes it.
 
-## 12. Decisions requiring the owner's approval
+## 12. Owner decisions
 
+### 12.1 Approved (recorded 20 September 2026)
+Squarespell Quiz as a Squarespell Limited product at `squarespellquiz.com`; primary market consultants and boutique agencies, secondary coaches and course creators; positioning around qualified enquiries and service matching; pilot types Lead qualifier, Service finder and Assessment/scorecard; the "Connect website" wording with truthful platform steps and universal publishing as the baseline; plan names Build, Launch, Growth, Agency; the 14-day Growth trial without a card; the event model and tenant-scoped privacy boundary; brand and landing-page direction as a working specification; protection of the marketplace and the lifetime plugin; the five corrections in section 0.2.
+
+### 12.2 Remaining decisions before any outreach
 | # | Decision | Recommended answer |
 |---|---|---|
-| 1 | Primary and secondary segment | Consultants and small agencies; secondary coaches and course creators |
-| 2 | Positioning statement (section 3.1) | Approve as written or edit |
-| 3 | Banned-claims list (section 3.3) | Approve |
-| 4 | Pilot experience types | Lead qualifier, Service finder, Assessment/scorecard; defer the rest |
-| 5 | Build the consultant/agency curated pack (section 4.3) | Approve as pilot scope |
-| 6 | Connection promise and Squarespell "guided, not silent" wording | Approve |
-| 7 | Connector order for the pilot | Universal HTML and Squarespace guided; WordPress and Shopify after pilot evidence |
-| 8 | Plan names | Build, Launch, Growth, Agency |
-| 9 | Prices and annual discount | $29 / $79 / $199 monthly; about 20% off annually; currency to confirm |
-| 10 | Trial and free-tier behaviour | 14-day Growth trial, then Build; never locked out; paused not deleted |
-| 11 | Limits, AI allowances and grace rules (section 7.4) | Approve or adjust the proposed (*) numbers |
-| 12 | Founding Partner offer (section 11.3) | 40% off for six months, paid from day one, 14-day money-back |
-| 13 | Brand direction, landing copy and design components (section 8) | Approve direction; visual design follows |
-| 14 | Event model and privacy boundary (section 9) | Approve |
-| 15 | SEO page map and content decisions (section 10) | Approve as a plan; nothing moves without a later, separate authorization |
-| 16 | Authorization to start outreach | **Not requested yet** - separate instruction required |
+| 1 | Final approval of this corrected specification | Approve after reading sections 2.3, 6.0, 7.4, 10.1 and 11.3 |
+| 2 | Founding Partner terms wording: refund handling, cancellation, what happens after month six, currency and tax | Confirm the wording in 11.3 and settle currency (USD or GBP) |
+| 3 | Grace allowance values and warning thresholds | 10% of the monthly allowance (minimum 10); warnings at 80% and 100% of the allowance and at 80% of the grace |
+| 4 | Launch-wave list of 20 pages | Approve the list in 10.1 |
+| 5 | Public pricing page at launch | Show Build and the founding-partner invitation only; publish plan prices after validation |
+| 6 | A reviewed prospect list (names, sources, consent basis per channel) | Owner reviews each entry; none exists yet |
+| 7 | **Authorization before outreach** (channel, message text, sender, compliance check) | **Not requested yet** |
+| 8 | Final acceptance tests | Approve the test plan after the specification is final |
 
-## 13. Phase 2 status - NOT COMPLETE
+## 13. Phase 2 status - STILL OPEN
 
 | Exit-gate item | Status |
 |---|---|
-| Owner approval of positioning | Pending (decisions 1-3) |
-| Owner approval of scope | Pending (decisions 4-7) |
-| Owner approval of pricing | Pending (decisions 8-11) |
-| Owner approval of brand direction and copy | Pending (decision 13) |
+| Final owner approval of the corrected specification | **Pending** |
+| A reviewed prospect list | **Not started** - no list exists; none has been reviewed |
+| Authorization before outreach | **Not granted** |
 | Five paying commitments | **0** - no outreach authorized; none secured |
-| Final tests and acceptance criteria | Acceptance criteria drafted per journey stage (section 5); the final test plan follows approval |
-| Remaining Phase 1 Hostinger-staging checks | **Open** (authenticated browser flows, Stripe test-mode checkout and webhooks, real email, real AI generation and timeouts, CORS and cookie behaviour, scheduler jobs, backups and monitoring, migration rehearsal on a copy of production data) - tracked in draft PR #63 |
+| Final acceptance tests | Acceptance criteria drafted per journey stage (section 5); the final approved test plan is pending |
+| Hostinger staging checks carried from Phase 1 | **Open** (authenticated browser flows, Stripe test-mode checkout and webhooks, real email, real AI generation and timeouts, CORS and cookie behaviour, scheduler jobs, backups and monitoring, migration rehearsal on a copy of production data) - tracked in draft PR #63 |
 
-Draft PR #63 stays open, draft, unmerged and undeployed. This document changes no code, Stripe object, Clerk setting, DNS record or production system.
+**PR #64 is not to be merged yet.** Draft PR #63 stays open, draft, unmerged and undeployed. This document changes no code, Stripe object, Clerk setting, DNS record or production system.
 
 ## 14. Sources and evidence notes
 
