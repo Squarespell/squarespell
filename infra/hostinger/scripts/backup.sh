@@ -3,7 +3,7 @@
 # Dumps go to /srv/squarespell-quiz/backups (a host directory, OUTSIDE the live database volume) as
 # AES-256 encrypted files. The key is generated once into backups/.backup.key (mode 600) and is never printed.
 # IMPORTANT: this is NOT an independent backup. An off-server destination is still required before production.
-# Retention: newest 7 dumps. Schedule (as squarespell):  17 3 * * *  /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/backup.sh
+# Retention: newest 7 dumps. Schedule (as squarespell):  17 3 * * *  bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/backup.sh
 set -euo pipefail
 umask 077
 ROOT=/srv/squarespell-quiz
