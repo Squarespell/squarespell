@@ -43,7 +43,7 @@ export const PLANS: Plan[] = [
     limits: { quizzes: '5', leads: '1,000', emails: '1,000' },
     included: [
       'AI quiz generation from your URL',
-      'Squarespace one-click connect',
+      'Embed on Squarespace and custom-code websites',
       'Remove Squarespell Quiz branding',
       'Branching logic',
       'Weighted scoring',
@@ -107,7 +107,7 @@ export const PLANS: Plan[] = [
     included: [
       // Core essentials
       'AI quiz generation from your URL',
-      'Squarespace one-click connect',
+      'Embed on Squarespace and custom-code websites',
       'Remove Squarespell Quiz branding',
       'Branching logic & weighted scoring',
       'Quiz scheduling',
@@ -124,7 +124,7 @@ export const PLANS: Plan[] = [
       'Custom domain for quizzes',
       'Team seats (3 included, $5/seat extra)',
       'API access',
-      'Priority support (email + chat)',
+      'Priority email support',
       'Dedicated onboarding call',
     ],
     excluded: [],
