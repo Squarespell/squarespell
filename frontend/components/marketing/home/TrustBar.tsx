@@ -1,7 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
+import { LOGOS } from './logoAssets';
+
+const PLATFORMS = [
+  { name: 'Squarespace', logo: LOGOS.squarespace },
+  { name: 'WordPress', logo: LOGOS.wordpress },
+  { name: 'Shopify', logo: LOGOS.shopify },
+  { name: 'Wix', logo: LOGOS.wix },
+  { name: 'Webflow', logo: LOGOS.webflow },
+  { name: 'Framer', logo: LOGOS.framer },
+];
 
 export function TrustBar() {
   return (
-    <div className="trust-bar"><span className="trust-label">Add it to the site you already use</span><div className="logo-viewport"><div className="logo-track" aria-label="Website platforms"><div className="platform-logo"><img src="https://cdn.simpleicons.org/squarespace/111111" alt="Squarespace logo" />Squarespace <small>connect</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/wordpress/21759B" alt="WordPress logo" />WordPress <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/shopify/7AB55C" alt="Shopify logo" />Shopify <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/wix/0C0C0C" alt="Wix logo" />Wix <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/webflow/146EF5" alt="Webflow logo" />Webflow <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/framer/0055FF" alt="Framer logo" />Framer <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/squarespace/111111" alt="" />Squarespace <small>connect</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/wordpress/21759B" alt="" />WordPress <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/shopify/7AB55C" alt="" />Shopify <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/wix/0C0C0C" alt="" />Wix <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/webflow/146EF5" alt="" />Webflow <small>embed</small></div><div className="platform-logo"><img src="https://cdn.simpleicons.org/framer/0055FF" alt="" />Framer <small>embed</small></div></div></div></div>
+    <div className="trust-bar"><span className="trust-label">Add it to the site you already use</span><div className="logo-viewport"><div className="logo-track" aria-label="Website platforms">{[0, 1].map((copy) => PLATFORMS.map((p) => (
+      <div className="platform-logo" key={copy + p.name} aria-hidden={copy === 1 ? true : undefined}><img src={p.logo} alt={copy === 0 ? p.name + ' logo' : ''} />{p.name} <small>embed</small></div>
+    )))}</div></div></div>
   );
 }
