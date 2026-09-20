@@ -2,6 +2,26 @@
 
 Status: **private production stack built and verified; NOT public.** No DNS, Vercel, Render, staging or squarespell.com change was made by this work. This record contains no secret values (variable names and status only).
 
+## Update, 21 September 2026: final preparation results (supersedes the older sections below where they differ)
+
+Aggregate counts and status only. No secret, connection string, customer name or email address appears here.
+
+**Deployment state.** `main` is `e23497e` (PRs #63, #65 and #67 merged). Render auto-deploy is **Off** and the `squarespell-api` service is unchanged (still deployment `ba31ab6`, healthy). Vercel Production is pinned to `vercel-production-hold` and its deployment is unchanged. The Hostinger production stack was rebuilt from `e23497e` with every credential in place and remains private (`127.0.0.1:18080` only). Staging is unchanged.
+
+**Credentials configured on the server (names and status only).** Clerk production publishable and secret keys (live prefixes); `ENCRYPTION_KEY` set to the existing Quiz production value (64 characters); Anthropic key from a dedicated "Squarespell Quiz Production" workspace with a $50 monthly spend limit (workspace-scoped, no expiry, rotate manually); Resend sending-only key restricted to `mail.squarespellquiz.com`; Stripe restricted live key with only Checkout Sessions, Customer Portal and Subscriptions (write), Invoices, Prices, Products, Customers and PaymentIntents (read) and Charges and Refunds (write). `STRIPE_LIVE_AUTHORISED=yes` is set (authorises using the live key; it does not authorise a payment). The Stripe webhook is **not** created and email scheduling jobs remain off. Verified sender: `hello@mail.squarespellquiz.com`.
+
+**DNS records added (verification only).** Resend: one TXT (DKIM) and two CNAME records under `mail`. Clerk: five CNAME records (`clerk`, `accounts`, `clkmail`, `clk._domainkey`, `clk2._domainkey`). The root, `www`, `staging` and `api-staging` records are unchanged and there is no `api` record. Resend domain: Verified. Clerk: Frontend API and Account portal Verified, Email 3 of 3 verified.
+
+**Clerk user migration (option A).** Source (development instance) 12 users: 12 with a verified primary email, 8 with a linked social login, 0 banned. Production instance: 12 users created with verified emails, no invitations or emails sent, no passwords migrated (customers sign in with email verification, password reset or their social login). Old-to-new ID mapping: 12 rows (stored in the production database and an owner-only file). Database references remapped in one transaction: 9 database users migrated, 0 orphans, 0 old references remaining. The old Clerk instance was not changed.
+
+**Supabase to Hostinger (project omwtmvzdqmxewdswapgq).** A temporary read-only role was used for the export and then dropped (0 remaining). 51 source tables inventoried and restored with identical row counts on all 51; production has 52 tables (the extra one is `stripe_webhook_events`, added by migration 031). 51 foreign keys, 0 unvalidated, 0 orphaned child rows. Migration 031 applied; earlier migrations recorded as applied. Aggregates: 9 database users, 31 quizzes, 0 leads, 0 stored integrations, 0 Stripe customer references, 0 Stripe subscription references (1 user is on a paid plan without Stripe references). Supabase was only read and remains the rollback source.
+
+**Private test results (from the VPS).** PASS: frontend 200 with noindex; API readiness (database up); embed script 200; `/api/cron/*` 404; protected route 401; no secret-shaped strings in any production container log or in the served pages; Anthropic request 200; one internal test email delivered to the account owner only; all 12 Stripe prices match the specification (amounts, intervals, live mode); live Checkout Session created and expired immediately (no payment); Clerk production sign-in token to session token to backend acceptance (a disposable test user, deleted afterwards); authenticated AI quiz generation and quiz creation and listing (test data removed, counts back to baseline); encryption round-trip with the production key; container restart with data persistence; daily backup created and restore test passed (52 tables, identical counts) as the deployment user.
+
+**Not tested.** Billing-portal session creation: there is no safe test customer and the restricted key can only read customers. The legacy ciphertext check: the migrated data contains no stored integrations. Stripe and Clerk webhooks: not created by design. A real payment: not attempted.
+
+**Remaining blockers before public launch.** (1) Stripe webhook endpoint and secret, and the Clerk webhook endpoint and secret, created only after the domain is live. (2) DNS for the root, `www` and `api` hostnames and the public TLS edge. (3) Removal of noindex. (4) The Stripe restricted key value briefly appeared in an automation screenshot during creation; roll it (Stripe: API keys, Roll key) before launch to be safe. (5) A safe test customer if a billing-portal test is wanted. (6) Owner approval for each of these.
+
 - Deployed commit: `a42bcbfd5845bd8158bb304dad5a3358e3badc6c` (`main`, merge of PR #65).
 - Location on the VPS: `/opt/squarespell-quiz/production` (staging is untouched at `/srv/squarespell-quiz/staging`).
 - Public domain after final approval: `squarespellquiz.com` (app) and `api.squarespellquiz.com` (API), mirroring staging's `staging.` and `api-staging.` layout.
@@ -96,7 +116,7 @@ Not yet done: the dedicated Quiz webhook endpoint and its signing secret (create
 - Restart policy `unless-stopped` on every container. No public listener on 5432, 3000, 3001 or 6379.
 - **Not testable yet:** sign-in and authenticated quiz creation (need the real Clerk keys), AI generation (Anthropic key), email (Resend), Stripe checkout and webhooks (keys and webhook).
 
-## 9. Incident to review (found during this work)
+## 9. Incident (resolved: Render auto-deploy is now Off)
 
 The live API on Render (`squarespell-api`, auto-deploy from `main`) **automatically deployed the merge of PR #63** (`ba31ab6`). The Vercel freeze covered only Vercel and this was not checked at the time. The live API was healthy afterward (`/api/health/ready` reported the database up). Any further merge to `main` will redeploy the Render production backend, including this docs PR, so merge nothing to `main` until Render auto-deploy is turned off or the owner accepts the deploy. Disabling it is a production-account change that needs approval.
 
