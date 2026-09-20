@@ -43,7 +43,7 @@ export const PLANS: Plan[] = [
     limits: { quizzes: '5', leads: '1,000', emails: '1,000' },
     included: [
       'AI quiz generation from your URL',
-      'Squarespace one-click connect',
+      'Embed on Squarespace and custom-code websites',
       'Remove Squarespell Quiz branding',
       'Branching logic',
       'Weighted scoring',
@@ -77,7 +77,7 @@ export const PLANS: Plan[] = [
       'Everything in Core',
       'A/B testing',
       'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
+      'Integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets',
       'Webhooks',
       'Advanced analytics',
       'Per-question drop-off analysis',
@@ -107,7 +107,7 @@ export const PLANS: Plan[] = [
     included: [
       // Core essentials
       'AI quiz generation from your URL',
-      'Squarespace one-click connect',
+      'Embed on Squarespace and custom-code websites',
       'Remove Squarespell Quiz branding',
       'Branching logic & weighted scoring',
       'Quiz scheduling',
@@ -116,7 +116,7 @@ export const PLANS: Plan[] = [
       // Core excluded → now included ✓
       'A/B testing',
       'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
+      'Integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets',
       'Advanced analytics & per-question drop-off',
       'Custom CSS',
       // Pro excluded → now included ✓
@@ -124,7 +124,7 @@ export const PLANS: Plan[] = [
       'Custom domain for quizzes',
       'Team seats (3 included, $5/seat extra)',
       'API access',
-      'Priority support (email + chat)',
+      'Priority email support',
       'Dedicated onboarding call',
     ],
     excluded: [],

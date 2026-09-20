@@ -19,7 +19,7 @@ const MATRIX = [
       { label: 'Leads per month', core: '1,000', pro: '3,000', business: 'Unlimited' },
       { label: 'Emails per month', core: '1,000', pro: '3,000', business: 'Unlimited' },
       { label: 'AI quiz generation', core: true, pro: true, business: true },
-      { label: 'Squarespace one-click connect', core: true, pro: true, business: true },
+      { label: 'Embed on Squarespace and custom-code websites', core: true, pro: true, business: true },
       { label: 'Lead dashboard + CSV export', core: true, pro: true, business: true },
       { label: 'Lead & email add-on packs', core: true, pro: true, business: 'N/A' },
     ],
@@ -69,8 +69,7 @@ const MATRIX = [
     rows: [
       { label: 'Email support', core: true, pro: true, business: true },
       { label: 'Priority email support', core: false, pro: true, business: true },
-      { label: 'Priority support (email + chat)', core: false, pro: false, business: true },
-      { label: 'Team seats', core: false, pro: false, business: '3 included' },
+            { label: 'Team seats', core: false, pro: false, business: '3 included' },
       { label: 'API access', core: false, pro: false, business: true },
       { label: 'Dedicated onboarding call', core: false, pro: false, business: true },
     ],
@@ -134,7 +133,7 @@ const FAQS = [
   },
   {
     q: 'What integrations are included with Pro?',
-    a: 'Pro includes Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets, and webhooks. Connect your existing marketing stack with zero setup friction.',
+    a: 'Pro includes integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets, plus webhooks. Each one needs to be set up with your own account, key or endpoint. See the integrations page for the status of each.',
   },
 ];
 
@@ -501,7 +500,7 @@ function PricingInner() {
           <div style={{ background: 'var(--acc-bg)', border: '1.5px solid rgba(13,115,119,.20)', borderRadius: 20, padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 64 }}>
             <div>
               <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--acc)', marginBottom: 4 }}>Start with a 14-day Pro trial</div>
-              <div style={{ fontSize: 15, color: 'var(--t3)', lineHeight: 1.55 }}>Unlimited quizzes, A/B testing, all integrations, advanced analytics. No credit card required.</div>
+              <div style={{ fontSize: 15, color: 'var(--t3)', lineHeight: 1.55 }}>Unlimited quizzes, A/B testing, integrations and webhooks, advanced analytics. No credit card required.</div>
             </div>
             <button className="plan-cta primary" style={{ width: 'auto', margin: 0, padding: '13px 32px' }} onClick={function () { if (!isSignedIn) router.push('/sign-up'); else router.push('/dashboard'); }}>
               {isSignedIn ? 'Go to dashboard' : 'Start free trial'}
