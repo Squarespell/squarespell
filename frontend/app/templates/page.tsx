@@ -54,6 +54,9 @@ function getCategoryIcon(cat: string): string {
   return CATEGORY_ICONS[cat] || CATEGORY_ICONS['All'];
 }
 
+// Render-only formatting: template records stay untouched.
+const plainText = (s: string) => s.replace(/\s*\u2014\s*/g, ', ');
+
 export default function TemplatesGalleryPage() {
   var categories = useMemo(function() { return getTemplateCategories(); }, []);
   var [activeFilter, setActiveFilter] = useState('All');
@@ -91,6 +94,20 @@ export default function TemplatesGalleryPage() {
   return (
     <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: "'Inter', system-ui, sans-serif" }}>
 
+      <style>{`
+        .tpl-main { min-width: 0; }
+        @media (max-width: 700px) {
+          .tpl-layout { flex-direction: column; }
+          .tpl-side { width: 100% !important; position: static !important; height: auto !important; border-right: 0 !important; border-bottom: 1px solid #e5e7eb; padding: 16px 0 !important; display: flex; flex-wrap: wrap; gap: 6px; }
+          .tpl-side > div { width: 100%; padding: 0 16px !important; margin-bottom: 4px !important; }
+          .tpl-side > button { width: auto !important; }
+          .tpl-main { padding: 20px 16px 48px !important; }
+          .tpl-bar { flex-wrap: wrap; gap: 12px; }
+          .tpl-search { width: 100%; }
+          .tpl-input { width: 100% !important; box-sizing: border-box; }
+        }
+      `}</style>
+
       {/* Header */}
       <header style={{
         padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -115,10 +132,10 @@ export default function TemplatesGalleryPage() {
         </div>
       </header>
 
-      <div style={{ display: 'flex', maxWidth: 1280, margin: '0 auto' }}>
+      <div className="tpl-layout" style={{ display: 'flex', maxWidth: 1280, margin: '0 auto' }}>
 
         {/* Sidebar — category filters */}
-        <aside style={{
+        <aside className="tpl-side" style={{
           width: 240, flexShrink: 0, background: COLORS.sidebarBg,
           borderRight: '1px solid ' + COLORS.border, padding: '24px 0',
           position: 'sticky', top: 49, height: 'calc(100vh - 49px)', overflowY: 'auto',
@@ -165,10 +182,10 @@ export default function TemplatesGalleryPage() {
         </aside>
 
         {/* Main content */}
-        <main style={{ flex: 1, padding: '24px 32px 64px' }}>
+        <main className="tpl-main" style={{ flex: 1, padding: '24px 32px 64px' }}>
 
           {/* Search + count bar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div className="tpl-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 700, color: COLORS.text, margin: '0 0 4px' }}>
                 {activeFilter === 'All' ? 'All Templates' : activeFilter + ' Templates'}
@@ -177,13 +194,13 @@ export default function TemplatesGalleryPage() {
                 {filtered.length} template{filtered.length !== 1 ? 's' : ''} available
               </p>
             </div>
-            <div style={{ position: 'relative' }}>
+            <div className="tpl-search" style={{ position: 'relative' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={COLORS.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
                 <circle cx="11" cy="11" r="8" />
                 <path d="M21 21l-4.35-4.35" />
               </svg>
-              <input
+              <input className="tpl-input"
                 type="text"
                 placeholder="Search templates..."
                 value={searchQuery}
@@ -200,7 +217,7 @@ export default function TemplatesGalleryPage() {
           {/* Template grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
             gap: 20,
           }}>
             {filtered.map(function(tpl) {
@@ -286,7 +303,7 @@ export default function TemplatesGalleryPage() {
                         display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any,
                         overflow: 'hidden',
                       }}>
-                        {tpl.description}
+                        {plainText(tpl.description)}
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{ fontSize: 12, color: COLORS.muted, display: 'flex', alignItems: 'center', gap: 4 }}>
