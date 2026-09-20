@@ -6,8 +6,6 @@ name: P1 verification
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: ['feat/quiz-homepage-port']
   workflow_dispatch:
 
 permissions:
@@ -112,7 +110,10 @@ jobs:
             IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role; END IF;
           END $$;
           EOF
-          git show origin/main:backend/migrations/016_enable_rls.sql > "$RUNNER_TEMP/016_original.sql"
+          # Fixed historical fixture: migration 016 exactly as it was on main before PR #63 (commit 98c68dd, the last
+          # production commit). Used only for the regression tests of the old broken behaviour. The current
+          # repository 016 is exercised by the complete-chain test and must succeed.
+          git show 98c68dd9f7536ee5a140324d8f64258e2f9494b8:backend/migrations/016_enable_rls.sql > "$RUNNER_TEMP/016_original.sql"
           cat > "$RUNNER_TEMP/lib.sh" <<'EOF'
           export LC_ALL=C
           export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=ci_only_password
