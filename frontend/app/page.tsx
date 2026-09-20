@@ -1,30 +1,27 @@
 import type { Metadata } from 'next';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import HomePage from '@/components/marketing/home/HomePage';
 
 /**
- * Root route on app.squarespell.com.
+ * Root route of the Squarespell Quiz application.
  *
- * Signed-in users go to the dashboard. Everyone else goes to the quiz-funnel
- * marketing landing page (the de-facto home of the app subdomain), where the
- * hero URL input drops them into the no-login quiz builder.
+ * Signed-in users go straight to the dashboard. Everyone else sees the public
+ * homepage. The URL field on that page hands off to the existing no-login
+ * builder at /tools/quiz-funnel/build.
  *
- * This is a server component (not 'use client') so the redirect happens
- * before any HTML ships — no client-side "Redirecting…" flash, and it lets
- * this route export real metadata, which the previous client-side version
- * structurally could not do.
+ * Staging is not indexable. Before public launch the robots rule below must be
+ * removed and the final domain's canonical URL and Open Graph image added.
  */
-
 export const metadata: Metadata = {
-  title: 'Squarespell Quiz — AI Quiz Funnels for Squarespace',
+  title: 'Squarespell Quiz | AI quiz funnels built from your website',
   description:
-    'Turn website visitors into segmented leads with AI-generated quiz funnels. Build a branded quiz from any URL in minutes, capture leads, and route them with personalized results — no login required to try it.',
-  alternates: {
-    canonical: 'https://app.squarespell.com/',
-  },
+    'Paste your website URL and Squarespell Quiz drafts the questions, scoring, outcomes and lead capture. Edit every detail, then connect it to Squarespace or embed it on other sites.',
+  robots: { index: false, follow: false },
 };
 
-export default function HomePage() {
+export default function Page() {
   const { userId } = auth();
-  redirect(userId ? '/dashboard' : '/tools/quiz-funnel');
+  if (userId) redirect('/dashboard');
+  return <HomePage />;
 }
