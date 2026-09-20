@@ -6,6 +6,8 @@ name: P1 verification
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: ['feat/quiz-homepage-port']
   workflow_dispatch:
 
 permissions:
