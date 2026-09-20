@@ -16,7 +16,7 @@ import HomePage from '@/components/marketing/home/HomePage';
 export const metadata: Metadata = {
   title: 'Squarespell Quiz | AI quiz funnels built from your website',
   description:
-    'Paste your website URL and Squarespell Quiz drafts the questions, scoring, outcomes and lead capture. Edit every detail, then connect it to Squarespace or embed it on other sites.',
+    'Paste your website URL and Squarespell Quiz drafts the questions, scoring, outcomes and lead capture. Edit every detail, then embed it on Squarespace and other sites that allow custom code.',
   robots: { index: false, follow: false },
 };
 
