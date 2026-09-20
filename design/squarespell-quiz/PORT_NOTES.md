@@ -47,3 +47,9 @@ Ported from `design/squarespell-quiz/index.html` (reviewed source a954105948bd97
 | Unsplash template photography | Hero preview, templates section | images.unsplash.com URLs already used by the canonical `templates.ts` product assets | Unsplash licence | Kept remote on purpose: they are the product's canonical template assets, and copying them would need per-photo licence and attribution review. Revisit before production |
 
 No third-party image CDN other than images.unsplash.com is requested by the homepage or /integrations.
+
+### Launch copy fixes and post-launch tasks
+- Pro integrations wording is now "Integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets" everywhere the plan catalog feature appears, and `/pricing` no longer says "all integrations" or "zero setup friction".
+- The homepage Business card now shows "Priority email support", matching `/pricing`.
+- Unsplash template photography is approved for the initial launch as the canonical product images.
+- **Post-launch reliability task:** self-host the template photography (after a per-photo licence and attribution check) so the homepage and templates page no longer depend on images.unsplash.com.
