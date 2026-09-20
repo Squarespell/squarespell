@@ -19,7 +19,7 @@ const MATRIX = [
       { label: 'Leads per month', core: '1,000', pro: '3,000', business: 'Unlimited' },
       { label: 'Emails per month', core: '1,000', pro: '3,000', business: 'Unlimited' },
       { label: 'AI quiz generation', core: true, pro: true, business: true },
-      { label: 'Squarespace one-click connect', core: true, pro: true, business: true },
+      { label: 'Embed on Squarespace and custom-code websites', core: true, pro: true, business: true },
       { label: 'Lead dashboard + CSV export', core: true, pro: true, business: true },
       { label: 'Lead & email add-on packs', core: true, pro: true, business: 'N/A' },
     ],
@@ -69,7 +69,7 @@ const MATRIX = [
     rows: [
       { label: 'Email support', core: true, pro: true, business: true },
       { label: 'Priority email support', core: false, pro: true, business: true },
-      { label: 'Priority support (email + chat)', core: false, pro: false, business: true },
+      { label: 'Priority email support', core: false, pro: false, business: true },
       { label: 'Team seats', core: false, pro: false, business: '3 included' },
       { label: 'API access', core: false, pro: false, business: true },
       { label: 'Dedicated onboarding call', core: false, pro: false, business: true },
