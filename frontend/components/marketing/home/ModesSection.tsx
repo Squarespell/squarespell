@@ -20,7 +20,7 @@ export function ModesSection() {
       <span className="mode-label">{mode.label}</span>
       <h3>{mode.title}</h3>
       <p>{mode.body}</p>
-      <div className="mode-demo" key={active}>{mode.demo}</div>
+      <div className="mode-demo" key={active}><span className="demo-label">Example preview data</span>{mode.demo}</div>
     </>
   );
 
