@@ -1,0 +1,212 @@
+# Squarespell Quiz - Hostinger PRODUCTION stack.
+# PRIVATE until the approved cutover: the only published port is the loopback edge proxy 127.0.0.1:18080
+# (plain HTTP, Host-header routing). Nothing here is reachable from the internet.
+# Run through infra/hostinger-production/scripts/deploy.sh. Values come from the protected server-side env file
+# /opt/squarespell-quiz/production/.env (owner-only, never committed). Names only: .env.production.example.
+# Reuses the official Dockerfiles, gateway configuration and scheduler from infra/hostinger.
+name: squarespell-quiz-production
+
+x-log: &log
+  driver: json-file
+  options: {max-size: "10m", max-file: "5"}
+
+x-restart: &restart
+  restart: unless-stopped
+
+networks:
+  edge: {}
+  internal:
+    internal: true
+
+volumes:
+  pgdata: {}
+  caddy_data: {}
+  caddy_config: {}
+
+services:
+  proxy:
+    <<: *restart
+    logging: *log
+    image: caddy:2.8
+    ports:
+      - "127.0.0.1:18080:80"
+    environment:
+      PROD_APP_HOST: ${PROD_APP_HOST:?set PROD_APP_HOST}
+      PROD_API_HOST: ${PROD_API_HOST:?set PROD_API_HOST}
+    volumes:
+      - ./Caddyfile.production:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [edge]
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+  frontend:
+    <<: *restart
+    logging: *log
+    build:
+      context: ../..
+      dockerfile: infra/hostinger/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://${PROD_API_HOST}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:?set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+    environment:
+      NODE_ENV: production
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY}
+    networks: [edge]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/',{redirect:'manual'}).then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    <<: *restart
+    logging: *log
+    build:
+      context: ../..
+      dockerfile: infra/hostinger/Dockerfile.backend
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      SUPABASE_URL: http://gateway:3100
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?set SUPABASE_SERVICE_ROLE_KEY}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY}
+      CLERK_WEBHOOK_SECRET: ${CLERK_WEBHOOK_SECRET:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_CORE_PRICE_ID: ${STRIPE_CORE_PRICE_ID:-}
+      STRIPE_CORE_YEARLY_PRICE_ID: ${STRIPE_CORE_YEARLY_PRICE_ID:-}
+      STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID:-}
+      STRIPE_PRO_YEARLY_PRICE_ID: ${STRIPE_PRO_YEARLY_PRICE_ID:-}
+      STRIPE_BUSINESS_PRICE_ID: ${STRIPE_BUSINESS_PRICE_ID:-}
+      STRIPE_BUSINESS_YEARLY_PRICE_ID: ${STRIPE_BUSINESS_YEARLY_PRICE_ID:-}
+      STRIPE_LEAD_500_PRICE_ID: ${STRIPE_LEAD_500_PRICE_ID:-}
+      STRIPE_LEAD_1500_PRICE_ID: ${STRIPE_LEAD_1500_PRICE_ID:-}
+      STRIPE_LEAD_3000_PRICE_ID: ${STRIPE_LEAD_3000_PRICE_ID:-}
+      STRIPE_EMAIL_1000_PRICE_ID: ${STRIPE_EMAIL_1000_PRICE_ID:-}
+      STRIPE_EMAIL_5000_PRICE_ID: ${STRIPE_EMAIL_5000_PRICE_ID:-}
+      STRIPE_EMAIL_10000_PRICE_ID: ${STRIPE_EMAIL_10000_PRICE_ID:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      PLATFORM_EMAIL_FROM: ${PLATFORM_EMAIL_FROM:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+      REPORT_SECRET: ${REPORT_SECRET:?set REPORT_SECRET}
+      CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL:-}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-}
+      PEXELS_ACCESS_KEY: ${PEXELS_ACCESS_KEY:-}
+      UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY:-}
+      FRONTEND_URL: https://${PROD_APP_HOST}
+      APP_URL: https://${PROD_APP_HOST}
+      MARKETING_URL: https://${PROD_APP_HOST}
+      BACKEND_URL: https://${PROD_API_HOST}
+      CORS_ORIGINS: https://${PROD_APP_HOST}
+      CORS_ORIGIN: https://${PROD_APP_HOST}
+      # The 'worker' service drains the email queue; do not also run the in-process timer.
+      DISABLE_INPROCESS_EMAIL_QUEUE: "true"
+    depends_on:
+      gateway:
+        condition: service_started
+    networks: [edge, internal]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  worker:
+    <<: *restart
+    logging: *log
+    image: curlimages/curl:8.8.0
+    entrypoint: ["/bin/sh", "/opt/scheduler.sh", "worker"]
+    environment:
+      API_URL: http://backend:3001
+      CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
+      ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
+    volumes:
+      - ../hostinger/scheduler/scheduler.sh:/opt/scheduler.sh:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "/bin/sh", "/opt/scheduler.sh", "health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+  scheduler:
+    <<: *restart
+    logging: *log
+    image: curlimages/curl:8.8.0
+    entrypoint: ["/bin/sh", "/opt/scheduler.sh", "scheduler"]
+    environment:
+      API_URL: http://backend:3001
+      CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
+      ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
+    volumes:
+      - ../hostinger/scheduler/scheduler.sh:/opt/scheduler.sh:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "/bin/sh", "/opt/scheduler.sh", "health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+  # Supabase-style REST layer for the API (supabase-js speaks PostgREST). Private: internal network only.
+  gateway:
+    <<: *restart
+    logging: *log
+    image: caddy:2.8
+    volumes:
+      - ../hostinger/Caddyfile.rest:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - rest
+    networks: [internal]
+
+  rest:
+    <<: *restart
+    logging: *log
+    image: postgrest/postgrest:v12.2.3
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD:?set AUTHENTICATOR_PASSWORD}@db:5432/quiz_production
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET:?set PGRST_JWT_SECRET}
+      PGRST_SERVER_PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
+  db:
+    <<: *restart
+    logging: *log
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: quiz_production
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d quiz_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
