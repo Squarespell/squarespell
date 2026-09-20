@@ -77,7 +77,7 @@ export const PLANS: Plan[] = [
       'Everything in Core',
       'A/B testing',
       'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
+      'Integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets',
       'Webhooks',
       'Advanced analytics',
       'Per-question drop-off analysis',
@@ -116,7 +116,7 @@ export const PLANS: Plan[] = [
       // Core excluded → now included ✓
       'A/B testing',
       'Email sequences',
-      'All integrations (Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets)',
+      'Integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets',
       'Advanced analytics & per-question drop-off',
       'Custom CSS',
       // Pro excluded → now included ✓
