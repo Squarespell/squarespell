@@ -25,7 +25,7 @@ export default function SupportPage() {
               Email {SUPPORT_EMAIL} <span className="arr">↗</span>
             </a>
           </p>
-          <p className="proof-note" style={{ marginTop: 20 }}>This address is for Squarespell Quiz support. Pro plans include priority email support and Business plans include email and chat priority support.</p>
+          <p className="proof-note" style={{ marginTop: 20 }}>This address is for Squarespell Quiz support. Support is by email. Pro and Business plans include priority email support.</p>
         </div>
       </section>
     </MarketingShell>
