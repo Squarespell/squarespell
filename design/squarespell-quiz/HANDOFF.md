@@ -1,160 +1,178 @@
-# Squarespell Quiz — homepage design and Claude handoff
-Version 1 · 20 September 2026
+# Squarespell Quiz homepage handoff
+Revision 2, 20 September 2026
 
-## Open the design
-- [Interactive preview](https://htmlpreview.github.io/?https://github.com/Squarespell/squarespell/blob/564b90853fa7a990a90b829a03ce60da97ab4a0e/design/squarespell-quiz/index.html)
-- [Editable HTML source](https://github.com/Squarespell/squarespell/blob/design/squarespell-quiz-homepage/design/squarespell-quiz/index.html)
+## Review links
+- Interactive preview: https://htmlpreview.github.io/?https://github.com/Squarespell/squarespell/blob/design/squarespell-quiz-homepage/design/squarespell-quiz/index.html
+- Source: https://github.com/Squarespell/squarespell/blob/design/squarespell-quiz-homepage/design/squarespell-quiz/index.html
 - Branch: design/squarespell-quiz-homepage
-- Approved product context: docs/relaunch/SQUARESPELL_PHASE_2_PILOT_SPEC.md
+- Reviewed source commit: a954105948bd972e9f68d196fee22ba69d93615d
 
-The preview uses a third-party HTML viewer to render the public source. It is a design demonstration, not a Squarespell production deployment. The source remains usable if that viewer is unavailable: serve index.html from the authorised Hostinger staging environment. Do not put project files or run builds on Hussnain’s Mac.
+This is a design prototype for Squarespell Quiz. It is not deployed to production. Signup, login, billing, support, URL analysis and account actions are intentionally represented by preview dialogs.
 
-## What is delivered
-One complete responsive homepage, with finished visual styling and copy, an animated product illustration, an interactive three-question demo, three selectable workflow illustrations, sample experience cards, a platform selector, pricing, expandable FAQs, mobile navigation and modal interactions.
+## What changed in revision 2
+The first design used the pilot planning document as its main source. That was wrong for the homepage because it removed working product modes, showed the wrong plans, used abstract illustrations and did not represent the depth of the existing application.
 
-It is intentionally self-contained HTML/CSS/JavaScript with no package installation, JavaScript framework, build step, image dependency, tracking script or backend request. Typography loads from Google Fonts with system fallbacks. Signup, login, payments and support are represented by explanatory preview dialogs. They are not live integrations.
+Revision 2 was rebuilt from the product code:
 
-This homepage is the visual reference for implementation in the existing Next.js application. It does not implement the application, 20-page launch map, checkout, accounts, CRM, AI generation or real installations. There are no invented customer logos, testimonials, conversion statistics, or live customer examples.
+- Core, Pro and Business pricing with monthly and yearly billing
+- 14-day Pro trial with no card
+- Current quiz, lead and email limits
+- Lead and email add-on packs
+- Five AI generation modes
+- Sixteen real templates and their existing Unsplash and Pexels media
+- Eight visual editor blocks
+- Conditional branching, scoring and outcomes
+- Inline, popup and floating-tab embeds
+- Global and per-quiz analytics, A/B testing and attribution
+- Lead dashboard, segmentation and CSV export
+- Email sequences and automation
+- Brand kit, custom CSS, white label, custom domains, team seats and API access
+- Existing integration services and pricing-catalog integrations
 
-## The design direction
-A confident, editorial identity: warm ivory, deep forest green and a precise lime accent. A large serif headline pairs with a clean sans-serif interface. Generous spacing creates hierarchy; fine borders and small labels give the product scenes a crafted feel.
+The page contains no em dash character. It does not use invented customer logos, reviews, user counts or conversion claims.
 
-The page tells one story: a visitor arrives with a question, receives a useful answer, and finds a relevant next step. The homepage demonstrates that exchange before asking for signup.
+## Repository sources that control the public claims
 
-Original elements: the overlapping square brand symbol, North / Studio sample website, three-card conversation scene, leaf/sun/arch illustrations, and oversized footer wordmark. North / Studio is a fictional sample, not a customer. The symbol is a design proposal, not a replacement of the parent company’s legal identity or marketplace branding.
+Use these files before changing public copy:
 
-### Tokens
-| Role | Value |
+| Subject | Current source |
 |---|---|
-| Page | #f5f4ed |
-| Surface | #fffefa |
-| Ink | #172b23 |
-| Secondary text | #5d6b60 |
-| Divider | #d5d9ce |
-| Accent | #d8f277 |
-| Secondary green | #254f3d |
-| Warm illustration accent | #e99163 |
-| Body/interface font | DM Sans, Arial, sans-serif |
-| Editorial accent | Instrument Serif, Georgia, serif |
-| Main maximum width | 1280px |
-| Desktop outer gutter | 48px minimum |
-| Phone outer gutter | 20px |
-| Section spacing | 112px desktop / 65px phone |
-| Main easing | cubic-bezier(.2,.7,.2,1) |
-| Border radii | 6–7px controls; 13–22px large surfaces |
+| Public plan cards and prices | frontend/lib/planCatalog.ts |
+| Entitlements, trial and add-ons | frontend/lib/plans.ts |
+| Pricing matrix and existing checkout route | frontend/app/pricing/page.tsx |
+| Five AI modes | backend/src/services/claudeService.ts and backend/src/routes/quiz.ts |
+| Sixteen template definitions and media | frontend/lib/quiz/templates.ts |
+| Editor blocks and outcome fields | frontend/lib/quiz/blocks.ts |
+| Extended question types | backend/src/services/questionTypes.ts |
+| Embed user flow | frontend/app/dashboard/embed/page.tsx |
+| Integration implementations | backend/src/services/integrations/ |
+| Current public builder gateway | frontend/app/tools/quiz-funnel/page.tsx |
+| Product renderer | frontend/components/quiz-taker/QuizRenderer.tsx |
 
-Keep the typography, spacing, colours, layouts, bespoke illustrations and interaction states when porting. Do not substitute a generic component-library theme. Do not copy competitor assets.
+Do not use older pricing strategy documents, llms.txt, old landing-page documents or the Phase 2 pilot pricing proposal as the price source. Some contain stale plan names, old limits or older Squarespace-only positioning.
 
-## Competitor research
-Primary homepages reviewed on 20 September 2026. Eight relevant competitors were selected; this is not an exhaustive list of every quiz tool.
+## Exact pricing shown in the design
 
-Desktop visuals were inspected for Interact, involve.me, ScoreApp, Octane AI, Outgrow, Riddle and Opinion Stage. Typeform’s narrow-layout hero and page structure were inspected. Cookie panels obscured parts of Typeform and Riddle. Motion statements below distinguish observed state changes from visible media controls. No authenticated product audit or performance benchmark was performed.
+### Monthly
+- Core: $12 per month, 5 quizzes, 1,000 leads, 1,000 emails
+- Pro: $19 per month, unlimited quizzes, 3,000 leads, 3,000 emails
+- Business: $35 per month, unlimited quizzes, leads and emails
 
-| Competitor and primary source | Observed presentation | Design lesson and our response |
-|---|---|---|
-| [Typeform](https://www.typeform.com/) | Dark editorial hero with large serif typography. The page exposes a named homepage animation/video and a three-part product carousel. Playback quality was not benchmarked. | Use strong typography and a product narrative. Squarespell’s preview uses lightweight native UI motion and a playable example. |
-| [Interact](https://www.tryinteract.com/) | Oversized outcome-led headline, restrained white layout, purple CTA and a large editor visual. The rest of the homepage uses customer stories and integrations. | State the outcome early and show the product. Use original green/ivory art direction and sample-labelled proof until real customer evidence exists. |
-| [involve.me](https://www.involve.me/) | Centred AI/funnel headline, blue CTA, social proof and a large colourful product demonstration. Broad platform/automation navigation. | Explain the journey, but keep this launch homepage focused on the three approved experience types. |
-| [ScoreApp](https://www.scoreapp.com/) | Qualification-led messaging, light blue scenes, readiness cards, prominent demo and proof sections. | Demonstrate a useful next step. Do not borrow its metrics or imply Squarespell has comparable customer evidence. |
-| [Octane AI](https://www.octaneai.com/) | Split hero with serif typography and an animated quiz/profile/result composition. Successive screenshots showed the scene moving from questions to an email/result state. Strong Shopify positioning. | Motion can explain cause and effect. Our own illustration explains website → question → result, and our actual demo requires no email. |
-| [Outgrow](https://outgrow.co/) | Split layout, prominent product canvas, colour controls and trial email form, followed by enterprise logos. | Make the product concrete. Let visitors experience an example before requesting contact details. |
-| [Riddle](https://www.riddle.com/) | Large centred headline, layered publisher/game examples and prominent privacy/accessibility signals. Cookie dialog partially obscured the scene. | Include accessibility and honest capability explanations. Do not claim certifications the product has not earned. |
-| [Opinion Stage](https://www.opinionstage.com/) | Simple split hero, quiz-creation demonstration, blue CTA and proof/logo rows. | Keep the entry point understandable. Pair clear navigation with a more distinctive visual identity. |
+### Yearly
+- Core: $9 per month equivalent, $108 billed yearly, $36 saving
+- Pro: $16 per month equivalent, $192 billed yearly, $36 saving
+- Business: $29 per month equivalent, $348 billed yearly, $72 saving
 
-These are design observations, not verified claims about vendors’ implementation frameworks, pricing or conversion performance. The preview includes none of the competitors’ protected visual assets or testimonials.
+### Trial
+- 14 days
+- Pro-level features
+- No credit card
 
-## Page sequence
-1. Sticky navigation and original product wordmark.
-2. Outcome-led hero and two CTAs.
-3. Animated website → quiz → result illustration.
-4. Platform names with actual installation limitations explained lower on the page.
-5. Why the experience is useful.
-6. Three selectable creation/publishing steps.
-7. Functional three-question recommendation demo.
-8. Lead qualifier, service finder and assessment sample cards.
-9. Platform selector with distinct installation guidance.
-10. Build and approved Founding Partner pricing.
-11. FAQ covering platforms, limits and the protected lifetime plugin.
-12. Final CTA and branded footer.
+### Add-ons
+- Leads: +500 for $3, +1,500 for $7, +3,000 for $12 per month
+- Emails: +1,000 for $3, +5,000 for $7, +10,000 for $12 per month
 
-## Motion specification
-| Element | Behaviour | Guardrail |
-|---|---|---|
-| Initial hero | Short opacity/vertical entrance on desktop | No blocking loader or delayed text |
-| Conversation illustration | Three stages, 3.5 seconds per stage; restrained card transforms and a travelling dot | Pause/play control; manual stage selection pauses autoplay |
-| Hidden/offscreen hero | Autoplay pauses | Visibility and intersection listeners |
-| Workflow | Buttons change illustrated content; 450ms entrance | All text remains available through controls |
-| Quiz | Progress bar animates; final result enters over 500ms | Focus moves to the new question/result |
-| Lower sections | Once-only 24px reveal, 800ms | Content remains visible without JS and under reduced motion |
-| Sample cards | Small hover lift and illustration change | No cursor replacement, drag requirement or scroll hijacking |
-| Links/buttons | 200–300ms colour/arrow movement | Visible keyboard focus |
-| Reduced motion | Removes CSS animations/transitions and automatic stage changes | Retain every function and all content |
+Recheck these source files immediately before production publication. If the owner changes the business model later, update the source of truth and the homepage together.
 
-Do not add WebGL, continuous full-page parallax, background video, custom scroll engines or large animation packages merely to make it look expensive. Motion should communicate product behaviour and stay smooth on phones.
+## Visual direction
 
-## Interaction contracts
-- Hero/nav/free-plan CTAs: replace preview dialogs with the dedicated Quiz signup/builder route after verifying its real route and readiness. Preserve intent across signup if supported.
-- Login: dedicated Squarespell Quiz authentication. No WordPress/WooCommerce login.
-- Founding Partner: connect to the reviewed application/acceptance flow. Do not silently create a checkout or subscribe a visitor.
-- Support: connect to the real dedicated Quiz contact route, not a guessed email address.
-- Demo: retain the public, anonymous three-question experience. It scores the three choices by frequency; a tie favours the first answer. Label it as an example. The prototype keeps answers only in page memory and makes no network requests for them.
-- Sample cards: show the corresponding sample recommendation and move to the demo section.
-- Workflow: preserve three clickable steps and their distinct visuals.
-- Platform controls: preserve guidance per platform; a logo is not evidence that a native connector exists.
-- FAQs/pricing disclosure: native details/summary interaction.
-- Mobile menu: close after anchor selection or Escape.
-- Modal: support keyboard focus, Escape and close button; production should replace the preview dialogs with genuine journeys.
+The page uses the application brand teal, #0f7377, with a neutral editorial palette and a sharp acid accent. It uses the branching product mark already represented in the public Quiz gateway instead of the invented overlapping-square mark from revision 1.
 
-## Product and company boundaries
-Squarespell Limited owns Squarespell Quiz. The parent marketplace remains squarespell.com. This is a new product site at squarespellquiz.com, not a new legal entity.
+The visual language combines:
 
-Protect squarespell.com, WordPress, WooCommerce, all existing Stripe marketplace mappings, the lifetime quiz product and its customer entitlements. Use separate Quiz application data and configuration within company accounts. This design requires no access to marketplace administration or private customer data.
+- large, direct typography
+- a real product-editor composition
+- real template photography already referenced by the product
+- visible product depth rather than generic feature icons
+- thin technical borders and compact interface labels
+- original UI scenes built from the actual data model
+- official-domain platform and integration logo assets
+- no fake customer proof
 
-The website advertises the three approved pilot experience types. Do not present the planned WordPress/Shopify connectors, Agency workspaces, white-label client management, calculators or ecommerce recommendation engine as working features.
+The homepage should feel designed around the product. Do not replace it with a generic component library, purple gradients, stock AI sparkles, floating blob backgrounds or decorative icon cards.
 
-Squarespace does not have documented public support for automatic insertion into an ordinary page. Keep its guided installation wording. Confirm each actual supported embed path against current official documentation and the implementation before marking it available.
+## Motion direction
 
-## Pricing and publication notes
-The design follows the merged pilot specification:
-- Build: $0, 1 live experience, 25 monthly completions, 1 site, product branding.
-- Founding Partner: $49 USD monthly, fixed for six months from each start date, first 10 accepted partners; Growth-level access, up to 3 own sites, personal onboarding and two feedback interviews.
-- First-payment fourteen-day refund; cancel anytime; no long-term contract; then-current Growth price after six months with at least 30 days’ notice.
-- Use the approved tax wording.
-- Launch/Growth/Agency remain coming after the pilot, without displaying unapproved future prices.
+Motion has a job on this page:
 
-The specification requires final review of refund, tax and cancellation terms before public publication. This file records that gate; the design is not legal approval. Do not change Stripe products/prices or activate billing just to demonstrate the design.
+1. The hero cycles through Analyze, Build and Publish.
+2. The real template image moves slowly inside the product frame.
+3. Brand and lead-score cards float with separate timing.
+4. Platform logos move in a continuous track.
+5. The five quiz modes replace the live product scene on selection.
+6. Real template images zoom slightly on hover.
+7. Analytics bars shift subtly.
+8. Page sections reveal once as they enter the viewport.
 
-The Build and Growth grace allowances and anonymous continuation must be implemented and tested before publishing the corresponding FAQ as live functionality.
+All movement stops under prefers-reduced-motion. Hero cycling also stops while the tab is hidden. No WebGL, scroll hijacking, heavy animation package, autoplay video or cursor replacement is needed.
 
-## Porting into the existing app
-1. Read this handoff and the approved product specification. Treat this new homepage design as the visual proposal for Hussnain’s review; do not reopen completed infrastructure work.
-2. Use the authorised Hostinger/cloud development environment and an isolated branch. Verify execution location before project commands. No local clones, installs, builds, screenshots, caches or project files on Hussnain’s Mac; no sub-agents.
-3. Inspect the existing frontend structure once. Port the homepage into reusable components: Header, HeroConversation, BenefitIntro, Workflow, InteractiveDemo, ExampleCards, PlatformPicker, PilotPricing, FAQ, FinalCTA and Footer.
-4. Namespace CSS under a dedicated marketing root, use CSS Modules or equivalent. The prototype’s global CSS must not change authenticated dashboard, quiz runner or marketplace layouts.
-5. Preserve the self-contained demo state and motion cleanup. In React, clear timers/observers/event listeners on unmount and avoid duplicate listeners under strict mode. Use stable state updates and semantic buttons. Replace the prototype’s innerHTML rendering with JSX.
-6. Serve properly licensed font files from the Quiz origin in production or use existing authorised font hosting. Keep fallbacks and font-display:swap. No image assets are required for this homepage.
-7. Connect genuine auth/contact routes and the approved partner flow. Do not publish preview dialogs as functioning signup or billing.
-8. Keep a staging preview noindex. Production must get its own accurate title, description, canonical, metadata, legal/contact routes and sitemap entry. Remove noindex only for the approved public deployment. Never canonicalise the new homepage to the marketplace or redirect marketplace URLs as part of this task.
-9. Use realistic performance budgets: no heavy JS animation library, no layout-shifting font/content reveal, no hero video. Measure production build performance on staging; do not claim a Lighthouse score without a run.
-10. Run the existing required checks and real browser checks on Hostinger staging. Confirm working CTA destinations and honest feature claims, then give Hussnain the staging URL. Production publication should follow his approval of that concrete staging result.
+## Real template content used
+The page uses content and media from frontend/lib/quiz/templates.ts:
 
-Do not merge a design-only branch into main simply to use this HTML. Do not change hosting/DNS, purchase services, migrate data, alter existing application PRs or initiate outreach as part of this design handoff.
+- Photography Style Quiz
+- Product Finder Quiz
+- Home Style Quiz
+- the Photography Style question, “Which editing style are you drawn to?”
+- the actual Photography Style answer options and image URLs
+- The Storyteller Collection result name
 
-## Verification performed on this prototype
-Source commit for the reviewed preview: 564b90853fa7a990a90b829a03ce60da97ab4a0e.
+The other thirteen templates are represented by their real categories. The page links to the real template library only after Claude connects the route.
 
-- Opened the actual rendered HTML through the public preview viewer.
-- Visually inspected desktop hero, workflow, interactive demo, sample cards, pricing and tablet/mobile views.
-- Checked document width at 390px and 768px. A 4px overflow found at 320px was fixed by simplifying the narrow header, and a second check returned 320px content width in a 320px viewport.
-- Completed all three recommendation types through the quiz or corresponding example; all-three-identical-answer journeys were tested for lead qualifier, service finder and assessment.
-- Tested back navigation and reset.
-- Tested the desktop CTA preview dialog and close control.
-- Tested mobile menu opening and anchor navigation.
-- Tested workflow switching and WordPress platform guidance.
-- Expanded the pricing terms.
-- Parsed the embedded JavaScript successfully.
-- Confirmed source contains no external script tag, form-submission request, analytics call, persistent browser storage or empty # placeholder link.
-- Reduced-motion and hidden/offscreen pause handling inspected in code. OS-level reduced-motion emulation and assistive-technology testing were not performed.
-- No claim is made of production functionality, complete accessibility certification, a performance score or cross-browser test coverage.
+## Platform wording
+The current product includes a Squarespace connection flow and three embed modes. Universal embedding can support other platforms when custom code is available. Do not imply a native marketplace connector or automatic page insertion for WordPress, Shopify, Wix, Webflow or Framer unless that connector has actually shipped and been verified.
 
-Code and handoff were written directly to the isolated GitHub branch through the connector. No repository was cloned and no packages, build outputs or design project files were written to the Mac. A single browser tab was reused for competitor review and visual checks.
+The platform logo row labels Squarespace as “connect” and other platforms as “embed.” Keep that distinction.
+
+## Integration wording
+The pricing catalog includes Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets, Zapier and webhooks on Pro. The backend also contains ActiveCampaign, Calendly and Acuity services.
+
+Before publishing the dedicated integrations page, test each connection and determine whether it is customer-ready. The homepage includes a small note that these additional backend connectors must be checked before they are described as generally available.
+
+## Company and data boundaries
+Squarespell Limited owns Squarespell Quiz. The dedicated product is squarespellquiz.com.
+
+Do not modify:
+
+- squarespell.com
+- the Squarespell marketplace
+- WordPress or WooCommerce
+- the one-time/lifetime quiz plugin
+- existing marketplace customers or entitlements
+- marketplace Stripe objects and webhook behavior
+
+Squarespell Quiz has separate application data and configuration while remaining under the same company accounts.
+
+## Claude implementation task
+1. Read this handoff, the design source and the repository source files listed above before editing.
+2. Work only in the approved cloud or Hostinger environment. Do not clone, install packages, build, cache files or store screenshots on Hussnain’s Mac. Do not start sub-agents.
+3. Confirm whether a newer public-site branch exists. Port this homepage into that branch without overwriting unrelated Phase 1 work.
+4. Implement the page in the existing Next.js frontend as scoped reusable components. Preserve the product application, dashboard and quiz runner styles.
+5. Use the source HTML as the visual target. Convert the interface to React and scoped CSS. Do not publish the raw prototype as the production architecture.
+6. Replace preview dialogs with the verified Quiz routes:
+   - public URL form to the current builder path
+   - login to the dedicated Quiz sign-in
+   - trial CTAs to the existing 14-day trial signup flow
+   - templates to the real template library
+   - integrations and support to real dedicated pages
+7. Keep pricing imported from the canonical plan catalog. Do not duplicate prices in another component if a shared import can be used.
+8. Keep all five modes and the actual plan names.
+9. Keep real template images and official platform/integration logos. Download and self-host only where licenses and brand terms permit. Record the attribution/license decision.
+10. Keep the staging site noindex. Add accurate title, description, canonical, Open Graph asset, sitemap entry and robots behavior only for the final public domain.
+11. Verify desktop, tablet and phone layouts, keyboard navigation, reduced motion, image loading, link destinations, responsive overflow and production performance.
+12. Show Hussnain the Hostinger staging URL for approval. Do not merge, switch DNS or publish to production until the reviewed staging result is approved.
+
+## Verification completed on the prototype
+- Desktop at 1440 by 1000
+- Tablet at 768 by 1024
+- Mobile at 390 by 844
+- No horizontal overflow at those sizes
+- All 29 external images and logo assets loaded after correction
+- Five-mode selector tested with the price calculator state
+- Monthly to yearly pricing switch tested: 12/19/35 becomes 9/16/29
+- Mobile menu and template action dialog tested
+- JavaScript parsed successfully
+- No external JavaScript, analytics, fetch request, form submission or persistent browser storage
+- No em dash character in the source
+- Reduced-motion behavior reviewed in code
+
+This verification covers the design prototype. It is not a production application, payment, authentication, API or deployment test.
