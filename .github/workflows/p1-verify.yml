@@ -1,0 +1,749 @@
+# Phase 1 cloud verification for draft PR #63.
+# Runs only in GitHub-hosted runners. Uses fake, generated-at-run-time credentials only.
+# No production secrets, no calls to production services, no scheduled jobs, no deployments.
+name: P1 verification
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p1-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend - tests, type-check, production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install from lockfile
+        run: npm ci
+      - name: Backend tests (vitest)
+        run: npx vitest run
+      - name: Backend type-check
+        run: npx tsc --noEmit
+      - name: Backend production build
+        run: npm run build
+
+  frontend:
+    name: Frontend - tests, type-check, production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+      CLERK_SECRET_KEY: sk_test_ci_local_fixture
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install from lockfile
+        run: npm ci
+      - name: Frontend tests (vitest)
+        run: npx vitest run
+      - name: Frontend type-check
+        run: npx tsc --noEmit
+      - name: Frontend production build
+        run: npm run build
+
+  database-and-api:
+    name: Migrations from empty database, migration 031, API and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci_only_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Prepare helpers (temporary PostgreSQL, Supabase shim, migration functions)
+        run: |
+          command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          psql --version
+          cat > "$RUNNER_TEMP/prelude.sql" <<'EOF'
+          CREATE SCHEMA IF NOT EXISTS auth;
+          CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT NULL::uuid $$;
+          CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql AS $$ SELECT 'service_role'::text $$;
+          DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon; END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role; END IF;
+          END $$;
+          EOF
+          git show origin/main:backend/migrations/016_enable_rls.sql > "$RUNNER_TEMP/016_original.sql"
+          cat > "$RUNNER_TEMP/lib.sh" <<'EOF'
+          export LC_ALL=C
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=ci_only_password
+          W="$GITHUB_WORKSPACE"; T="$RUNNER_TEMP"
+          newdb() {
+            psql -q -v ON_ERROR_STOP=1 -d postgres -c "DROP DATABASE IF EXISTS $1" -c "CREATE DATABASE $1"
+            psql -q -v ON_ERROR_STOP=1 -d "$1" -f "$T/prelude.sql"
+          }
+          strict() { psql -q -v ON_ERROR_STOP=1 -d "$1" -f "$2" > /dev/null; }
+          apply_base() { echo "applying SUPABASE_SCHEMA.sql"; strict "$1" "$W/SUPABASE_SCHEMA.sql"; }
+          apply_tail() { echo "applying 20260415_email_automation.sql"; strict "$1" "$W/backend/src/db/migrations/20260415_email_automation.sql"; }
+          # apply_migs DB [corrected|orig-strict|orig-tolerant] [STOP_BEFORE_FILENAME]
+          apply_migs() {
+            local db="$1" mode="$2" stop="$3" f b src
+            [ -n "$mode" ] || mode=corrected
+            for f in $(ls "$W"/backend/migrations/*.sql | sort); do
+              b=$(basename "$f")
+              if [ -n "$stop" ] && [ "$b" = "$stop" ]; then echo "stopping before $b"; return 0; fi
+              src="$f"
+              if [ "$b" = "016_enable_rls.sql" ] && [ "$mode" != corrected ]; then src="$T/016_original.sql"; fi
+              echo "applying $b"
+              if [ "$b" = "016_enable_rls.sql" ] && [ "$mode" = orig-tolerant ]; then
+                psql -q -d "$db" -f "$src" > /dev/null 2> "$T/016_tolerant_errors.txt" || true
+              else
+                strict "$db" "$src" || { echo "::error::migration $b failed"; return 1; }
+              fi
+            done
+          }
+          inventory() {
+            psql -d "$1" -At -F '|' \
+              -c "select 'col',table_name,column_name,data_type,is_nullable,coalesce(column_default,'') from information_schema.columns where table_schema='public'" \
+              -c "select 'con',conrelid::regclass::text,conname,pg_get_constraintdef(oid) from pg_constraint where connamespace='public'::regnamespace" \
+              -c "select 'idx',tablename,indexname,indexdef from pg_indexes where schemaname='public'" \
+              -c "select 'pol',tablename,policyname,cmd,coalesce(qual,''),coalesce(with_check,'') from pg_policies where schemaname='public'" \
+              -c "select 'fn',p.proname,pg_get_function_identity_arguments(p.oid) from pg_proc p where p.pronamespace='public'::regnamespace" \
+              -c "select 'rls',relname,relrowsecurity::text from pg_class where relnamespace='public'::regnamespace and relkind='r'" | tr -d '\r' | sort
+          }
+          rowcounts() {
+            psql -d "$1" -At -c "select table_name||'='||(xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text from information_schema.tables where table_schema='public' and table_type='BASE TABLE' order by 1" | sort
+          }
+          EOF
+          cmp -s "$RUNNER_TEMP/016_original.sql" backend/migrations/016_enable_rls.sql && echo "::warning::migration 016 is identical to main (no modification present)" || echo "migration 016 differs from main (expected: Phase 1 correction)"
+
+      - name: Migration 031 is forward-only (static guard)
+        run: |
+          f=backend/migrations/031_schema_reconciliation.sql
+          bad=$(grep -nE '^[^-]*\b(DELETE[[:space:]]+FROM|UPDATE[[:space:]]+[A-Za-z_]+[[:space:]]+SET|TRUNCATE|DROP[[:space:]]+TABLE|DROP[[:space:]]+COLUMN|DROP[[:space:]]+SCHEMA|RENAME[[:space:]]+(TO|COLUMN)|ALTER[[:space:]]+COLUMN[[:space:]]+[A-Za-z_]+[[:space:]]+(SET[[:space:]]+DATA[[:space:]]+)?TYPE)\b' "$f" || true)
+          if [ -n "$bad" ]; then echo "::error::031 contains a data-destroying or type-changing statement"; echo "$bad"; exit 1; fi
+          drops=$(grep -nE '^[^-]*\bDROP\b' "$f" | grep -vE 'DROP CONSTRAINT IF EXISTS email_sequence_queue_status_check|DROP FUNCTION IF EXISTS insert_lead_with_limit_check|DROP NOT NULL' || true)
+          if [ -n "$drops" ]; then echo "::error::031 contains an unexpected DROP"; echo "$drops"; exit 1; fi
+          echo "031 contains no DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN/RENAME/TYPE change, and only three allow-listed DROPs."
+
+      - name: Complete migration chain from an empty database (corrected 016), including 031
+        run: |
+          source "$RUNNER_TEMP/lib.sh"
+          newdb fresh
+          apply_base fresh
+          apply_migs fresh corrected
+          apply_tail fresh
+          inventory fresh > "$T/inv_fresh.txt"
+          echo "fresh database: $(psql -d fresh -At -c "select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE'") tables, $(grep -c '^pol|' "$T/inv_fresh.txt") policy lines"
+          psql -d fresh -At -c "select 'stripe_webhook_events exists', to_regclass('public.stripe_webhook_events') is not null" -c "select 'insert_lead_with_limit_check has 11 args', pronargs=11 from pg_proc where proname='insert_lead_with_limit_check'"
+
+      - name: Original migration 016 stops a fresh database (proof that the correction is required)
+        run: |
+          source "$RUNNER_TEMP/lib.sh"
+          newdb orig016
+          apply_base orig016
+          set +e
+          apply_migs orig016 orig-strict > "$T/orig_out.txt" 2> "$T/orig_err.txt"
+          rc=$?
+          set -e
+          cat "$T/orig_out.txt" | tail -5
+          cat "$T/orig_err.txt" | head -12
+          [ "$rc" -ne 0 ] || { echo "::error::expected the ORIGINAL 016 to fail on a fresh database, but the chain completed"; exit 1; }
+          grep -q "operator does not exist: text = uuid" "$T/orig_err.txt" || { echo "::error::original 016 failed, but not with the expected text = uuid error"; exit 1; }
+          ! grep -q "applying 017_database_cleanup.sql" "$T/orig_out.txt" || { echo "::error::chain continued past the failing 016"; exit 1; }
+          echo "CONFIRMED: with the original 016 the chain halts at 016 and migrations 017-031 are never reached."
+
+      - name: Migration 031 upgrade path - additive only, idempotent, no data change
+        run: |
+          source "$RUNNER_TEMP/lib.sh"
+          newdb upgrade
+          apply_base upgrade
+          apply_migs upgrade corrected 031_schema_reconciliation.sql
+          psql -q -v ON_ERROR_STOP=1 -d upgrade -c "insert into users (clerk_user_id, email, plan, quiz_count) values ('user_ci_seed', 'seed@example.test', 'free', 0)"
+          seed_hash() { psql -d upgrade -At -c "select md5(string_agg(concat_ws('|', id, clerk_user_id, email, plan, quiz_count), ';' order by id)) from users"; }
+          h1=$(seed_hash)
+          inventory upgrade > "$T/inv_before.txt"
+          rowcounts upgrade > "$T/rc_before.txt"
+          echo "applying 031 (first run)"
+          strict upgrade "$W/backend/migrations/031_schema_reconciliation.sql"
+          inventory upgrade > "$T/inv_after.txt"
+          rowcounts upgrade > "$T/rc_after.txt"
+          echo "applying 031 (second run, must be a no-op)"
+          strict upgrade "$W/backend/migrations/031_schema_reconciliation.sql"
+          inventory upgrade > "$T/inv_after2.txt"
+          cmp "$T/inv_after.txt" "$T/inv_after2.txt" || { echo "::error::031 is not idempotent"; exit 1; }
+          echo "--- objects removed or changed by 031 (allow-list: replaced check constraint, outcome_id nullability, replaced function signature)"
+          comm -23 "$T/inv_before.txt" "$T/inv_after.txt" | tee "$T/removed.txt"
+          unexpected=$(grep -vE '^(con\|email_sequence_queue\|email_sequence_queue_status_check\||col\|email_sequences\|outcome_id\||fn\|insert_lead_with_limit_check\|)' "$T/removed.txt" || true)
+          if [ -n "$unexpected" ]; then echo "::error::031 removed or changed objects outside the allow-list"; echo "$unexpected"; exit 1; fi
+          echo "--- objects added by 031: $(comm -13 "$T/inv_before.txt" "$T/inv_after.txt" | wc -l) lines"
+          changed=$(comm -23 "$T/rc_before.txt" "$T/rc_after.txt" || true)
+          if [ -n "$changed" ]; then echo "::error::031 changed a table row count"; echo "$changed"; exit 1; fi
+          [ "$(seed_hash)" = "$h1" ] || { echo "::error::031 changed a pre-existing users row"; exit 1; }
+          echo "031: additive, idempotent, no row counts or seeded rows changed."
+          apply_tail upgrade
+          inventory upgrade > "$T/inv_upgrade_final.txt"
+          diff "$T/inv_fresh.txt" "$T/inv_upgrade_final.txt" && echo "IDENTICAL: schema, constraints, indexes, policies and functions of (chain to 030 + 031) equal the fresh full chain."
+
+      - name: Informational - database built with the original 016 then upgraded with 031 (policy divergence, not a failure)
+        continue-on-error: true
+        run: |
+          source "$RUNNER_TEMP/lib.sh"
+          newdb legacy
+          apply_base legacy
+          apply_migs legacy orig-tolerant
+          apply_tail legacy
+          echo "errors ignored while applying the original 016 tolerantly:"; cat "$T/016_tolerant_errors.txt" | head -12
+          inventory legacy > "$T/inv_legacy.txt"
+          echo "--- differences between a legacy-built database and the fresh chain (expected: only the repository policies that the original 016 could not create)"
+          diff "$T/inv_fresh.txt" "$T/inv_legacy.txt" || true
+
+      - name: Install and build the API
+        run: |
+          cd backend
+          npm ci
+          npm run build
+
+      - name: Start temporary REST layer (PostgREST) and Supabase-style proxy on the temporary database
+        run: |
+          source "$RUNNER_TEMP/lib.sh"
+          psql -q -v ON_ERROR_STOP=1 -d fresh <<'EOF'
+          CREATE ROLE authenticator LOGIN NOINHERIT PASSWORD 'ci_only_password';
+          GRANT anon, authenticated, service_role TO authenticator;
+          ALTER ROLE service_role BYPASSRLS;
+          GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+          GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+          GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+          GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO service_role;
+          EOF
+          node - "$RUNNER_TEMP" <<'EOF'
+          const crypto = require('crypto'), fs = require('fs');
+          const tmp = process.argv[process.argv.length - 1];
+          const kp = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+          fs.writeFileSync(tmp + '/clerk_public.pem', kp.publicKey.export({ type: 'spki', format: 'pem' }));
+          const b = (x) => Buffer.from(x).toString('base64url');
+          const now = Math.floor(Date.now() / 1000);
+          const data = b(JSON.stringify({ alg: 'RS256', typ: 'JWT', kid: 'ins_ci_local' })) + '.' + b(JSON.stringify({ sub: 'user_ci_smoke', iss: 'https://clerk.ci.local', iat: now - 5, nbf: now - 10, exp: now + 1800, sid: 'sess_ci' }));
+          fs.writeFileSync(tmp + '/smoke_token.txt', data + '.' + b(crypto.sign('RSA-SHA256', Buffer.from(data), kp.privateKey)));
+          const secret = crypto.randomBytes(32).toString('hex');
+          fs.writeFileSync(tmp + '/pgrst_secret.txt', secret);
+          const h = b(JSON.stringify({ alg: 'HS256', typ: 'JWT' })) + '.' + b(JSON.stringify({ role: 'service_role', iss: 'ci-local', iat: now, exp: now + 7200 }));
+          fs.writeFileSync(tmp + '/service_role.txt', h + '.' + crypto.createHmac('sha256', secret).update(h).digest('base64url'));
+          EOF
+          echo "::add-mask::$(cat "$RUNNER_TEMP/smoke_token.txt")"
+          echo "::add-mask::$(cat "$RUNNER_TEMP/service_role.txt")"
+          echo "::add-mask::$(cat "$RUNNER_TEMP/pgrst_secret.txt")"
+          docker run -d --name pgrst --network host \
+            -e PGRST_DB_URI="postgres://authenticator:ci_only_password@127.0.0.1:5432/fresh" \
+            -e PGRST_DB_SCHEMAS=public -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_JWT_SECRET="$(cat "$RUNNER_TEMP/pgrst_secret.txt")" \
+            -e PGRST_SERVER_PORT=3000 postgrest/postgrest:v12.2.3
+          cat > "$RUNNER_TEMP/proxy.js" <<'EOF'
+          const http = require('http');
+          http.createServer((req, res) => {
+            const path = req.url.replace(/^\/rest\/v1/, '') || '/';
+            const up = http.request({ host: '127.0.0.1', port: 3000, path, method: req.method, headers: req.headers }, (r) => { res.writeHead(r.statusCode, r.headers); r.pipe(res); });
+            up.on('error', (e) => { res.writeHead(502); res.end(String(e)); });
+            req.pipe(up);
+          }).listen(3100, '127.0.0.1');
+          EOF
+          nohup node "$RUNNER_TEMP/proxy.js" > "$RUNNER_TEMP/proxy.log" 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:3000/ > /dev/null 2>&1 && break; sleep 2; done
+          curl -fsS http://127.0.0.1:3000/ > /dev/null
+          curl -fsS http://127.0.0.1:3100/rest/v1/ > /dev/null
+          echo "PostgREST and proxy are up on the temporary database."
+
+      - name: Start the API with safe test configuration, check health and readiness
+        run: |
+          source "$RUNNER_TEMP/lib.sh"
+          psql -q -v ON_ERROR_STOP=1 -d fresh -c "insert into users (clerk_user_id, email, plan, quiz_count) values ('user_ci_smoke', 'ci-smoke@example.test', 'pro', 0)"
+          cd backend
+          export NODE_ENV=production PORT=3001
+          export SUPABASE_URL=http://127.0.0.1:3100
+          export SUPABASE_SERVICE_ROLE_KEY="$(cat "$RUNNER_TEMP/service_role.txt")"
+          export CLERK_SECRET_KEY=sk_test_ci_local_fixture
+          export CLERK_JWT_KEY="$(cat "$RUNNER_TEMP/clerk_public.pem")"
+          export CLERK_API_URL=http://127.0.0.1:9
+          export CLERK_WEBHOOK_SECRET=whsec_Y2lfbG9jYWxfZml4dHVyZV9jbGVya19zZWNyZXQ=
+          export STRIPE_SECRET_KEY=sk_test_ci_local_fixture
+          export STRIPE_WEBHOOK_SECRET=whsec_ci_local_fixture_stripe_secret
+          export RESEND_API_KEY=re_ci_local_fixture
+          export RESEND_BASE_URL=http://127.0.0.1:9
+          export RESEND_WEBHOOK_SECRET=whsec_Y2lfbG9jYWxfZml4dHVyZV9yZXNlbmRfc2VjcmV0
+          export ANTHROPIC_API_KEY=sk-ant-ci-local-fixture
+          export ANTHROPIC_BASE_URL=http://127.0.0.1:9
+          export ENCRYPTION_KEY="$(node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))")"
+          export REPORT_SECRET=ci-local-report-secret CRON_SECRET=ci-local-cron-secret
+          export FRONTEND_URL=http://127.0.0.1:3000 APP_URL=http://127.0.0.1:3000 BACKEND_URL=http://127.0.0.1:3001
+          export STRIPE_CORE_PRICE_ID=price_ci_core_m STRIPE_CORE_YEARLY_PRICE_ID=price_ci_core_y STRIPE_PRO_PRICE_ID=price_ci_pro_m STRIPE_PRO_YEARLY_PRICE_ID=price_ci_pro_y STRIPE_BUSINESS_PRICE_ID=price_ci_biz_m STRIPE_BUSINESS_YEARLY_PRICE_ID=price_ci_biz_y
+          export DISABLE_INPROCESS_EMAIL_QUEUE=true
+          nohup node dist/index.js > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:3001/api/health > /dev/null 2>&1 && break; sleep 2; done
+          echo "GET /api/health:";        curl -fsS http://127.0.0.1:3001/api/health; echo
+          echo "GET /api/health/ready:";  curl -fsS http://127.0.0.1:3001/api/health/ready; echo
+
+      - name: API smoke test (scripts/smoke/smoke.mjs against the temporary API)
+        run: |
+          export SMOKE_CLERK_TOKEN="$(cat "$RUNNER_TEMP/smoke_token.txt")"
+          node scripts/smoke/smoke.mjs --base-url http://127.0.0.1:3001 | tee "$RUNNER_TEMP/smoke.out"
+          grep -q "13/13 steps passed" "$RUNNER_TEMP/smoke.out"
+
+      - name: Diagnostics on failure (logs contain no secrets)
+        if: failure()
+        run: |
+          echo "--- api.log (last 80 lines)";   tail -n 80 "$RUNNER_TEMP/api.log" 2>/dev/null || true
+          echo "--- proxy.log";                 tail -n 20 "$RUNNER_TEMP/proxy.log" 2>/dev/null || true
+          echo "--- postgrest log";             docker logs pgrst 2>&1 | tail -n 40 || true
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Database and API verification"
+            echo "- Fresh chain (base schema + 002-031 + email automation): see step result"
+            echo "- Original 016 halts a fresh database: see step result"
+            echo "- Migration 031 upgrade path (additive, idempotent, no data change): see step result"
+            echo "- API health, readiness and smoke test: see step result"
+            echo "- Commit tested: ${{ github.sha }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Hostinger staging deployment files (infra/hostinger/**).
+  # Every job checks out the exact PR head commit, runs on GitHub-hosted runners only and uses dummy values.
+  # Nothing is deployed and no external service is contacted.
+  # ---------------------------------------------------------------------------
+  hostinger-static:
+    name: Hostinger files - lint, policy, proxy configs, scheduler, deploy safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Inventory - exactly 17 files under infra/hostinger
+        run: |
+          set -euo pipefail
+          echo "validating commit $(git rev-parse HEAD)"
+          find infra/hostinger -type f | sort | tee "$RUNNER_TEMP/files.txt"
+          n=$(wc -l < "$RUNNER_TEMP/files.txt")
+          [ "$n" -eq 17 ] || { echo "::error::expected 17 files under infra/hostinger, found $n"; exit 1; }
+
+      - name: shellcheck and syntax check on every shell script
+        run: |
+          set -euo pipefail
+          mapfile -t scripts < <(find infra/hostinger -type f -name '*.sh' | sort)
+          echo "shell scripts: ${#scripts[@]}"
+          [ "${#scripts[@]}" -eq 8 ] || { echo "::error::expected 8 shell scripts"; exit 1; }
+          shellcheck --version
+          shellcheck -x -S warning "${scripts[@]}"
+          for f in "${scripts[@]}"; do
+            if head -n 1 "$f" | grep -q 'bin/sh'; then sh -n "$f"; else bash -n "$f"; fi
+            echo "syntax ok: $f"
+          done
+
+      - name: Docker Compose validation and network/port policy (dummy environment)
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/dummy.env" <<'EOF'
+          STAGING_APP_HOST=staging.example.test
+          STAGING_API_HOST=api-staging.example.test
+          ACME_EMAIL=ops@example.test
+          POSTGRES_PASSWORD=dummy-postgres
+          AUTHENTICATOR_PASSWORD=dummy-authenticator
+          PGRST_JWT_SECRET=dummy-jwt-secret-dummy-jwt-secret-1234
+          SUPABASE_SERVICE_ROLE_KEY=dummy-service-role
+          ENCRYPTION_KEY=dummy-encryption
+          REPORT_SECRET=dummy-report
+          CRON_SECRET=dummy-cron
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+          CLERK_SECRET_KEY=dummy-clerk
+          EOF
+          DC="docker compose --env-file $RUNNER_TEMP/dummy.env -f infra/hostinger/docker-compose.staging.yml"
+          $DC config -q
+          $DC config --format json > "$RUNNER_TEMP/compose.json"
+          chk() { d="$1"; shift; if jq -e "$@" "$RUNNER_TEMP/compose.json" > /dev/null; then echo "PASS $d"; else echo "::error::FAIL $d"; exit 1; fi; }
+          chk "only the proxy publishes any port" '[.services | to_entries[] | select((.value.ports // []) | length > 0) | .key] == ["proxy"]'
+          chk "only 80/tcp and 443/tcp are published" '[.services.proxy.ports[] | ((.published | tostring) + "/" + .protocol)] | sort == ["443/tcp","80/tcp"]'
+          chk "db, rest and gateway publish nothing" '[.services.db, .services.rest, .services.gateway] | all((.ports // []) | length == 0)'
+          for s in db rest gateway worker scheduler; do
+            chk "$s is on the internal network only" --arg s "$s" '(.services[$s].networks | keys) == ["internal"]'
+          done
+          chk "internal network has no outside access" '.networks.internal.internal == true'
+          chk "backend is on edge and internal" '(.services.backend.networks | keys | sort) == ["edge","internal"]'
+          chk "frontend is on edge only" '(.services.frontend.networks | keys) == ["edge"]'
+          chk "every service restarts unless stopped" '[.services[] | .restart] | all(. == "unless-stopped")'
+          chk "health checks on db, backend, frontend, worker, scheduler" '[.services.db, .services.backend, .services.frontend, .services.worker, .services.scheduler] | all(.healthcheck != null)'
+          chk "database data is on a named volume" '[.services.db.volumes[] | select(.target == "/var/lib/postgresql/data") | .type] == ["volume"]'
+          chk "in-process email queue is disabled on the API" '.services.backend.environment.DISABLE_INPROCESS_EMAIL_QUEUE == "true"'
+          chk "API reaches the database only through the gateway" '.services.backend.environment.SUPABASE_URL == "http://gateway:3100"'
+          if docker compose --env-file /dev/null -f infra/hostinger/docker-compose.staging.yml config -q 2> "$RUNNER_TEMP/unset.err"; then
+            echo "::error::compose accepted an empty environment (required secrets must not default)"; exit 1
+          fi
+          echo "PASS compose rejects an empty environment"
+
+      - name: Caddy public configuration and internal gateway configuration
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$PWD/infra/hostinger/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            -e STAGING_APP_HOST=staging.example.test -e STAGING_API_HOST=api-staging.example.test -e ACME_EMAIL=ops@example.test \
+            caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
+          docker run --rm -v "$PWD/infra/hostinger/Caddyfile.rest:/etc/caddy/Caddyfile:ro" caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
+          grep -qF '@cron path /api/cron/*' infra/hostinger/Caddyfile
+          grep -qF 'respond @cron 404' infra/hostinger/Caddyfile
+          grep -qF 'X-Robots-Tag' infra/hostinger/Caddyfile
+          grep -qF 'auto_https off' infra/hostinger/Caddyfile.rest
+          grep -qF 'admin off' infra/hostinger/Caddyfile.rest
+          echo "Caddy configurations valid; cron routes blocked publicly; gateway has no TLS or admin listener"
+
+      - name: Internal gateway strips /rest/v1 (functional test with a stub upstream)
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/echo.py" <<'EOF'
+          import http.server
+          class H(http.server.BaseHTTPRequestHandler):
+              def do_GET(self):
+                  self.send_response(200)
+                  self.end_headers()
+                  self.wfile.write(self.path.encode())
+              def log_message(self, *a):
+                  pass
+          http.server.HTTPServer(("0.0.0.0", 3000), H).serve_forever()
+          EOF
+          docker network create gwtest
+          docker run -d --name rest --network gwtest -v "$RUNNER_TEMP/echo.py:/echo.py:ro" python:3.12-alpine python /echo.py
+          docker run -d --name gateway --network gwtest -v "$PWD/infra/hostinger/Caddyfile.rest:/etc/caddy/Caddyfile:ro" caddy:2.8
+          sleep 6
+          out=$(docker run --rm --network gwtest curlimages/curl:8.8.0 -s 'http://gateway:3100/rest/v1/quizzes?select=id')
+          [ "$out" = "/quizzes?select=id" ] || { echo "::error::unexpected upstream path: $out"; exit 1; }
+          code=$(docker run --rm --network gwtest curlimages/curl:8.8.0 -s -o /dev/null -w '%{http_code}' http://gateway:3100/other)
+          [ "$code" = 404 ] || { echo "::error::non-REST path returned $code, expected 404"; exit 1; }
+          echo "PASS gateway rewrites /rest/v1/* and refuses everything else"
+
+      - name: Scheduler and worker behaviour (fake clock, fake curl)
+        run: |
+          set -euo pipefail
+          S="$PWD/infra/hostinger/scheduler/scheduler.sh"
+          sh -n "$S"
+          B="$RUNNER_TEMP/shim"; mkdir -p "$B"
+          cat > "$B/date" <<'EOF'
+          #!/bin/sh
+          case "$*" in
+            "-u +%M") echo "$FAKE_M";;
+            "-u +%H") echo "$FAKE_H";;
+            "-u +%u") echo "$FAKE_DOW";;
+            "-u +%d") echo "$FAKE_DOM";;
+            "-u +%S") echo 59;;
+            *) exec /bin/date "$@";;
+          esac
+          EOF
+          cat > "$B/curl" <<'EOF'
+          #!/bin/sh
+          echo "$@" >> "$CALLS"
+          printf 200
+          EOF
+          chmod +x "$B/date" "$B/curl"
+          run_case() {
+            mode="$1"; en="$2"; export FAKE_M="$3" FAKE_H="$4" FAKE_DOW="$5" FAKE_DOM="$6"; shift 6
+            export CALLS="$RUNNER_TEMP/calls.txt"; : > "$CALLS"; rm -f /tmp/alive-worker /tmp/alive-scheduler
+            PATH="$B:$PATH" API_URL=http://api.test CRON_SECRET=dummysecret ENABLE_EMAIL_JOBS="$en" timeout 1 sh "$S" "$mode" > "$RUNNER_TEMP/out.txt" 2>&1 || true
+            got=$(grep -o '/api/cron/[a-z-]*' "$CALLS" | sort | tr '\n' ' ' || true)
+            want=$(for p in "$@"; do echo "/api/cron/$p"; done | sort | tr '\n' ' ')
+            if [ "$got" != "$want" ]; then echo "::error::$mode email=$en $FAKE_H:$FAKE_M dow=$FAKE_DOW dom=$FAKE_DOM expected [$want] got [$got]"; exit 1; fi
+            if grep -q dummysecret "$RUNNER_TEMP/out.txt"; then echo "::error::cron secret leaked into scheduler output"; exit 1; fi
+            echo "PASS $mode email=$en $FAKE_H:$FAKE_M dow=$FAKE_DOW dom=$FAKE_DOM -> [$got]"
+          }
+          run_case scheduler true 00 10 1 01 process-scheduled-sends weekly-digest monthly-report
+          run_case scheduler true 00 09 2 15 process-scheduled-sends trial-reminders lead-milestones
+          run_case scheduler true 30 12 3 15 process-scheduled-sends cleanup-preview-cache
+          run_case scheduler true 07 12 3 15
+          run_case scheduler false 00 10 1 01
+          run_case scheduler false 30 12 3 15 cleanup-preview-cache
+          run_case worker true 05 12 3 15 process-email-queue
+          run_case worker true 07 12 3 15
+          run_case worker false 05 12 3 15
+          grep -q 'x-cron-secret: dummysecret' "$CALLS" || true
+          run_case worker true 00 12 3 15 process-email-queue
+          grep -q 'x-cron-secret: dummysecret' "$CALLS" || { echo "::error::worker did not send the x-cron-secret header"; exit 1; }
+          grep -q 'POST' "$CALLS" || { echo "::error::worker did not use POST"; exit 1; }
+          rm -f /tmp/alive-worker /tmp/alive-scheduler
+          if sh "$S" health; then echo "::error::health passed without a heartbeat"; exit 1; fi
+          date +%s > /tmp/alive-worker
+          sh "$S" health
+          echo 1 > /tmp/alive-worker
+          if sh "$S" health; then echo "::error::health passed with a stale heartbeat"; exit 1; fi
+          echo "PASS scheduler and worker job selection, secret handling and heartbeat health check"
+
+      - name: No secret values committed under infra/hostinger
+        run: |
+          set -euo pipefail
+          pat='(sk_(live|test)_[A-Za-z0-9]{10,}|rk_(live|test)_[A-Za-z0-9]{10,}|pk_(live|test)_[A-Za-z0-9]{10,}|whsec_[A-Za-z0-9+/=]{10,}|re_[A-Za-z0-9]{16,}|sk-ant-[A-Za-z0-9_-]{10,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}|eyJ[A-Za-z0-9_-]{15,}[.]eyJ|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
+          if grep -rEn "$pat" infra/hostinger; then echo "::error::possible secret value committed"; exit 1; fi
+          if find infra/hostinger \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name 'id_*' \) | grep .; then echo "::error::key or env file committed"; exit 1; fi
+          bad=$(grep -E '^[A-Z0-9_]+=.+' infra/hostinger/.env.staging.example | grep -Ev '^(STAGING_APP_HOST|STAGING_API_HOST|SCHEDULER_ENABLE_EMAIL_JOBS)=' || true)
+          [ -z "$bad" ] || { echo "::error::env example has values for: $(echo "$bad" | cut -d= -f1 | tr '\n' ' ')"; exit 1; }
+          echo "PASS no secret-shaped values; env example contains names only"
+
+      - name: No unsafe broad deletion or destructive commands in scripts
+        run: |
+          set -euo pipefail
+          pat='(\brm\b[^#|;&]*[[:space:]]-[a-zA-Z]*[rR]|\brm\b[^#|;&]*--recursive|docker[[:space:]]+(system|volume|image|container|network)[[:space:]]+(prune|rm)|compose.*[[:space:]]down([[:space:]].*)?[[:space:]](-v|--volumes)|mkfs|dd[[:space:]]+if=|chmod[[:space:]]+-R|chown[[:space:]]+-R|find[^#]*[[:space:]]-delete|shred|>[[:space:]]*/dev/sd)'
+          if grep -rEn --include='*.sh' "$pat" infra/hostinger; then echo "::error::unsafe or destructive command found"; exit 1; fi
+          echo "rm usage (must be single-file, -f only):"; grep -rn --include='*.sh' -E '\brm\b' infra/hostinger || true
+          echo "PASS no recursive/broad deletion, prune, volume removal, or disk-level commands"
+
+      - name: Deployment pins the exact commit
+        run: |
+          set -euo pipefail
+          d=infra/hostinger/scripts/deploy.sh
+          grep -qF "'^[0-9a-f]{40}$'" "$d"
+          grep -qF 'checkout --quiet --detach "$TARGET"' "$d"
+          grep -qF '[ "$(git -C "$REPO" rev-parse HEAD)" = "$TARGET" ]' "$d"
+          grep -qF 'cat-file -e "$TARGET^{commit}"' "$d"
+          if grep -nE 'git .*(pull|merge|reset --hard)|checkout[^"]*(origin/|refs/|main|master)' "$d"; then echo "::error::deploy.sh may move to a branch tip instead of the pinned commit"; exit 1; fi
+          for bad in main p1/stabilize-production 70546ee abc123 0123456789012345678901234567890123456789x; do
+            if echo "$bad" | grep -Eq '^[0-9a-f]{40}$'; then echo "::error::regex accepted $bad"; exit 1; fi
+          done
+          head=$(git rev-parse HEAD)
+          echo "$head" | grep -Eq '^[0-9a-f]{40}$'
+          echo "PASS deploy.sh accepts only a full commit SHA, detaches at it and verifies HEAD equals it"
+          echo "deploy command for this exact commit: deploy.sh $head" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record SHA-256 of host-baseline.sh
+        run: |
+          set -euo pipefail
+          sum=$(sha256sum infra/hostinger/scripts/host-baseline.sh | cut -d' ' -f1)
+          echo "host-baseline.sh sha256=$sum commit=$(git rev-parse HEAD)"
+          { echo "### host-baseline.sh SHA-256"; echo; echo "commit: $(git rev-parse HEAD)"; echo "sha256: $sum"; } >> "$GITHUB_STEP_SUMMARY"
+
+  hostinger-images:
+    name: Hostinger images - backend and frontend container builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Build backend image
+        run: docker build -f infra/hostinger/Dockerfile.backend -t sq-backend:ci .
+      - name: Backend image is non-root and contains the build output but no env files
+        run: |
+          set -euo pipefail
+          uid=$(docker run --rm --entrypoint id sq-backend:ci -u)
+          [ "$uid" != 0 ] || { echo "::error::backend image runs as root"; exit 1; }
+          docker run --rm --entrypoint sh sq-backend:ci -c 'test -f dist/index.js && ! ls -A | grep -q "^[.]env"'
+      - name: Build frontend image
+        run: |
+          docker build -f infra/hostinger/Dockerfile.frontend \
+            --build-arg NEXT_PUBLIC_API_URL=https://api-staging.example.test \
+            --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsuZXhhbXBsZS5jb20k \
+            -t sq-frontend:ci .
+      - name: Frontend image is non-root and contains the production build
+        run: |
+          set -euo pipefail
+          uid=$(docker run --rm --entrypoint id sq-frontend:ci -u)
+          [ "$uid" != 0 ] || { echo "::error::frontend image runs as root"; exit 1; }
+          docker run --rm --entrypoint sh sq-frontend:ci -c 'ls -A; test -d .next'
+          if docker run --rm --entrypoint sh sq-frontend:ci -c 'ls -A' | grep '^[.]env' | grep -v '[.]example$' | grep -q .; then echo "::error::a real env file is inside the frontend image"; exit 1; fi
+
+  hostinger-stack:
+    name: Hostinger stack - secret generator, migration chain, REST layer, backup and restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Prepare the /srv layout used on the VPS
+        run: |
+          set -euo pipefail
+          me="$(id -un)"
+          sudo install -d -o "$me" -g "$me" -m 750 /srv/squarespell-quiz /srv/squarespell-quiz/staging
+          sudo install -d -o "$me" -g "$me" -m 700 /srv/squarespell-quiz/backups
+          ln -s "$GITHUB_WORKSPACE" /srv/squarespell-quiz/staging/repo
+      - name: gen-env.sh and set-secret.sh
+        run: |
+          set -euo pipefail
+          R=/srv/squarespell-quiz/staging/repo/infra/hostinger/scripts
+          E=/srv/squarespell-quiz/staging/.env
+          out="$(bash "$R/gen-env.sh")"; echo "$out"
+          [ "$(stat -c %a "$E")" = 600 ] || { echo "::error::env file is not mode 600"; exit 1; }
+          for n in POSTGRES_PASSWORD AUTHENTICATOR_PASSWORD PGRST_JWT_SECRET SUPABASE_SERVICE_ROLE_KEY ENCRYPTION_KEY REPORT_SECRET CRON_SECRET; do
+            v="$(grep -m1 "^$n=" "$E" | cut -d= -f2-)"
+            [ -n "$v" ] || { echo "::error::$n was not generated"; exit 1; }
+            if echo "$out" | grep -qF "$v"; then echo "::error::$n value was printed"; exit 1; fi
+          done
+          node -e "const c=require('crypto'),fs=require('fs');const e=Object.fromEntries(fs.readFileSync('$E','utf8').split('\n').filter(l=>/^[A-Z_]+=/.test(l)).map(l=>[l.split('=')[0],l.slice(l.indexOf('=')+1)]));const [h,p,s]=e.SUPABASE_SERVICE_ROLE_KEY.split('.');if(c.createHmac('sha256',e.PGRST_JWT_SECRET).update(h+'.'+p).digest('base64url')!==s)process.exit(1);if(JSON.parse(Buffer.from(p,'base64url')).role!=='service_role')process.exit(1);console.log('service_role JWT signature verifies')"
+          again="$(bash "$R/gen-env.sh")"; echo "$again" | grep -q 'not overwriting'
+          printf '%s\n' 'ops@example.test' | bash "$R/set-secret.sh" ACME_EMAIL
+          printf '%s\n' 'pk_test_Y2xlcmsuZXhhbXBsZS5jb20k' | bash "$R/set-secret.sh" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+          printf '%s\n' 'dummy-clerk-secret' | bash "$R/set-secret.sh" CLERK_SECRET_KEY
+          if printf '%s\n' 'sk_live_dummyvalue' | bash "$R/set-secret.sh" STRIPE_SECRET_KEY; then echo "::error::set-secret accepted a live Stripe key"; exit 1; fi
+          grep -q '^STRIPE_SECRET_KEY=$' "$E"
+          [ "$(stat -c %a "$E")" = 600 ]
+          echo "PASS secrets are generated, verified, never printed; live Stripe keys refused"
+      - name: deploy.sh guards
+        run: |
+          set -uo pipefail
+          D=/srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/deploy.sh
+          E=/srv/squarespell-quiz/staging/.env
+          SHA=0123456789abcdef0123456789abcdef01234567
+          expect() {
+            out="$(bash "$D" "$1" 2>&1 || true)"
+            if grep -q "$2" <<< "$out"; then echo "PASS $3"; else echo "::error::FAIL $3 (output: $out)"; exit 1; fi
+          }
+          expect main 'full 40-character' "branch name refused"
+          expect 70546ee 'full 40-character' "short SHA refused"
+          expect rollback 'no previous deployment' "rollback without history refused"
+          sed -i 's|^STRIPE_SECRET_KEY=.*|STRIPE_SECRET_KEY=sk_live_dummyvalue|' "$E"
+          expect "$SHA" 'live Stripe key' "live Stripe key refused"
+          sed -i 's|^STRIPE_SECRET_KEY=.*|STRIPE_SECRET_KEY=|' "$E"
+          chmod 644 "$E"
+          expect "$SHA" 'mode 600' "loose env file refused"
+          chmod 600 "$E"
+      - name: Database from empty, full migration chain incl. 031, REST layer through the gateway
+        run: |
+          set -euo pipefail
+          B=/srv/squarespell-quiz/staging/repo/infra/hostinger
+          E=/srv/squarespell-quiz/staging/.env
+          DC="docker compose --env-file $E -f $B/docker-compose.staging.yml"
+          $DC up -d db
+          for _ in $(seq 1 60); do [ "$($DC ps --format '{{.Health}}' db)" = healthy ] && break; sleep 2; done
+          bash "$B/scripts/migrate.sh" | tee "$RUNNER_TEMP/migrate1.log"
+          grep -q '^apply  031_schema_reconciliation.sql' "$RUNNER_TEMP/migrate1.log"
+          grep -q '031 present' "$RUNNER_TEMP/migrate1.log"
+          bash "$B/scripts/migrate.sh" | tee "$RUNNER_TEMP/migrate2.log"
+          if grep -q '^apply ' "$RUNNER_TEMP/migrate2.log"; then echo "::error::second run re-applied migrations"; exit 1; fi
+          $DC up -d rest gateway
+          KEY="$(grep -m1 '^SUPABASE_SERVICE_ROLE_KEY=' "$E" | cut -d= -f2-)"
+          echo "::add-mask::$KEY"
+          net=squarespell-quiz-staging_internal
+          code=000
+          for _ in $(seq 1 40); do
+            code=$(docker run --rm --network "$net" curlimages/curl:8.8.0 -s -o /dev/null -w '%{http_code}' -H "apikey: $KEY" -H "Authorization: Bearer $KEY" 'http://gateway:3100/rest/v1/users?select=id&limit=1' || true)
+            [ "$code" = 200 ] && break; sleep 2
+          done
+          [ "$code" = 200 ] || { echo "::error::service_role read through the gateway returned $code"; exit 1; }
+          anon=$(docker run --rm --network "$net" curlimages/curl:8.8.0 -s -o /dev/null -w '%{http_code}' 'http://gateway:3100/rest/v1/users?select=id&limit=1' || true)
+          case "$anon" in 401|403) ;; *) echo "::error::anonymous read returned $anon, expected 401/403"; exit 1;; esac
+          if docker ps --format '{{.Names}} {{.Ports}}' | grep -- '->'; then echo "::error::a container port is published"; exit 1; fi
+          if ss -ltn | grep -E ':(5432|3000|3001|3100)[[:space:]]'; then echo "::error::an internal port is listening on the host"; exit 1; fi
+          echo "PASS migrations 000-031 + email automation applied to an empty DB; re-run is a no-op; REST works with the service key, anon is denied; nothing published"
+      - name: Encrypted backup and restore validation
+        run: |
+          set -euo pipefail
+          B=/srv/squarespell-quiz/staging/repo/infra/hostinger/scripts
+          bash "$B/backup.sh"
+          f="$(ls -1 /srv/squarespell-quiz/backups/quiz_staging_*.dump.enc | head -n 1)"
+          [ "$(stat -c %a "$f")" = 600 ]
+          [ "$(stat -c %a /srv/squarespell-quiz/backups/.backup.key)" = 600 ]
+          if head -c 5 "$f" | grep -q PGDMP; then echo "::error::backup is not encrypted"; exit 1; fi
+          bash "$B/restore-validate.sh"
+          E=/srv/squarespell-quiz/staging/.env
+          DC="docker compose --env-file $E -f $B/../docker-compose.staging.yml"
+          [ "$($DC exec -T db psql -U postgres -At -c "select count(*) from pg_database where datname='quiz_restore_test'")" = 0 ]
+          echo "PASS encrypted dump written outside the volume; restore validated in a temporary database and removed"
+      - name: Tear down the throwaway stack
+        if: always()
+        run: docker compose --env-file /srv/squarespell-quiz/staging/.env -f /srv/squarespell-quiz/staging/repo/infra/hostinger/docker-compose.staging.yml down -v || true
+
+  hostinger-baseline:
+    name: Hostinger baseline script - runs twice on a disposable Ubuntu 24.04 runner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Run host-baseline.sh twice and compare the resulting state
+        run: |
+          set -euo pipefail
+          pub='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ci-test-key'
+          snap() {
+            hostnamectl --static
+            timedatectl show -p Timezone --value
+            sudo ufw status verbose | sed '/^$/d'
+            sudo cat /etc/fail2ban/jail.d/sshd.local /etc/apt/apt.conf.d/20auto-upgrades /etc/docker/daemon.json
+            id squarespell
+            sudo stat -c '%a %U:%G %n' /srv/squarespell-quiz /srv/squarespell-quiz/staging /srv/squarespell-quiz/backups /home/squarespell/.ssh /home/squarespell/.ssh/authorized_keys
+            grep -c '^127.0.1.1 squarespell-quiz-us-1' /etc/hosts
+            sudo cat /home/squarespell/.ssh/authorized_keys | wc -l
+            systemctl is-active docker fail2ban unattended-upgrades
+            docker --version
+            docker compose version
+          }
+          sudo sha256sum /etc/ssh/sshd_config > "$RUNNER_TEMP/ssh_before.txt"
+          sudo sh -c 'cat /etc/ssh/sshd_config.d/* 2>/dev/null | sha256sum' >> "$RUNNER_TEMP/ssh_before.txt"
+          sudo env SQUARESPELL_PUBKEY="$pub" bash infra/hostinger/scripts/host-baseline.sh > "$RUNNER_TEMP/run1.log" 2>&1 || { tail -n 40 "$RUNNER_TEMP/run1.log"; exit 1; }
+          tail -n 30 "$RUNNER_TEMP/run1.log"
+          snap > "$RUNNER_TEMP/snap1.txt"
+          sudo env SQUARESPELL_PUBKEY="$pub" bash infra/hostinger/scripts/host-baseline.sh > "$RUNNER_TEMP/run2.log" 2>&1 || { tail -n 40 "$RUNNER_TEMP/run2.log"; exit 1; }
+          snap > "$RUNNER_TEMP/snap2.txt"
+          diff "$RUNNER_TEMP/snap1.txt" "$RUNNER_TEMP/snap2.txt" && echo "PASS second run left the system state identical"
+          [ "$(hostnamectl --static)" = squarespell-quiz-us-1 ]
+          [ "$(timedatectl show -p Timezone --value)" = UTC ]
+          [ "$(sudo cat /home/squarespell/.ssh/authorized_keys | wc -l)" -eq 1 ]
+          [ "$(grep -c '^127.0.1.1 squarespell-quiz-us-1' /etc/hosts)" -eq 1 ]
+          sudo ufw status | grep -q '^Status: active'
+          allowed="$(sudo ufw status | grep ALLOW | grep -Ev '^(22|80|443)/tcp( [(]v6[)])? ' || true)"
+          [ -z "$allowed" ] || { echo "::error::unexpected firewall rules: $allowed"; exit 1; }
+          for p in 22 80 443; do sudo ufw status | grep -Eq "^$p/tcp +ALLOW" || { echo "::error::port $p is not allowed"; exit 1; }; done
+          sudo fail2ban-client status sshd | grep -q 'Status for the jail: sshd'
+          id -nG squarespell | grep -qw docker
+          sudo sha256sum /etc/ssh/sshd_config > "$RUNNER_TEMP/ssh_after.txt"
+          sudo sh -c 'cat /etc/ssh/sshd_config.d/* 2>/dev/null | sha256sum' >> "$RUNNER_TEMP/ssh_after.txt"
+          diff "$RUNNER_TEMP/ssh_before.txt" "$RUNNER_TEMP/ssh_after.txt" && echo "PASS SSH configuration was not changed by the baseline"
+
+  verify:
+    name: P1 verification gate
+    if: always()
+    needs: [backend, frontend, database-and-api, hostinger-static, hostinger-images, hostinger-stack, hostinger-baseline]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to pass
+        run: |
+          echo "backend=${{ needs.backend.result }} frontend=${{ needs.frontend.result }} database-and-api=${{ needs['database-and-api'].result }}"
+          test "${{ needs.backend.result }}" = success
+          test "${{ needs.frontend.result }}" = success
+          test "${{ needs['database-and-api'].result }}" = success
+          test "${{ needs['hostinger-static'].result }}" = success
+          test "${{ needs['hostinger-images'].result }}" = success
+          test "${{ needs['hostinger-stack'].result }}" = success
+          test "${{ needs['hostinger-baseline'].result }}" = success

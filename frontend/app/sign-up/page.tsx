@@ -169,7 +169,7 @@ function SignUpContent() {
                 {fromTry ? 'Publish your quiz' : 'Start your free trial'}
               </h1>
               <p style={{ fontSize: '15px', color: '#6B6B6B', margin: 0 }}>
-                {fromTry ? 'Create your account to go live in 30 seconds' : '7 days free · No credit card required'}
+                {fromTry ? 'Create your account to go live in 30 seconds' : '14 days free · No credit card required'}
               </p>
             </div>
 

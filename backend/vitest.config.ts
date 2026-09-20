@@ -6,6 +6,9 @@ export default defineConfig({
     environment: 'node',
     exclude: ['node_modules', 'dist', '.git'],
     include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
+    setupFiles: ['src/__tests__/helpers/setup.ts'],
+    testTimeout: 30000,
+    hookTimeout: 60000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -37,11 +37,14 @@ export async function recordConsent(params: {
   }
 }
 
-export async function getConsentHistory(email: string): Promise<any[]> {
+export async function getConsentHistory(email: string, ownerQuizIds: string[]): Promise<any[]> {
+  // Only records about the caller's own quizzes: consent given to another business is not theirs to read.
+  if (ownerQuizIds.length === 0) return [];
   var { data } = await supabase
     .from('consent_records')
     .select('*')
     .eq('email', email)
+    .in('quiz_id', ownerQuizIds)
     .order('created_at', { ascending: false });
   return data || [];
 }
@@ -52,7 +55,7 @@ export async function getConsentHistory(email: string): Promise<any[]> {
  * Export ALL data held about an email address.
  * Returns structured JSON for the data subject.
  */
-export async function exportUserData(email: string, quizOwnerId: string): Promise<{
+export async function exportUserData(email: string, quizOwnerId: string, ownerQuizIds: string[]): Promise<{
   leads: any[];
   consent_records: any[];
   partial_completions: any[];
@@ -70,13 +73,15 @@ export async function exportUserData(email: string, quizOwnerId: string): Promis
   var { data: consents } = await supabase
     .from('consent_records')
     .select('consent_type, consent_given, consent_text, created_at')
-    .eq('email', email);
+    .eq('email', email)
+    .in('quiz_id', ownerQuizIds.length ? ownerQuizIds : ['00000000-0000-0000-0000-000000000000']);
 
   // Partial completions
   var { data: partials } = await supabase
     .from('partial_completions')
     .select('quiz_id, answers, last_question_index, email, status, started_at, last_activity_at')
-    .eq('email', email);
+    .eq('email', email)
+    .in('quiz_id', ownerQuizIds.length ? ownerQuizIds : ['00000000-0000-0000-0000-000000000000']);
 
   // Tags
   var leadIds = (leads || []).map(function(l) { return l.id; });

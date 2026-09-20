@@ -102,7 +102,7 @@ export async function connectSquarespaceSite(
 
 export async function disconnectSquarespaceSite(connectionId: string, userId: string): Promise<{ error: any }> {
   // Delete products first, then connection
-  await supabase.from('squarespace_products').delete().eq('connection_id', connectionId);
+  await supabase.from('squarespace_products').delete().eq('connection_id', connectionId).eq('user_id', userId);
   var { error } = await supabase
     .from('squarespace_connections')
     .delete()

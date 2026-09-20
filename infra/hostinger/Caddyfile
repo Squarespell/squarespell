@@ -1,0 +1,29 @@
+# Public reverse proxy for STAGING. Caddy obtains and renews HTTPS certificates automatically.
+# Hosts and the ACME contact come from the protected server env file (see docker-compose.staging.yml).
+{
+	email {$ACME_EMAIL}
+}
+
+{$STAGING_APP_HOST} {
+	encode zstd gzip
+	header X-Robots-Tag "noindex, nofollow"
+	# Reproduce frontend/vercel.json (Vercel-only) for the self-hosted frontend: the /embed.js loader alias
+	# and the CORS / framing headers that let customers embed quizzes on their own sites.
+	@embedjs path_regexp embedjs "^/embed(\.js|/[^/]+\.js)$"
+	header @embedjs Access-Control-Allow-Origin "*"
+	header @embedjs Cache-Control "public, max-age=300, s-maxage=60"
+	@embedpage path_regexp embedpage "^/embed/[^/.]+$"
+	header @embedpage Access-Control-Allow-Origin "*"
+	header @embedpage Content-Security-Policy "frame-ancestors *"
+	rewrite /embed.js /embed/quiz-embed.js
+	reverse_proxy frontend:3000
+}
+
+{$STAGING_API_HOST} {
+	encode zstd gzip
+	header X-Robots-Tag "noindex, nofollow"
+	# Cron endpoints are called only by the internal scheduler/worker; never expose them publicly.
+	@cron path /api/cron/*
+	respond @cron 404
+	reverse_proxy backend:3001
+}

@@ -56,7 +56,7 @@ partialAnalyticsRouter.get('/:quizId/partial-completions', requireAuth, attachUs
 
     var result = await getPartialCompletions(
       req.params.quizId,
-      req.userId!,
+      req.dbUserId!,
       status,
       limit,
       offset
@@ -70,7 +70,7 @@ partialAnalyticsRouter.get('/:quizId/partial-completions', requireAuth, attachUs
 // GET /api/analytics/:quizId/partial-stats — aggregate stats
 partialAnalyticsRouter.get('/:quizId/partial-stats', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
-    var stats = await getPartialCompletionStats(req.params.quizId, req.userId!);
+    var stats = await getPartialCompletionStats(req.params.quizId, req.dbUserId!);
     res.json(stats);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

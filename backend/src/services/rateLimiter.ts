@@ -10,63 +10,54 @@ const redis = process.env.UPSTASH_REDIS_REST_URL
     })
   : undefined;
 
+// ── Limiters ────────────────────────────────────────────────────────────────
+// With Upstash configured these are distributed sliding windows. Without it they USED to be silently
+// unenforced (Ratelimit was built with redis: undefined, every .limit() threw, and safeLimit failed open), which left
+// the anonymous AI endpoints (cost) and the lead form (spam) completely unthrottled. They now fall back to a
+// per-process sliding window with the same limits: not shared across instances, but never "off".
+
+type LimitResult = { success: boolean };
+export interface RateLimiter { limit(key: string): Promise<LimitResult> }
+
+const memoryStores: Map<string, number[]>[] = [];
+
+class MemoryLimiter implements RateLimiter {
+  private store = new Map<string, number[]>();
+  constructor(private max: number, private windowMs: number) { memoryStores.push(this.store); }
+  async limit(key: string): Promise<LimitResult> {
+    const now = Date.now();
+    const hits = (this.store.get(key) || []).filter((t) => now - t < this.windowMs);
+    if (hits.length >= this.max) { this.store.set(key, hits); return { success: false }; }
+    hits.push(now);
+    this.store.set(key, hits);
+    if (this.store.size > 20000) { // bound memory: drop the oldest keys
+      for (const k of Array.from(this.store.keys()).slice(0, 5000)) this.store.delete(k);
+    }
+    return { success: true };
+  }
+}
+
+/** Test hook: clear all in-memory counters. */
+export function resetMemoryLimiters() { memoryStores.forEach((m) => m.clear()); }
+
+function makeLimiter(prefix: string, max: number, upstashWindow: '1 m' | '1 h', windowMs: number): RateLimiter {
+  if (!redis) return new MemoryLimiter(max, windowMs);
+  return new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(max, upstashWindow), prefix: 'ratelimit:' + prefix, analytics: true });
+}
+
+const MIN = 60_000, HOUR = 3_600_000;
 // Preview endpoints: 5 per hour per IP
-export const previewLimiter = new Ratelimit({
-  redis: redis as any,
-  limiter: Ratelimit.slidingWindow(5, '1 h'),
-  prefix: 'ratelimit:preview',
-  analytics: true,
-  ...(redis ? {} : { ephemeralCache: new Map() }),
-});
-
+export const previewLimiter = makeLimiter('preview', 5, '1 h', HOUR);
 // Lead submission: 3 per minute per IP per quiz
-export const leadLimiter = new Ratelimit({
-  redis: redis as any,
-  limiter: Ratelimit.slidingWindow(3, '1 m'),
-  prefix: 'ratelimit:lead',
-  analytics: true,
-  ...(redis ? {} : { ephemeralCache: new Map() }),
-});
-
-// Public quiz fetch: 60 per minute per IP
-export const publicQuizLimiter = new Ratelimit({
-  redis: redis as any,
-  limiter: Ratelimit.slidingWindow(60, '1 m'),
-  prefix: 'ratelimit:quiz',
-  analytics: true,
-  ...(redis ? {} : { ephemeralCache: new Map() }),
-});
-
+export const leadLimiter = makeLimiter('lead', 3, '1 m', MIN);
+// Public quiz events: 60 per minute per IP (per quiz)
+export const publicQuizLimiter = makeLimiter('quiz', 60, '1 m', MIN);
 // GDPR confirm-delete: 5 attempts per hour per user
-export const deletionLimiter = new Ratelimit({
-  redis: redis as any,
-  limiter: Ratelimit.slidingWindow(5, '1 h'),
-  prefix: 'ratelimit:deletion',
-  analytics: true,
-  ...(redis ? {} : { ephemeralCache: new Map() }),
-});
-
-// Quiz checkout session creation: 10 per minute per IP per quiz — public,
-// unauthenticated endpoint that calls out to Stripe, so needs abuse protection.
-export const checkoutLimiter = new Ratelimit({
-  redis: redis as any,
-  limiter: Ratelimit.slidingWindow(10, '1 m'),
-  prefix: 'ratelimit:checkout',
-  analytics: true,
-  ...(redis ? {} : { ephemeralCache: new Map() }),
-});
-
-// process-other: free-text "other" answer classification calls out to an
-// LLM (processOtherAnswer) and was previously completely unrated-limited —
-// 10 per minute per IP per quiz keeps cost/abuse bounded while still
-// allowing normal quiz-taking traffic through.
-export const processOtherLimiter = new Ratelimit({
-  redis: redis as any,
-  limiter: Ratelimit.slidingWindow(10, '1 m'),
-  prefix: 'ratelimit:process-other',
-  analytics: true,
-  ...(redis ? {} : { ephemeralCache: new Map() }),
-});
+export const deletionLimiter = makeLimiter('deletion', 5, '1 h', HOUR);
+// Quiz checkout session creation: 10 per minute per IP per quiz (public, calls Stripe)
+export const checkoutLimiter = makeLimiter('checkout', 10, '1 m', MIN);
+// process-other: free-text "other" answer classification calls an LLM: 10 per minute per IP per quiz
+export const processOtherLimiter = makeLimiter('process-other', 10, '1 m', MIN);
 
 export function getClientIp(req: any): string {
   return ((req.headers['x-forwarded-for'] as string) || req.ip || 'unknown').split(',')[0].trim();
@@ -96,7 +87,7 @@ export function getClientIp(req: any): string {
 // ride out to whatever the platform's gateway timeout is. So this also
 // races the real call against a short timeout and fails open if neither the
 // success nor the error path wins in time.
-export async function safeLimit(limiter: Ratelimit, key: string): Promise<{ success: boolean }> {
+export async function safeLimit(limiter: RateLimiter, key: string): Promise<{ success: boolean }> {
   try {
     const result = await Promise.race([
       limiter.limit(key),

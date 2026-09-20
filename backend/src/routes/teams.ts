@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import { requireFeature } from '../middleware/planGuard';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import {
   createTeam,
@@ -34,7 +35,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 });
 
 // ── POST /api/teams — create a new team ─────────────────────────────────────
-router.post('/', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', requireFeature('teamSeats'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });

@@ -1,0 +1,13 @@
+PHASE 1 - identityKeys.test.ts run against commit 127a493 (schema fix only; route fixes not yet applied)
+Command: cd backend && npx vitest run
+Totals: 8 tests, 0 passed, 8 failed, 0 skipped/todo
+
+src/__tests__/phase1/identityKeys.test.ts  passed=0 failed=8
+   FAIL  owner can use the feature routes lead tags: create, list, assign, read back, unassign  -- AssertionError: {"error":"invalid input syntax for type uuid: \"user_local_1789831769057_1\""}: expected 400 to be 201 // Object.is equality
+   FAIL  owner can use the feature routes segments and automations: create then list  -- AssertionError: {"error":"invalid input syntax for type uuid: \"user_local_1789831769929_3\""}: expected 400 to be 201 // Object.is equality
+   FAIL  owner can use the feature routes translations: save, list, read one  -- AssertionError: {"error":"Quiz not found"}: expected 404 to be 200 // Object.is equality
+   FAIL  owner can use the feature routes rich result blocks: create, list, update, reorder, delete  -- AssertionError: {"error":"Quiz not found"}: expected 404 to be less than 300
+   FAIL  owner can use the feature routes custom CSS (Pro), question analytics, partial-completion stats and embed performance answer for the owner  -- AssertionError: expected 400 to be 200 // Object.is equality
+   FAIL  owner can use the feature routes GDPR: the owner can read consent history and export data for their own lead  -- AssertionError: expected [] to have a length of 1 but got +0
+   FAIL  owner can use the feature routes GDPR exports never include another business's records for the same person  -- AssertionError: expected '{"leads":[],"consent_records":[{"cons…' not to contain 'OTHER-BUSINESS-TEXT'
+   FAIL  another tenant cannot touch those records (write paths) B cannot assign A's tag to A's lead, edit or delete A's result blocks, or map A's products  -- AssertionError: expected 400 to be 404 // Object.is equality

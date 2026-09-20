@@ -1,6 +1,10 @@
 -- ============================================================================
 -- Migration 016: Enable Row Level Security (RLS) on all tables
 --
+-- Phase 1 note: ab_tests.user_id is TEXT (migration 015), so the ab_tests policies compare with
+-- auth.uid()::text. Before this correction those five statements failed with
+-- "operator does not exist: text = uuid" on a fresh database.
+--
 -- RLS STRATEGY:
 -- - RLS protects against unauthorized direct Supabase client access from frontend
 -- - Backend service_role API key bypasses RLS by design (no policy restrictions apply)
@@ -248,19 +252,19 @@ ALTER TABLE ab_tests ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view their own A/B tests"
   ON ab_tests FOR SELECT
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid()::text);
 
 CREATE POLICY "Users can create A/B tests"
   ON ab_tests FOR INSERT
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = auth.uid()::text);
 
 CREATE POLICY "Users can update their own A/B tests"
   ON ab_tests FOR UPDATE
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid()::text);
 
 CREATE POLICY "Users can delete their own A/B tests"
   ON ab_tests FOR DELETE
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid()::text);
 
 
 -- ============================================================================
@@ -278,6 +282,6 @@ CREATE POLICY "Test owners can view their test assignments"
   ON ab_test_assignments FOR SELECT
   USING (
     test_id IN (
-      SELECT id FROM ab_tests WHERE user_id = auth.uid()
+      SELECT id FROM ab_tests WHERE user_id = auth.uid()::text
     )
   );

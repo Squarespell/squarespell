@@ -336,13 +336,15 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
 
         // Send email via Resend
         const unsubHeaders = buildUnsubscribeHeaders(leadData.email, leadData.quiz_id);
-        await resend.emails.send({
+        const sendResult: any = await resend.emails.send({
           from: `${siteName} <results@squarespell.com>`,
           to: leadData.email,
           subject: resolvedSubject,
           html: htmlBody,
           headers: unsubHeaders,
         });
+        // Resend v3 returns { data, error } instead of throwing: without this check a rejected email was recorded as 'sent'.
+        if (sendResult?.error) throw new Error(sendResult.error.message || 'email rejected by provider');
 
         // Mark as sent
         await supabase

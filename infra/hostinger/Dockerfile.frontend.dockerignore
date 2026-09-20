@@ -1,0 +1,10 @@
+# Build-context ignore rules for Dockerfile.frontend (keeps secrets and bulk out of the image build).
+.git
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.staging.example
+**/.next
+docs
+*.docx

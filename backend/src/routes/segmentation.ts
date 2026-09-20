@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express';
+import { ownsLead, ownsTag } from '../utils/ownership';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import {
@@ -23,7 +24,7 @@ segmentationRouter.get('/tags', requireAuth, attachUser, async function(req: Aut
     var { data, error } = await supabase
       .from('lead_tags')
       .select('*')
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .order('name');
     if (error) return res.status(500).json({ error: error.message });
     res.json(data || []);
@@ -37,7 +38,7 @@ segmentationRouter.post('/tags', requireAuth, attachUser, async function(req: Au
   try {
     var { name, color } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
-    var { data, error } = await createTag(req.userId!, name, color);
+    var { data, error } = await createTag(req.dbUserId!, name, color);
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json(data);
   } catch (err: any) {
@@ -52,7 +53,7 @@ segmentationRouter.delete('/tags/:id', requireAuth, attachUser, async function(r
       .from('lead_tags')
       .delete()
       .eq('id', req.params.id)
-      .eq('user_id', req.userId);
+      .eq('user_id', req.dbUserId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err: any) {
@@ -65,6 +66,7 @@ segmentationRouter.post('/leads/:leadId/tags', requireAuth, attachUser, async fu
   try {
     var { tag_id } = req.body;
     if (!tag_id) return res.status(400).json({ error: 'tag_id required' });
+    if (!(await ownsLead(req.params.leadId, req.dbUserId)) || !(await ownsTag(tag_id, req.dbUserId))) return res.status(404).json({ error: 'Lead or tag not found' });
     var { data, error } = await assignTag(req.params.leadId, tag_id, 'manual');
     if (error) return res.status(400).json({ error: error.message });
     res.json(data);
@@ -76,6 +78,7 @@ segmentationRouter.post('/leads/:leadId/tags', requireAuth, attachUser, async fu
 // DELETE /api/leads/:leadId/tags/:tagId — remove tag from lead
 segmentationRouter.delete('/leads/:leadId/tags/:tagId', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsLead(req.params.leadId, req.dbUserId))) return res.status(404).json({ error: 'Lead not found' });
     var { error } = await removeTag(req.params.leadId, req.params.tagId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
@@ -87,6 +90,7 @@ segmentationRouter.delete('/leads/:leadId/tags/:tagId', requireAuth, attachUser,
 // GET /api/leads/:leadId/tags — get tags for a lead
 segmentationRouter.get('/leads/:leadId/tags', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsLead(req.params.leadId, req.dbUserId))) return res.status(404).json({ error: 'Lead not found' });
     var tags = await getLeadTags(req.params.leadId);
     res.json(tags);
   } catch (err: any) {
@@ -99,7 +103,7 @@ segmentationRouter.get('/leads/:leadId/tags', requireAuth, attachUser, async fun
 // GET /api/segments — list all segments
 segmentationRouter.get('/segments', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
-    var { data, error } = await listSegments(req.userId!);
+    var { data, error } = await listSegments(req.dbUserId!);
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
   } catch (err: any) {
@@ -113,7 +117,7 @@ segmentationRouter.post('/segments', requireAuth, attachUser, async function(req
     var { name, rules, description } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
     if (!rules || !Array.isArray(rules)) return res.status(400).json({ error: 'rules array required' });
-    var { data, error } = await createSegment(req.userId!, name, rules as SegmentRule[], description);
+    var { data, error } = await createSegment(req.dbUserId!, name, rules as SegmentRule[], description);
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json(data);
   } catch (err: any) {
@@ -125,7 +129,7 @@ segmentationRouter.post('/segments', requireAuth, attachUser, async function(req
 segmentationRouter.patch('/segments/:id', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     var { name, rules, description } = req.body;
-    var { data, error } = await updateSegment(req.params.id, req.userId!, { name, rules, description });
+    var { data, error } = await updateSegment(req.params.id, req.dbUserId!, { name, rules, description });
     if (error) return res.status(400).json({ error: error.message });
     res.json(data);
   } catch (err: any) {
@@ -136,7 +140,7 @@ segmentationRouter.patch('/segments/:id', requireAuth, attachUser, async functio
 // DELETE /api/segments/:id — delete a segment
 segmentationRouter.delete('/segments/:id', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
-    var { error } = await deleteSegment(req.params.id, req.userId!);
+    var { error } = await deleteSegment(req.params.id, req.dbUserId!);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err: any) {
@@ -149,7 +153,7 @@ segmentationRouter.get('/segments/:id/leads', requireAuth, attachUser, async fun
   try {
     var limit = parseInt(req.query.limit as string) || 50;
     var offset = parseInt(req.query.offset as string) || 0;
-    var result = await getSegmentLeads(req.params.id, req.userId!, limit, offset);
+    var result = await getSegmentLeads(req.params.id, req.dbUserId!, limit, offset);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -164,7 +168,7 @@ segmentationRouter.get('/auto-tag-rules', requireAuth, attachUser, async functio
     var { data, error } = await supabase
       .from('auto_tag_rules')
       .select('*, lead_tags(name, color)')
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .order('created_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
     res.json(data || []);
@@ -181,7 +185,7 @@ segmentationRouter.post('/auto-tag-rules', requireAuth, attachUser, async functi
     var { data, error } = await supabase
       .from('auto_tag_rules')
       .insert({
-        user_id: req.userId,
+        user_id: req.dbUserId,
         tag_id: tag_id,
         conditions: conditions || [],
         quiz_id: quiz_id || null,
@@ -208,7 +212,7 @@ segmentationRouter.patch('/auto-tag-rules/:id', requireAuth, attachUser, async f
       .from('auto_tag_rules')
       .update(updateObj)
       .eq('id', req.params.id)
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .select('*, lead_tags(name, color)')
       .single();
     if (error) return res.status(400).json({ error: error.message });
@@ -225,7 +229,7 @@ segmentationRouter.delete('/auto-tag-rules/:id', requireAuth, attachUser, async 
       .from('auto_tag_rules')
       .delete()
       .eq('id', req.params.id)
-      .eq('user_id', req.userId);
+      .eq('user_id', req.dbUserId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err: any) {

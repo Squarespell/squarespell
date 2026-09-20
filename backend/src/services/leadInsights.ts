@@ -1,9 +1,7 @@
 import { log } from '../lib/logger';
-import Anthropic from '@anthropic-ai/sdk';
+import { createAnthropic } from '../lib/anthropicClient';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+const anthropic = createAnthropic(process.env.ANTHROPIC_API_KEY);
 
 export interface AnswerSummary {
   question: string;

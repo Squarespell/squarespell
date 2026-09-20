@@ -66,7 +66,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
     const unsubHeaders = buildUnsubscribeHeaders(to, quizId);
     const plainText = [quizTitle,'',outcomeTitle,'',outcomeDescription.replace(/<[^>]+>/g,''),'',ctaUrl?`${ctaText||'Learn More'}: ${ctaUrl}`:'',reportUrl?`Download your report: ${reportUrl}`:'','',`Powered by Squarespell`,canSpamFooterText(to, { quizId })].filter(Boolean).join('\n');
 
-    await resend.emails.send({
+    const sendResult: any = await resend.emails.send({
       from: `${siteName} <results@squarespell.com>`,
       to,
       ...(ownerEmail ? { reply_to: ownerEmail } : {}),
@@ -129,6 +129,8 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
 </html>`,
     });
     log.info(`[ResultEmail] Sent to ${to} for "${quizTitle}"`);
+    // Resend v3 returns { data, error } and does not throw on API errors (unverified domain, bad recipient, quota).
+    if (sendResult?.error) throw new Error(sendResult.error.message || 'result email rejected by provider');
     return true;
   } catch (err: any) {
     log.error('[ResultEmail] Failed:', { err: err.message });

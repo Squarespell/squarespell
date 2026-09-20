@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import { ownsQuiz, ownsConnection, ownsProduct } from '../utils/ownership';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import {
@@ -20,7 +21,7 @@ commerceRouter.post('/connect', requireAuth, attachUser, async function(req: Aut
   try {
     var { api_key, site_url } = req.body;
     if (!api_key) return res.status(400).json({ error: 'api_key required' });
-    var result = await connectSquarespaceSite(req.userId!, api_key, site_url);
+    var result = await connectSquarespaceSite(req.dbUserId!, api_key, site_url);
     if (result.error) return res.status(400).json({ error: result.error.message });
     res.status(201).json(result.data);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
@@ -29,7 +30,8 @@ commerceRouter.post('/connect', requireAuth, attachUser, async function(req: Aut
 // DELETE /api/commerce/connections/:id — disconnect
 commerceRouter.delete('/connections/:id', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
-    var result = await disconnectSquarespaceSite(req.params.id, req.userId!);
+    if (!(await ownsConnection(req.params.id, req.dbUserId))) return res.status(404).json({ error: 'Connection not found' });
+    var result = await disconnectSquarespaceSite(req.params.id, req.dbUserId!);
     if (result.error) return res.status(500).json({ error: result.error.message });
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
@@ -41,7 +43,7 @@ commerceRouter.get('/connections', requireAuth, attachUser, async function(req: 
     var { data } = await supabase
       .from('squarespace_connections')
       .select('id, site_id, site_url, site_title, sync_status, sync_error, last_synced_at, created_at')
-      .eq('user_id', req.userId)
+      .eq('user_id', req.dbUserId)
       .order('created_at', { ascending: false });
     res.json(data || []);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
@@ -50,7 +52,8 @@ commerceRouter.get('/connections', requireAuth, attachUser, async function(req: 
 // POST /api/commerce/connections/:id/sync — trigger product sync
 commerceRouter.post('/connections/:id/sync', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
-    var count = await syncProducts(req.params.id, req.userId!);
+    if (!(await ownsConnection(req.params.id, req.dbUserId))) return res.status(404).json({ error: 'Connection not found' });
+    var count = await syncProducts(req.params.id, req.dbUserId!);
     res.json({ synced: count });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -61,7 +64,7 @@ commerceRouter.post('/connections/:id/sync', requireAuth, attachUser, async func
 commerceRouter.get('/products', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
     var available = req.query.available === 'true';
-    var products = await getUserProducts(req.userId!, available);
+    var products = await getUserProducts(req.dbUserId!, available);
     res.json(products);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -71,6 +74,7 @@ commerceRouter.get('/products', requireAuth, attachUser, async function(req: Aut
 // GET /api/commerce/quizzes/:quizId/outcomes/:outcomeId/products
 commerceRouter.get('/quizzes/:quizId/outcomes/:outcomeId/products', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsQuiz(req.params.quizId, req.dbUserId))) return res.status(404).json({ error: 'Quiz not found' });
     var products = await getOutcomeProducts(req.params.quizId, req.params.outcomeId);
     res.json(products);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
@@ -81,6 +85,7 @@ commerceRouter.post('/quizzes/:quizId/outcomes/:outcomeId/products', requireAuth
   try {
     var { product_id, display_order, custom_headline, custom_description } = req.body;
     if (!product_id) return res.status(400).json({ error: 'product_id required' });
+    if (!(await ownsQuiz(req.params.quizId, req.dbUserId)) || !(await ownsProduct(product_id, req.dbUserId))) return res.status(404).json({ error: 'Quiz or product not found' });
     var result = await mapProductToOutcome(
       req.params.quizId, req.params.outcomeId, product_id,
       display_order, custom_headline, custom_description
@@ -93,6 +98,7 @@ commerceRouter.post('/quizzes/:quizId/outcomes/:outcomeId/products', requireAuth
 // DELETE /api/commerce/quizzes/:quizId/outcomes/:outcomeId/products/:productId
 commerceRouter.delete('/quizzes/:quizId/outcomes/:outcomeId/products/:productId', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsQuiz(req.params.quizId, req.dbUserId))) return res.status(404).json({ error: 'Quiz not found' });
     var result = await removeProductFromOutcome(req.params.quizId, req.params.outcomeId, req.params.productId);
     if (result.error) return res.status(500).json({ error: result.error.message });
     res.json({ success: true });
