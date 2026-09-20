@@ -16,7 +16,7 @@ const TAGS: Record<string, string> = {
   pro: 'For serious lead generation',
   business: 'For teams and scale',
 };
-const BUSINESS_HIGHLIGHTS = /white-label|custom domain|team seats|api access|priority support|onboarding/i;
+const BUSINESS_HIGHLIGHTS = /white-label|custom domain|team seats|api access|priority (email )?support|onboarding/i;
 
 // Catalog wording is reused as written, with two display rules: no claim of
 // automatic page insertion ("one-click connect" reads "connect") and no em dashes.
@@ -26,7 +26,7 @@ function clean(text: string): string {
 
 function features(plan: Plan): string[] {
   if (plan.key === 'business') {
-    return ['Everything in Pro', ...plan.included.filter((f) => BUSINESS_HIGHLIGHTS.test(f))].slice(0, 6).map(clean);
+    return ['Everything in Pro', ...plan.included.filter((f) => BUSINESS_HIGHLIGHTS.test(f))].slice(0, 7).map(clean);
   }
   return plan.included.slice(0, 6).map(clean);
 }
