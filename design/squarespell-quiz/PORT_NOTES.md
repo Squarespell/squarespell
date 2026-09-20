@@ -12,6 +12,7 @@ Ported from `design/squarespell-quiz/index.html` (reviewed source a954105948bd97
 - `/integrations` and `/support` are new dedicated pages. Support is an email address, the one already published in the app's terms and privacy pages. There is no help center or live chat.
 - Fonts (Manrope, DM Sans) load through `next/font` instead of a render-blocking Google Fonts link.
 - Catalog copy "Squarespace one-click connect" is displayed as "Squarespace connect" and em dashes are shown as colons.
+- Two CSS fixes to defects found while testing on staging: the website URL field now shows a focus ring on the whole form (the prototype set `outline: 0` on the input), and plan tags no longer stretch across the card and run under the "Most popular" badge.
 - The staging homepage is `noindex`. Canonical URL, Open Graph image, sitemap entry and the indexing rule are for the final domain only.
 
 ## Asset decisions
