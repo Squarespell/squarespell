@@ -907,7 +907,7 @@ export function DashboardShell({
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderBottom: '1px solid ' + C.GRAY_200,
-            padding: '0 32px',
+            padding: isMobile ? '0 16px' : '0 32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -953,7 +953,12 @@ export function DashboardShell({
                 borderRadius: 8,
                 color: C.GRAY_400,
                 fontSize: 14,
-                minWidth: 320,
+                // Shrinks on phones instead of forcing every dashboard page wider than the screen (was a fixed minWidth of 320).
+                minWidth: 0,
+                flex: '0 1 320px',
+                width: '100%',
+                maxWidth: 320,
+                overflow: 'hidden',
                 cursor: 'pointer',
                 background: C.SURFACE,
                 fontFamily: C.FONT,
@@ -963,7 +968,7 @@ export function DashboardShell({
               onMouseLeave={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_200; }}
             >
               {icons.search}
-              <span style={{ flex: 1, textAlign: 'left', color: C.GRAY_500, fontSize: 14 }}>Search anything...</span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: 'left', color: C.GRAY_500, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Search anything...</span>
               <kbd style={{ padding: '2px 6px', border: '1px solid ' + C.GRAY_200, borderRadius: 4, fontSize: 11, color: C.GRAY_400, background: C.GRAY_50, fontWeight: 500, fontFamily: C.FONT }}>&#8984; K</kbd>
             </button>
           </div>
