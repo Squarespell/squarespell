@@ -22,6 +22,8 @@ volumes:
   pgdata: {}
   caddy_data: {}
   caddy_config: {}
+  worker_state: {}
+  scheduler_state: {}
 
 services:
   proxy:
@@ -138,8 +140,11 @@ services:
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
       ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
       DRY_RUN: ${SCHEDULER_DRY_RUN:-false}
+      STATE_DIR: /home/curl_user/state
     volumes:
       - ./scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      # Persistent, production-only state (per-job, per-minute run markers) so a restart cannot repeat a job. One volume each.
+      - worker_state:/home/curl_user
     depends_on:
       backend:
         condition: service_healthy
@@ -161,8 +166,11 @@ services:
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
       ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
       DRY_RUN: ${SCHEDULER_DRY_RUN:-false}
+      STATE_DIR: /home/curl_user/state
     volumes:
       - ./scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      # Persistent, production-only state (per-job, per-minute run markers) so a restart cannot repeat a job. One volume each.
+      - scheduler_state:/home/curl_user
     depends_on:
       backend:
         condition: service_healthy
