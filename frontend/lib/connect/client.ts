@@ -28,13 +28,28 @@ export class ConnectApiError extends Error {
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
+/**
+ * Clerk session tokens live about a minute, but a dashboard page can stay open for hours. Every call therefore asks the live Clerk session
+ * for a fresh token and only falls back to the one the page was given (tests, or a page without Clerk).
+ */
+export async function freshToken(fallback: string): Promise<string> {
+  try {
+    const clerk = (globalThis as any).Clerk;
+    const t = clerk && clerk.session ? await clerk.session.getToken() : null;
+    return t || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 async function call<T>(token: string, method: string, path: string, body?: unknown): Promise<T> {
+  const bearer = await freshToken(token);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25000);
   try {
     const res = await fetch(API + path, {
       method, signal: controller.signal,
-      headers: { Authorization: 'Bearer ' + token, ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) },
+      headers: { Authorization: 'Bearer ' + bearer, ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     let data: any = null;
