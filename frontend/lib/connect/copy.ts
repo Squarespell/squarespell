@@ -146,8 +146,9 @@ export function relativeTime(iso: string | null | undefined, now = Date.now()): 
   if (!iso) return 'Never';
   const s = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
   if (s < 45) return 'Just now';
-  if (s < 3600) return Math.round(s / 60) + ' minutes ago';
-  if (s < 86400) return Math.round(s / 3600) + ' hours ago';
+  const plural = (n: number, unit: string) => n + ' ' + unit + (n === 1 ? '' : 's') + ' ago';
+  if (s < 3600) return plural(Math.max(1, Math.round(s / 60)), 'minute');
+  if (s < 86400) return plural(Math.max(1, Math.round(s / 3600)), 'hour');
   if (s < 172800) return 'Yesterday';
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
