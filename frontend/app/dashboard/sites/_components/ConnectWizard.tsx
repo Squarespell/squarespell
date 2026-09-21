@@ -193,7 +193,7 @@ export function ConnectWizard({ open, token, existingSite, onClose, onVerified }
             aria-invalid={domainError ? true : undefined} aria-describedby={'sx-domain-help' + (domainError ? ' sx-domain-err' : '')}
             onChange={(e) => { setDomain(e.target.value); setDomainError(''); }} onKeyDown={(e) => { if (e.key === 'Enter' && !busy) createSite(); }} />
           <small id="sx-domain-help">No paths or page links. We check https:// followed by your domain.</small>
-          {domainError ? <p id="sx-domain-err" className="sx-err" role="alert">{domainError}</p> : null}
+          {domainError ? <p id="sx-domain-err" className="sx-err">{domainError}</p> : null}
         </div>
       </div>
     );
@@ -248,7 +248,7 @@ export function ConnectWizard({ open, token, existingSite, onClose, onVerified }
         {verifying ? <p style={{ color: 'var(--muted)', margin: 0 }}>Still checking. Squarespace can take a moment to publish your change. You can cancel at any time.</p> : null}
         {message ? <div className="sx-note sx-bad" role="alert">{message}</div> : null}
         {rec ? (
-          <div className="sx-note sx-warn" role="alert" data-testid="recovery">
+          <div className="sx-note sx-warn" data-testid="recovery">
             <b>{rec.title}</b>
             <p style={{ margin: '4px 0 6px' }}>{rec.body}</p>
             <ol style={{ margin: '0 0 8px', paddingLeft: 18 }}>{rec.steps.map((s) => <li key={s}>{s}</li>)}</ol>
