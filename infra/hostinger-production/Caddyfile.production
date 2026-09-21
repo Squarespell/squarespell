@@ -1,5 +1,5 @@
 # PRIVATE production edge: plain HTTP on loopback only (127.0.0.1:18080). No TLS, no admin API, no public exposure.
-# At the approved cutover, a public TLS edge forwards the two production hostnames to this listener.
+# At the approved cutover, the public TLS edge (infra/hostinger-edge) forwards the production hostnames to this proxy over the private edge network.
 # Hosts come from the protected server env file (PROD_APP_HOST, PROD_API_HOST).
 {
 	admin off
@@ -8,8 +8,7 @@
 
 http://{$PROD_APP_HOST} {
 	encode zstd gzip
-	# Remove ONLY at the approved launch (this header and the page metadata).
-	header X-Robots-Tag "noindex, nofollow"
+	# X-Robots-Tag is set by the public edge (infra/hostinger-edge), controlled by PROD_INDEXING / GATE_ENABLED.
 	# Reproduce frontend/vercel.json (Vercel-only): the /embed.js loader alias and the CORS / framing headers
 	# that let customers embed quizzes on their own sites.
 	@embedjs path_regexp embedjs "^/embed(\.js|/[^/]+\.js)$"
@@ -24,7 +23,7 @@ http://{$PROD_APP_HOST} {
 
 http://{$PROD_API_HOST} {
 	encode zstd gzip
-	header X-Robots-Tag "noindex, nofollow"
+	# X-Robots-Tag is set by the public edge (infra/hostinger-edge).
 	# Cron endpoints are called only by the internal scheduler/worker; never expose them publicly.
 	@cron path /api/cron/*
 	respond @cron 404
