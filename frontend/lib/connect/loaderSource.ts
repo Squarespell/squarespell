@@ -318,10 +318,15 @@ export const LOADER_TEMPLATE = String.raw`(function () {
     }).catch(function () { /* offline or server error: keep the previous manifest */ });
   }
   var lastBeat = 0;
+  var beatTimer = null;
   function beat(force) {
     var now = Date.now();
     if (!force && now - lastBeat < 60000) return;
-    if (now - lastBeat < 5000) return;
+    if (now - lastBeat < 5000) {
+      // Too soon after the last signal: send it a moment later instead of dropping it (a new slot must still be reported).
+      if (!beatTimer) beatTimer = setTimeout(function () { beatTimer = null; beat(true); }, 5000 - (now - lastBeat));
+      return;
+    }
     lastBeat = now;
     lastSlots = slotsSig();
     try {
@@ -360,6 +365,7 @@ export const LOADER_TEMPLATE = String.raw`(function () {
     if (observer) observer.disconnect();
     if (interval) clearInterval(interval);
     if (scanTimer) clearTimeout(scanTimer);
+    if (beatTimer) clearTimeout(beatTimer);
     for (var id in state.rendered) teardown(id);
     w.removeEventListener('popstate', schedule); w.removeEventListener('hashchange', schedule); w.removeEventListener('mercury:load', schedule);
     try { delete w.__squarespellConnect; } catch (e) { w.__squarespellConnect = undefined; }
