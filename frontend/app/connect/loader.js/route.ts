@@ -1,10 +1,11 @@
 import { renderLoader } from '@/lib/connect/loaderSource';
-import { APP_URL } from '@/lib/urls';
 
 /**
  * GET /connect/loader.js - the Squarespell site loader.
  * Behind the CONNECT_ENABLED feature flag (a server runtime variable, off by default): while it is off this is a plain 404.
  * The script is public and cacheable; it carries no secrets and sets no cookies.
+ * Both origins come from configuration (NEXT_PUBLIC_API_URL and NEXT_PUBLIC_SITE_URL) and there is NO fallback: a build that lacks either
+ * answers 503 instead of quietly pointing quiz frames at some other deployment (for example the production domain from a staging build).
  */
 export const dynamic = 'force-dynamic';
 
@@ -15,10 +16,11 @@ export async function GET() {
     return new Response('/* Not available. */', { status: 404, headers: { 'content-type': JS, 'cache-control': 'no-store' } });
   }
   const api = (process.env.NEXT_PUBLIC_API_URL || '').trim();
-  if (!api) return new Response('/* Not configured. */', { status: 503, headers: { 'content-type': JS, 'cache-control': 'no-store' } });
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
+  if (!api || !site) return new Response('/* Not configured. */', { status: 503, headers: { 'content-type': JS, 'cache-control': 'no-store' } });
   let body: string;
   try {
-    body = renderLoader({ api, origin: APP_URL });
+    body = renderLoader({ api, origin: site });
   } catch {
     return new Response('/* Not configured. */', { status: 503, headers: { 'content-type': JS, 'cache-control': 'no-store' } });
   }
