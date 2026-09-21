@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Metadata } from 'next';
+import { pageSeo } from '@/lib/site';
 import Link from 'next/link';
 import { MarketingShell } from '@/components/marketing/home/MarketingShell';
 import { ROUTES } from '@/components/marketing/home/routes';
@@ -9,7 +10,7 @@ import { TRIAL_DAYS } from '@/lib/plans';
 export const metadata: Metadata = {
   title: 'Integrations | Squarespell Quiz',
   description: 'The tools Squarespell Quiz can send quiz answers, scores and leads to, and the status of each one.',
-  robots: { index: false, follow: false },
+  ...pageSeo('/integrations', { title: 'Integrations | Squarespell Quiz', description: 'The tools Squarespell Quiz can send quiz answers, scores and leads to, and the status of each one.' }),
 };
 
 type Status = 'Available' | 'Requires customer configuration' | 'Planned';
