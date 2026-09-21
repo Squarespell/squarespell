@@ -21,13 +21,13 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--su
 .sx-btn-danger{background:#fff;border-color:#FDA29B;color:var(--bad)}
 .sx-btn-sm{min-height:34px;padding:0 12px;font-size:13px}
 .sx-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:24px}
-.sx-metric{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.sx-metric{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 18px rgba(26,55,50,.04)}
 .sx-metric b{display:block;font-size:24px;letter-spacing:-.02em;margin-top:4px}
 .sx-metric span{color:var(--muted);font-size:13px}
 .sx-section{margin:0 0 28px}
 .sx-section h2{font-size:17px;margin:0 0 4px}.sx-section>p{margin:0 0 14px;color:var(--muted);font-size:14px}
 .sx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px}
-.sx-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0;transition:box-shadow .2s ease,transform .2s ease}
+.sx-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(26,55,50,.05);transition:box-shadow .2s ease,transform .2s ease}
 .sx-card:hover{box-shadow:0 10px 30px rgba(16,24,40,.07)}
 .sx-site-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
 .sx-host{display:flex;gap:10px;align-items:center;min-width:0}.sx-host b{overflow-wrap:anywhere;font-size:15px}.sx-host small{display:block;color:var(--muted)}
