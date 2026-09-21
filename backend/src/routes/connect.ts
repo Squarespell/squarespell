@@ -51,7 +51,9 @@ const ctxOf = (req: Request, requestId: string) => ({
 // The dashboard asks this to decide whether to show Sites at all; it answers even when the feature is off.
 connectRouter.get('/config', requireAuth, (_req, res) => { res.json(getConnectConfig()); });
 
-connectRouter.use(requireFlag, requireAuth, attachUser);
+// Authentication first: a request without a valid token is 401 whether or not the feature is on (nothing about the flag leaks).
+// A signed-in caller gets 404 while the flag is off.
+connectRouter.use(requireAuth, requireFlag, attachUser);
 
 connectRouter.get('/sites', handle(async (req, res) => { res.json({ sites: await listSites(uid(req)) }); }));
 
