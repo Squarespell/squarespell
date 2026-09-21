@@ -21,15 +21,29 @@ const bapi = async (m, p, b) => { const r = await fetch('https://api.clerk.com/v
 const load = () => (fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : {});
 const save = (s) => fs.writeFileSync(STATE, JSON.stringify(s));
 
+// A Clerk DEVELOPMENT instance (pk_test_) needs a dev-browser token on every frontend-API call; production instances do not.
+async function devBrowserQuery(which) {
+  if (!/^pk_test_/.test(process.env.PK || '')) return '';
+  const r = await fetch(FAPI + '/v1/dev_browser', { method: 'POST', headers: { Origin: APP } });
+  const j = await r.json().catch(() => null);
+  const t = j && (which === 'token' ? j.token : j.id);
+  return t ? '?__clerk_db_jwt=' + encodeURIComponent(t) : '';
+}
 async function jwtFor(clerkId) {
   const st = await bapi('POST', '/sign_in_tokens', { user_id: clerkId, expires_in_seconds: 300 });
-  const fr = await fetch(FAPI + '/v1/client/sign_ins', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: APP }, body: new URLSearchParams({ strategy: 'ticket', ticket: st.j.token }) });
+  let dq = await devBrowserQuery('id');
+  let fr = await fetch(FAPI + '/v1/client/sign_ins' + dq, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: APP }, body: new URLSearchParams({ strategy: 'ticket', ticket: st.j.token }) });
+  if (fr.status === 401 && dq) {
+    const st2 = await bapi('POST', '/sign_in_tokens', { user_id: clerkId, expires_in_seconds: 300 });
+    dq = await devBrowserQuery('token');
+    fr = await fetch(FAPI + '/v1/client/sign_ins' + dq, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: APP }, body: new URLSearchParams({ strategy: 'ticket', ticket: st2.j.token }) });
+  }
   const fj = await fr.json();
   const sess = fj.client && fj.client.sessions && fj.client.sessions[0];
   let jwt = sess && sess.last_active_token && sess.last_active_token.jwt;
   if (!jwt && sess) {
     const ck = (fr.headers.getSetCookie ? fr.headers.getSetCookie() : []).map((c) => c.split(';')[0]).join('; ');
-    const tr = await fetch(FAPI + '/v1/client/sessions/' + sess.id + '/tokens', { method: 'POST', headers: { Cookie: ck, Origin: APP } });
+    const tr = await fetch(FAPI + '/v1/client/sessions/' + sess.id + '/tokens' + dq, { method: 'POST', headers: { Cookie: ck, Origin: APP } });
     jwt = (await tr.json()).jwt;
   }
   return jwt;
