@@ -1,0 +1,48 @@
+# Squarespell Quiz - PUBLIC TLS edge (production + staging hostnames on ports 80/443).
+# Run with:  docker compose --env-file /opt/squarespell-quiz/edge.env -f infra/hostinger-edge/docker-compose.edge.yml up -d
+# It joins the existing staging and production 'edge' networks (both must already be running) and reuses the staging proxy's
+# certificate volumes, so the existing staging certificates keep working. The staging proxy container must be STOPPED first
+# (it owns ports 80/443 and the same volumes): see README.md. Nothing in the staging or production stacks is modified.
+name: squarespell-quiz-edge
+
+services:
+  edge:
+    image: caddy:2.8
+    container_name: squarespell-quiz-edge
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+      PROD_APP_HOST: ${PROD_APP_HOST:?set PROD_APP_HOST}
+      PROD_API_HOST: ${PROD_API_HOST:?set PROD_API_HOST}
+      STAGING_APP_HOST: ${STAGING_APP_HOST:?set STAGING_APP_HOST}
+      STAGING_API_HOST: ${STAGING_API_HOST:?set STAGING_API_HOST}
+      GATE_ENABLED: ${GATE_ENABLED:-true}
+      GATE_ALLOW_IPS: ${GATE_ALLOW_IPS:-127.0.0.1}
+      PROD_INDEXING: ${PROD_INDEXING:-off}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - staging_caddy_data:/data
+      - staging_caddy_config:/config
+    networks: [staging_edge, production_edge]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+volumes:
+  staging_caddy_data:
+    external: true
+    name: squarespell-quiz-staging_caddy_data
+  staging_caddy_config:
+    external: true
+    name: squarespell-quiz-staging_caddy_config
+
+networks:
+  staging_edge:
+    external: true
+    name: squarespell-quiz-staging_edge
+  production_edge:
+    external: true
+    name: squarespell-quiz-production_edge
