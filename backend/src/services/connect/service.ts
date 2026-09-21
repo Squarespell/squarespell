@@ -137,10 +137,10 @@ export async function getSiteDetail(userId: string, siteId: string) {
   };
 }
 
-export async function verifyNow(userId: string, siteId: string, opts: { fetchOptions?: SafeFetchOptions; scheme?: 'https' | 'http'; requestId?: string } = {}) {
+export async function verifyNow(userId: string, siteId: string, opts: { fetchOptions?: SafeFetchOptions; scheme?: 'https' | 'http'; requestId?: string; testPort?: number } = {}) {
   const site = await loadSite(userId, siteId);
   if (site.state === 'disconnected') throw new ConnectError(409, 'site_disconnected', 'This website is disconnected.');
-  const result = await verifySite({ hostname: site.hostname, siteKey: site.site_key, fetchOptions: opts.fetchOptions, scheme: opts.scheme });
+  const result = await verifySite({ hostname: site.hostname, siteKey: site.site_key, fetchOptions: opts.fetchOptions, scheme: opts.scheme, testPort: opts.testPort });
   await supabase.from('verification_checks').insert({ site_id: site.id, user_id: userId, method: 'page_fetch', url_checked: result.url, result: result.ok ? 'ok' : 'failed', reason_code: result.reason });
   const now = new Date().toISOString();
   let patch: Record<string, unknown>;
