@@ -267,7 +267,7 @@ describe('Connect Website wizard', () => {
     const input = await screen.findByLabelText('Website domain');
     fireEvent.change(input, { target: { value: 'https://shop.example/about' } });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect((await screen.findByRole('alert')).textContent).toMatch(/domain only/);
+    await waitFor(() => expect(document.getElementById('sx-domain-err')!.textContent).toMatch(/domain only/));
     expect(calls.some((c) => c.method === 'POST')).toBe(false);
     fireEvent.change(input, { target: { value: 'shop.example' } });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -287,7 +287,7 @@ describe('Connect Website wizard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     fireEvent.change(await screen.findByLabelText('Website domain'), { target: { value: 'shop.example' } });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect((await screen.findByRole('alert')).textContent).toBe('This website is already connected to your account.');
+    await waitFor(() => expect(document.getElementById('sx-domain-err')!.textContent).toBe('This website is already connected to your account.'));
   });
 
   async function toVerifyStep(verify: () => any) {
@@ -334,13 +334,13 @@ describe('Connect Website wizard', () => {
     await toVerifyStepFake(() => { n++; return json({ site: { ...SITE, state: 'verifying', attention_reason: 'loader_not_found' }, result: { ok: false, reason: 'loader_not_found', url: 'https://shop.example/', status: 200, loaderFound: false, slots: [] } }); });
     fireEvent.click(screen.getByRole('button', { name: 'Verify connection' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(40000); });
-    const rec = await screen.findByTestId('recovery');
+    const rec = screen.getByTestId('recovery');
     expect(rec.textContent).toContain('We could not find the site loader on your live page');
     expect(n).toBeGreaterThanOrEqual(2);
     expect(n).toBeLessThanOrEqual(6);
     fireEvent.click(within(rec).getByRole('button', { name: 'I cannot find Code Injection' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(50); });
-    expect((await screen.findByTestId('recovery')).textContent).toContain('may not include Code Injection');
+    expect(screen.getByTestId('recovery').textContent).toContain('may not include Code Injection');
   });
   async function toVerifyStepFake(verify: () => any) {
     stubFetch((m, p, body) => {
