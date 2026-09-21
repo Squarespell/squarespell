@@ -1,6 +1,6 @@
 /**
  * Plain-language copy for the Sites screens: states, recovery for every failure, and API error messages.
- * No em dashes. Never says "automatic Squarespace insertion" and never calls the first setup "one click".
+ * No em dashes. The copy never overstates what Squarespace allows: the first setup is guided, not instant.
  */
 import type { InstallMode, InstallStatus, Platform, SiteState } from './client';
 
