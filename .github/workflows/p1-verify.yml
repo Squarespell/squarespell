@@ -221,6 +221,8 @@ jobs:
           if [ -n "$changed" ]; then echo "::error::031 changed a table row count"; echo "$changed"; exit 1; fi
           [ "$(seed_hash)" = "$h1" ] || { echo "::error::031 changed a pre-existing users row"; exit 1; }
           echo "031: additive, idempotent, no row counts or seeded rows changed."
+          # Migrations added after 031 (032+) are applied on top, so the upgraded database is compared like for like with the fresh chain.
+          for f in $(ls "$W"/backend/migrations/*.sql | sort); do b=$(basename "$f"); [[ "$b" > "031_schema_reconciliation.sql" ]] || continue; echo "applying $b (after 031)"; strict upgrade "$f"; done
           apply_tail upgrade
           inventory upgrade > "$T/inv_upgrade_final.txt"
           diff "$T/inv_fresh.txt" "$T/inv_upgrade_final.txt" && echo "IDENTICAL: schema, constraints, indexes, policies and functions of (chain to 030 + 031) equal the fresh full chain."
