@@ -14,6 +14,7 @@ import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { embedSnippet, publicQuizUrl } from '@/lib/urls';
 import { minimumPlanFor, type PlanFeatures } from '@/lib/plans';
 import { api } from '@/lib/api';
+import { useConnectEnabled } from '@/lib/connect/useConnectEnabled';
 
 /* ------------------------------------------------------------------ */
 /* Sheet - shared backdrop + centered card                             */
@@ -307,6 +308,8 @@ export function PublishModal({
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('link');
+  // One-button connect (feature flag): "Publish to website" becomes the primary action and the embed code stays as "Manual embed".
+  const connectEnabled = useConnectEnabled();
 
   if (!open) return null;
 
@@ -352,9 +355,18 @@ export function PublishModal({
           </button>
         </div>
 
+        {connectEnabled && (
+          <a
+            href={'/dashboard/sites?publish=' + encodeURIComponent(slug)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 16, padding: '10px 16px', borderRadius: 8, background: C.ACCENT, color: '#FFFFFF', fontSize: 13.5, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}
+          >
+            Publish to website
+          </a>
+        )}
+
         <div style={{ display: 'flex', gap: 2, marginTop: 18, marginBottom: -1 }}>
           <TabButton active={tab === 'link'} onClick={() => setTab('link')}>Link</TabButton>
-          <TabButton active={tab === 'embed'} onClick={() => setTab('embed')}>Embed</TabButton>
+          <TabButton active={tab === 'embed'} onClick={() => setTab('embed')}>{connectEnabled ? 'Manual embed' : 'Embed'}</TabButton>
           <TabButton active={tab === 'preview'} onClick={() => setTab('preview')}>Preview</TabButton>
         </div>
       </div>
