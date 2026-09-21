@@ -114,9 +114,22 @@ describe('Pages and preview: rules beside a website-context preview', () => {
     expect(ctx.querySelector('.sx-mock-overlay .sx-mock-dialog iframe')).not.toBeNull();
     expect(ctx.querySelector('.sx-mock-tab')).toBeNull();
   });
-  it('inline: the real quiz sits inside the page, where the slot is', async () => {
-    await toStep2('inline');
-    fireEvent.change(dialog().querySelector('#sx-slot') || document.body, { target: { value: 'hero-quiz' } });
+  it('inline: the real quiz sits inside the page, where the slot is (a slot name is needed first)', async () => {
+    render(open());
+    await settle();
+    fireEvent.click(dialog().querySelector('[data-art="inline"]')!);
+    clickBtn(/^Continue$/);
+    await settle();
+    expect(dialog().querySelector('h3')!.textContent).toBe('Choose how it appears');
+    fireEvent.change(dialog().querySelector('#sx-slot')!, { target: { value: 'hero-quiz' } });
+    clickBtn(/^Continue$/);
+    await settle();
+    const ctx = dialog().querySelector('[data-testid="preview-context"]')!;
+    expect(ctx.getAttribute('data-mode')).toBe('inline');
+    expect(ctx.querySelector('.sx-mock-page .sx-mock-quiz iframe')!.getAttribute('src')).toContain('preview=1');
+    expect(ctx.querySelector('.sx-mock-overlay')).toBeNull();
+    expect(ctx.querySelector('.sx-mock-tab')).toBeNull();
+    expect(ctx.querySelectorAll('iframe')).toHaveLength(1);
   });
   it('the Desktop/Mobile toggle changes the preview width and keeps the real quiz', async () => {
     await toStep2('floating_tab');
