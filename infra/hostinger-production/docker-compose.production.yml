@@ -3,7 +3,7 @@
 # (plain HTTP, Host-header routing). Nothing here is reachable from the internet.
 # Run through infra/hostinger-production/scripts/deploy.sh. Values come from the protected server-side env file
 # /opt/squarespell-quiz/production/.env (owner-only, never committed). Names only: .env.production.example.
-# Reuses the official Dockerfiles, gateway configuration and scheduler from infra/hostinger.
+# Reuses the official Dockerfiles and gateway configuration from infra/hostinger; the scheduler is production-specific (./scheduler/scheduler.sh).
 name: squarespell-quiz-production
 
 x-log: &log
@@ -134,8 +134,9 @@ services:
       API_URL: http://backend:3001
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
       ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
+      DRY_RUN: ${SCHEDULER_DRY_RUN:-false}
     volumes:
-      - ../hostinger/scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      - ./scheduler/scheduler.sh:/opt/scheduler.sh:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -156,8 +157,9 @@ services:
       API_URL: http://backend:3001
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
       ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
+      DRY_RUN: ${SCHEDULER_DRY_RUN:-false}
     volumes:
-      - ../hostinger/scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      - ./scheduler/scheduler.sh:/opt/scheduler.sh:ro
     depends_on:
       backend:
         condition: service_healthy
