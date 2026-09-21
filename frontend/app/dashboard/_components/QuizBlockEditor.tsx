@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
+import { APP_URL } from '@/lib/urls';
 import {
   QuizBlock,
   QuizBlockType,
@@ -2843,10 +2844,10 @@ function SettingsPanel({
               <div style={{ background: '#1D2939', borderRadius: 8, padding: 14, fontFamily: 'monospace', fontSize: 11, color: '#E5E7EB', lineHeight: 1.6, wordBreak: 'break-all' as const, marginBottom: 12 }}>
                 {'<div data-squarespell-quiz="' + (quizSlug || quizId || 'your-slug') + '"></div>'}
                 <br />
-                {'<script src="https://quiz.squarespell.com/embed/quiz-embed.js" async></script>'}
+                {'<script src="' + APP_URL + '/embed/quiz-embed.js" async></script>'}
               </div>
               <button type="button" onClick={function() {
-                var code = '<div data-squarespell-quiz="' + (quizSlug || quizId || 'your-slug') + '"></div>\n<script src="https://quiz.squarespell.com/embed/quiz-embed.js" async></script>';
+                var code = '<div data-squarespell-quiz="' + (quizSlug || quizId || 'your-slug') + '"></div>\n<script src="' + APP_URL + '/embed/quiz-embed.js" async></script>';
                 var onSuccess = function() {
                   setCopied(true);
                   setTimeout(function() { setCopied(false); }, 2000);
