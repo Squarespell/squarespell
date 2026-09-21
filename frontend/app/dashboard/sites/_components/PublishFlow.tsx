@@ -13,6 +13,7 @@ const RULE_OK = /^(\*|\/[^\s<>"'`\\?#*]*(\/\*)?)$/;
 
 export function normalizeRule(v: string): string | null {
   const s = v.trim().toLowerCase();
+  if (!s) return null;
   if (s === '*' || s === '/*') return '*';
   const withSlash = s.startsWith('/') ? s : '/' + s;
   if (!RULE_OK.test(withSlash) || withSlash.length > 200) return null;
@@ -220,7 +221,7 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
         ) : (
           <div className="sx-note">No new code needed. Your verified site loader will receive this installation automatically.</div>
         )}
-        {formError ? <p className="sx-err" role="alert" style={{ marginTop: 10 }}>{formError}</p> : null}
+        {formError ? <p className="sx-err" style={{ marginTop: 10 }}>{formError}</p> : null}
       </div>
     );
     footer = (<><span className="sx-hint">The current live version stays active until this succeeds</span><span style={{ display: 'flex', gap: 8 }}><button type="button" className="sx-btn" onClick={onClose}>Cancel</button><button type="button" className="sx-btn sx-btn-primary" onClick={next1}>Continue</button></span></>);
@@ -247,7 +248,7 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
               <button type="button" className="sx-btn" onClick={addPath}>Add path</button>
             </div>
             <small id="sx-path-help">A page like /pricing, or a section like /services/* (also matches /services).</small>
-            {pathError ? <p className="sx-err" role="alert">{pathError}</p> : null}
+            {pathError ? <p className="sx-err">{pathError}</p> : null}
             <ul className="sx-chips" aria-label="Selected pages">
               {paths.map((p) => <li key={p} className="sx-chip" style={{ listStyle: 'none' }}>{p}<button type="button" aria-label={'Remove ' + p} onClick={() => setPaths(paths.filter((x) => x !== p))}>{'\u00d7'}</button></li>)}
             </ul>
@@ -287,7 +288,7 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
           {quiz ? <div className="sx-frame" style={{ width: device === 'mobile' ? 340 : '100%' }}><iframe title={'Preview of ' + quiz.title} src={previewSrc} loading="lazy" /></div> : <p style={{ color: 'var(--muted)' }}>Choose a quiz to see it here.</p>}
           <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>{device === 'desktop' ? 'Desktop' : 'Mobile'} preview, {MODE_LABEL[mode]}, {summary}</div>
         </div>
-        {formError ? <p className="sx-err" role="alert" style={{ marginTop: 10 }}>{formError}</p> : null}
+        {formError ? <p className="sx-err" style={{ marginTop: 10 }}>{formError}</p> : null}
       </div>
     );
     footer = (<><span className="sx-hint">The current live version stays active until this succeeds</span><span style={{ display: 'flex', gap: 8 }}>{editing ? <button type="button" className="sx-btn" onClick={onClose}>Cancel</button> : <button type="button" className="sx-btn" onClick={() => setStep(1)}>Back</button>}<button type="button" className="sx-btn sx-btn-primary" onClick={publishNow}>{editing ? 'Save changes' : 'Publish'}</button></span></>);
@@ -305,7 +306,7 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
           {rows.map(([n, s]) => <li key={n}><span>{n}</span><span className={'sx-badge ' + (s === 'done' ? 'sx-b-ok' : s === 'fail' ? 'sx-b-bad' : s === 'run' ? 'sx-b-teal' : 'sx-b-neutral')}><span aria-hidden="true">{s === 'done' ? '\u2713' : s === 'fail' ? '!' : s === 'run' ? '\u2026' : '\u2022'}</span>{label[s]}</span></li>)}
         </ul>
         {error ? (
-          <div className="sx-note sx-bad" role="alert" data-testid="publish-error">
+          <div className="sx-note sx-bad" data-testid="publish-error">
             <b>{error.message}</b>
             {rec ? <ol style={{ margin: '6px 0 0', paddingLeft: 18 }}>{rec.steps.map((s) => <li key={s}>{s}</li>)}</ol> : <p style={{ margin: '4px 0 0' }}>Nothing changed on your live website.</p>}
           </div>
