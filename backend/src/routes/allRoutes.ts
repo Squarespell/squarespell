@@ -5,7 +5,7 @@ import { respondIfAiError } from '../lib/aiErrors';
 import { resolvePlanPrice, priceIdToPlanName, isKnownPlan, PlanMappingError } from '../services/billingPlans';
 import { log } from '../lib/logger';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
-import { guardQuizCreation, checkQuizAllowance, requireFeature, effectivePlan, getPlanLimits, isTrialActive } from '../middleware/planGuard';
+import { guardQuizCreation, checkQuizAllowance, requireFeature, effectivePlan, getPlanLimits, isTrialActive, entitledPlan } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
@@ -1952,7 +1952,7 @@ userRouter.use(requireAuth, attachUser);
 userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications,custom_domain,domain_verified,lead_addon,email_addon').eq('id', req.dbUserId).single();
   if (!user) return res.status(404).json({ error: 'Not found' });
-  var plan = user.plan || 'free';
+  var plan = await entitledPlan(req.dbUserId, user.plan || 'free'); // active legacy entitlement -> Business
   // Map legacy 'starter' to 'free' for users who never paid
   if (plan === 'starter' && !user.plan) plan = 'free';
   var trialEndsAt = (plan === 'free' || plan === 'trial') && user.created_at

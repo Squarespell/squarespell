@@ -36,6 +36,25 @@ export function getPlanLimits(plan: string) {
   return PLAN_LIMITS[plan] ?? PLAN_LIMITS['free'];
 }
 
+/**
+ * Legacy entitlements (migration 032): a user with an ACTIVE legacy entitlement is always entitled to its effective_plan
+ * (Business), whatever the stored plan says (agency, pro, core, starter, growth, trial, free or empty). The database also
+ * refuses to store a plan below Business for such a user, so every reader of users.plan agrees. Only the audited
+ * public.revoke_legacy_entitlement() ends it. A lookup failure falls back to the stored plan: an error alone neither
+ * grants nor removes access.
+ */
+export async function entitledPlan(userId: string | null | undefined, plan: string | null | undefined): Promise<string> {
+  const stored = plan ?? 'free';
+  if (!userId) return stored;
+  try {
+    const { data, error } = await supabase.from('legacy_entitlements').select('effective_plan').eq('user_id', userId).eq('active', true).maybeSingle();
+    if (!error && data?.effective_plan) return data.effective_plan;
+  } catch (err: any) {
+    log.error('entitledPlan lookup failed', { err: err?.message });
+  }
+  return stored;
+}
+
 export function isTrialActive(createdAt: string): boolean {
   const created = new Date(createdAt);
   const trialEnd = new Date(created.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
@@ -66,7 +85,7 @@ export async function guardQuizCreation(
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const plan = user.plan ?? 'free';
+    const plan = await entitledPlan(user.id, user.plan ?? 'free');
     const onTrial = plan === 'free' || plan === 'trial';
 
     if (onTrial) {
@@ -149,7 +168,7 @@ export function requireFeature(feature: FeatureKey) {
     try {
       const { data: user, error } = await supabase.from('users').select('plan, created_at').eq('id', req.dbUserId).single();
       if (error || !user) return res.status(error && error.code !== 'PGRST116' ? 503 : 404).json({ error: error && error.code !== 'PGRST116' ? 'Service temporarily unavailable' : 'User not found', code: error && error.code !== 'PGRST116' ? 'db_unavailable' : 'user_not_found' });
-      const { plan } = effectivePlan(user.plan, user.created_at);
+      const { plan } = effectivePlan(await entitledPlan(req.dbUserId, user.plan), user.created_at);
       const limits = getPlanLimits(plan) as any;
       if (!limits[feature]) {
         return res.status(403).json({
@@ -178,7 +197,7 @@ export async function checkQuizAllowance(req: AuthenticatedRequest, res: Respons
       const outage = !!error && error.code !== 'PGRST116';
       return res.status(outage ? 503 : 404).json({ error: outage ? 'Service temporarily unavailable' : 'User not found', code: outage ? 'db_unavailable' : 'user_not_found' });
     }
-    const plan = user.plan ?? 'free';
+    const plan = await entitledPlan(user.id, user.plan ?? 'free');
     if (plan === 'free' || plan === 'trial') {
       if (!isTrialActive(user.created_at)) {
         return res.status(403).json({

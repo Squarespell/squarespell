@@ -88,6 +88,8 @@ const OWN = {
   UPSTASH_REDIS_REST_TOKEN: V('other (Upstash Redis)', 'prod (Render) - optional', 'unclear', 'YES', ''),
   SENTRY_DSN: V('other (Sentry)', 'prod (Render) - optional', 'unclear: Sentry org/project not documented', 'YES - dedicated Quiz project', ''),
   NEXT_PUBLIC_SENTRY_DSN: V('other (Sentry)', 'prod (Vercel) - optional', 'unclear', 'YES', ''),
+  NEXT_PUBLIC_SITE_URL: V('Squarespell (build argument)', 'production frontend build - canonical origin', 'yes', 'YES - https://squarespellquiz.com', 'defaults to the production domain when unset'),
+  NEXT_PUBLIC_ALLOW_INDEXING: V('Squarespell (build argument)', 'production frontend build - search indexing switch', 'yes', 'YES - true only in the approved launch build', 'default off: robots.txt disallows all and pages are noindex'),
   SENTRY_ORG: V('other (Sentry)', 'Vercel build (source maps)', 'unclear', 'YES', ''),
   SENTRY_PROJECT: V('other (Sentry)', 'Vercel build (source maps)', 'unclear', 'YES', ''),
   SENTRY_AUTH_TOKEN: V('other (Sentry)', 'Vercel build (source maps)', 'unclear', 'YES', ''),

@@ -12,7 +12,17 @@
 (function () {
   'use strict';
 
-  var BASE_URL = 'https://quiz.squarespell.com';
+  // Quizzes load from the origin this script was served from when that is a Squarespell Quiz host; otherwise the legacy host.
+  var BASE_URL = (function () {
+    try {
+      var s = document.currentScript;
+      if (s && s.src) {
+        var u = new URL(s.src);
+        if (/(^|\.)squarespellquiz\.com$/.test(u.hostname)) return u.origin;
+      }
+    } catch (e) { /* fall through */ }
+    return 'https://quiz.squarespell.com';
+  })();
   var EMBED_VERSION = '2.3.1';
   var INIT_ATTR = 'data-squarespell-init';
 

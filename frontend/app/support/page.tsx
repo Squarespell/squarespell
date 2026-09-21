@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
+import { pageSeo } from '@/lib/site';
 import { MarketingShell } from '@/components/marketing/home/MarketingShell';
 
 export const metadata: Metadata = {
   title: 'Support | Squarespell Quiz',
   description: 'How to contact Squarespell Quiz support.',
-  robots: { index: false, follow: false },
+  ...pageSeo('/support', { title: 'Support | Squarespell Quiz', description: 'How to contact Squarespell Quiz support.' }),
 };
 
 // The contact address is the one already published in this app's own terms and privacy pages.

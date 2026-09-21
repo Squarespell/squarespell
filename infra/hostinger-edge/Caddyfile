@@ -1,0 +1,81 @@
+# PUBLIC TLS edge for Squarespell Quiz (Caddy obtains and renews HTTPS certificates automatically).
+# One container owns ports 80/443 and routes by hostname:
+#   - production: {$PROD_APP_HOST}, www.{$PROD_APP_HOST} (redirects to the apex), {$PROD_API_HOST}  -> the private production proxy
+#   - staging:    {$STAGING_APP_HOST}, {$STAGING_API_HOST} -> the staging stack. These two blocks are the staging Caddyfile
+#                 (infra/hostinger/Caddyfile) unchanged apart from the upstream names.
+# Upstreams use full container names because the staging and production networks both contain services called 'frontend' and 'backend'.
+# Runtime switches (environment, see .env.edge.example):
+#   GATE_ENABLED     true = only GATE_ALLOW_IPS reach production, plus the exact webhook paths below; everyone else gets 503.
+#   PROD_INDEXING    on = production stops sending X-Robots-Tag (only when the gate is also off). Staging always sends noindex.
+{
+	email {$ACME_EMAIL}
+}
+
+# Production noindex header: on while the gate is enabled or until indexing is switched on.
+(prod_noindex) {
+	@noindex expression `'{$PROD_INDEXING:off}' != 'on' || '{$GATE_ENABLED:true}' == 'true'`
+	header @noindex X-Robots-Tag "noindex, nofollow"
+}
+
+www.{$PROD_APP_HOST} {
+	redir https://{$PROD_APP_HOST}{uri} permanent
+}
+
+{$PROD_APP_HOST} {
+	import prod_noindex
+	@blocked {
+		expression `'{$GATE_ENABLED:true}' == 'true'`
+		not remote_ip {$GATE_ALLOW_IPS:127.0.0.1}
+	}
+	handle @blocked {
+		header Cache-Control "no-store"
+		header Retry-After "3600"
+		respond "Squarespell Quiz is being prepared. Please check back soon." 503
+	}
+	handle {
+		reverse_proxy squarespell-quiz-production-proxy-1:80
+	}
+}
+
+{$PROD_API_HOST} {
+	import prod_noindex
+	# While gated, only the three webhook endpoints stay reachable from anywhere. Exact paths, nothing else.
+	@blocked {
+		expression `'{$GATE_ENABLED:true}' == 'true'`
+		not remote_ip {$GATE_ALLOW_IPS:127.0.0.1}
+		not path /api/stripe/webhook /api/clerk/webhook /api/webhooks/resend
+	}
+	handle @blocked {
+		header Cache-Control "no-store"
+		header Retry-After "3600"
+		respond "Squarespell Quiz is being prepared. Please check back soon." 503
+	}
+	handle {
+		reverse_proxy squarespell-quiz-production-proxy-1:80
+	}
+}
+
+# ---- STAGING (unchanged blocks; only the upstream container names differ) ----
+{$STAGING_APP_HOST} {
+	encode zstd gzip
+	header X-Robots-Tag "noindex, nofollow"
+	# Reproduce frontend/vercel.json (Vercel-only) for the self-hosted frontend: the /embed.js loader alias
+	# and the CORS / framing headers that let customers embed quizzes on their own sites.
+	@embedjs path_regexp embedjs "^/embed(\.js|/[^/]+\.js)$"
+	header @embedjs Access-Control-Allow-Origin "*"
+	header @embedjs Cache-Control "public, max-age=300, s-maxage=60"
+	@embedpage path_regexp embedpage "^/embed/[^/.]+$"
+	header @embedpage Access-Control-Allow-Origin "*"
+	header @embedpage Content-Security-Policy "frame-ancestors *"
+	rewrite /embed.js /embed/quiz-embed.js
+	reverse_proxy squarespell-quiz-staging-frontend-1:3000
+}
+
+{$STAGING_API_HOST} {
+	encode zstd gzip
+	header X-Robots-Tag "noindex, nofollow"
+	# Cron endpoints are called only by the internal scheduler/worker; never expose them publicly.
+	@cron path /api/cron/*
+	respond @cron 404
+	reverse_proxy squarespell-quiz-staging-backend-1:3001
+}

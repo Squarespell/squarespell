@@ -3,7 +3,7 @@
 # (plain HTTP, Host-header routing). Nothing here is reachable from the internet.
 # Run through infra/hostinger-production/scripts/deploy.sh. Values come from the protected server-side env file
 # /opt/squarespell-quiz/production/.env (owner-only, never committed). Names only: .env.production.example.
-# Reuses the official Dockerfiles, gateway configuration and scheduler from infra/hostinger.
+# Reuses the official Dockerfiles and gateway configuration from infra/hostinger; the scheduler is production-specific (./scheduler/scheduler.sh).
 name: squarespell-quiz-production
 
 x-log: &log
@@ -22,6 +22,8 @@ volumes:
   pgdata: {}
   caddy_data: {}
   caddy_config: {}
+  worker_state: {}
+  scheduler_state: {}
 
 services:
   proxy:
@@ -54,6 +56,9 @@ services:
         NEXT_PUBLIC_API_URL: https://${PROD_API_HOST}
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:?set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        NEXT_PUBLIC_SITE_URL: https://${PROD_APP_HOST}
+        # Indexing stays off until the approved launch build sets PROD_ALLOW_INDEXING=true in the server env file.
+        NEXT_PUBLIC_ALLOW_INDEXING: ${PROD_ALLOW_INDEXING:-false}
     environment:
       NODE_ENV: production
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY}
@@ -134,8 +139,12 @@ services:
       API_URL: http://backend:3001
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
       ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
+      DRY_RUN: ${SCHEDULER_DRY_RUN:-false}
+      STATE_DIR: /home/curl_user/state
     volumes:
-      - ../hostinger/scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      - ./scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      # Persistent, production-only state (per-job, per-minute run markers) so a restart cannot repeat a job. One volume each.
+      - worker_state:/home/curl_user
     depends_on:
       backend:
         condition: service_healthy
@@ -156,8 +165,12 @@ services:
       API_URL: http://backend:3001
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
       ENABLE_EMAIL_JOBS: ${SCHEDULER_ENABLE_EMAIL_JOBS:-false}
+      DRY_RUN: ${SCHEDULER_DRY_RUN:-false}
+      STATE_DIR: /home/curl_user/state
     volumes:
-      - ../hostinger/scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      - ./scheduler/scheduler.sh:/opt/scheduler.sh:ro
+      # Persistent, production-only state (per-job, per-minute run markers) so a restart cannot repeat a job. One volume each.
+      - scheduler_state:/home/curl_user
     depends_on:
       backend:
         condition: service_healthy
