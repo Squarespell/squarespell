@@ -80,8 +80,13 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
+  // Initialise ONLY when the dialog opens. A data refresh (for example a rotated auth token reloading the quiz list) must never wipe a
+  // half-completed flow, so the deps below are read once per opening.
+  const initialised = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open) { initialised.current = false; return; }
+    if (initialised.current) return;
+    initialised.current = true;
     setError(null); setResult(null); setBusy(false); setFormError(''); setPathInput(''); setPathError(''); setProg(['idle', 'idle', 'idle']); setConfirmed(true);
     if (installation) {
       const o = installation.options || {};
@@ -98,6 +103,13 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
       setTrigger('delay'); setDelaySeconds(8); setScrollPercent(50); setStep(1);
     }
   }, [open, installation, presetQuizId, quizzes]);
+
+  // Quizzes that arrive after the dialog opened only fill an empty choice; they never replace what the person picked.
+  useEffect(() => {
+    if (!open || installation || quizId) return;
+    const first = quizzes.find((q) => q.status === 'live');
+    if (first) setQuizId(presetQuizId && quizzes.some((q) => q.id === presetQuizId && q.status === 'live') ? presetQuizId : first.id);
+  }, [open, installation, quizId, quizzes, presetQuizId]);
 
   const quiz = quizzes.find((q) => q.id === quizId) || installation?.quiz || null;
   const liveQuizzes = quizzes.filter((q) => q.status === 'live');
