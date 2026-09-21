@@ -188,11 +188,18 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
           </select>
           {liveQuizzes.length === 0 ? <small>Publish a quiz first, then add it to your website.</small> : <small>Only live quizzes can be added to a website.</small>}
         </div>
-        <div className="sx-cards3" role="radiogroup" aria-label="Placement">
+        <div className="sx-place-grid" role="radiogroup" aria-label="Placement">
           {MODES.map((m, i) => (
-            <button key={m.id} type="button" role="radio" aria-checked={mode === m.id} tabIndex={mode === m.id ? 0 : -1} className="sx-radio" onClick={() => setMode(m.id)} onKeyDown={(e) => radioKeys(e, i)}>
-              <b>{m.title} {m.badge ? <span className="sx-badge sx-b-teal" style={{ marginLeft: 4 }}>{m.badge}</span> : null}</b>
-              <small>{m.body}</small>
+            <button key={m.id} type="button" role="radio" aria-checked={mode === m.id} tabIndex={mode === m.id ? 0 : -1} className="sx-place" data-art={m.id} onClick={() => setMode(m.id)} onKeyDown={(e) => radioKeys(e, i)}>
+              <div className="sx-place-visual" aria-hidden="true">
+                <div className="sx-wire">{m.id === 'inline' ? <div className="sx-art-inline" /> : null}</div>
+                {m.id === 'popup' ? <div className="sx-art-popup" /> : null}
+                {m.id === 'floating_tab' ? <div className="sx-art-tab">Take the quiz</div> : null}
+              </div>
+              <div className="sx-place-copy">
+                <b>{m.title}{m.badge ? <span className="sx-rec">{m.badge}</span> : null}</b>
+                <small>{m.body}</small>
+              </div>
             </button>
           ))}
         </div>
@@ -231,6 +238,9 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
         {stepper}
         <h3>Pages and preview</h3>
         <p>Choose where it appears. You can change this later without opening {site.platform === 'squarespace' ? 'Squarespace' : 'your website'}.</p>
+        <div className="sx-two">
+          <div className="sx-panel-card">
+            <div className="sx-card-label">Display rules</div>
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
           <legend style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>Show on</legend>
           <div className="sx-seg" role="group" aria-label="Show on">
@@ -280,13 +290,25 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
             {mode === 'popup' ? <label className="sx-toggle"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /><span><b>Remember dismissal</b><small>Do not show again for 7 days. Uses the visitor's browser storage, never a cookie.</small></span></label> : null}
           </>
         ) : null}
-        <div className="sx-preview">
-          <div className="sx-preview-bar">
-            <span>Live preview. Nothing you do here is recorded.</span>
-            <span className="sx-seg" role="group" aria-label="Preview size"><button type="button" aria-pressed={device === 'desktop'} onClick={() => setDevice('desktop')}>Desktop</button><button type="button" aria-pressed={device === 'mobile'} onClick={() => setDevice('mobile')}>Mobile</button></span>
           </div>
-          {quiz ? <div className="sx-frame" style={{ width: device === 'mobile' ? 340 : '100%' }}><iframe title={'Preview of ' + quiz.title} src={previewSrc} loading="lazy" /></div> : <p style={{ color: 'var(--muted)' }}>Choose a quiz to see it here.</p>}
-          <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>{device === 'desktop' ? 'Desktop' : 'Mobile'} preview, {MODE_LABEL[mode]}, {summary}</div>
+          <div className="sx-panel-card">
+            <div className="sx-card-label">Live preview. Nothing you do here is recorded.</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+              <span className="sx-seg" role="group" aria-label="Preview size"><button type="button" aria-pressed={device === 'desktop'} onClick={() => setDevice('desktop')}>Desktop</button><button type="button" aria-pressed={device === 'mobile'} onClick={() => setDevice('mobile')}>Mobile</button></span>
+            </div>
+            {quiz ? (
+              <div className="sx-site-mock" data-testid="preview-context" data-mode={mode} data-device={device}>
+                <div className="sx-mock-page">
+                  <div className="sx-mock-brand">{site.hostname}</div>
+                  <div className="sx-mock-line w70" /><div className="sx-mock-line w40" />
+                  {mode === 'inline' ? <div className="sx-mock-quiz"><iframe title={'Preview of ' + quiz.title} src={previewSrc} loading="lazy" /></div> : <><div className="sx-mock-line w55" /><div className="sx-mock-line w70" /><div className="sx-mock-line w40" /><div className="sx-mock-line w55" /></>}
+                </div>
+                {mode === 'popup' ? <div className="sx-mock-overlay"><div className="sx-mock-dialog"><iframe title={'Preview of ' + quiz.title} src={previewSrc} loading="lazy" /></div></div> : null}
+                {mode === 'floating_tab' ? <><div className="sx-mock-panel"><iframe title={'Preview of ' + quiz.title} src={previewSrc} loading="lazy" /></div><div className="sx-mock-tab">{buttonText || 'Take the quiz'}</div></> : null}
+              </div>
+            ) : <p style={{ color: 'var(--muted)' }}>Choose a quiz to see it here.</p>}
+            <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>{device === 'desktop' ? 'Desktop' : 'Mobile'} preview, {MODE_LABEL[mode]}, {summary}</div>
+          </div>
         </div>
         {formError ? <p className="sx-err" style={{ marginTop: 10 }}>{formError}</p> : null}
       </div>
