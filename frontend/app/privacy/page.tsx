@@ -1,6 +1,12 @@
+import { pageSeo } from '@/lib/site';
+
+const TITLE = 'Privacy Policy | Squarespell Quiz';
+const DESCRIPTION = 'How Squarespell Quiz collects, uses, and protects data for quiz owners and their visitors.';
+
 export const metadata = {
-  title: 'Privacy Policy | Squarespell Quiz',
-  description: 'How Squarespell Quiz collects, uses, and protects data for quiz owners and their visitors.',
+  title: TITLE,
+  description: DESCRIPTION,
+  ...pageSeo('/privacy', { title: TITLE, description: DESCRIPTION }),
 };
 
 const S: 'left' = 'left';
