@@ -82,11 +82,18 @@ describe('SSRF: safeFetch refuses before connecting', () => {
 
 describe('SSRF: fetching a loopback fixture (test-only escape hatch)', () => {
   const opts = (extra: any = {}) => ({ allowLoopbackForTests: true, lookup: LOOPBACK, timeoutMs: 1500, ...extra });
-  it('is ignored outside NODE_ENV=test, so loopback stays blocked in production', async () => {
-    const port = await serve((_q, r) => r.end('hi'));
+  it('is ignored outside NODE_ENV=test: in production nothing on loopback is ever contacted', async () => {
+    let hits = 0;
+    const port = await serve((_q, r) => { hits++; r.end('hi'); });
     const prev = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
-    try { await expect(safeFetch('http://site.example.test:' + port + '/', opts())).rejects.toMatchObject({ code: 'blocked_address' }); } finally { process.env.NODE_ENV = prev; }
+    try {
+      const outcome = await safeFetch('http://site.example.test:' + port + '/', opts()).then(() => 'fetched', (e: any) => e.code);
+      expect(['blocked_port', 'blocked_address']).toContain(outcome);
+      const literal = await safeFetch('http://127.0.0.1/', opts()).then(() => 'fetched', (e: any) => e.code);
+      expect(literal).toBe('blocked_address');
+    } finally { process.env.NODE_ENV = prev; }
+    expect(hits).toBe(0);
   });
   it('returns the page', async () => {
     const port = await serve((_q, r) => { r.setHeader('content-type', 'text/html'); r.end('<p>hello</p>'); });
@@ -166,6 +173,10 @@ describe('site keys, slots, page rules and display options', () => {
     expect(sanitizeOptions('inline', { height: 640, buttonText: 'x', trigger: 'exit' })).toEqual({ height: 640 });
     expect(sanitizeOptions('inline', { height: 50 })).toEqual({});
     expect(sanitizeOptions('inline', 'nonsense')).toEqual({});
+    expect(sanitizeOptions('popup', { trigger: 'delay', delaySeconds: 3, hideOnMobile: true, dismissDays: 7 })).toEqual({ trigger: 'delay', delaySeconds: 3, hideOnMobile: true, dismissDays: 7 });
+    expect(sanitizeOptions('popup', { hideOnMobile: 'yes', dismissDays: 400 })).toEqual({ trigger: 'delay', delaySeconds: 8 });
+    expect(sanitizeOptions('floating_tab', { hideOnMobile: true, dismissDays: 7 })).toEqual({ hideOnMobile: true });
+    expect(sanitizeOptions('inline', { hideOnMobile: true, dismissDays: 7 })).toEqual({});
   });
   it('the public manifest body has exactly the display fields and never any private data', () => {
     const body = buildManifestBody({ site_key: KEY, hostname: 'customer.example' }, [{ id: 'i1', quiz: 'my-quiz', mode: 'popup', slot: null, include: [], exclude: [], options: { trigger: 'delay', delaySeconds: 8 } }]);
