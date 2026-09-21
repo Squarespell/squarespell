@@ -82,6 +82,8 @@ export interface DisplayOptions {
   trigger?: 'delay' | 'scroll' | 'exit';
   delaySeconds?: number;
   scrollPercent?: number;
+  hideOnMobile?: true;
+  dismissDays?: number;
 }
 
 const clean = (s: unknown, max: number) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, max) : '');
@@ -94,7 +96,9 @@ export function sanitizeOptions(mode: InstallMode, raw: unknown): DisplayOptions
   if (text && mode !== 'inline') out.buttonText = text;
   if (typeof o.accentColor === 'string' && /^#[0-9a-f]{6}$/i.test(o.accentColor)) out.accentColor = o.accentColor.toLowerCase();
   if (mode === 'inline' && Number.isInteger(o.height) && (o.height as number) >= 200 && (o.height as number) <= 2000) out.height = o.height as number;
+  if (mode !== 'inline' && o.hideOnMobile === true) out.hideOnMobile = true;
   if (mode === 'popup') {
+    if (Number.isInteger(o.dismissDays) && (o.dismissDays as number) >= 1 && (o.dismissDays as number) <= 30) out.dismissDays = o.dismissDays as number;
     const t = o.trigger;
     out.trigger = t === 'scroll' || t === 'exit' ? t : 'delay';
     if (out.trigger === 'delay') out.delaySeconds = Number.isInteger(o.delaySeconds) && (o.delaySeconds as number) >= 0 && (o.delaySeconds as number) <= 120 ? (o.delaySeconds as number) : 8;
