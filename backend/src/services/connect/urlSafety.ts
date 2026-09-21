@@ -97,22 +97,24 @@ export interface SafeFetchOptions {
   timeoutMs?: number;
   maxBytes?: number;
   lookup?: LookupFn;
-  /** Honoured only when NODE_ENV is "test": lets the suite reach a loopback fixture server. Ignored everywhere else. */
-  allowPrivateForTests?: boolean;
+  /** Honoured only when NODE_ENV is "test": lets the suite reach a LOOPBACK fixture server (127.0.0.0/8 and ::1 only; every other blocked range stays blocked). Ignored everywhere else. */
+  allowLoopbackForTests?: boolean;
 }
 export interface SafeFetchResult { status: number; finalUrl: string; headers: Record<string, string>; body: string; truncated: boolean; redirects: string[] }
 
 const USER_AGENT = 'SquarespellConnectVerifier/1 (+https://squarespellquiz.com)';
 
-async function resolvePublic(hostname: string, lookup: LookupFn, allowPrivate: boolean): Promise<LookupResult> {
+const isLoopback = (ip: string): boolean => ip === '::1' || /^127\./.test(ip);
+
+async function resolvePublic(hostname: string, lookup: LookupFn, allowLoopback: boolean): Promise<LookupResult> {
   const bare = hostname.replace(/^\[|\]$/g, '');
   const addrs: LookupResult[] = net.isIP(bare) ? [{ address: bare, family: net.isIP(bare) }] : await lookup(bare).catch(() => []);
   if (!addrs.length) throw new SafeFetchError('network', 'The domain did not resolve.');
-  if (!allowPrivate && addrs.some((a) => isBlockedIp(a.address))) throw new SafeFetchError('blocked_address', 'The address is not a public website.');
+  if (addrs.some((a) => isBlockedIp(a.address) && !(allowLoopback && isLoopback(a.address)))) throw new SafeFetchError('blocked_address', 'The address is not a public website.');
   return addrs[0];
 }
 
-function once(url: URL, ip: LookupResult, timeoutMs: number, maxBytes: number, allowPrivate: boolean): Promise<{ status: number; headers: Record<string, string>; body: string; truncated: boolean }> {
+function once(url: URL, ip: LookupResult, timeoutMs: number, maxBytes: number): Promise<{ status: number; headers: Record<string, string>; body: string; truncated: boolean }> {
   return new Promise((resolve, reject) => {
     const mod = url.protocol === 'https:' ? https : http;
     const req = mod.request(
@@ -156,7 +158,7 @@ export async function safeFetch(rawUrl: string, opts: SafeFetchOptions = {}): Pr
   const timeoutMs = opts.timeoutMs ?? 8000;
   const maxBytes = opts.maxBytes ?? 512 * 1024;
   const lookup = opts.lookup ?? defaultLookup;
-  const allowPrivate = process.env.NODE_ENV === 'test' && opts.allowPrivateForTests === true;
+  const allowLoopback = process.env.NODE_ENV === 'test' && opts.allowLoopbackForTests === true;
   const redirects: string[] = [];
   let current = rawUrl;
   for (let hop = 0; hop <= maxRedirects; hop++) {
@@ -165,9 +167,9 @@ export async function safeFetch(rawUrl: string, opts: SafeFetchOptions = {}): Pr
     if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new SafeFetchError('unsupported_protocol', 'Only http and https addresses can be checked.');
     if (url.username || url.password) throw new SafeFetchError('invalid_url', 'Addresses with credentials are not allowed.');
     const port = url.port ? Number(url.port) : url.protocol === 'https:' ? 443 : 80;
-    if (!allowPrivate && port !== 80 && port !== 443) throw new SafeFetchError('blocked_port', 'Only standard web ports can be checked.');
-    const ip = await resolvePublic(url.hostname, lookup, allowPrivate);
-    const res = await once(url, ip, timeoutMs, maxBytes, allowPrivate);
+    if (!allowLoopback && port !== 80 && port !== 443) throw new SafeFetchError('blocked_port', 'Only standard web ports can be checked.');
+    const ip = await resolvePublic(url.hostname, lookup, allowLoopback);
+    const res = await once(url, ip, timeoutMs, maxBytes);
     if ([301, 302, 303, 307, 308].includes(res.status) && res.headers.location) {
       redirects.push(url.toString());
       if (hop === maxRedirects) throw new SafeFetchError('too_many_redirects', 'The website redirected too many times.');
