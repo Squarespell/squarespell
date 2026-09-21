@@ -54,6 +54,9 @@ services:
         NEXT_PUBLIC_API_URL: https://${PROD_API_HOST}
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:?set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        NEXT_PUBLIC_SITE_URL: https://${PROD_APP_HOST}
+        # Indexing stays off until the approved launch build sets PROD_ALLOW_INDEXING=true in the server env file.
+        NEXT_PUBLIC_ALLOW_INDEXING: ${PROD_ALLOW_INDEXING:-false}
     environment:
       NODE_ENV: production
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY}
