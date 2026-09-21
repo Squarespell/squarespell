@@ -71,7 +71,8 @@ function SitesPage() {
   }, [sites]);
   const activity = useMemo(() => details.flatMap((d) => d.events.map((e) => ({ ...e, host: d.site.hostname }))).sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).slice(0, 6), [details]);
   const liveRows = useMemo(() => details.flatMap((d) => d.installations.filter((i) => ['live', 'updating', 'moving'].includes(i.status)).map((i) => ({ ...i, host: d.site.hostname, siteId: d.site.id }))).slice(0, 8), [details]);
-  const quizForPreset = quizzes.find((q) => q.id === presetQuiz);
+  // The publish dialog links with the quiz slug; accept an id as well.
+  const quizForPreset = quizzes.find((q) => q.id === presetQuiz || q.slug === presetQuiz);
 
   function openWizard(site: Site | null) { setResumeSite(site); setWizardOpen(true); }
 
@@ -201,7 +202,7 @@ function SitesPage() {
             onVerified={(site, publishNext) => { setWizardOpen(false); setResumeSite(null); setNotice(''); load().then(() => { if (publishNext) setPublishSite(site); else setDrawerId(site.id); }); }} />
 
           {publishSite ? (
-            <PublishFlow open token={token || ''} site={sites.find((s) => s.id === publishSite.id) || publishSite} quizzes={quizzes} presetQuizId={presetQuiz} onClose={() => { setPublishSite(null); if (presetQuiz) router.replace('/dashboard/sites'); }}
+            <PublishFlow open token={token || ''} site={sites.find((s) => s.id === publishSite.id) || publishSite} quizzes={quizzes} presetQuizId={quizForPreset?.id || null} onClose={() => { setPublishSite(null); if (presetQuiz) router.replace('/dashboard/sites'); }}
               onDone={(inst) => { setPublishSite(null); load(); setDrawerId(inst.site_id); if (presetQuiz) router.replace('/dashboard/sites'); }} />
           ) : null}
 
