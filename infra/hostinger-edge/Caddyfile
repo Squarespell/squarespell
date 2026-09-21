@@ -17,12 +17,26 @@
 	header @noindex X-Robots-Tag "noindex, nofollow"
 }
 
+# Site password (HTTP basic auth, bcrypt). Values come ONLY from the server env file (see set-site-password.sh); nothing here is a secret.
+# SITE_AUTH_ENABLED=true turns it on; requests without valid credentials get 401 before anything else is served.
+(site_password) {
+	@sitepw expression `'{$SITE_AUTH_ENABLED:false}' == 'true'`
+	basic_auth @sitepw {
+		{$SITE_AUTH_USER} {$SITE_AUTH_HASH}
+	}
+}
+
 www.{$PROD_APP_HOST} {
-	redir https://{$PROD_APP_HOST}{uri} permanent
+	# route keeps the order: the password check runs before the redirect.
+	route {
+		import site_password
+		redir https://{$PROD_APP_HOST}{uri} permanent
+	}
 }
 
 {$PROD_APP_HOST} {
 	import prod_noindex
+	import site_password
 	@blocked {
 		expression `'{$GATE_ENABLED:true}' == 'true'`
 		not remote_ip {$GATE_ALLOW_IPS:127.0.0.1}
