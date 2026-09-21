@@ -2,6 +2,7 @@
 import { SignIn, useAuth } from '@clerk/nextjs'
 import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { HIDE_SOCIAL_ELEMENTS } from '@/lib/site'
 
 const ACC = '#0f7377'
 const BG = '#F7F7F5'
@@ -50,7 +51,7 @@ function SignInContent() {
           signUpUrl={signUpUrl}
           appearance={{
             variables: { colorPrimary: ACC, fontFamily: '"Inter", system-ui, sans-serif', borderRadius: '12px' },
-            elements: { rootBox: { width: '100%' }, card: { boxShadow: 'none', border: '1px solid #E4E3E0', background: '#FFFFFF' } },
+            elements: { ...HIDE_SOCIAL_ELEMENTS, rootBox: { width: '100%' }, card: { boxShadow: 'none', border: '1px solid #E4E3E0', background: '#FFFFFF' } },
           }}
         />
       </div>
