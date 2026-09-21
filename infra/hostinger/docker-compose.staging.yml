@@ -21,10 +21,11 @@ volumes:
 services:
   proxy:
     <<: *restart
+    # OBSOLETE for the deployed topology. The public edge (infra/hostinger-edge) owns host ports 80 and 443 and routes the staging
+    # hosts straight to the frontend and backend containers. This standalone proxy therefore publishes NO host ports and is
+    # excluded from the default stack by its profile, so a normal deploy never tries to bind 80 or 443.
+    profiles: ["standalone-proxy"]
     image: caddy:2.8
-    ports:
-      - "80:80"
-      - "443:443"
     environment:
       STAGING_APP_HOST: ${STAGING_APP_HOST:?set STAGING_APP_HOST}
       STAGING_API_HOST: ${STAGING_API_HOST:?set STAGING_API_HOST}
@@ -47,6 +48,8 @@ services:
       dockerfile: infra/hostinger/Dockerfile.frontend
       args:
         NEXT_PUBLIC_API_URL: https://${STAGING_API_HOST}
+        # Public origin of this deployment, derived from the staging host so a staging build can never fall back to the production domain.
+        NEXT_PUBLIC_SITE_URL: https://${STAGING_APP_HOST}
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:?set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     environment:
