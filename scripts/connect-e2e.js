@@ -134,6 +134,7 @@ const quizBody = (title, slug, userId) => ({ user_id: userId, title, slug, statu
     const vj = await fetch(APP + '/embed/version.json'); out('embed version file still served', vj.status === 200);
     const ld = await fetch(APP + '/connect/loader.js'); const ldt = await ld.text();
     out('loader served with final domain only, no cookies API, no legacy host', ld.status === 200 && ldt.includes(APP) && !/quiz\.squarespell\.com|app\.squarespell\.com|document\.cookie/.test(ldt), 'status ' + ld.status);
+    out('loader quiz frames use only the staging site and the configured API, never the production quiz-frame origin', ldt.includes("ORIGIN = '" + APP + "'") && ldt.includes("API = '" + API + "'") && !/https:\/\/squarespellquiz\.com/.test(ldt), APP);
     const after2 = await emailCounts(); out('no email was sent or queued', JSON.stringify(after2) === JSON.stringify(S.emailBefore), JSON.stringify(after2));
     save(S);
   } else if (MODE === 'cleanup') {
