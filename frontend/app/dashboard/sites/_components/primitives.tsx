@@ -198,6 +198,20 @@ export function AnnounceProvider({ children }: { children: ReactNode }) {
 }
 
 // ---- accessible modal: focus trap, Escape, focus restore, scroll lock ----
+/**
+ * The control the person last pressed. Some browsers (notably Safari) do not focus a button when it is clicked, so document.activeElement
+ * alone would lose the opener; this is the fallback used to give focus back when a dialog closes.
+ */
+let lastPressed: HTMLElement | null = null;
+if (typeof document !== 'undefined') {
+  const remember = (e: Event) => {
+    const t = (e.target as HTMLElement | null)?.closest?.('button,a[href],[role="button"],[role="menuitem"]') as HTMLElement | null;
+    if (t) lastPressed = t;
+  };
+  document.addEventListener('pointerdown', remember, true);
+  document.addEventListener('keydown', remember, true);
+}
+
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 /** Focusable and actually shown (works without layout, so it behaves the same in browsers and in tests). */
@@ -218,7 +232,8 @@ export function Modal({ open, title, subtitle, onClose, children, footer, drawer
 
   useEffect(() => {
     if (!open) return;
-    openerRef.current = document.activeElement as HTMLElement | null;
+    const active = document.activeElement as HTMLElement | null;
+    openerRef.current = active && active !== document.body ? active : lastPressed;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const t = setTimeout(() => {
