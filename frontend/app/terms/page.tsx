@@ -1,6 +1,12 @@
+import { pageSeo } from '@/lib/site';
+
+const TITLE = 'Terms of Service | Squarespell Quiz';
+const DESCRIPTION = 'The terms governing use of Squarespell Quiz.';
+
 export const metadata = {
-  title: 'Terms of Service | Squarespell Quiz',
-  description: 'The terms governing use of Squarespell Quiz.',
+  title: TITLE,
+  description: DESCRIPTION,
+  ...pageSeo('/terms', { title: TITLE, description: DESCRIPTION }),
 };
 
 const S: 'left' = 'left';
