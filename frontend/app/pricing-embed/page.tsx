@@ -27,11 +27,12 @@
  */
 
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { APP_URL } from '@/lib/urls';
 import { useAuth } from '@clerk/nextjs';
 import { PLANS } from '@/lib/planCatalog';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
-const APP = 'https://app.squarespell.com';
+const APP = APP_URL;
 
 type Billing = 'monthly' | 'yearly';
 
