@@ -182,9 +182,9 @@
 
     .modal {
       position:fixed;inset:0;z-index:80;background:rgba(8,20,18,.6);backdrop-filter:blur(8px);
-      display:grid;place-items:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s ease;
+      display:grid;place-items:center;padding:20px;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease, visibility 0s linear .22s;
     }
-    .modal.open { opacity:1;pointer-events:auto; }
+    .modal.open { opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s; }
     .dialog {
       width:min(930px,100%);max-height:min(850px,calc(100vh - 32px));overflow:auto;background:#fbfcfb;
       border-radius:24px;box-shadow:0 30px 100px rgba(0,0,0,.28);transform:translateY(16px) scale(.985);transition:.24s ease;
@@ -813,7 +813,7 @@
         if (p.querySelector('.availability.later')) { toast(p.dataset.platform + ' connector is planned'); return; }
         $$('.platform').forEach(x=>x.classList.remove('selected'));p.classList.add('selected');
       }));
-      $('#connectNext').addEventListener('click', () => { if(connectStep<3){connectStep++;updateConnect();} });
+      $('#connectNext').addEventListener('click', () => { if(connectStep<4){connectStep++;updateConnect();} });
       $('#connectBack').addEventListener('click', () => { if(connectStep>1){connectStep--;updateConnect();} });
       $('#copyLoader').addEventListener('click', function(){ this.textContent='Copied';toast('Site loader copied');setTimeout(()=>this.textContent='Copy loader',1600); });
       $('#verifyBtn').addEventListener('click', function(){
