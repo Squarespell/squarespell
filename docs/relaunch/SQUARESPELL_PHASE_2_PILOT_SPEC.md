@@ -28,6 +28,18 @@ Nothing here is implemented, published, sent, purchased or deployed. No outreach
 ### 0.3 Still open before any outreach
 The specification is approved. Still open: **final terms/legal review of the refund, tax and cancellation wording before public publication** (no legal research has been done); a **public-information prospect list prepared for owner review** (the next Phase 2 task); authorization to contact anyone; five paying commitments; final acceptance tests; the Hostinger-staging checks carried from Phase 1. Details in sections 12 and 13. **Nothing has been sent, implemented, purchased or deployed.**
 
+### 0.4 Top-level product requirement (owner-stated 21 September 2026): one-button connect
+
+> **Connect your website once. Publish, update or remove every quiz with one button.**
+
+Customers should not copy and paste embed code every time they publish a quiz. This is now a **top-level product requirement** alongside the pilot promise in section 3. It **extends** the connection promise in section 6 and Stage 7 of the customer journey (section 5); it does not replace the guaranteed universal baseline or any current embed option.
+
+- **Target flow:** Connect website, choose the platform, use the platform's approved authorization or installation process, choose the website, choose the page and placement where the platform permits, choose inline, popup or floating tab, Publish, Squarespell installs or activates the quiz, Squarespell verifies the live installation, later updates publish without another paste, and the customer can pause, update, move or remove the installation from Squarespell.
+- **Truthfulness:** every platform is in a delivery class - **A** native one-button installation, **B** connect once then one-button publishing, **C** guided fallback (never described as automatic). No automatic page insertion is claimed where a platform's official APIs do not support it. Squarespace's documented public APIs (re-checked 21 September 2026) provide no way to create a page, block or code-injection entry, so Squarespace is **guided once (the site loader), then one-button** for popup, floating tab and pre-placed inline slots.
+- **Shared engine:** one Site Loader per connected site plus a versioned installation manifest, a connected-site data model, verification (page fetch and heartbeat), audit history, retry and rollback. Manual embeds (hosted link, iframe, script snippet) stay as the fallback and rollback path.
+- **Detailed specification:** [SQUARESPELL_ONE_BUTTON_CONNECT_SPEC.md](SQUARESPELL_ONE_BUTTON_CONNECT_SPEC.md) - what exists today, the platform capability matrix, the connection model, the twelve product screens, the MVP order and what cannot be promised.
+- **Status:** requirement recorded; screens to be designed before implementation. Nothing is built. Section 6.0 (connector order and advertising rule) is unchanged; the linked specification recommends the owner consider moving Wix ahead of Shopify and states why.
+
 ## 1. Identity and guardrails (confirmed by the owner)
 
 - **Squarespell Limited** is the company and parent brand; **Squarespell Quiz** is a Squarespell product at **`squarespellquiz.com`** (approved domain; no further name or domain research).
@@ -233,6 +245,8 @@ Common rules for every stage: no endless loaders (each wait has a visible progre
 - *Acceptance:* no recommendation is shown below the sample threshold; each cites its evidence; applying one never changes a published experience without approval.
 
 ## 6. The truthful connection promise
+
+**Extended by the top-level one-button connect requirement (section 0.4): see [SQUARESPELL_ONE_BUTTON_CONNECT_SPEC.md](SQUARESPELL_ONE_BUTTON_CONNECT_SPEC.md). Where that specification and this section differ on how a connector works, the platform limits stated here still apply.**
 
 The button says **Connect website** on every platform. What follows must state exactly what that platform permits. Universal publishing is the guaranteed baseline. **Verified** means the live page (or a runtime ping from the connected domain) confirms the experience is present. Platform limitations come from the official documentation reviewed in Phase 0 and are re-checked before each connector ships.
 
