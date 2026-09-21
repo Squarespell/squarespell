@@ -81,6 +81,7 @@ export function SiteDetailBody({ token, siteId, quizzes, onChanged, onDisconnect
           <p style={{ margin: '4px 0 6px' }}>{rec.body}</p>
           <ol style={{ margin: '0 0 8px', paddingLeft: 18 }}>{rec.steps.map((s) => <li key={s}>{s}</li>)}</ol>
           <button type="button" className="sx-btn sx-btn-sm" disabled={!!busy} onClick={() => run('verify', () => api.current.verify(siteId), 'Check finished')}>{busy === 'verify' ? 'Checking' : 'Check again'}</button>
+          {!site.last_verified_at ? <button type="button" className="sx-btn sx-btn-sm" style={{ marginLeft: 8 }} onClick={() => onFinishSetup(site)}>Show the loader again</button> : null}
         </div>
       ) : null}
       {problem ? <div className="sx-note sx-bad" role="alert" style={{ marginBottom: 14 }}>{problem}</div> : null}
