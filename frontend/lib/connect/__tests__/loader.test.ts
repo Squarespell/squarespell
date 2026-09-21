@@ -251,6 +251,8 @@ describe('inline slots', () => {
     document.body.appendChild(document.createElement('p'));
     await tick(400);
     expect(document.querySelectorAll('iframe')).toHaveLength(1);
+    // The heartbeat is throttled to one per five seconds; the new slot is reported as soon as that window ends.
+    await tick(6000);
     expect(heartbeats.some((h) => JSON.parse(h.init.body).slots.includes('late'))).toBe(true);
   });
   it('a slot with another name is left alone', async () => {
