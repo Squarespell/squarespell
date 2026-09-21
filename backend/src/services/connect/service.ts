@@ -221,14 +221,13 @@ export async function recordHeartbeat(input: { siteKey: unknown; origin?: unknow
 // ── Installations ───────────────────────────────────────────────────────────────────────────────
 
 async function liveManifestInstallations(siteId: string, userId: string, override?: { row: any }): Promise<ManifestInstallation[]> {
-  const { data: rows } = await supabase.from('quiz_installations').select(INST_COLS).eq('site_id', siteId).eq('user_id', userId).in('status', ['live', 'updating', 'moving', 'removing', 'publishing']);
-  const byId: Record<string, any> = {};
-  for (const r of rows || []) byId[r.id] = r;
-  // The row being changed is represented by its TARGET values; every other row by its stored (still live) values.
-  if (override) { if (override.row.status === 'live') byId[override.row.id] = override.row; else delete byId[override.row.id]; }
-  else { for (const id of Object.keys(byId)) if (byId[id].status !== 'live') delete byId[id]; }
-  for (const id of Object.keys(byId)) if (byId[id].status !== 'live' && !override) delete byId[id];
-  const live = Object.values(byId).filter((r: any) => (override && r.id === override.row.id) ? r.status === 'live' : ['live', 'updating', 'moving', 'removing'].includes(r.status) && r.status !== 'publishing');
+  const { data: rows } = await supabase.from('quiz_installations').select(INST_COLS).eq('site_id', siteId).eq('user_id', userId).neq('status', 'removed');
+  // A row that is mid-change (updating, moving, removing) is still published with its stored values; a row still being created
+  // (publishing), failed, draft or paused is not. The row being changed is represented by its TARGET values.
+  const effective = (r: any): string => (override && r.id === override.row.id ? override.row.status : ['live', 'updating', 'moving', 'removing'].includes(r.status) ? 'live' : r.status);
+  const all: any[] = (rows || []).map((r: any) => (override && r.id === override.row.id ? override.row : r));
+  if (override && !all.some((r) => r.id === override.row.id)) all.push(override.row);
+  const live = all.filter((r) => effective(r) === 'live');
   const quizIds = Array.from(new Set(live.map((r: any) => r.quiz_id)));
   const slugs: Record<string, string> = {};
   if (quizIds.length) {
