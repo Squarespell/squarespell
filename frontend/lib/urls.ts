@@ -29,7 +29,8 @@
  */
 
 export const MARKETING_URL = 'https://squarespell.com';
-export const APP_URL = 'https://app.squarespell.com';
+/** Public origin of this deployment. Set NEXT_PUBLIC_SITE_URL at build time; defaults to the production domain. */
+export const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://squarespellquiz.com').replace(/\/+$/, '');
 
 /* ------------------------------------------------------------------ */
 /* Internal route paths (single source of truth)                       */
