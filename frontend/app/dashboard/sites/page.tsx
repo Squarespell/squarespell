@@ -71,6 +71,7 @@ function SitesPage() {
   }, [sites]);
   const activity = useMemo(() => details.flatMap((d) => d.events.map((e) => ({ ...e, host: d.site.hostname }))).sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).slice(0, 6), [details]);
   const liveRows = useMemo(() => details.flatMap((d) => d.installations.filter((i) => ['live', 'updating', 'moving'].includes(i.status)).map((i) => ({ ...i, host: d.site.hostname, siteId: d.site.id }))).slice(0, 8), [details]);
+  const lastVerified = useMemo(() => sites.map((x) => x.last_verified_at).filter(Boolean).sort().pop() || null, [sites]);
   // The publish dialog links with the quiz slug; accept an id as well.
   const quizForPreset = quizzes.find((q) => q.id === presetQuiz || q.slug === presetQuiz);
 
@@ -99,8 +100,8 @@ function SitesPage() {
           <SitesStyles />
           <header className="sx-hero">
             <div>
-              <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 600, color: 'var(--teal)' }}>Publish / Sites</p>
-              <h1>Website connections</h1>
+              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--teal)' }}>Website connections</p>
+              <h1>Publish without pasting code every time.</h1>
               <p>Publish without pasting code every time. Connect each website once. Then publish, update, pause, move or remove any quiz from one place.</p>
             </div>
             <div className="sx-actions">
@@ -136,6 +137,7 @@ function SitesPage() {
                 <div className="sx-metric"><span>Connected sites</span><b>{sites.length}{config?.limits.maxSites ? ' of ' + config.limits.maxSites : ''}</b></div>
                 <div className="sx-metric"><span>Live installations</span><b>{liveCount}</b></div>
                 <div className="sx-metric"><span>Connection health</span><b style={{ fontSize: 18, marginTop: 8 }}><StatusBadge state={health.state} label={health.label} /></b></div>
+                <div className="sx-metric"><span>Last verified</span><b style={{ fontSize: 20 }}>{lastVerified ? relativeTime(lastVerified) : 'Not yet'}</b></div>
               </div>
 
               <section className="sx-section" aria-labelledby="sx-sites-h">
@@ -171,6 +173,7 @@ function SitesPage() {
                 </div>
               </section>
 
+              <div className="sx-lower">
               <section className="sx-section" aria-labelledby="sx-live-h">
                 <h2 id="sx-live-h">Live installations</h2>
                 <p>Quizzes currently shown on connected websites.</p>
@@ -195,6 +198,7 @@ function SitesPage() {
                   </ul>
                 )}
               </section>
+              </div>
             </>
           ) : null}
 
