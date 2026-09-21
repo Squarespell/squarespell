@@ -58,6 +58,12 @@ export const deletionLimiter = makeLimiter('deletion', 5, '1 h', HOUR);
 export const checkoutLimiter = makeLimiter('checkout', 10, '1 m', MIN);
 // process-other: free-text "other" answer classification calls an LLM: 10 per minute per IP per quiz
 export const processOtherLimiter = makeLimiter('process-other', 10, '1 m', MIN);
+// One-button connect (routes/connect.ts). Manifest: 120 per minute per IP and site. Heartbeat: 30 per minute per IP and site.
+// Verify (server-side page fetch): 10 per minute per user. Publish and other installation changes: 30 per minute per user.
+export const connectManifestLimiter = makeLimiter('connect-manifest', 120, '1 m', MIN);
+export const connectHeartbeatLimiter = makeLimiter('connect-heartbeat', 30, '1 m', MIN);
+export const connectVerifyLimiter = makeLimiter('connect-verify', 10, '1 m', MIN);
+export const connectPublishLimiter = makeLimiter('connect-publish', 30, '1 m', MIN);
 
 export function getClientIp(req: any): string {
   return ((req.headers['x-forwarded-for'] as string) || req.ip || 'unknown').split(',')[0].trim();
