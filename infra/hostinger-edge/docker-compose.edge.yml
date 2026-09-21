@@ -22,6 +22,10 @@ services:
       GATE_ENABLED: ${GATE_ENABLED:-true}
       GATE_ALLOW_IPS: ${GATE_ALLOW_IPS:-127.0.0.1}
       PROD_INDEXING: ${PROD_INDEXING:-off}
+      # Site password (basic auth). Written to the server env file by set-site-password.sh; never committed.
+      SITE_AUTH_ENABLED: ${SITE_AUTH_ENABLED:-false}
+      SITE_AUTH_USER: ${SITE_AUTH_USER:?run infra/hostinger-edge/set-site-password.sh first}
+      SITE_AUTH_HASH: ${SITE_AUTH_HASH:?run infra/hostinger-edge/set-site-password.sh first}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - staging_caddy_data:/data
