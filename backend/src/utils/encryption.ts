@@ -7,11 +7,17 @@ import crypto from 'crypto';
  * Generate one with:  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
  *
  * Format of encrypted value:  iv:authTag:ciphertext  (all hex-encoded)
+ *
+ * Key-version prefix (added for the one-button connect credentials): encryptVersioned() writes  v1:iv:authTag:ciphertext.
+ * The version names the key that sealed the value, so ENCRYPTION_KEY can be rotated later by introducing v2 without a flag day:
+ * decrypt() reads both the legacy un-prefixed format and any known version. An unknown version fails closed.
  */
 
 var ALGORITHM = 'aes-256-gcm';
 var IV_LENGTH = 12; // 96-bit IV recommended for GCM
 var AUTH_TAG_LENGTH = 16; // 128-bit auth tag
+export var KEY_VERSION = 'v1'; // the version encryptVersioned() writes; v1 uses ENCRYPTION_KEY
+var VERSION_PREFIX = /^v[0-9]+$/;
 
 function getEncryptionKey(): Buffer {
   var keyHex = process.env.ENCRYPTION_KEY;
@@ -41,6 +47,10 @@ export function encrypt(plaintext: string): string {
 export function decrypt(encryptedValue: string): string {
   var key = getEncryptionKey();
   var parts = encryptedValue.split(':');
+  if (parts.length === 4 && VERSION_PREFIX.test(parts[0])) {
+    if (parts[0] !== KEY_VERSION) throw new Error('Unknown encryption key version: ' + parts[0]);
+    parts = parts.slice(1);
+  }
   if (parts.length !== 3) {
     throw new Error('Invalid encrypted value format');
   }
@@ -54,6 +64,13 @@ export function decrypt(encryptedValue: string): string {
 }
 
 /**
+ * Encrypt and stamp the key version:  v1:iv:authTag:ciphertext. Use this for new private platform credentials.
+ */
+export function encryptVersioned(plaintext: string): string {
+  return KEY_VERSION + ':' + encrypt(plaintext);
+}
+
+/**
  * Fields within integration config objects that contain secrets and must be encrypted.
  */
 var SENSITIVE_FIELDS = ['apiKey', 'accessToken', 'api_key', 'access_token', 'service_account_json'];
@@ -64,6 +81,7 @@ var SENSITIVE_FIELDS = ['apiKey', 'accessToken', 'api_key', 'access_token', 'ser
 function isEncrypted(value: string): boolean {
   if (typeof value !== 'string') return false;
   var parts = value.split(':');
+  if (parts.length === 4 && VERSION_PREFIX.test(parts[0])) parts = parts.slice(1);
   if (parts.length !== 3) return false;
   // IV should be 24 hex chars (12 bytes), authTag 32 hex chars (16 bytes)
   return parts[0].length === 24 && parts[1].length === 32 && /^[0-9a-f]+$/.test(parts[0] + parts[1] + parts[2]);
