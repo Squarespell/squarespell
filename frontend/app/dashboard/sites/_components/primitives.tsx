@@ -20,7 +20,7 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--su
 .sx-btn-primary{background:var(--teal);border-color:var(--teal);color:#fff}.sx-btn-primary:hover{background:var(--teal-d)}
 .sx-btn-danger{background:#fff;border-color:#FDA29B;color:var(--bad)}
 .sx-btn-sm{min-height:34px;padding:0 12px;font-size:13px}
-.sx-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:24px}
+.sx-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:24px}
 .sx-metric{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
 .sx-metric b{display:block;font-size:24px;letter-spacing:-.02em;margin-top:4px}
 .sx-metric span{color:var(--muted);font-size:13px}
@@ -113,7 +113,45 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--su
 @keyframes sx-drawer{from{transform:translateX(30px);opacity:.6}to{transform:none;opacity:1}}
 @keyframes sx-scan{from{left:-40%}to{left:100%}}
 @keyframes sx-pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
-@media (max-width:820px){.sx-cards3{grid-template-columns:1fr}.sx-how{grid-template-columns:1fr}}
+.sx-place-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:10px 0}
+.sx-place{display:flex;flex-direction:column;text-align:left;padding:0;border:1px solid var(--line);border-radius:15px;background:#fff;overflow:hidden;cursor:pointer;font:inherit;color:inherit;min-width:0;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.sx-place:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(16,24,40,.09)}
+.sx-place[aria-checked="true"]{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,115,119,.12)}
+.sx-place-visual{height:116px;background:#eff4f2;position:relative;overflow:hidden;flex:none}
+.sx-wire{position:absolute;inset:15px;background:#fff;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.06);padding:9px}
+.sx-wire::before{content:"";display:block;width:34%;height:5px;border-radius:5px;background:#d7e0dd;margin-bottom:7px}
+.sx-wire::after{content:"";display:block;width:72%;height:4px;border-radius:4px;background:#e4e9e8}
+.sx-art-inline{height:45px;border-radius:5px;background:linear-gradient(135deg,#176f70,#269794);margin-top:11px}
+.sx-art-popup{position:absolute;width:66%;height:72%;left:17%;top:16%;border-radius:7px;background:#fff;box-shadow:0 9px 23px rgba(12,35,31,.22);border-top:20px solid var(--teal)}
+.sx-art-tab{position:absolute;right:0;top:45%;transform:translateY(-50%);padding:9px 6px;background:var(--teal);color:#fff;border-radius:6px 0 0 6px;font-size:9px;font-weight:700;writing-mode:vertical-rl}
+.sx-place-copy{padding:13px 14px 15px}
+.sx-place-copy b{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-size:14px}
+.sx-rec{color:var(--teal);font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.sx-place-copy small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:5px}
+.sx-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start;margin-top:6px}
+.sx-panel-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff;min-width:0}
+.sx-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:10px}
+.sx-site-mock{position:relative;background:#eff4f2;border-radius:12px;padding:14px;overflow:hidden;margin:0 auto;transition:width .25s ease;max-width:100%}
+.sx-site-mock[data-device="mobile"]{width:340px}
+.sx-mock-page{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.06);min-height:270px}
+.sx-mock-brand{font:700 10px/1.2 Inter,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;text-align:center;color:var(--muted);margin-bottom:12px;overflow-wrap:anywhere}
+.sx-mock-line{height:6px;border-radius:6px;background:#e4e9e8;margin:8px 0}
+.sx-mock-line.w40{width:40%}.sx-mock-line.w55{width:55%}.sx-mock-line.w70{width:70%}
+.sx-mock-quiz{margin:12px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.sx-mock-quiz iframe,.sx-mock-dialog iframe,.sx-mock-panel iframe{display:block;width:100%;height:300px;border:0}
+.sx-mock-overlay{position:absolute;inset:0;background:rgba(8,20,18,.5);display:grid;place-items:center;padding:12px}
+.sx-mock-dialog{width:min(100%,400px);background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.3);animation:sx-rise .25s ease both}
+.sx-mock-panel{position:absolute;top:14px;bottom:14px;right:38px;width:min(62%,300px);background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.25);animation:sx-drawer .25s ease both}
+.sx-mock-panel iframe{height:100%}
+.sx-mock-tab{position:absolute;right:14px;top:45%;transform:translateY(-50%);padding:10px 6px;background:var(--teal);color:#fff;border-radius:6px 0 0 6px;font:700 11px/1.1 Inter,system-ui,sans-serif;writing-mode:vertical-rl;max-height:70%;overflow:hidden}
+.sx-modal-head>div{min-width:0}.sx-modal-head h2{overflow-wrap:anywhere}
+.sx-lower{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.sx-tick::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--ok);opacity:0;animation:sx-ring 1.1s ease-out .2s 1 both}
+.sx-tick{position:relative}
+@keyframes sx-ring{0%{transform:scale(.8);opacity:.6}100%{transform:scale(1.3);opacity:0}}
+@media (max-width:1000px){.sx-lower{grid-template-columns:1fr}.sx-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.sx-two{grid-template-columns:1fr}}
+@media (max-width:820px){.sx-cards3{grid-template-columns:1fr}.sx-how{grid-template-columns:1fr}.sx-place-grid{grid-template-columns:1fr}.sx-place{display:grid;grid-template-columns:120px minmax(0,1fr)}.sx-place-visual{height:auto;min-height:100px}}
 @media (max-width:640px){
   .sx-platforms{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sx-metrics{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding-bottom:6px}.sx-metric{flex:0 0 78%;scroll-snap-align:start}
