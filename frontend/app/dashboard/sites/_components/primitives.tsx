@@ -162,6 +162,13 @@ export function AnnounceProvider({ children }: { children: ReactNode }) {
 // ---- accessible modal: focus trap, Escape, focus restore, scroll lock ----
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
+/** Focusable and actually shown (works without layout, so it behaves the same in browsers and in tests). */
+const isShown = (el: HTMLElement): boolean => {
+  if (el.closest('[hidden],[aria-hidden="true"]')) return false;
+  const st = window.getComputedStyle(el);
+  return st.display !== 'none' && st.visibility !== 'hidden';
+};
+
 export function Modal({ open, title, subtitle, onClose, children, footer, drawer = false, persistent = false, wide = false }: {
   open: boolean; title: string; subtitle?: string; onClose: () => void; children: ReactNode; footer?: ReactNode; drawer?: boolean; persistent?: boolean; wide?: boolean;
 }) {
@@ -197,7 +204,7 @@ export function Modal({ open, title, subtitle, onClose, children, footer, drawer
     if (e.key !== 'Tab') return;
     const d = dialogRef.current;
     if (!d) return;
-    const items = Array.from(d.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement);
+    const items = Array.from(d.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(isShown);
     if (!items.length) { e.preventDefault(); d.focus(); return; }
     const first = items[0], last = items[items.length - 1];
     if (e.shiftKey && (document.activeElement === first || document.activeElement === d)) { e.preventDefault(); last.focus(); }
