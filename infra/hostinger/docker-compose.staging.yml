@@ -52,6 +52,8 @@ services:
     environment:
       NODE_ENV: production
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY}
+      # One-button connect feature flag (off unless set to true in the staging env file; not passed to production).
+      CONNECT_ENABLED: ${CONNECT_ENABLED:-}
     networks: [edge]
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/',{redirect:'manual'}).then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
@@ -102,6 +104,11 @@ services:
       CORS_ORIGIN: https://${STAGING_APP_HOST}
       # The 'worker' service drains the email queue; do not also run the in-process timer.
       DISABLE_INPROCESS_EMAIL_QUEUE: "true"
+      # One-button connect (staging review only). CONNECT_TEST_FAULTS also enables the staging fixture website and failure simulation.
+      CONNECT_ENABLED: ${CONNECT_ENABLED:-}
+      CONNECT_TEST_FAULTS: ${CONNECT_TEST_FAULTS:-}
+      CONNECT_MAX_SITES: ${CONNECT_MAX_SITES:-}
+      CONNECT_MAX_INSTALLATIONS_PER_SITE: ${CONNECT_MAX_INSTALLATIONS_PER_SITE:-}
     depends_on:
       gateway:
         condition: service_started
