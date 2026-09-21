@@ -37,12 +37,15 @@ export function getPlanLimits(plan: string) {
 }
 
 /**
- * Legacy entitlements (migration 032): a user with an ACTIVE legacy entitlement whose stored plan reads free/trial is entitled to
- * Business. A lookup failure falls back to the stored plan, so an error can neither grant nor remove access on its own.
+ * Legacy entitlements (migration 032): a user with an ACTIVE legacy entitlement is always entitled to its effective_plan
+ * (Business), whatever the stored plan says (agency, pro, core, starter, growth, trial, free or empty). The database also
+ * refuses to store a plan below Business for such a user, so every reader of users.plan agrees. Only the audited
+ * public.revoke_legacy_entitlement() ends it. A lookup failure falls back to the stored plan: an error alone neither
+ * grants nor removes access.
  */
 export async function entitledPlan(userId: string | null | undefined, plan: string | null | undefined): Promise<string> {
   const stored = plan ?? 'free';
-  if (!userId || (stored !== 'free' && stored !== 'trial')) return stored;
+  if (!userId) return stored;
   try {
     const { data, error } = await supabase.from('legacy_entitlements').select('effective_plan').eq('user_id', userId).eq('active', true).maybeSingle();
     if (!error && data?.effective_plan) return data.effective_plan;
