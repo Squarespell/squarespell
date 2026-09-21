@@ -44,9 +44,11 @@ const PASSWORD_PAGE = /(password[- ]protected|sqs-password|site-password|lock-sc
  * Server-side page check for a connected site. The hostname is the site's canonical hostname; the check follows redirects
  * (each re-validated) but fails with wrong_domain if the page ends up on a different hostname.
  */
-export async function verifySite(input: { hostname: string; siteKey: string; path?: string; fetchOptions?: SafeFetchOptions; scheme?: 'https' | 'http' }): Promise<VerifyResult> {
+export async function verifySite(input: { hostname: string; siteKey: string; path?: string; fetchOptions?: SafeFetchOptions; scheme?: 'https' | 'http'; testPort?: number }): Promise<VerifyResult> {
   const path = input.path && input.path.startsWith('/') ? input.path : '/';
-  const url = (input.scheme || 'https') + '://' + input.hostname + path;
+  // testPort exists only so the test suite can reach a loopback fixture; it is ignored outside NODE_ENV=test.
+  const port = process.env.NODE_ENV === 'test' && input.testPort ? ':' + input.testPort : '';
+  const url = (input.scheme || 'https') + '://' + input.hostname + port + path;
   const fail = (reason: ReasonCode, status: number | null = null): VerifyResult => ({ ok: false, reason, url, status, loaderFound: false, slots: [] });
   let res;
   try {
