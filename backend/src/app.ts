@@ -21,6 +21,8 @@ import { gdprRouter, publicGdprRouter } from './routes/gdpr';
 import { extendedFeaturesRouter, publicExtendedRouter } from './routes/extendedFeatures';
 import teamsRouter from './routes/teams';
 import unsubscribeRouter from './routes/unsubscribe';
+import { connectRouter, publicConnectRouter } from './routes/connect';
+import { connectFixtureRouter } from './routes/connectFixture';
 import clerkWebhookRoute from './routes/clerkWebhook';
 import { log } from './lib/logger';
 import { requestLogger } from './middleware/requestLogger';
@@ -82,6 +84,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/public/unsubscribe',
   '/api/public/resubscribe',
   '/api/public/white-label',
+  '/api/public/connect',
   '/api/webhooks',
   '/api/emails/unsplash',
 ];
@@ -160,6 +163,11 @@ app.use('/api/public', publicGdprRouter);
 app.use('/api', extendedFeaturesRouter);
 app.use('/api/public', publicExtendedRouter);
 app.use('/api/teams', teamsRouter);
+// One-button connect: every route is behind the CONNECT_ENABLED feature flag (off by default).
+app.use('/api/connect', connectRouter);
+app.use('/api/public/connect', publicConnectRouter);
+// Staging-only fixture website (404 unless CONNECT_ENABLED and CONNECT_TEST_FAULTS are both exactly "true").
+app.use('/', connectFixtureRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 // Readiness: verifies the database answers. Details are logged, never returned.

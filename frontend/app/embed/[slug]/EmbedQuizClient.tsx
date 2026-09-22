@@ -5,6 +5,11 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
+// Dashboard preview (?preview=1): the quiz runs normally but records nothing (no analytics events, no leads).
+function isPreviewMode(): boolean {
+  try { return new URLSearchParams(window.location.search).get('preview') === '1'; } catch { return false; }
+}
+
 interface QuizOption {
   id: string;
   text: string;
@@ -122,6 +127,7 @@ export default function EmbedQuizClient({
   // for the embed flow, which is this product's primary distribution channel.
   const trackEvent = useCallback(
     function(eventType: string, metadata?: Record<string, any>) {
+      if (isPreviewMode()) return;
       fetch(API + '/api/quiz/' + quiz.slug + '/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -385,6 +391,7 @@ export default function EmbedQuizClient({
     // been saved.
     const maxAttempts = 3;
     async function attempt(n: number): Promise<void> {
+      if (isPreviewMode()) return; // preview: nothing is submitted
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       try {

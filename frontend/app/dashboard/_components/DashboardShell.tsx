@@ -188,7 +188,7 @@ function isEditorRoute(pathname: string): boolean {
     '/dashboard/team', '/dashboard/emails', '/dashboard/segmentation',
     '/dashboard/automations', '/dashboard/commerce', '/dashboard/templates',
     '/dashboard/brand-kit', '/dashboard/referrals', '/dashboard/embed',
-    '/dashboard/admin', '/dashboard/trash',
+    '/dashboard/admin', '/dashboard/trash', '/dashboard/sites',
   ];
   if (knownPrefixes.some(function(prefix) { return pathname === prefix || pathname.startsWith(prefix + '/'); })) {
     return false;
@@ -274,6 +274,34 @@ var NAV_SECTIONS: NavSection[] = [
     ],
   },
 ];
+
+/**
+ * One-button connect: when the feature is enabled, a "Publish" group (Sites, Manual embed, Integrations) follows Quizzes and
+ * Integrations moves out of Settings. When it is disabled the navigation is exactly the original NAV_SECTIONS.
+ */
+function navSectionsFor(connectEnabled: boolean): NavSection[] {
+  if (!connectEnabled) return NAV_SECTIONS;
+  var svg = function(children: ReactNode) {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
+    );
+  };
+  var publish: NavSection = {
+    label: 'Publish',
+    items: [
+      { href: '/dashboard/sites', label: 'Sites', icon: svg(<><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></>) },
+      { href: '/dashboard/embed', label: 'Manual embed', icon: svg(<><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></>) },
+      { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
+    ],
+  };
+  var out: NavSection[] = [];
+  NAV_SECTIONS.forEach(function(section) {
+    var items = section.items.filter(function(i) { return i.href !== '/dashboard/integrations'; });
+    out.push(items.length === section.items.length ? section : { label: section.label, items: items });
+    if (section.label === 'Quizzes') out.push(publish);
+  });
+  return out;
+}
 
 function isActive(item: NavItem, pathname: string): boolean {
   if (item.match) return item.match(pathname);
@@ -446,6 +474,7 @@ export function DashboardShell({
   var [mobileOpen, setMobileOpen] = useState(false);
   var [isMobile, setIsMobile] = useState(false);
   var [bannerToken, setBannerToken] = useState<string | null>(null);
+  var [connectEnabled, setConnectEnabled] = useState(false);
   var sidebarScrollRef = useRef<HTMLDivElement>(null);
   var sidebarScrollPos = useRef(0);
   var [planData, setPlanData] = useState<PlanCardData>({
@@ -491,6 +520,18 @@ export function DashboardShell({
   var userInitial = (userName[0] || 'S').toUpperCase();
 
   var sidebarWidth = 280;
+
+  // One-button connect feature flag (server-side, off by default): decides whether the Publish group is shown.
+  useEffect(function() {
+    if (!bannerToken) return;
+    var cancelled = false;
+    var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+    fetch(apiBase + '/api/connect/config', { headers: { Authorization: 'Bearer ' + bannerToken } })
+      .then(function(r) { return r.ok ? r.json() : { enabled: false }; })
+      .then(function(d) { if (!cancelled) setConnectEnabled(!!(d && d.enabled)); })
+      .catch(function() { /* flag unreachable: keep the original navigation */ });
+    return function() { cancelled = true; };
+  }, [bannerToken]);
 
   // Fetch plan data for sidebar card
   useEffect(function() {
@@ -596,7 +637,7 @@ export function DashboardShell({
         style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}
       >
         <nav aria-label="Main" style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {NAV_SECTIONS.map(function(section, sectionIdx) {
+          {navSectionsFor(connectEnabled).map(function(section, sectionIdx) {
             return (
               <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 16 }}>
                 <div
@@ -866,7 +907,7 @@ export function DashboardShell({
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderBottom: '1px solid ' + C.GRAY_200,
-            padding: '0 32px',
+            padding: isMobile ? '0 16px' : '0 32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -912,7 +953,12 @@ export function DashboardShell({
                 borderRadius: 8,
                 color: C.GRAY_400,
                 fontSize: 14,
-                minWidth: 320,
+                // Shrinks on phones instead of forcing every dashboard page wider than the screen (was a fixed minWidth of 320).
+                minWidth: 0,
+                flex: '0 1 320px',
+                width: '100%',
+                maxWidth: 320,
+                overflow: 'hidden',
                 cursor: 'pointer',
                 background: C.SURFACE,
                 fontFamily: C.FONT,
@@ -922,7 +968,7 @@ export function DashboardShell({
               onMouseLeave={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_200; }}
             >
               {icons.search}
-              <span style={{ flex: 1, textAlign: 'left', color: C.GRAY_500, fontSize: 14 }}>Search anything...</span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: 'left', color: C.GRAY_500, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Search anything...</span>
               <kbd style={{ padding: '2px 6px', border: '1px solid ' + C.GRAY_200, borderRadius: 4, fontSize: 11, color: C.GRAY_400, background: C.GRAY_50, fontWeight: 500, fontFamily: C.FONT }}>&#8984; K</kbd>
             </button>
           </div>

@@ -405,8 +405,11 @@ jobs:
           $DC config -q
           $DC config --format json > "$RUNNER_TEMP/compose.json"
           chk() { d="$1"; shift; if jq -e "$@" "$RUNNER_TEMP/compose.json" > /dev/null; then echo "PASS $d"; else echo "::error::FAIL $d"; exit 1; fi; }
-          chk "only the proxy publishes any port" '[.services | to_entries[] | select((.value.ports // []) | length > 0) | .key] == ["proxy"]'
-          chk "only 80/tcp and 443/tcp are published" '[.services.proxy.ports[] | ((.published | tostring) + "/" + .protocol)] | sort == ["443/tcp","80/tcp"]'
+          chk "no staging service publishes any host port (the public edge owns 80 and 443)" '[.services | to_entries[] | select((.value.ports // []) | length > 0)] | length == 0'
+          chk "nothing in the staging stack claims host port 80 or 443" '[.services[] | (.ports // [])[] | (.published | tostring)] | map(select(. == "80" or . == "443")) | length == 0'
+          chk "the obsolete standalone proxy is not part of the default stack" '.services.proxy == null'
+          chk "the staging frontend is built for the staging host" '.services.frontend.build.args.NEXT_PUBLIC_SITE_URL == "https://staging.example.test"'
+          chk "no staging build argument mentions the production domain" '(.services.frontend.build.args | tostring | test("squarespellquiz[.]com")) | not'
           chk "db, rest and gateway publish nothing" '[.services.db, .services.rest, .services.gateway] | all((.ports // []) | length == 0)'
           for s in db rest gateway worker scheduler; do
             chk "$s is on the internal network only" --arg s "$s" '(.services[$s].networks | keys) == ["internal"]'

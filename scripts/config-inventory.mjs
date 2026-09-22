@@ -107,6 +107,11 @@ const OWN = {
   NEXT_PUBLIC_QUIZ_URL: V('Vercel', 'documented as intentionally NOT an env var', 'n/a', 'n/a', 'URLs are hard-coded constants in frontend/lib/urls.ts'),
   NEXT_PUBLIC_APP_URL: V('Vercel', 'documented as intentionally NOT an env var', 'n/a', 'n/a', ''),
   NEXT_PUBLIC_MARKETING_URL: V('Vercel', 'documented as intentionally NOT an env var', 'n/a', 'n/a', ''),
+  // One-button connect (feature flag, off by default; enabled only in protected staging for review)
+  CONNECT_ENABLED: V('Squarespell (server env)', 'feature flag for the connect APIs, manifest and site loader: exactly "true" enables; unset = off', 'yes', 'no', 'must stay unset or false in production until launch is approved'),
+  CONNECT_MAX_SITES: V('Squarespell (server env)', 'optional limit on connected websites per account; unset = no limit', 'yes', 'no', 'limits are not approved yet, so unset by default'),
+  CONNECT_MAX_INSTALLATIONS_PER_SITE: V('Squarespell (server env)', 'optional limit on quiz installations per website; unset = no limit', 'yes', 'no', 'limits are not approved yet, so unset by default'),
+  CONNECT_TEST_FAULTS: V('Squarespell (server env)', 'staging-fixture only: lets an authenticated request simulate a publish failure to prove rollback', 'yes', 'no', 'never set in production'),
   GITHUB_TOKEN: V('GitHub Actions', 'n/a', 'n/a', 'n/a', ''),
 };
 

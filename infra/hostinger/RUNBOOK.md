@@ -6,7 +6,7 @@ Vercel, Render, the root domain, the marketplace, or live Stripe.
 
 ## Architecture (matches the repository; no second application)
 
-- proxy: Caddy, ports 80/443 only, automatic HTTPS for the two staging hosts. /api/cron/* is blocked publicly.
+- proxy (obsolete, off by default): a standalone Caddy kept behind the compose profile standalone-proxy. It publishes no host ports. The public edge (infra/hostinger-edge) owns ports 80 and 443 and routes the two staging hosts to the frontend and backend containers; /api/cron/* is blocked there. The staging stack publishes no host ports at all, and CI proves it.
 - frontend: Next.js 14 (frontend/), Clerk. NEXT_PUBLIC_* values are baked in at image build.
 - backend: Express API (backend/), port 3001 internal. Health: /api/health and /api/health/ready.
 - db + rest + gateway: the API talks to Supabase through supabase-js (PostgREST). Staging reproduces that on a
