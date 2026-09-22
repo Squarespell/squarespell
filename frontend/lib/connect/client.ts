@@ -42,8 +42,7 @@ export async function freshToken(fallback: string): Promise<string> {
   }
 }
 
-async function call<T>(token: string, method: string, path: string, body?: unknown): Promise<T> {
-  const bearer = await freshToken(token);
+async function doFetch(bearer: string, method: string, path: string, body?: unknown): Promise<{ res: Response; data: any }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25000);
   try {
@@ -54,13 +53,32 @@ async function call<T>(token: string, method: string, path: string, body?: unkno
     });
     let data: any = null;
     try { data = await res.json(); } catch { /* no body */ }
+    return { res, data };
+  } finally { clearTimeout(timer); }
+}
+
+/**
+ * A dashboard tab can sit backgrounded for a long time, and Clerk's own refresh timer is throttled while it is hidden.
+ * The token freshToken() hands back can therefore still be the one that just expired. One 401 gets one retry with a
+ * forced refresh (skipCache) before we give up and surface an error, so coming back to an old tab does not show
+ * empty data or a false failure.
+ */
+async function call<T>(token: string, method: string, path: string, body?: unknown): Promise<T> {
+  try {
+    const bearer = await freshToken(token);
+    let { res, data } = await doFetch(bearer, method, path, body);
+    if (res.status === 401) {
+      const clerk = (globalThis as any).Clerk;
+      const retried: string | null = clerk?.session ? await clerk.session.getToken({ skipCache: true }).catch(() => null) : null;
+      if (retried && retried !== bearer) ({ res, data } = await doFetch(retried, method, path, body));
+    }
     if (!res.ok) throw new ConnectApiError(res.status, (data && data.code) || 'error', (data && data.error) || 'Something went wrong. Please try again.');
     return data as T;
   } catch (e: any) {
     if (e instanceof ConnectApiError) throw e;
     if (e?.name === 'AbortError') throw new ConnectApiError(0, 'timeout', 'That took too long. Please check your connection and try again.');
     throw new ConnectApiError(0, 'network', 'We could not reach Squarespell. Please check your connection and try again.');
-  } finally { clearTimeout(timer); }
+  }
 }
 
 export function connectApi(token: string) {
