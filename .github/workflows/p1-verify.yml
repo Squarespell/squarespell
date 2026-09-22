@@ -448,10 +448,12 @@ jobs:
           $DCP config --format json > "$RUNNER_TEMP/compose-prod.json"
           chkp() { d="$1"; shift; if jq -e "$@" "$RUNNER_TEMP/compose-prod.json" > /dev/null; then echo "PASS $d"; else echo "::error::FAIL $d"; exit 1; fi; }
           chkp "production backend receives CONNECT_ENABLED, defaulting to false" '.services.backend.environment.CONNECT_ENABLED == "false"'
+          chkp "production frontend also receives CONNECT_ENABLED (the loader route reads it directly, independent of the backend)" '.services.frontend.environment.CONNECT_ENABLED == "false"'
           chkp "CONNECT_TEST_FAULTS never reaches the production compose file" '(. | tostring | test("CONNECT_TEST_FAULTS")) | not'
           printf '%s\nCONNECT_ENABLED=true\n' "$(cat "$RUNNER_TEMP/dummy-prod.env")" > "$RUNNER_TEMP/dummy-prod-on.env"
           docker compose --env-file "$RUNNER_TEMP/dummy-prod-on.env" -f infra/hostinger-production/docker-compose.production.yml config --format json > "$RUNNER_TEMP/compose-prod-on.json"
           if jq -e '.services.backend.environment.CONNECT_ENABLED == "true"' "$RUNNER_TEMP/compose-prod-on.json" > /dev/null; then echo "PASS the server env file's CONNECT_ENABLED actually reaches the container"; else echo "::error::FAIL setting CONNECT_ENABLED=true in the env file did not reach the backend container"; exit 1; fi
+          if jq -e '.services.frontend.environment.CONNECT_ENABLED == "true"' "$RUNNER_TEMP/compose-prod-on.json" > /dev/null; then echo "PASS the server env file's CONNECT_ENABLED reaches the frontend container too"; else echo "::error::FAIL setting CONNECT_ENABLED=true in the env file did not reach the frontend container"; exit 1; fi
 
       - name: Caddy public configuration and internal gateway configuration
         run: |
