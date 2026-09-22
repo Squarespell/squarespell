@@ -427,6 +427,32 @@ jobs:
           fi
           echo "PASS compose rejects an empty environment"
 
+      - name: Production Docker Compose passes the connect flag correctly (dummy environment)
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/dummy-prod.env" <<'EOF'
+          PROD_APP_HOST=squarespellquiz.example.test
+          PROD_API_HOST=api.squarespellquiz.example.test
+          POSTGRES_PASSWORD=dummy-postgres
+          AUTHENTICATOR_PASSWORD=dummy-authenticator
+          PGRST_JWT_SECRET=dummy-jwt-secret-dummy-jwt-secret-1234
+          SUPABASE_SERVICE_ROLE_KEY=dummy-service-role
+          ENCRYPTION_KEY=dummy-encryption
+          REPORT_SECRET=dummy-report
+          CRON_SECRET=dummy-cron
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+          CLERK_SECRET_KEY=dummy-clerk
+          EOF
+          DCP="docker compose --env-file $RUNNER_TEMP/dummy-prod.env -f infra/hostinger-production/docker-compose.production.yml"
+          $DCP config -q
+          $DCP config --format json > "$RUNNER_TEMP/compose-prod.json"
+          chkp() { d="$1"; shift; if jq -e "$@" "$RUNNER_TEMP/compose-prod.json" > /dev/null; then echo "PASS $d"; else echo "::error::FAIL $d"; exit 1; fi; }
+          chkp "production backend receives CONNECT_ENABLED, defaulting to false" '.services.backend.environment.CONNECT_ENABLED == "false"'
+          chkp "CONNECT_TEST_FAULTS never reaches the production compose file" '(. | tostring | test("CONNECT_TEST_FAULTS")) | not'
+          printf '%s\nCONNECT_ENABLED=true\n' "$(cat "$RUNNER_TEMP/dummy-prod.env")" > "$RUNNER_TEMP/dummy-prod-on.env"
+          docker compose --env-file "$RUNNER_TEMP/dummy-prod-on.env" -f infra/hostinger-production/docker-compose.production.yml config --format json > "$RUNNER_TEMP/compose-prod-on.json"
+          if jq -e '.services.backend.environment.CONNECT_ENABLED == "true"' "$RUNNER_TEMP/compose-prod-on.json" > /dev/null; then echo "PASS the server env file's CONNECT_ENABLED actually reaches the container"; else echo "::error::FAIL setting CONNECT_ENABLED=true in the env file did not reach the backend container"; exit 1; fi
+
       - name: Caddy public configuration and internal gateway configuration
         run: |
           set -euo pipefail
