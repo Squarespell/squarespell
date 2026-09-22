@@ -33,6 +33,7 @@ function SitesPage() {
   const [drawerId, setDrawerId] = useState<string | null>(null);
   const [handledPreset, setHandledPreset] = useState(false);
   const [notice, setNotice] = useState('');
+  const [detailsError, setDetailsError] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -45,6 +46,7 @@ function SitesPage() {
       setSites(s.sites); setQuizzes(Array.isArray(q) ? q : []); setError('');
       const ds = await Promise.all(s.sites.slice(0, 6).map((x) => api.getSite(x.id).then((d) => ({ site: d.site, installations: d.installations, events: d.events })).catch(() => null)));
       setDetails(ds.filter(Boolean) as Detail[]);
+      setDetailsError(ds.some((d) => d === null));
     } catch (e) {
       setError(friendlyError((e as ConnectApiError).code, (e as Error).message));
     } finally { setLoading(false); }
@@ -177,7 +179,9 @@ function SitesPage() {
               <section className="sx-section" aria-labelledby="sx-live-h">
                 <h2 id="sx-live-h">Live installations</h2>
                 <p>Quizzes currently shown on connected websites.</p>
-                {liveRows.length === 0 ? <p style={{ color: 'var(--muted)' }}>Nothing is live yet. Publish a quiz to a verified website to see it here.</p> : (
+                {liveRows.length === 0 && detailsError ? (
+                  <p className="sx-note sx-bad" role="alert">We could not load your installations. <button type="button" className="sx-btn sx-btn-sm" onClick={() => load()}>Try again</button></p>
+                ) : liveRows.length === 0 ? <p style={{ color: 'var(--muted)' }}>Nothing is live yet. Publish a quiz to a verified website to see it here.</p> : (
                   <ul className="sx-list">
                     {liveRows.map((i) => (
                       <li key={i.id} className="sx-row">
