@@ -4,8 +4,13 @@
 # their logic. Run as the deployment user (squarespell) on the Hostinger STAGING VPS only.
 #
 # Usage:
-#   staging-cutover.sh prepare   Deploy the pinned commit dark (CLERK_SELF_DELIVERY_ENABLED=false),
+#   staging-cutover.sh prepare [--already-deployed]
+#                                 Deploy the pinned commit dark (CLERK_SELF_DELIVERY_ENABLED=false),
 #                                 verify health, migrations, baseline counts and webhook rejection.
+#                                 --already-deployed: skip the backup+deploy steps (a bootstrap step
+#                                 already ran them to get this very script onto disk) and instead
+#                                 just restart the backend once, after the secrets/config below are
+#                                 written, so it never rebuilds or restarts twice in one bootstrap.
 #   staging-cutover.sh enable    After prepare succeeded and the Clerk webhook test has been
 #                                 confirmed separately: flip the flag on, restart the backend only.
 #   staging-cutover.sh rollback  Flip the flag back off and restart the backend only.
@@ -26,8 +31,13 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 MODE="${1:-}"
 case "$MODE" in
   prepare|enable|rollback) ;;
-  *) die "usage: $0 prepare|enable|rollback" ;;
+  *) die "usage: $0 prepare [--already-deployed]|enable|rollback" ;;
 esac
+
+ALREADY_DEPLOYED=false
+if [ "$MODE" = prepare ] && [ "${2:-}" = "--already-deployed" ]; then
+  ALREADY_DEPLOYED=true
+fi
 
 set_config() {
   # $1=NAME $2=value. Non-secret only -- never call this with anything sensitive.
@@ -86,11 +96,20 @@ if [ "$MODE" = prepare ]; then
   chmod 600 "$ENV_FILE"
   confirm_env_perms
 
-  echo "== backup =="
-  bash "$SCRIPTS/backup.sh"
+  if [ "$ALREADY_DEPLOYED" = true ]; then
+    echo "== --already-deployed: skipping backup + deploy.sh (a bootstrap step already ran them) =="
+    [ -f "$ROOT/.deploy-history" ] || die "--already-deployed given but no deploy history found -- deploy first"
+    deployed="$(tail -n 1 "$ROOT/.deploy-history" | awk '{print $2}')"
+    [ "$deployed" = "$DEPLOY_COMMIT" ] || die "deployed commit ($deployed) does not match the expected cutover commit ($DEPLOY_COMMIT)"
+    echo "== restarting only the backend so it picks up the secrets/config just written =="
+    "${DC[@]}" restart backend
+  else
+    echo "== backup =="
+    bash "$SCRIPTS/backup.sh"
 
-  echo "== deploy $DEPLOY_COMMIT =="
-  bash "$SCRIPTS/deploy.sh" "$DEPLOY_COMMIT"
+    echo "== deploy $DEPLOY_COMMIT =="
+    bash "$SCRIPTS/deploy.sh" "$DEPLOY_COMMIT"
+  fi
 
   echo "== migrate again: must be all-skip, idempotent =="
   bash "$SCRIPTS/migrate.sh" | tee /tmp/migrate-rerun.log
