@@ -28,6 +28,8 @@ const OWN = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: V('Supabase', 'prod (Vercel)', 'unclear: declared in frontend/.env.example, no code reference found', 'no', 'same'),
   // Clerk
   CLERK_SECRET_KEY: V('Clerk', 'prod (Render + Vercel) - currently a DEVELOPMENT instance', 'yes', 'YES - new production Clerk app', 'sk_test/sk_live pair'),
+  CLERK_EMAIL_FROM: V('Resend', 'optional (staging self-delivery): sender for Clerk verification-code emails relayed through Resend', 'yes', 'no', 'default "Squarespell Quiz <hello@mail.squarespellquiz.com>"; used only when CLERK_SELF_DELIVERY_ENABLED=true'),
+  CLERK_SELF_DELIVERY_ENABLED: V('Squarespell (server env)', 'feature flag: exactly "true" self-delivers Clerk\'s verification_code email via Resend instead of Clerk\'s own sender; unset = off', 'yes', 'no', 'staging cutover for the shared Clerk dev-sender deliverability issue; keep unset in production until proven'),
   CLERK_WEBHOOK_SECRET: V('Clerk', 'prod (Render)', 'yes', 'YES - new endpoint signing secret', 'webhook may not be registered'),
   CLERK_JWT_KEY: V('Clerk', 'optional (Phase 1): networkless verification', 'yes', 'YES if used (new instance key)', 'new in Phase 1; unset = JWKS via Clerk API'),
   CLERK_API_URL: V('Clerk', 'optional (Phase 1): API base override', 'yes', 'no', 'new in Phase 1; tests use a closed local port'),
