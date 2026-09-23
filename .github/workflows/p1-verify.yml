@@ -363,20 +363,20 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Inventory - exactly 17 files under infra/hostinger
+      - name: Inventory - exactly 18 files under infra/hostinger
         run: |
           set -euo pipefail
           echo "validating commit $(git rev-parse HEAD)"
           find infra/hostinger -type f | sort | tee "$RUNNER_TEMP/files.txt"
           n=$(wc -l < "$RUNNER_TEMP/files.txt")
-          [ "$n" -eq 17 ] || { echo "::error::expected 17 files under infra/hostinger, found $n"; exit 1; }
+          [ "$n" -eq 18 ] || { echo "::error::expected 18 files under infra/hostinger, found $n"; exit 1; }
 
       - name: shellcheck and syntax check on every shell script
         run: |
           set -euo pipefail
           mapfile -t scripts < <(find infra/hostinger -type f -name '*.sh' | sort)
           echo "shell scripts: ${#scripts[@]}"
-          [ "${#scripts[@]}" -eq 8 ] || { echo "::error::expected 8 shell scripts"; exit 1; }
+          [ "${#scripts[@]}" -eq 9 ] || { echo "::error::expected 9 shell scripts"; exit 1; }
           shellcheck --version
           shellcheck -x -S warning "${scripts[@]}"
           for f in "${scripts[@]}"; do

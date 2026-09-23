@@ -74,6 +74,63 @@ Clerk TEST session token read from the environment. Confirm no published databas
 Redeploys the previous commit recorded in .deploy-history. Migrations are forward-only and are not reverted;
 migration 031 is additive. To reset staging completely: stop the stack, remove the pgdata volume, redeploy.
 
+## Clerk verification-code self-delivery cutover (PR #77)
+
+One script, three modes, wrapping set-secret.sh / backup.sh / deploy.sh / migrate.sh above -- it does not
+duplicate their logic. Run as the deployment user (squarespell). Never pass a secret as an argument; the
+script prompts silently for CLERK_WEBHOOK_SECRET the same way set-secret.sh always has.
+
+    sudo -iu squarespell bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/staging-cutover.sh prepare
+
+Prompts once for CLERK_WEBHOOK_SECRET (the signing secret of the email.created webhook endpoint on the
+Development Clerk instance), sets CLERK_EMAIL_FROM and CLERK_SELF_DELIVERY_ENABLED=false, backs up, deploys
+the exact commit the script is pinned to, re-runs migrations to prove idempotency, checks health, confirms
+the running backend still has self-delivery disabled, tests unsigned/invalid-signature webhook rejection,
+and prints safe baseline row counts. Exits nonzero on any failure; prints no secret or PII.
+
+If staging's checkout does not yet contain this script at all (the pinned commit has never been deployed),
+bootstrap first -- see the next section -- rather than running the plain command above, which will fail with
+"no such file or directory" because deploy.sh has never put it on disk.
+
+Between prepare and enable: send a signed test event from the Clerk endpoint's Testing tab and confirm it is
+accepted with self-delivery still disabled.
+
+    sudo -iu squarespell bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/staging-cutover.sh enable
+
+Refuses to run unless prepare deployed this exact commit. Sets CLERK_SELF_DELIVERY_ENABLED=true, restarts
+only the backend, confirms the running container sees the flag, confirms health. Makes no Clerk-dashboard
+change itself -- disable "Delivered by Clerk" on the verification-code template separately, after this
+succeeds.
+
+    sudo -iu squarespell bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/staging-cutover.sh rollback
+
+Sets CLERK_SELF_DELIVERY_ENABLED=false, restarts only the backend, confirms health. Deletes no database rows.
+
+### Bootstrap: first deploy of a commit that introduces staging-cutover.sh
+
+staging-cutover.sh only exists once a deploy.sh run has checked out a commit that contains it. If the
+currently deployed commit predates it (check with `git -C /srv/squarespell-quiz/staging/repo rev-parse HEAD`),
+running `staging-cutover.sh prepare` directly will fail: the file is not there yet. Bootstrap instead:
+
+    sudo -iu squarespell bash -c '
+      set -euo pipefail
+      R=/srv/squarespell-quiz/staging/repo
+      [ -z "$(git -C "$R" status --porcelain)" ] || { echo "checkout not clean"; exit 1; }
+      bash "$R/infra/hostinger/scripts/backup.sh"
+      bash "$R/infra/hostinger/scripts/deploy.sh" <full-40-char-sha>
+      test -x "$R/infra/hostinger/scripts/staging-cutover.sh" || { echo "staging-cutover.sh still missing after deploy"; exit 1; }
+      bash "$R/infra/hostinger/scripts/staging-cutover.sh" prepare --already-deployed
+    '
+
+This is safe to run unattended even though it deploys and starts the new code before the webhook secret is
+set, because at that point: the Clerk webhook endpoint for email.created is disabled (Clerk will not send
+it anything), CLERK_SELF_DELIVERY_ENABLED defaults to false in the code even before the .env var exists, and
+"Delivered by Clerk" is still enabled on the verification-code template -- so nothing in the new self-delivery
+path can fire regardless of what state deploy.sh leaves the container in. `--already-deployed` tells `prepare`
+to skip its own backup+deploy (already done above) and, after writing CLERK_WEBHOOK_SECRET and the non-secret
+config, just restart the backend once -- so the whole bootstrap builds and restarts the backend only once,
+not twice.
+
 ## Backups and restore test (temporary, on-server)
 
     bash scripts/backup.sh         # encrypted dump in /srv/squarespell-quiz/backups, outside the database volume
