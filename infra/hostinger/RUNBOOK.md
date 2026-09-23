@@ -74,6 +74,34 @@ Clerk TEST session token read from the environment. Confirm no published databas
 Redeploys the previous commit recorded in .deploy-history. Migrations are forward-only and are not reverted;
 migration 031 is additive. To reset staging completely: stop the stack, remove the pgdata volume, redeploy.
 
+## Clerk verification-code self-delivery cutover (PR #77)
+
+One script, three modes, wrapping set-secret.sh / backup.sh / deploy.sh / migrate.sh above -- it does not
+duplicate their logic. Run as the deployment user (squarespell). Never pass a secret as an argument; the
+script prompts silently for CLERK_WEBHOOK_SECRET the same way set-secret.sh always has.
+
+    sudo -iu squarespell bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/staging-cutover.sh prepare
+
+Prompts once for CLERK_WEBHOOK_SECRET (the signing secret of the email.created webhook endpoint on the
+Development Clerk instance), sets CLERK_EMAIL_FROM and CLERK_SELF_DELIVERY_ENABLED=false, backs up, deploys
+the exact commit the script is pinned to, re-runs migrations to prove idempotency, checks health, confirms
+the running backend still has self-delivery disabled, tests unsigned/invalid-signature webhook rejection,
+and prints safe baseline row counts. Exits nonzero on any failure; prints no secret or PII.
+
+Between prepare and enable: send a signed test event from the Clerk endpoint's Testing tab and confirm it is
+accepted with self-delivery still disabled.
+
+    sudo -iu squarespell bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/staging-cutover.sh enable
+
+Refuses to run unless prepare deployed this exact commit. Sets CLERK_SELF_DELIVERY_ENABLED=true, restarts
+only the backend, confirms the running container sees the flag, confirms health. Makes no Clerk-dashboard
+change itself -- disable "Delivered by Clerk" on the verification-code template separately, after this
+succeeds.
+
+    sudo -iu squarespell bash /srv/squarespell-quiz/staging/repo/infra/hostinger/scripts/staging-cutover.sh rollback
+
+Sets CLERK_SELF_DELIVERY_ENABLED=false, restarts only the backend, confirms health. Deletes no database rows.
+
 ## Backups and restore test (temporary, on-server)
 
     bash scripts/backup.sh         # encrypted dump in /srv/squarespell-quiz/backups, outside the database volume
