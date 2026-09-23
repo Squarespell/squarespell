@@ -251,9 +251,15 @@ describe('POST /api/clerk/webhook — email.created self-delivery', () => {
     const r = await post(evt);
     expect(r.status).toBe(409);
     expect(outbox).toHaveLength(0);
-    let rows = await sql<any>(`select status from clerk_email_deliveries where clerk_email_id = $1`, [evt.data.id]);
+    let rows = await sql<any>(`select status, updated_at from clerk_email_deliveries where clerk_email_id = $1`, [evt.data.id]);
     expect(rows[0].status).toBe('pending'); // not 'failed' — this is not a permanent failure
 
+    // An immediate retry, while Resend's own conflict is presumably still active, is correctly
+    // reported as still in progress (409) rather than raced against — see the separate
+    // "fresh pending reservation" test. Once the row is stale (the in-flight attempt is presumed
+    // gone, e.g. that process crashed), a retry reclaims it and Resend itself decides whether it
+    // actually still conflicts.
+    await sql(`update clerk_email_deliveries set updated_at = now() - interval '5 minutes' where clerk_email_id = $1`, [evt.data.id]);
     resendBehaviour.mode = 'ok';
     const s = signed(evt);
     const retry = await (await api()).post('/api/clerk/webhook').set(s.headers).send(s.payload);
