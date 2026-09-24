@@ -29,13 +29,12 @@ import { markPartialAsConverted } from '../services/partialCompletion';
 import { processAutomationEvent } from '../services/automationEngine';
 import { sendPlatformEmail } from '../services/platformEmails';
 import Stripe from 'stripe';
-import { Resend } from 'resend';
+import { emailProvider } from '../services/email';
+import { PLATFORM_FROM_ADDRESS } from '../services/email/provider';
 import { UAParser } from 'ua-parser-js';
 import { validateEmail } from '../services/emailValidator';
 import { validateName } from '../services/nameValidator';
 import { isTurnstileConfigured, verifyTurnstileToken } from '../services/turnstile';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Canonical URLs used in outgoing emails. Set APP_URL/MARKETING_URL in env to swap domains.
 const APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
@@ -834,21 +833,19 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   const { data: ownerUser } = await supabase.from('users').select('email,brand_kit').eq('id', quiz.user_id).single();
 
   // Send email notification to quiz owner
-  if (resend) {
-    try {
-      const notifyEmail = ownerUser?.email;
-      if (notifyEmail) {
-        const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
-        const ownerMail = await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
-          to: notifyEmail,
-          subject: `New lead captured: ${name || email}`,
-          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(name) || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(email)}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(quizInfo?.title) || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
-        });
-        // Resend v3 reports API failures in the result ({ error }) instead of throwing.
-        if ((ownerMail as any)?.error) throw new Error((ownerMail as any).error.message || 'owner notification rejected');
-      }
-    } catch (e: any) { log.warn('Owner lead notification failed', { err: e?.message }); }
+  try {
+    const notifyEmail = ownerUser?.email;
+    if (notifyEmail) {
+      const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
+      await emailProvider.send({
+        from: PLATFORM_FROM_ADDRESS,
+        fromName: 'Squarespell',
+        to: notifyEmail,
+        subject: `New lead captured: ${name || email}`,
+        html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(name) || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(email)}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(quizInfo?.title) || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
+      });
+    }
+  } catch (e: any) { log.warn('Owner lead notification failed', { err: e?.message }); }
   }
 
   // In-app notification (non-blocking)
@@ -1185,16 +1182,15 @@ leadsRouter.post('/gdpr/delete-request', async (req, res) => {
       confirmed: false,
     });
 
-    // Send verification email (if Resend is configured)
-    if (resend) {
-      var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
-      await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
-        to: email,
-        subject: 'Confirm your data deletion request',
-        html: '<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px"><h2 style="font-size:20px;margin:0 0 16px">Data Deletion Request</h2><p>We received a request to delete your quiz data. Click the button below to confirm.</p><p>This link expires in 1 hour.</p><a href="' + confirmUrl + '" style="display:inline-block;margin-top:16px;background:#0D7377;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Confirm Deletion</a><p style="margin-top:24px;color:#888;font-size:12px">If you did not request this, you can safely ignore this email.</p></div>',
-      });
-    }
+    // Send verification email
+    var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
+    await emailProvider.send({
+      from: PLATFORM_FROM_ADDRESS,
+      fromName: 'Squarespell',
+      to: email,
+      subject: 'Confirm your data deletion request',
+      html: '<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px"><h2 style="font-size:20px;margin:0 0 16px">Data Deletion Request</h2><p>We received a request to delete your quiz data. Click the button below to confirm.</p><p>This link expires in 1 hour.</p><a href="' + confirmUrl + '" style="display:inline-block;margin-top:16px;background:#0D7377;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Confirm Deletion</a><p style="margin-top:24px;color:#888;font-size:12px">If you did not request this, you can safely ignore this email.</p></div>',
+    });
 
     // Always return success to prevent email enumeration
     res.json({ success: true, message: 'If this email has quiz data, a verification email has been sent. Please check your inbox.' });
@@ -2645,10 +2641,6 @@ cronRouter.post('/weekly-digest', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!resend) {
-    return res.status(500).json({ error: 'Resend not configured' });
-  }
-
   try {
     // Get all non-free users (active subscribers + trials)
     const { data: users, error: usersError } = await supabase
@@ -2785,8 +2777,9 @@ cronRouter.post('/weekly-digest', async (req, res) => {
           '</div>',
         ].join('\n');
 
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
+        await emailProvider.send({
+          from: PLATFORM_FROM_ADDRESS,
+          fromName: 'Squarespell',
           to: user.email,
           subject: totalLeads > 0 ? `${totalLeads} new lead${totalLeads === 1 ? '' : 's'} this week - your Squarespell recap` : `Your weekly Squarespell recap - ${totalViews} views`,
           html,
