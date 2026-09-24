@@ -149,11 +149,12 @@ export async function verifyCode(email: string, code: string, ip: string): Promi
 
   // Atomically increment the attempt counter first (transaction-safe under
   // concurrent verification attempts), then evaluate the *returned* row --
-  // never the one read above, which may already be stale. The RPC's return
-  // type isn't in the (ungenerated) Supabase client types, hence the cast.
-  const { data: incrementedRaw, error: incError } = await supabase
-    .rpc('increment_auth_code_attempt', { p_id: row.id })
-    .single();
+  // never the one read above, which may already be stale. The fake and real
+  // Supabase clients disagree on chaining .single()/.maybeSingle() off
+  // .rpc(), so a set-returning function's result is read as a plain array.
+  const { data: incrementedRows, error: incError } = await supabase
+    .rpc('increment_auth_code_attempt', { p_id: row.id });
+  const incrementedRaw = Array.isArray(incrementedRows) ? incrementedRows[0] : incrementedRows;
 
   if (incError || !incrementedRaw) {
     log.error('verifyCode: attempt increment failed', { err: incError?.message });
@@ -184,9 +185,9 @@ export async function verifyCode(email: string, code: string, ip: string): Promi
 
   // Claim the code atomically -- only one concurrent caller can succeed even
   // if the same correct code is verified twice at once.
-  const { data: claimed, error: claimError } = await supabase
-    .rpc('consume_auth_code', { p_id: row.id })
-    .maybeSingle();
+  const { data: claimedRows, error: claimError } = await supabase
+    .rpc('consume_auth_code', { p_id: row.id });
+  const claimed = Array.isArray(claimedRows) ? claimedRows[0] : claimedRows;
 
   if (claimError || !claimed) {
     await recordAuthAudit({ emailNormalized, action: 'verify_code', outcome: 'race_lost', ip });
