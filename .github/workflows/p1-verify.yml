@@ -271,7 +271,7 @@ jobs:
           fs.writeFileSync(tmp + '/pgrst_secret.txt', secret);
           const h = b(JSON.stringify({ alg: 'HS256', typ: 'JWT' })) + '.' + b(JSON.stringify({ role: 'service_role', iss: 'ci-local', iat: now, exp: now + 7200 }));
           fs.writeFileSync(tmp + '/service_role.txt', h + '.' + crypto.createHmac('sha256', secret).update(h).digest('base64url'));
-                    const sessionToken = crypto.randomBytes(32).toString('hex');
+          const sessionToken = crypto.randomBytes(32).toString('hex');
           fs.writeFileSync(tmp + '/smoke_token.txt', sessionToken);
           fs.writeFileSync(tmp + '/smoke_token_hash.txt', crypto.createHash('sha256').update(sessionToken).digest('hex'));
           fs.writeFileSync(tmp + '/smoke_csrf.txt', crypto.randomBytes(16).toString('hex'));
@@ -303,7 +303,7 @@ jobs:
         run: |
           source "$RUNNER_TEMP/lib.sh"
           psql -q -v ON_ERROR_STOP=1 -d fresh -c "insert into users (clerk_user_id, email, plan, quiz_count) values ('user_ci_smoke', 'ci-smoke@example.test', 'pro', 0)"
-                    psql -q -v ON_ERROR_STOP=1 -d fresh -c "insert into auth_sessions (user_id, token_hash, expires_at) select id, '$(cat "$RUNNER_TEMP/smoke_token_hash.txt")', now() + interval '1 hour' from users where clerk_user_id='user_ci_smoke'"
+          psql -q -v ON_ERROR_STOP=1 -d fresh -c "insert into auth_sessions (user_id, token_hash, expires_at) select id, '$(cat "$RUNNER_TEMP/smoke_token_hash.txt")', now() + interval '1 hour' from users where clerk_user_id='user_ci_smoke'"
           cd backend
           export NODE_ENV=production PORT=3001
           export SUPABASE_URL=http://127.0.0.1:3100
