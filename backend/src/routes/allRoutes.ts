@@ -846,7 +846,6 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
       });
     }
   } catch (e: any) { log.warn('Owner lead notification failed', { err: e?.message }); }
-  }
 
   // In-app notification (non-blocking)
   try {
