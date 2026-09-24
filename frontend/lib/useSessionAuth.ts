@@ -31,4 +31,4 @@ export function useSessionAuth() {
   }
 
   return { isLoaded: state.isLoaded, isSignedIn: state.isSignedIn, getToken };
-      }
+}
