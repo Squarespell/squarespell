@@ -1,7 +1,6 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/admin(.*)'])
+const PROTECTED_ROUTE = /^\/(dashboard|admin)(\/|$)/
 
 /**
  * Host + path routing rules.
@@ -17,8 +16,8 @@ const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/admin(.*)'])
  *     /tools/quiz-funnel/build       public no-login quiz builder
  *     /q/:slug                       public published quiz
  *     /embed.js, /embed/*            embed loader assets
- *     /sign-in, /sign-up             Clerk auth
- *     /dashboard, /dashboard/*       authenticated dashboard (Clerk-protected)
+ *     /sign-in, /sign-up             passwordless email-code auth
+ *     /dashboard, /dashboard/*       authenticated dashboard (session-protected)
  *
  *   quiz.squarespell.com (legacy subdomain - will be sunset)
  *     ALL paths                      301 → app.squarespell.com<path>
@@ -46,13 +45,13 @@ function isAdminHost(host: string | null): boolean {
   return h.startsWith(ADMIN_HOST_PREFIX)
 }
 
-export default clerkMiddleware((auth, req) => {
+export default function middleware(req: NextRequest) {
   const host = req.headers.get('host')
   const pathname = req.nextUrl.pathname
 
   // 1a. admin.squarespell.com → redirect to app.squarespell.com/admin.
   //     The admin dashboard lives at /admin on the app host (standalone page, no
-  //     dashboard shell). We redirect instead of rewrite so the Clerk session
+  //     dashboard shell). We redirect instead of rewrite so the session
   //     cookie (scoped to app.squarespell.com) is available.
   if (isAdminHost(host)) {
     const target = req.nextUrl.clone()
@@ -83,26 +82,21 @@ export default clerkMiddleware((auth, req) => {
   //    page.tsx which redirects them to /dashboard.
   //    (Handled inside app/page.tsx, not here, so we don't break SSR.)
 
-  // Let client-side useDashboardAuth handle auth for page routes.
-  // The middleware only needs to protect server API routes under /dashboard.
-  // Page navigations get through to the client, where useDashboardAuth has
-  // a grace window for Clerk token rotation — the middleware does not, so
-  // it was bouncing users to /sign-in during brief rotation gaps.
-  if (isProtectedRoute(req)) {
-    const authObj = auth();
-    if (!authObj.userId) {
-      // For API/trpc routes, hard-block — they can't do client-side retry
-      if (pathname.startsWith('/api/') || pathname.startsWith('/trpc/')) {
-        authObj.protect({
-          unauthenticatedUrl: new URL('/sign-in', req.url).toString(),
-        });
-      }
-      // For page routes, let them through — useDashboardAuth handles it
-      // with retry logic and a grace window for token rotation.
+  // Let client-side useDashboardAuth handle auth for page routes: it calls
+  // GET /api/auth/session, which is the actual source of truth (the cookie
+  // could be present but expired/revoked). The middleware only needs to
+  // protect this app's own /api or /trpc routes, which can't do that
+  // client-side retry — a presence check on the cookie is enough there.
+  if (PROTECTED_ROUTE.test(pathname)) {
+    const hasSessionCookie = !!req.cookies.get('sq_session')?.value
+    if (!hasSessionCookie && (pathname.startsWith('/api/') || pathname.startsWith('/trpc/'))) {
+      const target = new URL('/sign-in', req.url)
+      target.searchParams.set('redirect', pathname + req.nextUrl.search)
+      return NextResponse.redirect(target, 302)
     }
   }
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: [
