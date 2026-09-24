@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, Suspense, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useSessionAuth } from '@/lib/useSessionAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PLANS } from '@/lib/planCatalog';
 
@@ -180,7 +180,7 @@ function PricingInner() {
   const [billing, setBilling] = useState<Billing>(initialBilling);
   const [loading, setLoading] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn } = useSessionAuth();
   const router = useRouter();
 
   var handleUpgrade = async function (plan: string) {
