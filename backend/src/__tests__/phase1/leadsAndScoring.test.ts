@@ -8,9 +8,9 @@ import fs from 'fs';
 import path from 'path';
 import { api, makeUser, makeQuiz, bearer, waitFor, nextIp } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
-import { outbox, resetOutbox } from '../helpers/resendFake';
+import { getCapturedTestEmails, clearCapturedTestEmails } from '../../services/email/testProvider';
 
-beforeEach(async () => { await resetData(); resetOutbox(); });
+beforeEach(async () => { await resetData(); clearCapturedTestEmails(); });
 
 const lead = (over: Record<string, any> = {}) => ({ name: 'Ada Lovelace', email: 'ada@customer.example', answers: { 0: 2, 1: 2 }, ...over });
 
@@ -69,8 +69,8 @@ describe('lead submission', () => {
     const { quiz, owner } = await liveQuiz();
     const app = await api();
     const first = await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead());
-    await waitFor(() => outbox.length >= 2);
-    const sentAfterFirst = outbox.length;
+    await waitFor(() => getCapturedTestEmails().length >= 2);
+    const sentAfterFirst = getCapturedTestEmails().length;
     const second = await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead());
     const third = await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'ADA@customer.example ' }));
     expect([200, 201]).toContain(second.status);
@@ -80,7 +80,7 @@ describe('lead submission', () => {
     expect(await sql(`select 1 from leads`)).toHaveLength(1);
     expect((await sql<any>(`select lead_count from quizzes where id=$1`, [quiz.id]))[0].lead_count).toBe(1);
     await new Promise((r) => setTimeout(r, 200));
-    expect(outbox.length).toBe(sentAfterFirst);
+    expect(getCapturedTestEmails().length).toBe(sentAfterFirst);
     void owner;
   });
 
@@ -122,9 +122,9 @@ describe('lead submission', () => {
     const app = await api();
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'noconsent@customer.example' })).expect(201);
     await new Promise((r) => setTimeout(r, 300));
-    expect(outbox.filter((m) => String(m.to).includes('noconsent'))).toHaveLength(0);
+    expect(getCapturedTestEmails().filter((m) => String(m.to).includes('noconsent'))).toHaveLength(0);
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'consent@customer.example', consent: true, consent_text: 'I agree' })).expect(201);
-    expect(await waitFor(() => outbox.some((m) => String(m.to).includes('consent@customer.example')))).toBe(true);
+    expect(await waitFor(() => getCapturedTestEmails().some((m) => String(m.to).includes('consent@customer.example')))).toBe(true);
   });
 });
 
