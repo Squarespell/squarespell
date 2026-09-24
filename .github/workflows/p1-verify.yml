@@ -271,6 +271,10 @@ jobs:
           fs.writeFileSync(tmp + '/pgrst_secret.txt', secret);
           const h = b(JSON.stringify({ alg: 'HS256', typ: 'JWT' })) + '.' + b(JSON.stringify({ role: 'service_role', iss: 'ci-local', iat: now, exp: now + 7200 }));
           fs.writeFileSync(tmp + '/service_role.txt', h + '.' + crypto.createHmac('sha256', secret).update(h).digest('base64url'));
+                    const sessionToken = crypto.randomBytes(32).toString('hex');
+          fs.writeFileSync(tmp + '/smoke_token.txt', sessionToken);
+          fs.writeFileSync(tmp + '/smoke_token_hash.txt', crypto.createHash('sha256').update(sessionToken).digest('hex'));
+          fs.writeFileSync(tmp + '/smoke_csrf.txt', crypto.randomBytes(16).toString('hex'));
           EOF
           echo "::add-mask::$(cat "$RUNNER_TEMP/smoke_token.txt")"
           echo "::add-mask::$(cat "$RUNNER_TEMP/service_role.txt")"
@@ -299,6 +303,7 @@ jobs:
         run: |
           source "$RUNNER_TEMP/lib.sh"
           psql -q -v ON_ERROR_STOP=1 -d fresh -c "insert into users (clerk_user_id, email, plan, quiz_count) values ('user_ci_smoke', 'ci-smoke@example.test', 'pro', 0)"
+                    psql -q -v ON_ERROR_STOP=1 -d fresh -c "insert into auth_sessions (user_id, token_hash, expires_at) select id, '$(cat "$RUNNER_TEMP/smoke_token_hash.txt")', now() + interval '1 hour' from users where clerk_user_id='user_ci_smoke'"
           cd backend
           export NODE_ENV=production PORT=3001
           export SUPABASE_URL=http://127.0.0.1:3100
@@ -326,7 +331,8 @@ jobs:
 
       - name: API smoke test (scripts/smoke/smoke.mjs against the temporary API)
         run: |
-          export SMOKE_CLERK_TOKEN="$(cat "$RUNNER_TEMP/smoke_token.txt")"
+                    export SMOKE_SESSION_TOKEN="$(cat "$RUNNER_TEMP/smoke_token.txt")"
+          export SMOKE_CSRF_TOKEN="$(cat "$RUNNER_TEMP/smoke_csrf.txt")"
           node scripts/smoke/smoke.mjs --base-url http://127.0.0.1:3001 | tee "$RUNNER_TEMP/smoke.out"
           grep -q "13/13 steps passed" "$RUNNER_TEMP/smoke.out"
 
