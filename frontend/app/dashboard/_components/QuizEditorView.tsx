@@ -13,7 +13,6 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAuth } from "@clerk/nextjs";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -259,22 +258,6 @@ export interface QuizEditorViewProps {
 }
 
 export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
-  const { getToken } = useAuth();
-
-  // Wire Clerk token into the shared api client BEFORE any request fires.
-  // Provides a cached token for normal requests, and a fresh (skipCache)
-  // token for automatic 401 retry inside req().
-  useEffect(function() {
-    api.setAuthToken(
-      function() {
-        try { return getToken().then(function(t) { return t || ''; }); } catch(e) { return Promise.resolve(''); }
-      },
-      function() {
-        try { return getToken({ skipCache: true } as any).then(function(t) { return t || ''; }); } catch(e) { return Promise.resolve(''); }
-      }
-    );
-  }, [getToken]);
-
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState<string>("");
   const [publishing, setPublishing] = useState(false);
@@ -287,18 +270,10 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
       const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
       const qid = (quiz as any)?.id || quizId || "";
       if (!qid) throw new Error("Quiz id not ready yet. Give the editor a second to load.");
-      // One-shot retry: if the first token is stale and the server returns 401,
-      // force a fresh token via skipCache and try once more before giving up.
-      const doFetch = async (fresh: boolean) => {
-        const token = await getToken(fresh ? { skipCache: true } as any : undefined);
-        if (!token) throw new Error("Not signed in");
-        return fetch(`${API}/api/quizzes/${qid}/publish`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      };
-      let res = await doFetch(false);
-      if (res.status === 401) res = await doFetch(true);
+      // The session cookie (attached automatically, see lib/authFetch.ts)
+      // authenticates this request -- there is no per-request token to retry
+      // with, so a 401 here means the session is genuinely gone.
+      const res = await fetch(`${API}/api/quizzes/${qid}/publish`, { method: "POST" });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new Error(`Publish failed (${res.status}): ${body.slice(0, 200)}`);
@@ -415,11 +390,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
     async function fetchPlan() {
       try {
         const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
-        const token = await getToken();
-        if (!token || cancelled) return;
-        const res = await fetch(`${API}/api/user/plan`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`${API}/api/user/plan`);
         if (!res.ok || cancelled) return;
         const data = await res.json();
         if (!cancelled && data.plan) setUserPlan(data.plan);
@@ -427,7 +398,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
     }
     fetchPlan();
     return () => { cancelled = true; };
-  }, [getToken]);
+  }, []);
 
   // Block editor state
   var [initialBlocksReady, setInitialBlocksReady] = useState(false);
