@@ -63,6 +63,14 @@ const OWN = {
   EMAIL_FROM: V('Resend', 'prod (Render)', 'yes', 'YES - sender on squarespellquiz.com', 'default hello@squarespell.com hard-coded fallback'),
   PLATFORM_EMAIL_FROM: V('Resend', 'prod (Render)', 'yes', 'YES', ''),
   BUSINESS_ADDRESS: V('other (CAN-SPAM footer)', 'prod (Render)', 'yes', 'review', 'default is a hard-coded Delaware address'),
+  // Hostinger SMTP + first-party passwordless auth (staging only for now)
+  SMTP_HOST: V('Hostinger Email', 'staging (Render not yet wired)', 'yes', 'no', 'smtp.hostinger.com'),
+  SMTP_PORT: V('Hostinger Email', 'staging', 'yes', 'no', '465, implicit TLS'),
+  SMTP_SECURE: V('Hostinger Email', 'staging', 'yes', 'no', 'always true for port 465'),
+  SMTP_USER: V('Hostinger Email', 'staging', 'yes', 'no', 'info@squarespellquiz.com'),
+  SMTP_PASSWORD: V('Hostinger Email', 'staging', 'yes', 'rotate if ever exposed', 'Hostinger app password scoped to this mailbox, never the mailbox login password'),
+  COOKIE_SECURE: V('Squarespell (server env)', 'optional override forcing Secure session/CSRF cookies outside NODE_ENV=production', 'yes', 'no', 'defaults to NODE_ENV === production'),
+  EMAIL_TRANSPORT: V('Squarespell (server env)', 'test-only email transport switch; refused at startup when NODE_ENV=production', 'yes', 'no', 'never set in staging or production compose files'),
   // Anthropic
   ANTHROPIC_API_KEY: V('Anthropic', 'prod (Render)', 'yes', 'YES - dedicated Quiz key (Phase 0 target)', ''),
   ANTHROPIC_BASE_URL: V('Anthropic', 'SDK-read (tests point it at a local stub)', 'yes', 'no', 'not set in production'),
