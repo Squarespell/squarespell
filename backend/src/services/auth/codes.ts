@@ -116,6 +116,14 @@ export type VerifyCodeResult =
   | { ok: true; emailNormalized: string }
   | { ok: false; reason: 'invalid' | 'expired' | 'too_many_attempts' | 'not_found' };
 
+interface IncrementAttemptRow {
+  attempt_count: number;
+  max_attempts: number;
+  code_hash: string;
+  expires_at: string;
+  consumed_at: string | null;
+}
+
 /**
  * Verifies `code` for `email`. Every failure path returns the same shape so
  * the HTTP layer can show one generic message for anti-enumeration while
@@ -141,15 +149,18 @@ export async function verifyCode(email: string, code: string, ip: string): Promi
 
   // Atomically increment the attempt counter first (transaction-safe under
   // concurrent verification attempts), then evaluate the *returned* row --
-  // never the one read above, which may already be stale.
-  const { data: incremented, error: incError } = await supabase
+  // never the one read above, which may already be stale. The RPC's return
+  // type isn't in the (ungenerated) Supabase client types, hence the cast.
+  const { data: incrementedRaw, error: incError } = await supabase
     .rpc('increment_auth_code_attempt', { p_id: row.id })
     .single();
 
-  if (incError || !incremented) {
+  if (incError || !incrementedRaw) {
     log.error('verifyCode: attempt increment failed', { err: incError?.message });
     return { ok: false, reason: 'invalid' };
   }
+
+  const incremented = incrementedRaw as unknown as IncrementAttemptRow;
 
   if (incremented.consumed_at) {
     await recordAuthAudit({ emailNormalized, action: 'verify_code', outcome: 'already_consumed', ip });
@@ -200,4 +211,3 @@ export async function cleanupExpiredCodes(): Promise<number> {
   }
   return data?.length || 0;
 }
-
