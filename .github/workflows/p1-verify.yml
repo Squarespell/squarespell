@@ -655,8 +655,8 @@ jobs:
           node -e "const c=require('crypto'),fs=require('fs');const e=Object.fromEntries(fs.readFileSync('$E','utf8').split('\n').filter(l=>/^[A-Z_]+=/.test(l)).map(l=>[l.split('=')[0],l.slice(l.indexOf('=')+1)]));const [h,p,s]=e.SUPABASE_SERVICE_ROLE_KEY.split('.');if(c.createHmac('sha256',e.PGRST_JWT_SECRET).update(h+'.'+p).digest('base64url')!==s)process.exit(1);if(JSON.parse(Buffer.from(p,'base64url')).role!=='service_role')process.exit(1);console.log('service_role JWT signature verifies')"
           again="$(bash "$R/gen-env.sh")"; echo "$again" | grep -q 'not overwriting'
           printf '%s\n' 'ops@example.test' | bash "$R/set-secret.sh" ACME_EMAIL
-          printf '%s\n' 'pk_test_Y2xlcmsuZXhhbXBsZS5jb20k' | bash "$R/set-secret.sh" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-          printf '%s\n' 'dummy-clerk-secret' | bash "$R/set-secret.sh" CLERK_SECRET_KEY
+          printf '%s\n' 'smtp.hostinger.com' | bash "$R/set-secret.sh" SMTP_HOST
+          printf '%s\n' 'dummy-smtp-password' | bash "$R/set-secret.sh" SMTP_PASSWORD
           if printf '%s\n' 'sk_live_dummyvalue' | bash "$R/set-secret.sh" STRIPE_SECRET_KEY; then echo "::error::set-secret accepted a live Stripe key"; exit 1; fi
           grep -q '^STRIPE_SECRET_KEY=$' "$E"
           [ "$(stat -c %a "$E")" = 600 ]
