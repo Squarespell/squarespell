@@ -24,6 +24,7 @@ import unsubscribeRouter from './routes/unsubscribe';
 import { connectRouter, publicConnectRouter } from './routes/connect';
 import { connectFixtureRouter } from './routes/connectFixture';
 import clerkWebhookRoute from './routes/clerkWebhook';
+import { authEmailRouter } from './routes/authEmail';
 import { log } from './lib/logger';
 import { requestLogger } from './middleware/requestLogger';
 import { requireAuth, attachUser } from './middleware/auth';
@@ -117,6 +118,9 @@ app.use(requestLogger);
 
 // Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
+
+// First-party passwordless email-code auth (request-code, verify-code, session, logout, logout-all).
+app.use('/api/auth', authEmailRouter);
 
 app.use('/api/public', publicReportRouter);
 app.use('/api/public', unsubscribeRouter);
