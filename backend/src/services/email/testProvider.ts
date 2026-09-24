@@ -12,8 +12,16 @@ export interface CapturedTestEmail extends SendOpts {
 
 const sent: CapturedTestEmail[] = [];
 
+// Lets a test simulate a provider outage. 'ok' (default) always succeeds;
+// 'throw' rejects every send the way the real Hostinger SMTP client does on
+// failure -- callers must catch it, there is no {error} result to check.
+export const testEmailBehaviour: { mode: 'ok' | 'throw' } = { mode: 'ok' };
+
 export const testEmailProvider: EmailProvider = {
   async send(opts: SendOpts) {
+    if (testEmailBehaviour.mode === 'throw') {
+      throw new Error('test transport failure (fixture)');
+    }
     const messageId = 'test-' + Date.now() + '-' + Math.random().toString(36).slice(2);
     sent.push({ ...opts, sentAt: new Date().toISOString() });
     return { messageId };
@@ -34,5 +42,5 @@ export function getCapturedTestEmails(): CapturedTestEmail[] {
 
 export function clearCapturedTestEmails(): void {
   sent.length = 0;
+  testEmailBehaviour.mode = 'ok';
 }
-
