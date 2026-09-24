@@ -89,6 +89,14 @@ services:
       RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       PLATFORM_EMAIL_FROM: ${PLATFORM_EMAIL_FROM:-}
+      # Hostinger SMTP (first-party passwordless email-code auth + platform email). SMTP_PASSWORD
+      # is a Hostinger app password for info@squarespellquiz.com, stored only in the protected
+      # server-side .env, never in this repository.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
       REPORT_SECRET: ${REPORT_SECRET:?set REPORT_SECRET}
