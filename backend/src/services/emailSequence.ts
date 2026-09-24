@@ -1,10 +1,9 @@
 import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
-import { Resend } from 'resend';
+import { emailProvider } from './email';
+import { PLATFORM_FROM_ADDRESS } from './email/provider';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterHtml } from './unsubscribe';
 import { applyMergeTags, buildMergeContextFromData } from './mergeTags';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function appendUtm(url: string, campaign: string): string {
   if (!url) return url;
@@ -176,11 +175,6 @@ export async function enqueueSequenceEmails(
  * Called by cron job (e.g., every 5 minutes)
  */
 export async function processEmailQueue(): Promise<{ processed: number; failed: number }> {
-  if (!resend) {
-    log.warn('[EmailSequence] Resend not configured, skipping');
-    return { processed: 0, failed: 0 };
-  }
-
   try {
     // Find all pending emails where send_at <= now, PLUS failed emails ready for retry
     const now = new Date();
@@ -334,17 +328,18 @@ export async function processEmailQueue(): Promise<{ processed: number; failed: 
           htmlBody += unsubFooter;
         }
 
-        // Send email via Resend
+        // Send email via the shared Hostinger SMTP provider (throws on failure,
+        // which the surrounding try/catch below routes into the retry path --
+        // so a rejected send is never recorded as 'sent').
         const unsubHeaders = buildUnsubscribeHeaders(leadData.email, leadData.quiz_id);
-        const sendResult: any = await resend.emails.send({
-          from: `${siteName} <results@squarespell.com>`,
+        await emailProvider.send({
+          from: PLATFORM_FROM_ADDRESS,
+          fromName: siteName,
           to: leadData.email,
           subject: resolvedSubject,
           html: htmlBody,
           headers: unsubHeaders,
         });
-        // Resend v3 returns { data, error } instead of throwing: without this check a rejected email was recorded as 'sent'.
-        if (sendResult?.error) throw new Error(sendResult.error.message || 'email rejected by provider');
 
         // Mark as sent
         await supabase
