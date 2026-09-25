@@ -52,7 +52,8 @@ export async function verifySite(input: { hostname: string; siteKey: string; pat
   const fail = (reason: ReasonCode, status: number | null = null): VerifyResult => ({ ok: false, reason, url, status, loaderFound: false, slots: [] });
   let res;
   try {
-    res = await safeFetch(url, input.fetchOptions);
+    // Squarespace pages routinely exceed 512 KB and Code Injection footer code sits near the end, so read up to 4 MB.
+    res = await safeFetch(url, { maxBytes: 4 * 1024 * 1024, ...input.fetchOptions });
   } catch (e: any) {
     if (e instanceof SafeFetchError) return fail(e.code === 'timeout' ? 'timeout' : 'unreachable');
     return fail('unreachable');
