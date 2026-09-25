@@ -8,6 +8,7 @@ import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/aut
 import { guardQuizCreation, checkQuizAllowance, requireFeature, effectivePlan, getPlanLimits, isTrialActive, entitledPlan } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
+import { hasBranching, resolveVisitedPath } from '../services/branching';
 import { generateLeadInsight } from '../services/leadInsights';
 import { sendResultEmail } from '../services/resultEmail';
 import { isUnsubscribed, buildUnsubscribeHeaders, buildUnsubscribeUrl } from '../services/unsubscribe';
@@ -141,7 +142,10 @@ function computeServerScoreAndOutcome(quiz: any, answers: Record<string, any>): 
   const outcomes = (quiz?.outcomes as any[]) || [];
 
   let score = 0;
+  // With branching, only the questions on the visitor's path count; answers left over from a path they backed out of do not.
+  const onPath = hasBranching(questions) ? new Set(resolveVisitedPath(questions, answers)) : null;
   questions.forEach((q: any, qIdx: number) => {
+    if (onPath && !onPath.has(qIdx)) return;
     // Real wire format: answers["<questionIndex>"] = <optionIndex>
     let ans = answers?.[qIdx];
     if (ans === undefined && q?.id !== undefined) {
@@ -3215,39 +3219,62 @@ templatesRouter.get('/', (req, res) => {
 // ── Media Router (upload to Supabase Storage + Pexels search) ────────────────
 export const mediaRouter = Router();
 
-// POST /api/media/upload — accepts base64-encoded file, stores in Supabase storage
+const MEDIA_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
+const MEDIA_MAX_BYTES = 5 * 1024 * 1024;
+
+/** The bytes must match the declared type, so a script or page cannot be stored under an image content type. */
+function looksLikeImage(type: string, b: Buffer): boolean {
+  if (type === 'image/jpeg') return b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  if (type === 'image/png') return b.length > 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (type === 'image/gif') return b.length > 6 && b.subarray(0, 4).toString('latin1') === 'GIF8';
+  if (type === 'image/webp') return b.length > 12 && b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP';
+  return false;
+}
+
+// POST /api/media/upload — accepts a base64-encoded JPEG/PNG/GIF/WebP (max 5 MB), stores it in Supabase storage
 mediaRouter.post('/upload', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  const { data: base64Data, fileName, contentType } = req.body || {};
+  if (typeof base64Data !== 'string' || !base64Data || typeof fileName !== 'string' || !fileName) {
+    return res.status(400).json({ error: 'data (base64) and fileName are required' });
+  }
+  const type = String(contentType || 'image/jpeg').toLowerCase();
+  const ext = MEDIA_TYPES[type];
+  if (!ext) {
+    return res.status(415).json({ error: 'Only JPEG, PNG, GIF or WebP images can be uploaded', code: 'unsupported_media_type' });
+  }
+  // Base64 is about 4/3 of the decoded size: refuse oversized payloads before decoding them.
+  if (base64Data.length > Math.ceil((MEDIA_MAX_BYTES * 4) / 3) + 8) {
+    return res.status(413).json({ error: 'Image is too large (5 MB maximum)', code: 'file_too_large' });
+  }
+  const buffer = Buffer.from(base64Data, 'base64');
+  if (buffer.length === 0) return res.status(400).json({ error: 'The file is empty' });
+  if (buffer.length > MEDIA_MAX_BYTES) {
+    return res.status(413).json({ error: 'Image is too large (5 MB maximum)', code: 'file_too_large' });
+  }
+  if (!looksLikeImage(type, buffer)) {
+    return res.status(415).json({ error: 'The file is not a valid image of the declared type', code: 'unsupported_media_type' });
+  }
+
+  const userId = req.userId || 'anon';
+  // The extension comes from the verified content type, never from the client-supplied file name.
+  const safeFileName = userId + '/' + Date.now() + '_' + crypto.randomUUID().slice(0, 8) + '.' + ext;
   try {
-    const { data: base64Data, fileName, contentType } = req.body;
-    if (!base64Data || !fileName) {
-      return res.status(400).json({ error: 'data (base64) and fileName are required' });
-    }
-    const userId = req.userId || 'anon';
-    const ext = fileName.split('.').pop() || 'jpg';
-    const safeFileName = `${userId}/${Date.now()}_${crypto.randomUUID().slice(0, 8)}.${ext}`;
-    const buffer = Buffer.from(base64Data, 'base64');
-
-    // Upload to Supabase storage bucket "quiz-media"
-    const { data, error } = await supabase.storage
-      .from('quiz-media')
-      .upload(safeFileName, buffer, {
-        contentType: contentType || 'image/jpeg',
-        upsert: false,
-      });
-
+    const bucket = supabase.storage.from('quiz-media');
+    const { error } = await bucket.upload(safeFileName, buffer, { contentType: type, upsert: false });
     if (error) {
       log.error('Supabase upload error', { error: error.message });
-      return res.status(500).json({ error: 'Upload failed: ' + error.message });
+      return res.status(500).json({ error: 'Upload failed', code: 'upload_failed' });
     }
-
-    const { data: urlData } = supabase.storage
-      .from('quiz-media')
-      .getPublicUrl(safeFileName);
-
+    const { data: urlData } = bucket.getPublicUrl(safeFileName);
+    if (!urlData || !urlData.publicUrl) {
+      // Do not leave an object behind that nothing can reference.
+      await Promise.resolve(bucket.remove([safeFileName])).catch(() => {});
+      return res.status(500).json({ error: 'Upload failed', code: 'upload_failed' });
+    }
     res.json({ url: urlData.publicUrl, path: safeFileName });
   } catch (err: any) {
-    log.error('Media upload error', { error: err.message });
-    res.status(500).json({ error: err.message || 'Upload failed' });
+    log.error('Media upload error', { error: err?.message });
+    res.status(500).json({ error: 'Upload failed', code: 'upload_failed' });
   }
 });
 
