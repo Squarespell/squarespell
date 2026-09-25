@@ -3,7 +3,7 @@ import { requestCode, verifyCode, normalizeEmail } from '../services/auth/codes'
 import { matchOrCreateUser } from '../services/auth/userMatching';
 import {
   createSession, getSessionFromToken, revokeSessionByToken, revokeAllSessionsForUser,
-  SESSION_COOKIE_NAME, CSRF_COOKIE_NAME, sessionCookieOptions, csrfCookieOptions,
+  SESSION_COOKIE_NAME, sessionCookieOptions, clearSessionCookieOptions, csrfMatches, csrfTokenFor,
 } from '../services/auth/sessions';
 import { recordAuthAudit } from '../services/auth/audit';
 import { authCodeEmailLimiter, authCodeIpLimiter, getClientIp, safeLimit } from '../services/rateLimiter';
@@ -24,10 +24,8 @@ function parseCookies(header: string | undefined): Record<string, string> {
   return out;
 }
 
-function checkCsrf(req: Request, cookies: Record<string, string>): boolean {
-  const csrfCookie = cookies[CSRF_COOKIE_NAME];
-  const csrfHeader = req.headers['x-csrf-token'];
-  return !!csrfCookie && !!csrfHeader && csrfCookie === csrfHeader;
+function checkCsrf(req: Request, sessionToken: string): boolean {
+  return csrfMatches(sessionToken, req.headers['x-csrf-token']);
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -87,10 +85,10 @@ authEmailRouter.post('/verify-code', async (req: Request, res: Response) => {
     const session = await createSession(user.id, ip, String(req.headers['user-agent'] || ''));
 
     res.cookie(SESSION_COOKIE_NAME, session.token, sessionCookieOptions(session.expiresAt));
-    res.cookie(CSRF_COOKIE_NAME, session.csrfToken, csrfCookieOptions(session.expiresAt));
 
     await recordAuthAudit({ emailNormalized: result.emailNormalized, action: 'session_create', outcome: 'success', ip });
-    return res.json({ ok: true, isNewUser: user.isNewUser });
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({ ok: true, isNewUser: user.isNewUser, csrfToken: session.csrfToken });
   } catch (err: any) {
     log.error('POST /verify-code: session creation failed', { err: err?.message });
     return res.status(503).json({ error: 'Unable to sign you in right now. Please try again.', code: 'session_unavailable' });
@@ -102,18 +100,18 @@ authEmailRouter.get('/session', async (req: Request, res: Response) => {
   const token = cookies[SESSION_COOKIE_NAME];
   const session = token ? await getSessionFromToken(token) : null;
   if (!session) return res.status(401).json({ authenticated: false });
-  return res.json({ authenticated: true });
+  res.setHeader('Cache-Control', 'no-store');
+  return res.json({ authenticated: true, csrfToken: csrfTokenFor(token) });
 });
 
 authEmailRouter.post('/logout', async (req: Request, res: Response) => {
   const cookies = parseCookies(req.headers.cookie);
-  if (cookies[SESSION_COOKIE_NAME] && !checkCsrf(req, cookies)) {
+  const token = cookies[SESSION_COOKIE_NAME];
+  if (token && !checkCsrf(req, token)) {
     return res.status(403).json({ error: 'Invalid or missing CSRF token', code: 'csrf_invalid' });
   }
-  const token = cookies[SESSION_COOKIE_NAME];
   if (token) await revokeSessionByToken(token);
-  res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
-  res.clearCookie(CSRF_COOKIE_NAME, { path: '/' });
+  res.clearCookie(SESSION_COOKIE_NAME, clearSessionCookieOptions());
   return res.json({ ok: true });
 });
 
@@ -122,16 +120,14 @@ authEmailRouter.post('/logout-all', async (req: Request, res: Response) => {
   const token = cookies[SESSION_COOKIE_NAME];
   const session = token ? await getSessionFromToken(token) : null;
   if (!session) {
-    res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
-    res.clearCookie(CSRF_COOKIE_NAME, { path: '/' });
+    res.clearCookie(SESSION_COOKIE_NAME, clearSessionCookieOptions());
     return res.status(401).json({ error: 'Unauthorized', code: 'auth_required' });
   }
-  if (!checkCsrf(req, cookies)) {
+  if (!checkCsrf(req, token)) {
     return res.status(403).json({ error: 'Invalid or missing CSRF token', code: 'csrf_invalid' });
   }
   await revokeAllSessionsForUser(session.userId);
-  res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
-  res.clearCookie(CSRF_COOKIE_NAME, { path: '/' });
+  res.clearCookie(SESSION_COOKIE_NAME, clearSessionCookieOptions());
   return res.json({ ok: true });
 });
 
