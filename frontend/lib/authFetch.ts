@@ -4,8 +4,8 @@
  * Patches the global fetch so every request to the API origin automatically
  * carries the sq_session cookie (the app and API are different subdomains,
  * so the browser needs `credentials: 'include'` to attach it) and, for
- * mutating requests, echoes the sq_csrf cookie as a header -- the
- * double-submit pattern requireAuth expects. This lets the ~30 dashboard
+ * mutating requests, sends the in-memory CSRF token (from verify-code /
+ * GET /api/auth/session, see lib/authApi.ts) as the x-csrf-token header. This lets the ~30 dashboard
  * pages that already do `fetch(API + '/path', { headers: { Authorization:
  * 'Bearer ' + token } } )` keep working unmodified: the Authorization
  * header is now inert (requireAuth reads the session cookie, not that
@@ -23,11 +23,10 @@ const API_ORIGIN = (() => {
   }
 })();
 
-function readCookie(name: string): string {
-  if (typeof document === 'undefined') return '';
-  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-  return m ? decodeURIComponent(m[1]) : '';
-}
+import { getCsrfToken, ensureCsrfToken } from './authApi';
+
+// Sign-in requests happen before any session exists, so they have no CSRF token to attach.
+const PRE_SESSION_PATHS = new Set(['/api/auth/request-code', '/api/auth/verify-code']);
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -38,7 +37,7 @@ function installAuthFetch() {
   patched = true;
   const native = window.fetch.bind(window);
 
-  window.fetch = ((input: RequestInfo | URL, init: RequestInit = {}) => {
+  window.fetch = (async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const url = typeof input === 'string' || input instanceof URL ? input.toString() : (input as Request).url;
     if (!url.startsWith(API_ORIGIN)) return native(input, init);
 
@@ -47,8 +46,12 @@ function installAuthFetch() {
     const headers = new Headers(init.headers || requestLike?.headers || undefined);
 
     if (!SAFE_METHODS.has(method) && !headers.has('x-csrf-token')) {
-      const csrf = readCookie('sq_csrf');
-      if (csrf) headers.set('x-csrf-token', csrf);
+      let pathname = '';
+      try { pathname = new URL(url).pathname; } catch {}
+      if (!PRE_SESSION_PATHS.has(pathname)) {
+        const csrf = getCsrfToken() || (await ensureCsrfToken());
+        if (csrf) headers.set('x-csrf-token', csrf);
+      }
     }
 
     return native(input, { ...init, credentials: init.credentials || 'include', headers });
