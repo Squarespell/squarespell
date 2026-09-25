@@ -224,6 +224,7 @@ export function ConnectWizard({ open, token, existingSite, onClose, onVerified }
           <b style={{ fontSize: 14 }}>Squarespell site loader</b>
           <CopyButton text={snippet} label="Copy loader" doneLabel="Loader copied" announceText="Site loader copied to clipboard" small />
         </div>
+        {sq ? <p style={{ margin: '8px 0' }}><a className="sx-btn sx-btn-sm" href={'https://' + (site?.hostname || domain) + '/config'} target="_blank" rel="noopener noreferrer">Open Squarespace settings</a> <span style={{ fontSize: 13, color: 'var(--muted)' }}>Opens your Squarespace sign-in in a new tab. Squarespell never sees your Squarespace password and cannot install the loader for you.</span></p> : null}
         <pre className="sx-code" aria-label="Site loader code">{snippet}</pre>
         <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>The site key identifies this website. It is not an account password and cannot access your {sq ? 'Squarespace ' : ''}account.</p>
         {sq ? <div className="sx-note sx-warn" style={{ marginTop: 12 }}>Code Injection needs a Squarespace plan that includes custom code. If you cannot find it, tell us in the next step.</div> : null}
