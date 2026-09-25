@@ -9,6 +9,7 @@ import path from 'path';
 import { api, makeUser, makeQuiz, bearer, waitFor, nextIp } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
 import { getCapturedTestEmails, clearCapturedTestEmails } from '../../services/email/testProvider';
+import { hasBranching, resolveVisitedPath } from '../../services/branching';
 
 beforeEach(async () => { await resetData(); clearCapturedTestEmails(); });
 
@@ -189,7 +190,7 @@ describe('result / outcome calculation is correct and server-authoritative', () 
     const m = src.match(/function getOutcome\([^)]*\)[^{]*\{[\s\S]*?\n\}/);
     expect(m, 'getOutcome not found in the quiz page; re-check server/browser parity').toBeTruthy();
     const js = m![0].replace(/\(quiz: Quiz, answers: Record<number, number>\): QuizOutcome \| null/, '(quiz, answers)');
-    const clientGetOutcome = new Function(`${js}; return getOutcome;`)();
+    const clientGetOutcome = new Function('hasBranching', 'resolveVisitedPath', `${js}; return getOutcome;`)(hasBranching, resolveVisitedPath);
     const quizDef = { questions: [{ options: [{ score: 0 }, { score: 1 }, { score: 2 }] }, { options: [{ score: 0 }, { score: 1 }, { score: 2 }] }],
       outcomes: [{ id: 'open', title: 'Open (no range)' }, { id: 'ranged', title: 'Ranged', minScore: 0, maxScore: 10 }] };
     const owner = await makeUser({ plan: 'pro' });
