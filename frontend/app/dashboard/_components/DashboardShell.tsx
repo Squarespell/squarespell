@@ -18,7 +18,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth, useClerk, useUser } from '@clerk/nextjs';
+import { authApi } from '@/lib/authApi';
 import { TopBanner } from './TopBanner';
 import { NotificationBell } from './NotificationBell';
 import { CommandPalette } from './CommandPalette';
@@ -468,9 +468,7 @@ export function DashboardShell({
   var isOnEditor = isEditorRoute(pathname);
   var shouldHideSidebar = hideSidebar !== undefined ? hideSidebar : isOnEditor;
   var router = useRouter();
-  var { signOut } = useClerk();
-  var { user } = useUser();
-  var { getToken } = useAuth();
+  var [userEmail, setUserEmail] = useState('');
   var [mobileOpen, setMobileOpen] = useState(false);
   var [isMobile, setIsMobile] = useState(false);
   var [bannerToken, setBannerToken] = useState<string | null>(null);
@@ -490,15 +488,12 @@ export function DashboardShell({
   }, []);
 
   useEffect(function() {
-    var cancelled = false;
-    (async function() {
-      try {
-        var t = await getToken();
-        if (!cancelled) setBannerToken(t);
-      } catch { /* ignore */ }
-    })();
-    return function() { cancelled = true; };
-  }, [getToken]);
+    // No real per-request token anymore -- the session cookie authenticates
+    // every request (see lib/authFetch.ts's global fetch patch). This is
+    // just a truthy sentinel so the effects below that gate on
+    // `bannerToken` still run once mounted.
+    setBannerToken('session');
+  }, []);
 
   // Restore sidebar scroll position on mount (survives re-mount across routes)
   useEffect(function() {
@@ -515,8 +510,7 @@ export function DashboardShell({
     setMobileOpen(false);
   }, [pathname]);
 
-  var userEmail = user?.primaryEmailAddress?.emailAddress || '';
-  var userName = user?.firstName || userEmail.split('@')[0] || 'User';
+  var userName = userEmail.split('@')[0] || 'User';
   var userInitial = (userName[0] || 'S').toUpperCase();
 
   var sidebarWidth = 280;
@@ -567,6 +561,7 @@ export function DashboardShell({
               quizzesUsed: data.quiz_count ?? 0,
               quizzesLimit: data.limits?.quizzes ?? 0,
             });
+            setUserEmail(data.email || '');
           }
         }
       } catch {}
@@ -792,7 +787,7 @@ export function DashboardShell({
           </div>
           <button
             type="button"
-            onClick={function() { signOut(function() { router.push('/sign-in'); }); }}
+            onClick={function() { authApi.logout().finally(function() { router.push('/sign-in'); }); }}
             title="Sign out"
             style={{
               width: 36,

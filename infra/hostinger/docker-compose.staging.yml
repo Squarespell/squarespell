@@ -50,11 +50,9 @@ services:
         NEXT_PUBLIC_API_URL: https://${STAGING_API_HOST}
         # Public origin of this deployment, derived from the staging host so a staging build can never fall back to the production domain.
         NEXT_PUBLIC_SITE_URL: https://${STAGING_APP_HOST}
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:?set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     environment:
       NODE_ENV: production
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY}
       # One-button connect feature flag (off unless set to true in the staging env file; not passed to production).
       CONNECT_ENABLED: ${CONNECT_ENABLED:-}
     networks: [edge]
@@ -75,8 +73,6 @@ services:
       PORT: "3001"
       SUPABASE_URL: http://gateway:3100
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?set SUPABASE_SERVICE_ROLE_KEY}
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY}
-      CLERK_WEBHOOK_SECRET: ${CLERK_WEBHOOK_SECRET:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_CORE_PRICE_ID: ${STRIPE_CORE_PRICE_ID:-}
@@ -85,10 +81,17 @@ services:
       STRIPE_PRO_YEARLY_PRICE_ID: ${STRIPE_PRO_YEARLY_PRICE_ID:-}
       STRIPE_BUSINESS_PRICE_ID: ${STRIPE_BUSINESS_PRICE_ID:-}
       STRIPE_BUSINESS_YEARLY_PRICE_ID: ${STRIPE_BUSINESS_YEARLY_PRICE_ID:-}
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
-      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
-      EMAIL_FROM: ${EMAIL_FROM:-}
+      # Display name only now (e.g. "Squarespell") -- every outbound email is sent from the one
+      # authenticated Hostinger mailbox (SMTP_USER), which a plain SMTP account can't override per send.
       PLATFORM_EMAIL_FROM: ${PLATFORM_EMAIL_FROM:-}
+      # Hostinger SMTP (first-party passwordless email-code auth + all platform email). SMTP_PASSWORD
+      # is a Hostinger app password for info@squarespellquiz.com, stored only in the protected
+      # server-side .env, never in this repository.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
       REPORT_SECRET: ${REPORT_SECRET:?set REPORT_SECRET}
@@ -105,6 +108,7 @@ services:
       BACKEND_URL: https://${STAGING_API_HOST}
       CORS_ORIGINS: https://${STAGING_APP_HOST}
       CORS_ORIGIN: https://${STAGING_APP_HOST}
+      CORS_STRICT_ORIGINS: "true"
       # The 'worker' service drains the email queue; do not also run the in-process timer.
       DISABLE_INPROCESS_EMAIL_QUEUE: "true"
       # One-button connect (staging review only). CONNECT_TEST_FAULTS also enables the staging fixture website and failure simulation.

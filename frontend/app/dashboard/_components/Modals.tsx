@@ -484,7 +484,7 @@ var UPGRADE_COPY: Record<string, { title: string; desc: string; icon: string }> 
     icon: 'M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5',
   },
   zapier: {
-    title: 'Connect Zapier and webhooks',
+    title: 'Connect webhooks and integrations',
     desc: 'Automatically send leads to your CRM, email tool, or spreadsheet the moment they complete your quiz.',
     icon: 'M13 2L3 14h9l-1 8 10-12h-9l1-8',
   },

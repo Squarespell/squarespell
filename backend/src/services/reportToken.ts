@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-const REPORT_SECRET = process.env.REPORT_SECRET || process.env.CLERK_SECRET_KEY || 'fallback-secret-key';
+const REPORT_SECRET = process.env.REPORT_SECRET || 'fallback-secret-key';
 const TOKEN_VALIDITY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /**

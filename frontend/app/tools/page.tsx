@@ -172,7 +172,7 @@ const CSS = `
   margin: 0 auto;
   padding: 0 32px 120px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
   gap: 22px;
 }
 .th-card {

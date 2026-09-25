@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, Suspense, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useSessionAuth } from '@/lib/useSessionAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PLANS } from '@/lib/planCatalog';
 
@@ -49,13 +49,13 @@ const MATRIX = [
       { label: 'Remove Squarespell Quiz branding', core: true, pro: true, business: true },
       { label: 'Custom CSS', core: false, pro: true, business: true },
       { label: 'White-label (your brand)', core: false, pro: false, business: true },
-      { label: 'Custom domain for quizzes', core: false, pro: false, business: true },
+      { label: 'Custom domain for quizzes (planned)', core: false, pro: false, business: true },
     ],
   },
   {
     category: 'Integrations',
     rows: [
-      { label: 'Zapier', core: false, pro: true, business: true },
+      { label: 'Zapier (planned)', core: false, pro: true, business: true },
       { label: 'Webhooks', core: false, pro: true, business: true },
       { label: 'Mailchimp', core: false, pro: true, business: true },
       { label: 'Klaviyo', core: false, pro: true, business: true },
@@ -70,7 +70,7 @@ const MATRIX = [
       { label: 'Email support', core: true, pro: true, business: true },
       { label: 'Priority email support', core: false, pro: true, business: true },
             { label: 'Team seats', core: false, pro: false, business: '3 included' },
-      { label: 'API access', core: false, pro: false, business: true },
+      { label: 'API access (planned)', core: false, pro: false, business: true },
       { label: 'Dedicated onboarding call', core: false, pro: false, business: true },
     ],
   },
@@ -105,7 +105,7 @@ const EMAIL_PACKS = [
 const FAQS = [
   {
     q: 'Do I need a Squarespace subscription?',
-    a: 'Yes, Squarespell Quiz works with any active Squarespace plan. You connect your site in one click through your dashboard. No code required.',
+    a: 'Yes, Squarespell Quiz works with any active Squarespace plan. One-time Squarespace setup: you paste one small loader into Code Injection once. After that, publish, update, pause or remove quizzes from Squarespell with no repeated code pasting.',
   },
   {
     q: 'What happens when my 14-day trial ends?',
@@ -125,15 +125,15 @@ const FAQS = [
   },
   {
     q: 'How is Squarespell Quiz different from other quiz tools?',
-    a: 'Other quiz tools charge $27–75/mo for entry plans with fewer leads. Squarespell Quiz starts at $9/mo annual with 1,000 leads, branching logic, and native Squarespace integration. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
+    a: 'Other quiz tools charge $27–75/mo for entry plans with fewer leads. Squarespell Quiz starts at $9/mo annual with 1,000 leads, branching logic, and embeds built for Squarespace. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
   },
   {
     q: 'I run an agency. Can I manage multiple client sites?',
-    a: 'Yes. The Business plan at $29/mo annual includes unlimited quizzes and leads, white-label branding, custom domains, team seats, API access, and a dedicated onboarding call.',
+    a: 'Yes. The Business plan at $29/mo annual includes unlimited quizzes and leads, white-label branding, team seats and a dedicated onboarding call. Custom domains and API access are planned.',
   },
   {
     q: 'What integrations are included with Pro?',
-    a: 'Pro includes integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets, plus webhooks. Each one needs to be set up with your own account, key or endpoint. See the integrations page for the status of each.',
+    a: 'Pro includes integrations with Mailchimp, Klaviyo, ConvertKit and Google Sheets, plus webhooks. Zapier and HubSpot are planned. Each one needs to be set up with your own account, key or endpoint. See the integrations page for the status of each.',
   },
 ];
 
@@ -180,7 +180,7 @@ function PricingInner() {
   const [billing, setBilling] = useState<Billing>(initialBilling);
   const [loading, setLoading] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn } = useSessionAuth();
   const router = useRouter();
 
   var handleUpgrade = async function (plan: string) {

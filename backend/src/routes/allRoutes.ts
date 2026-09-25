@@ -8,6 +8,7 @@ import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/aut
 import { guardQuizCreation, checkQuizAllowance, requireFeature, effectivePlan, getPlanLimits, isTrialActive, entitledPlan } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
 import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
+import { hasBranching, resolveVisitedPath } from '../services/branching';
 import { generateLeadInsight } from '../services/leadInsights';
 import { sendResultEmail } from '../services/resultEmail';
 import { isUnsubscribed, buildUnsubscribeHeaders, buildUnsubscribeUrl } from '../services/unsubscribe';
@@ -29,13 +30,12 @@ import { markPartialAsConverted } from '../services/partialCompletion';
 import { processAutomationEvent } from '../services/automationEngine';
 import { sendPlatformEmail } from '../services/platformEmails';
 import Stripe from 'stripe';
-import { Resend } from 'resend';
+import { emailProvider } from '../services/email';
+import { PLATFORM_FROM_ADDRESS } from '../services/email/provider';
 import { UAParser } from 'ua-parser-js';
 import { validateEmail } from '../services/emailValidator';
 import { validateName } from '../services/nameValidator';
 import { isTurnstileConfigured, verifyTurnstileToken } from '../services/turnstile';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Canonical URLs used in outgoing emails. Set APP_URL/MARKETING_URL in env to swap domains.
 const APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
@@ -142,7 +142,10 @@ function computeServerScoreAndOutcome(quiz: any, answers: Record<string, any>): 
   const outcomes = (quiz?.outcomes as any[]) || [];
 
   let score = 0;
+  // With branching, only the questions on the visitor's path count; answers left over from a path they backed out of do not.
+  const onPath = hasBranching(questions) ? new Set(resolveVisitedPath(questions, answers)) : null;
   questions.forEach((q: any, qIdx: number) => {
+    if (onPath && !onPath.has(qIdx)) return;
     // Real wire format: answers["<questionIndex>"] = <optionIndex>
     let ans = answers?.[qIdx];
     if (ans === undefined && q?.id !== undefined) {
@@ -834,22 +837,19 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   const { data: ownerUser } = await supabase.from('users').select('email,brand_kit').eq('id', quiz.user_id).single();
 
   // Send email notification to quiz owner
-  if (resend) {
-    try {
-      const notifyEmail = ownerUser?.email;
-      if (notifyEmail) {
-        const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
-        const ownerMail = await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
-          to: notifyEmail,
-          subject: `New lead captured: ${name || email}`,
-          html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(name) || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(email)}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(quizInfo?.title) || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
-        });
-        // Resend v3 reports API failures in the result ({ error }) instead of throwing.
-        if ((ownerMail as any)?.error) throw new Error((ownerMail as any).error.message || 'owner notification rejected');
-      }
-    } catch (e: any) { log.warn('Owner lead notification failed', { err: e?.message }); }
-  }
+  try {
+    const notifyEmail = ownerUser?.email;
+    if (notifyEmail) {
+      const { data: quizInfo } = await supabase.from('quizzes').select('title').eq('id', quiz.id).single();
+      await emailProvider.send({
+        from: PLATFORM_FROM_ADDRESS,
+        fromName: 'Squarespell',
+        to: notifyEmail,
+        subject: `New lead captured: ${name || email}`,
+        html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#07090c;color:#f0f2f5;border-radius:12px"><h2 style="color:#D2FF1D;font-size:20px;margin:0 0 16px">New lead captured!</h2><table style="width:100%;border-collapse:collapse"><tr><td style="padding:8px 0;color:#888;font-size:14px">Name</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(name) || ' - '}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Email</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(email)}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Quiz</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${escapeHtml(quizInfo?.title) || 'Your quiz'}</td></tr><tr><td style="padding:8px 0;color:#888;font-size:14px">Date</td><td style="padding:8px 0;color:#f0f2f5;font-size:14px">${new Date().toLocaleDateString()}</td></tr></table><a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:20px;background:#D2FF1D;color:#07090c;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">View in dashboard →</a></div>`,
+      });
+    }
+  } catch (e: any) { log.warn('Owner lead notification failed', { err: e?.message }); }
 
   // In-app notification (non-blocking)
   try {
@@ -1185,16 +1185,15 @@ leadsRouter.post('/gdpr/delete-request', async (req, res) => {
       confirmed: false,
     });
 
-    // Send verification email (if Resend is configured)
-    if (resend) {
-      var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
-      await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
-        to: email,
-        subject: 'Confirm your data deletion request',
-        html: '<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px"><h2 style="font-size:20px;margin:0 0 16px">Data Deletion Request</h2><p>We received a request to delete your quiz data. Click the button below to confirm.</p><p>This link expires in 1 hour.</p><a href="' + confirmUrl + '" style="display:inline-block;margin-top:16px;background:#0D7377;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Confirm Deletion</a><p style="margin-top:24px;color:#888;font-size:12px">If you did not request this, you can safely ignore this email.</p></div>',
-      });
-    }
+    // Send verification email
+    var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
+    await emailProvider.send({
+      from: PLATFORM_FROM_ADDRESS,
+      fromName: 'Squarespell',
+      to: email,
+      subject: 'Confirm your data deletion request',
+      html: '<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px"><h2 style="font-size:20px;margin:0 0 16px">Data Deletion Request</h2><p>We received a request to delete your quiz data. Click the button below to confirm.</p><p>This link expires in 1 hour.</p><a href="' + confirmUrl + '" style="display:inline-block;margin-top:16px;background:#0D7377;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Confirm Deletion</a><p style="margin-top:24px;color:#888;font-size:12px">If you did not request this, you can safely ignore this email.</p></div>',
+    });
 
     // Always return success to prevent email enumeration
     res.json({ success: true, message: 'If this email has quiz data, a verification email has been sent. Please check your inbox.' });
@@ -2645,10 +2644,6 @@ cronRouter.post('/weekly-digest', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!resend) {
-    return res.status(500).json({ error: 'Resend not configured' });
-  }
-
   try {
     // Get all non-free users (active subscribers + trials)
     const { data: users, error: usersError } = await supabase
@@ -2785,8 +2780,9 @@ cronRouter.post('/weekly-digest', async (req, res) => {
           '</div>',
         ].join('\n');
 
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
+        await emailProvider.send({
+          from: PLATFORM_FROM_ADDRESS,
+          fromName: 'Squarespell',
           to: user.email,
           subject: totalLeads > 0 ? `${totalLeads} new lead${totalLeads === 1 ? '' : 's'} this week - your Squarespell recap` : `Your weekly Squarespell recap - ${totalViews} views`,
           html,
@@ -3223,39 +3219,62 @@ templatesRouter.get('/', (req, res) => {
 // ── Media Router (upload to Supabase Storage + Pexels search) ────────────────
 export const mediaRouter = Router();
 
-// POST /api/media/upload — accepts base64-encoded file, stores in Supabase storage
+const MEDIA_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
+const MEDIA_MAX_BYTES = 5 * 1024 * 1024;
+
+/** The bytes must match the declared type, so a script or page cannot be stored under an image content type. */
+function looksLikeImage(type: string, b: Buffer): boolean {
+  if (type === 'image/jpeg') return b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  if (type === 'image/png') return b.length > 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (type === 'image/gif') return b.length > 6 && b.subarray(0, 4).toString('latin1') === 'GIF8';
+  if (type === 'image/webp') return b.length > 12 && b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP';
+  return false;
+}
+
+// POST /api/media/upload — accepts a base64-encoded JPEG/PNG/GIF/WebP (max 5 MB), stores it in Supabase storage
 mediaRouter.post('/upload', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  const { data: base64Data, fileName, contentType } = req.body || {};
+  if (typeof base64Data !== 'string' || !base64Data || typeof fileName !== 'string' || !fileName) {
+    return res.status(400).json({ error: 'data (base64) and fileName are required' });
+  }
+  const type = String(contentType || 'image/jpeg').toLowerCase();
+  const ext = MEDIA_TYPES[type];
+  if (!ext) {
+    return res.status(415).json({ error: 'Only JPEG, PNG, GIF or WebP images can be uploaded', code: 'unsupported_media_type' });
+  }
+  // Base64 is about 4/3 of the decoded size: refuse oversized payloads before decoding them.
+  if (base64Data.length > Math.ceil((MEDIA_MAX_BYTES * 4) / 3) + 8) {
+    return res.status(413).json({ error: 'Image is too large (5 MB maximum)', code: 'file_too_large' });
+  }
+  const buffer = Buffer.from(base64Data, 'base64');
+  if (buffer.length === 0) return res.status(400).json({ error: 'The file is empty' });
+  if (buffer.length > MEDIA_MAX_BYTES) {
+    return res.status(413).json({ error: 'Image is too large (5 MB maximum)', code: 'file_too_large' });
+  }
+  if (!looksLikeImage(type, buffer)) {
+    return res.status(415).json({ error: 'The file is not a valid image of the declared type', code: 'unsupported_media_type' });
+  }
+
+  const userId = req.userId || 'anon';
+  // The extension comes from the verified content type, never from the client-supplied file name.
+  const safeFileName = userId + '/' + Date.now() + '_' + crypto.randomUUID().slice(0, 8) + '.' + ext;
   try {
-    const { data: base64Data, fileName, contentType } = req.body;
-    if (!base64Data || !fileName) {
-      return res.status(400).json({ error: 'data (base64) and fileName are required' });
-    }
-    const userId = req.userId || 'anon';
-    const ext = fileName.split('.').pop() || 'jpg';
-    const safeFileName = `${userId}/${Date.now()}_${crypto.randomUUID().slice(0, 8)}.${ext}`;
-    const buffer = Buffer.from(base64Data, 'base64');
-
-    // Upload to Supabase storage bucket "quiz-media"
-    const { data, error } = await supabase.storage
-      .from('quiz-media')
-      .upload(safeFileName, buffer, {
-        contentType: contentType || 'image/jpeg',
-        upsert: false,
-      });
-
+    const bucket = supabase.storage.from('quiz-media');
+    const { error } = await bucket.upload(safeFileName, buffer, { contentType: type, upsert: false });
     if (error) {
       log.error('Supabase upload error', { error: error.message });
-      return res.status(500).json({ error: 'Upload failed: ' + error.message });
+      return res.status(500).json({ error: 'Upload failed', code: 'upload_failed' });
     }
-
-    const { data: urlData } = supabase.storage
-      .from('quiz-media')
-      .getPublicUrl(safeFileName);
-
+    const { data: urlData } = bucket.getPublicUrl(safeFileName);
+    if (!urlData || !urlData.publicUrl) {
+      // Do not leave an object behind that nothing can reference.
+      await Promise.resolve(bucket.remove([safeFileName])).catch(() => {});
+      return res.status(500).json({ error: 'Upload failed', code: 'upload_failed' });
+    }
     res.json({ url: urlData.publicUrl, path: safeFileName });
   } catch (err: any) {
-    log.error('Media upload error', { error: err.message });
-    res.status(500).json({ error: err.message || 'Upload failed' });
+    log.error('Media upload error', { error: err?.message });
+    res.status(500).json({ error: 'Upload failed', code: 'upload_failed' });
   }
 });
 

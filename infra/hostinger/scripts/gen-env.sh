@@ -31,4 +31,4 @@ setv CRON_SECRET "$(hex 24)"
 
 chmod 600 "$ENV"
 echo "created $ENV (mode $(stat -c %a "$ENV")); generated: POSTGRES_PASSWORD AUTHENTICATOR_PASSWORD PGRST_JWT_SECRET SUPABASE_SERVICE_ROLE_KEY ENCRYPTION_KEY REPORT_SECRET CRON_SECRET"
-echo "still to set with scripts/set-secret.sh: ACME_EMAIL and the Clerk / Stripe (test) / AI / email values"
+echo "still to set with scripts/set-secret.sh: ACME_EMAIL and the Stripe (test) / AI / SMTP values"

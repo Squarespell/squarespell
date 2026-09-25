@@ -7,7 +7,7 @@ export const INSTALL_MODES: InstallMode[] = ['inline', 'popup', 'floating_tab'];
 
 export const REASON_CODES = [
   'loader_not_found', 'wrong_domain', 'page_requires_login', 'plan_does_not_allow_custom_code', 'blocked_by_csp_or_consent_manager',
-  'slot_missing', 'token_expired', 'token_revoked', 'timeout', 'verification_lost', 'unreachable',
+  'site_private', 'slot_missing', 'token_expired', 'token_revoked', 'timeout', 'verification_lost', 'unreachable',
 ] as const;
 export type ReasonCode = (typeof REASON_CODES)[number];
 /** Reasons the customer can report themselves (we cannot detect them from outside the site). */

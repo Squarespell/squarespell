@@ -16,13 +16,13 @@
 
 import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
-import { Resend } from 'resend';
+import { emailProvider } from './email';
+import { PLATFORM_FROM_ADDRESS } from './email/provider';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed } from './unsubscribe';
 import { applyMergeTags, buildMergeContextFromData } from './mergeTags';
 import { assignTag } from './segmentation';
 import { enqueueSequenceEmails } from './emailSequence';
 
-var resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 var APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -155,11 +155,6 @@ async function executeSendEmail(
     return;
   }
 
-  if (!resend) {
-    log.info('[Automation] No Resend key configured');
-    return;
-  }
-
   var subject = replaceMergeTags(action.email_subject, mergeTags);
   var body = replaceMergeTags(action.email_body, mergeTags);
   var ctaHtml = '';
@@ -170,8 +165,9 @@ async function executeSendEmail(
 
   var unsubUrl = buildUnsubscribeUrl(payload.lead_email);
 
-  const sendResult: any = await resend.emails.send({
-    from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
+  await emailProvider.send({
+    from: PLATFORM_FROM_ADDRESS,
+    fromName: 'Squarespell',
     to: payload.lead_email,
     subject: subject,
     html: '<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px">' +
@@ -179,7 +175,6 @@ async function executeSendEmail(
       '<p style="margin-top:32px;font-size:12px;color:#888"><a href="' + unsubUrl + '" style="color:#888">Unsubscribe</a></p></div>',
     headers: buildUnsubscribeHeaders(payload.lead_email),
   });
-  if (sendResult?.error) throw new Error(sendResult.error.message || 'automation email rejected by provider'); // Resend v3 does not throw
 }
 
 async function executeAddTag(rule: AutomationRule, payload: EventPayload): Promise<void> {

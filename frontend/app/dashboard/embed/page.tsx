@@ -310,7 +310,7 @@ function SquarespaceConnect({ token }: { token: string | null }) {
       .then(function() {
         setConnected(true);
       })
-      .catch(function(err) { setError(err.message || 'Failed to connect'); })
+      .catch(function(err) { setError(err.message || 'Failed to import brand'); })
       .finally(function() { setConnecting(false); });
   }
 
@@ -324,9 +324,9 @@ function SquarespaceConnect({ token }: { token: string | null }) {
         }}>S</div>
         <div>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-            Connect Squarespace
+            Import brand from your Squarespace site
           </h2>
-          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>Auto-detect your brand and generate embed code</div>
+          <div style={{ fontSize: 12, color: C.TEXT_MUTED }}>Reads your public colours and fonts. It does not connect to or change your website.</div>
         </div>
       </div>
 
@@ -338,7 +338,7 @@ function SquarespaceConnect({ token }: { token: string | null }) {
           <span style={{ fontSize: 20 }}>✓</span>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#16A34A' }}>
-              Connected to {brandResult.site_name || siteUrl}
+              Brand imported from {brandResult.site_name || siteUrl}
             </div>
             <div style={{ fontSize: 12, color: '#15803D' }}>
               Brand colors {brandResult.colors?.primary ? '(' + brandResult.colors.primary + ')' : ''} and fonts imported to your Brand Kit.
@@ -367,7 +367,7 @@ function SquarespaceConnect({ token }: { token: string | null }) {
                 cursor: connecting ? 'wait' : 'pointer', opacity: connecting ? 0.6 : 1,
                 whiteSpace: 'nowrap' as const,
               }}>
-              {connecting ? 'Connecting...' : 'Connect'}
+              {connecting ? 'Importing...' : 'Import brand'}
             </button>
           </div>
           {error && <div style={{ fontSize: 12, color: '#DC2626', marginTop: 8 }}>{error}</div>}

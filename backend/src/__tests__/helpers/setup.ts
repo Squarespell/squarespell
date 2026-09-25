@@ -26,6 +26,10 @@ process.env.STRIPE_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('
 process.env.CLERK_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('base64');
 set('RESEND_API_KEY', 're_local_fixture');
 process.env.RESEND_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('base64');
+// Hermetic tests never send real email: this is the only place EMAIL_TRANSPORT=test
+// is set anywhere in the codebase (never in staging/production compose files), and
+// services/email/index.ts refuses it outright when NODE_ENV=production.
+process.env.EMAIL_TRANSPORT = 'test';
 set('ANTHROPIC_API_KEY', 'sk-ant-local-fixture');
 set('ENCRYPTION_KEY', crypto.randomBytes(32).toString('hex'));
 set('REPORT_SECRET', 'local-report-secret');
