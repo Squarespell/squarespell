@@ -99,12 +99,25 @@ export async function requestCode(email: string, ip: string): Promise<RequestCod
     throw new Error('code_issue_failed');
   }
 
-  try {
-    await sendAuthCodeEmail(emailNormalized, code);
+  // One automatic retry: a transient SMTP hiccup should not leave the user staring at "check your email"
+  // for a code that was never sent.
+  let sendError: any = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await sendAuthCodeEmail(emailNormalized, code);
+      sendError = null;
+      break;
+    } catch (err: any) {
+      sendError = err;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+  }
+
+  if (!sendError) {
     await recordAuthAudit({ emailNormalized, action: 'request_code', outcome: 'sent', ip });
-  } catch (err: any) {
-    log.error('requestCode: send failed', { err: err?.message });
-    await recordAuthAudit({ emailNormalized, action: 'request_code', outcome: 'send_failed', ip, detail: err?.message });
+  } else {
+    log.error('requestCode: send failed', { err: sendError?.message });
+    await recordAuthAudit({ emailNormalized, action: 'request_code', outcome: 'send_failed', ip, detail: sendError?.message });
     // Do not throw: surfacing delivery failure to an unauthenticated caller
     // is itself an enumeration signal. The code simply expires unused.
   }
