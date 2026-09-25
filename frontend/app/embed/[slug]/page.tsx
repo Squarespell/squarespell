@@ -19,6 +19,7 @@
  */
 
 import { Suspense } from 'react';
+import { notFound } from 'next/navigation';
 import EmbedQuizClient from './EmbedQuizClient';
 import { safeCssColor, safeFontFamily } from '@/lib/safeInput';
 
@@ -115,13 +116,15 @@ async function fetchQuizOnce(slug: string): Promise<Response> {
   }
 }
 
-async function fetchQuiz(slug: string): Promise<Quiz | null> {
+// 'not_found' means the backend answered 404 (unknown or unpublished slug); null means it could not be reached.
+async function fetchQuiz(slug: string): Promise<Quiz | 'not_found' | null> {
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const res = await fetchQuizOnce(slug);
       if (res.ok) return res.json();
       // Non-2xx: only worth retrying on likely-transient server errors.
+      if (res.status === 404) return 'not_found';
       if (res.status < 500 || attempt === maxAttempts) return null;
     } catch {
       if (attempt === maxAttempts) return null;
@@ -146,6 +149,9 @@ function ErrorView() {
 
 export default async function EmbedPage({ params }: { params: { slug: string } }) {
   const quiz = await fetchQuiz(params.slug);
+
+  // A real 404 status for unknown slugs (monitors and crawlers must not see 200).
+  if (quiz === 'not_found') notFound();
 
   if (!quiz) {
     return <ErrorView />;
