@@ -8,10 +8,17 @@
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
-function readCookie(name: string): string {
-  if (typeof document === 'undefined') return '';
-  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-  return m ? decodeURIComponent(m[1]) : '';
+// The CSRF token lives in module memory only (never localStorage/sessionStorage/cookies): the API
+// returns it from verify-code and GET /api/auth/session, so a page refresh restores it via getSession().
+let csrfToken: string | null = null;
+let restoring: Promise<string | null> | null = null;
+
+export function getCsrfToken(): string | null {
+  return csrfToken;
+}
+
+export function clearCsrfToken(): void {
+  csrfToken = null;
 }
 
 export interface AuthApiResult<T = any> {
@@ -22,10 +29,7 @@ export interface AuthApiResult<T = any> {
 async function call<T = any>(path: string, method: string, body?: any): Promise<AuthApiResult<T>> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (method !== 'GET') {
-    const csrf = readCookie('sq_csrf');
-    if (csrf) headers['x-csrf-token'] = csrf;
-  }
+  if (method !== 'GET' && csrfToken) headers['x-csrf-token'] = csrfToken;
   let res: Response;
   try {
     res = await fetch(API + path, {
@@ -44,10 +48,39 @@ async function call<T = any>(path: string, method: string, body?: any): Promise<
   return { status: res.status, data };
 }
 
+type SessionBody = { authenticated: boolean; csrfToken?: string };
+
+async function getSession(): Promise<AuthApiResult<SessionBody>> {
+  const r = await call<SessionBody>('/api/auth/session', 'GET');
+  if (r.status === 200 && r.data?.csrfToken) csrfToken = r.data.csrfToken;
+  else if (r.status === 401) csrfToken = null;
+  return r;
+}
+
+/** Returns the in-memory CSRF token, restoring it from the server session first if this page load doesn't have it yet. */
+export async function ensureCsrfToken(): Promise<string | null> {
+  if (csrfToken) return csrfToken;
+  restoring ||= getSession().then(() => csrfToken).finally(() => { restoring = null; });
+  return restoring;
+}
+
+async function verifyCode(email: string, code: string) {
+  const r = await call<{ ok: boolean; isNewUser?: boolean; code?: string; csrfToken?: string }>('/api/auth/verify-code', 'POST', { email, code });
+  if (r.status === 200 && r.data?.csrfToken) csrfToken = r.data.csrfToken;
+  return r;
+}
+
+async function endSession(path: string) {
+  await ensureCsrfToken();
+  const r = await call<{ ok: boolean }>(path, 'POST');
+  if (r.status === 200 || r.status === 401) csrfToken = null;
+  return r;
+}
+
 export const authApi = {
   requestCode: (email: string) => call<{ ok: boolean; message?: string; code?: string; retryAfterMs?: number }>('/api/auth/request-code', 'POST', { email }),
-  verifyCode: (email: string, code: string) => call<{ ok: boolean; isNewUser?: boolean; code?: string }>('/api/auth/verify-code', 'POST', { email, code }),
-  getSession: () => call<{ authenticated: boolean }>('/api/auth/session', 'GET'),
-  logout: () => call<{ ok: boolean }>('/api/auth/logout', 'POST'),
-  logoutAll: () => call<{ ok: boolean }>('/api/auth/logout-all', 'POST'),
+  verifyCode,
+  getSession,
+  logout: () => endSession('/api/auth/logout'),
+  logoutAll: () => endSession('/api/auth/logout-all'),
 };
