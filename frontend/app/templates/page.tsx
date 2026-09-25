@@ -203,6 +203,7 @@ export default function TemplatesGalleryPage() {
               <input className="tpl-input"
                 type="text"
                 placeholder="Search templates..."
+                aria-label="Search templates"
                 value={searchQuery}
                 onChange={function(e) { setSearchQuery(e.target.value); }}
                 style={{
