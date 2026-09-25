@@ -21,12 +21,29 @@ export const INSTALL_STATUS_LABEL: Record<InstallStatus, string> = {
 
 export const MODE_LABEL: Record<InstallMode, string> = { inline: 'Inline', popup: 'Popup', floating_tab: 'Floating tab' };
 export const PLATFORM_LABEL: Record<Platform, string> = { squarespace: 'Squarespace', html: 'Other / HTML' };
-export const PLATFORM_METHOD: Record<Platform, string> = { squarespace: 'Guided setup', html: 'Site loader' };
+export const PLATFORM_METHOD: Record<Platform, string> = { squarespace: 'Manual setup (paste once)', html: 'Manual setup (paste once)' };
+
+/**
+ * What each platform officially lets an app do. 'automatic' means the platform's own API or app mechanism can place the quiz
+ * without the customer pasting code. Nothing may be labelled automatic unless it is proven and documented by the platform.
+ * Squarespace: its public API has no page, block or Code Injection endpoint, so it is manual only.
+ */
+export type InstallCapability = 'automatic' | 'manual_loader' | 'planned';
+export const PLATFORM_CAPABILITY: Record<string, InstallCapability> = {
+  squarespace: 'manual_loader',
+  html: 'manual_loader',
+  wordpress: 'planned',
+  shopify: 'planned',
+  wix: 'planned',
+  webflow: 'planned',
+  framer: 'planned',
+};
+export const isAutomaticInstall = (platformId: string): boolean => PLATFORM_CAPABILITY[platformId] === 'automatic';
 
 export interface PlatformChoice { id: string; label: string; method: string; availability: 'Available' | 'Planned' | 'Later'; sprite: string }
 export const PLATFORM_CHOICES: PlatformChoice[] = [
-  { id: 'squarespace', label: 'Squarespace', method: 'One guided step, then one button', availability: 'Available', sprite: 'squarespace' },
-  { id: 'html', label: 'Other / HTML', method: 'Universal site loader', availability: 'Available', sprite: 'html' },
+  { id: 'squarespace', label: 'Squarespace', method: 'Manual setup: paste one loader once. Not automatic.', availability: 'Available', sprite: 'squarespace' },
+  { id: 'html', label: 'Other / HTML', method: 'Manual setup: paste one loader once', availability: 'Available', sprite: 'html' },
   { id: 'wordpress', label: 'WordPress', method: 'Plugin connection', availability: 'Planned', sprite: 'wordpress' },
   { id: 'shopify', label: 'Shopify', method: 'App and theme extension', availability: 'Planned', sprite: 'shopify' },
   { id: 'wix', label: 'Wix', method: 'App connection', availability: 'Planned', sprite: 'wix' },
@@ -35,7 +52,7 @@ export const PLATFORM_CHOICES: PlatformChoice[] = [
 ];
 
 export const SQUARESPACE_EXPLANATION =
-  'Squarespace does not provide a page API that lets us place a quiz silently. You install a small site loader once. After it is verified, popup and floating quizzes are controlled here with one button. Each new inline location needs one slot, added once.';
+  'Squarespace does not let apps add code or blocks to a website, so Squarespell cannot install itself. This is a manual setup: you paste one small loader into Code Injection once. After it is verified, popup and floating quizzes are managed here. Each inline location also needs a Code Block slot that you add once.';
 
 export interface Recovery { title: string; body: string; steps: string[]; action?: 'recheck' | 'plan' | 'back' }
 
