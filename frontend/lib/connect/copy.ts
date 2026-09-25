@@ -64,6 +64,12 @@ export const RECOVERY: Record<string, Recovery> = {
     steps: ['Turn off site password protection for a moment, or publish the site.', 'Then check the connection again. You can turn protection back on afterwards, but visitors will not see quizzes behind a password.'],
     action: 'recheck',
   },
+  site_private: {
+    title: 'Your Squarespace site is set to Private',
+    body: 'Private sites can only be seen by people signed in to Squarespace, so we cannot see the loader. This is not a password lock.',
+    steps: ['In Squarespace open Settings, then Website, then Site Availability.', 'Choose Public (or publish the site) so the check can see it. You can switch back afterwards, but visitors cannot see quizzes on a private site.', 'Then check the connection again.'],
+    action: 'recheck',
+  },
   plan_does_not_allow_custom_code: {
     title: 'Your Squarespace plan may not include Code Injection',
     body: 'Code Injection and code blocks need a Squarespace plan that allows custom code. We cannot see your plan, so this is based on what you told us.',
