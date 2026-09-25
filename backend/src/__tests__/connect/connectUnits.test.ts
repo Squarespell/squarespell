@@ -225,6 +225,12 @@ describe('server-side verification of a site (loopback fixture)', () => {
     expect((await run((_q, res) => res.end('<html>nothing</html>'))).reason).toBe('loader_not_found');
     expect((await run((_q, res) => res.end('<script src="https://squarespellquiz.com/connect/loader.js" data-site="ssq_' + 'C'.repeat(32) + '"></script>'))).reason).toBe('loader_not_found');
   });
+  it('site_private for a Squarespace Private Site page, not a password lock', async () => {
+    const priv = '<!DOCTYPE HTML><html><head><title>Private Site</title></head><body></body></html>';
+    expect((await run((_q, res) => { res.statusCode = 401; res.end(priv); })).reason).toBe('site_private');
+    expect((await run((_q, res) => { res.statusCode = 401; res.end(priv.replace('<body>', '<body><input type="password">')); })).reason).toBe('page_requires_login');
+  });
+
   it('page_requires_login for 401, 403 and a password lock screen', async () => {
     expect((await run((_q, res) => { res.statusCode = 401; res.end(); })).reason).toBe('page_requires_login');
     expect((await run((_q, res) => { res.statusCode = 403; res.end(); })).reason).toBe('page_requires_login');
