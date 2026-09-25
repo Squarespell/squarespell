@@ -20,6 +20,7 @@
 
 import { Suspense } from 'react';
 import EmbedQuizClient from './EmbedQuizClient';
+import { safeCssColor, safeFontFamily } from '@/lib/safeInput';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -184,14 +185,16 @@ export default async function EmbedPage({ params }: { params: { slug: string } }
 
   // Derive branding from quiz settings (matches the main /quiz/[slug] logic)
   const brand = quiz.branding;
-  const brandBg = brand?.colors?.background || '#ffffff';
-  const brandText = brand?.colors?.text || '#1a1a1a';
-  const brandPrimary =
-    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor || '#0a0a0a';
+  // Owner-controlled values end up inside a <style> block, so each one is allow-listed (see lib/safeInput.ts).
+  const brandBg = safeCssColor(brand?.colors?.background, '#ffffff');
+  const brandText = safeCssColor(brand?.colors?.text, '#1a1a1a');
+  const brandPrimary = safeCssColor(
+    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor,
+    '#0a0a0a',
+  );
+  const brandFontName = safeFontFamily(brand?.font_family, 'Inter');
   const brandFont =
-    brand?.font_family && brand.font_family !== 'sans-serif'
-      ? `'${brand.font_family}', system-ui, sans-serif`
-      : "'Inter', system-ui, sans-serif";
+    brandFontName !== 'sans-serif' ? "'" + brandFontName + "', system-ui, sans-serif" : "'Inter', system-ui, sans-serif";
 
   return (
     <Suspense fallback={<ErrorView />}>
