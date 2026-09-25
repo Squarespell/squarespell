@@ -816,6 +816,8 @@ export default function IntegrationsPage() {
                         <div
                           key={c.name + '-' + ci}
                           onClick={function() {
+                            /* Planned integrations (Zapier and everything via Zapier) are not live: nothing to open. */
+                            if (!c.available) return;
                             if (!c.native) {
                               /* Via Zapier — go to Zapier setup */
                               router.push('/dashboard/integrations/api-keys');
@@ -829,7 +831,8 @@ export default function IntegrationsPage() {
                             border: '1px solid ' + (isConnected ? C.ACCENT : C.BORDER),
                             borderRadius: 12,
                             background: isConnected ? 'rgba(13,115,119,0.04)' : C.SURFACE,
-                            cursor: 'pointer',
+                            cursor: c.available ? 'pointer' : 'default',
+                      opacity: c.available ? 1 : 0.65,
                             transition: 'border-color 0.15s, box-shadow 0.15s',
                           }}
                           onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.boxShadow = '0 2px 8px rgba(13,115,119,0.08)'; }}
@@ -845,9 +848,9 @@ export default function IntegrationsPage() {
                             </div>
                             <div style={{ flex: 1 }}>
                               <span style={{ fontSize: 13, fontWeight: 700, color: C.TEXT, display: 'block' }}>{c.name}</span>
-                              {!c.native && (
+                              {(!c.native || !c.available) && (
                                 <span style={{ fontSize: 10, fontWeight: 600, color: '#FF4A00', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
-                                  via Zapier
+                                  {c.available ? 'via Zapier' : 'Coming soon'}
                                 </span>
                               )}
                             </div>
