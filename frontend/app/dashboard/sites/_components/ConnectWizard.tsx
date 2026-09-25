@@ -209,7 +209,7 @@ export function ConnectWizard({ open, token, existingSite, onClose, onVerified }
           {sq ? (
             <>
               <li><span><b>Open Code Injection.</b> In Squarespace, open Website, then Pages, then Custom Code, then Code Injection. Menu names can change, so look for Code Injection.</span></li>
-              <li><span><b>Paste into Footer.</b> Add the single loader line below to the Footer field.</span></li>
+              <li><span><b>Paste into Footer.</b> Add the single loader line below at the very top of the Footer field, above any code already there. Code placed after an unfinished script can stop it from running.</span></li>
               <li><span><b>Save your changes.</b> Return here and we will verify the live website.</span></li>
             </>
           ) : (
