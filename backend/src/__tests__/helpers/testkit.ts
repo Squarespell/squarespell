@@ -3,7 +3,7 @@ import request from 'supertest';
 import { signToken } from './clerkFake';
 import { sql } from './db';
 import { clerkDirectory } from './clerkDirectory';
-import { SESSION_COOKIE_NAME, CSRF_COOKIE_NAME } from '../../services/auth/sessions';
+import { SESSION_COOKIE_NAME, csrfTokenFor } from '../../services/auth/sessions';
 
 let n = 0;
 export type TestUser = { clerkId: string; id: string; email: string; token: string; csrfToken: string };
@@ -29,7 +29,7 @@ export async function makeUser(opts: { plan?: string; createdDaysAgo?: number; q
 
   const token = crypto.randomBytes(32).toString('hex');
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const csrfToken = crypto.randomBytes(16).toString('hex');
+  const csrfToken = csrfTokenFor(token);
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   await sql(
     `INSERT INTO auth_sessions (user_id, token_hash, expires_at) VALUES ($1,$2,$3)`,
@@ -41,7 +41,7 @@ export async function makeUser(opts: { plan?: string; createdDaysAgo?: number; q
 
 /** Session cookie + matching CSRF header for a TestUser, for `.set(bearer(user))`. */
 export const bearer = (u: { token: string; csrfToken: string }) => ({
-  Cookie: `${SESSION_COOKIE_NAME}=${u.token}; ${CSRF_COOKIE_NAME}=${u.csrfToken}`,
+  Cookie: `${SESSION_COOKIE_NAME}=${u.token}`,
   'x-csrf-token': u.csrfToken,
 });
 
