@@ -3,7 +3,6 @@ import { supabase } from '../../db/supabaseClient';
 import { log } from '../../lib/logger';
 
 export const SESSION_COOKIE_NAME = 'sq_session';
-export const CSRF_COOKIE_NAME = 'sq_csrf';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // fixed 30 days, not sliding
 
 function sha256Hex(input: string): string {
@@ -16,11 +15,28 @@ export interface CreatedSession {
   expiresAt: Date;
 }
 
+/**
+ * The CSRF token is a keyed hash of the session token, so it needs no cookie and no
+ * storage: the server recomputes it on every mutating request, and /api/auth/session
+ * can hand it back after a page refresh. It is returned in response bodies only,
+ * never logged, and unusable without the HttpOnly session cookie it is derived from.
+ */
+export function csrfTokenFor(sessionToken: string): string {
+  return crypto.createHmac('sha256', sessionToken).update('sq-csrf-v1').digest('hex');
+}
+
+export function csrfMatches(sessionToken: string, presented: unknown): boolean {
+  if (typeof presented !== 'string' || !presented) return false;
+  const expected = Buffer.from(csrfTokenFor(sessionToken));
+  const got = Buffer.from(presented);
+  return got.length === expected.length && crypto.timingSafeEqual(got, expected);
+}
+
 /** Mints a new 256-bit session token and its CSRF token. Only the SHA-256 hash of the session token is ever persisted. */
 export async function createSession(userId: string, ip: string, userAgent: string): Promise<CreatedSession> {
   const token = crypto.randomBytes(32).toString('hex'); // 256 bits
   const tokenHash = sha256Hex(token);
-  const csrfToken = crypto.randomBytes(32).toString('hex');
+  const csrfToken = csrfTokenFor(token);
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
   const { error } = await supabase.from('auth_sessions').insert({
@@ -82,15 +98,20 @@ export async function cleanupExpiredSessions(): Promise<number> {
   return data?.length || 0;
 }
 
-const isProduction = process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true';
+// Read at call time so tests can toggle it; staging and production both run with NODE_ENV=production.
+const secureCookies = () => process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true';
+
+// Host-only on purpose: no `domain` attribute, so the browser sends it only to the exact API host
+// that set it (never to sibling subdomains, never shared between staging and production).
+function baseSessionCookie() {
+  return { httpOnly: true, secure: secureCookies(), sameSite: 'lax' as const, path: '/' };
+}
 
 export function sessionCookieOptions(expires: Date) {
-  return { httpOnly: true, secure: isProduction, sameSite: 'lax' as const, path: '/', expires };
+  return { ...baseSessionCookie(), expires };
 }
 
-// Readable by frontend JS: the double-submit CSRF pattern requires the page
-// to read this cookie and echo it back as the x-csrf-token header.
-export function csrfCookieOptions(expires: Date) {
-  return { httpOnly: false, secure: isProduction, sameSite: 'lax' as const, path: '/', expires };
+/** Exactly the attributes used when the cookie was set (minus expiry), so the browser matches and removes it. */
+export function clearSessionCookieOptions() {
+  return baseSessionCookie();
 }
-
