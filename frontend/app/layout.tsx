@@ -1,21 +1,16 @@
 'use client';
 import { useEffect } from 'react';
-import { Inter } from 'next/font/google';
 import '../lib/authFetch';
 import { startKeepAlive } from '../lib/keepAlive';
 import { ToastProvider } from '../lib/toast';
 import './globals.css';
 
-// Self-hosted, optimized loading (no render-blocking Google Fonts request).
-// Inter is the platform's primary typeface — see SQUARESPELL-SYSTEM-DESIGN.md
-// typography section for rationale. Exposed as --font-inter and consumed by
-// the --font / --font-body CSS variables in globals.css.
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-inter',
-  display: 'swap',
-});
+// next/font/google was removed: it fetches font metadata from Google's
+// servers at *build* time (not just runtime), which made CI builds fail
+// whenever that network call was unreliable. --font-inter is now simply
+// unset, so the var(--font-inter, 'Inter') fallback chain already in
+// globals.css degrades straight to the system font stack -- see the
+// typography section of SQUARESPELL-SYSTEM-DESIGN.md for the prior rationale.
 
 function KeepAlive() {
   useEffect(() => { startKeepAlive(); }, []);
@@ -31,7 +26,7 @@ function Footer() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <body>
         <ToastProvider>
         <KeepAlive />
