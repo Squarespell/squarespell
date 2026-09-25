@@ -105,7 +105,7 @@ const EMAIL_PACKS = [
 const FAQS = [
   {
     q: 'Do I need a Squarespace subscription?',
-    a: 'Yes, Squarespell Quiz works with any active Squarespace plan. You connect your site in one click through your dashboard. No code required.',
+    a: 'Yes, Squarespell Quiz works with any active Squarespace plan. One-time Squarespace setup: you paste one small loader into Code Injection once. After that, publish, update, pause or remove quizzes from Squarespell with no repeated code pasting.',
   },
   {
     q: 'What happens when my 14-day trial ends?',
