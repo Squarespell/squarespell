@@ -9,7 +9,7 @@
  * (many of them do raw `fetch(API + '/path', { headers: { Authorization:
  * 'Bearer ' + token } } )` and gate on `if (!token) return`), so none of
  * those pages need to change: `token` is just a truthy sentinel now (the
- * readable CSRF cookie value) — the Authorization header they send is
+ * in-memory CSRF token) — the Authorization header they send is
  * inert, and lib/authFetch.ts's global fetch patch is what actually
  * authenticates the request via the session cookie.
  *
@@ -21,15 +21,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { authApi } from '@/lib/authApi';
+import { authApi, getCsrfToken } from '@/lib/authApi';
 
 export type AuthStatus = 'loading' | 'ready' | 'unauthed';
-
-function readCookie(name: string): string {
-  if (typeof document === 'undefined') return '';
-  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-  return m ? decodeURIComponent(m[1]) : '';
-}
 
 function markSessionEstablished() {
   try { sessionStorage.setItem('sq_auth_ok', '1'); } catch {}
@@ -63,7 +57,7 @@ export function useDashboardAuth(): { token: string | null; status: AuthStatus }
         if (cancelled) return;
         if (httpStatus === 200) {
           markSessionEstablished();
-          setToken(readCookie('sq_csrf') || 'session');
+          setToken(getCsrfToken() || 'session');
           setStatus('ready');
           return;
         }
