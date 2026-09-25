@@ -66,7 +66,7 @@ var TOUR_STEPS: TourStep[] = [
   {
     target: '[data-tour="integrations"]',
     title: 'Integrations',
-    description: 'Send leads to Mailchimp, Klaviyo, Google Sheets, Zapier, and 100+ other tools your team already uses.',
+    description: 'Send leads to Mailchimp, Klaviyo, ConvertKit, Google Sheets or any webhook. Zapier is planned.',
     position: 'right',
   },
   {
