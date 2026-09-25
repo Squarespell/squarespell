@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
-import { SESSION_COOKIE_NAME, CSRF_COOKIE_NAME, getSessionFromToken } from '../services/auth/sessions';
+import { SESSION_COOKIE_NAME, csrfMatches, getSessionFromToken } from '../services/auth/sessions';
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -28,10 +28,10 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
  * Session-cookie auth, replacing the previous Clerk-JWT verification. Sets
  * req.userId to the session's user id (kept for the one call site that
  * still reads it) and req.sessionId for logout. CSRF: double-submit
- * cookie -- any non-GET/HEAD/OPTIONS request must echo the sq_csrf cookie
- * value back as the x-csrf-token header, since browsers attach cookies to
- * cross-site requests automatically but cannot read another origin's
- * cookies to forge that header.
+ * cookie -- any non-GET/HEAD/OPTIONS request must send the x-csrf-token
+ * header, which is derived from the HttpOnly session token (see csrfTokenFor)
+ * and delivered to the page in the verify-code / GET /api/auth/session
+ * response bodies, so a cross-site request cannot forge it.
  */
 export async function requireAuth(
   req: AuthenticatedRequest,
@@ -57,9 +57,7 @@ export async function requireAuth(
   }
 
   if (!SAFE_METHODS.has(req.method)) {
-    const csrfCookie = cookies[CSRF_COOKIE_NAME];
-    const csrfHeader = req.headers['x-csrf-token'];
-    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+    if (!csrfMatches(token, req.headers['x-csrf-token'])) {
       return res.status(403).json({ error: 'Invalid or missing CSRF token', code: 'csrf_invalid' });
     }
   }
