@@ -71,8 +71,12 @@ const envOrigins = (process.env.CORS_ORIGINS || '')
 
 const legacyOrigin = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
 
+// CORS_STRICT_ORIGINS=true (set on staging) drops the built-in production origins so credentialed
+// requests are accepted only from the exact origins listed in CORS_ORIGINS / FRONTEND_URL.
+const STRICT_ORIGINS = process.env.CORS_STRICT_ORIGINS === 'true';
+
 const ALLOWED_ORIGINS = Array.from(
-  new Set([...DEFAULT_ALLOWED_ORIGINS, ...envOrigins, ...legacyOrigin]),
+  new Set([...(STRICT_ORIGINS ? [] : DEFAULT_ALLOWED_ORIGINS), ...envOrigins, ...legacyOrigin]),
 );
 
 const PUBLIC_PATH_PREFIXES = [
