@@ -15,7 +15,7 @@ const SRC = path.resolve(__dirname, '../..');
 // P2 findings (documented in docs/relaunch/SQUARESPELL_PHASE_1_RESULTS.md): non-core features whose tables/columns are
 // referenced by code but defined nowhere in the repository. Their real production shape is unknown, so Phase 1 does not
 // invent it. The tests pin this list: any NEW drift fails, and fixing one requires removing it here.
-const KNOWN_UNRESOLVED_TABLES = ['campaigns', 'email_ab_variants', 'email_engagement_log', 'referral_codes', 'referrals'];
+const KNOWN_UNRESOLVED_TABLES = ['campaigns', 'email_ab_variants', 'email_engagement_log'];
 const KNOWN_UNRESOLVED_COLUMNS = ['quizzes.brand', 'quizzes.category'];
 
 function walk(dir: string, out: string[] = []): string[] {
