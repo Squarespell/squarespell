@@ -59,6 +59,8 @@ export async function verifySite(input: { hostname: string; siteKey: string; pat
   }
   const finalHost = hostnameFromHeader(res.finalUrl);
   if (!finalHost || finalHost !== input.hostname) return fail('wrong_domain', res.status);
+  // Squarespace serves a private (not password protected) site as 401 with a "Private Site" page and no password form.
+  if ((res.status === 401 || res.status === 403) && /<title>\s*Private Site\s*<\/title>/i.test(res.body) && !/type\s*=\s*["']password["']/i.test(res.body)) return fail('site_private', res.status);
   if (res.status === 401 || res.status === 403) return fail('page_requires_login', res.status);
   if (res.status >= 400) return fail('unreachable', res.status);
   if (PASSWORD_PAGE.test(res.body) && /type\s*=\s*["']password["']/i.test(res.body)) return fail('page_requires_login', res.status);
