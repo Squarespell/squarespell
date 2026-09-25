@@ -26,6 +26,7 @@ import { useParams } from 'next/navigation';
 import { addUtmParams, quizUtm } from '@/lib/urls';
 import generatePdfReport from './generatePdfReport';
 import QuizRenderer from '@/components/quiz-taker/QuizRenderer';
+import { safeHttpUrl } from '@/lib/safeInput';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -633,7 +634,7 @@ export default function QuizPage() {
   var showProgressBar = quiz?.settings?.show_progress_bar !== false;
   var transitionType = quiz?.settings?.transition_type || 'slide';
   var customCss = quiz?.settings?.custom_css || '';
-  var redirectUrl = quiz?.settings?.redirect_url || '';
+  var redirectUrl = safeHttpUrl(quiz?.settings?.redirect_url);
   var redirectDelay = quiz?.settings?.redirect_delay || 5;
   var logoUrl = quiz?.settings?.logo_url || '';
   var consentRequired = quiz?.settings?.consent_required || false;
