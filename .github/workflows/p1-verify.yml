@@ -274,7 +274,7 @@ jobs:
           const sessionToken = crypto.randomBytes(32).toString('hex');
           fs.writeFileSync(tmp + '/smoke_token.txt', sessionToken);
           fs.writeFileSync(tmp + '/smoke_token_hash.txt', crypto.createHash('sha256').update(sessionToken).digest('hex'));
-          fs.writeFileSync(tmp + '/smoke_csrf.txt', crypto.randomBytes(16).toString('hex'));
+          fs.writeFileSync(tmp + '/smoke_csrf.txt', crypto.createHmac('sha256', sessionToken).update('sq-csrf-v1').digest('hex'));
           EOF
           echo "::add-mask::$(cat "$RUNNER_TEMP/smoke_token.txt")"
           echo "::add-mask::$(cat "$RUNNER_TEMP/service_role.txt")"
