@@ -24,6 +24,7 @@
 
 import { useRef } from 'react';
 import { addUtmParams, quizUtm } from '@/lib/urls';
+import { safeHttpUrl } from '@/lib/safeInput';
 
 export interface QuizOption {
   id: string;
@@ -793,7 +794,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                   </button>
                 </a>
               ) : quiz.settings?.cta_url ? (
-                <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={addUtmParams(safeHttpUrl(quiz.settings.cta_url), quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button type="button" style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
