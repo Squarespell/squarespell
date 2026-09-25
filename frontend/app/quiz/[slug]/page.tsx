@@ -27,6 +27,7 @@ import { addUtmParams, quizUtm } from '@/lib/urls';
 import generatePdfReport from './generatePdfReport';
 import QuizRenderer from '@/components/quiz-taker/QuizRenderer';
 import { safeHttpUrl } from '@/lib/safeInput';
+import { hasBranching, nextQuestionIndex, resolveVisitedPath } from '@/lib/quiz/branching';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -170,8 +171,10 @@ function getOutcome(quiz: Quiz, answers: Record<number, number>): QuizOutcome | 
   var outcomes = quiz.outcomes || quiz.results || [];
   if (outcomes.length === 0) return null;
   var total = 0;
+  var onPath = hasBranching(quiz.questions) ? new Set(resolveVisitedPath(quiz.questions, answers)) : null;
   Object.entries(answers).forEach(function(entry) {
     var qi = entry[0];
+    if (onPath && !onPath.has(Number(qi))) return;
     var oi = entry[1];
     var q = quiz.questions[Number(qi)];
     var opt = q?.options?.[Number(oi)];
@@ -428,11 +431,13 @@ export default function QuizPage() {
         setAnswers(function(prev) { return Object.assign({}, prev, { [qIdx]: oi }); });
         trackEvent('question_' + qIdx + '_answer');
       }
-      if (qIdx < (quiz.questions.length - 1)) {
+      var pickedId = oi >= 0 ? (quiz.questions[qIdx]?.options?.[oi] as any)?.id : undefined;
+      var nextIdx = nextQuestionIndex(quiz.questions, qIdx, pickedId === undefined || pickedId === null ? '' : String(pickedId));
+      if (nextIdx < quiz.questions.length) {
         transDir.current = 'forward';
         setPrevQIdx(qIdx);
         setTransitioning(true);
-        setQIdx(qIdx + 1);
+        setQIdx(nextIdx);
       } else {
         if (requireEmail) {
           setStage('leadgate');
@@ -481,10 +486,12 @@ export default function QuizPage() {
 
   var goBack = function() {
     if (qIdx > 0) {
+      var backPath = quiz && hasBranching(quiz.questions) ? resolveVisitedPath(quiz.questions, answers).filter(function(i) { return i < qIdx; }) : null;
+      var backIdx = backPath && backPath.length ? backPath[backPath.length - 1] : qIdx - 1;
       transDir.current = 'back';
       setPrevQIdx(qIdx);
       setTransitioning(true);
-      setQIdx(qIdx - 1);
+      setQIdx(backIdx);
     }
   };
 
@@ -515,8 +522,10 @@ export default function QuizPage() {
     if (stage !== 'result' || !quiz) return;
     var questions = quiz.questions || [];
     var score = 0;
+    var onPath = hasBranching(questions) ? new Set(resolveVisitedPath(questions, answers)) : null;
     Object.keys(answers).forEach(function(k) {
       var qIdx = parseInt(k);
+      if (onPath && !onPath.has(qIdx)) return;
       var q = questions[qIdx];
       if (q && q.options && q.options[answers[qIdx]]) {
         score += (q.options[answers[qIdx]].score || 0);
