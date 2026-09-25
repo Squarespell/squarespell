@@ -53,24 +53,61 @@ Framer: not evaluated here (unverified).
 3. Send the Squarespace partner application below through the Circle partner channel. Do not submit without owner approval.
 4. Keep the manual loader as the Squarespace fallback until Squarespace ships a content capability, then add a real automatic installer behind PLATFORM_CAPABILITY.
 
-## 8. Squarespace partner / Extension application package (draft, not submitted)
+## 8. Squarespace partner / Extension application package (complete draft, NOT submitted)
 
-**Product.** Squarespell Quiz builds branded lead quizzes and shows them on a customer's website as a floating tab, popup or inline section. Customers manage every quiz from Squarespell.
+Status: ready for owner review. Not submitted. The Developer Terms have not been accepted. Both are owner-only steps.
 
-**Request.** A supported way for an approved Extension to (a) list the site's pages and sections, and (b) add, move, pause and remove one app-owned embed block or one app-owned script on a site the customer authorises, with the owner's consent screen naming the change. Read-only page structure plus a single-purpose write capability, no design or content access beyond our block.
+### 8.1 Applicant
+Squarespell (Square Spell), Squarespace Circle Silver Partner since 2025. Product: Squarespell Quiz, a lead-quiz builder for Squarespace sites. Contact: info@squarespell.com.
 
-**Requested permissions (proposed).** Existing scope: none needed for commerce. Proposed new: page and section read; app-owned embed block write; app-owned script register. No orders, products, contacts or payments.
+### 8.2 Product explanation
+Squarespell Quiz creates branded multiple-choice quizzes with branching, weighted scoring, outcomes and a lead gate, and delivers them on a customer's Squarespace website as an inline section, a popup or a floating tab. Customers manage every quiz (publish, update, move, pause, resume, remove) from Squarespell. Today this needs a manual one-time loader paste and a Code Block slot per inline location, because the public Squarespace platform has no content-editing API. This application asks Squarespace for the missing capability.
 
-**Customer journey.** Connect with Squarespace -> Squarespace consent screen naming the website and the exact permission -> customer picks page and placement in Squarespell -> Squarespell adds the block -> customer can pause, move or remove from Squarespell -> revoke in Squarespace or Squarespell removes the block and token.
+### 8.3 Requested capability (does not exist today; proposed names)
+1. `website.pages.read`: list pages and their sections, read only, so the customer can choose a page and placement in Squarespell.
+2. `website.embed.write`: add, move and remove **one Squarespell-owned embed block** in a named section of a named page. The block only points at a Squarespell-hosted URL. No other content may be read or changed.
+3. Alternative to 2 if blocks are not possible: `website.script.write`, register and remove **one app-owned script** for a single website (equivalent to a Footer Code Injection entry owned by the app, visible to and removable by the site owner in Code Injection settings).
+4. Consent screen wording that names the website, the page and the exact change.
+Not requested: orders, products, contacts, payments, design, domains, member data.
 
-**OAuth details (to confirm before submission).** Redirect URL: https://squarespellquiz.com/api/connect/squarespace/callback (production) and https://api-staging.squarespellquiz.com/api/connect/squarespace/callback (staging demo). Initiate URL: https://squarespellquiz.com/api/connect/squarespace/initiate. Terms and privacy links: squarespellquiz.com legal pages. Icon: 1:1 PNG or SVG under 200 KB.
+### 8.4 Customer journey
+1. Customer clicks **Connect with Squarespace** in Squarespell.
+2. Squarespace shows its OAuth confirmation page; the customer picks the website and approves the two scopes above.
+3. Squarespell shows the site's pages; the customer chooses a page, section and mode (inline, popup, floating tab).
+4. Squarespell adds the embed block or script through the API. No pasting, no Code Block, no Code Injection edit.
+5. Later publish, update, move, pause, resume and remove run through the same API from Squarespell.
+6. Customer can revoke in Squarespace or disconnect in Squarespell.
 
-**Webhooks needed.** extension.uninstall (exists) to remove our block and delete tokens; plus events for page deleted or renamed and site publish (do not exist today).
+### 8.5 OAuth details (owner to confirm before submission)
+| Item | Value |
+|---|---|
+| Client name | Squarespell Quiz |
+| Redirect URIs | https://squarespellquiz.com/api/connect/squarespace/callback (production); https://api-staging.squarespellquiz.com/api/connect/squarespace/callback (staging, Demo Mode) |
+| Initiate URL (partner apps) | https://squarespellquiz.com/api/connect/squarespace/initiate (accepts website_id and passes it to /authorize) |
+| Scopes | as in 8.3 (proposed) |
+| Access type | offline (refresh token) |
+| Terms | https://squarespellquiz.com/terms |
+| Privacy | https://squarespellquiz.com/privacy |
+| Icon | 1:1 PNG or SVG under 200 KB |
+| Registration route | Account Dashboard, Developer Apps (self-service since Jul 27, 2026); starts in Demo Mode; production review requested from the app page |
 
-**Privacy.** We store the OAuth refresh token encrypted, the site id and hostname, and the list of placed blocks. No customer passwords are ever requested or stored. Quiz respondents' leads belong to the customer. Data is deleted on uninstall or on request. Tokens are never sent to the browser.
+### 8.6 Webhook requirements
+Existing and used: `extension.uninstall`. Requested (not available today): page deleted or renamed, section removed, site published. Notifications verified with the Squarespace-Signature header; the secret is stored encrypted; delivery is idempotent by notification id.
 
-**Architecture.** Next.js dashboard, Express API, Postgres. Server-side OAuth code exchange with client secret, encrypted token store, per-site manifest, idempotent publish and rollback (already built for the loader flow), audit log, signed webhook verification. Loader flow remains a labelled manual fallback.
+### 8.7 Privacy and data handling
+Stored: encrypted OAuth refresh token, website id and hostname, the list of Squarespell-owned blocks (id, page, section, mode). Not stored: Squarespace passwords (never requested), page content, member or order data. Tokens are used server-side only and never sent to the browser. Quiz respondents' leads belong to the customer and are handled under the Squarespell privacy policy and GDPR delete-request flow. Retention: token and block records are deleted on uninstall or within 30 days of a disconnect; audit events are kept 12 months without personal data.
 
-**Screenshots to attach.** Connect screen, consent screen, page and placement picker, live preview, manage panel with pause/move/remove, revoke screen.
+### 8.8 Security architecture
+Server-side authorization-code exchange with client secret; state parameter verified against a per-session value; short access tokens (30 minutes) refreshed server-side; tokens and secrets encrypted at rest and never logged; least-privilege scopes; per-site manifest signed by the API and validated by the loader (unexpected fields ignored, previous good manifest kept); write operations are idempotent, rate-limited and audited; publish uses a rollback on failure; SSRF-protected fetches; CSRF-protected dashboard; HTTPS only with security headers. The existing loader flow is retained only as a labelled manual fallback.
 
-**Open items for the owner.** Accept the Developer Terms in the Account Dashboard; confirm production redirect domain; choose the submission channel (Circle partner contact or Developer Support); approve the final text.
+### 8.9 Uninstall and revocation behaviour
+On `extension.uninstall` or token revocation Squarespell removes its embed block or script where the API still allows it, marks the site disconnected, stops serving its manifest, deletes tokens, and shows the customer what was removed. If removal fails, the customer sees exactly which block remains and how to delete it in the editor. Removing a quiz never deletes the customer's leads.
+
+### 8.10 Screenshots to attach at submission
+Captured from staging (https://staging.squarespellquiz.com/dashboard/sites) with a disposable account: (1) platform choice showing Squarespace as manual today; (2) the future Connect with Squarespace button and consent step (mock, marked as mock); (3) page and placement picker; (4) live preview desktop and mobile; (5) manage panel: update, move, pause, resume, remove; (6) disconnect and revoke confirmation; (7) failure explanation (for example Private site or missing slot). Captures are taken by the owner or on request; none contain customer data.
+
+### 8.11 Testing plan
+Demo Mode app on two independent Squarespace test sites. Cases: authorize, deny, wrong website, expired access token refresh, revoked token, uninstall webhook, install each mode, update text, move page, pause and resume, remove and republish, two quizzes on one page, page renamed or deleted, site private or unpublished, concurrent edits by the site owner, rate limiting, token and secret leakage scans, and full regression of the hosted and embed quiz. Pass criteria: no code pasted by the customer, every action reversible from Squarespell, uninstall leaves the site clean.
+
+### 8.12 Open items for the owner
+Accept the Developer Terms in the Account Dashboard; confirm the production redirect domain; choose the submission channel (Circle partner contact or Developer Support); review and approve the final text.
