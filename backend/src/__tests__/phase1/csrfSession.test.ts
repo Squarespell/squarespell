@@ -230,3 +230,23 @@ describe('frontend fetch patch (lib/authFetch.ts + lib/authApi.ts)', () => {
     }
   });
 });
+
+describe('CORS on routes whose path starts with a public prefix', () => {
+  it('the authenticated quiz CRUD (/api/quizzes) gets credentialed exact-origin CORS for the frontend, not the public wildcard', async () => {
+    const r = await (await api()).get('/api/quizzes').set('Origin', STAGING_ORIGIN);
+    expect(r.headers['access-control-allow-origin']).toBe(STAGING_ORIGIN);
+    expect(r.headers['access-control-allow-credentials']).toBe('true');
+  });
+
+  it('a cookie-authenticated route under a public prefix (/api/scrape-brand) is reachable with credentials from the frontend', async () => {
+    const r = await (await api()).options('/api/scrape-brand').set('Origin', STAGING_ORIGIN).set('Access-Control-Request-Method', 'POST');
+    expect(r.headers['access-control-allow-origin']).toBe(STAGING_ORIGIN);
+    expect(r.headers['access-control-allow-credentials']).toBe('true');
+  });
+
+  it('the public quiz runtime keeps the wildcard for customer sites and never allows credentials there', async () => {
+    const r = await (await api()).get('/api/quiz/does-not-exist').set('Origin', 'https://customer.example');
+    expect(r.headers['access-control-allow-origin']).toBe('*');
+    expect(r.headers['access-control-allow-credentials']).toBeUndefined();
+  });
+});
