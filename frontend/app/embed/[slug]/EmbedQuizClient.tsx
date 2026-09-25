@@ -1,6 +1,7 @@
 'use client';
 import { addUtmParams, quizUtm } from '@/lib/urls';
 import { safeCssColor, safeHttpUrl } from '@/lib/safeInput';
+import { hasBranching, resolveVisitedPath } from '@/lib/quiz/branching';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 
@@ -286,8 +287,11 @@ export default function EmbedQuizClient({
     var outcomes = quiz.outcomes || quiz.results || [];
     if (outcomes.length === 0) return null;
     var total = 0;
+    // With branching, only the questions on the visitor's path count (same rule as the server).
+    var onPath = hasBranching(questions) ? new Set(resolveVisitedPath(questions, answers)) : null;
     Object.entries(answers).forEach(function(entry) {
       var qi = entry[0];
+      if (onPath && !onPath.has(Number(qi))) return;
       var oi = entry[1];
       var q = questions[Number(qi)];
       var opt = q?.options?.[Number(oi)];
@@ -309,7 +313,8 @@ export default function EmbedQuizClient({
       var matchedRule = rules.find(function(r) { return r.if_answer === selectedOptionId; });
       if (matchedRule && matchedRule.goto) {
         var targetIdx = questionIdMap.current[matchedRule.goto];
-        if (typeof targetIdx === 'number' && targetIdx >= 0 && targetIdx < questions.length) {
+        // Forward-only: a rule pointing at the same or an earlier question is ignored, so a path can never loop.
+        if (typeof targetIdx === 'number' && targetIdx > currentIdx && targetIdx < questions.length) {
           return targetIdx;
         }
       }
