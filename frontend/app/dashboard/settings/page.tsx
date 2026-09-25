@@ -228,7 +228,7 @@ export default function SettingsPage() {
       icon: <IntegrationsIcon />,
       iconBg: C.BRAND_50,
       title: 'Integrations',
-      desc: 'Manage webhooks, Zapier, and API keys.',
+      desc: 'Manage webhooks and integrations. Zapier and API keys are planned.',
       action: 'link' as const,
       href: '/dashboard/integrations',
       btnLabel: 'Manage',
