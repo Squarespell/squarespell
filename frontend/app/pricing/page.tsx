@@ -49,13 +49,13 @@ const MATRIX = [
       { label: 'Remove Squarespell Quiz branding', core: true, pro: true, business: true },
       { label: 'Custom CSS', core: false, pro: true, business: true },
       { label: 'White-label (your brand)', core: false, pro: false, business: true },
-      { label: 'Custom domain for quizzes', core: false, pro: false, business: true },
+      { label: 'Custom domain for quizzes (planned)', core: false, pro: false, business: true },
     ],
   },
   {
     category: 'Integrations',
     rows: [
-      { label: 'Zapier', core: false, pro: true, business: true },
+      { label: 'Zapier (planned)', core: false, pro: true, business: true },
       { label: 'Webhooks', core: false, pro: true, business: true },
       { label: 'Mailchimp', core: false, pro: true, business: true },
       { label: 'Klaviyo', core: false, pro: true, business: true },
@@ -70,7 +70,7 @@ const MATRIX = [
       { label: 'Email support', core: true, pro: true, business: true },
       { label: 'Priority email support', core: false, pro: true, business: true },
             { label: 'Team seats', core: false, pro: false, business: '3 included' },
-      { label: 'API access', core: false, pro: false, business: true },
+      { label: 'API access (planned)', core: false, pro: false, business: true },
       { label: 'Dedicated onboarding call', core: false, pro: false, business: true },
     ],
   },
@@ -129,11 +129,11 @@ const FAQS = [
   },
   {
     q: 'I run an agency. Can I manage multiple client sites?',
-    a: 'Yes. The Business plan at $29/mo annual includes unlimited quizzes and leads, white-label branding, custom domains, team seats, API access, and a dedicated onboarding call.',
+    a: 'Yes. The Business plan at $29/mo annual includes unlimited quizzes and leads, white-label branding, team seats and a dedicated onboarding call. Custom domains and API access are planned.',
   },
   {
     q: 'What integrations are included with Pro?',
-    a: 'Pro includes integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets, plus webhooks. Each one needs to be set up with your own account, key or endpoint. See the integrations page for the status of each.',
+    a: 'Pro includes integrations with Mailchimp, Klaviyo, ConvertKit and Google Sheets, plus webhooks. Zapier and HubSpot are planned. Each one needs to be set up with your own account, key or endpoint. See the integrations page for the status of each.',
   },
 ];
 
