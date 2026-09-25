@@ -108,6 +108,7 @@ services:
       BACKEND_URL: https://${STAGING_API_HOST}
       CORS_ORIGINS: https://${STAGING_APP_HOST}
       CORS_ORIGIN: https://${STAGING_APP_HOST}
+      CORS_STRICT_ORIGINS: "true"
       # The 'worker' service drains the email queue; do not also run the in-process timer.
       DISABLE_INPROCESS_EMAIL_QUEUE: "true"
       # One-button connect (staging review only). CONNECT_TEST_FAULTS also enables the staging fixture website and failure simulation.
