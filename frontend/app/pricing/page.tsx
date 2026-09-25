@@ -125,7 +125,7 @@ const FAQS = [
   },
   {
     q: 'How is Squarespell Quiz different from other quiz tools?',
-    a: 'Other quiz tools charge $27–75/mo for entry plans with fewer leads. Squarespell Quiz starts at $9/mo annual with 1,000 leads, branching logic, and native Squarespace integration. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
+    a: 'Other quiz tools charge $27–75/mo for entry plans with fewer leads. Squarespell Quiz starts at $9/mo annual with 1,000 leads, branching logic, and embeds built for Squarespace. Our AI generates a fully branded quiz from your website URL in under 60 seconds.',
   },
   {
     q: 'I run an agency. Can I manage multiple client sites?',
