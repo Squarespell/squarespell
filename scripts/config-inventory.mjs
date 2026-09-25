@@ -81,6 +81,7 @@ const OWN = {
   APP_URL: V('Render (app config)', 'prod: links in emails', 'yes', 'YES', 'default https://app.squarespell.com'),
   MARKETING_URL: V('Render (app config)', 'prod', 'yes', 'YES', 'default https://squarespell.com'),
   CORS_ORIGINS: V('Render (app config)', 'prod: allowlist', 'yes', 'YES', 'defaults are app./quiz./www. squarespell.com'),
+  CORS_STRICT_ORIGINS: V('Squarespell (server env)', 'staging: "true" drops the built-in production origins so credentialed CORS allows only CORS_ORIGINS / FRONTEND_URL', 'yes', 'no', 'unset = built-in defaults (production behaviour unchanged)'),
   BACKEND_URL: V('Render (app config)', 'prod: unsubscribe/report links, cron', 'yes', 'YES if API host changes', ''),
   API_URL: V('Render (app config)', 'legacy alias of BACKEND_URL', 'unclear (alias)', 'as BACKEND_URL', ''),
   API_BASE_URL: V('Render (app config)', 'legacy alias for keep-alive self ping', 'unclear (alias)', 'as BACKEND_URL', ''),
