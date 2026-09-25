@@ -110,8 +110,13 @@ const publicCors = cors({
 });
 
 app.use((req, res, next) => {
-  const isPublic = PUBLIC_PATH_PREFIXES.some((p) => req.path.startsWith(p));
-  if (isPublic) return publicCors(req, res, next);
+  // '/api/quizzes' (the authenticated quiz CRUD) only shares the text prefix '/api/quiz' with the public quiz
+  // runtime; it must never get the credential-less wildcard CORS, or the browser blocks every cookie-authenticated call.
+  const isPublic = !req.path.startsWith('/api/quizzes') && PUBLIC_PATH_PREFIXES.some((p) => req.path.startsWith(p));
+  // Our own frontends call a few public-prefix routes with the session cookie (e.g. /api/scrape-brand), so they get the
+  // credentialed exact-origin CORS; every other origin (customer sites embedding a quiz) keeps the wildcard.
+  const origin = req.headers.origin;
+  if (isPublic && !(origin && ALLOWED_ORIGINS.includes(origin))) return publicCors(req, res, next);
   return restrictedCors(req, res, next);
 });
 
