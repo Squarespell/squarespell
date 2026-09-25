@@ -84,7 +84,7 @@ describe('request-code', () => {
 });
 
 describe('verify-code', () => {
-  it('the correct code creates a session, sets the session and CSRF cookies, and creates exactly one new user row', async () => {
+  it('the correct code creates a session, sets only the session cookie, returns the CSRF token in the body, and creates exactly one new user row', async () => {
     const email = 'brandnew@quiz-test.example';
     await requestCode(email);
     const code = lastCodeFor(email);
@@ -93,7 +93,8 @@ describe('verify-code', () => {
     expect(r.body).toMatchObject({ ok: true, isNewUser: true });
     const setCookie = (r.headers['set-cookie'] || []) as unknown as string[];
     expect(setCookie.some((c) => c.startsWith('sq_session='))).toBe(true);
-    expect(setCookie.some((c) => c.startsWith('sq_csrf='))).toBe(true);
+    expect(setCookie.some((c) => c.startsWith('sq_csrf='))).toBe(false);
+    expect(r.body.csrfToken).toMatch(/^[0-9a-f]{64}$/);
     const rows = await sql<any>(`select email, plan, email_verified_at from users where lower(email)=$1`, [email]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ email, plan: 'free' });
@@ -248,7 +249,7 @@ describe('session lifecycle', () => {
     const cookieHeader = setCookie.map((c) => c.split(';')[0]).join('; ');
 
     const authed = await (await api()).get('/api/auth/session').set('Cookie', cookieHeader);
-    expect(authed.body).toEqual({ authenticated: true });
+    expect(authed.body).toEqual({ authenticated: true, csrfToken: verify.body.csrfToken });
 
     const anon = await (await api()).get('/api/auth/session');
     expect(anon.status).toBe(401);
@@ -261,9 +262,8 @@ describe('session lifecycle', () => {
     const verify = await verifyCode(email, lastCodeFor(email));
     const setCookie = verify.headers['set-cookie'] as unknown as string[];
     const sessionCookie = setCookie.find((c) => c.startsWith('sq_session='))!.split(';')[0];
-    const csrfCookie = setCookie.find((c) => c.startsWith('sq_csrf='))!.split(';')[0];
-    const csrfValue = csrfCookie.split('=')[1];
-    const cookieHeader = `${sessionCookie}; ${csrfCookie}`;
+    const csrfValue = verify.body.csrfToken as string;
+    const cookieHeader = sessionCookie;
 
     const noCsrf = await (await api()).post('/api/auth/logout').set('Cookie', cookieHeader);
     expect(noCsrf.status).toBe(403);
@@ -285,8 +285,7 @@ describe('session lifecycle', () => {
     const cookiesOf = (res: any) => {
       const sc = res.headers['set-cookie'] as unknown as string[];
       const session = sc.find((c: string) => c.startsWith('sq_session='))!.split(';')[0];
-      const csrf = sc.find((c: string) => c.startsWith('sq_csrf='))!.split(';')[0];
-      return { header: `${session}; ${csrf}`, csrfValue: csrf.split('=')[1] };
+      return { header: session, csrfValue: res.body.csrfToken as string };
     };
     const a = cookiesOf(first);
     const b = cookiesOf(second);
