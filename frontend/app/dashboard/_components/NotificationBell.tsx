@@ -151,6 +151,8 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={handleToggle}
+        aria-label="Notifications"
+        aria-expanded={open}
         style={{
           width: 36, height: 36, borderRadius: 10,
           background: open ? C.ACCENT_LIGHT : 'transparent',
