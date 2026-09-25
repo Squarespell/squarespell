@@ -1,5 +1,6 @@
 'use client';
 import { addUtmParams, quizUtm } from '@/lib/urls';
+import { safeCssColor, safeHttpUrl } from '@/lib/safeInput';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 
@@ -192,7 +193,7 @@ export default function EmbedQuizClient({
   // Custom redirect after quiz completion
   useEffect(function() {
     if (stage !== 'result') return;
-    var redirectUrl = quiz.settings?.redirect_url;
+    var redirectUrl = safeHttpUrl(quiz.settings?.redirect_url);
     if (!redirectUrl) return;
     var delay = quiz.settings?.redirect_delay ?? 5;
     setRedirectCountdown(delay);
@@ -213,7 +214,7 @@ export default function EmbedQuizClient({
   }, [stage, quiz.settings?.redirect_url, quiz.settings?.redirect_delay]);
 
   const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const brandSurface = quiz.branding?.colors?.surface || brandBg;
+  const brandSurface = safeCssColor(quiz.branding?.colors?.surface, brandBg);
   const brandBorder = 'rgba(0,0,0,0.10)';
   const brandName = quiz.branding?.site_name || '';
   const PAID_PLANS = ['core', 'starter', 'growth', 'pro', 'business', 'agency'];
@@ -1416,7 +1417,7 @@ export default function EmbedQuizClient({
                             {quiz.settings?.gdpr_policy_url && (
                               <span>
                                 {' '}
-                                <a href={quiz.settings.gdpr_policy_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', opacity: 0.8 }}>
+                                <a href={safeHttpUrl(quiz.settings.gdpr_policy_url)} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', opacity: 0.8 }}>
                                   Privacy Policy
                                 </a>
                               </span>
@@ -1444,13 +1445,13 @@ export default function EmbedQuizClient({
               <div className="sq-result-desc">{outcome.description}</div>
 
               {outcome.ctaUrl ? (
-                <a href={addUtmParams(outcome.ctaUrl, quizUtm(quiz.slug, outcome.title))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={addUtmParams(safeHttpUrl(outcome.ctaUrl), quizUtm(quiz.slug, outcome.title))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button className="sq-btn" type="button">
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
                 </a>
               ) : quiz.settings?.cta_url ? (
-                <a href={addUtmParams(quiz.settings.cta_url, quizUtm(quiz.slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={addUtmParams(safeHttpUrl(quiz.settings.cta_url), quizUtm(quiz.slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button className="sq-btn" type="button">
                     {outcome.ctaText || quiz.settings?.cta_text || 'Get my plan'} →
                   </button>
