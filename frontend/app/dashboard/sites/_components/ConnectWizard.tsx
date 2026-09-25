@@ -9,8 +9,8 @@ type Step = 1 | 2 | 3 | 4 | 5;
 type Check = 'idle' | 'wait' | 'pass' | 'fail';
 const STEP_NAMES = ['Platform', 'Website', 'Install once', 'Verify'];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const NO_RETRY = ['page_requires_login', 'wrong_domain'];
-const NOT_REACHABLE = ['unreachable', 'timeout', 'wrong_domain', 'page_requires_login'];
+const NO_RETRY = ['page_requires_login', 'site_private', 'wrong_domain'];
+const NOT_REACHABLE = ['unreachable', 'timeout', 'wrong_domain', 'page_requires_login', 'site_private'];
 
 const CHECK_TEXT: Record<Check, string> = { idle: 'Not started', wait: 'Checking', pass: 'Passed', fail: 'Did not pass' };
 
@@ -208,7 +208,7 @@ export function ConnectWizard({ open, token, existingSite, onClose, onVerified }
         <ol className="sx-guide">
           {sq ? (
             <>
-              <li><span><b>Open Code Injection.</b> In Squarespace, open Settings, then Advanced, then Code Injection. Menu names can change, so look for Code Injection.</span></li>
+              <li><span><b>Open Code Injection.</b> In Squarespace, open Website, then Pages, then Custom Code, then Code Injection. Menu names can change, so look for Code Injection.</span></li>
               <li><span><b>Paste into Footer.</b> Add the single loader line below to the Footer field.</span></li>
               <li><span><b>Save your changes.</b> Return here and we will verify the live website.</span></li>
             </>
