@@ -19,7 +19,7 @@
  * logout-all from another device, without requiring a page reload).
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { authApi, getCsrfToken } from '@/lib/authApi';
 
@@ -41,11 +41,10 @@ export function useDashboardAuth(): { token: string | null; status: AuthStatus }
   const searchParams = useSearchParams();
   const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
-  const initializedRef = useRef(false);
-
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    // No "already initialized" ref guard here: under React Strict Mode (dev) the effect is mounted, cleaned up
+    // (setting `cancelled`) and mounted again, and a ref guard would skip the second run, leaving every page on
+    // its spinner. Running the check twice in dev is harmless; production mounts once.
     let cancelled = false;
 
     (async () => {

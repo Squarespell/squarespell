@@ -695,8 +695,8 @@ export default function BillingPage() {
                 <div
                   key={p.id}
                   style={{
-                    background: p.featured ? 'linear-gradient(180deg, rgba(13,115,119,.03) 0%, rgba(13,115,119,.08) 100%)' : C.ELEVATED,
-                    border: p.featured ? '2px solid rgba(13,115,119,.30)' : isCurrentPlan ? '2px solid ' + C.ACCENT : '1.5px solid ' + C.BORDER,
+                    background: p.featured ? 'linear-gradient(180deg, rgba(49, 84, 255,.03) 0%, rgba(49, 84, 255,.08) 100%)' : C.ELEVATED,
+                    border: p.featured ? '2px solid rgba(49, 84, 255,.30)' : isCurrentPlan ? '2px solid ' + C.ACCENT : '1.5px solid ' + C.BORDER,
                     borderRadius: 18,
                     padding: '28px 22px 24px',
                     position: 'relative',
@@ -788,7 +788,7 @@ export default function BillingPage() {
                   {isCurrentPlan && <div style={{ height: 18 }} />}
 
                   {/* included */}
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.08em', color: C.ACCENT, marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid rgba(13,115,119,.15)' }}>Included</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.08em', color: C.ACCENT, marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid rgba(49, 84, 255,.15)' }}>Included</div>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', flex: 1, display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
                     {p.included.map(function(f) {
                       return (
@@ -877,7 +877,7 @@ export default function BillingPage() {
                 <span style={{ fontSize: 13, color: C.TEXT_MUTED }}>Proration adjustment</span>
                 <span style={{
                   fontSize: 14, fontWeight: 700,
-                  color: switchModal.prorationAmount >= 0 ? C.TEXT : '#0f7377',
+                  color: switchModal.prorationAmount >= 0 ? C.TEXT : '#3154FF',
                 }}>
                   {switchModal.prorationFormatted}
                 </span>
@@ -892,13 +892,13 @@ export default function BillingPage() {
 
             {switchModal.prorationAmount < 0 && (
               <div style={{
-                background: 'rgba(13,115,119,0.06)',
-                border: '1px solid rgba(13,115,119,0.15)',
+                background: 'rgba(49, 84, 255,0.06)',
+                border: '1px solid rgba(49, 84, 255,0.15)',
                 borderRadius: 8,
                 padding: '10px 14px',
                 marginBottom: 20,
                 fontSize: 13,
-                color: '#0f7377',
+                color: '#3154FF',
                 lineHeight: 1.5,
               }}>
                 You&apos;ll receive a credit of {switchModal.prorationFormatted} for the unused time on your current plan.

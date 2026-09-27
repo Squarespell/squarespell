@@ -1,18 +1,18 @@
 'use client';
 
 /**
- * DashboardShell - the persistent chrome (sidebar + topbar) that wraps every
- * top-level dashboard page.
+ * DashboardShell - the persistent chrome that wraps every top-level dashboard page (2026 redesign).
  *
- * Untitled UI-inspired clean white design with Inter font.
+ * Two horizontal navigation bars instead of a sidebar:
+ *   1. Primary bar: wordmark, the four areas Workspace / Audience / Engage / Insights, search, notifications, account menu.
+ *   2. Contextual bar: the pages of the active area (for Workspace: Dashboard, Quizzes, Templates, Publish, Integrations, Settings).
  *
  * Rules
  * -----
- * - Sidebar is persistent across route changes (no re-mount flicker)
- * - Active state uses gray-50 background
- * - Collapses to a drawer on mobile (<768px)
- * - Full-screen pages (like /dashboard/[quizId] editor) deliberately opt out
- *   by NOT rendering inside this shell
+ * - The chrome is persistent across route changes (no re-mount flicker).
+ * - The active area and page are derived from the pathname, so deep links highlight correctly.
+ * - Full-screen editor routes opt out of the chrome (hideSidebar / isEditorRoute) and render their own editor shell.
+ * - Plan and usage live in the account menu, so nothing from the old sidebar card is lost.
  */
 
 import { ReactNode, useEffect, useRef, useState } from 'react';
@@ -27,156 +27,14 @@ import { DASHBOARD_COLORS } from './dashboardColors';
 
 var C = DASHBOARD_COLORS;
 
-type NavItem = {
-  href: string;
-  label: string;
-  icon: ReactNode;
-  match?: (pathname: string) => boolean;
-};
+/* ---------- navigation model ---------- */
 
-// Inline SVG icons - 1.75px stroke, 20x20 viewBox for Untitled UI feel
-var icons = {
-  overview: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
-      <path d="M9 21V12h6v9"/>
-    </svg>
-  ),
-  quizzes: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="2"/>
-      <path d="M9 9h6M9 13h6M9 17h4"/>
-    </svg>
-  ),
-  editor: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 20h9"/>
-      <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-    </svg>
-  ),
-  leads: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="8" r="4"/>
-      <path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/>
-    </svg>
-  ),
-  emails: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2" y="4" width="20" height="16" rx="2"/>
-      <path d="M22 4L12 13 2 4"/>
-    </svg>
-  ),
-  analytics: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 3v18h18"/>
-      <path d="M7 16l4-5 4 3 5-7"/>
-    </svg>
-  ),
-  integrations: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
-      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
-    </svg>
-  ),
-  embed: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="16 18 22 12 16 6"/>
-      <polyline points="8 6 2 12 8 18"/>
-    </svg>
-  ),
-  brand: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    </svg>
-  ),
-  billing: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
-    </svg>
-  ),
-  templates: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="3" width="7" height="9" rx="1.5"/>
-      <rect x="14" y="3" width="7" height="5" rx="1.5"/>
-      <rect x="14" y="12" width="7" height="9" rx="1.5"/>
-      <rect x="3" y="16" width="7" height="5" rx="1.5"/>
-    </svg>
-  ),
-  trash: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="3 6 5 6 21 6"/>
-      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-    </svg>
-  ),
-  help: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
-      <line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-  ),
-  settings: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-    </svg>
-  ),
-  menu: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden="true">
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <line x1="3" y1="12" x2="21" y2="12"/>
-      <line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  ),
-  close: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18"/>
-      <line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-  ),
-  plus: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="12" y1="5" x2="12" y2="19"/>
-      <line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
-  ),
-  search: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="8"/>
-      <path d="M21 21l-4.35-4.35"/>
-    </svg>
-  ),
-  signout: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-      <polyline points="16 17 21 12 16 7"/>
-      <line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-  ),
-  logo: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="4" r="2" fill="#FFFFFF"/>
-      <line x1="12" y1="6" x2="12" y2="11"/>
-      <line x1="12" y1="11" x2="7" y2="16"/>
-      <line x1="12" y1="11" x2="17" y2="16"/>
-      <circle cx="7" cy="18" r="2" fill="#FFFFFF"/>
-      <circle cx="17" cy="18" r="2" fill="#FFFFFF"/>
-    </svg>
-  ),
-  referrals: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M5 20c0-2 2-4 4-4s4 2 4 4"/>
-      <path d="M19 5l-3 3m0-3l3 3"/>
-      <path d="M19 5c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4"/>
-    </svg>
-  ),
-};
+type SubItem = { href: string; label: string; tour?: string; match?: (p: string) => boolean };
+type NavItem = SubItem & { icon?: ReactNode; children?: SubItem[] };
+type Area = { key: string; label: string; href: string; tour?: string; items: NavItem[] };
 
-function isOverviewRoute(pathname: string): boolean {
-  return pathname === '/dashboard';
+function starts(p: string, prefix: string): boolean {
+  return p === prefix || p.startsWith(prefix + '/');
 }
 
 function isEditorRoute(pathname: string): boolean {
@@ -188,127 +46,126 @@ function isEditorRoute(pathname: string): boolean {
     '/dashboard/team', '/dashboard/emails', '/dashboard/segmentation',
     '/dashboard/automations', '/dashboard/commerce', '/dashboard/templates',
     '/dashboard/brand-kit', '/dashboard/referrals', '/dashboard/embed',
-    '/dashboard/admin', '/dashboard/trash', '/dashboard/sites',
+    '/dashboard/admin', '/dashboard/trash', '/dashboard/sites', '/dashboard/translations',
   ];
-  if (knownPrefixes.some(function(prefix) { return pathname === prefix || pathname.startsWith(prefix + '/'); })) {
-    return false;
-  }
+  if (knownPrefixes.some(function(prefix) { return starts(pathname, prefix); })) return false;
   return pathname.startsWith('/dashboard/');
 }
 
-function isQuizzesRoute(pathname: string): boolean {
-  return pathname === '/dashboard/quizzes' || pathname.startsWith('/dashboard/quizzes/');
+var SETTINGS_PREFIXES = ['/dashboard/settings', '/dashboard/billing', '/dashboard/brand-kit', '/dashboard/team', '/dashboard/referrals', '/dashboard/trash'];
+
+function areasFor(connectEnabled: boolean): Area[] {
+  var publishChildren: SubItem[] = [];
+  if (connectEnabled) publishChildren.push({ href: '/dashboard/sites', label: 'Sites' });
+  publishChildren.push({ href: '/dashboard/embed', label: 'Manual embed', tour: 'embed' });
+  return [
+    {
+      key: 'workspace', label: 'Workspace', href: '/dashboard',
+      items: [
+        { href: '/dashboard', label: 'Dashboard', tour: 'dashboard', match: function(p) { return p === '/dashboard'; }, icon: <HomeIcon /> },
+        {
+          href: '/dashboard/quizzes', label: 'Quizzes', tour: 'quizzes',
+          match: function(p) { return starts(p, '/dashboard/quizzes') || starts(p, '/dashboard/quiz') || starts(p, '/dashboard/translations') || isEditorRoute(p); },
+        },
+        { href: '/dashboard/templates', label: 'Templates' },
+        {
+          href: publishChildren[0].href, label: 'Publish',
+          match: function(p) { return starts(p, '/dashboard/sites') || starts(p, '/dashboard/embed'); },
+          children: publishChildren,
+        },
+        { href: '/dashboard/integrations', label: 'Integrations', tour: 'integrations' },
+        {
+          href: '/dashboard/settings', label: 'Settings', tour: 'billing',
+          match: function(p) { return SETTINGS_PREFIXES.some(function(x) { return starts(p, x); }); },
+        },
+      ],
+    },
+    {
+      key: 'audience', label: 'Audience', href: '/dashboard/leads', tour: 'leads',
+      items: [
+        { href: '/dashboard/leads', label: 'Leads' },
+        { href: '/dashboard/segmentation', label: 'Segmentation' },
+      ],
+    },
+    {
+      key: 'engage', label: 'Engage', href: '/dashboard/emails', tour: 'emails',
+      items: [
+        { href: '/dashboard/emails', label: 'Email campaigns' },
+        { href: '/dashboard/automations', label: 'Automations' },
+        { href: '/dashboard/commerce', label: 'Products' },
+      ],
+    },
+    {
+      key: 'insights', label: 'Insights', href: '/dashboard/analytics', tour: 'analytics',
+      items: [
+        { href: '/dashboard/analytics', label: 'Analytics', match: function(p) { return starts(p, '/dashboard/analytics') && !starts(p, '/dashboard/analytics/attribution'); } },
+        { href: '/dashboard/analytics/attribution', label: 'Attribution' },
+      ],
+    },
+  ];
 }
 
-type NavSection = {
-  label: string;
-  items: NavItem[];
-};
-
-var NAV_SECTIONS: NavSection[] = [
-  {
-    label: 'Overview',
-    items: [
-      { href: '/dashboard', label: 'Dashboard', icon: icons.overview, match: isOverviewRoute },
-      {
-        href: '/dashboard/analytics',
-        label: 'Analytics',
-        icon: icons.analytics,
-        match: function(p) { return p === '/dashboard/analytics' || p.startsWith('/dashboard/analytics/'); },
-      },
-    ],
-  },
-  {
-    label: 'Quizzes',
-    items: [
-      { href: '/dashboard/quizzes', label: 'All quizzes', icon: icons.quizzes, match: isQuizzesRoute },
-      { href: '/dashboard/templates', label: 'Templates', icon: icons.templates },
-      { href: '/dashboard/editor', label: 'Quiz editor', icon: icons.editor, match: isEditorRoute },
-    ],
-  },
-  {
-    label: 'Leads',
-    items: [
-      { href: '/dashboard/leads', label: 'All leads', icon: icons.leads },
-      { href: '/dashboard/segmentation', label: 'Segmentation', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-        </svg>
-      ) },
-    ],
-  },
-  {
-    label: 'Engage',
-    items: [
-      { href: '/dashboard/emails', label: 'Email Campaigns', icon: icons.emails },
-      { href: '/dashboard/automations', label: 'Automations', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-        </svg>
-      ) },
-    ],
-  },
-  {
-    label: 'Commerce',
-    items: [
-      { href: '/dashboard/commerce', label: 'Products', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
-        </svg>
-      ) },
-    ],
-  },
-  {
-    label: 'Settings',
-    items: [
-      { href: '/dashboard/settings', label: 'General', icon: icons.settings },
-      { href: '/dashboard/billing', label: 'Billing & plan', icon: icons.billing },
-      { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
-      { href: '/dashboard/brand-kit', label: 'Brand kit', icon: icons.brand },
-      { href: '/dashboard/team', label: 'Team', icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-        </svg>
-      ) },
-      { href: '/dashboard/referrals', label: 'Referrals', icon: icons.referrals },
-    ],
-  },
-];
-
-/**
- * One-button connect: when the feature is enabled, a "Publish" group (Sites, Manual embed, Integrations) follows Quizzes and
- * Integrations moves out of Settings. When it is disabled the navigation is exactly the original NAV_SECTIONS.
- */
-function navSectionsFor(connectEnabled: boolean): NavSection[] {
-  if (!connectEnabled) return NAV_SECTIONS;
-  var svg = function(children: ReactNode) {
-    return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
-    );
-  };
-  var publish: NavSection = {
-    label: 'Publish',
-    items: [
-      { href: '/dashboard/sites', label: 'Sites', icon: svg(<><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></>) },
-      { href: '/dashboard/embed', label: 'Manual embed', icon: svg(<><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></>) },
-      { href: '/dashboard/integrations', label: 'Integrations', icon: icons.integrations },
-    ],
-  };
-  var out: NavSection[] = [];
-  NAV_SECTIONS.forEach(function(section) {
-    var items = section.items.filter(function(i) { return i.href !== '/dashboard/integrations'; });
-    out.push(items.length === section.items.length ? section : { label: section.label, items: items });
-    if (section.label === 'Quizzes') out.push(publish);
-  });
-  return out;
-}
-
-function isActive(item: NavItem, pathname: string): boolean {
+function itemActive(item: SubItem, pathname: string): boolean {
   if (item.match) return item.match(pathname);
-  return pathname === item.href || pathname.startsWith(item.href + '/');
+  return starts(pathname, item.href);
 }
 
-/* Sidebar plan usage card */
+function areaFor(areas: Area[], pathname: string): Area {
+  for (var i = 0; i < areas.length; i++) {
+    if (areas[i].items.some(function(it) { return itemActive(it, pathname); })) return areas[i];
+  }
+  return areas[0];
+}
+
+/* ---------- icons and brand ---------- */
+
+function HomeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 10l9-7 9 7v10a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1V10z" />
+    </svg>
+  );
+}
+
+function Chevron({ open }: { open?: boolean }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+/** Geometric Squarespell symbol: a block "S" with two fine slits. */
+export function BrandMark({ size = 28, color }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M6 4h20v8H14v2h12v14H6v-8h12v-2H6z" fill={color || C.INK} />
+    </svg>
+  );
+}
+
+export function Wordmark({ compact, size = 26 }: { compact?: boolean; size?: number }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+      <BrandMark size={size} />
+      {!compact && (
+        <span style={{ fontFamily: C.DISPLAY_FONT, fontWeight: 800, fontSize: Math.round(size * 0.7), letterSpacing: '0.02em', color: C.INK }}>
+          SQUARESPELL
+        </span>
+      )}
+    </span>
+  );
+}
+
+var searchIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7.5" />
+    <path d="M20.5 20.5l-4.2-4.2" />
+  </svg>
+);
+
+/* ---------- plan data (moved from the old sidebar card into the account menu) ---------- */
+
 type PlanCardData = {
   name: string;
   renewsAt: string;
@@ -320,161 +177,198 @@ type PlanCardData = {
   quizzesLimit: number;
 };
 
-function usageBarColor(pct: number): string {
-  if (pct >= 90) return C.DANGER;
-  if (pct >= 70) return C.WARNING;
-  return C.ACCENT;
+function isUnlimited(limit: number): boolean {
+  return limit <= 0 || limit === Infinity || limit >= 999999;
 }
 
-function UsageBar({ label, used, limit, unlimited }: { label: string; used: number; limit: number; unlimited?: boolean }) {
-  var pct = (!unlimited && limit > 0) ? Math.min(100, Math.round((used / limit) * 100)) : 0;
-  var color = usageBarColor(pct);
+function UsageLine({ label, used, limit }: { label: string; used: number; limit: number }) {
+  var unlimited = isUnlimited(limit);
+  var pct = unlimited ? 0 : Math.min(100, Math.round((used / limit) * 100));
+  var color = pct >= 90 ? C.DANGER : pct >= 70 ? C.WARNING_500 : C.ACCENT;
   return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: C.GRAY_600 }}>{label}</span>
-        <span style={{ fontSize: 11, color: unlimited ? C.SUCCESS : (pct >= 90 ? C.DANGER : C.GRAY_500) }}>
-          {unlimited ? 'Unlimited' : used.toLocaleString() + ' / ' + limit.toLocaleString()}
+    <div style={{ marginTop: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.GRAY_600 }}>
+        <span>{label}</span>
+        <span style={{ fontVariantNumeric: 'tabular-nums', color: C.INK }}>
+          {unlimited ? used.toLocaleString() + ' / ∞' : used.toLocaleString() + ' / ' + limit.toLocaleString()}
         </span>
       </div>
       {!unlimited && (
-        <div style={{ height: 5, background: C.GRAY_200, borderRadius: 3, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: pct + '%', background: color, borderRadius: 3, transition: 'width 0.4s' }} />
+        <div style={{ height: 4, background: C.GRAY_100, borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: pct + '%', background: color }} />
         </div>
       )}
     </div>
   );
 }
 
-function SidebarPlanCard({ plan }: { plan: PlanCardData }) {
-  var isTopTier = plan.name.toLowerCase().includes('business') || plan.name.toLowerCase().includes('agency');
-  var leadsUnlimited = plan.leadsLimit <= 0 || plan.leadsLimit === Infinity || plan.leadsLimit >= 999999;
-  var quizzesUnlimited = plan.quizzesLimit <= 0 || plan.quizzesLimit === Infinity || plan.quizzesLimit >= 999999;
-  var trialUrgent = plan.isTrial && plan.trialDaysLeft <= 3;
-  return (
-    <div
-      style={{
-        margin: '0 16px 12px',
-        padding: '14px 16px',
-        background: C.GRAY_50,
-        border: '1px solid ' + (trialUrgent ? C.WARNING : C.GRAY_200),
-        borderRadius: 12,
-        fontFamily: C.FONT,
-      }}
-    >
-      {/* Plan name + status */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: C.GRAY_900 }}>{plan.name}</span>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: trialUrgent ? C.WARNING : C.SUCCESS_500, flexShrink: 0 }} />
-      </div>
-      {/* Subline: trial days or renewal date */}
-      {plan.isTrial ? (
-        <div style={{ fontSize: 11, color: trialUrgent ? C.WARNING : C.GRAY_500, fontWeight: trialUrgent ? 600 : 400, marginBottom: 12 }}>
-          {plan.trialDaysLeft > 0 ? plan.trialDaysLeft + ' days left in trial' : 'Trial ended'}
-        </div>
-      ) : plan.renewsAt ? (
-        <div style={{ fontSize: 11, color: C.GRAY_500, marginBottom: 12 }}>Renews {plan.renewsAt}</div>
-      ) : (
-        <div style={{ fontSize: 11, color: C.GRAY_500, marginBottom: 12 }}>Active</div>
-      )}
+/* ---------- account menu ---------- */
 
-      {/* Usage bars */}
-      <UsageBar label="Leads" used={plan.leadsUsed} limit={plan.leadsLimit} unlimited={leadsUnlimited} />
-      <UsageBar label="Quizzes" used={plan.quizzesUsed} limit={plan.quizzesLimit} unlimited={quizzesUnlimited} />
+function AccountMenu({ userEmail, plan, onSignOut }: { userEmail: string; plan: PlanCardData; onSignOut: () => void }) {
+  var [open, setOpen] = useState(false);
+  var ref = useRef<HTMLDivElement>(null);
+  var userName = userEmail.split('@')[0] || 'Account';
+  var displayName = userName.charAt(0).toUpperCase() + userName.slice(1);
+  var initial = (userName[0] || 'S').toUpperCase();
 
-      <Link
-        href="/dashboard/billing"
-        style={{
-          display: 'block',
-          width: '100%',
-          padding: '7px 0',
-          marginTop: 4,
-          background: plan.isTrial ? C.ACCENT : C.SURFACE,
-          border: '1px solid ' + (plan.isTrial ? C.ACCENT : C.GRAY_300),
-          borderRadius: 8,
-          fontSize: 12,
-          fontWeight: 700,
-          color: plan.isTrial ? '#fff' : C.GRAY_700,
-          textAlign: 'center',
-          textDecoration: 'none',
-          fontFamily: C.FONT,
-          transition: 'opacity 0.12s',
-        }}
-        onMouseEnter={function(e) { e.currentTarget.style.opacity = '0.85'; }}
-        onMouseLeave={function(e) { e.currentTarget.style.opacity = '1'; }}
-      >
-        {plan.isTrial ? 'Choose a plan' : isTopTier ? 'Manage plan' : 'Upgrade plan'}
+  useEffect(function() {
+    if (!open) return;
+    var onDoc = function(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    var onKey = function(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return function() { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  var link = function(href: string, label: string) {
+    return (
+      <Link href={href} role="menuitem" onClick={function() { setOpen(false); }} className="sq-menu-item">
+        {label}
       </Link>
+    );
+  };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Account menu"
+        onClick={function() { setOpen(function(v) { return !v; }); }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', padding: '4px 2px', color: C.INK, fontFamily: C.FONT }}
+      >
+        <span style={{ width: 34, height: 34, borderRadius: '50%', background: C.INK, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600 }}>
+          {initial}
+        </span>
+        <span className="sq-hide-sm" style={{ fontSize: 14, fontWeight: 500, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
+        <span className="sq-hide-sm" style={{ color: C.GRAY_500 }}><Chevron open={open} /></span>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute', right: 0, top: 'calc(100% + 10px)', width: 280, background: C.SURFACE,
+            border: '1px solid ' + C.BORDER, borderRadius: C.RADIUS, boxShadow: C.SHADOW_LG, zIndex: 60, overflow: 'hidden',
+          }}
+        >
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid ' + C.BORDER }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.INK }}>{displayName}</div>
+            <div style={{ fontSize: 12, color: C.GRAY_500, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail || '-'}</div>
+          </div>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid ' + C.BORDER, background: C.GRAY_25 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.INK }}>{plan.name}</span>
+              <span style={{ fontSize: 12, color: plan.isTrial && plan.trialDaysLeft <= 3 ? C.WARNING : C.GRAY_500 }}>
+                {plan.isTrial ? (plan.trialDaysLeft > 0 ? plan.trialDaysLeft + ' days left in trial' : 'Trial ended') : plan.renewsAt ? 'Renews ' + plan.renewsAt : 'Active'}
+              </span>
+            </div>
+            <UsageLine label="Leads this month" used={plan.leadsUsed} limit={plan.leadsLimit} />
+            <UsageLine label="Quizzes" used={plan.quizzesUsed} limit={plan.quizzesLimit} />
+          </div>
+          <div style={{ padding: 6 }}>
+            {link('/dashboard/billing', plan.isTrial ? 'Choose a plan' : 'Billing & plan')}
+            {link('/dashboard/settings', 'Workspace settings')}
+            {link('/dashboard/brand-kit', 'Brand kit')}
+            {link('/dashboard/team', 'Team')}
+            {link('/dashboard/referrals', 'Referrals')}
+            {link('/dashboard/trash', 'Trash')}
+            <a href="https://docs.squarespell.com" target="_blank" rel="noopener noreferrer" role="menuitem" className="sq-menu-item">Help center</a>
+          </div>
+          <div style={{ padding: 6, borderTop: '1px solid ' + C.BORDER }}>
+            <button type="button" role="menuitem" onClick={onSignOut} className="sq-menu-item" style={{ color: C.DANGER }}>Sign out</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/* Sidebar help section */
-function SidebarHelpCard() {
+/* ---------- contextual nav item with optional dropdown (Publish) ---------- */
+
+function SubNavItem({ item, pathname }: { item: NavItem; pathname: string }) {
+  var active = itemActive(item, pathname);
+  var [open, setOpen] = useState(false);
+  var ref = useRef<HTMLDivElement>(null);
+
+  useEffect(function() {
+    if (!open) return;
+    var onDoc = function(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    var onKey = function(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return function() { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  if (item.children && item.children.length > 1) {
+    return (
+      <div ref={ref} style={{ position: 'relative', display: 'flex' }}>
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={function() { setOpen(function(v) { return !v; }); }}
+          className={'sq-subnav-link' + (active ? ' is-active' : '')}
+        >
+          {item.label} <Chevron open={open} />
+        </button>
+        {open && (
+          <div role="menu" style={{ position: 'absolute', left: 0, top: 'calc(100% + 4px)', minWidth: 200, background: C.SURFACE, border: '1px solid ' + C.BORDER, borderRadius: C.RADIUS, boxShadow: C.SHADOW_LG, padding: 6, zIndex: 60 }}>
+            {item.children.map(function(child) {
+              var childTour = child.tour ? { 'data-tour': child.tour } : {};
+              return (
+                <Link key={child.href} href={child.href} role="menuitem" onClick={function() { setOpen(false); }} className="sq-menu-item" aria-current={starts(pathname, child.href) ? 'page' : undefined} {...childTour}>
+                  {child.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  var single = item.children && item.children.length === 1 ? item.children[0] : null;
+  var href = single ? single.href : item.href;
+  var tour = single && single.tour ? single.tour : item.tour;
+  var tourAttr = tour ? { 'data-tour': tour } : {};
   return (
-    <a
-      href="https://docs.squarespell.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        margin: '0 16px 12px',
-        padding: '12px 16px',
-        borderRadius: 10,
-        background: C.ACCENT_LIGHT,
-        textDecoration: 'none',
-        transition: 'all 0.12s',
-      }}
-    >
-      <div style={{
-        width: 36, height: 36, borderRadius: '50%',
-        background: C.ACCENT, display: 'flex',
-        alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>Need help?</div>
-        <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>Visit our help center or contact support</div>
-      </div>
-      <span style={{ color: C.GRAY_400, fontSize: 16 }}>&rarr;</span>
-    </a>
+    <Link href={href} className={'sq-subnav-link' + (active ? ' is-active' : '')} aria-current={active ? 'page' : undefined} {...tourAttr}>
+      {item.icon && active ? <span style={{ display: 'inline-flex', color: C.ACCENT }}>{item.icon}</span> : null}
+      {item.label}
+    </Link>
   );
 }
+
+/* ---------- shell ---------- */
 
 interface DashboardShellProps {
   children: ReactNode;
   title?: string;
+  /** Page-level actions; rendered at the right end of the contextual navigation bar. */
   topbarRight?: ReactNode;
   contentPadding?: string;
+  /** Hides both navigation bars (used by focused multi-step flows). */
   hideTopbar?: boolean;
+  /** Hides all chrome (full-screen editor). Defaults to true on editor routes. */
   hideSidebar?: boolean;
 }
 
 export function DashboardShell({
   children,
-  title,
   topbarRight,
-  contentPadding = '32px 32px 56px',
+  contentPadding = '40px 40px 72px',
   hideTopbar = false,
   hideSidebar,
 }: DashboardShellProps) {
-  var pathname = usePathname();
-  // Auto-hide sidebar on editor routes to give maximum canvas space
+  var pathname = usePathname() || '/dashboard';
   var isOnEditor = isEditorRoute(pathname);
-  var shouldHideSidebar = hideSidebar !== undefined ? hideSidebar : isOnEditor;
+  var hideChrome = hideSidebar !== undefined ? hideSidebar : isOnEditor;
   var router = useRouter();
   var [userEmail, setUserEmail] = useState('');
-  var [mobileOpen, setMobileOpen] = useState(false);
   var [isMobile, setIsMobile] = useState(false);
   var [bannerToken, setBannerToken] = useState<string | null>(null);
   var [connectEnabled, setConnectEnabled] = useState(false);
-  var sidebarScrollRef = useRef<HTMLDivElement>(null);
-  var sidebarScrollPos = useRef(0);
   var [planData, setPlanData] = useState<PlanCardData>({
     name: 'Loading...', renewsAt: '', isTrial: false, trialDaysLeft: 0,
     leadsUsed: 0, leadsLimit: 0, quizzesUsed: 0, quizzesLimit: 0,
@@ -488,34 +382,12 @@ export function DashboardShell({
   }, []);
 
   useEffect(function() {
-    // No real per-request token anymore -- the session cookie authenticates
-    // every request (see lib/authFetch.ts's global fetch patch). This is
-    // just a truthy sentinel so the effects below that gate on
-    // `bannerToken` still run once mounted.
+    // The session cookie authenticates every request (lib/authFetch.ts); this is only a truthy sentinel so the
+    // effects below that gate on `bannerToken` run once mounted.
     setBannerToken('session');
   }, []);
 
-  // Restore sidebar scroll position on mount (survives re-mount across routes)
-  useEffect(function() {
-    var el = sidebarScrollRef.current;
-    if (el) {
-      try {
-        var saved = sessionStorage.getItem('sq-sidebar-scroll');
-        if (saved) el.scrollTop = Number(saved);
-      } catch {}
-    }
-  }, []);
-
-  useEffect(function() {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  var userName = userEmail.split('@')[0] || 'User';
-  var userInitial = (userName[0] || 'S').toUpperCase();
-
-  var sidebarWidth = 280;
-
-  // One-button connect feature flag (server-side, off by default): decides whether the Publish group is shown.
+  // One-button connect feature flag (server-side, off by default): decides whether Sites appears under Publish.
   useEffect(function() {
     if (!bannerToken) return;
     var cancelled = false;
@@ -523,11 +395,11 @@ export function DashboardShell({
     fetch(apiBase + '/api/connect/config', { headers: { Authorization: 'Bearer ' + bannerToken } })
       .then(function(r) { return r.ok ? r.json() : { enabled: false }; })
       .then(function(d) { if (!cancelled) setConnectEnabled(!!(d && d.enabled)); })
-      .catch(function() { /* flag unreachable: keep the original navigation */ });
+      .catch(function() { /* flag unreachable: keep Manual embed only */ });
     return function() { cancelled = true; };
   }, [bannerToken]);
 
-  // Fetch plan data for sidebar card
+  // Plan and usage for the account menu.
   useEffect(function() {
     if (!bannerToken) return;
     var cancelled = false;
@@ -554,8 +426,8 @@ export function DashboardShell({
             setPlanData({
               name: planDisplayName,
               renewsAt: renewDate,
-              isTrial,
-              trialDaysLeft,
+              isTrial: isTrial,
+              trialDaysLeft: trialDaysLeft,
               leadsUsed: data.leads_this_month ?? data.usage?.leads ?? 0,
               leadsLimit: data.limits?.leads ?? 0,
               quizzesUsed: data.quiz_count ?? 0,
@@ -569,420 +441,106 @@ export function DashboardShell({
     return function() { cancelled = true; };
   }, [bannerToken]);
 
-  var sidebar = (
-    <aside
-      aria-label="Sidebar navigation"
-      style={{
-        width: sidebarWidth,
-        background: C.SIDEBAR,
-        borderRight: '1px solid ' + C.GRAY_200,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        position: isMobile ? 'fixed' : 'sticky',
-        top: 0,
-        left: isMobile ? (mobileOpen ? 0 : -sidebarWidth - 8) : 0,
-        zIndex: 50,
-        transition: 'left 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
-        fontFamily: C.FONT,
-        boxShadow: isMobile && mobileOpen ? '4px 0 24px rgba(0,0,0,0.08)' : 'none',
-        flexShrink: 0,
-      }}
-    >
-      {/* Brand header */}
-      <div style={{ padding: '24px 16px 16px' }}>
-        <Link
-          href="/dashboard"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            textDecoration: 'none',
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              background: '#0f7377',
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(15,115,119,0.3)',
-            }}
-          >
-            {icons.logo}
-          </div>
-          <span style={{ fontSize: 18, fontWeight: 800, color: C.GRAY_900, letterSpacing: '-0.02em' }}>
-            SQUARESPELL QUIZ
-          </span>
-        </Link>
-      </div>
+  var areas = areasFor(connectEnabled);
+  var currentArea = areaFor(areas, pathname);
 
-      {/* Scrollable area: nav + plan card scroll together */}
-      <div
-        ref={sidebarScrollRef}
-        onScroll={function(e: any) {
-          var pos = e.currentTarget.scrollTop;
-          sidebarScrollPos.current = pos;
-          try { sessionStorage.setItem('sq-sidebar-scroll', String(pos)); } catch {}
-        }}
-        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}
-      >
-        <nav aria-label="Main" style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {navSectionsFor(connectEnabled).map(function(section, sectionIdx) {
+  var signOut = function() { authApi.logout().finally(function() { router.push('/sign-in'); }); };
+  var openSearch = function() { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true })); };
+  var sidePad = isMobile ? 16 : 40;
+
+  var chrome = (
+    <header style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
+      {/* Primary bar */}
+      <div style={{ height: 64, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 44, padding: '0 ' + sidePad + 'px', borderBottom: '1px solid ' + C.BORDER }}>
+        <Link href="/dashboard" aria-label="Squarespell Quiz home" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <Wordmark compact={isMobile} />
+        </Link>
+        <nav aria-label="Primary" className="sq-scroll-x" style={{ display: 'flex', alignItems: 'stretch', gap: isMobile ? 18 : 34, alignSelf: 'stretch', minWidth: 0 }}>
+          {areas.map(function(area) {
+            var active = area.key === currentArea.key;
+            var tourAttr = area.tour ? { 'data-tour': area.tour } : {};
             return (
-              <div key={section.label} style={{ marginTop: sectionIdx === 0 ? 0 : 16 }}>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: C.GRAY_400,
-                    padding: '8px 8px 4px',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase' as const,
-                    fontFamily: C.FONT,
-                  }}
-                >
-                  {section.label}
-                </div>
-                {section.items.map(function(item) {
-                  var active = isActive(item, pathname || '');
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      data-tour={
-                        item.href === '/dashboard' ? 'dashboard' :
-                        item.href === '/dashboard/quizzes' ? 'quizzes' :
-                        item.href === '/dashboard/editor' ? 'editor' :
-                        item.href === '/dashboard/leads' ? 'leads' :
-                        item.href === '/dashboard/analytics' ? 'analytics' :
-                        item.href === '/dashboard/integrations' ? 'integrations' :
-                        item.href === '/dashboard/embed' ? 'embed' :
-                        item.href === '/dashboard/emails' ? 'emails' :
-                        item.href === '/dashboard/billing' ? 'billing' :
-                        undefined
-                      }
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                        padding: '8px 12px',
-                        margin: '1px 0',
-                        borderRadius: 6,
-                        textDecoration: 'none',
-                        color: active ? C.GRAY_900 : C.GRAY_700,
-                        background: active ? C.GRAY_50 : 'transparent',
-                        fontSize: 14,
-                        fontWeight: active ? 600 : 500,
-                        fontFamily: C.FONT,
-                        transition: 'all 0.12s ease',
-                      }}
-                      onMouseEnter={function(e: any) {
-                        if (!active) {
-                          e.currentTarget.style.background = C.GRAY_50;
-                          e.currentTarget.style.color = C.GRAY_900;
-                        }
-                      }}
-                      onMouseLeave={function(e: any) {
-                        if (!active) {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = C.GRAY_700;
-                        }
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 20,
-                          height: 20,
-                          flexShrink: 0,
-                          color: active ? C.ACCENT : C.GRAY_500,
-                          transition: 'color 0.12s ease',
-                        }}
-                      >
-                        {item.icon}
-                      </span>
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+              <Link key={area.key} href={area.href} className={'sq-area-link' + (active ? ' is-active' : '')} aria-current={active ? 'true' : undefined} {...tourAttr}>
+                {area.label}
+              </Link>
             );
           })}
         </nav>
-
-        {/* Plan card — scrolls with nav */}
-        <div style={{ padding: '16px 0 8px' }}>
-          <SidebarPlanCard plan={planData} />
-        </div>
+        <div style={{ flex: 1 }} />
+        <button type="button" onClick={openSearch} className="sq-search" aria-label="Search anything (Command K)">
+          {searchIcon}
+          <span className="sq-hide-sm" style={{ flex: 1, textAlign: 'left' }}>Search anything...</span>
+          <kbd className="sq-hide-sm">⌘K</kbd>
+        </button>
+        <NotificationBell />
+        <AccountMenu userEmail={userEmail} plan={planData} onSignOut={signOut} />
       </div>
 
-      {/* Account footer */}
-      <div style={{ padding: '16px', borderTop: '1px solid ' + C.GRAY_200 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '4px',
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0f7377, #0fa3a8)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 14,
-              fontWeight: 600,
-              flexShrink: 0,
-              position: 'relative',
-            }}
-          >
-            {userInitial}
-            <span style={{
-              position: 'absolute',
-              bottom: 1,
-              right: 1,
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: C.SUCCESS_500,
-              border: '2px solid ' + C.SURFACE,
-            }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: C.GRAY_700,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              fontFamily: C.FONT,
-            }}>
-              {userName}
-            </div>
-            <div style={{
-              fontSize: 12,
-              color: C.GRAY_500,
-              marginTop: 1,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              fontFamily: C.FONT,
-            }}>
-              {userEmail || '-'}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={function() { authApi.logout().finally(function() { router.push('/sign-in'); }); }}
-            title="Sign out"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              background: 'transparent',
-              border: 'none',
-              color: C.GRAY_400,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.12s ease',
-              flexShrink: 0,
-            }}
-            onMouseEnter={function(e: any) {
-              e.currentTarget.style.background = C.DANGER_LIGHT;
-              e.currentTarget.style.color = C.DANGER;
-            }}
-            onMouseLeave={function(e: any) {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = C.GRAY_400;
-            }}
-          >
-            {icons.signout}
-          </button>
-        </div>
+      {/* Contextual bar */}
+      <div style={{ minHeight: 52, display: 'flex', alignItems: 'center', gap: 16, padding: '0 ' + sidePad + 'px', borderBottom: '1px solid ' + C.BORDER, background: 'rgba(251,251,248,0.95)' }}>
+        <nav aria-label={currentArea.label} className="sq-scroll-x" style={{ display: 'flex', alignItems: 'stretch', gap: isMobile ? 18 : 30, alignSelf: 'stretch', minWidth: 0, flex: 1 }}>
+          {currentArea.key === 'workspace' && !isMobile && (
+            <span style={{ display: 'flex', alignItems: 'center', fontSize: 14, color: C.GRAY_600, paddingRight: 18, borderRight: '1px solid ' + C.BORDER, margin: '14px 0' }}>
+              My workspace
+            </span>
+          )}
+          {currentArea.items.map(function(item) {
+            return <SubNavItem key={item.label} item={item} pathname={pathname} />;
+          })}
+        </nav>
+        {topbarRight && <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>{topbarRight}</div>}
       </div>
-    </aside>
+    </header>
   );
 
   return (
-    <div
-      style={{
-        background: C.BG,
-        minHeight: '100vh',
-        display: 'flex',
-        fontFamily: C.FONT,
-        color: C.TEXT,
-      }}
-    >
-      {/* Skip-to-content link for keyboard users (WCAG 2.4.1) */}
+    <div style={{ background: C.BG, minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: C.FONT, color: C.TEXT }}>
       <a
         href="#sq-main"
-        style={{
-          position: 'absolute',
-          left: -9999,
-          top: 0,
-          zIndex: 100,
-          padding: '12px 24px',
-          background: C.ACCENT,
-          color: '#FFFFFF',
-          fontWeight: 700,
-          fontSize: 14,
-          borderRadius: '0 0 8px 0',
-          textDecoration: 'none',
-        }}
+        style={{ position: 'absolute', left: -9999, top: 0, zIndex: 100, padding: '12px 24px', background: C.ACCENT, color: '#FFFFFF', fontWeight: 700, fontSize: 14, borderRadius: '0 0 8px 0' }}
         onFocus={function(e: any) { e.currentTarget.style.left = '0'; }}
         onBlur={function(e: any) { e.currentTarget.style.left = '-9999px'; }}
       >
         Skip to main content
       </a>
 
-      {/* Global focus-visible ring style */}
-      <style>{`
-        *:focus-visible {
-          outline: 2px solid ${C.ACCENT};
-          outline-offset: 2px;
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: SHELL_CSS }} />
 
-      {!shouldHideSidebar && sidebar}
+      {!hideChrome && !hideTopbar && chrome}
       <CommandPalette />
-      {!shouldHideSidebar && <OnboardingTour />}
+      {!hideChrome && !hideTopbar && <OnboardingTour />}
 
-      {/* Scrim for mobile drawer */}
-      {isMobile && mobileOpen && (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Close sidebar"
-          onClick={function() { setMobileOpen(false); }}
-          onKeyDown={function(e: any) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMobileOpen(false); } }}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.18)',
-            zIndex: 40,
-            backdropFilter: 'blur(2px)',
-          }}
-        />
-      )}
+      {!hideChrome && <TopBanner token={bannerToken} />}
 
-      {/* Main column */}
-      <div
-        style={{
-          flex: 1,
-          minWidth: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          background: C.BG,
-        }}
-      >
-        {/* Topbar */}
-        {!hideTopbar && !shouldHideSidebar && (
-        <header
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 20,
-            background: 'rgba(255,255,255,0.85)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderBottom: '1px solid ' + C.GRAY_200,
-            padding: isMobile ? '0 16px' : '0 32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-            height: 64,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
-            {isMobile && (
-              <button
-                type="button"
-                onClick={function() { setMobileOpen(function(v) { return !v; }); }}
-                aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid ' + C.GRAY_300,
-                  color: C.GRAY_700,
-                  width: 40,
-                  height: 40,
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {mobileOpen ? icons.close : icons.menu}
-              </button>
-            )}
-            {/* Topbar search */}
-            <button
-              type="button"
-              onClick={function() {
-                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 14px',
-                border: '1px solid ' + C.GRAY_200,
-                borderRadius: 8,
-                color: C.GRAY_400,
-                fontSize: 14,
-                // Shrinks on phones instead of forcing every dashboard page wider than the screen (was a fixed minWidth of 320).
-                minWidth: 0,
-                flex: '0 1 320px',
-                width: '100%',
-                maxWidth: 320,
-                overflow: 'hidden',
-                cursor: 'pointer',
-                background: C.SURFACE,
-                fontFamily: C.FONT,
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_300; }}
-              onMouseLeave={function(e: any) { e.currentTarget.style.borderColor = C.GRAY_200; }}
-            >
-              {icons.search}
-              <span style={{ flex: 1, minWidth: 0, textAlign: 'left', color: C.GRAY_500, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Search anything...</span>
-              <kbd style={{ padding: '2px 6px', border: '1px solid ' + C.GRAY_200, borderRadius: 4, fontSize: 11, color: C.GRAY_400, background: C.GRAY_50, fontWeight: 500, fontFamily: C.FONT }}>&#8984; K</kbd>
-            </button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <NotificationBell />
-            {topbarRight}
-          </div>
-        </header>
-        )}
-
-        {/* Persistent banner slot */}
-        {!shouldHideSidebar && <TopBanner token={bannerToken} />}
-
-        {/* Page content */}
-        <main id="sq-main" style={{ flex: 1, padding: shouldHideSidebar ? 0 : contentPadding, minWidth: 0 }}>{children}</main>
-      </div>
+      <main id="sq-main" style={{ flex: 1, minWidth: 0, width: '100%', padding: hideChrome ? 0 : (isMobile ? '28px 16px 56px' : contentPadding) }}>
+        <div style={hideChrome ? undefined : { maxWidth: 1440, margin: '0 auto', width: '100%' }}>{children}</div>
+      </main>
     </div>
   );
 }
+
+var SHELL_CSS = `
+  *:focus-visible { outline: 2px solid ${C.ACCENT}; outline-offset: 2px; }
+  .sq-scroll-x { overflow-x: auto; scrollbar-width: none; }
+  .sq-scroll-x::-webkit-scrollbar { display: none; }
+  .sq-area-link { position: relative; display: flex; align-items: center; font-size: 15px; font-weight: 500; color: ${C.GRAY_700}; white-space: nowrap; transition: color .12s; }
+  .sq-area-link:hover { color: ${C.INK}; }
+  .sq-area-link.is-active { color: ${C.ACCENT}; }
+  .sq-area-link.is-active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: ${C.ACCENT}; }
+  .sq-subnav-link { position: relative; display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: ${C.GRAY_600}; white-space: nowrap; background: transparent; border: none; padding: 0; font-family: ${C.FONT}; transition: color .12s; }
+  .sq-subnav-link:hover { color: ${C.INK}; }
+  .sq-subnav-link.is-active { color: ${C.INK}; font-weight: 600; }
+  .sq-subnav-link.is-active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: ${C.ACCENT}; }
+  .sq-search { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; width: 300px; max-width: 30vw; border: 1px solid ${C.BORDER}; border-radius: ${C.RADIUS_SM}px; background: #fff; color: ${C.GRAY_500}; font-size: 14px; font-family: ${C.FONT}; }
+  .sq-search:hover { border-color: ${C.GRAY_300}; }
+  .sq-search kbd { font-family: ${C.FONT}; font-size: 11px; color: ${C.GRAY_500}; border: 1px solid ${C.BORDER}; border-radius: 4px; padding: 1px 5px; background: ${C.GRAY_50}; }
+  .sq-menu-item { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; font-size: 14px; color: ${C.INK}; background: transparent; border: none; font-family: ${C.FONT}; }
+  .sq-menu-item:hover, .sq-menu-item[aria-current="page"] { background: ${C.GRAY_50}; }
+  @media (max-width: 767px) {
+    .sq-hide-sm { display: none !important; }
+    .sq-search { width: 38px; padding: 0; justify-content: center; }
+  }
+`;
 
 // Re-export for backward compatibility
 export { DASHBOARD_COLORS } from './dashboardColors';

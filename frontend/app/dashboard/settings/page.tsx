@@ -15,7 +15,7 @@ function GearIllustration() {
       <div style={{
         position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
         width: 80, height: 10, borderRadius: '50%',
-        background: 'linear-gradient(135deg, #E0F5F6 0%, #B3E6E8 100%)',
+        background: 'linear-gradient(135deg, #DDE3FF 0%, #BFCAFF 100%)',
         opacity: 0.7,
       }} />
       {/* Gear body */}
@@ -71,7 +71,7 @@ function BellIcon() {
 /* ── Integrations icon ── */
 function IntegrationsIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3154FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="2" width="8" height="8" rx="2" />
       <rect x="14" y="2" width="8" height="8" rx="2" />
       <rect x="2" y="14" width="8" height="8" rx="2" />

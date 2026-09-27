@@ -77,10 +77,10 @@ function generateAltPalette(colors: Record<string, string>): Record<string, stri
   }
   // Light bg -> generate dark variant
   return {
-    primary: colors.primary || '#0f7377',
+    primary: colors.primary || '#3154FF',
     background: '#F7F7F5',
     text: '#1A1A1A',
-    accent: colors.accent || colors.primary || '#0f7377',
+    accent: colors.accent || colors.primary || '#3154FF',
   };
 }
 

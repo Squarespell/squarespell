@@ -579,7 +579,7 @@ export function UpgradeModal({
             width: 56,
             height: 56,
             borderRadius: 16,
-            background: 'rgba(13,115,119,0.08)',
+            background: 'rgba(49, 84, 255,0.08)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',

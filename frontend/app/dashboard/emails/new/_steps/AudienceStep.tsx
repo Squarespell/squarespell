@@ -25,10 +25,10 @@ function injectFocusStyles() {
   var style = document.createElement('style');
   style.id = FOCUS_STYLE_ID;
   style.textContent = [
-    '.sq-input:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }',
+    '.sq-input:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(49, 84, 255,0.13) !important; outline: none !important; }',
     '.sq-input::placeholder { color: ' + C.TEXT_MUTED + '; }',
-    '.sq-textarea:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }',
-    '.sq-date-input:focus-within { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; }',
+    '.sq-textarea:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(49, 84, 255,0.13) !important; outline: none !important; }',
+    '.sq-date-input:focus-within { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(49, 84, 255,0.13) !important; }',
   ].join('\n');
   document.head.appendChild(style);
 }

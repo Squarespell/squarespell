@@ -60,7 +60,7 @@ function getInitials(name: string | null, email: string): string {
   return email.slice(0, 2).toUpperCase();
 }
 
-var AVATAR_COLORS = ['#0f7377', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#0B6165'];
+var AVATAR_COLORS = ['#3154FF', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#2442E6'];
 function avatarColor(s: string) {
   var hash = 0;
   for (var i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
@@ -252,7 +252,7 @@ export default function LeadsPage() {
           {/* stat cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
             {[
-              { label: 'Total Leads', val: totalLeads, change: totalLeads > 0 ? '↑ ' + totalLeads + ' total' : '— No data yet', up: totalLeads > 0, iconBg: 'rgba(13,115,119,.08)', iconColor: C.ACCENT, iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
+              { label: 'Total Leads', val: totalLeads, change: totalLeads > 0 ? '↑ ' + totalLeads + ' total' : '— No data yet', up: totalLeads > 0, iconBg: 'rgba(49, 84, 255,.08)', iconColor: C.ACCENT, iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
               { label: 'New This Week', val: leads.filter(function (l) { var d = new Date(l.created_at); var week = new Date(); week.setDate(week.getDate() - 7); return d >= week; }).length, change: leads.length > 0 ? 'of ' + leads.length + ' total' : '— No data yet', up: leads.filter(function (l) { var d = new Date(l.created_at); var week = new Date(); week.setDate(week.getDate() - 7); return d >= week; }).length > 0, iconBg: 'rgba(5,150,105,.08)', iconColor: '#059669', iconPath: 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6' },
               { label: 'Quizzes with Leads', val: totalQuizzes, change: totalQuizzes > 0 ? totalQuizzes + ' active' : '— No data yet', up: false, iconBg: 'rgba(37,99,235,.08)', iconColor: '#2563EB', iconPath: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6' },
               { label: 'High Intent Leads', val: highIntent, change: highIntent > 0 ? '↑ ' + highIntent + ' high intent' : '— No change', up: highIntent > 0, iconBg: 'rgba(220,38,38,.08)', iconColor: '#DC2626', iconPath: 'M12 2c-4 4-8 7-8 12a8 8 0 0016 0c0-5-4-8-8-12z' },

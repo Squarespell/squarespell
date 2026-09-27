@@ -7,7 +7,7 @@ import { SITE_STATE_LABEL } from '@/lib/connect/copy';
 
 /** Shared building blocks for the Sites screens: styles, accessible dialog, live announcements, status badges, logos. */
 
-export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--subtle:#667085;--line:#EAECF0;--soft:#F9FAFB;--teal:#0f7377;--teal-d:#0d6569;--teal-l:#E0F5F6;--ok:#027A48;--ok-l:#ECFDF3;--warn:#B54708;--warn-l:#FFFAEB;--bad:#B42318;--bad-l:#FEF3F2;font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--ink);min-width:0}
+export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--subtle:#667085;--line:#EAECF0;--soft:#F9FAFB;--teal:#3154FF;--teal-d:#2442E6;--teal-l:#DDE3FF;--ok:#027A48;--ok-l:#ECFDF3;--warn:#B54708;--warn-l:#FFFAEB;--bad:#B42318;--bad-l:#FEF3F2;font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--ink);min-width:0}
 .sx-scope *{box-sizing:border-box}
 .sx-scope :focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:8px}
 .sx-hero{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
@@ -35,8 +35,8 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--su
 .sx-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin:0 0 14px}.sx-kv dt{color:var(--muted)}.sx-kv dd{margin:0;text-align:right;overflow-wrap:anywhere}
 .sx-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid transparent}
 .sx-badge svg{flex:none}
-.sx-b-ok{background:var(--ok-l);color:var(--ok);border-color:#ABEFC6}.sx-b-warn{background:var(--warn-l);color:var(--warn);border-color:#FEDF89}.sx-b-bad{background:var(--bad-l);color:var(--bad);border-color:#FECDCA}.sx-b-neutral{background:var(--soft);color:var(--muted);border-color:var(--line)}.sx-b-teal{background:var(--teal-l);color:var(--teal-d);border-color:#B3E6E8}
-.sx-empty{text-align:center;padding:44px 20px;border:1px dashed #D0D5DD;border-radius:18px;background:linear-gradient(180deg,#fff,#F0FAFB)}
+.sx-b-ok{background:var(--ok-l);color:var(--ok);border-color:#ABEFC6}.sx-b-warn{background:var(--warn-l);color:var(--warn);border-color:#FEDF89}.sx-b-bad{background:var(--bad-l);color:var(--bad);border-color:#FECDCA}.sx-b-neutral{background:var(--soft);color:var(--muted);border-color:var(--line)}.sx-b-teal{background:var(--teal-l);color:var(--teal-d);border-color:#BFCAFF}
+.sx-empty{text-align:center;padding:44px 20px;border:1px dashed #D0D5DD;border-radius:18px;background:linear-gradient(180deg,#fff,#EEF1FF)}
 .sx-empty h2{margin:12px 0 6px;font-size:20px}.sx-empty p{margin:0 auto 18px;max-width:52ch;color:var(--muted);line-height:1.55}
 .sx-how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;text-align:left;margin:20px auto 22px;max-width:760px}
 .sx-how div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted)}.sx-how b{display:block;color:var(--ink);margin-bottom:2px;font-size:14px}
@@ -65,7 +65,7 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--su
 .sx-platform[aria-pressed="true"]{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-l)}
 .sx-platform[aria-disabled="true"]{background:var(--soft);cursor:default}
 .sx-platform b{font-size:14px}.sx-platform small{color:var(--muted);font-size:12px;line-height:1.35}
-.sx-note{border:1px solid #B3E6E8;background:var(--teal-l);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:#0b545a;margin-top:14px}
+.sx-note{border:1px solid #BFCAFF;background:var(--teal-l);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:#2442E6;margin-top:14px}
 .sx-warn{border-color:#FEDF89;background:var(--warn-l);color:#7A2E0E}
 .sx-bad{border-color:#FECDCA;background:var(--bad-l);color:#7A271A}
 .sx-field{display:grid;gap:6px;margin:8px 0 12px}.sx-field label{font-weight:600;font-size:14px}.sx-field small{color:var(--muted)}
@@ -116,7 +116,7 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#101828;--muted:#475467;--su
 .sx-place-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:10px 0}
 .sx-place{display:flex;flex-direction:column;text-align:left;padding:0;border:1px solid var(--line);border-radius:15px;background:#fff;overflow:hidden;cursor:pointer;font:inherit;color:inherit;min-width:0;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 .sx-place:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(16,24,40,.09)}
-.sx-place[aria-checked="true"]{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,115,119,.12)}
+.sx-place[aria-checked="true"]{border-color:var(--teal);box-shadow:0 0 0 3px rgba(49, 84, 255,.12)}
 .sx-place-visual{height:116px;background:#eff4f2;position:relative;overflow:hidden;flex:none}
 .sx-wire{position:absolute;inset:15px;background:#fff;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.06);padding:9px}
 .sx-wire::before{content:"";display:block;width:34%;height:5px;border-radius:5px;background:#d7e0dd;margin-bottom:7px}

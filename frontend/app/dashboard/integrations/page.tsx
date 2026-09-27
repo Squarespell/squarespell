@@ -350,7 +350,7 @@ function EmailPlatformForm({
                       padding: '10px 14px',
                       border: '1px solid ' + (isSelected ? C.ACCENT : C.BORDER),
                       borderRadius: 8,
-                      background: isSelected ? 'rgba(13,115,119,0.06)' : C.SURFACE,
+                      background: isSelected ? 'rgba(49, 84, 255,0.06)' : C.SURFACE,
                       cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       transition: 'all 0.15s ease',
@@ -830,12 +830,12 @@ export default function IntegrationsPage() {
                             padding: 16,
                             border: '1px solid ' + (isConnected ? C.ACCENT : C.BORDER),
                             borderRadius: 12,
-                            background: isConnected ? 'rgba(13,115,119,0.04)' : C.SURFACE,
+                            background: isConnected ? 'rgba(49, 84, 255,0.04)' : C.SURFACE,
                             cursor: c.available ? 'pointer' : 'default',
                       opacity: c.available ? 1 : 0.65,
                             transition: 'border-color 0.15s, box-shadow 0.15s',
                           }}
-                          onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.boxShadow = '0 2px 8px rgba(13,115,119,0.08)'; }}
+                          onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.boxShadow = '0 2px 8px rgba(49, 84, 255,0.08)'; }}
                           onMouseLeave={function(e) { e.currentTarget.style.borderColor = isConnected ? C.ACCENT : C.BORDER; e.currentTarget.style.boxShadow = 'none'; }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>

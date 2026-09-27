@@ -59,7 +59,7 @@ const VARIANT_STYLES: Record<BannerVariant, { bg: string; border: string; accent
   },
   info: {
     bg: C.ACCENT_LIGHT,
-    border: 'rgba(13, 115, 119, 0.15)',
+    border: 'rgba(49, 84, 255, 0.15)',
     accent: C.ACCENT,
     text: C.TEXT,
   },

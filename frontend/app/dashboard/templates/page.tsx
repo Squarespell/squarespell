@@ -19,7 +19,7 @@ import {
 } from '../../../lib/quiz/templates';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 
-var ACCENT = C.ACCENT || '#0F7377';
+var ACCENT = C.ACCENT || '#3154FF';
 var ACCENT_LIGHT = C.ACCENT_LIGHT || '#E8F5F5';
 /* Shorthand aliases for cleaner JSX */
 var TEXT = C.TEXT;
@@ -168,7 +168,7 @@ export default function DashboardTemplatesPage() {
                 style={{
                   background: '#fff', borderRadius: 12, overflow: 'hidden',
                   border: '1px solid ' + (isHovered ? ACCENT : BORDER),
-                  boxShadow: isHovered ? '0 4px 20px rgba(15, 115, 119, 0.12)' : '0 1px 3px rgba(0,0,0,0.04)',
+                  boxShadow: isHovered ? '0 4px 20px rgba(49, 84, 255, 0.12)' : '0 1px 3px rgba(0,0,0,0.04)',
                   transition: 'all 0.2s', cursor: 'pointer', position: 'relative',
                 }}
               >

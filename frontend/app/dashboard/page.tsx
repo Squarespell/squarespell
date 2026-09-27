@@ -156,7 +156,7 @@ var AVATAR_COLORS = [
   { bg: '#FFE4E8', fg: '#E31B54' },
 ];
 
-var SOURCE_COLORS = ['#0f7377', '#4DC2C6', '#B3E6E8', '#F79009', '#F04438'];
+var SOURCE_COLORS = ['#3154FF', '#8FA2FF', '#BFCAFF', '#F79009', '#F04438'];
 
 // ═══════ STAT CARD ═══════
 
@@ -206,7 +206,7 @@ function DashStatCard({
         <span style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_500 }}>{label}</span>
         <div style={{
           width: 32, height: 32, borderRadius: 8,
-          background: C.ACCENT_LIGHT, border: '1px solid rgba(13,115,119,0.12)',
+          background: C.ACCENT_LIGHT, border: '1px solid rgba(49, 84, 255,0.12)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: C.ACCENT,
         }}>
@@ -515,10 +515,10 @@ function TopQuizzesList({ quizzes }: { quizzes: Quiz[] }) {
 
 function ConversionFunnel({ funnel }: { funnel: FunnelData }) {
   var steps = [
-    { label: 'Views', value: funnel.views, pct: '100%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
-    { label: 'Started', value: funnel.started, pct: funnel.views > 0 ? ((funnel.started / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
-    { label: 'Completed', value: funnel.completed, pct: funnel.views > 0 ? ((funnel.completed / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
-    { label: 'Leads', value: funnel.leads, pct: funnel.views > 0 ? ((funnel.leads / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.BRAND_50, borderColor: 'rgba(13,115,119,0.25)' },
+    { label: 'Views', value: funnel.views, pct: '100%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(49, 84, 255,0.15)' },
+    { label: 'Started', value: funnel.started, pct: funnel.views > 0 ? ((funnel.started / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(49, 84, 255,0.15)' },
+    { label: 'Completed', value: funnel.completed, pct: funnel.views > 0 ? ((funnel.completed / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(49, 84, 255,0.15)' },
+    { label: 'Leads', value: funnel.leads, pct: funnel.views > 0 ? ((funnel.leads / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.BRAND_50, borderColor: 'rgba(49, 84, 255,0.25)' },
   ];
 
   return (

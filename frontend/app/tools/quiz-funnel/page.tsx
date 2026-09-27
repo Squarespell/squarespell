@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { QUIZ_BUILDER_PATH } from '@/lib/urls'
 
 /* ─── tokens ─── */
-const A='#0f7377',AH='#0b6165',T='#0d1117',M='#6b7280',B='#e5e7eb',S='#f9fafb',W='#ffffff'
+const A='#3154FF',AH='#2442E6',T='#0d1117',M='#6b7280',B='#e5e7eb',S='#f9fafb',W='#ffffff'
 const F="'Inter', system-ui, sans-serif"
 
 /* ─── functional gateway page ───

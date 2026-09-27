@@ -518,9 +518,9 @@ function ScoreBadge({ score, onChange }: { score: number; onChange: (s: number) 
       title="Click to edit score"
       style={{
         fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-        background: (score || 0) >= 3 ? 'rgba(13,115,119,0.12)' : 'rgba(0,0,0,0.04)',
+        background: (score || 0) >= 3 ? 'rgba(49, 84, 255,0.12)' : 'rgba(0,0,0,0.04)',
         color: (score || 0) >= 3 ? C.ACCENT : C.TEXT_MUTED,
-        border: '1px solid ' + ((score || 0) >= 3 ? 'rgba(13,115,119,0.2)' : 'rgba(0,0,0,0.06)'),
+        border: '1px solid ' + ((score || 0) >= 3 ? 'rgba(49, 84, 255,0.2)' : 'rgba(0,0,0,0.06)'),
         cursor: 'pointer', flexShrink: 0,
       }}
     >
@@ -2799,11 +2799,11 @@ function SettingsPanel({
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Theme Color</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input type="color" value={settings?.primary_color || '#0f7377'}
+                <input type="color" value={settings?.primary_color || '#3154FF'}
                   onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
                   style={{ width: 36, height: 36, borderRadius: 8, border: '2px solid ' + C.BORDER, cursor: 'pointer', padding: 0 }} />
                 <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Primary</span>
-                <input type="text" value={settings?.primary_color || '#0f7377'}
+                <input type="text" value={settings?.primary_color || '#3154FF'}
                   onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
                   style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' as const, fontFamily: C.FONT }} />
               </div>
@@ -3353,7 +3353,7 @@ export function QuizBlockEditor({
             {blocks.length === 0 ? (
               <div style={{ textAlign: 'center', marginTop: 120 }}>
                 <div style={{
-                  width: 64, height: 64, borderRadius: 16, background: 'rgba(13,115,119,0.08)',
+                  width: 64, height: 64, borderRadius: 16, background: 'rgba(49, 84, 255,0.08)',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   marginBottom: 16, color: C.ACCENT,
                 }}>
@@ -3451,13 +3451,13 @@ export function QuizBlockEditor({
           background: transparent;
         }
         .qte-wrap:hover .qte-ta {
-          border-color: rgba(15,115,119,0.25);
-          background: rgba(15,115,119,0.03);
+          border-color: rgba(49, 84, 255,0.25);
+          background: rgba(49, 84, 255,0.03);
         }
         .qte-wrap:focus-within .qte-ta {
-          border-color: #0f7377 !important;
+          border-color: #3154FF !important;
           background: #fff !important;
-          box-shadow: 0 0 0 3px rgba(15,115,119,0.08);
+          box-shadow: 0 0 0 3px rgba(49, 84, 255,0.08);
         }
         .qte-pencil { opacity: 0; transition: opacity 0.15s; }
         .qte-wrap:hover:not(:focus-within) .qte-pencil { opacity: 0.55; }
@@ -3468,11 +3468,11 @@ export function QuizBlockEditor({
           border: 1.5px solid #EAECF0;
         }
         .sq-answer-row:hover {
-          border-color: rgba(15,115,119,0.35) !important;
+          border-color: rgba(49, 84, 255,0.35) !important;
         }
         .sq-answer-row:focus-within {
-          border-color: #0f7377 !important;
-          box-shadow: 0 0 0 3px rgba(15,115,119,0.08) !important;
+          border-color: #3154FF !important;
+          box-shadow: 0 0 0 3px rgba(49, 84, 255,0.08) !important;
         }
         .sq-answer-row input::placeholder { color: rgba(0,0,0,0.28); }
         .sq-ans-ta { -webkit-appearance: none; appearance: none; }

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, Suspense, FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { authApi } from '@/lib/authApi'
 
-const ACC = '#0f7377'
+const ACC = '#3154FF'
 const BG = '#F7F7F5'
 const RESEND_COOLDOWN_S = 60
 
@@ -143,7 +143,7 @@ function EmailCodeAuthContent({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   if (checkingSession) {
     return (
       <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 28, height: 28, border: '2px solid rgba(15,115,119,.2)', borderTopColor: ACC, borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '2px solid rgba(49, 84, 255,.2)', borderTopColor: ACC, borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )

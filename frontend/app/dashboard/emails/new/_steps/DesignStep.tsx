@@ -341,10 +341,10 @@ export function DesignStep({
                   <div style={{
                     position: 'absolute', top: 8, left: 8,
                     padding: '5px 12px', borderRadius: 20,
-                    background: 'linear-gradient(135deg, #0f7377 0%, #059669 100%)',
+                    background: 'linear-gradient(135deg, #3154FF 0%, #059669 100%)',
                     color: '#FFFFFF', fontSize: 11, fontWeight: 700,
                     display: 'flex', alignItems: 'center', gap: 5,
-                    boxShadow: '0 2px 8px rgba(13,115,119,0.3)',
+                    boxShadow: '0 2px 8px rgba(49, 84, 255,0.3)',
                   }}>
                     <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
@@ -394,7 +394,7 @@ export function DesignStep({
                       <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 4 }}>Brand applied</span>
                     )}
                     {aiDesign.quizContentApplied && (
-                      <span style={{ fontSize: 10, fontWeight: 600, color: '#0f7377', background: '#F0FDFA', padding: '2px 8px', borderRadius: 4 }}>Quiz content</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#3154FF', background: '#F0FDFA', padding: '2px 8px', borderRadius: 4 }}>Quiz content</span>
                     )}
                   </div>
                 </div>
@@ -662,7 +662,7 @@ export function DesignStep({
                   background: state.abEnabled
                     ? 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%)'
                     : '#FAFAF8',
-                  border: '1.5px solid ' + (state.abEnabled ? '#0f7377' : C.BORDER),
+                  border: '1.5px solid ' + (state.abEnabled ? '#3154FF' : C.BORDER),
                   borderRadius: 12, padding: 16,
                   transition: 'all 0.2s',
                 }}>
@@ -670,7 +670,7 @@ export function DesignStep({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{
                         width: 32, height: 32, borderRadius: 8,
-                        background: state.abEnabled ? 'linear-gradient(135deg, #0f7377, #059669)' : C.ELEVATED,
+                        background: state.abEnabled ? 'linear-gradient(135deg, #3154FF, #059669)' : C.ELEVATED,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         transition: 'all 0.2s',
                       }}>
@@ -687,7 +687,7 @@ export function DesignStep({
                       onClick={function() { setState({ abEnabled: !state.abEnabled, subjectB: state.subjectB || '', abTestPercent: state.abTestPercent || 20, abWaitHours: state.abWaitHours || 4 }); }}
                       style={{
                         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                        background: state.abEnabled ? '#0f7377' : '#D1D5DB',
+                        background: state.abEnabled ? '#3154FF' : '#D1D5DB',
                         position: 'relative', transition: 'background 0.2s', flexShrink: 0,
                       }}
                     >
@@ -704,10 +704,10 @@ export function DesignStep({
                   {state.abEnabled && (
                     <div>
                       <div style={{ marginBottom: 14 }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#0f7377', marginBottom: 6 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#3154FF', marginBottom: 6 }}>
                           <div style={{
                             width: 18, height: 18, borderRadius: 4,
-                            background: 'linear-gradient(135deg, #0f7377, #059669)',
+                            background: 'linear-gradient(135deg, #3154FF, #059669)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 10, fontWeight: 800, color: '#FFFFFF',
                           }}>B</div>
@@ -743,7 +743,7 @@ export function DesignStep({
                       </div>
                       <div style={{
                         marginTop: 14, padding: '10px 12px', background: 'rgba(255,255,255,0.7)',
-                        borderRadius: 8, border: '1px solid rgba(13,115,119,0.15)',
+                        borderRadius: 8, border: '1px solid rgba(49, 84, 255,0.15)',
                       }}>
                         <div style={{ fontSize: 11, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
                           {state.abTestPercent || 20}% of your audience gets Subject A, {state.abTestPercent || 20}% gets Subject B. After {state.abWaitHours || 4} hours, the winning subject is sent to the remaining {100 - ((state.abTestPercent || 20) * 2)}%.
@@ -853,7 +853,7 @@ function injectDesignFocusStyles() {
   if (document.getElementById(FOCUS_STYLE_ID)) return;
   var style = document.createElement('style');
   style.id = FOCUS_STYLE_ID;
-  style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }' +
+  style.textContent = '.sq-dinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(49, 84, 255,0.13) !important; outline: none !important; }' +
     ' .sq-tpl-eye:hover { border-color: ' + C.ACCENT + ' !important; color: ' + C.ACCENT + ' !important; background: #FFFFFF !important; transform: scale(1.08); }' +
     ' @keyframes spin { to { transform: rotate(360deg); } }';
   document.head.appendChild(style);

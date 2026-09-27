@@ -57,7 +57,7 @@ function TeamIllustration() {
         width: 28, height: 28, borderRadius: '50%',
         background: C.ACCENT, display: 'flex',
         alignItems: 'center', justifyContent: 'center', zIndex: 2,
-        boxShadow: '0 2px 4px rgba(13, 115, 119, 0.3)',
+        boxShadow: '0 2px 4px rgba(49, 84, 255, 0.3)',
       }}>
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
           <path d="M8 3v10M3 8h10" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />

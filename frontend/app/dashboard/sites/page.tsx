@@ -118,7 +118,7 @@ function SitesPage() {
 
           {!error && sites.length === 0 ? (
             <div className="sx-empty" data-testid="sites-empty">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0f7377" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" /></svg>
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3154FF" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" /></svg>
               <h2>Connect your website once</h2>
               <p>{PRODUCT_PROMISE} No more copying embed code each time you publish a quiz.</p>
               <div className="sx-how">
