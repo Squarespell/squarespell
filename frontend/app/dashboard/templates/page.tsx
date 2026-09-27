@@ -1,276 +1,228 @@
 'use client';
 
 /**
- * /dashboard/templates — Template gallery inside the dashboard shell.
+ * /dashboard/templates — Template gallery (2026 redesign, screen 13: "Start with a great question.").
  *
- * Image-rich cards with category sidebar, search, hover preview,
- * and "Use this template" + "Preview" actions on each card.
- * Matches the dashboard's Untitled UI design language.
+ * Photographic cards with real per-template facts (question count, whether a lead gate is included, outcome count,
+ * all computed from the template's blocks), search, the four largest categories as pills plus a "More" menu for the
+ * rest, and Preview / Use template actions.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  QUIZ_TEMPLATE_CATALOG,
-  getTemplateCategories,
-  getTemplateThumbnail,
-  getTemplateQuestionCount,
-} from '../../../lib/quiz/templates';
+import { QUIZ_TEMPLATE_CATALOG, getTemplateCategories, getTemplateThumbnail } from '../../../lib/quiz/templates';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
+import { DisplayTitle } from '../_components/PageShell';
 
-var ACCENT = C.ACCENT || '#3154FF';
-var ACCENT_LIGHT = C.ACCENT_LIGHT || '#E8F5F5';
-/* Shorthand aliases for cleaner JSX */
-var TEXT = C.TEXT;
-var MUTED = C.TEXT_MUTED;
-var BORDER = C.BORDER;
-
-/* New category icons for the Squarespace-focused templates */
 var CATEGORY_ICONS: Record<string, string> = {
-  'All':                   'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
   'Photography':           'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2zM12 17a5 5 0 100-10 5 5 0 000 10z',
   'Food & Dining':         'M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3',
-  'Fitness & Wellness':    'M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5zM16 8L2 22M17.5 15H9',
+  'Fitness & Wellness':    'M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11',
   'Online Store':          'M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82zM7 7h.01',
-  'Weddings & Events':     'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z',
-  'Coaches & Consultants': 'M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3.01',
-  'Interior Design':       'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 22V12h6v10',
-  'Beauty & Salons':       'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM9 9h.01M15 9h.01M8 14s1.5 2 4 2 4-2 4-2',
-  'Artists & Creatives':   'M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.586 7.586',
-  'Podcasters & Creators': 'M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8',
-  'Real Estate':           'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0zM12 7a3 3 0 100 6 3 3 0 000-6z',
-  'Travel & Hospitality':  'M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z',
-  'Nonprofits & Causes':   'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
 };
 
-function getCatIcon(cat: string): string {
-  return CATEGORY_ICONS[cat] || CATEGORY_ICONS['All'];
+function catLabel(cat: string): string {
+  if (cat === 'Fitness & Wellness') return 'Fitness';
+  if (cat === 'Online Store') return 'Store';
+  return cat;
 }
+
+type Meta = { thumb: string | null; questions: number; outcomes: number; leadGate: boolean };
+
+var PAGE_CSS = `
+  .sq-tgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .sq-tcard { background: #fff; border: 1px solid ${C.BORDER}; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; transition: border-color .15s, box-shadow .15s; }
+  .sq-tcard:hover { border-color: ${C.GRAY_300}; box-shadow: ${C.SHADOW_MD}; }
+  .sq-tcard:hover .sq-timg { transform: scale(1.03); }
+  .sq-timg { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; display: block; }
+  .sq-tpill { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 20px; border-radius: 999px; border: 1px solid ${C.BORDER}; background: #fff; color: ${C.INK}; font: 500 15px ${C.FONT}; cursor: pointer; white-space: nowrap; }
+  .sq-tpill[aria-pressed="true"] { background: ${C.INK}; border-color: ${C.INK}; color: #fff; }
+  .sq-tbtn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 42px; border-radius: 6px; font: 600 15px ${C.FONT}; text-decoration: none; cursor: pointer; }
+  @media (max-width: 1100px) { .sq-tgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sq-t-art { display: none; } }
+  @media (max-width: 700px) { .sq-tgrid { grid-template-columns: 1fr; } }
+`;
 
 export default function DashboardTemplatesPage() {
   var router = useRouter();
   var categories = useMemo(function() { return getTemplateCategories(); }, []);
   var [activeFilter, setActiveFilter] = useState('All');
   var [searchQuery, setSearchQuery] = useState('');
-  var [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  var [moreOpen, setMoreOpen] = useState(false);
+
+  // Largest four categories become pills; the rest live under "More".
+  var counts = useMemo(function() {
+    var c: Record<string, number> = {};
+    QUIZ_TEMPLATE_CATALOG.forEach(function(t) { c[t.category] = (c[t.category] || 0) + 1; });
+    return c;
+  }, []);
+  var primaryCats = useMemo(function() {
+    return categories.slice().sort(function(a, b) { return (counts[b] || 0) - (counts[a] || 0) || categories.indexOf(a) - categories.indexOf(b); }).slice(0, 4)
+      .sort(function(a, b) { return categories.indexOf(a) - categories.indexOf(b); });
+  }, [categories, counts]);
+  var moreCats = categories.filter(function(c) { return primaryCats.indexOf(c) < 0; });
+
+  useEffect(function() {
+    if (!moreOpen) return;
+    function close(e: MouseEvent) { var t = e.target as HTMLElement; if (!t.closest || !t.closest('[data-more]')) setMoreOpen(false); }
+    document.addEventListener('mousedown', close);
+    return function() { document.removeEventListener('mousedown', close); };
+  }, [moreOpen]);
+
+  var meta = useMemo(function() {
+    var m: Record<string, Meta> = {};
+    QUIZ_TEMPLATE_CATALOG.forEach(function(t) {
+      var blocks = t.blocks();
+      m[t.id] = {
+        thumb: getTemplateThumbnail(t.id),
+        questions: blocks.filter(function(b) { return b.type === 'question'; }).length,
+        outcomes: blocks.filter(function(b) { return b.type === 'outcome'; }).length,
+        leadGate: blocks.some(function(b) { return b.type === 'leadGate'; }),
+      };
+    });
+    return m;
+  }, []);
 
   var filtered = useMemo(function() {
     var result = QUIZ_TEMPLATE_CATALOG;
-    if (activeFilter !== 'All') {
-      result = result.filter(function(t) { return t.category === activeFilter; });
-    }
+    if (activeFilter !== 'All') result = result.filter(function(t) { return t.category === activeFilter; });
     if (searchQuery.trim()) {
       var q = searchQuery.toLowerCase();
       result = result.filter(function(t) {
-        return t.name.toLowerCase().indexOf(q) !== -1 ||
-          t.description.toLowerCase().indexOf(q) !== -1 ||
+        return t.name.toLowerCase().indexOf(q) !== -1 || t.description.toLowerCase().indexOf(q) !== -1 ||
           t.tags.some(function(tag) { return tag.toLowerCase().indexOf(q) !== -1; });
       });
     }
     return result;
   }, [activeFilter, searchQuery]);
 
-  /* Pre-compute thumbnail + question count */
-  var templateMeta = useMemo(function() {
-    var meta: Record<string, { thumb: string | null; qCount: number }> = {};
-    QUIZ_TEMPLATE_CATALOG.forEach(function(t) {
-      meta[t.id] = {
-        thumb: getTemplateThumbnail(t.id),
-        qCount: getTemplateQuestionCount(t.id),
-      };
-    });
-    return meta;
-  }, []);
+  var total = QUIZ_TEMPLATE_CATALOG.length;
+  var activeIsMore = moreCats.indexOf(activeFilter) > -1;
 
   return (
     <DashboardShell title="Templates">
-    <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
 
-      {/* Page header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: TEXT, margin: 0 }}>Quiz Templates</h1>
-        <p style={{ fontSize: 14, color: MUTED, margin: '6px 0 0', lineHeight: 1.5 }}>
-          Start with a professionally designed template built for your Squarespace business. Preview any template, then customize it with your brand.
-        </p>
-      </div>
-
-      {/* Search + filter bar */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: 400 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
-            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-          </svg>
-          <input
-            type="text"
-            placeholder="Search templates..."
-            value={searchQuery}
-            onChange={function(e) { setSearchQuery(e.target.value); }}
-            style={{
-              width: '100%', padding: '9px 12px 9px 36px', fontSize: 14, border: '1px solid ' + BORDER,
-              borderRadius: 8, outline: 'none', background: '#fff', color: TEXT, boxSizing: 'border-box',
-            }}
-          />
+      {/* Header */}
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 32 }}>
+        <div style={{ minWidth: 0 }}>
+          <DisplayTitle size="xl">Start with a great question.</DisplayTitle>
+          <p style={{ margin: '14px 0 0', fontSize: 'clamp(17px, 1.6vw, 22px)', color: C.GRAY_600 }}>{total} templates, ready for your brand.</p>
         </div>
-        <span style={{ fontSize: 13, color: MUTED }}>{filtered.length} template{filtered.length !== 1 ? 's' : ''}</span>
+        <svg className="sq-t-art" width="300" height="140" viewBox="0 0 300 140" aria-hidden="true" style={{ flexShrink: 0, marginTop: -8 }}>
+          <rect x="140" y="0" width="60" height="40" fill={C.ACID} />
+          <path d="M150 140 C 150 80, 190 30, 260 20" fill="none" stroke={C.INK} strokeWidth="1.2" />
+          <rect x="220" y="14" width="80" height="120" fill={C.PERIWINKLE} />
+          <line x1="12" y1="24" x2="12" y2="120" stroke={C.GRAY_300} />
+          <text x="28" y="44" fontSize="10" letterSpacing="2.6" fill={C.INK} fontFamily="Inter">TURN</text>
+          <text x="28" y="60" fontSize="10" letterSpacing="2.6" fill={C.INK} fontFamily="Inter">CURIOSITY</text>
+          <text x="28" y="76" fontSize="10" letterSpacing="2.6" fill={C.INK} fontFamily="Inter">INTO</text>
+          <text x="28" y="92" fontSize="10" letterSpacing="2.6" fill={C.INK} fontFamily="Inter">CONNECTION.</text>
+        </svg>
       </div>
 
-      {/* Category pills */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-        {['All'].concat(categories).map(function(cat) {
-          var isActive = cat === activeFilter;
-          return (
-            <button
-              key={cat}
-              onClick={function() { setActiveFilter(cat); }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px',
-                fontSize: 13, fontWeight: isActive ? 600 : 500, borderRadius: 20,
-                border: isActive ? '1.5px solid ' + ACCENT : '1px solid ' + BORDER,
-                background: isActive ? ACCENT_LIGHT : '#fff',
-                color: isActive ? ACCENT : MUTED,
-                cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d={getCatIcon(cat)} />
-              </svg>
-              {cat}
-            </button>
-          );
-        })}
+      {/* Search + categories */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
+        <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: '1 1 320px', maxWidth: 620 }}>
+          <span style={{ position: 'absolute', left: 16, color: C.GRAY_600, display: 'flex' }}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          </span>
+          <input type="search" aria-label="Search templates" placeholder="Search templates..." value={searchQuery} onChange={function(e) { setSearchQuery(e.target.value); }}
+            style={{ width: '100%', height: 46, padding: '0 16px 0 46px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.INK, fontSize: 16, fontFamily: C.FONT }} />
+        </label>
+        <div role="group" aria-label="Template categories" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button type="button" className="sq-tpill" aria-pressed={activeFilter === 'All'} onClick={function() { setActiveFilter('All'); }} style={{ minWidth: 80, justifyContent: 'center' }}>All</button>
+          {primaryCats.map(function(cat) {
+            return (
+              <button key={cat} type="button" className="sq-tpill" aria-pressed={activeFilter === cat} onClick={function() { setActiveFilter(cat); }}>
+                {CATEGORY_ICONS[cat] && (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={CATEGORY_ICONS[cat]} /></svg>
+                )}
+                {catLabel(cat)}
+              </button>
+            );
+          })}
+          {moreCats.length > 0 && (
+            <div data-more style={{ position: 'relative' }}>
+              <button type="button" className="sq-tpill" aria-haspopup="menu" aria-expanded={moreOpen} aria-pressed={activeIsMore} onClick={function() { setMoreOpen(!moreOpen); }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+                {activeIsMore ? activeFilter : 'More'}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+              </button>
+              {moreOpen && (
+                <div role="menu" style={{ position: 'absolute', top: 50, right: 0, zIndex: 40, minWidth: 240, padding: 6, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, boxShadow: C.SHADOW_LG }}>
+                  {moreCats.map(function(cat) {
+                    return (
+                      <button key={cat} type="button" role="menuitem" onClick={function() { setActiveFilter(cat); setMoreOpen(false); }}
+                        style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '9px 12px', border: 'none', borderRadius: 6, background: activeFilter === cat ? C.GRAY_50 : 'transparent', color: C.INK, fontSize: 14, fontFamily: C.FONT, cursor: 'pointer', textAlign: 'left' }}>
+                        {cat}<span style={{ color: C.GRAY_500 }}>{counts[cat]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Template grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <p style={{ fontSize: 16, fontWeight: 600, color: TEXT }}>No templates found</p>
-          <p style={{ fontSize: 14, color: MUTED, marginTop: 4 }}>Try a different search or category.</p>
-          <button onClick={function() { setActiveFilter('All'); setSearchQuery(''); }} style={{
-            marginTop: 16, padding: '8px 20px', fontSize: 14, fontWeight: 600,
-            background: ACCENT, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
-          }}>Show all templates</button>
+        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: C.INK }}>No templates found.</div>
+          <p style={{ fontSize: 15, color: C.GRAY_600, margin: '6px 0 18px' }}>Try a different search or category.</p>
+          <button type="button" onClick={function() { setActiveFilter('All'); setSearchQuery(''); }} className="sq-tbtn" style={{ flex: 'none', padding: '0 20px', background: C.ACCENT, color: '#fff', border: 'none' }}>Show all templates</button>
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: 20,
-        }}>
+        <div className="sq-tgrid">
           {filtered.map(function(t) {
-            var meta = templateMeta[t.id] || { thumb: null, qCount: 0 };
-            var isHovered = hoveredCard === t.id;
+            var m = meta[t.id] || { thumb: null, questions: 0, outcomes: 0, leadGate: false };
             return (
-              <div
-                key={t.id}
-                onMouseEnter={function() { setHoveredCard(t.id); }}
-                onMouseLeave={function() { setHoveredCard(null); }}
-                style={{
-                  background: '#fff', borderRadius: 12, overflow: 'hidden',
-                  border: '1px solid ' + (isHovered ? ACCENT : BORDER),
-                  boxShadow: isHovered ? '0 4px 20px rgba(49, 84, 255, 0.12)' : '0 1px 3px rgba(0,0,0,0.04)',
-                  transition: 'all 0.2s', cursor: 'pointer', position: 'relative',
-                }}
-              >
-                {/* Image */}
-                <div style={{ position: 'relative', height: 180, overflow: 'hidden', background: '#f0f0f0' }}>
-                  {meta.thumb && (
-                    <img
-                      src={meta.thumb}
-                      alt={t.name}
-                      onError={function(e: any) { e.currentTarget.style.display = 'none'; }}
-                      style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        transition: 'transform 0.3s',
-                        transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                      }}
-                    />
+              <article key={t.id} className="sq-tcard">
+                <Link href={'/dashboard/templates/' + t.id} tabIndex={-1} aria-hidden="true" style={{ position: 'relative', display: 'block', height: 170, overflow: 'hidden', background: C.PERIWINKLE_SOFT }}>
+                  {m.thumb && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="sq-timg" src={m.thumb} alt="" loading="lazy" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                   )}
-
-                  {/* Hover overlay with buttons */}
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-                    opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s',
-                  }}>
-                    <Link
-                      href={'/dashboard/templates/' + t.id}
-                      style={{
-                        padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8,
-                        background: '#fff', color: ACCENT, textDecoration: 'none',
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
-                      Preview
-                    </Link>
-                    <button
-                      onClick={function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        router.push('/dashboard/editor?template=' + t.id);
-                      }}
-                      style={{
-                        padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8,
-                        background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer',
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
+                  <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(22,23,25,0.55) 0%, rgba(22,23,25,0) 55%)' }} />
+                  <span style={{ position: 'absolute', left: 20, bottom: 18, maxWidth: '45%', fontSize: 10, fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff', lineHeight: 1.5 }}>{t.category}</span>
+                </Link>
+                <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: 19, fontWeight: 600, color: C.INK, letterSpacing: '-0.01em' }}>{t.name}</h3>
+                  <p style={{ margin: '6px 0 0', fontSize: 15, color: C.GRAY_600, lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.description}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', margin: '14px 0 16px', fontSize: 14, color: C.GRAY_600 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
+                      {m.questions} {m.questions === 1 ? 'question' : 'questions'}
+                    </span>
+                    {m.leadGate && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3.1-6 7-6 1.6 0 3 .4 4.2 1.1M16 18l2 2 4-4" /></svg>
+                        Lead gate
+                      </span>
+                    )}
+                    {m.outcomes > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></svg>
+                        {m.outcomes} {m.outcomes === 1 ? 'outcome' : 'outcomes'}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 'auto' }}>
+                    <Link href={'/dashboard/templates/' + t.id} className="sq-tbtn" style={{ border: '1px solid ' + C.BORDER, color: C.INK, background: '#fff' }}>Preview</Link>
+                    <button type="button" className="sq-tbtn" onClick={function() { router.push('/dashboard/editor?template=' + t.id); }}
+                      style={{ border: 'none', background: C.ACCENT, color: '#fff' }}
+                      onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_HOVER; }}
+                      onMouseLeave={function(e) { e.currentTarget.style.background = C.ACCENT; }}>
                       Use template
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                     </button>
                   </div>
-
-                  {/* Category badge */}
-                  <span style={{
-                    position: 'absolute', top: 10, left: 10, padding: '4px 10px',
-                    fontSize: 11, fontWeight: 600, borderRadius: 6,
-                    background: 'rgba(255,255,255,0.92)', color: ACCENT,
-                    backdropFilter: 'blur(4px)',
-                  }}>{t.category}</span>
                 </div>
-
-                {/* Card body */}
-                <div style={{ padding: '16px 18px 18px' }}>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: TEXT, margin: 0 }}>{t.name}</h3>
-                  <p style={{
-                    fontSize: 13, color: MUTED, margin: '6px 0 0', lineHeight: 1.5,
-                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                  }}>
-                    {t.description}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: MUTED }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/>
-                      </svg>
-                      {meta.qCount} question{meta.qCount !== 1 ? 's' : ''}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: MUTED }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 8l-4 4-2-2"/>
-                      </svg>
-                      Lead gate
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: MUTED }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3.01"/>
-                      </svg>
-                      3 outcomes
-                    </span>
-                  </div>
-                </div>
-              </div>
+              </article>
             );
           })}
         </div>
       )}
-    </div>
     </DashboardShell>
   );
 }
