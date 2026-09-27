@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
+import { DisplayTitle, UnderlineTabs, PageLoading } from '../_components/PageShell';
 
 /* ─── types ─── */
 type Tag = { id: string; name: string; color: string; created_at: string };
@@ -13,8 +14,8 @@ type Segment = {
 
 /* ─── color presets ─── */
 var TAG_COLORS = [
-  '#3154FF', '#2E90FA', '#7F56D9', '#EE46BC',
-  '#F04438', '#F79009', '#17B26A', '#475467',
+  '#3154FF', '#8FA2FF', '#161719', '#6E6D68',
+  '#C9D93F', '#1F9D57', '#E09B1A', '#C0271B',
 ];
 
 /* ─── main ─── */
@@ -28,6 +29,7 @@ export default function SegmentationPage() {
   /* tag creation */
   var [newTagName, setNewTagName] = useState('');
   var [newTagColor, setNewTagColor] = useState('#3154FF');
+  var tagInputRef = useRef<HTMLInputElement>(null);
   var [colorOpen, setColorOpen] = useState(false);
   var colorRef = useRef<HTMLDivElement>(null);
 
@@ -129,578 +131,193 @@ export default function SegmentationPage() {
 
   /* ─── loading state ─── */
   if (status === 'loading' || loading) {
+    return <DashboardShell title="Segmentation"><PageLoading /></DashboardShell>;
+  }
+
+  var card: React.CSSProperties = { background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 };
+  var label: React.CSSProperties = { display: 'block', fontSize: 15, color: C.INK, marginBottom: 8 };
+  var input: React.CSSProperties = { width: '100%', height: 46, padding: '0 14px', borderRadius: 6, border: '1px solid ' + C.BORDER, fontSize: 15, fontFamily: C.FONT, color: C.INK, background: '#fff' };
+  var tint = function (hex: string) { return hex + '26'; };
+
+  function addButton(onClick: () => void, disabled: boolean, text: string) {
     return (
-      <DashboardShell title="Segmentation">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, fontFamily: C.FONT, color: C.GRAY_400, fontSize: 14 }}>
-          Loading...
-        </div>
-      </DashboardShell>
+      <button type="button" onClick={onClick} disabled={disabled}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 6, border: 'none', fontSize: 16, fontFamily: C.FONT, cursor: disabled ? 'default' : 'pointer', background: disabled ? C.GRAY_100 : C.ACCENT, color: disabled ? C.GRAY_400 : '#fff' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        {text}
+      </button>
     );
   }
 
-  /* ─── render ─── */
+  var TIPS = [
+    { n: '1. Tag your leads', b: 'Use tags to group leads by interest, intent, source or any custom category.', bg: C.PERIWINKLE_SOFT, icon: 'M20.6 13.4 13.4 20.6a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8zM7.5 7.5h.01' },
+    { n: '2. Create segments', b: 'Combine tags and rules to build dynamic segments of your audience.', bg: C.ACID_SOFT, icon: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5M17 11a3 3 0 100-6M22 21c0-3-1.8-5-4.5-5.7' },
+    { n: '3. Automate engagement', b: 'Use segments to send targeted email campaigns and automations.', bg: C.PERIWINKLE_SOFT, icon: 'M13 2 4 14h7l-1 8 9-12h-7z' },
+  ];
+
   return (
     <DashboardShell title="Segmentation">
-      <style>{`
-        .seg-input:focus { border-color: ${C.ACCENT} !important; box-shadow: ${C.FOCUS_RING} !important; }
-        .seg-tab { transition: all 0.15s ease; }
-        .seg-tab:hover { opacity: 0.85; }
-        .seg-tag-chip:hover .seg-tag-x { opacity: 1; }
-        .seg-color-opt:hover { transform: scale(1.2); }
-        .seg-cta-outline:hover { background: ${C.ACCENT_LIGHT} !important; border-color: ${C.ACCENT} !important; color: ${C.ACCENT} !important; }
-        .seg-info-card:hover { box-shadow: ${C.SHADOW_MD}; }
-        .seg-new-btn:hover { background: ${C.ACCENT_HOVER} !important; }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .sq-seg-top { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; margin-bottom: 20px; }
+        .sq-seg-tips { display: grid; grid-template-columns: 240px repeat(3, minmax(0, 1fr)); }
+        .sq-seg-tips > div + div { border-left: 1px solid ${C.BORDER}; }
+        @media (max-width: 1100px) { .sq-seg-top { grid-template-columns: 1fr; } .sq-seg-tips { grid-template-columns: 1fr; } .sq-seg-tips > div + div { border-left: none; border-top: 1px solid ${C.BORDER}; } }
+      ` }} />
 
-      {/* ─── Header row ─── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, margin: 0, lineHeight: 1.3 }}>
-            Segmentation
-          </h1>
-          <p style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, margin: '4px 0 0', lineHeight: 1.5 }}>
-            Organize leads with tags and dynamic segments
-          </p>
-        </div>
-        <button
-          type="button"
-          className="seg-new-btn"
-          onClick={function () {
-            setTab('tags');
-            setNewTagName('');
-            /* focus input after render */
-            setTimeout(function () {
-              var el = document.getElementById('seg-tag-input');
-              if (el) el.focus();
-            }, 50);
-          }}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '10px 18px', borderRadius: 10, border: 'none',
-            background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600,
-            fontFamily: C.FONT, cursor: 'pointer', boxShadow: C.SHADOW_XS,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
-          New tag
-        </button>
+      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Segmentation</div>
+      <DisplayTitle size="xl">Know your audience better.</DisplayTitle>
+      <p style={{ margin: '14px 0 24px', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Organize leads with tags and dynamic segments.</p>
+
+      <div style={{ marginBottom: 24 }}>
+        <UnderlineTabs
+          tabs={[{ value: 'tags', label: 'Tags (' + tags.length + ')' }, { value: 'segments', label: 'Segments (' + segments.length + ')' }]}
+          value={tab}
+          onChange={function (v) { setTab(v as 'tags' | 'segments'); setError(''); }}
+        />
       </div>
 
-      {/* ─── Tabs ─── */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-        {(['tags', 'segments'] as const).map(function (t) {
-          var active = tab === t;
+      {error && <div role="alert" style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 6, background: C.DANGER_LIGHT, color: C.DANGER, fontSize: 14 }}>{error}</div>}
+
+      {tab === 'tags' ? (
+        <>
+          <div className="sq-seg-top">
+            <section style={{ ...card, padding: '28px 28px 30px' }}>
+              <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK }}>Create a tag</h2>
+              <p style={{ margin: '6px 0 22px', fontSize: 16, color: C.GRAY_600 }}>Add a tag to categorize and organize your leads.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto auto', gap: 20, alignItems: 'end' }}>
+                <div>
+                  <label htmlFor="sq-tag-name" style={label}>Tag name</label>
+                  <input id="sq-tag-name" ref={tagInputRef} value={newTagName} onChange={function (e) { setNewTagName(e.target.value); }} onKeyDown={function (e) { if (e.key === 'Enter') createTag(); }} placeholder="Enter tag name..." maxLength={40} style={input} />
+                </div>
+                <div ref={colorRef} style={{ position: 'relative' }}>
+                  <span style={label}>Color</span>
+                  <button type="button" aria-haspopup="listbox" aria-expanded={colorOpen} aria-label="Tag color" onClick={function () { setColorOpen(!colorOpen); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, height: 46, padding: '0 14px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', cursor: 'pointer' }}>
+                    <span style={{ width: 24, height: 24, borderRadius: '50%', background: newTagColor }} />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.INK} strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+                  {colorOpen && (
+                    <div role="listbox" aria-label="Tag colors" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 20, display: 'grid', gridTemplateColumns: 'repeat(4, 28px)', gap: 10, padding: 12, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, boxShadow: C.SHADOW_LG }}>
+                      {TAG_COLORS.map(function (c) {
+                        return <button key={c} type="button" role="option" aria-selected={newTagColor === c} aria-label={'Color ' + c} onClick={function () { setNewTagColor(c); setColorOpen(false); }}
+                          style={{ width: 28, height: 28, borderRadius: '50%', background: c, border: 'none', cursor: 'pointer', boxShadow: newTagColor === c ? '0 0 0 2px #fff, 0 0 0 4px ' + C.INK : 'none' }} />;
+                      })}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span style={label}>Preview</span>
+                  <span style={{ height: 46, display: 'flex', alignItems: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', height: 40, padding: '0 20px', borderRadius: 999, background: tint(newTagColor), color: newTagColor === '#C9D93F' ? C.INK : newTagColor, fontSize: 15, fontWeight: 500, maxWidth: 220, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{newTagName.trim() || 'Tag name'}</span></span>
+                </div>
+              </div>
+              <div style={{ marginTop: 24 }}>{addButton(createTag, !newTagName.trim() || creating, creating ? 'Adding...' : 'Add tag')}</div>
+            </section>
+
+            <section aria-label="Example tags" style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, background: C.PERIWINKLE, padding: '28px 30px' }}>
+              <svg aria-hidden="true" width="200" height="200" viewBox="0 0 200 200" style={{ position: 'absolute', right: -30, bottom: -40 }}>
+                <circle cx="130" cy="130" r="110" fill={C.BRAND_300} opacity="0.6" />
+                <path d="M20 200 A 80 80 0 0 1 100 120 L 100 200 Z" fill={C.ACID} />
+              </svg>
+              <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 20 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: C.GRAY_600, marginBottom: 18 }}>EXAMPLES</div>
+                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1.05, color: C.INK }}>Simple tags<span style={{ color: C.ACCENT }}>.</span><br />Bigger insights<span style={{ color: C.ACCENT }}>.</span></div>
+                  <p style={{ margin: '16px 0 0', fontSize: 16, color: C.GRAY_700, lineHeight: 1.5, maxWidth: 340 }}>Use tags to group leads by interest, intent or source. Later, turn them into dynamic segments for targeted campaigns.</p>
+                </div>
+                <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+                  {[['Interest: Design', C.ACID], ['High intent', C.ACCENT], ['New lead', C.BRAND_300]].map(function (t) {
+                    return <span key={t[0]} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 42, padding: '0 18px 0 14px', borderRadius: 999, background: '#fff', fontSize: 15, color: C.INK, whiteSpace: 'nowrap' }}><span style={{ width: 18, height: 18, borderRadius: '50%', background: t[1] }} />{t[0]}</span>;
+                  })}
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section style={{ ...card, marginBottom: 20 }}>
+            {tags.length === 0 ? (
+              <div style={{ padding: '44px 20px', textAlign: 'center' }}>
+                <span style={{ width: 76, height: 76, borderRadius: '50%', background: C.PERIWINKLE_SOFT, color: C.BRAND_700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8zM7.5 7.5h.01" /></svg>
+                </span>
+                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: C.INK }}>No tags yet</div>
+                <p style={{ margin: '6px 0 18px', fontSize: 16, color: C.GRAY_600 }}>Create tags to categorize and organize your leads.</p>
+                <button type="button" onClick={function () { tagInputRef.current?.focus(); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.INK, fontSize: 16, fontFamily: C.FONT, cursor: 'pointer' }}>+ Create your first tag</button>
+              </div>
+            ) : (
+              <div style={{ padding: '20px 24px' }}>
+                <h3 style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 600, color: C.INK }}>Your tags</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {tags.map(function (t) {
+                    return (
+                      <span key={t.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 38, padding: '0 6px 0 16px', borderRadius: 999, background: tint(t.color || C.ACCENT), color: t.color === '#C9D93F' ? C.INK : (t.color || C.ACCENT), fontSize: 15, fontWeight: 500 }}>
+                        {t.name}
+                        <button type="button" aria-label={'Remove tag ' + t.name} title="Remove tag" onClick={function () { deleteTag(t.id); }}
+                          style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.7)', color: C.GRAY_600, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <>
+          <section style={{ ...card, padding: '28px', marginBottom: 20 }}>
+            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK }}>Create a segment</h2>
+            <p style={{ margin: '6px 0 22px', fontSize: 16, color: C.GRAY_600 }}>Group leads for targeted campaigns and automations.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.4fr) auto', gap: 16, alignItems: 'end' }}>
+              <div><label htmlFor="sq-seg-name" style={label}>Segment name</label><input id="sq-seg-name" value={newSegName} onChange={function (e) { setNewSegName(e.target.value); }} onKeyDown={function (e) { if (e.key === 'Enter') createSegment(); }} placeholder="Enter segment name..." style={input} /></div>
+              <div><label htmlFor="sq-seg-desc" style={label}>Description (optional)</label><input id="sq-seg-desc" value={newSegDesc} onChange={function (e) { setNewSegDesc(e.target.value); }} placeholder="Who belongs in this segment?" style={input} /></div>
+              {addButton(createSegment, !newSegName.trim() || creating, creating ? 'Adding...' : 'Add segment')}
+            </div>
+          </section>
+          <section style={{ ...card, marginBottom: 20 }}>
+            {segments.length === 0 ? (
+              <div style={{ padding: '44px 20px', textAlign: 'center' }}>
+                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: C.INK }}>No segments yet</div>
+                <p style={{ margin: '6px 0 0', fontSize: 16, color: C.GRAY_600 }}>Create a segment to target a group of leads in campaigns and automations.</p>
+              </div>
+            ) : (
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                {segments.map(function (sg, i) {
+                  return (
+                    <li key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 24px', borderTop: i === 0 ? 'none' : '1px solid ' + C.BORDER_LIGHT }}>
+                      <span style={{ width: 40, height: 40, borderRadius: 6, background: C.PERIWINKLE_SOFT, color: C.ACCENT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5" /></svg>
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: C.INK }}>{sg.name}</div>
+                        {sg.description && <div style={{ fontSize: 14, color: C.GRAY_600, marginTop: 2 }}>{sg.description}</div>}
+                      </div>
+                      <span style={{ fontSize: 14, color: C.GRAY_600, whiteSpace: 'nowrap' }}>{(sg.cached_count || 0).toLocaleString()} {sg.cached_count === 1 ? 'lead' : 'leads'}</span>
+                      <button type="button" onClick={function () { deleteSegment(sg.id); }} style={{ height: 36, padding: '0 14px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.DANGER, fontSize: 14, fontFamily: C.FONT, cursor: 'pointer' }}>Delete</button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* Tips */}
+      <section className="sq-seg-tips" style={{ ...card, padding: '26px 0' }}>
+        <div style={{ padding: '0 28px' }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: C.GRAY_600, marginBottom: 10 }}>TIPS</div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.05, color: C.INK }}>Get more from segmentation<span style={{ color: C.ACCENT }}>.</span></div>
+        </div>
+        {TIPS.map(function (t) {
           return (
-            <button
-              key={t}
-              type="button"
-              className="seg-tab"
-              onClick={function () { setTab(t); }}
-              style={{
-                padding: '8px 20px', fontSize: 14, fontWeight: 600,
-                color: active ? '#fff' : C.GRAY_500,
-                background: active ? C.ACCENT : '#fff',
-                border: '1px solid ' + (active ? C.ACCENT : C.GRAY_200),
-                borderRadius: 10, cursor: 'pointer', fontFamily: C.FONT,
-              }}
-            >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
+            <div key={t.n} style={{ display: 'flex', gap: 18, padding: '0 28px' }}>
+              <span style={{ width: 62, height: 62, borderRadius: 8, background: t.bg, color: C.INK, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={t.icon} /></svg>
+              </span>
+              <div><div style={{ fontSize: 17, fontWeight: 600, color: C.INK }}>{t.n}</div><div style={{ fontSize: 15, color: C.GRAY_600, lineHeight: 1.45, marginTop: 4 }}>{t.b}</div></div>
+            </div>
           );
         })}
-      </div>
-
-      {/* ─── Error banner ─── */}
-      {error && (
-        <div style={{
-          padding: '10px 16px', background: C.DANGER_LIGHT,
-          border: '1px solid #FEE4E2', borderRadius: 10,
-          color: C.DANGER, fontSize: 13, fontFamily: C.FONT, marginBottom: 16,
-        }}>
-          {error}
-        </div>
-      )}
-
-      {/* ─── Tags tab ─── */}
-      {tab === 'tags' && (
-        <>
-          {/* Main card */}
-          <div style={{
-            background: '#fff', border: '1px solid ' + C.GRAY_200,
-            borderRadius: 16, padding: 28, boxShadow: C.SHADOW_XS,
-            minHeight: 360,
-          }}>
-            {/* Creation row */}
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 32 }}>
-              <input
-                id="seg-tag-input"
-                type="text"
-                className="seg-input"
-                placeholder="Enter new tag name..."
-                value={newTagName}
-                onChange={function (e) { setNewTagName(e.target.value); }}
-                onKeyDown={function (e) { if (e.key === 'Enter') createTag(); }}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid ' + C.GRAY_300,
-                  borderRadius: 10, fontSize: 14, fontFamily: C.FONT,
-                  color: C.GRAY_900, outline: 'none', background: '#fff',
-                }}
-              />
-
-              {/* Color picker dropdown */}
-              <div ref={colorRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={function () { setColorOpen(!colorOpen); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '9px 12px', border: '1px solid ' + C.GRAY_300,
-                    borderRadius: 10, background: '#fff', cursor: 'pointer',
-                  }}
-                >
-                  <span style={{
-                    width: 22, height: 22, borderRadius: 6,
-                    background: newTagColor, flexShrink: 0,
-                  }} />
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 6l4 4 4-4" stroke={C.GRAY_400} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-
-                {colorOpen && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                    background: '#fff', border: '1px solid ' + C.GRAY_200,
-                    borderRadius: 12, padding: 12, boxShadow: C.SHADOW_LG,
-                    zIndex: 20, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 8, minWidth: 140,
-                  }}>
-                    {TAG_COLORS.map(function (c) {
-                      return (
-                        <button
-                          key={c}
-                          type="button"
-                          className="seg-color-opt"
-                          onClick={function () { setNewTagColor(c); setColorOpen(false); }}
-                          style={{
-                            width: 28, height: 28, borderRadius: 8,
-                            background: c, border: newTagColor === c ? '2px solid ' + C.GRAY_900 : '2px solid transparent',
-                            cursor: 'pointer', transition: 'transform 0.15s',
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Add tag button */}
-              <button
-                type="button"
-                className="seg-new-btn"
-                onClick={createTag}
-                disabled={creating || !newTagName.trim()}
-                style={{
-                  padding: '10px 20px', borderRadius: 10, border: 'none',
-                  background: creating || !newTagName.trim() ? C.GRAY_200 : C.ACCENT,
-                  color: creating || !newTagName.trim() ? C.GRAY_400 : '#fff',
-                  fontSize: 14, fontWeight: 600, fontFamily: C.FONT,
-                  cursor: creating || !newTagName.trim() ? 'not-allowed' : 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {creating ? 'Adding...' : 'Add tag'}
-              </button>
-            </div>
-
-            {/* Tag list or empty state */}
-            {tags.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0 32px' }}>
-                {/* Illustration */}
-                <div style={{ position: 'relative', width: 100, height: 100, marginBottom: 20 }}>
-                  {/* Soft circle bg */}
-                  <div style={{
-                    position: 'absolute', inset: 0, borderRadius: '50%',
-                    background: 'radial-gradient(circle, ' + C.BRAND_50 + ' 0%, transparent 70%)',
-                  }} />
-                  {/* Tag icon */}
-                  <div style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: 56, height: 56, borderRadius: 14,
-                    background: C.BRAND_50, display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-                      <line x1="7" y1="7" x2="7.01" y2="7" />
-                    </svg>
-                  </div>
-                  {/* Sparkles */}
-                  <svg width="14" height="14" viewBox="0 0 14 14" style={{ position: 'absolute', top: 10, right: 8 }}>
-                    <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.ACCENT} opacity="0.3" />
-                  </svg>
-                  <svg width="10" height="10" viewBox="0 0 14 14" style={{ position: 'absolute', top: 4, right: 22 }}>
-                    <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.ACCENT} opacity="0.5" />
-                  </svg>
-                  <svg width="8" height="8" viewBox="0 0 14 14" style={{ position: 'absolute', top: 22, right: 2 }}>
-                    <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.ACCENT} opacity="0.2" />
-                  </svg>
-                </div>
-
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, margin: '0 0 6px' }}>
-                  No tags yet
-                </h3>
-                <p style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, margin: '0 0 20px', textAlign: 'center' }}>
-                  Create tags to categorize and organize your leads.
-                </p>
-                <button
-                  type="button"
-                  className="seg-cta-outline"
-                  onClick={function () {
-                    var el = document.getElementById('seg-tag-input');
-                    if (el) el.focus();
-                  }}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '10px 20px', borderRadius: 10,
-                    border: '1px solid ' + C.GRAY_200, background: '#fff',
-                    color: C.GRAY_700, fontSize: 14, fontWeight: 600,
-                    fontFamily: C.FONT, cursor: 'pointer',
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                  Create your first tag
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                {tags.map(function (tag) {
-                  return (
-                    <div
-                      key={tag.id}
-                      className="seg-tag-chip"
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 8,
-                        padding: '7px 14px', borderRadius: 20,
-                        background: tag.color + '12', border: '1px solid ' + tag.color + '25',
-                        fontSize: 13, fontWeight: 500, color: C.GRAY_700, fontFamily: C.FONT,
-                      }}
-                    >
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: tag.color, flexShrink: 0 }} />
-                      {tag.name}
-                      <button
-                        type="button"
-                        className="seg-tag-x"
-                        onClick={function () { deleteTag(tag.id); }}
-                        style={{
-                          background: 'none', border: 'none', color: C.GRAY_400,
-                          cursor: 'pointer', padding: 0, fontSize: 16, lineHeight: 1,
-                          opacity: 0.5, transition: 'opacity 0.15s',
-                        }}
-                        title="Remove tag"
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* ─── Bottom info cards ─── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 20 }}>
-            {/* Organize leads */}
-            <div className="seg-info-card" style={{
-              background: '#fff', border: '1px solid ' + C.GRAY_200,
-              borderRadius: 14, padding: 24, transition: 'box-shadow 0.2s',
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: C.BRAND_50, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-                  <line x1="7" y1="7" x2="7.01" y2="7" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>
-                  Organize leads
-                </div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>
-                  Use tags to group leads based on interests, behavior, or quiz responses.
-                </div>
-              </div>
-            </div>
-
-            {/* Create segments */}
-            <div className="seg-info-card" style={{
-              background: '#fff', border: '1px solid ' + C.GRAY_200,
-              borderRadius: 14, padding: 24, transition: 'box-shadow 0.2s',
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: '#F4EBFF', display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.PURPLE_500} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                  <path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>
-                  Create segments
-                </div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>
-                  Build dynamic segments for targeted campaigns and automations.
-                </div>
-              </div>
-            </div>
-
-            {/* Power automations */}
-            <div className="seg-info-card" style={{
-              background: '#fff', border: '1px solid ' + C.GRAY_200,
-              borderRadius: 14, padding: 24, transition: 'box-shadow 0.2s',
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: C.GRAY_100, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_600} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>
-                  Power automations
-                </div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>
-                  Use tags and segments to trigger personalized workflows.
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ─── Segments tab ─── */}
-      {tab === 'segments' && (
-        <>
-          <div style={{
-            background: '#fff', border: '1px solid ' + C.GRAY_200,
-            borderRadius: 16, padding: 28, boxShadow: C.SHADOW_XS,
-            minHeight: 360,
-          }}>
-            {/* Creation row */}
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 32 }}>
-              <input
-                type="text"
-                className="seg-input"
-                placeholder="Enter segment name..."
-                value={newSegName}
-                onChange={function (e) { setNewSegName(e.target.value); }}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid ' + C.GRAY_300,
-                  borderRadius: 10, fontSize: 14, fontFamily: C.FONT,
-                  color: C.GRAY_900, outline: 'none', background: '#fff',
-                }}
-              />
-              <input
-                type="text"
-                className="seg-input"
-                placeholder="Description (optional)"
-                value={newSegDesc}
-                onChange={function (e) { setNewSegDesc(e.target.value); }}
-                onKeyDown={function (e) { if (e.key === 'Enter') createSegment(); }}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid ' + C.GRAY_300,
-                  borderRadius: 10, fontSize: 14, fontFamily: C.FONT,
-                  color: C.GRAY_900, outline: 'none', background: '#fff',
-                }}
-              />
-              <button
-                type="button"
-                className="seg-new-btn"
-                onClick={createSegment}
-                disabled={creating || !newSegName.trim()}
-                style={{
-                  padding: '10px 20px', borderRadius: 10, border: 'none',
-                  background: creating || !newSegName.trim() ? C.GRAY_200 : C.ACCENT,
-                  color: creating || !newSegName.trim() ? C.GRAY_400 : '#fff',
-                  fontSize: 14, fontWeight: 600, fontFamily: C.FONT,
-                  cursor: creating || !newSegName.trim() ? 'not-allowed' : 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {creating ? 'Adding...' : 'Add segment'}
-              </button>
-            </div>
-
-            {/* Segment list or empty state */}
-            {segments.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0 32px' }}>
-                <div style={{ position: 'relative', width: 100, height: 100, marginBottom: 20 }}>
-                  <div style={{
-                    position: 'absolute', inset: 0, borderRadius: '50%',
-                    background: 'radial-gradient(circle, #F4EBFF 0%, transparent 70%)',
-                  }} />
-                  <div style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: 56, height: 56, borderRadius: 14,
-                    background: '#F4EBFF', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.PURPLE_500} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-                    </svg>
-                  </div>
-                  <svg width="14" height="14" viewBox="0 0 14 14" style={{ position: 'absolute', top: 10, right: 8 }}>
-                    <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.PURPLE_500} opacity="0.3" />
-                  </svg>
-                  <svg width="10" height="10" viewBox="0 0 14 14" style={{ position: 'absolute', top: 4, right: 22 }}>
-                    <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.PURPLE_500} opacity="0.5" />
-                  </svg>
-                </div>
-
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, margin: '0 0 6px' }}>
-                  No segments yet
-                </h3>
-                <p style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, margin: '0 0 20px', textAlign: 'center', maxWidth: 340 }}>
-                  Create segments to group leads by shared criteria like quiz score, outcome, or tags.
-                </p>
-                <button
-                  type="button"
-                  className="seg-cta-outline"
-                  onClick={function () {
-                    var el = document.querySelector<HTMLInputElement>('input[placeholder="Enter segment name..."]');
-                    if (el) el.focus();
-                  }}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '10px 20px', borderRadius: 10,
-                    border: '1px solid ' + C.GRAY_200, background: '#fff',
-                    color: C.GRAY_700, fontSize: 14, fontWeight: 600,
-                    fontFamily: C.FONT, cursor: 'pointer',
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                  Create your first segment
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {segments.map(function (seg) {
-                  return (
-                    <div
-                      key={seg.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: 16, border: '1px solid ' + C.GRAY_200, borderRadius: 12,
-                        background: C.SURFACE, transition: 'box-shadow 0.15s',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{seg.name}</div>
-                        {seg.description && <div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 2, fontFamily: C.FONT }}>{seg.description}</div>}
-                        <div style={{ fontSize: 12, color: C.GRAY_400, marginTop: 4, fontFamily: C.FONT }}>
-                          {seg.rules.length} rule{seg.rules.length !== 1 ? 's' : ''} &middot; {seg.cached_count} lead{seg.cached_count !== 1 ? 's' : ''}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="seg-cta-outline"
-                        onClick={function () { deleteSegment(seg.id); }}
-                        style={{
-                          background: '#fff', border: '1px solid ' + C.GRAY_200,
-                          borderRadius: 8, color: C.GRAY_500, cursor: 'pointer',
-                          padding: '6px 14px', fontSize: 13, fontFamily: C.FONT,
-                          fontWeight: 500,
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Bottom info cards (same as tags tab) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 20 }}>
-            <div className="seg-info-card" style={{
-              background: '#fff', border: '1px solid ' + C.GRAY_200,
-              borderRadius: 14, padding: 24, transition: 'box-shadow 0.2s',
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: C.BRAND_50, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>Organize leads</div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>Use tags to group leads based on interests, behavior, or quiz responses.</div>
-              </div>
-            </div>
-            <div className="seg-info-card" style={{
-              background: '#fff', border: '1px solid ' + C.GRAY_200,
-              borderRadius: 14, padding: 24, transition: 'box-shadow 0.2s',
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: '#F4EBFF', display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.PURPLE_500} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>Create segments</div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>Build dynamic segments for targeted campaigns and automations.</div>
-              </div>
-            </div>
-            <div className="seg-info-card" style={{
-              background: '#fff', border: '1px solid ' + C.GRAY_200,
-              borderRadius: 14, padding: 24, transition: 'box-shadow 0.2s',
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: C.GRAY_100, display: 'flex',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_600} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>Power automations</div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>Use tags and segments to trigger personalized workflows.</div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      </section>
     </DashboardShell>
   );
 }
