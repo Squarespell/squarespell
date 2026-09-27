@@ -1705,6 +1705,7 @@ export function TryFlowInner({
             saveState="idle"
             onPublish={goSignUp}
             publishLabel="Save & Publish"
+            quizTitle={quiz?.title}
             onPreview={function() {
               // Convert current editorBlocks → legacy quiz format so stage 4
               // renders the user's edited version, not the original AI output.
