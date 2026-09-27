@@ -9,6 +9,7 @@ import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '@/lib/quiz/templates';
 import { blocksToLegacy, legacyToBlocks } from '@/lib/quiz/blocks';
 import { QuizBlockEditor } from '@/app/dashboard/_components/QuizBlockEditor';
 import QuizRenderer, { RendererQuiz, RendererStage } from '@/components/quiz-taker/QuizRenderer';
+import { Wordmark } from '@/app/dashboard/_components/Brand';
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
@@ -1265,10 +1266,7 @@ export function TryFlowInner({
           <div className="s2-split-wrap">
             <div className="s2-left-panel">
               <div className="s2-left-logo">
-                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-                </div>
-                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
+                <Wordmark size={28} />
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Error</div>
@@ -1276,11 +1274,7 @@ export function TryFlowInner({
                 <div className="s2-left-type-chip">Could not analyze</div>
               </div>
               <div className="s2-left-footer">
-                <div className="s2-left-step-dots">
-                  <span className="s2-left-dot active" />
-                  <span className="s2-left-dot" />
-                  <span className="s2-left-dot" />
-                </div>
+                <ol className="s2-left-step-dots" aria-label="Setup progress"><li className="s2-left-dot active">Website</li><li className="s2-left-dot">Brand</li><li className="s2-left-dot">Quiz</li></ol>
               </div>
             </div>
             <div className="s2-right-panel">
@@ -1307,14 +1301,11 @@ export function TryFlowInner({
             {/* LEFT: dark teal panel with logo + shimmer placeholders */}
             <div className="s2-left-panel">
               <div className="s2-left-logo">
-                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-                </div>
-                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
+                <Wordmark size={28} />
               </div>
               <div className="s2-left-body">
-                <div className="s2-dark-skel s2-dark-skel-label shimmer"></div>
-                <div className="s2-dark-skel s2-dark-skel-title shimmer"></div>
+                <div className="s2-left-analyzing">Analyzing</div>
+                <div className="s2-left-site-name">{domain || 'Your website'}</div>
                 <div className="s2-dark-skel s2-dark-skel-chip shimmer"></div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                   <div className="s2-dark-skel s2-dark-skel-dot shimmer"></div>
@@ -1323,29 +1314,34 @@ export function TryFlowInner({
                 </div>
               </div>
               <div className="s2-left-footer">
-                <div className="s2-left-step-dots">
-                  <span className="s2-left-dot active" />
-                  <span className="s2-left-dot" />
-                  <span className="s2-left-dot" />
-                </div>
+                <ol className="s2-left-step-dots" aria-label="Setup progress"><li className="s2-left-dot active">Website</li><li className="s2-left-dot">Brand</li><li className="s2-left-dot">Quiz</li></ol>
               </div>
             </div>
             {/* RIGHT: white panel with spinner + skeleton cards */}
             <div className="s2-right-panel">
               <div className="s2-right-inner">
-                <div className="analysis-status" style={{ marginBottom: 28 }}>
-                  <div className="analysis-spinner" style={{ margin: '0 0 14px' }}></div>
-                  <div className="analysis-text">Reading your website...</div>
-                  <div className="analysis-detail">Extracting brand, copy, and offers</div>
+                <div className="s2-choose-label">Analyzing {domain || 'your website'}</div>
+                <h1 className="s2-build-title">Getting to know your brand</h1>
+                <p className="s2-build-sub">Your quiz starts with your story.</p>
+                <div className="s2-indeterminate" role="progressbar" aria-label="Analyzing your website" />
+                <div className="s2-progress-steps" style={{ marginBottom: 28 }}>
+                  {[
+                    { label: 'Reading website', detail: 'Pages, copy and offers' },
+                    { label: 'Detecting your brand', detail: 'Colours, fonts and logo' },
+                    { label: 'Understanding your audience', detail: 'Who your site speaks to' },
+                    { label: 'Finding your offers', detail: 'Services and products to recommend' },
+                  ].map(function(step, i) {
+                    return (
+                      <div key={i} className={'s2-progress-step' + (i === 0 ? ' active' : '')}>
+                        <div className="s2-progress-check">{i === 0 && <div className="s2-progress-spinner"></div>}</div>
+                        <div className="s2-progress-text">
+                          <div className="s2-progress-label">{step.label}</div>
+                          <div className="s2-progress-detail">{i === 0 ? step.detail : 'Pending'}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="s2-skel-badge shimmer"></div>
-                <div className="s2-skel-h1 shimmer"></div>
-                <div className="s2-skel-h2 shimmer"></div>
-                <div className="s2-skel-p shimmer"></div>
-                <div className="s2-skel-row shimmer"></div>
-                <div className="s2-skel-row shimmer"></div>
-                <div className="s2-skel-row shimmer"></div>
-                <div className="s2-skel-btn shimmer"></div>
               </div>
             </div>
           </div>
@@ -1357,10 +1353,7 @@ export function TryFlowInner({
             {/* LEFT: dark teal brand showcase */}
             <div className="s2-left-panel">
               <div className="s2-left-logo">
-                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-                </div>
-                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
+                <Wordmark size={28} />
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Analyzed</div>
@@ -1378,11 +1371,7 @@ export function TryFlowInner({
                 )}
               </div>
               <div className="s2-left-footer">
-                <div className="s2-left-step-dots">
-                  <span className="s2-left-dot active" />
-                  <span className="s2-left-dot" />
-                  <span className="s2-left-dot" />
-                </div>
+                <ol className="s2-left-step-dots" aria-label="Setup progress"><li className="s2-left-dot done">Website</li><li className="s2-left-dot active">Brand</li><li className="s2-left-dot">Quiz</li></ol>
               </div>
             </div>
 
@@ -1394,7 +1383,7 @@ export function TryFlowInner({
                   SITE ANALYZED
                 </div>
                 <h1 className="s2-brand-title">
-                  Confirm your <span className="s2-brand-title-acc">brand details</span>
+                  Make sure this feels like you<span className="s2-brand-title-acc">.</span>
                 </h1>
                 <p className="s2-brand-sub">Edit anything that does not look right before we build your quiz.</p>
 
@@ -1494,10 +1483,7 @@ export function TryFlowInner({
             {/* LEFT: brand summary + step 2 active */}
             <div className="s2-left-panel">
               <div className="s2-left-logo">
-                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-                </div>
-                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
+                <Wordmark size={28} />
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Your brand</div>
@@ -1515,11 +1501,7 @@ export function TryFlowInner({
                 )}
               </div>
               <div className="s2-left-footer">
-                <div className="s2-left-step-dots">
-                  <span className="s2-left-dot done" />
-                  <span className="s2-left-dot active" />
-                  <span className="s2-left-dot" />
-                </div>
+                <ol className="s2-left-step-dots" aria-label="Setup progress"><li className="s2-left-dot done">Website</li><li className="s2-left-dot done">Brand</li><li className="s2-left-dot active">Quiz</li></ol>
               </div>
             </div>
 
@@ -1527,7 +1509,7 @@ export function TryFlowInner({
             <div className="s2-right-panel">
               <div className="s2-right-inner s2-substep">
                 <div className="s2-choose-label">Step 2 of 2</div>
-                <h1 className="s2-choose-title">Choose your quiz style</h1>
+                <h1 className="s2-choose-title">How would you like to create your quiz?</h1>
                 <p className="s2-choose-sub">We will build it using your brand and content. You can edit everything after.</p>
 
                 <div className="s2-path-options" role="radiogroup" aria-label="Quiz style">
@@ -1542,7 +1524,7 @@ export function TryFlowInner({
                     <div className="s2-path-radio"><div className="s2-path-radio-dot"></div></div>
                     <div className="s2-path-icon s2-path-icon-ai"><SvgBolt size={18} /></div>
                     <div className="s2-path-content">
-                      <div className="s2-path-name">AI-generated quiz</div>
+                      <div className="s2-path-name">Generate with AI</div>
                       <div className="s2-path-desc">Custom quiz built from your website content, audience, and offers</div>
                     </div>
                     <div className="s2-path-badge s2-path-badge-rec">Recommended</div>
@@ -1574,7 +1556,7 @@ export function TryFlowInner({
                     </div>
                     <div className="s2-path-content">
                       <div className="s2-path-name">Start from a template</div>
-                      <div className="s2-path-desc">Pick a proven quiz structure and customize it</div>
+                      <div className="s2-path-desc">Pick a ready-made quiz structure and customize it</div>
                     </div>
                   </div>
                 </div>
@@ -1644,10 +1626,7 @@ export function TryFlowInner({
             {/* LEFT: brand summary + all dots active */}
             <div className="s2-left-panel">
               <div className="s2-left-logo">
-                <div className="brand-mark" style={{ background: 'rgba(255,255,255,0.13)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-                </div>
-                <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
+                <Wordmark size={28} />
               </div>
               <div className="s2-left-body">
                 <div className="s2-left-analyzing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1668,18 +1647,14 @@ export function TryFlowInner({
                 )}
               </div>
               <div className="s2-left-footer">
-                <div className="s2-left-step-dots">
-                  <span className="s2-left-dot done" />
-                  <span className="s2-left-dot done" />
-                  <span className="s2-left-dot active" />
-                </div>
+                <ol className="s2-left-step-dots" aria-label="Setup progress"><li className="s2-left-dot done">Website</li><li className="s2-left-dot done">Brand</li><li className="s2-left-dot active">Quiz</li></ol>
               </div>
             </div>
 
             {/* RIGHT: progress steps */}
             <div className="s2-right-panel">
               <div className="s2-right-inner s2-substep">
-                <h1 className="s2-build-title">Building your quiz</h1>
+                <h1 className="s2-build-title">Your quiz is taking shape<span className="s2-brand-title-acc">.</span></h1>
                 <p className="s2-build-sub">
                   {pickChoice === 'ai'
                     ? 'AI is crafting a custom quiz from your website content...'
