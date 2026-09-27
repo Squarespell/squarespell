@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
+import { DisplayTitle, PageLoading } from '../_components/PageShell';
 
 /* ─── types ─── */
 type AutomationRule = {
@@ -33,21 +34,6 @@ var ACTION_OPTIONS = [
   { value: 'start_sequence', label: 'Start sequence' },
 ];
 
-/* ─── sparkline SVG ─── */
-function Sparkline({ color }: { color: string }) {
-  return (
-    <svg width="80" height="32" viewBox="0 0 80 32" fill="none" style={{ position: 'absolute', bottom: 12, right: 16, opacity: 0.35 }}>
-      <path d="M0 28Q10 20 20 24T40 16T60 20T80 10" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/* ─── shared card ─── */
-var cardBase: React.CSSProperties = {
-  background: '#fff', border: '1px solid ' + C.GRAY_200,
-  borderRadius: 16, boxShadow: C.SHADOW_XS,
-};
-
 /* ─── page ─── */
 export default function AutomationsPage() {
   var { token, status } = useDashboardAuth();
@@ -70,11 +56,11 @@ export default function AutomationsPage() {
     (async function () {
       try {
         var res = await fetch(apiBase + '/api/automations', { headers: { Authorization: 'Bearer ' + token } });
-        if (res.ok && !cancelled) { var d = await res.json(); setRules(d.rules || d || []); }
+        if (res.ok && !cancelled) { var d = await res.json(); var list = Array.isArray(d) ? d : (d && (d.rules || d.automations)); setRules(Array.isArray(list) ? list : []); }
       } catch {}
       try {
         var qRes = await fetch(apiBase + '/api/quizzes', { headers: { Authorization: 'Bearer ' + token } });
-        if (qRes.ok && !cancelled) { var qd = await qRes.json(); setQuizzes(qd.quizzes || qd || []); }
+        if (qRes.ok && !cancelled) { var qd = await qRes.json(); var ql = Array.isArray(qd) ? qd : qd && qd.quizzes; setQuizzes(Array.isArray(ql) ? ql : []); }
       } catch {}
       if (!cancelled) setLoading(false);
     })();
@@ -119,422 +105,213 @@ export default function AutomationsPage() {
 
   var activeCount = rules.filter(function (r) { return r.enabled; }).length;
   var totalFired = rules.reduce(function (s, r) { return s + (r.fire_count || 0); }, 0);
+  var lastFired = rules.map(function (r) { return r.last_fired_at; }).filter(Boolean).sort().pop() || null;
 
-  if (status === 'loading' || loading) {
-    return (
-      <DashboardShell title="Automations">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, fontFamily: C.FONT, color: C.GRAY_400, fontSize: 14 }}>Loading...</div>
-      </DashboardShell>
-    );
+  var RECIPES = [
+    { name: 'Welcome new leads', body: 'Send a friendly welcome email when someone becomes a lead.', trigger: 'lead_created', action: 'send_email', bg: C.PERIWINKLE_SOFT, art: C.BRAND_300, icon: 'M12 11a4 4 0 100-8 4 4 0 000 8zM5 21c0-3.9 3.1-7 7-7s7 3.1 7 7' },
+    { name: 'Follow up after a quiz', body: 'Send a follow-up email when someone completes a specific quiz.', trigger: 'quiz_completed', action: 'send_email', bg: '#EEF3FF', art: C.BRAND_300, icon: 'M5 20v-6M12 20V8M19 20V4' },
+    { name: 'Nurture a segment', body: 'Start an email sequence when a lead enters an audience segment.', trigger: 'segment_entered', action: 'start_sequence', bg: C.ACID_SOFT, art: C.ACID, icon: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5M17 11a3 3 0 100-6M22 21c0-3-1.8-5-4.5-5.7' },
+  ];
+
+  function applyRecipe(r: typeof RECIPES[number]) {
+    setFormName(r.name);
+    setFormTrigger(r.trigger);
+    setFormAction(r.action);
+    setFormQuizId('');
+    setShowCreate(true);
   }
 
-  /* ─── input style ─── */
-  var inputStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 14px', border: '1px solid ' + C.GRAY_200,
-    borderRadius: 10, fontSize: 14, fontFamily: C.FONT, color: C.GRAY_900,
-    outline: 'none', boxSizing: 'border-box', background: '#fff',
-  };
+  var inputStyle: React.CSSProperties = { width: '100%', height: 46, padding: '0 14px', borderRadius: 6, border: '1px solid ' + C.BORDER, fontSize: 15, fontFamily: C.FONT, color: C.INK, background: '#fff' };
+  var labelStyle: React.CSSProperties = { display: 'block', fontSize: 14, color: C.INK, marginBottom: 8 };
+
+  function relTime(s: string | null) {
+    if (!s) return 'Never';
+    var d = Math.floor((Date.now() - new Date(s).getTime()) / 86400000);
+    if (d < 1) return 'Today';
+    if (d === 1) return 'Yesterday';
+    return d + ' days ago';
+  }
+
+  if (status === 'loading' || loading) {
+    return <DashboardShell title="Automations"><PageLoading /></DashboardShell>;
+  }
+
+  var nodes = [
+    { t: 'Quiz completed', b: 'A lead finishes your quiz', bg: C.PERIWINKLE_SOFT, icon: 'M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zM9 8h6M9 12h6M9 16h3' },
+    { t: 'Add tag', b: 'Automatically tag the lead', bg: C.ACID_SOFT, icon: 'M20.6 13.4 13.4 20.6a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8zM7.5 7.5h.01' },
+    { t: 'Send email', b: 'Send a personalised follow-up email', bg: C.PERIWINKLE_SOFT, icon: 'M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zM22 7l-10 7L2 7' },
+  ];
 
   return (
     <DashboardShell title="Automations">
-      <style>{`
-        .auto-stat { transition: box-shadow 0.2s; }
-        .auto-stat:hover { box-shadow: ${C.SHADOW_MD}; }
-        .auto-create { transition: background 0.15s; }
-        .auto-create:hover { background: ${C.ACCENT_HOVER} !important; }
-        .auto-card { transition: box-shadow 0.2s, border-color 0.2s; }
-        .auto-card:hover { box-shadow: ${C.SHADOW_MD}; border-color: ${C.GRAY_300}; }
-        .auto-action { transition: background 0.15s; }
-        .auto-action:hover { background: ${C.GRAY_50} !important; }
-        .auto-recipe { transition: box-shadow 0.2s; }
-        .auto-recipe:hover { box-shadow: ${C.SHADOW_MD}; }
-        .auto-input:focus { border-color: ${C.ACCENT} !important; box-shadow: ${C.FOCUS_RING} !important; }
-        .auto-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-        @media (max-width: 1200px) { .auto-stats-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-        @media (max-width: 900px) { .auto-stats-grid { grid-template-columns: 1fr !important; } }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .au-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: start; margin-bottom: 32px; }
+        .au-stats { display: grid; grid-template-columns: repeat(4, minmax(150px, auto)); }
+        .au-stats > div { padding: 6px 28px; border-left: 1px solid ${C.BORDER}; }
+        .au-recipes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+        .au-btn { display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 18px; border-radius: 6px; border: 1px solid ${C.BORDER}; background: #fff; color: ${C.INK}; font: 500 15px ${C.FONT}; cursor: pointer; }
+        .au-btn:hover { border-color: ${C.GRAY_300}; }
+        @media (max-width: 1200px) { .au-hero { grid-template-columns: 1fr; } .au-stats > div:first-child { border-left: none; padding-left: 0; } .au-recipes { grid-template-columns: 1fr; } }
+        @media (max-width: 700px) { .au-stats { grid-template-columns: 1fr 1fr; row-gap: 16px; } .au-flow { flex-direction: column; } }
+      ` }} />
 
-      <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
-
-      {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap' as const, gap: 12 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.3 }}>
-            Automations
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, maxWidth: 480, lineHeight: 1.5 }}>
-            Trigger actions automatically when leads complete quizzes, reach scores, or get tagged.
-          </p>
+      {/* Header */}
+      <div className="au-hero">
+        <div style={{ minWidth: 0 }}>
+          <DisplayTitle size="xl">Let your quizzes do the follow-up.</DisplayTitle>
+          <p style={{ margin: '16px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600, maxWidth: 620 }}>Trigger actions automatically when leads complete quizzes, get tagged or enter a segment.</p>
         </div>
-        {rules.length > 0 && (
-          <button type="button" className="auto-create"
-            onClick={function () { setShowCreate(true); }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '10px 20px', borderRadius: 10, border: 'none',
-              background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600,
-              fontFamily: C.FONT, cursor: 'pointer', boxShadow: C.SHADOW_XS, whiteSpace: 'nowrap',
-            }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
-            Create automation
-          </button>
-        )}
-      </div>
-
-      {/* ── 4 Stat cards ── */}
-      <div className="auto-stats-grid">
-        {[
-          { label: 'Active automations', value: String(activeCount), sub: activeCount === 0 ? 'No active rules yet' : activeCount + ' running', iconBg: C.BRAND_50, color: C.ACCENT,
-            icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /><path d="M14 8l3 4-3 4" /></svg> },
-          { label: 'Emails sent (automated)', value: String(totalFired), sub: totalFired === 0 ? 'No emails sent yet' : totalFired + ' total', iconBg: '#F4EBFF', color: '#7F56D9',
-            icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg> },
-          { label: 'Leads in automation', value: '0', sub: 'No leads enrolled yet', iconBg: '#FEF0C7', color: '#DC6803',
-            icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC6803" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg> },
-          { label: 'Time saved', value: '0h', sub: 'Automate and save time', iconBg: '#E0F2FE', color: '#0086C9',
-            icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0086C9" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> },
-        ].map(function (stat, i) {
-          return (
-            <div key={i} className="auto-stat" style={{
-              ...cardBase, padding: '20px 20px 18px', position: 'relative', overflow: 'hidden',
-            }}>
-              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12, background: stat.iconBg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  {stat.icon}
-                </div>
-                <div style={{ position: 'relative', zIndex: 1, minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 6 }}>{stat.label}</div>
-                  <div style={{ fontSize: 26, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1 }}>{stat.value}</div>
-                  <div style={{ fontSize: 12, color: C.GRAY_400, fontFamily: C.FONT, marginTop: 6 }}>{stat.sub}</div>
-                </div>
+        <div className="au-stats" style={{ paddingTop: 30 }}>
+          {[
+            { v: String(activeCount), l: 'Active automations', s: activeCount ? 'Running now' : 'No active rules yet' },
+            { v: String(rules.length), l: 'Automations', s: rules.length ? (rules.length - activeCount) + ' paused' : 'None created yet' },
+            { v: totalFired.toLocaleString(), l: 'Times run', s: totalFired ? 'Across all automations' : 'Nothing has run yet' },
+            { v: relTime(lastFired), l: 'Last run', s: lastFired ? new Date(lastFired).toLocaleDateString() : 'Waiting for a trigger' },
+          ].map(function (m) {
+            return (
+              <div key={m.l} className="stat">
+                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: m.v.length > 6 ? 26 : 42, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.05 }}>{m.v}</div>
+                <div style={{ fontSize: 16, color: C.INK, marginTop: 8 }}>{m.l}</div>
+                <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{m.s}</div>
               </div>
-              <Sparkline color={stat.color} />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
-      {/* ── Rules list or empty state ── */}
       {rules.length === 0 ? (
-        <>
-          {/* Workflow illustration empty state */}
-          <div style={{
-            ...cardBase, padding: '48px 24px 40px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20,
-          }}>
-            {/* Workflow nodes illustration */}
-            <div style={{ position: 'relative', width: 320, height: 140, marginBottom: 28 }}>
-              {/* Center lightning node */}
-              <div style={{
-                position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)',
-                width: 60, height: 60, borderRadius: 14,
-                background: C.BRAND_50, border: '2px dashed ' + C.ACCENT,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2,
-              }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
-              </div>
-              {/* Left email node */}
-              <div style={{
-                position: 'absolute', top: 30, left: 30,
-                width: 44, height: 44, borderRadius: 12, background: '#ECFDF3',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#12B76A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                  <polyline points="22,6 12,13 2,6" />
-                </svg>
-              </div>
-              {/* Right people node */}
-              <div style={{
-                position: 'absolute', top: 30, right: 30,
-                width: 44, height: 44, borderRadius: 12, background: '#F4EBFF',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-              </div>
-              {/* Bottom tag node */}
-              <div style={{
-                position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-                width: 44, height: 44, borderRadius: 12, background: C.BRAND_50,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-                  <line x1="7" y1="7" x2="7.01" y2="7" />
-                </svg>
-              </div>
-              {/* Connecting dashed lines */}
-              <svg width="320" height="140" viewBox="0 0 320 140" fill="none"
-                style={{ position: 'absolute', top: 0, left: 0, zIndex: 1, pointerEvents: 'none' }}>
-                <line x1="86" y1="52" x2="128" y2="50" stroke={C.GRAY_300} strokeWidth="1.5" strokeDasharray="4 4" />
-                <line x1="192" y1="50" x2="244" y2="52" stroke={C.GRAY_300} strokeWidth="1.5" strokeDasharray="4 4" />
-                <line x1="160" y1="82" x2="160" y2="96" stroke={C.GRAY_300} strokeWidth="1.5" strokeDasharray="4 4" />
-              </svg>
-              {/* Sparkle decorations */}
-              <svg width="12" height="12" viewBox="0 0 14 14" style={{ position: 'absolute', top: 8, left: 100 }}>
-                <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.ACCENT} opacity="0.25" />
-              </svg>
-              <svg width="10" height="10" viewBox="0 0 14 14" style={{ position: 'absolute', top: 0, right: 80 }}>
-                <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill="#7F56D9" opacity="0.3" />
-              </svg>
-            </div>
-
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, margin: '0 0 8px' }}>
-              No automations yet
-            </h3>
-            <p style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, margin: '0 0 28px', textAlign: 'center', maxWidth: 440, lineHeight: 1.5 }}>
-              Create automation rules to send emails, add tags, or start sequences when specific events happen.
-            </p>
-
-            <button type="button" className="auto-create"
-              onClick={function () { setShowCreate(true); }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '12px 28px', borderRadius: 10, border: 'none',
-                background: C.ACCENT, color: '#fff', fontSize: 15, fontWeight: 600,
-                fontFamily: C.FONT, cursor: 'pointer', boxShadow: C.SHADOW_XS, marginBottom: 32,
-              }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
-              Create your first automation
-            </button>
-
-            {/* Bottom features row */}
-            <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {[
-                { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#12B76A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>, text: 'Send personalized emails' },
-                { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC6803" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>, text: 'Add tags automatically' },
-                { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>, text: 'Save time & grow faster' },
-              ].map(function (f, i) {
+        <section style={{ position: 'relative', overflow: 'hidden', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: '26px 24px 40px', marginBottom: 28 }}>
+          <svg aria-hidden="true" width="300" height="340" viewBox="0 0 300 340" style={{ position: 'absolute', left: 0, bottom: 0 }}>
+            <path d="M0 50 A 170 170 0 0 1 170 220 L 0 220 Z" fill={C.PERIWINKLE_SOFT} />
+            <path d="M100 200 A 140 140 0 0 1 240 340 L 100 340 Z" fill={C.ACCENT} />
+            <rect x="210" y="180" width="18" height="18" fill={C.ACID} />
+          </svg>
+          <svg aria-hidden="true" width="300" height="230" viewBox="0 0 300 230" style={{ position: 'absolute', right: 0, top: 0 }}>
+            <path d="M300 0 L 300 210 L 130 210 Z" fill={C.PERIWINKLE_SOFT} opacity="0.7" />
+            <rect x="130" y="40" width="18" height="18" fill={C.ACID} />
+            <text x="20" y="70" fontSize="22" fill={C.INK} fontFamily="'Instrument Serif', Georgia, serif" fontStyle="italic" transform="rotate(-12 20 70)">From curiosity</text>
+            <text x="30" y="110" fontSize="22" fill={C.INK} fontFamily="'Instrument Serif', Georgia, serif" fontStyle="italic" transform="rotate(-12 30 110)">to connection.</text>
+          </svg>
+          <div style={{ position: 'relative' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: C.GRAY_600, marginBottom: 12 }}>EXAMPLE WORKFLOW</div>
+            <div className="au-flow" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 16 }}>
+              {nodes.map(function (n, i) {
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {f.icon}
-                    <span style={{ fontSize: 13, color: C.GRAY_600, fontFamily: C.FONT, fontWeight: 500 }}>{f.text}</span>
+                  <div key={n.t} style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                    <div style={{ width: 170, textAlign: 'center' }}>
+                      <span style={{ width: 92, height: 92, borderRadius: 8, background: n.bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: C.INK }}>
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={n.icon} /></svg>
+                      </span>
+                      <div style={{ fontSize: 19, fontWeight: 600, color: C.INK, marginTop: 14 }}>{n.t}</div>
+                      <div style={{ fontSize: 15, color: C.GRAY_600, marginTop: 4, lineHeight: 1.35 }}>{n.b}</div>
+                    </div>
+                    {i < nodes.length - 1 && (
+                      <svg aria-hidden="true" width="110" height="92" viewBox="0 0 110 92"><path d="M0 46 H 100 M 92 38 L 100 46 L 92 54" fill="none" stroke={C.GRAY_400} strokeWidth="1.4" strokeDasharray="4 4" /></svg>
+                    )}
                   </div>
                 );
               })}
             </div>
-          </div>
-
-          {/* Recipe banner */}
-          <div className="auto-recipe" style={{
-            ...cardBase, padding: '20px 24px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 12,
-          }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12, background: C.GRAY_100,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_600} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 2 }}>
-                  Not sure where to start?
-                </div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
-                  Explore pre-built automation recipes to get started in seconds.
-                </div>
-              </div>
+            <div style={{ textAlign: 'center', marginTop: 36 }}>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK }}>Create your first automation</div>
+              <p style={{ margin: '6px 0 20px', fontSize: 17, color: C.GRAY_600 }}>Save time, engage your audience, and turn quiz results into action.</p>
+              <button type="button" onClick={function () { setShowCreate(true); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 12, height: 52, padding: '0 30px', borderRadius: 6, border: 'none', background: C.ACCENT, color: '#fff', fontSize: 17, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                Create automation
+              </button>
             </div>
-            <button type="button" className="auto-action"
-              onClick={function () { setShowCreate(true); }}
-              style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '9px 18px', borderRadius: 10, border: '1px solid ' + C.GRAY_200,
-              background: '#fff', color: C.GRAY_700, fontSize: 14, fontWeight: 600,
-              fontFamily: C.FONT, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-              Browse recipes
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
           </div>
-        </>
+        </section>
       ) : (
-        /* ── Rules list ── */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {rules.map(function (rule) {
-            return (
-              <div key={rule.id} className="auto-card" style={{
-                ...cardBase, padding: '18px 24px',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 16,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    background: rule.enabled ? C.BRAND_50 : C.GRAY_100,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={rule.enabled ? C.ACCENT : C.GRAY_400} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{rule.name}</span>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4,
-                        padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, fontFamily: C.FONT,
-                        background: rule.enabled ? '#ECFDF3' : C.GRAY_100,
-                        color: rule.enabled ? '#027A48' : C.GRAY_500,
-                      }}>
-                        {rule.enabled && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#12B76A' }} />}
-                        {rule.enabled ? 'Active' : 'Paused'}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
-                      When <strong style={{ fontWeight: 600 }}>{TRIGGER_LABELS[rule.trigger_config?.type] || rule.trigger_config?.type || 'unknown'}</strong>
-                      {' → '}
-                      <strong style={{ fontWeight: 600 }}>{ACTION_LABELS[rule.action_config?.type] || rule.action_config?.type || 'unknown'}</strong>
-                      <span style={{ color: C.GRAY_400, marginLeft: 8 }}>
-                        {rule.fire_count} time{rule.fire_count !== 1 ? 's' : ''}
-                        {rule.last_fired_at ? ' · Last: ' + new Date(rule.last_fired_at).toLocaleDateString() : ''}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <button type="button" className="auto-action" onClick={function () { toggleRule(rule.id, rule.enabled); }}
-                    style={{
-                      padding: '8px 16px', border: '1px solid ' + C.GRAY_200, borderRadius: 8,
-                      background: '#fff', color: C.GRAY_600, fontSize: 13, fontWeight: 600,
-                      fontFamily: C.FONT, cursor: 'pointer',
-                    }}>
-                    {rule.enabled ? 'Pause' : 'Enable'}
-                  </button>
-                  <button type="button" className="auto-action" onClick={function () { deleteRule(rule.id); }}
-                    style={{
-                      padding: '8px 16px', border: '1px solid ' + C.GRAY_200, borderRadius: 8,
-                      background: '#fff', color: '#F04438', fontSize: 13, fontWeight: 600,
-                      fontFamily: C.FONT, cursor: 'pointer',
-                    }}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Recipe banner */}
-          <div className="auto-recipe" style={{
-            ...cardBase, padding: '20px 24px', marginTop: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 12,
-          }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12, background: C.GRAY_100,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_600} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 2 }}>Not sure where to start?</div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Explore pre-built automation recipes to get started in seconds.</div>
-              </div>
-            </div>
-            <button type="button" className="auto-action"
-              onClick={function () { setShowCreate(true); }}
-              style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '9px 18px', borderRadius: 10, border: '1px solid ' + C.GRAY_200,
-              background: '#fff', color: C.GRAY_700, fontSize: 14, fontWeight: 600,
-              fontFamily: C.FONT, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-              Browse recipes
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+        <section style={{ marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK }}>Your automations</h2>
+            <button type="button" onClick={function () { setShowCreate(true); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 6, border: 'none', background: C.ACCENT, color: '#fff', fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>+ Create automation</button>
           </div>
-        </div>
+          <div style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+            {rules.map(function (rule, i) {
+              var quiz = quizzes.find(function (q) { return q.id === rule.trigger_config?.quiz_id; });
+              return (
+                <div key={rule.id} style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 22px', borderTop: i === 0 ? 'none' : '1px solid ' + C.BORDER_LIGHT, flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+                    <div style={{ fontSize: 17, fontWeight: 600, color: C.INK }}>{rule.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap', fontSize: 14 }}>
+                      <span style={{ padding: '3px 10px', borderRadius: 4, background: C.PERIWINKLE_SOFT, color: C.BRAND_700 }}>{TRIGGER_LABELS[rule.trigger_config?.type] || rule.trigger_config?.type}{quiz ? ': ' + quiz.title : ''}</span>
+                      <span aria-hidden="true" style={{ color: C.GRAY_400 }}>→</span>
+                      <span style={{ padding: '3px 10px', borderRadius: 4, background: C.ACID_SOFT, color: C.INK }}>{ACTION_LABELS[rule.action_config?.type] || rule.action_config?.type}</span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 14, color: C.GRAY_600, minWidth: 150 }}>Ran {rule.fire_count || 0} {rule.fire_count === 1 ? 'time' : 'times'}<br /><span style={{ color: C.GRAY_500 }}>Last: {relTime(rule.last_fired_at)}</span></div>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 14, color: C.INK, cursor: 'pointer' }}>
+                    <input type="checkbox" role="switch" checked={rule.enabled} onChange={function () { toggleRule(rule.id, rule.enabled); }} style={{ width: 18, height: 18, accentColor: C.ACCENT }} />
+                    {rule.enabled ? 'Active' : 'Paused'}
+                  </label>
+                  <button type="button" className="au-btn" style={{ color: C.DANGER }} onClick={function () { if (confirm('Delete this automation?')) deleteRule(rule.id); }}>Delete</button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      </div>{/* close overflow wrapper */}
+      {/* Recipes */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: C.INK }}>Or try a recipe</h2>
+        <span style={{ fontSize: 15, color: C.GRAY_600 }}>Quick ways to get started with common automation flows.</span>
+      </div>
+      <div className="au-recipes">
+        {RECIPES.map(function (r) {
+          return (
+            <article key={r.name} style={{ position: 'relative', overflow: 'hidden', display: 'flex', gap: 18, padding: 20, borderRadius: 8, border: '1px solid ' + C.BORDER, background: r.bg }}>
+              <svg aria-hidden="true" width="140" height="120" viewBox="0 0 140 120" style={{ position: 'absolute', right: 0, bottom: 0 }}><path d="M140 10 A 110 110 0 0 0 30 120 L 140 120 Z" fill={r.art} opacity="0.55" /></svg>
+              <span style={{ position: 'relative', width: 64, height: 64, borderRadius: 8, background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: C.ACCENT, flexShrink: 0 }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={r.icon} /></svg>
+              </span>
+              <div style={{ position: 'relative' }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: C.INK }}>{r.name}</h3>
+                <p style={{ margin: '6px 0 14px', fontSize: 15, color: C.GRAY_600, lineHeight: 1.45 }}>{r.body}</p>
+                <button type="button" className="au-btn" onClick={function () { applyRecipe(r); }}>Use recipe <span aria-hidden="true">→</span></button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
 
-      {/* ── Create modal ── */}
+      {/* Create dialog */}
       {showCreate && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(16, 24, 40, 0.5)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 9999,
-        }}
-          onClick={function (e) { if (e.target === e.currentTarget) setShowCreate(false); }}>
-          <div style={{
-            background: '#fff', borderRadius: 16, padding: 28,
-            width: 480, maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(16, 24, 40, 0.18)',
-          }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 24 }}>
-              Create automation
-            </div>
-
+        <div role="dialog" aria-modal="true" aria-labelledby="au-create-title" onMouseDown={function (e) { if (e.target === e.currentTarget) setShowCreate(false); }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(22,23,25,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 8, padding: 28, width: 520, maxWidth: '100%', maxHeight: '86vh', overflow: 'auto', boxShadow: C.SHADOW_LG }}>
+            <h2 id="au-create-title" style={{ margin: '0 0 22px', fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK }}>Create automation</h2>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.GRAY_600, marginBottom: 6, fontFamily: C.FONT }}>Name</label>
-              <input type="text" className="auto-input" placeholder="e.g. Send welcome email on quiz completion"
-                value={formName} onChange={function (e) { setFormName(e.target.value); }}
-                style={inputStyle} />
+              <label htmlFor="au-name" style={labelStyle}>Name</label>
+              <input id="au-name" type="text" placeholder="e.g. Send welcome email on quiz completion" value={formName} onChange={function (e) { setFormName(e.target.value); }} style={inputStyle} />
             </div>
-
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.GRAY_600, marginBottom: 6, fontFamily: C.FONT }}>When this happens (trigger)</label>
-              <select value={formTrigger} onChange={function (e) { setFormTrigger(e.target.value); }}
-                style={{ ...inputStyle, cursor: 'pointer' }}>
+              <label htmlFor="au-trigger" style={labelStyle}>When this happens</label>
+              <select id="au-trigger" value={formTrigger} onChange={function (e) { setFormTrigger(e.target.value); }} style={{ ...inputStyle, cursor: 'pointer' }}>
                 {TRIGGER_OPTIONS.map(function (o) { return <option key={o.value} value={o.value}>{o.label}</option>; })}
               </select>
             </div>
-
             {(formTrigger === 'quiz_completed' || formTrigger === 'lead_created') && quizzes.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.GRAY_600, marginBottom: 6, fontFamily: C.FONT }}>For quiz (optional)</label>
-                <select value={formQuizId} onChange={function (e) { setFormQuizId(e.target.value); }}
-                  style={{ ...inputStyle, cursor: 'pointer' }}>
+                <label htmlFor="au-quiz" style={labelStyle}>For quiz (optional)</label>
+                <select id="au-quiz" value={formQuizId} onChange={function (e) { setFormQuizId(e.target.value); }} style={{ ...inputStyle, cursor: 'pointer' }}>
                   <option value="">Any quiz</option>
                   {quizzes.map(function (q) { return <option key={q.id} value={q.id}>{q.title || 'Untitled'}</option>; })}
                 </select>
               </div>
             )}
-
-            <div style={{ marginBottom: 28 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.GRAY_600, marginBottom: 6, fontFamily: C.FONT }}>Do this (action)</label>
-              <select value={formAction} onChange={function (e) { setFormAction(e.target.value); }}
-                style={{ ...inputStyle, cursor: 'pointer' }}>
+            <div style={{ marginBottom: 26 }}>
+              <label htmlFor="au-action" style={labelStyle}>Do this</label>
+              <select id="au-action" value={formAction} onChange={function (e) { setFormAction(e.target.value); }} style={{ ...inputStyle, cursor: 'pointer' }}>
                 {ACTION_OPTIONS.map(function (o) { return <option key={o.value} value={o.value}>{o.label}</option>; })}
               </select>
             </div>
-
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={function () { setShowCreate(false); }}
-                style={{
-                  padding: '10px 18px', borderRadius: 10, border: '1px solid ' + C.GRAY_200,
-                  background: '#fff', color: C.GRAY_600, fontSize: 14, fontWeight: 600,
-                  fontFamily: C.FONT, cursor: 'pointer',
-                }}>Cancel</button>
-              <button type="button" className="auto-create" onClick={createRule}
-                disabled={!formName.trim() || saving}
-                style={{
-                  padding: '10px 20px', borderRadius: 10, border: 'none',
-                  background: !formName.trim() || saving ? C.GRAY_200 : C.ACCENT,
-                  color: !formName.trim() || saving ? C.GRAY_400 : '#fff',
-                  fontSize: 14, fontWeight: 600, fontFamily: C.FONT,
-                  cursor: !formName.trim() || saving ? 'not-allowed' : 'pointer',
-                }}>
+              <button type="button" className="au-btn" onClick={function () { setShowCreate(false); }}>Cancel</button>
+              <button type="button" onClick={createRule} disabled={!formName.trim() || saving}
+                style={{ height: 42, padding: '0 20px', borderRadius: 6, border: 'none', background: !formName.trim() || saving ? C.GRAY_100 : C.ACCENT, color: !formName.trim() || saving ? C.GRAY_400 : '#fff', fontSize: 15, fontFamily: C.FONT, cursor: !formName.trim() || saving ? 'default' : 'pointer' }}>
                 {saving ? 'Creating...' : 'Create automation'}
               </button>
             </div>

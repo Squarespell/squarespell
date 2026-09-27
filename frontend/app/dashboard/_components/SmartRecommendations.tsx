@@ -94,7 +94,7 @@ export function SmartRecommendations() {
               <div style={{
                 width: 36, height: 36, borderRadius: 10,
                 background: C.ACCENT_LIGHT,
-                border: '1px solid rgba(13,115,119,0.15)',
+                border: '1px solid rgba(49, 84, 255,0.15)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>

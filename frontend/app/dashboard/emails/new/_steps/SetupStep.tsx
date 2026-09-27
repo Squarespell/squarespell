@@ -11,7 +11,7 @@ function injectSetupFocusStyles() {
   if (document.getElementById(FOCUS_STYLE_ID_SETUP)) return;
   var style = document.createElement('style');
   style.id = FOCUS_STYLE_ID_SETUP;
-  style.textContent = '.sq-sinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(13,115,119,0.13) !important; outline: none !important; }';
+  style.textContent = '.sq-sinput:focus { border-color: ' + C.ACCENT + ' !important; box-shadow: 0 0 0 3px rgba(49, 84, 255,0.13) !important; outline: none !important; }';
   document.head.appendChild(style);
 }
 

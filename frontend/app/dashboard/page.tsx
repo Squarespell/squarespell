@@ -1,16 +1,15 @@
 'use client';
 
 /**
- * /dashboard - Overview (Pixel-accurate replication of dashboard screenshot)
+ * /dashboard - Overview (2026 cobalt-and-ivory redesign, screen 09)
  *
  * Sections:
- *  1. Welcome header with date picker + create quiz CTA
- *  2. 5 KPI stat cards with change indicators
- *  3. Performance line chart (views + leads)
- *  4. Three-column row: top quizzes, conversion funnel, lead sources donut
- *  5. Recent leads table with filters
- *  6. Bottom row: question drop-off analysis + recent activity
- *  7. A/B testing promo banner
+ *  1. Editorial welcome header with Create quiz and a template shortcut
+ *  2. KPI strip (views, completions, leads, completion rate) with the date range selector
+ *  3. Quiz performance chart (views + leads) beside the top quizzes list
+ *  4. Recent leads table with quiz/source filters
+ *  5. Conversion funnel, lead sources and question drop-off
+ *  6. Recent activity (only when there is any) and the A/B testing prompt
  *
  * All values are fetched from APIs - NO hardcoded fake data.
  * Data binding pattern: state variables populated via useEffect fetch calls.
@@ -22,7 +21,8 @@ import Link from 'next/link';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from './_components/DashboardShell';
 import { useDashboardAuth } from './_components/useDashboardAuth';
-import { PageLoading } from './_components/PageShell';
+import { PageLoading, DisplayTitle, Pill } from './_components/PageShell';
+import { QuizCover } from './_components/QuizCover';
 import { NewQuizModal } from './quizzes/_components/NewQuizModal';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
@@ -147,833 +147,486 @@ function clearCookie(name: string) {
   document.cookie = name + '=;path=/;max-age=0';
 }
 
-var AVATAR_COLORS = [
-  { bg: '#E8D5F5', fg: '#7F56D9' },
-  { bg: '#D1FADF', fg: '#027A48' },
-  { bg: '#D1E9FF', fg: '#1570EF' },
-  { bg: '#FEF0C7', fg: '#B54708' },
-  { bg: '#F4EBFF', fg: '#7F56D9' },
-  { bg: '#FFE4E8', fg: '#E31B54' },
+var SOURCE_COLORS = ['#3154FF', '#8FA2FF', '#BFCAFF', '#161719', '#9B9A93'];
+
+var DASH_CSS = `
+  .sq-dash-hero { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 32px; align-items: start; margin-bottom: 32px; }
+  .sq-dash-main { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(320px, 1fr); gap: 20px; margin-bottom: 20px; }
+  .sq-dash-trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 20px; }
+  .sq-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; background: #fff; border: 1px solid ${C.BORDER}; border-radius: 8px; margin-bottom: 20px; }
+  .sq-kpi { display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-right: 1px solid ${C.BORDER}; min-width: 0; }
+  .sq-link-arrow { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: ${C.ACCENT}; text-decoration: none; }
+  .sq-link-arrow:hover { color: ${C.ACCENT_HOVER}; }
+  .sq-tip:hover { border-color: ${C.GRAY_300}; }
+  .sq-topq:hover .sq-topq-title { color: ${C.ACCENT}; }
+  @media (max-width: 1180px) {
+    .sq-dash-hero { grid-template-columns: 1fr; }
+    .sq-dash-main { grid-template-columns: 1fr; }
+    .sq-dash-trio { grid-template-columns: 1fr 1fr; }
+    .sq-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sq-kpi:nth-child(2n) { border-right: none; }
+    .sq-kpi { border-bottom: 1px solid ${C.BORDER}; }
+    .sq-kpis-range { grid-column: 1 / -1; }
+  }
+  @media (max-width: 720px) { .sq-dash-trio { grid-template-columns: 1fr; } .sq-kpis { grid-template-columns: 1fr; } .sq-kpi { border-right: none; } }
+`;
+
+var ARROW = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+);
+
+/** Hairline white panel with an optional header row. */
+function Panel({ title, subtitle, action, children, bodyPad = '4px 24px 24px' }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode; bodyPad?: string }) {
+  return (
+    <section style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '22px 24px 14px' }}>
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em', color: C.INK }}>{title}</h2>
+          {subtitle && <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{subtitle}</div>}
+        </div>
+        {action}
+      </div>
+      <div style={{ padding: bodyPad }}>{children}</div>
+    </section>
+  );
+}
+
+function KpiIcon({ children }: { children: ReactNode }) {
+  return (
+    <span style={{ width: 52, height: 52, borderRadius: '50%', background: C.PERIWINKLE_SOFT, color: C.ACCENT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      {children}
+    </span>
+  );
+}
+
+function RateRing({ pct }: { pct: number }) {
+  var r = 22;
+  var circ = 2 * Math.PI * r;
+  var clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <circle cx="26" cy="26" r={r} fill="none" stroke={C.GRAY_100} strokeWidth="5" />
+      <circle cx="26" cy="26" r={r} fill="none" stroke={C.ACCENT} strokeWidth="5" strokeLinecap="round"
+        strokeDasharray={(clamped / 100) * circ + ' ' + circ} transform="rotate(-90 26 26)" />
+    </svg>
+  );
+}
+
+function Kpi({ icon, value, label }: { icon: ReactNode; value: ReactNode; label: string }) {
+  return (
+    <div className="sq-kpi">
+      {icon}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.05, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+        <div style={{ fontSize: 15, color: C.GRAY_600, marginTop: 4 }}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
+var RANGE_OPTIONS = [
+  { days: 7, label: 'Last 7 days' },
+  { days: 30, label: 'Last 30 days' },
+  { days: 90, label: 'Last 90 days' },
+  { days: 0, label: 'All time' },
 ];
 
-var SOURCE_COLORS = ['#0f7377', '#4DC2C6', '#B3E6E8', '#F79009', '#F04438'];
-
-// ═══════ STAT CARD ═══════
-
-function DashStatCard({
-  label,
-  value,
-  change,
-  compareLabel,
-  icon,
-  sub,
-  progress,
-}: {
-  label: string;
-  value: ReactNode;
-  change?: number;
-  compareLabel?: string;
-  icon: ReactNode;
-  sub?: string;
-  progress?: { current: number; max: number };
-}) {
-  var hasChange = change !== undefined;
-  var trendUp = !hasChange || change >= 0;
-  var sparkColor = hasChange ? (trendUp ? C.SUCCESS_500 : C.ERROR_500) : C.GRAY_300;
+function RangeSelect({ value, onChange }: { value: number; onChange: (days: number) => void }) {
   return (
-    <div
-      style={{
-        background: C.SURFACE,
-        border: '1px solid ' + C.GRAY_200,
-        borderRadius: 12,
-        padding: 20,
-        fontFamily: C.FONT,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Sparkline — bottom-right decorative */}
-      <svg width="80" height="32" viewBox="0 0 80 32" fill="none" style={{ position: 'absolute', bottom: 12, right: 16, opacity: 0.25 }}>
-        <path
-          d={trendUp ? 'M0 28Q10 20 20 24T40 16T60 20T80 10' : 'M0 10Q10 18 20 14T40 22T60 18T80 28'}
-          stroke={sparkColor}
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-        />
-      </svg>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_500 }}>{label}</span>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: C.ACCENT_LIGHT, border: '1px solid rgba(13,115,119,0.12)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: C.ACCENT,
-        }}>
-          {icon}
-        </div>
-      </div>
-      <div
-        style={{
-          fontSize: 30, fontWeight: 700, color: C.GRAY_900,
-          letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 8,
-          fontVariantNumeric: 'tabular-nums',
-        }}
+    <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <span style={{ position: 'absolute', left: 14, color: C.INK, display: 'flex', pointerEvents: 'none' }}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+      </span>
+      <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Date range</span>
+      <select
+        value={value}
+        onChange={function(e) { onChange(parseInt(e.target.value, 10)); }}
+        style={{ appearance: 'none', WebkitAppearance: 'none', height: 44, padding: '0 40px 0 42px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.INK, fontSize: 15, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer' }}
       >
-        {value}
-      </div>
-      {change !== undefined && (
-        <div>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 500, color: change >= 0 ? C.SUCCESS : C.DANGER }}>
-            <span>{change >= 0 ? '\u2191' : '\u2193'}</span> {Math.abs(change).toFixed(1)}%
-          </span>
-          {compareLabel && <span style={{ fontSize: 13, color: C.GRAY_500, marginLeft: 4 }}>vs {compareLabel}</span>}
-        </div>
-      )}
-      {sub && <div style={{ fontSize: 13, color: C.GRAY_500 }}>{sub}</div>}
-      {progress && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ height: 6, background: C.GRAY_100, borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: (progress.max > 0 ? Math.round((progress.current / progress.max) * 100) : 0) + '%', background: C.ACCENT, borderRadius: 3 }} />
-          </div>
-        </div>
-      )}
-    </div>
+        {RANGE_OPTIONS.map(function(o) { return <option key={o.days} value={o.days}>{o.label}</option>; })}
+      </select>
+      <span style={{ position: 'absolute', right: 14, pointerEvents: 'none', display: 'flex', color: C.INK }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      </span>
+    </label>
   );
 }
 
 // ═══════ PERFORMANCE CHART ═══════
 
-function PerformanceChart({
-  data,
-  period,
-  onPeriodChange,
-  dateRange,
-  selectedDays,
-  onDaysChange,
-}: {
-  data: ChartPoint[];
-  period: string;
-  onPeriodChange: (p: string) => void;
-  dateRange?: string;
-  selectedDays?: number;
-  onDaysChange?: (days: number) => void;
-}) {
-  var [localPickerOpen, setLocalPickerOpen] = useState(false);
-
+function PerformanceChart({ data, period, onPeriodChange }: { data: ChartPoint[]; period: string; onPeriodChange: (p: string) => void }) {
   var periodToggle = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      {onDaysChange && (
-        <div style={{ position: 'relative' }}>
+    <div role="group" aria-label="Chart range" style={{ display: 'flex', gap: 2, background: C.GRAY_100, borderRadius: 6, padding: 2, flexShrink: 0 }}>
+      {[{ v: 'daily', l: '7 days' }, { v: 'weekly', l: '30 days' }, { v: 'monthly', l: '90 days' }].map(function(p) {
+        var isActive = period === p.v;
+        return (
           <button
-            onClick={function() { setLocalPickerOpen(!localPickerOpen); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 7,
-              fontSize: 12.5, fontWeight: 500, color: C.GRAY_600, background: C.SURFACE,
-              cursor: 'pointer', fontFamily: C.FONT,
-            }}
+            key={p.v}
+            type="button"
+            aria-pressed={isActive}
+            onClick={function() { onPeriodChange(p.v); }}
+            style={{ padding: '6px 12px', borderRadius: 5, fontSize: 13, fontWeight: 500, color: isActive ? C.INK : C.GRAY_500, background: isActive ? '#fff' : 'transparent', border: 'none', cursor: 'pointer', fontFamily: C.FONT, boxShadow: isActive ? C.SHADOW_SM : 'none' }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            {dateRange || 'Last 30 days'}
+            {p.l}
           </button>
-          {localPickerOpen && (
-            <div style={{
-              position: 'absolute', top: '100%', right: 0, marginTop: 6,
-              background: C.SURFACE, border: '1px solid ' + C.GRAY_200,
-              borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-              padding: 6, zIndex: 50, minWidth: 160,
-            }}>
-              {[
-                { days: 7, label: 'Last 7 days' },
-                { days: 30, label: 'Last 30 days' },
-                { days: 90, label: 'Last 90 days' },
-                { days: 0, label: 'All time' },
-              ].map(function(opt) {
-                var isActive = selectedDays === opt.days;
-                return (
-                  <button
-                    key={opt.days}
-                    onClick={function() {
-                      onDaysChange(opt.days);
-                      setLocalPickerOpen(false);
-                    }}
-                    style={{
-                      display: 'block', width: '100%', textAlign: 'left',
-                      padding: '8px 12px', border: 'none', borderRadius: 6,
-                      background: isActive ? C.ACCENT_LIGHT : 'transparent',
-                      color: isActive ? C.ACCENT : C.GRAY_700,
-                      fontSize: 13, fontWeight: isActive ? 600 : 500,
-                      cursor: 'pointer', fontFamily: C.FONT,
-                      transition: 'background 0.1s',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-      <div style={{ display: 'flex', gap: 2, background: C.GRAY_100, borderRadius: 8, padding: 2 }}>
-        {['Daily', 'Weekly', 'Monthly'].map(function(p) {
-          var isActive = period === p.toLowerCase();
-          return (
-            <button
-              key={p}
-              onClick={function() { onPeriodChange(p.toLowerCase()); }}
-              style={{
-                padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: isActive ? 600 : 500,
-                color: isActive ? C.GRAY_900 : C.GRAY_500, background: isActive ? C.SURFACE : 'transparent',
-                border: 'none', cursor: 'pointer', fontFamily: C.FONT,
-                boxShadow: isActive ? C.SHADOW_XS : 'none', transition: 'all 0.12s',
-              }}
-            >
-              {p}
-            </button>
-          );
-        })}
-      </div>
+        );
+      })}
     </div>
   );
 
-  if (data.length === 0) {
-    return (
-      <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
-        <div style={{ padding: '20px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Performance overview</div>
-          {periodToggle}
-        </div>
-        <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.GRAY_400, fontSize: 14, fontFamily: C.FONT }}>
-          No data for this period yet
-        </div>
-      </div>
-    );
-  }
+  var legend = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 14, color: C.GRAY_600 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: C.ACCENT }} />Views</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: C.BRAND_300 }} />Leads</span>
+    </div>
+  );
 
-  var maxVal = 1;
-  for (var i = 0; i < data.length; i++) {
-    if (data[i].views > maxVal) maxVal = data[i].views;
-    if (data[i].leads > maxVal) maxVal = data[i].leads;
-  }
+  var hasData = data.some(function(d) { return d.views > 0 || d.leads > 0; });
 
-  var chartW = 800;
-  var chartH = 240;
-  var padL = 40;
-  var padR = 20;
+  var chartW = 820;
+  var chartH = 250;
+  var padL = 36;
+  var padR = 12;
   var usableW = chartW - padL - padR;
+  var maxVal = 1;
+  data.forEach(function(d) { maxVal = Math.max(maxVal, d.views, d.leads); });
+  // Round the axis up to a friendly number so gridlines read cleanly.
+  var rawStep = maxVal / 4;
+  var mag = Math.pow(10, Math.floor(Math.log10(Math.max(rawStep, 1))));
+  var step = [1, 2, 5, 10].map(function(m) { return m * mag; }).filter(function(v) { return v >= rawStep; })[0] || 10 * mag;
+  var top = step * 4;
+  function yPos(val: number) { return chartH - 24 - (val / top) * (chartH - 44); }
   var stepX = data.length > 1 ? usableW / (data.length - 1) : 0;
-
-  function yPos(val: number): number {
-    return chartH - 20 - ((val / maxVal) * (chartH - 40));
+  function pts(key: 'views' | 'leads') {
+    return data.map(function(d, i) { return { x: padL + i * stepX, y: yPos(d[key]) }; });
   }
-
-  // Build smooth cubic-bezier path (Catmull-Rom → bezier, tension 0.35)
-  function smoothD(pts: { x: number; y: number }[]): string {
-    if (pts.length === 0) return '';
-    if (pts.length === 1) return 'M' + pts[0].x + ' ' + pts[0].y;
-    var t = 0.35;
-    var d = 'M' + pts[0].x + ' ' + pts[0].y;
-    for (var si = 0; si < pts.length - 1; si++) {
-      var p0 = pts[Math.max(si - 1, 0)];
-      var p1 = pts[si];
-      var p2 = pts[si + 1];
-      var p3 = pts[Math.min(si + 2, pts.length - 1)];
-      var cp1x = p1.x + (p2.x - p0.x) * t;
-      var cp1y = p1.y + (p2.y - p0.y) * t;
-      var cp2x = p2.x - (p3.x - p1.x) * t;
-      var cp2y = p2.y - (p3.y - p1.y) * t;
-      d += ' C' + cp1x.toFixed(2) + ' ' + cp1y.toFixed(2) + ' ' + cp2x.toFixed(2) + ' ' + cp2y.toFixed(2) + ' ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2);
-    }
-    return d;
+  function lineD(p: { x: number; y: number }[]) {
+    return p.map(function(pt, i) { return (i === 0 ? 'M' : 'L') + pt.x.toFixed(1) + ' ' + pt.y.toFixed(1); }).join(' ');
   }
-
-  var viewsPts = data.map(function(pt, pi) { return { x: padL + pi * stepX, y: yPos(pt.views) }; });
-  var leadsPts = data.map(function(pt, pi) { return { x: padL + pi * stepX, y: yPos(pt.leads) }; });
-
-  var viewsPath = smoothD(viewsPts);
-  var leadsPath = smoothD(leadsPts);
-
-  // Area path: follow the smooth views curve then close back along the bottom
-  var lastX = padL + (data.length - 1) * stepX;
-  var areaPath = viewsPath + ' L' + lastX + ' ' + chartH + ' L' + padL + ' ' + chartH + ' Z';
-
-  var yLabels = [0, 0.25, 0.5, 0.75, 1].map(function(p) {
-    var val = Math.round(maxVal * p);
-    if (val >= 1000) return (val / 1000).toFixed(val % 1000 === 0 ? 0 : 1) + 'K';
-    return '' + val;
-  });
+  var viewsP = pts('views');
+  var leadsP = pts('leads');
+  var baseY = yPos(0);
+  var areaD = viewsP.length ? lineD(viewsP) + ' L' + viewsP[viewsP.length - 1].x + ' ' + baseY + ' L' + viewsP[0].x + ' ' + baseY + ' Z' : '';
+  var labelEvery = Math.max(1, Math.ceil(data.length / 8));
 
   return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
-      <div style={{ padding: '20px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Performance overview</div>
-        {periodToggle}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px 12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} /> Views
+    <Panel
+      title="Quiz performance"
+      subtitle="Views and leads over time"
+      action={<div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', justifyContent: 'flex-end' }}>{legend}{periodToggle}</div>}
+    >
+      {!hasData ? (
+        <div style={{ position: 'relative', height: 250 }}>
+          <svg viewBox={'0 0 ' + chartW + ' ' + chartH} width="100%" height="100%" preserveAspectRatio="none" aria-hidden="true">
+            {[0, 1, 2, 3, 4].map(function(i) {
+              var y = 20 + i * ((chartH - 44) / 4);
+              return <line key={i} x1={padL} x2={chartW - padR} y1={y} y2={y} stroke={C.GRAY_100} />;
+            })}
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: C.INK }}>No activity in this period</div>
+            <div style={{ fontSize: 14, color: C.GRAY_500 }}>Views and leads appear here once people take your live quizzes.</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.GRAY_300, display: 'inline-block' }} /> Leads
-        </div>
-      </div>
-      <div style={{ padding: '0 24px 24px' }}>
-        <svg viewBox={'0 0 ' + chartW + ' ' + (chartH + 20)} width="100%" style={{ display: 'block' }}>
-          {/* Grid lines */}
-          {[0, 0.25, 0.5, 0.75, 1].map(function(p, gi) {
-            var y = yPos(maxVal * p);
-            return (
-              <g key={gi}>
-                <line x1={padL} y1={y} x2={chartW - padR} y2={y} stroke={C.GRAY_100} strokeWidth="1" />
-                <text x={padL - 8} y={y + 4} fill={C.GRAY_500} fontSize="11" fontFamily="Inter" textAnchor="end">{yLabels[gi]}</text>
-              </g>
-            );
-          })}
-          {/* Area fill */}
+      ) : (
+        <svg viewBox={'0 0 ' + chartW + ' ' + (chartH + 4)} width="100%" style={{ display: 'block' }} role="img" aria-label="Views and leads over time">
           <defs>
-            <linearGradient id="viewsGrad" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor={C.ACCENT} stopOpacity="0.15" />
+            <linearGradient id="sqViewsGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor={C.ACCENT} stopOpacity="0.16" />
               <stop offset="100%" stopColor={C.ACCENT} stopOpacity="0" />
             </linearGradient>
           </defs>
-          <path d={areaPath} fill="url(#viewsGrad)" />
-          {/* Leads line (dashed) — drawn first so views line sits on top */}
-          <path d={leadsPath} fill="none" stroke={C.GRAY_300} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5 5" />
-          {/* Views line */}
-          <path d={viewsPath} fill="none" stroke={C.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          {/* Data points — all visible, last point larger */}
-          {data.map(function(pt, di) {
-            var cx = padL + di * stepX;
-            var isLast = di === 0;
+          {[0, 1, 2, 3, 4].map(function(i) {
+            var v = step * i;
+            var y = yPos(v);
             return (
-              <g key={di}>
-                {/* Views dot */}
-                <circle cx={cx} cy={yPos(pt.views)} r={isLast ? 5.5 : 3.5} fill={C.ACCENT} stroke="#fff" strokeWidth={isLast ? 2.5 : 2} />
-                {/* Leads dot */}
-                <circle cx={cx} cy={yPos(pt.leads)} r={isLast ? 4.5 : 3} fill={C.GRAY_400} stroke="#fff" strokeWidth={isLast ? 2 : 1.5} />
+              <g key={i}>
+                <line x1={padL} x2={chartW - padR} y1={y} y2={y} stroke={C.GRAY_100} />
+                <text x={padL - 10} y={y + 4} fontSize="11" fill={C.GRAY_500} textAnchor="end" fontFamily="Inter">{v}</text>
               </g>
             );
           })}
-          {/* X axis labels */}
-          {data.map(function(pt, di) {
-            if (data.length > 10 && di % Math.ceil(data.length / 5) !== 0 && di !== data.length - 1) return null;
+          {data.map(function(d, i) {
+            var last = data.length - 1;
+            if (i !== last && (i % labelEvery !== 0 || last - i < labelEvery * 0.6)) return null;
+            var x = padL + i * stepX;
             return (
-              <text key={di} x={padL + di * stepX} y={chartH + 16} fill={C.GRAY_500} fontSize="11" fontFamily="Inter" textAnchor="middle">
-                {pt.label}
-              </text>
+              <g key={i}>
+                <line x1={x} x2={x} y1={20} y2={baseY} stroke={C.GRAY_100} strokeDasharray="3 4" />
+                <text x={x} y={chartH} fontSize="11" fill={C.GRAY_500} textAnchor="middle" fontFamily="Inter">{d.label}</text>
+              </g>
             );
           })}
+          <path d={areaD} fill="url(#sqViewsGrad)" />
+          <path d={lineD(leadsP)} fill="none" stroke={C.BRAND_300} strokeWidth="2" strokeLinejoin="round" />
+          <path d={lineD(viewsP)} fill="none" stroke={C.ACCENT} strokeWidth="2.25" strokeLinejoin="round" />
+          {viewsP.length > 0 && <circle cx={viewsP[viewsP.length - 1].x} cy={viewsP[viewsP.length - 1].y} r="4.5" fill={C.ACCENT} stroke="#fff" strokeWidth="2" />}
+          {leadsP.length > 0 && <circle cx={leadsP[leadsP.length - 1].x} cy={leadsP[leadsP.length - 1].y} r="4" fill={C.BRAND_300} stroke="#fff" strokeWidth="2" />}
         </svg>
-      </div>
-    </div>
+      )}
+    </Panel>
   );
 }
 
-// ═══════ TOP QUIZZES LIST ═══════
+// ═══════ TOP QUIZZES ═══════
 
 function TopQuizzesList({ quizzes }: { quizzes: Quiz[] }) {
-  var sorted = quizzes.slice().sort(function(a, b) { return b.view_count - a.view_count; }).slice(0, 5);
+  var sorted = quizzes.slice().sort(function(a, b) { return (b.view_count || 0) - (a.view_count || 0); }).slice(0, 4);
+  var order: Record<string, number> = {};
+  quizzes.slice().sort(function(a, b) { return new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); }).forEach(function(q, i) { order[q.id] = i; });
   return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
-        <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Top quizzes</span>
-        <Link href="/dashboard/quizzes" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>View all</Link>
-      </div>
-      <div style={{ padding: '8px 24px 24px' }}>
-        {sorted.length === 0 ? (
-          <div style={{ padding: '20px 0', textAlign: 'center', color: C.GRAY_500, fontSize: 14, fontFamily: C.FONT }}>No quizzes yet</div>
-        ) : sorted.map(function(quiz, idx) {
-          var cvr = quiz.view_count > 0 ? ((quiz.lead_count / quiz.view_count) * 100).toFixed(1) : '0.0';
-          return (
-            <div
-              key={quiz.id}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
-                borderBottom: idx < sorted.length - 1 ? '1px solid ' + C.GRAY_100 : 'none',
-              }}
-            >
-              <span style={{ width: 20, fontSize: 14, fontWeight: 600, color: C.GRAY_400, textAlign: 'center', flexShrink: 0 }}>{idx + 1}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: C.FONT }}>{quiz.title}</div>
-                <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>{formatNumber(quiz.view_count)} {quiz.view_count === 1 ? 'view' : 'views'}</div>
-              </div>
-              <span style={{
-                padding: '4px 10px', borderRadius: 16, background: C.ACCENT_LIGHT, color: C.ACCENT,
-                fontSize: 13, fontWeight: 600, flexShrink: 0, fontFamily: C.FONT,
-              }}>{cvr}%</span>
+    <Panel title="Top quizzes" action={<Link href="/dashboard/quizzes" className="sq-link-arrow">View all {ARROW}</Link>} bodyPad="0 24px 12px">
+      {sorted.length === 0 ? (
+        <div style={{ padding: '24px 0 16px', fontSize: 14, color: C.GRAY_500 }}>Your quizzes will be ranked here by views.</div>
+      ) : sorted.map(function(q, i) {
+        return (
+          <Link key={q.id} href={'/dashboard/' + q.id} className="sq-topq" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderTop: i === 0 ? 'none' : '1px solid ' + C.BORDER_LIGHT, textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ width: 132, height: 60, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
+              <QuizCover id={q.id} title={q.title} height={60} compact variant={order[q.id]} />
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ═══════ CONVERSION FUNNEL ═══════
-
-function ConversionFunnel({ funnel }: { funnel: FunnelData }) {
-  var steps = [
-    { label: 'Views', value: funnel.views, pct: '100%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
-    { label: 'Started', value: funnel.started, pct: funnel.views > 0 ? ((funnel.started / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
-    { label: 'Completed', value: funnel.completed, pct: funnel.views > 0 ? ((funnel.completed / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.ACCENT_LIGHT, borderColor: 'rgba(13,115,119,0.15)' },
-    { label: 'Leads', value: funnel.leads, pct: funnel.views > 0 ? ((funnel.leads / funnel.views) * 100).toFixed(1) + '%' : '0%', bg: C.BRAND_50, borderColor: 'rgba(13,115,119,0.25)' },
-  ];
-
-  return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ padding: '20px 24px 16px' }}>
-        <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Conversion funnel</span>
-      </div>
-      <div style={{ padding: '8px 24px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {steps.map(function(step, si) {
-          var barW = funnel.views > 0 ? Math.max(45, (step.value / funnel.views) * 100) : 100;
-          return (
-            <div key={si} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  flex: 1, padding: '14px 16px', borderRadius: 8,
-                  background: step.bg, border: '1px solid ' + step.borderColor,
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  width: barW + '%',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: C.GRAY_700, fontFamily: C.FONT }}>{step.label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT }}>{formatNumber(step.value)}</div>
-                </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="sq-topq-title" style={{ fontSize: 15, fontWeight: 500, color: C.INK, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{q.title || 'Untitled quiz'}</div>
+              <div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 4 }}>
+                {formatNumber(q.view_count || 0)} {q.view_count === 1 ? 'view' : 'views'}
+                <span style={{ margin: '0 6px', color: C.GRAY_300 }}>·</span>
+                {formatNumber(q.lead_count || 0)} {q.lead_count === 1 ? 'lead' : 'leads'}
               </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.ACCENT, minWidth: 50, textAlign: 'right', fontFamily: C.FONT }}>{step.pct}</span>
             </div>
-          );
-        })}
-      </div>
-    </div>
+            <Pill variant={q.status === 'live' ? 'live' : 'draft'}>{q.status === 'live' ? 'Live' : 'Draft'}</Pill>
+          </Link>
+        );
+      })}
+    </Panel>
   );
 }
 
-// ═══════ LEAD SOURCES DONUT ═══════
-
-function LeadSourcesDonut({ sources, total }: { sources: LeadSource[]; total: number }) {
-  var radius = 70;
-  var circumference = 2 * Math.PI * radius;
-  var offsetAcc = 0;
-
-  return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
-        <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Lead sources</span>
-        <Link href="/dashboard/analytics" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>View all</Link>
-      </div>
-      <div style={{ padding: '8px 24px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ position: 'relative', width: 180, height: 180, marginBottom: 16 }}>
-          <svg viewBox="0 0 180 180" width="180" height="180">
-            <circle cx="90" cy="90" r={radius} fill="none" stroke={C.GRAY_200} strokeWidth="20" />
-            {sources.map(function(src, si) {
-              var dash = (src.percentage / 100) * circumference;
-              var gap = circumference - dash;
-              var offset = -offsetAcc + circumference * 0.25;
-              offsetAcc += dash;
-              return (
-                <circle
-                  key={si}
-                  cx="90" cy="90" r={radius} fill="none"
-                  stroke={src.color} strokeWidth="20"
-                  strokeDasharray={dash + ' ' + gap}
-                  strokeDashoffset={offset}
-                  strokeLinecap="round"
-                />
-              );
-            })}
-          </svg>
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.GRAY_900, letterSpacing: '-0.02em', fontFamily: C.FONT }}>{formatNumber(total)}</div>
-            <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT }}>Total</div>
-          </div>
-        </div>
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {sources.map(function(src, si) {
-            return (
-              <div key={si} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: C.GRAY_600, fontFamily: C.FONT }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: src.color, flexShrink: 0 }} />
-                <span style={{ flex: 1 }}>{src.name}</span>
-                <span style={{ fontWeight: 600, color: C.GRAY_900 }}>{formatNumber(src.count)}</span>
-                <span style={{ color: C.GRAY_500, minWidth: 50, textAlign: 'right' }}>({src.percentage.toFixed(1)}%)</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ═══════ RECENT LEADS TABLE ═══════
+// ═══════ RECENT LEADS ═══════
 
 function RecentLeadsTable({ leads, quizzes }: { leads: Lead[]; quizzes: Quiz[] }) {
   var [leadQuizFilter, setLeadQuizFilter] = useState('all');
   var [leadSourceFilter, setLeadSourceFilter] = useState('all');
-  var [quizFilterOpen, setQuizFilterOpen] = useState(false);
-  var [sourceFilterOpen, setSourceFilterOpen] = useState(false);
 
   var quizMap: Record<string, string> = {};
-  for (var qi = 0; qi < quizzes.length; qi++) {
-    quizMap[quizzes[qi].id] = quizzes[qi].title;
-  }
-
+  quizzes.forEach(function(q) { quizMap[q.id] = q.title; });
   var uniqueSources: string[] = [];
-  var seenSources: Record<string, boolean> = {};
-  for (var si = 0; si < leads.length; si++) {
-    var src = leads[si].source || 'Direct';
-    if (!seenSources[src]) { seenSources[src] = true; uniqueSources.push(src); }
-  }
+  leads.forEach(function(l) { var s = l.source || 'Direct'; if (uniqueSources.indexOf(s) < 0) uniqueSources.push(s); });
 
-  function scoreVariant(score: number | null): { bg: string; fg: string } {
-    if (score === null) return { bg: C.GRAY_100, fg: C.GRAY_600 };
-    if (score >= 70) return { bg: C.SUCCESS_LIGHT, fg: C.SUCCESS };
-    if (score >= 50) return { bg: C.ACCENT_LIGHT, fg: C.ACCENT };
-    return { bg: '#FFFAEB', fg: '#B54708' };
-  }
+  var rows = leads.filter(function(lead) {
+    if (leadQuizFilter !== 'all' && lead.quiz_id !== leadQuizFilter) return false;
+    if (leadSourceFilter !== 'all' && (lead.source || 'Direct') !== leadSourceFilter) return false;
+    return true;
+  }).slice(0, 5);
 
-  function statusStyle(status: string | null): { bg: string; fg: string } {
-    if (!status) return { bg: C.GRAY_100, fg: C.GRAY_600 };
-    var s = status.toLowerCase();
-    if (s === 'new') return { bg: C.ACCENT_LIGHT, fg: C.ACCENT };
-    if (s === 'contacted') return { bg: C.GRAY_100, fg: C.GRAY_600 };
-    if (s === 'qualified') return { bg: C.SUCCESS_LIGHT, fg: C.SUCCESS };
-    if (s === 'nurturing') return { bg: '#FFF6ED', fg: '#C4320A' };
-    return { bg: C.GRAY_100, fg: C.GRAY_600 };
-  }
+  var selectStyle: React.CSSProperties = { height: 36, padding: '0 12px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.INK, fontSize: 13, fontFamily: C.FONT, maxWidth: 220, cursor: 'pointer' };
+  var th: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.GRAY_500, borderBottom: '1px solid ' + C.BORDER };
+  var td: React.CSSProperties = { padding: '14px 12px', fontSize: 15, color: C.INK, borderBottom: '1px solid ' + C.BORDER_LIGHT, verticalAlign: 'middle' };
 
   return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>Recent leads</h3>
-          <span style={{
-            width: 8, height: 8, borderRadius: '50%', background: C.SUCCESS_500,
-            animation: 'sq-live-pulse 2s infinite',
-          }} />
-          <style>{`@keyframes sq-live-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={function() { setQuizFilterOpen(!quizFilterOpen); setSourceFilterOpen(false); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-                border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
-                color: C.GRAY_700, background: C.SURFACE, cursor: 'pointer', fontFamily: C.FONT,
-              }}
-            >
-              {leadQuizFilter === 'all' ? 'All quizzes' : quizzes.find(function(q) { return q.id === leadQuizFilter; })?.title || 'All quizzes'}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            {quizFilterOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, marginTop: 4, background: C.SURFACE,
-                border: '1px solid ' + C.GRAY_200, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                padding: 4, zIndex: 50, minWidth: 180, maxHeight: 220, overflowY: 'auto',
-              }}>
-                <button onClick={function() { setLeadQuizFilter('all'); setQuizFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadQuizFilter === 'all' ? C.ACCENT_LIGHT : 'transparent', color: leadQuizFilter === 'all' ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT }}>All quizzes</button>
-                {quizzes.map(function(q) {
-                  return <button key={q.id} onClick={function() { setLeadQuizFilter(q.id); setQuizFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadQuizFilter === q.id ? C.ACCENT_LIGHT : 'transparent', color: leadQuizFilter === q.id ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.title || 'Untitled'}</button>;
-                })}
-              </div>
+    <div style={{ marginBottom: 20 }}>
+      <Panel
+        title="Recent leads"
+        action={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {leads.length > 0 && (
+              <>
+                <select aria-label="Filter by quiz" value={leadQuizFilter} onChange={function(e) { setLeadQuizFilter(e.target.value); }} style={selectStyle}>
+                  <option value="all">All quizzes</option>
+                  {quizzes.map(function(q) { return <option key={q.id} value={q.id}>{q.title || 'Untitled'}</option>; })}
+                </select>
+                <select aria-label="Filter by source" value={leadSourceFilter} onChange={function(e) { setLeadSourceFilter(e.target.value); }} style={selectStyle}>
+                  <option value="all">All sources</option>
+                  {uniqueSources.map(function(s) { return <option key={s} value={s}>{s}</option>; })}
+                </select>
+              </>
             )}
+            <Link href="/dashboard/leads" className="sq-link-arrow">View all {ARROW}</Link>
           </div>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={function() { setSourceFilterOpen(!sourceFilterOpen); setQuizFilterOpen(false); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-                border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
-                color: C.GRAY_700, background: C.SURFACE, cursor: 'pointer', fontFamily: C.FONT,
-              }}
-            >
-              {leadSourceFilter === 'all' ? 'All sources' : leadSourceFilter}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            {sourceFilterOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, marginTop: 4, background: C.SURFACE,
-                border: '1px solid ' + C.GRAY_200, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                padding: 4, zIndex: 50, minWidth: 160,
-              }}>
-                <button onClick={function() { setLeadSourceFilter('all'); setSourceFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadSourceFilter === 'all' ? C.ACCENT_LIGHT : 'transparent', color: leadSourceFilter === 'all' ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT }}>All sources</button>
-                {uniqueSources.map(function(s) {
-                  return <button key={s} onClick={function() { setLeadSourceFilter(s); setSourceFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: 'none', borderRadius: 4, background: leadSourceFilter === s ? C.ACCENT_LIGHT : 'transparent', color: leadSourceFilter === s ? C.ACCENT : C.GRAY_700, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: C.FONT }}>{s}</button>;
-                })}
-              </div>
-            )}
+        }
+        bodyPad="0 12px 8px"
+      >
+        {leads.length === 0 ? (
+          <div style={{ padding: '18px 12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.INK }}>No leads yet</div>
+              <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 2 }}>Publish a quiz and add it to your website to start capturing leads.</div>
+            </div>
+            <Link href="/dashboard/embed" className="sq-link-arrow">Get embed code {ARROW}</Link>
           </div>
-          <Link href="/dashboard/leads" style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-            border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 13, fontWeight: 500,
-            color: C.GRAY_700, background: C.SURFACE, textDecoration: 'none', fontFamily: C.FONT,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export
-          </Link>
-        </div>
-      </div>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: C.FONT }}>
-        <thead>
-          <tr>
-            {['Lead', 'Quiz', 'Score', 'Source', 'Submitted', 'Status', ''].map(function(h, hi) {
-              return (
-                <th key={hi} style={{
-                  padding: '10px 24px', textAlign: 'left', fontSize: 12, fontWeight: 500,
-                  color: C.GRAY_500, borderBottom: '1px solid ' + C.GRAY_200, background: C.GRAY_50,
-                }}>{h}</th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {leads.filter(function(lead) {
-            if (leadQuizFilter !== 'all' && lead.quiz_id !== leadQuizFilter) return false;
-            if (leadSourceFilter !== 'all' && (lead.source || 'Direct') !== leadSourceFilter) return false;
-            return true;
-          }).slice(0, 5).map(function(lead, li) {
-            var ac = AVATAR_COLORS[li % AVATAR_COLORS.length];
-            var sc = scoreVariant(lead.score);
-            var ss = statusStyle(lead.status);
-            var submitted = new Date(lead.created_at);
-            return (
-              <tr key={lead.id}>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none', fontSize: 14, color: C.GRAY_600 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 32, height: 32, borderRadius: '50%', background: ac.bg, color: ac.fg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, fontWeight: 600, flexShrink: 0,
-                    }}>{initialsFrom(lead.name, lead.email)}</div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_900 }}>{lead.name || lead.email.split('@')[0]}</div>
-                      <div style={{ fontSize: 12, color: C.GRAY_500 }}>{lead.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none', fontSize: 14, color: C.GRAY_700, whiteSpace: 'nowrap' }}>
-                  {lead.quizzes?.title || quizMap[lead.quiz_id] || 'Quiz'}
-                </td>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none' }}>
-                  <span style={{
-                    width: 32, height: 24, borderRadius: 12, display: 'inline-flex',
-                    alignItems: 'center', justifyContent: 'center', fontSize: 13,
-                    fontWeight: 600, background: sc.bg, color: sc.fg,
-                  }}>{lead.score !== null ? lead.score : '—'}</span>
-                </td>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none', fontSize: 14, color: C.GRAY_600 }}>
-                  {lead.source || 'Direct'}
-                </td>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none' }}>
-                  <div style={{ fontSize: 14, color: C.GRAY_600 }}>{submitted.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                  <div style={{ fontSize: 12, color: C.GRAY_400 }}>{submitted.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</div>
-                </td>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none' }}>
-                  <span style={{
-                    padding: '3px 10px', borderRadius: 16, fontSize: 12, fontWeight: 500,
-                    background: ss.bg, color: ss.fg, display: 'inline-flex', alignItems: 'center',
-                  }}>{lead.status ? lead.status.charAt(0).toUpperCase() + lead.status.slice(1) : 'New'}</span>
-                </td>
-                <td style={{ padding: '12px 24px', borderBottom: li < Math.min(leads.length, 5) - 1 ? '1px solid ' + C.GRAY_100 : 'none', textAlign: 'right' }}>
-                  <span style={{ padding: '4px 8px', borderRadius: 4, fontSize: 16, color: C.GRAY_400, cursor: 'pointer', letterSpacing: 2 }}>&#8942;</span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <div style={{ padding: '12px 24px', textAlign: 'center', borderTop: '1px solid ' + C.GRAY_200 }}>
-        <Link href="/dashboard/leads" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>
-          View all leads &rarr;
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// ═══════ QUESTION DROP-OFF ═══════
-
-function QuestionDropoff({ questions, quizTitle, quizzes, selectedQuizId, onQuizChange }: {
-  questions: DropoffQuestion[];
-  quizTitle: string;
-  quizzes?: Array<{ id: string; title: string }>;
-  selectedQuizId?: string;
-  onQuizChange?: (quizId: string) => void;
-}) {
-  return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
-        <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Question drop-off analysis</span>
-        {quizzes && quizzes.length > 0 && onQuizChange ? (
-          <select
-            value={selectedQuizId || ''}
-            onChange={function(e) { onQuizChange(e.target.value); }}
-            style={{
-              padding: '8px 32px 8px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
-              fontSize: 13, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
-              fontFamily: C.FONT, cursor: 'pointer', outline: 'none',
-              appearance: 'none' as const,
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'14\' height=\'14\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23667085\' stroke-width=\'2\' stroke-linecap=\'round\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 10px center',
-              maxWidth: 280,
-            }}
-          >
-            {quizzes.map(function(q) {
-              return <option key={q.id} value={q.id}>{q.title || 'Untitled'}</option>;
-            })}
-          </select>
         ) : (
-          <div style={{
-            padding: '6px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
-            fontSize: 13, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
-            display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
-          }}>
-            {quizTitle}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: C.FONT, minWidth: 720 }}>
+              <thead>
+                <tr><th style={th}>Name</th><th style={th}>Quiz</th><th style={th}>Email</th><th style={th}>Score</th><th style={th}>Source</th><th style={th}>Date</th></tr>
+              </thead>
+              <tbody>
+                {rows.map(function(lead) {
+                  var submitted = new Date(lead.created_at);
+                  return (
+                    <tr key={lead.id}>
+                      <td style={td}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ width: 36, height: 36, borderRadius: '50%', background: C.PERIWINKLE_SOFT, color: C.BRAND_700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>{initialsFrom(lead.name, lead.email)}</span>
+                          <span style={{ fontWeight: 500 }}>{lead.name || lead.email.split('@')[0]}</span>
+                        </div>
+                      </td>
+                      <td style={td}>{lead.quizzes?.title || quizMap[lead.quiz_id] || 'Quiz'}</td>
+                      <td style={{ ...td, color: C.GRAY_600 }}>{lead.email}</td>
+                      <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{lead.score !== null && lead.score !== undefined ? lead.score : '—'}</td>
+                      <td style={{ ...td, color: C.GRAY_600 }}>{lead.source || 'Direct'}</td>
+                      <td style={{ ...td, color: C.GRAY_600, whiteSpace: 'nowrap' }}>{submitted.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    </tr>
+                  );
+                })}
+                {rows.length === 0 && (
+                  <tr><td colSpan={6} style={{ ...td, color: C.GRAY_500, textAlign: 'center' }}>No leads match these filters.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
-      <div style={{ padding: '8px 24px 24px' }}>
-        <table style={{ width: '100%', fontFamily: C.FONT }}>
-          <thead>
-            <tr>
-              <th style={{ padding: '8px 0', textAlign: 'left', fontSize: 12, fontWeight: 500, color: C.GRAY_500, borderBottom: '1px solid ' + C.GRAY_200 }}>Question</th>
-              <th style={{ padding: '8px 0', textAlign: 'left', fontSize: 12, fontWeight: 500, color: C.GRAY_500, borderBottom: '1px solid ' + C.GRAY_200 }}>Drop-off</th>
-              <th style={{ padding: '8px 0', textAlign: 'left', fontSize: 12, fontWeight: 500, color: C.GRAY_500, borderBottom: '1px solid ' + C.GRAY_200, width: 140 }}>Completion rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {questions.map(function(q, qi) {
-              return (
-                <tr key={qi}>
-                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: C.GRAY_600 }}>{qi + 1}.{q.question ? ' ' + q.question : ''}</td>
-                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, fontSize: 13, color: '#F04438' }}>{q.dropoff_rate || 0}%</td>
-                  <td style={{ padding: '10px 0', borderBottom: '1px solid ' + C.GRAY_100, width: 160 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 6, background: C.GRAY_100, borderRadius: 3, overflow: 'hidden', display: 'flex' }}>
-                        <div style={{ height: '100%', width: (q.dropoff_rate || 0) + '%', background: '#F04438', borderRadius: '3px 0 0 3px', flexShrink: 0 }} />
-                        <div style={{ height: '100%', width: (q.completion_rate || 0) + '%', background: C.ACCENT, borderRadius: '0 3px 3px 0', flexShrink: 0 }} />
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: C.GRAY_700, minWidth: 35, textAlign: 'right' }}>{q.completion_rate || 0}%</span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <div style={{ marginTop: 12, textAlign: 'center' }}>
-          <Link href="/dashboard/analytics" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>
-            View full analysis &rarr;
-          </Link>
-        </div>
-      </div>
+      </Panel>
     </div>
   );
 }
 
-// ═══════ RECENT ACTIVITY ═══════
+// ═══════ FUNNEL / SOURCES / DROP-OFF ═══════
 
-function RecentActivityList({ activities }: { activities: ActivityItem[] }) {
-  var iconStyles: Record<string, { bg: string; fg: string }> = {
-    lead: { bg: C.ACCENT_LIGHT, fg: C.ACCENT },
-    quiz: { bg: C.SUCCESS_LIGHT, fg: C.SUCCESS_500 },
-    integration: { bg: '#F4EBFF', fg: '#7F56D9' },
-    ab_test: { bg: '#FFFAEB', fg: '#B54708' },
-    export: { bg: C.GRAY_100, fg: C.GRAY_600 },
-  };
-
-  var iconSvgs: Record<string, ReactNode> = {
-    lead: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg>,
-    quiz: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-    integration: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>,
-    ab_test: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 00-1.172-2.872L3 3"/><path d="M21 3l-7.828 7.828A4 4 0 0012 13.657V22"/></svg>,
-    export: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-  };
-
+function ConversionFunnel({ funnel }: { funnel: FunnelData }) {
+  var steps = [
+    { label: 'Views', value: funnel.views },
+    { label: 'Started', value: funnel.started },
+    { label: 'Completed', value: funnel.completed },
+    { label: 'Leads', value: funnel.leads },
+  ];
   return (
-    <div style={{ background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px' }}>
-        <span style={{ fontSize: 16, fontWeight: 600, color: C.GRAY_900, letterSpacing: '-0.01em', fontFamily: C.FONT }}>Recent activity</span>
-        <Link href="/dashboard/analytics" style={{ fontSize: 14, fontWeight: 600, color: C.ACCENT, textDecoration: 'none', fontFamily: C.FONT }}>View all</Link>
-      </div>
-      <div style={{ padding: '8px 24px 24px' }}>
-        {activities.length === 0 ? (
-          <div style={{ padding: '20px 0', textAlign: 'center', color: C.GRAY_500, fontSize: 14, fontFamily: C.FONT }}>No recent activity</div>
-        ) : activities.map(function(act, ai) {
-          var is = iconStyles[act.type] || iconStyles.export;
+    <Panel title="Conversion funnel" subtitle="Across all quizzes in this period">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {steps.map(function(s, i) {
+          var pct = funnel.views > 0 ? (s.value / funnel.views) * 100 : 0;
           return (
-            <div
-              key={act.id}
-              style={{
-                display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0',
-                borderBottom: ai < activities.length - 1 ? '1px solid ' + C.GRAY_100 : 'none',
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 8, background: is.bg, color: is.fg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                {iconSvgs[act.type] || iconSvgs.export}
+            <div key={s.label}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
+                <span style={{ color: C.GRAY_600 }}>{s.label}</span>
+                <span style={{ color: C.INK, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {formatNumber(s.value)}
+                  {i > 0 && <span style={{ color: C.GRAY_500, fontWeight: 400, marginLeft: 8 }}>{funnel.views > 0 ? pct.toFixed(1) + '%' : '—'}</span>}
+                </span>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: C.GRAY_900, fontFamily: C.FONT }}>{act.title}</div>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>{act.description}</div>
+              <div style={{ height: 8, borderRadius: 4, background: C.GRAY_100, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: (funnel.views > 0 ? Math.max(pct, s.value > 0 ? 2 : 0) : 0) + '%', background: i === 3 ? C.INK : C.ACCENT, borderRadius: 4 }} />
               </div>
-              <span style={{ fontSize: 12, color: C.GRAY_400, flexShrink: 0, whiteSpace: 'nowrap', fontFamily: C.FONT }}>{act.time && act.time.includes('T') ? formatRelative(act.time) : act.time}</span>
             </div>
           );
         })}
       </div>
-    </div>
+    </Panel>
   );
 }
 
-// ═══════ A/B TESTING BANNER ═══════
+function LeadSourcesList({ sources, total }: { sources: LeadSource[]; total: number }) {
+  return (
+    <Panel title="Lead sources" subtitle={formatNumber(total) + ' ' + (total === 1 ? 'lead' : 'leads') + ' in total'}>
+      {sources.length === 0 ? (
+        <div style={{ fontSize: 14, color: C.GRAY_500, padding: '8px 0' }}>Where your leads come from will show here.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {sources.map(function(src) {
+            return (
+              <div key={src.name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: C.INK }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: src.color }} />{src.name}</span>
+                  <span style={{ color: C.GRAY_600, fontVariantNumeric: 'tabular-nums' }}>{formatNumber(src.count)} · {src.percentage.toFixed(0)}%</span>
+                </div>
+                <div style={{ height: 6, borderRadius: 3, background: C.GRAY_100, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: src.percentage + '%', background: src.color }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function QuestionDropoff({ questions, quizzes, selectedQuizId, onQuizChange }: {
+  questions: DropoffQuestion[];
+  quizzes: Array<{ id: string; title: string }>;
+  selectedQuizId?: string;
+  onQuizChange: (quizId: string) => void;
+}) {
+  return (
+    <Panel
+      title="Question drop-off"
+      action={quizzes.length > 0 ? (
+        <select
+          aria-label="Quiz for drop-off analysis"
+          value={selectedQuizId || ''}
+          onChange={function(e) { onQuizChange(e.target.value); }}
+          style={{ height: 34, padding: '0 10px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.INK, fontSize: 13, fontFamily: C.FONT, maxWidth: 170, cursor: 'pointer' }}
+        >
+          {quizzes.map(function(q) { return <option key={q.id} value={q.id}>{q.title || 'Untitled'}</option>; })}
+        </select>
+      ) : undefined}
+    >
+      {questions.length === 0 ? (
+        <div style={{ fontSize: 14, color: C.GRAY_500, padding: '8px 0' }}>Drop-off by question appears once this quiz has responses.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {questions.map(function(q, qi) {
+            return (
+              <div key={qi} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 64px', gap: 12, alignItems: 'center' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 14, color: C.INK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{qi + 1}. {q.question || 'Question ' + (qi + 1)}</div>
+                  <div style={{ height: 6, borderRadius: 3, background: C.GRAY_100, overflow: 'hidden', marginTop: 6 }}>
+                    <div style={{ height: '100%', width: (q.completion_rate || 0) + '%', background: C.ACCENT }} />
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', fontSize: 13, color: C.GRAY_600, fontVariantNumeric: 'tabular-nums' }}>{q.dropoff_rate || 0}% off</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div style={{ marginTop: 16 }}>
+        <Link href="/dashboard/analytics" className="sq-link-arrow">View full analytics {ARROW}</Link>
+      </div>
+    </Panel>
+  );
+}
+
+function RecentActivityList({ activities }: { activities: ActivityItem[] }) {
+  return (
+    <Panel title="Recent activity">
+      {activities.map(function(act, ai) {
+        return (
+          <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderTop: ai === 0 ? 'none' : '1px solid ' + C.BORDER_LIGHT }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.ACCENT, marginTop: 7, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: C.INK }}>{act.title}</div>
+              <div style={{ fontSize: 13, color: C.GRAY_500 }}>{act.description}</div>
+            </div>
+            <span style={{ fontSize: 12, color: C.GRAY_500, whiteSpace: 'nowrap' }}>{act.time && act.time.includes('T') ? formatRelative(act.time) : act.time}</span>
+          </div>
+        );
+      })}
+    </Panel>
+  );
+}
 
 function ABTestingBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div style={{
-      background: C.SURFACE, border: '1px solid ' + C.GRAY_200, borderRadius: 12,
-      padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24,
-    }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: 10,
-        background: '#FFFAEB',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B54708" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6"/><path d="M10 3v4.4a1 1 0 01-.3.7L6 12a5 5 0 003.5 8.5h5A5 5 0 0018 12l-3.7-3.9a1 1 0 01-.3-.7V3"/></svg>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 20px 18px 24px', background: C.INK, color: '#fff', borderRadius: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.INK, background: C.ACID, borderRadius: 4, padding: '4px 8px' }}>A/B testing</span>
+      <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 600 }}>Find out which version of a quiz converts better.</div>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>Test different questions, paths and designs side by side.</div>
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>Boost your conversions with A/B testing</div>
-        <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>Test different questions, paths, and designs to see what converts best.</div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <Link href="/dashboard/quizzes" style={{
-          padding: '8px 16px', background: '#F04438', color: '#fff', borderRadius: 8,
-          fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: C.FONT,
-          transition: 'all 0.12s',
-        }}>Create A/B test</Link>
-        <a href="https://docs.squarespell.com/ab-testing" target="_blank" rel="noopener noreferrer" style={{
-          padding: '8px 16px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
-          fontSize: 13, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
-          textDecoration: 'none', fontFamily: C.FONT, transition: 'all 0.12s',
-        }}>Learn more</a>
-      </div>
-      <button
-        onClick={onDismiss}
-        style={{
-          width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: 6, color: C.GRAY_400, background: 'none', border: 'none', cursor: 'pointer',
-          transition: 'all 0.12s',
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <Link href="/dashboard/quizzes" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 40, padding: '0 16px', borderRadius: 6, background: '#fff', color: C.INK, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+        Choose a quiz {ARROW}
+      </Link>
+      <button type="button" onClick={onDismiss} aria-label="Dismiss" style={{ width: 36, height: 36, borderRadius: 6, border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
       </button>
     </div>
   );
@@ -1103,14 +756,16 @@ function OverviewInner() {
         // Parse quizzes
         var quizData: Quiz[] = [];
         if (quizRes && quizRes.ok) {
-          quizData = await quizRes.json();
+          var quizJson = await quizRes.json();
+          quizData = Array.isArray(quizJson) ? quizJson : [];
           if (!cancelled) setQuizzes(quizData);
         }
 
         // Parse leads
         var leadData: Lead[] = [];
         if (leadRes && leadRes.ok) {
-          leadData = await leadRes.json();
+          var leadJson = await leadRes.json();
+          leadData = Array.isArray(leadJson) ? leadJson : (leadJson && Array.isArray(leadJson.leads) ? leadJson.leads : []);
           if (!cancelled) setLeads(leadData.slice(0, 10));
         }
 
@@ -1174,8 +829,8 @@ function OverviewInner() {
 
           setFunnel({
             views: totalViews,
-            started: totalStarted || Math.round(totalViews * 0.57),
-            completed: totalCompletions || Math.round(totalViews * 0.33),
+            started: totalStarted,
+            completed: totalCompletions,
             leads: totalLeads,
           });
 
@@ -1288,8 +943,8 @@ function OverviewInner() {
 
         setFunnel({
           views: totalViews,
-          started: totalStarted || Math.round(totalViews * 0.57),
-          completed: totalCompletions || Math.round(totalViews * 0.33),
+          started: totalStarted,
+          completed: totalCompletions,
           leads: totalLeads,
         });
 
@@ -1357,7 +1012,7 @@ function OverviewInner() {
         } catch {}
       }
 
-      var sortedDates = Object.keys(allDates).sort().reverse();
+      var sortedDates = Object.keys(allDates).sort(); // chronological, oldest on the left
       var points: ChartPoint[] = sortedDates.map(function(d) {
         var parts = d.split('-');
         var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1373,6 +1028,11 @@ function OverviewInner() {
 
     return function() { cancelled = true; };
   }, [token, quizzes, chartPeriod]);
+
+  // Respect a previous dismissal of the A/B testing prompt.
+  useEffect(function() {
+    try { if (localStorage.getItem('sq_ab_banner_dismissed') === '1') setShowABBanner(false); } catch {}
+  }, []);
 
   // Resolve username from Clerk
   useEffect(function() {
@@ -1390,159 +1050,102 @@ function OverviewInner() {
     );
   }
 
-  var displayName = userName || 'there';
+  var displayName = userName ? userName.charAt(0).toUpperCase() + userName.slice(1) : '';
 
   return (
     <DashboardShell title="Dashboard">
+      <style dangerouslySetInnerHTML={{ __html: DASH_CSS }} />
       <NewQuizModal open={newQuizOpen} onClose={function() { setNewQuizOpen(false); }} />
 
       {/* Welcome header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, marginBottom: 24 }}>
-        <div>
-          <h1 style={{
-            margin: 0, fontSize: 24, fontWeight: 600, color: C.GRAY_900,
-            letterSpacing: '-0.02em', marginBottom: 4, fontFamily: C.FONT,
-          }}>
-            Welcome back, {displayName} &#128075;
-          </h1>
-          <p style={{ margin: 0, fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT }}>
-            Here&apos;s what&apos;s happening with your quizzes today.
+      <div className="sq-dash-hero">
+        <div style={{ minWidth: 0 }}>
+          <DisplayTitle size="xl">{displayName ? 'Welcome back, ' + displayName + '.' : 'Welcome back.'}</DisplayTitle>
+          <p style={{ margin: '16px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600, lineHeight: 1.4 }}>
+            Here&apos;s what&apos;s happening with your quizzes.
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={function() { setDatePickerOpen(!datePickerOpen); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '9px 14px', border: '1px solid ' + C.GRAY_300, borderRadius: 8,
-                fontSize: 14, fontWeight: 500, color: C.GRAY_700, background: C.SURFACE,
-                cursor: 'pointer', fontFamily: C.FONT, boxShadow: C.SHADOW_XS,
-              }}
-            >
-              {dateRange || 'Last 30 days'}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            </button>
-            {datePickerOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 6,
-                background: C.SURFACE, border: '1px solid ' + C.GRAY_200,
-                borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                padding: 6, zIndex: 50, minWidth: 160,
-              }}>
-                {[
-                  { days: 7, label: 'Last 7 days' },
-                  { days: 30, label: 'Last 30 days' },
-                  { days: 90, label: 'Last 90 days' },
-                  { days: 0, label: 'All time' },
-                ].map(function(opt) {
-                  var isActive = selectedDays === opt.days;
-                  return (
-                    <button
-                      key={opt.days}
-                      onClick={function() {
-                        setSelectedDays(opt.days);
-                        setDatePickerOpen(false);
-                      }}
-                      style={{
-                        display: 'block', width: '100%', textAlign: 'left',
-                        padding: '8px 12px', border: 'none', borderRadius: 6,
-                        background: isActive ? C.ACCENT_LIGHT : 'transparent',
-                        color: isActive ? C.ACCENT : C.GRAY_700,
-                        fontSize: 13, fontWeight: isActive ? 600 : 500,
-                        cursor: 'pointer', fontFamily: C.FONT,
-                        transition: 'background 0.1s',
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <button
+            type="button"
             onClick={function() { setNewQuizOpen(true); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '10px 18px', background: C.ACCENT, color: '#fff',
-              borderRadius: 8, fontSize: 14, fontWeight: 600, border: 'none',
-              cursor: 'pointer', fontFamily: C.FONT, boxShadow: C.SHADOW_XS,
-              transition: 'all 0.15s',
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, height: 60, padding: '0 28px', borderRadius: 6, border: 'none', background: C.ACCENT, color: '#fff', fontSize: 19, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer' }}
+            onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_HOVER; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = C.ACCENT; }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
             Create quiz
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
+          <Link href="/dashboard/templates" className="sq-tip" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 20px', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, textDecoration: 'none', color: 'inherit' }}>
+            <span style={{ width: 40, height: 40, borderRadius: 6, background: C.ACID_SOFT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.INK} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z" /></svg>
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 15, fontWeight: 500, color: C.INK }}>Turn curiosity into connection.</span>
+              <span style={{ display: 'block', fontSize: 14, color: C.GRAY_500, marginTop: 2 }}>Start from a ready-made template.</span>
+            </span>
+            <span style={{ color: C.INK, display: 'flex' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+            </span>
+          </Link>
         </div>
       </div>
 
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
-        <DashStatCard
-          label="Total views"
+      {/* KPI strip */}
+      <div className="sq-kpis">
+        <Kpi
+          icon={<KpiIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></KpiIcon>}
           value={formatNumber(analytics.total_views)}
-          change={analytics.views_change || undefined}
-          compareLabel={analytics.compare_label || undefined}
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+          label={analytics.total_views === 1 ? 'View' : 'Views'}
         />
-        <DashStatCard
-          label="Leads captured"
+        <Kpi
+          icon={<KpiIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" /><circle cx="17" cy="9" r="2.8" /><path d="M16.5 14.6c2.9.2 5 2.2 5 5.4" /></svg></KpiIcon>}
+          value={formatNumber(funnel.completed)}
+          label={funnel.completed === 1 ? 'Completion' : 'Completions'}
+        />
+        <Kpi
+          icon={<KpiIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6" /></svg></KpiIcon>}
           value={formatNumber(analytics.total_leads)}
-          change={analytics.leads_change || undefined}
-          compareLabel={analytics.compare_label || undefined}
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/></svg>}
+          label={analytics.total_leads === 1 ? 'Lead' : 'Leads'}
         />
-        <DashStatCard
+        <Kpi
+          icon={<RateRing pct={analytics.completion_rate} />}
+          value={(Math.round(analytics.completion_rate * 10) / 10) + '%'}
           label="Completion rate"
-          value={analytics.completion_rate.toFixed(1) + '%'}
-          change={analytics.completion_change || undefined}
-          compareLabel={analytics.compare_label || undefined}
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
         />
-        <DashStatCard
-          label="Lead rate"
-          value={analytics.lead_rate.toFixed(1) + '%'}
-          change={analytics.lead_rate_change || undefined}
-          compareLabel={analytics.compare_label || undefined}
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17l4-5 4 3 5-7"/></svg>}
-        />
-        <DashStatCard
-          label="Active quizzes"
-          value={<>{analytics.active_quizzes} <span style={{ fontSize: 18, fontWeight: 500, color: C.GRAY_400 }}>/ {analytics.quiz_limit}</span></>}
-          sub={analytics.quiz_limit > 0 ? Math.round((analytics.active_quizzes / analytics.quiz_limit) * 100) + '% of limit used' : undefined}
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="currentColor"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="currentColor"/><circle cx="17" cy="18" r="2" fill="currentColor"/></svg>}
-        />
+        <div className="sq-kpis-range" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 20px' }}>
+          <RangeSelect value={selectedDays} onChange={function(d) { setSelectedDays(d); }} />
+        </div>
       </div>
 
-      {/* Performance chart */}
-      <PerformanceChart data={chartData} period={chartPeriod} onPeriodChange={setChartPeriod} dateRange={dateRange} selectedDays={selectedDays} onDaysChange={function(days) { setSelectedDays(days); }} />
-
-      {/* Three-column row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
+      {/* Chart + top quizzes */}
+      <div className="sq-dash-main">
+        <PerformanceChart data={chartData} period={chartPeriod} onPeriodChange={setChartPeriod} />
         <TopQuizzesList quizzes={quizzes} />
-        <ConversionFunnel funnel={funnel} />
-        <LeadSourcesDonut sources={sources} total={analytics.total_leads} />
       </div>
 
-      {/* Recent leads table */}
+      {/* Recent leads */}
       <RecentLeadsTable leads={leads} quizzes={quizzes} />
 
-      {/* Bottom row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      {/* Deeper insight */}
+      <div className="sq-dash-trio">
+        <ConversionFunnel funnel={funnel} />
+        <LeadSourcesList sources={sources} total={analytics.total_leads} />
         <QuestionDropoff
           questions={dropoffQuestions}
-          quizTitle={dropoffQuizTitle || 'Select quiz'}
           quizzes={quizzes.map(function(q) { return { id: q.id, title: q.title }; })}
           selectedQuizId={dropoffQuizId}
           onQuizChange={handleDropoffQuizChange}
         />
-        <RecentActivityList activities={activities} />
       </div>
 
-      {/* A/B testing banner */}
-      {showABBanner && (
+      {activities.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <RecentActivityList activities={activities} />
+        </div>
+      )}
+
+      {showABBanner && quizzes.length > 0 && (
         <ABTestingBanner onDismiss={function() {
           setShowABBanner(false);
           try { localStorage.setItem('sq_ab_banner_dismissed', '1'); } catch {}

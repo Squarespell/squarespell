@@ -167,7 +167,7 @@ export function LiveLeadFeed() {
                 gap: 12,
                 padding: '12px 0',
                 borderTop: '1px solid ' + C.GRAY_100,
-                background: isNew ? 'rgba(13,115,119,0.02)' : 'transparent',
+                background: isNew ? 'rgba(49, 84, 255,0.02)' : 'transparent',
                 transition: 'all 0.5s ease',
               }}
             >
