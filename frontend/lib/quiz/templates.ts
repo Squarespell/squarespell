@@ -1749,7 +1749,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     name: 'Coaching Readiness Quiz',
     description: 'Segment potential clients by business stage and route them to the right offer. Captures revenue level, biggest challenge, and learning style — so your sales conversation starts where it matters.',
     audience: 'Business coaches, life coaches, consultants, course creators, mentors',
-    whyItWorks: 'Knowing each lead's stage helps you focus. The quiz pre-qualifies prospects so you spend call time with people who are ready for your level of service.',
+    whyItWorks: 'Knowing each lead’s stage helps you focus. The quiz pre-qualifies prospects so you spend call time with people who are ready for your level of service.',
     iconPath: 'M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3.01',
     tags: ['coaching', 'consulting', 'business', 'mentor', 'course'],
     blocks: coachingStyleBlocks,
