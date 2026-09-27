@@ -59,12 +59,14 @@ describe('focus goes back to the control that opened a dialog, even if the brows
 describe('the dashboard shell top bar fits a phone', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', '..', '_components', 'DashboardShell.tsx'), 'utf8');
   it('the search button can shrink (it used a fixed minWidth of 320 that widened every page)', () => {
+    // 2026 redesign: the search is a CSS class with a capped, viewport-relative width that collapses to an icon on phones.
     expect(src).not.toMatch(/minWidth:\s*320/);
-    expect(src).toMatch(/flex:\s*'0 1 320px'/);
-    expect(src).toMatch(/maxWidth:\s*320/);
+    expect(src).toMatch(/\.sq-search \{[^}]*width: 300px; max-width: 30vw;/);
+    expect(src).toMatch(/@media \(max-width: 767px\)[\s\S]*\.sq-search \{ width: 38px;/);
   });
   it('uses a tighter side padding on phones', () => {
-    expect(src).toMatch(/padding:\s*isMobile \? '0 16px' : '0 32px'/);
+    expect(src).toMatch(/var sidePad = isMobile \? 16 : 40;/);
+    expect(src).toMatch(/padding: '0 ' \+ sidePad \+ 'px'/);
   });
 });
 

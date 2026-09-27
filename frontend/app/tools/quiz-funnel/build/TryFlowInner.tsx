@@ -1901,48 +1901,23 @@ export function TryFlowInner({
         <div className="s5">
           <div className="s5-card">
             <div className="s5-brand">
-              <div className="brand-mark">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-              </div>
-              <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
+              <Wordmark size={28} />
             </div>
 
             <div className="s5-banner">
               <SvgCheck size={16} />
-              Your quiz is saved. Sign in to publish it.
+              Your quiz is ready. Sign in or create an account to publish it.
             </div>
 
             <div className="s5-title">Sign in to publish</div>
-            <div className="s5-sub">One more step, then your quiz goes live.</div>
-
-            <div className="s5-social">
-              <button className="s5-social-btn" onClick={goSignUp} type="button">
-                <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.3c0-.78-.07-1.53-.2-2.25H12v4.26h5.9a5.04 5.04 0 0 1-2.18 3.3v2.75h3.53c2.06-1.9 3.25-4.7 3.25-8.06z"/><path fill="#34A853" d="M12 23c2.94 0 5.4-.97 7.2-2.64l-3.53-2.74c-.98.65-2.23 1.04-3.67 1.04-2.82 0-5.2-1.9-6.06-4.46H2.3v2.84A10.97 10.97 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.94 14.2a6.6 6.6 0 0 1 0-4.2V7.16H2.3a11 11 0 0 0 0 9.68l3.64-2.64z"/><path fill="#EA4335" d="M12 5.38c1.6 0 3.03.55 4.15 1.62l3.12-3.12C17.4 2.1 14.93 1 12 1a10.97 10.97 0 0 0-9.7 6.16l3.64 2.84C6.8 7.28 9.18 5.38 12 5.38z"/></svg>
-                Continue with Google
-              </button>
-              <button className="s5-social-btn" onClick={goSignUp} type="button">
-                <svg viewBox="0 0 24 24" fill="#ffffff"><path d="M17.6 12.8c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.2.8-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3-.1-.1-2-.8-2-3.6zM15.4 6.5c.6-.7 1-1.6.9-2.5-.9.1-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.5 1-.1 2-.6 2.5-1.3z"/></svg>
-                Continue with Apple
-              </button>
-            </div>
-
-            <div className="s5-divider">or continue with email</div>
-
-            <div className="s5-field">
-              <label>Email</label>
-              <input className="s5-input" type="email" placeholder="you@yourcompany.com" />
-            </div>
-            <div className="s5-field">
-              <label>Password</label>
-              <input className="s5-input" type="password" placeholder="••••••••••" />
-            </div>
+            <div className="s5-sub">We’ll email you a 6-digit code. No password needed, and your quiz comes with you.</div>
 
             <button className="btn btn-primary btn-block s5-submit" onClick={goSignUp} type="button">
-              Sign in and publish
+              Continue with email
             </button>
 
             <div className="s5-foot">
-              Don&apos;t have an account? <a onClick={goSignUp} style={{ cursor: 'pointer' }}>Create one</a>
+              New here? The same step creates your account.
             </div>
           </div>
         </div>
@@ -1958,10 +1933,7 @@ export function TryFlowInner({
       <div className={`stage${stage === 6 ? ' active' : ''}`} id="stage-6">
         <div className="topbar">
           <div className="brand">
-            <div className="brand-mark">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="4" r="2" fill="#FFFFFF"/><line x1="12" y1="6" x2="12" y2="11"/><line x1="12" y1="11" x2="7" y2="16"/><line x1="12" y1="11" x2="17" y2="16"/><circle cx="7" cy="18" r="2" fill="#FFFFFF"/><circle cx="17" cy="18" r="2" fill="#FFFFFF"/></svg>
-            </div>
-            <span>SQUARESPELL<span style={{ marginLeft: 4 }}>QUIZ</span></span>
+            <Wordmark size={28} />
           </div>
           <div className="top-right">
             <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>founder@{domain}</span>

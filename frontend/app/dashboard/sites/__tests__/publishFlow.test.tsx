@@ -150,7 +150,7 @@ describe('Pages and preview: rules beside a website-context preview', () => {
 
 describe('style contract for the design fixes', () => {
   it('placement cards stack with a side illustration on phones, and use the approved illustration rules', () => {
-    expect(SITES_CSS).toMatch(/\.sx-place-visual\{height:116px;background:#eff4f2/);
+    expect(SITES_CSS).toMatch(/\.sx-place-visual\{height:116px;background:#EEF1FF/);
     expect(SITES_CSS).toMatch(/\.sx-art-popup\{[^}]*border-top:20px solid var\(--teal\)/);
     expect(SITES_CSS).toMatch(/\.sx-place\{display:grid;grid-template-columns:120px minmax\(0,1fr\)\}/);
   });
