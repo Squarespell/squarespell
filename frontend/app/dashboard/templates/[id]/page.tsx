@@ -20,7 +20,7 @@ import {
 import type { QuizBlock } from '../../../../lib/quiz/blocks';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 
-var ACCENT = C.ACCENT || '#0F7377';
+var ACCENT = C.ACCENT || '#3154FF';
 var ACCENT_LIGHT = C.ACCENT_LIGHT || '#E8F5F5';
 var PAPER = '#F7F7F5';
 /* Shorthand aliases */

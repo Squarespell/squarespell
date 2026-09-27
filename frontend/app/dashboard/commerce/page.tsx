@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
+import { DisplayTitle, PageLoading } from '../_components/PageShell';
 
 /* ─── types ─── */
 type Connection = {
@@ -14,15 +15,16 @@ type Product = {
   image_url: string; price_cents: number; currency: string; is_available: boolean;
 };
 
+function normalizeUrl(u: string): string {
+  var t = u.trim();
+  if (!t) return t;
+  return /^https?:\/\//i.test(t) ? t : 'https://' + t;
+}
+
 function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(cents / 100);
 }
 
-/* ─── shared card ─── */
-var cardBase: React.CSSProperties = {
-  background: '#fff', border: '1px solid ' + C.GRAY_200,
-  borderRadius: 16, boxShadow: C.SHADOW_XS,
-};
 
 /* ─── page ─── */
 export default function CommercePage() {
@@ -31,7 +33,7 @@ export default function CommercePage() {
   var [products, setProducts] = useState<Product[]>([]);
   var [loading, setLoading] = useState(true);
   var [tab, setTab] = useState<'connections' | 'products'>('connections');
-  var [connectForm, setConnectForm] = useState({ site_id: '', api_key: '' });
+  var [connectForm, setConnectForm] = useState({ site_url: '', api_key: '' });
   var [showKey, setShowKey] = useState(false);
   var [connecting, setConnecting] = useState(false);
   var [connectError, setConnectError] = useState('');
@@ -49,8 +51,8 @@ export default function CommercePage() {
           fetch(apiBase + '/api/commerce/products', { headers }),
         ]);
         if (!cancelled) {
-          if (connRes.ok) { var cd = await connRes.json(); setConnections(cd.connections || cd || []); }
-          if (prodRes.ok) { var pd = await prodRes.json(); setProducts(pd.products || pd || []); }
+          if (connRes.ok) { var cd = await connRes.json(); var cl = Array.isArray(cd) ? cd : cd && cd.connections; setConnections(Array.isArray(cl) ? cl : []); }
+          if (prodRes.ok) { var pd = await prodRes.json(); var pl = Array.isArray(pd) ? pd : pd && pd.products; setProducts(Array.isArray(pl) ? pl : []); }
           setLoading(false);
         }
       } catch { if (!cancelled) setLoading(false); }
@@ -59,18 +61,18 @@ export default function CommercePage() {
   }, [token]);
 
   async function connectSite() {
-    if (!connectForm.site_id || !connectForm.api_key || !token) return;
+    if (!connectForm.site_url.trim() || !connectForm.api_key.trim() || !token) return;
     setConnecting(true); setConnectError('');
     try {
       var res = await fetch(apiBase + '/api/commerce/connect', {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ site_id: connectForm.site_id, api_key: connectForm.api_key }),
+        body: JSON.stringify({ api_key: connectForm.api_key.trim(), site_url: normalizeUrl(connectForm.site_url) }),
       });
       var data = await res.json();
       if (res.ok) {
         setConnections(function (prev) { return [data.connection || data, ...prev]; });
-        setConnectForm({ site_id: '', api_key: '' });
+        setConnectForm({ site_url: '', api_key: '' });
       } else { setConnectError(data.error || 'Connection failed'); }
     } catch { setConnectError('Network error'); }
     setConnecting(false);
@@ -82,7 +84,7 @@ export default function CommercePage() {
       method: 'POST', headers: { Authorization: 'Bearer ' + token },
     });
     var res = await fetch(apiBase + '/api/commerce/products', { headers: { Authorization: 'Bearer ' + token } });
-    if (res.ok) { var pd = await res.json(); setProducts(pd.products || pd || []); }
+    if (res.ok) { var pd = await res.json(); var pl = Array.isArray(pd) ? pd : pd && pd.products; setProducts(Array.isArray(pl) ? pl : []); }
   }
 
   async function disconnectSite(id: string) {
@@ -94,449 +96,204 @@ export default function CommercePage() {
   }
 
   if (status === 'loading' || loading) {
+    return <DashboardShell title="Products"><PageLoading /></DashboardShell>;
+  }
+
+  var inputStyle: React.CSSProperties = { width: '100%', height: 46, padding: '0 14px', borderRadius: 6, border: '1px solid ' + C.BORDER, fontSize: 15, fontFamily: C.FONT, color: C.INK, background: '#fff' };
+  var canConnect = connectForm.site_url.trim() !== '' && connectForm.api_key.trim() !== '';
+  var steps = [
+    { n: 1, t: 'Sync products', b: 'Connect your store', done: connections.length > 0 },
+    { n: 2, t: 'Map outcomes', b: 'Link products to results', done: false },
+    { n: 3, t: 'Recommend products', b: 'Show the right products', done: false },
+  ];
+  var currentStep = connections.length > 0 ? 2 : 1;
+
+  function Tab({ v, label }: { v: 'connections' | 'products'; label: string }) {
+    var active = tab === v;
     return (
-      <DashboardShell title="Commerce">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, fontFamily: C.FONT, color: C.GRAY_400, fontSize: 14 }}>Loading...</div>
-      </DashboardShell>
+      <button type="button" role="tab" aria-selected={active} onClick={function () { setTab(v); }}
+        style={{ height: 46, padding: '0 24px', borderRadius: 6, border: '1px solid ' + (active ? C.ACCENT : C.BORDER), background: active ? C.ACCENT : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
+        {label}
+      </button>
     );
   }
 
-  /* ─── input style ─── */
-  var inputStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 14px', border: '1px solid ' + C.GRAY_200,
-    borderRadius: 10, fontSize: 14, fontFamily: C.FONT, color: C.GRAY_900,
-    outline: 'none', boxSizing: 'border-box', background: '#fff',
-  };
-
-  var canConnect = connectForm.site_id.trim() !== '' && connectForm.api_key.trim() !== '';
-
   return (
-    <DashboardShell title="Commerce">
-      <style>{`
-        .com-tab { transition: all 0.15s; }
-        .com-tab:hover { opacity: 0.85; }
-        .com-input:focus { border-color: ${C.ACCENT} !important; box-shadow: ${C.FOCUS_RING} !important; }
-        .com-card { transition: box-shadow 0.2s; }
-        .com-card:hover { box-shadow: ${C.SHADOW_MD}; }
-        .com-info { transition: box-shadow 0.2s; }
-        .com-info:hover { box-shadow: ${C.SHADOW_MD}; }
-        .com-connect-btn { transition: background 0.15s; }
-        .com-connect-btn:hover:not(:disabled) { background: ${C.ACCENT_HOVER} !important; }
-        .com-action { transition: background 0.15s; }
-        .com-action:hover { background: ${C.GRAY_50} !important; }
-      `}</style>
+    <DashboardShell title="Products">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .co-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: start; margin-bottom: 30px; }
+        .co-main { display: grid; grid-template-columns: minmax(360px, 0.75fr) minmax(0, 1.2fr); gap: 20px; margin-bottom: 20px; }
+        .co-prod { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+        @media (max-width: 1200px) { .co-hero, .co-main { grid-template-columns: 1fr; } .co-prod { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      ` }} />
 
-      {/* ── Header with illustration ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
+      {/* Header */}
+      <div className="co-hero">
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Commerce</div>
+          <DisplayTitle size="xl">Match every result to the right product.</DisplayTitle>
+          <p style={{ margin: '16px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Connect your Squarespace store and map products to quiz outcomes.</p>
+        </div>
+        <ol aria-label="Setup steps" style={{ listStyle: 'none', margin: 0, padding: '28px 0 0', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          {steps.map(function (st, i) {
+            var active = st.n === currentStep;
+            return (
+              <li key={st.n} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                <span style={{ width: 44, height: 44, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0, background: st.done ? C.INK : active ? C.ACCENT : C.PERIWINKLE_SOFT, color: st.done || active ? '#fff' : C.INK, border: active || st.done ? 'none' : '1px solid ' + C.PERIWINKLE }}>{st.done ? '✓' : st.n}</span>
+                <div><div style={{ fontSize: 15, fontWeight: 600, color: C.INK }}>{st.t}</div><div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 2 }}>{st.b}</div></div>
+                {i < steps.length - 1 && <span aria-hidden="true" style={{ width: 40, borderTop: '1px solid ' + C.GRAY_300, marginTop: 22 }} />}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
+      <div className="co-main">
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.3 }}>
-            Commerce
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>
-            Connect your Squarespace store and map products to quiz outcomes.
-          </p>
-        </div>
+          <div role="tablist" aria-label="Commerce" style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            <Tab v="connections" label="Connections" />
+            <Tab v="products" label={'Products (' + products.length + ')'} />
+          </div>
 
-        {/* Shopping illustration */}
-        <div style={{ position: 'relative', width: 200, height: 100, flexShrink: 0 }}>
-          {/* Cart icon */}
-          <div style={{
-            position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)',
-            width: 56, height: 56, borderRadius: 14, background: C.GRAY_100,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-            </svg>
-          </div>
-          {/* Floating cart */}
-          <div style={{
-            position: 'absolute', top: 0, right: 10,
-            width: 36, height: 36, borderRadius: 10, background: '#FEF0C7',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC6803" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-            </svg>
-          </div>
-          {/* Lock */}
-          <div style={{
-            position: 'absolute', top: 2, left: 20,
-            width: 32, height: 32, borderRadius: 8, background: C.GRAY_100,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
-            </svg>
-          </div>
-          {/* Tag */}
-          <div style={{
-            position: 'absolute', bottom: 5, right: 5,
-            width: 32, height: 32, borderRadius: 8, background: '#F4EBFF',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-              <line x1="7" y1="7" x2="7.01" y2="7" />
-            </svg>
-          </div>
-          {/* Sparkles */}
-          <svg width="10" height="10" viewBox="0 0 14 14" style={{ position: 'absolute', top: 4, left: 70 }}>
-            <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.GRAY_300} />
-          </svg>
-          <svg width="7" height="7" viewBox="0 0 14 14" style={{ position: 'absolute', top: 38, right: 0 }}>
-            <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.GRAY_300} />
-          </svg>
-          <div style={{ position: 'absolute', top: 55, left: 15, width: 5, height: 5, borderRadius: '50%', background: C.GRAY_200 }} />
-          <div style={{ position: 'absolute', top: 70, right: 35, width: 4, height: 4, borderRadius: '50%', background: C.GRAY_200 }} />
-        </div>
-      </div>
-
-      {/* ── Tabs ── */}
-      <div style={{ display: 'inline-flex', gap: 8, marginBottom: 24 }}>
-        {(['connections', 'products'] as const).map(function (t) {
-          var active = tab === t;
-          var label = t === 'products' ? 'Products (' + products.length + ')' : 'Connections';
-          return (
-            <button key={t} type="button" className="com-tab"
-              onClick={function () { setTab(t); }}
-              style={{
-                padding: '8px 20px', fontSize: 14, fontWeight: 600,
-                color: active ? '#fff' : C.GRAY_500,
-                background: active ? C.ACCENT : '#fff',
-                border: '1px solid ' + (active ? C.ACCENT : C.GRAY_200),
-                borderRadius: 10, cursor: 'pointer', fontFamily: C.FONT,
-              }}>
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Connections Tab ── */}
-      {tab === 'connections' && (
-        <>
-          {/* Connect store card */}
-          <div style={{ ...cardBase, padding: '24px 28px', marginBottom: 16 }}>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-              {/* Left: icon + text */}
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexShrink: 0 }}>
-                <div style={{
-                  width: 52, height: 52, borderRadius: 14, background: C.GRAY_50,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '1px solid ' + C.GRAY_200,
-                }}>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_500} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a4 4 0 00-8 0v2" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>
-                    Connect your Squarespace Store
-                  </div>
-                  <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>
-                    Enter your Squarespace Site ID and API Key to get started.
-                  </div>
+          {tab === 'connections' ? (
+            <section style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: '26px 28px' }}>
+              <div style={{ display: 'flex', gap: 22, marginBottom: 24 }}>
+                <span style={{ width: 64, height: 64, borderRadius: 8, background: C.GRAY_50, border: '1px solid ' + C.BORDER_LIGHT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><use href="/platforms/sprite.svg#squarespace" /></svg>
+                </span>
+                <div><h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: C.INK }}>Connect your Squarespace store</h2><p style={{ margin: '6px 0 0', fontSize: 15, color: C.GRAY_600 }}>Enter your store address and a Squarespace Commerce API key.</p></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '110px minmax(0,1fr)', gap: '16px 20px', alignItems: 'center' }}>
+                <label htmlFor="co-url" style={{ fontSize: 16, color: C.INK }}>Store URL</label>
+                <input id="co-url" type="text" inputMode="url" autoComplete="off" placeholder="e.g. yourstore.com" value={connectForm.site_url} onChange={function (e) { setConnectForm({ ...connectForm, site_url: e.target.value }); }} style={inputStyle} />
+                <label htmlFor="co-key" style={{ fontSize: 16, color: C.INK }}>API key</label>
+                <div style={{ position: 'relative' }}>
+                  <input id="co-key" type={showKey ? 'text' : 'password'} autoComplete="off" placeholder="Paste your API key" value={connectForm.api_key} onChange={function (e) { setConnectForm({ ...connectForm, api_key: e.target.value }); }} onKeyDown={function (e) { if (e.key === 'Enter' && canConnect) connectSite(); }} style={{ ...inputStyle, paddingRight: 48 }} />
+                  <button type="button" aria-label={showKey ? 'Hide API key' : 'Show API key'} onClick={function () { setShowKey(!showKey); }} style={{ position: 'absolute', right: 8, top: 7, width: 32, height: 32, border: 'none', background: 'none', color: C.GRAY_600, cursor: 'pointer' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />{showKey && <path d="M3 3l18 18" />}</svg>
+                  </button>
                 </div>
               </div>
-
-              {/* Right: form fields */}
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flex: 1, minWidth: 0 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.GRAY_700, fontFamily: C.FONT, marginBottom: 6 }}>
-                    Site ID
-                  </label>
-                  <input type="text" className="com-input" placeholder="e.g. abc123"
-                    value={connectForm.site_id}
-                    onChange={function (e) { setConnectForm(function (f) { return Object.assign({}, f, { site_id: e.target.value }); }); }}
-                    style={inputStyle} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.GRAY_700, fontFamily: C.FONT, marginBottom: 6 }}>
-                    API Key
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input type={showKey ? 'text' : 'password'} className="com-input"
-                      placeholder="e.g. ••••••••••••"
-                      value={connectForm.api_key}
-                      onChange={function (e) { setConnectForm(function (f) { return Object.assign({}, f, { api_key: e.target.value }); }); }}
-                      style={{ ...inputStyle, paddingRight: 40 }} />
-                    <button type="button" onClick={function () { setShowKey(!showKey); }}
-                      style={{
-                        position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer', color: C.GRAY_400,
-                        display: 'flex', padding: 4,
-                      }}>
-                      {showKey ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
-                          <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                      ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <button type="button" className="com-connect-btn" onClick={connectSite}
-                  disabled={connecting || !canConnect}
-                  style={{
-                    padding: '10px 24px', borderRadius: 10, border: 'none',
-                    background: connecting || !canConnect ? C.GRAY_200 : C.ACCENT,
-                    color: connecting || !canConnect ? C.GRAY_400 : '#fff',
-                    fontSize: 14, fontWeight: 600, fontFamily: C.FONT,
-                    cursor: connecting || !canConnect ? 'not-allowed' : 'pointer',
-                    whiteSpace: 'nowrap', flexShrink: 0, height: 42,
-                  }}>
-                  {connecting ? 'Connecting...' : 'Connect'}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Security note or error */}
-          {connectError ? (
-            <div style={{
-              padding: '10px 16px', background: C.DANGER_LIGHT,
-              border: '1px solid #FEE4E2', borderRadius: 10,
-              color: C.DANGER, fontSize: 13, fontFamily: C.FONT, marginBottom: 20,
-            }}>
-              {connectError}
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontSize: 12, color: C.GRAY_400, fontFamily: C.FONT, marginBottom: 24, paddingLeft: 4,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
-              Your credentials are encrypted and secure
-            </div>
-          )}
-
-          {/* Connected stores or empty state */}
-          {connections.length === 0 ? (
-            <div style={{
-              ...cardBase, padding: '56px 24px 48px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24,
-            }}>
-              {/* Shopping bag illustration */}
-              <div style={{ position: 'relative', width: 100, height: 100, marginBottom: 24 }}>
-                <div style={{
-                  position: 'absolute', inset: 0, borderRadius: '50%',
-                  background: 'radial-gradient(circle, ' + C.BRAND_50 + ' 0%, transparent 70%)',
-                }} />
-                <div style={{
-                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                  width: 60, height: 60, borderRadius: 16, background: C.BRAND_50,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a4 4 0 00-8 0v2" />
-                  </svg>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 14 14" style={{ position: 'absolute', top: 6, right: 6 }}>
-                  <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.ACCENT} opacity="0.3" />
-                </svg>
-                <svg width="10" height="10" viewBox="0 0 14 14" style={{ position: 'absolute', top: 0, right: 22 }}>
-                  <path d="M7 0l1.5 5.5L14 7l-5.5 1.5L7 14l-1.5-5.5L0 7l5.5-1.5z" fill={C.ACCENT} opacity="0.5" />
-                </svg>
-              </div>
-
-              <h3 style={{ fontSize: 20, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, margin: '0 0 8px' }}>
-                No stores connected yet
-              </h3>
-              <p style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, margin: '0 0 24px', textAlign: 'center', maxWidth: 380, lineHeight: 1.5 }}>
-                Connect your Squarespace store to sync products and map them to quiz outcomes.
-              </p>
-              <button type="button" className="com-connect-btn"
-                onClick={function () {
-                  var el = document.querySelector<HTMLInputElement>('input[placeholder="e.g. abc123"]');
-                  if (el) el.focus();
-                }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '12px 28px', borderRadius: 10, border: 'none',
-                  background: C.ACCENT, color: '#fff', fontSize: 15, fontWeight: 600,
-                  fontFamily: C.FONT, cursor: 'pointer', boxShadow: C.SHADOW_XS,
-                }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
-                Connect your store
+              {connectError && <div role="alert" style={{ marginTop: 14, fontSize: 14, color: C.DANGER }}>{connectError}</div>}
+              <button type="button" onClick={connectSite} disabled={!canConnect || connecting}
+                style={{ width: '100%', height: 48, marginTop: 22, borderRadius: 6, border: 'none', fontSize: 16, fontWeight: 500, fontFamily: C.FONT, background: !canConnect || connecting ? C.GRAY_100 : C.ACCENT, color: !canConnect || connecting ? C.GRAY_400 : '#fff', cursor: !canConnect || connecting ? 'default' : 'pointer' }}>
+                {connecting ? 'Connecting...' : 'Connect store'}
               </button>
-            </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 14, color: C.GRAY_500 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" /></svg>
+                Your API key is stored encrypted.
+              </div>
+              <details style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid ' + C.BORDER }}>
+                <summary style={{ cursor: 'pointer', fontSize: 15, color: C.ACCENT }}>Where to find your API key</summary>
+                <p style={{ margin: '10px 0 0', fontSize: 14, color: C.GRAY_600, lineHeight: 1.55 }}>In Squarespace, open your site settings and find Developer API Keys (under Advanced or Developer Tools). Create a key with read access to Products, then paste it here. Commerce API access depends on your Squarespace plan.</p>
+              </details>
+            </section>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-              {connections.map(function (conn) {
-                return (
-                  <div key={conn.id} className="com-card" style={{
-                    ...cardBase, padding: '18px 24px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
-                  }}>
-                    <div style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0 }}>
-                      <div style={{
-                        width: 44, height: 44, borderRadius: 12, background: C.BRAND_50,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a4 4 0 00-8 0v2" />
-                        </svg>
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 15, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT }}>{conn.site_title || conn.site_id}</div>
-                        <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, marginTop: 2 }}>
-                          {conn.site_url || 'No URL'}
-                          <span style={{ color: C.GRAY_300, margin: '0 6px' }}>&middot;</span>
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            color: conn.sync_status === 'synced' ? '#12B76A' : C.GRAY_500,
-                          }}>
-                            {conn.sync_status === 'synced' && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#12B76A', display: 'inline-block' }} />}
-                            {conn.sync_status}
-                          </span>
-                          {conn.last_synced_at && (
-                            <span style={{ color: C.GRAY_400, marginLeft: 6 }}>
-                              &middot; Synced {new Date(conn.last_synced_at).toLocaleDateString()}
-                            </span>
+            <section style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 20 }}>
+              {products.length === 0 ? (
+                <div style={{ padding: '30px 10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 18, fontWeight: 600, color: C.INK }}>No products synced yet</div>
+                  <p style={{ margin: '6px 0 0', fontSize: 15, color: C.GRAY_600 }}>Connect a store, then sync to bring in your products.</p>
+                </div>
+              ) : (
+                <div className="co-prod" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+                  {products.map(function (p) {
+                    return (
+                      <a key={p.id} href={p.url || undefined} target="_blank" rel="noopener noreferrer" style={{ border: '1px solid ' + C.BORDER, borderRadius: 6, overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}>
+                        <div style={{ height: 120, background: C.GRAY_50 }}>
+                          {p.image_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.image_url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           )}
                         </div>
-                      </div>
+                        <div style={{ padding: 12 }}>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: C.INK }}>{p.name}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 14, color: C.GRAY_600 }}>
+                            <span>{formatPrice(p.price_cents, p.currency)}</span>
+                            <span style={{ color: p.is_available ? C.SUCCESS : C.GRAY_500 }}>{p.is_available ? 'In stock' : 'Unavailable'}</span>
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+        </div>
+
+        {/* Illustrative preview */}
+        <section aria-label="Preview of product recommendations" style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '40px 36px', minHeight: 420 }}>
+          <svg aria-hidden="true" width="260" height="140" viewBox="0 0 260 140" style={{ position: 'absolute', left: 0, bottom: 0 }}><path d="M0 0 A 220 220 0 0 1 220 140 L 0 140 Z" fill={C.ACID_SOFT} /></svg>
+          <svg aria-hidden="true" width="260" height="180" viewBox="0 0 260 180" style={{ position: 'absolute', right: 0, top: 0 }}><path d="M0 0 H 260 V 180 C 140 170, 40 100, 0 0 Z" fill={C.PERIWINKLE} /></svg>
+          <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'minmax(0, 0.9fr) minmax(0, 1.1fr)', gap: 28, alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', color: C.GRAY_600, marginBottom: 16 }}>QUIZ RESULTS → REAL PRODUCTS</div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(34px, 3.4vw, 50px)', fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Turn insights into sales<span style={{ color: C.ACCENT }}>.</span></div>
+              <p style={{ margin: '18px 0 0', fontSize: 17, color: C.GRAY_600, lineHeight: 1.5 }}>Sync your products from Squarespace and map them to quiz outcomes, so every result can show a relevant product.</p>
+            </div>
+            <div style={{ display: 'grid', gap: 18 }}>
+              {[
+                { type: 'Skin type', result: 'Dry skin', bg: C.PERIWINKLE, product: 'Nourishing cleanser', price: '$28.00' },
+                { type: 'Skin type', result: 'Oily skin', bg: C.ACID_SOFT, product: 'Clarifying moisturizer', price: '$32.00' },
+              ].map(function (r) {
+                return (
+                  <div key={r.result} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 30px minmax(0,1fr)', alignItems: 'center', gap: 10 }}>
+                    <div style={{ background: r.bg, borderRadius: 6, padding: '16px 16px' }}>
+                      <div style={{ fontSize: 11, color: C.GRAY_600 }}>{r.type}</div>
+                      <div style={{ fontFamily: C.SERIF_FONT, fontSize: 24, color: C.INK, margin: '4px 0 10px' }}>{r.result}</div>
+                      <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 999, background: '#fff', color: C.GRAY_600 }}>Quiz result</span>
                     </div>
-                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button type="button" className="com-action" onClick={function () { syncConnection(conn.id); }}
-                        style={{
-                          padding: '8px 16px', border: '1px solid ' + C.GRAY_200, borderRadius: 8,
-                          background: '#fff', color: C.GRAY_600, fontSize: 13, fontWeight: 600,
-                          fontFamily: C.FONT, cursor: 'pointer',
-                        }}>Sync now</button>
-                      <button type="button" className="com-action" onClick={function () { disconnectSite(conn.id); }}
-                        style={{
-                          padding: '8px 16px', border: '1px solid ' + C.GRAY_200, borderRadius: 8,
-                          background: '#fff', color: '#F04438', fontSize: 13, fontWeight: 600,
-                          fontFamily: C.FONT, cursor: 'pointer',
-                        }}>Disconnect</button>
+                    <span aria-hidden="true" style={{ textAlign: 'center', fontSize: 20, color: C.INK }}>→</span>
+                    <div style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 6, overflow: 'hidden' }}>
+                      <div style={{ position: 'relative', height: 70, background: 'linear-gradient(135deg, #EFEAE2, #DDD5C8)' }}>
+                        <svg aria-hidden="true" width="100%" height="70" viewBox="0 0 160 70"><rect x="68" y="14" width="22" height="46" rx="6" fill="#F7F4EE" stroke="#D2C8B8" /><rect x="74" y="6" width="10" height="10" fill="#D2C8B8" /></svg>
+                        <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 11, padding: '2px 8px', borderRadius: 4, background: C.ACID, color: C.INK }}>Preview</span>
+                      </div>
+                      <div style={{ padding: '8px 10px' }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: C.INK }}>{r.product}</div>
+                        <div style={{ fontSize: 13, color: C.GRAY_600 }}>{r.price}</div>
+                      </div>
                     </div>
                   </div>
                 );
               })}
+              <div style={{ fontSize: 12, color: C.GRAY_500 }}>Example only. Your own products appear after syncing.</div>
             </div>
-          )}
+          </div>
+        </section>
+      </div>
 
-          {/* ── Bottom info cards ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
-            {[
-              { iconBg: C.BRAND_50, iconColor: C.ACCENT, title: 'Sync products instantly', desc: 'Automatically import and keep your products up to date.',
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" /></svg> },
-              { iconBg: '#ECFDF3', iconColor: '#12B76A', title: 'Map to quiz outcomes', desc: 'Show the right products based on quiz results.',
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#12B76A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path d="M9 3v18" /></svg> },
-              { iconBg: '#FEF0C7', iconColor: '#DC6803', title: 'Boost conversions', desc: 'Recommend the perfect products and increase sales.',
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC6803" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" /></svg> },
-            ].map(function (card, i) {
+      {/* Connected stores */}
+      <section style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: '22px 26px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+          <div><h2 style={{ margin: 0, fontSize: 19, fontWeight: 600, color: C.INK }}>Connected stores</h2><p style={{ margin: '4px 0 0', fontSize: 15, color: C.GRAY_600 }}>Manage your Squarespace store connections.</p></div>
+        </div>
+        {connections.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '10px 0 8px' }}>
+            <span style={{ width: 60, height: 60, borderRadius: 8, background: C.PERIWINKLE_SOFT, color: C.INK, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M3 9h18v11H3zM3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3" /></svg>
+            </span>
+            <div style={{ fontSize: 18, fontWeight: 600, color: C.INK, marginTop: 12 }}>No stores connected yet</div>
+            <p style={{ margin: '4px 0 0', fontSize: 15, color: C.GRAY_600 }}>Connect your Squarespace store to sync products and start mapping them to quiz outcomes.</p>
+          </div>
+        ) : (
+          <ul style={{ listStyle: 'none', margin: '16px 0 0', padding: 0 }}>
+            {connections.map(function (c, i) {
               return (
-                <div key={i} className="com-info" style={{
-                  ...cardBase, padding: 24, display: 'flex', gap: 16, alignItems: 'flex-start',
-                }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 12, background: card.iconBg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    {card.icon}
+                <li key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0', borderTop: i === 0 ? 'none' : '1px solid ' + C.BORDER_LIGHT, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 500, color: C.INK }}>{c.site_title || c.site_url || c.site_id}</div>
+                    <div style={{ fontSize: 14, color: C.GRAY_500 }}>{c.site_url} · {c.sync_status || 'not synced'}{c.last_synced_at ? ' · last synced ' + new Date(c.last_synced_at).toLocaleString() : ''}</div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 4 }}>{card.title}</div>
-                    <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.5 }}>{card.desc}</div>
-                  </div>
-                </div>
+                  <button type="button" onClick={function () { syncConnection(c.id); }} style={{ height: 40, padding: '0 16px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.INK, fontSize: 14, fontFamily: C.FONT, cursor: 'pointer' }}>Sync products</button>
+                  <button type="button" onClick={function () { if (confirm('Disconnect this store?')) disconnectSite(c.id); }} style={{ height: 40, padding: '0 16px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.DANGER, fontSize: 14, fontFamily: C.FONT, cursor: 'pointer' }}>Disconnect</button>
+                </li>
               );
             })}
-          </div>
-        </>
-      )}
-
-      {/* ── Products Tab ── */}
-      {tab === 'products' && (
-        <>
-          {products.length === 0 ? (
-            <div style={{
-              ...cardBase, padding: '56px 24px 48px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-            }}>
-              <div style={{ position: 'relative', width: 100, height: 100, marginBottom: 20 }}>
-                <div style={{
-                  position: 'absolute', inset: 0, borderRadius: '50%',
-                  background: 'radial-gradient(circle, #F4EBFF 0%, transparent 70%)',
-                }} />
-                <div style={{
-                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                  width: 56, height: 56, borderRadius: 14, background: '#F4EBFF',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a4 4 0 00-8 0v2" />
-                  </svg>
-                </div>
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, margin: '0 0 6px' }}>No products synced</h3>
-              <p style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, margin: '0 0 20px', textAlign: 'center', maxWidth: 340 }}>
-                Connect a Squarespace store and sync to see your product catalog here.
-              </p>
-              <button type="button" className="com-connect-btn" onClick={function () { setTab('connections'); }}
-                style={{
-                  padding: '10px 20px', borderRadius: 10, border: 'none',
-                  background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600,
-                  fontFamily: C.FONT, cursor: 'pointer',
-                }}>
-                Connect a store first
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-              {products.map(function (prod) {
-                return (
-                  <div key={prod.id} className="com-card" style={{
-                    ...cardBase, overflow: 'hidden',
-                  }}>
-                    {prod.image_url ? (
-                      <div style={{ width: '100%', height: 160, background: C.GRAY_50, overflow: 'hidden' }}>
-                        <img src={prod.image_url} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ) : (
-                      <div style={{
-                        width: '100%', height: 120, background: C.GRAY_50,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_300} strokeWidth="1.5">
-                          <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a4 4 0 00-8 0v2" />
-                        </svg>
-                      </div>
-                    )}
-                    <div style={{ padding: 16 }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 6 }}>{prod.name}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 15, color: C.ACCENT, fontWeight: 700, fontFamily: C.FONT }}>
-                          {prod.price_cents ? formatPrice(prod.price_cents, prod.currency) : 'No price'}
-                        </span>
-                        <span style={{
-                          fontSize: 11, fontWeight: 600, fontFamily: C.FONT,
-                          padding: '2px 8px', borderRadius: 6,
-                          background: prod.is_available ? '#ECFDF3' : C.GRAY_100,
-                          color: prod.is_available ? '#027A48' : C.GRAY_500,
-                        }}>
-                          {prod.is_available ? 'Available' : 'Unavailable'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
+          </ul>
+        )}
+      </section>
     </DashboardShell>
   );
 }

@@ -10,8 +10,8 @@ export default function SignOutPage() {
   }, [signOut])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '28px', height: '28px', border: '2px solid rgba(13,115,119,.2)', borderTopColor: '#0f7377', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
+    <div style={{ minHeight: '100vh', background: '#F4F3ED', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '28px', height: '28px', border: '2px solid rgba(49, 84, 255,.2)', borderTopColor: '#3154FF', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )

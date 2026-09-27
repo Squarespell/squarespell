@@ -154,7 +154,7 @@ export function NotificationBell() {
         style={{
           width: 36, height: 36, borderRadius: 10,
           background: open ? C.ACCENT_LIGHT : 'transparent',
-          border: '1px solid ' + (open ? 'rgba(13,115,119,0.25)' : 'transparent'),
+          border: '1px solid ' + (open ? 'rgba(49, 84, 255,0.25)' : 'transparent'),
           color: open ? C.ACCENT : C.TEXT_MUTED,
           cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -263,13 +263,13 @@ export function NotificationBell() {
                   style={{
                     display: 'flex', alignItems: 'flex-start', gap: 12,
                     padding: '12px 16px',
-                    background: notif.read ? 'transparent' : 'rgba(13,115,119,0.03)',
+                    background: notif.read ? 'transparent' : 'rgba(49, 84, 255,0.03)',
                     borderBottom: '1px solid ' + C.HAIRLINE,
                     cursor: notif.action_url ? 'pointer' : 'default',
                     transition: 'background 0.12s ease',
                   }}
                   onMouseEnter={function(e) { e.currentTarget.style.background = C.SIDEBAR; }}
-                  onMouseLeave={function(e) { e.currentTarget.style.background = notif.read ? 'transparent' : 'rgba(13,115,119,0.03)'; }}
+                  onMouseLeave={function(e) { e.currentTarget.style.background = notif.read ? 'transparent' : 'rgba(49, 84, 255,0.03)'; }}
                 >
                   {/* Icon */}
                   <div style={{
