@@ -14,11 +14,10 @@ import { DashboardShell } from '../_components/DashboardShell';
 import { DASHBOARD_COLORS as C } from '../_components/dashboardColors';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import {
-  PageHeader,
-  Card,
-  EmptyState,
+  DisplayTitle,
   PrimaryButton,
   PageLoading,
+  SettingsTabs,
 } from '../_components/PageShell';
 import { api } from '@/lib/api';
 
@@ -85,11 +84,12 @@ function generateAltPalette(colors: Record<string, string>): Record<string, stri
 }
 
 const inputStyle: React.CSSProperties = {
-  padding: '10px 14px',
+  height: 46,
+  padding: '0 14px',
   background: C.SURFACE,
   border: `1px solid ${C.BORDER}`,
-  borderRadius: 10,
-  fontSize: 13.5,
+  borderRadius: 6,
+  fontSize: 15,
   color: C.TEXT,
   fontFamily: '"Inter",system-ui,sans-serif',
   outline: 'none',
@@ -97,12 +97,10 @@ const inputStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  color: C.TEXT_MUTED,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.05em',
-  marginBottom: 6,
+  fontSize: 15,
+  fontWeight: 400,
+  color: C.INK,
+  marginBottom: 8,
   display: 'block',
 };
 
@@ -112,52 +110,26 @@ const labelStyle: React.CSSProperties = {
 
 function EditableColor({
   label,
+  hint,
   value,
   onChange,
 }: {
   label: string;
+  hint: string;
   value: string;
   onChange: (v: string) => void;
 }) {
+  var id = 'bk-color-' + label.toLowerCase();
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <label
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 10,
-          background: value || '#333',
-          border: `1px solid ${C.BORDER}`,
-          flexShrink: 0,
-          cursor: 'pointer',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <input
-          type="color"
-          value={value || '#333333'}
-          onChange={(e) => onChange(e.target.value)}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            opacity: 0,
-            cursor: 'pointer',
-            width: '100%',
-            height: '100%',
-          }}
-        />
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 15, fontWeight: 500, color: C.INK, marginBottom: 8, textTransform: 'capitalize' }}>{label}</div>
+      <label style={{ display: 'block', height: 56, borderRadius: 6, background: value || '#FFFFFF', border: `1px solid ${C.BORDER}`, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+        <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Pick {label} colour</span>
+        <input type="color" value={/^#[0-9a-f]{6}$/i.test(value || '') ? value : '#333333'} onChange={(e) => onChange(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
       </label>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={labelStyle}>{label}</div>
-        <input
-          type="text"
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="#000000"
-          style={{ ...inputStyle, fontFamily: 'ui-monospace,monospace', fontSize: 13 }}
-        />
-      </div>
+      <input id={id} aria-label={label + ' hex value'} type="text" value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder="#000000"
+        style={{ ...inputStyle, height: 42, marginTop: 8, fontFamily: C.MONO_FONT, fontSize: 14, textTransform: 'uppercase' }} />
+      <div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 6 }}>{hint}</div>
     </div>
   );
 }
@@ -218,15 +190,13 @@ function ScrapeUrlInput({
           placeholder="https://your-squarespace-site.com"
           style={{ ...inputStyle, flex: 1 }}
         />
-        <PrimaryButton
-          onClick={handleScrape}
-          disabled={loading || !url.trim()}
-        >
+        <button type="button" onClick={handleScrape} disabled={loading || !url.trim()}
+          style={{ height: 46, padding: '0 22px', borderRadius: 6, border: `1px solid ${C.BORDER}`, background: C.GRAY_50, color: C.INK, fontSize: 15, fontWeight: 500, fontFamily: C.FONT, cursor: loading || !url.trim() ? 'default' : 'pointer', whiteSpace: 'nowrap' }}>
           {loading ? 'Scanning...' : 'Import brand'}
-        </PrimaryButton>
+        </button>
       </div>
       {error && (
-        <div style={{ fontSize: 12.5, color: '#ef4444', lineHeight: 1.4 }}>
+        <div role="alert" style={{ fontSize: 13, color: C.DANGER, lineHeight: 1.4 }}>
           {error}
         </div>
       )}
@@ -245,6 +215,7 @@ export default function BrandKitPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [scraping, setScraping] = useState(false);
+  const [previewType, setPreviewType] = useState<'quiz' | 'email'>('quiz');
   var [dirty, setDirty] = useState(false);
   var [loadError, setLoadError] = useState(false);
 
@@ -341,270 +312,152 @@ export default function BrandKitPage() {
   }
 
   var hasKit = kit && (kit.site_name || kit.font_family || (kit.colors && Object.values(kit.colors).some(Boolean)));
+  var colors = kit?.colors || {};
+  var mode = kit?.color_mode || 'dark';
+  var brandPrimary = colors.primary || '#3154FF';
+  var brandBg = colors.background || '#FFFFFF';
+  var brandText = colors.text || '#161719';
+  var brandAccent = colors.accent || brandPrimary;
+  var brandFont = kit?.font_family || 'inherit';
+  var onPrimary = isDark(brandPrimary) ? '#FFFFFF' : '#161719';
+  var HINTS: Record<string, string> = { primary: 'Buttons, links, highlights', background: 'Page and card backgrounds', text: 'Headings and body text', accent: 'Secondary elements' };
+
+  function switchMode(m: ColorMode) {
+    if (mode === m) return;
+    const currentColors = kit?.colors || {};
+    const altColors = kit?.dark_colors || generateAltPalette(currentColors);
+    updateKit({ color_mode: m, colors: altColors, dark_colors: currentColors });
+  }
+
+  var card: React.CSSProperties = { background: '#fff', border: `1px solid ${C.BORDER}`, borderRadius: 8, padding: '24px 26px', marginBottom: 16 };
 
   return (
     <DashboardShell title="Brand kit">
-      <PageHeader
-        title="Brand kit"
-        subtitle="Your brand defaults for quizzes, emails, and popups"
-      />
+      <style dangerouslySetInnerHTML={{ __html: `
+        .bk-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr); gap: 20px; align-items: start; }
+        .bk-two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .bk-four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+        @media (max-width: 1100px) { .bk-grid { grid-template-columns: 1fr; } .bk-four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 600px) { .bk-two { grid-template-columns: 1fr; } }
+      ` }} />
 
-      {/* Save bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 20, flexWrap: 'wrap', gap: 10,
-      }}>
-        <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
-          {hasKit
-            ? 'Changes apply to new quizzes and emails that don\'t have per-quiz branding.'
-            : 'Import from your site or fill in manually below.'}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Brand kit</div>
+          <DisplayTitle size="xl">Make every quiz feel like you.</DisplayTitle>
+          <p style={{ margin: '14px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Set your brand defaults for quizzes, emails and popups.</p>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {saved && (
-            <span style={{ fontSize: 12, color: C.SUCCESS, fontWeight: 600 }}>
-              Saved
-            </span>
-          )}
-          <PrimaryButton onClick={save} disabled={saving || !dirty}>
-            {saving ? 'Saving...' : 'Save brand kit'}
-          </PrimaryButton>
+        <div style={{ textAlign: 'right', paddingTop: 26 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end' }}>
+            {saved && <span role="status" style={{ fontSize: 14, color: C.SUCCESS }}>Saved</span>}
+            <PrimaryButton size="lg" onClick={save} disabled={saving || !dirty}>{saving ? 'Saving...' : 'Save brand kit'}</PrimaryButton>
+          </div>
+          <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 10, maxWidth: 440 }}>{hasKit ? 'Changes apply to new quizzes and emails that don’t have per-quiz branding.' : 'Import from your site or fill in the fields below.'}</div>
         </div>
       </div>
 
-      {/* Import from URL */}
-      <Card style={{ marginBottom: 20 }}>
-        <div style={{ marginBottom: 10 }}>
-          <h2 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 700, color: C.TEXT }}>
-            Import from URL
-          </h2>
-          <p style={{ margin: 0, fontSize: 13, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
-            Paste any Squarespace site URL to auto-detect palette, fonts, and brand name.
-          </p>
-        </div>
-        <ScrapeUrlInput
-          token={token}
-          loading={scraping}
-          onLoadingChange={setScraping}
-          onResult={applyScrapedBrand}
-        />
-      </Card>
+      <SettingsTabs />
 
-      {/* Identity */}
-      <Card style={{ marginBottom: 20 }}>
-        <h2 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-          Identity
-        </h2>
-        <div style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr' }}>
-          <div>
-            <label style={labelStyle}>Site / brand name</label>
-            <input
-              type="text"
-              value={kit?.site_name || ''}
-              onChange={(e) => updateKit({ site_name: e.target.value })}
-              placeholder="My Squarespace Site"
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Font family</label>
-            <input
-              type="text"
-              value={kit?.font_family || ''}
-              onChange={(e) => updateKit({ font_family: e.target.value })}
-              placeholder="Montserrat, system-ui, sans-serif"
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Favicon URL</label>
-            <input
-              type="url"
-              value={kit?.favicon_url || ''}
-              onChange={(e) => updateKit({ favicon_url: e.target.value })}
-              placeholder="https://..."
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Logo URL</label>
-            <input
-              type="url"
-              value={kit?.logo_url || ''}
-              onChange={(e) => updateKit({ logo_url: e.target.value })}
-              placeholder="https://..."
-              style={inputStyle}
-            />
-          </div>
-        </div>
-      </Card>
+      <div className="bk-grid">
+        <div>
+          <section style={card}>
+            <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 600, color: C.INK }}>Import from URL</h2>
+            <p style={{ margin: '0 0 16px', fontSize: 15, color: C.GRAY_600 }}>Paste your website address to detect palette, fonts and brand name.</p>
+            <ScrapeUrlInput token={token} loading={scraping} onLoadingChange={setScraping} onResult={applyScrapedBrand} />
+          </section>
 
-      {/* Colors */}
-      <Card style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-            Palette
-          </h2>
-          <div style={{ display: 'flex', gap: 4, background: C.ELEVATED, borderRadius: 8, padding: 3 }}>
-            {(['light', 'dark'] as const).map((m) => {
-              const active = (kit?.color_mode || 'dark') === m;
-              return (
-                <button
-                  key={m}
-                  onClick={() => {
-                    if (active) return;
-                    // Swap active and alternate palettes
-                    const currentColors = kit?.colors || {};
-                    const altColors = kit?.dark_colors || generateAltPalette(currentColors);
-                    updateKit({
-                      color_mode: m,
-                      colors: altColors,
-                      dark_colors: currentColors,
-                    });
-                  }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    background: active ? C.ACCENT : 'transparent',
-                    color: active ? '#FFFFFF' : C.TEXT_MUTED,
-                    border: 'none', padding: '5px 12px', borderRadius: 6,
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  }}
-                >
-                  {m === 'light' ? (
-                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="5" />
-                      <line x1="12" y1="1" x2="12" y2="3" />
-                      <line x1="12" y1="21" x2="12" y2="23" />
-                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                      <line x1="1" y1="12" x2="3" y2="12" />
-                      <line x1="21" y1="12" x2="23" y2="12" />
-                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                  ) : (
-                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                  )}
-                  {m === 'light' ? 'Light' : 'Dark'}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <p style={{ margin: '0 0 14px 0', fontSize: 12.5, color: C.TEXT_MUTED, lineHeight: 1.5 }}>
-          Active palette: <strong style={{ color: C.TEXT }}>{(kit?.color_mode || 'dark') === 'dark' ? 'Dark' : 'Light'}</strong>.
-          Toggle to edit the alternate variant. Both are saved so you can switch per campaign.
-        </p>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          gap: 16,
-        }}>
-          {COLOR_KEYS.map((key) => (
-            <EditableColor
-              key={key}
-              label={key}
-              value={(kit?.colors || {})[key] || ''}
-              onChange={(v) => updateColor(key, v)}
-            />
-          ))}
-        </div>
-      </Card>
+          <section style={card}>
+            <h2 style={{ margin: '0 0 16px', fontSize: 21, fontWeight: 600, color: C.INK }}>Identity</h2>
+            <div className="bk-two">
+              <div><label htmlFor="bk-name" style={labelStyle}>Site / brand name</label><input id="bk-name" type="text" value={kit?.site_name || ''} onChange={(e) => updateKit({ site_name: e.target.value })} placeholder="My brand" style={inputStyle} /></div>
+              <div><label htmlFor="bk-font" style={labelStyle}>Font family</label><input id="bk-font" type="text" value={kit?.font_family || ''} onChange={(e) => updateKit({ font_family: e.target.value })} placeholder="Poppins, system-ui, sans-serif" style={inputStyle} /></div>
+              <div><label htmlFor="bk-logo" style={labelStyle}>Logo URL</label><input id="bk-logo" type="url" value={kit?.logo_url || ''} onChange={(e) => updateKit({ logo_url: e.target.value })} placeholder="https://..." style={inputStyle} /><div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 6 }}>PNG, SVG or JPG hosted on your site</div></div>
+              <div><label htmlFor="bk-fav" style={labelStyle}>Favicon URL</label><input id="bk-fav" type="url" value={kit?.favicon_url || ''} onChange={(e) => updateKit({ favicon_url: e.target.value })} placeholder="https://..." style={inputStyle} /><div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 6 }}>PNG or ICO</div></div>
+            </div>
+          </section>
 
-      {/* Preview */}
-      {hasKit && (
-        <Card>
-          <h2 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: C.TEXT }}>
-            Preview
-          </h2>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-            padding: 20,
-            background: kit?.colors?.background || C.SURFACE,
-            border: `1px solid ${C.BORDER}`,
-            borderRadius: 12,
-          }}>
-            {kit?.favicon_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={kit.favicon_url}
-                alt=""
-                style={{
-                  width: 48, height: 48, borderRadius: 10,
-                  objectFit: 'contain', background: C.BG,
-                  padding: 6, border: `1px solid ${C.BORDER}`,
-                }}
-              />
-            ) : (
-              <div style={{
-                width: 48, height: 48, borderRadius: 10,
-                background: kit?.colors?.primary || C.ACCENT,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: 20, fontWeight: 800,
-              }}>
-                {(kit?.site_name || '?').charAt(0).toUpperCase()}
+          <section style={card}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <h2 style={{ margin: 0, fontSize: 21, fontWeight: 600, color: C.INK }}>Palette</h2>
+              <div role="group" aria-label="Palette variant" style={{ display: 'flex', padding: 3, borderRadius: 6, background: C.GRAY_100 }}>
+                {(['light', 'dark'] as const).map((m) => (
+                  <button key={m} type="button" aria-pressed={mode === m} onClick={() => switchMode(m)}
+                    style={{ height: 36, padding: '0 20px', borderRadius: 5, border: 'none', background: mode === m ? C.ACCENT : 'transparent', color: mode === m ? '#fff' : C.INK, fontSize: 14, fontFamily: C.FONT, cursor: 'pointer' }}>
+                    {m === 'light' ? 'Light' : 'Dark'}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+            <div className="bk-four">
+              {COLOR_KEYS.map((key) => (
+                <EditableColor key={key} label={key} hint={HINTS[key]} value={colors[key] || ''} onChange={(v) => updateColor(key, v)} />
+              ))}
+            </div>
+            <p style={{ margin: '16px 0 0', fontSize: 13, color: C.GRAY_500 }}>Both light and dark variants are saved, so you can switch per campaign.</p>
+          </section>
+        </div>
+
+        {/* Live preview in the customer's own brand */}
+        <section style={{ ...card, position: 'sticky', top: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 16 }}>
             <div>
-              <div style={{
-                fontSize: 20, fontWeight: 700,
-                color: kit?.colors?.text || C.TEXT,
-                fontFamily: kit?.font_family || 'inherit',
-                marginBottom: 4,
-              }}>
-                {kit?.site_name || 'Your Brand'}
-              </div>
-              <div style={{ fontSize: 13, color: C.TEXT_MUTED }}>
-                {kit?.font_family || 'Default font'}
-              </div>
+              <h2 style={{ margin: 0, fontSize: 21, fontWeight: 600, color: C.INK }}>Live preview</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 15, color: C.GRAY_600 }}>How your brand looks in quizzes and emails.</p>
             </div>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-              {COLOR_KEYS.map((key) => {
-                var c = (kit?.colors || {})[key];
-                return c ? (
-                  <div key={key} title={key} style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: c, border: `1px solid ${C.BORDER}`,
-                  }} />
-                ) : null;
-              })}
+            <div role="group" aria-label="Preview type" style={{ display: 'flex', padding: 3, borderRadius: 6, border: `1px solid ${C.BORDER}` }}>
+              {(['quiz', 'email'] as const).map((v) => (
+                <button key={v} type="button" aria-pressed={previewType === v} onClick={() => setPreviewType(v)}
+                  style={{ height: 36, padding: '0 18px', borderRadius: 5, border: 'none', background: previewType === v ? C.ACCENT : 'transparent', color: previewType === v ? '#fff' : C.INK, fontSize: 14, fontFamily: C.FONT, cursor: 'pointer' }}>
+                  {v === 'quiz' ? 'Quiz' : 'Email'}
+                </button>
+              ))}
             </div>
           </div>
-          <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{
-              padding: '10px 22px', borderRadius: 8, fontWeight: 700, fontSize: 13,
-              background: kit?.colors?.primary || C.ACCENT,
-              color: '#FFFFFF',
-            }}>
-              Sample CTA button
-            </div>
-            <div style={{
-              fontSize: 26, lineHeight: 1.2,
-              fontFamily: kit?.font_family || 'inherit',
-              color: kit?.colors?.text || C.TEXT,
-            }}>
-              The quick brown fox
-            </div>
-          </div>
-        </Card>
-      )}
 
-      {!hasKit && !scraping && (
-        <EmptyState
-          icon={
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="13.5" cy="6.5" r="2.5" />
-              <circle cx="19" cy="13" r="2.5" />
-              <circle cx="6" cy="12" r="2.5" />
-              <circle cx="10" cy="20" r="2.5" />
-              <path d="M12 2a10 10 0 1 0 10 10" />
-            </svg>
-          }
-          title="No brand kit yet"
-          body="Paste a URL above to import your brand, or fill in the fields manually."
-        />
-      )}
+          <div style={{ border: `1px solid ${C.BORDER}`, borderRadius: 8, background: brandBg, color: brandText, fontFamily: brandFont, padding: 24, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              {kit?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={kit.logo_url} alt="" style={{ height: 24, maxWidth: 160, objectFit: 'contain' }} />
+              ) : (
+                <span style={{ fontWeight: 800, letterSpacing: '0.02em', fontSize: 15 }}>{(kit?.site_name || 'Your brand').toUpperCase()}</span>
+              )}
+              {previewType === 'quiz' && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, opacity: 0.7 }}>
+                  <span style={{ width: 110, height: 6, borderRadius: 3, background: 'rgba(128,128,128,0.2)', overflow: 'hidden' }}><span style={{ display: 'block', width: '20%', height: '100%', background: brandPrimary }} /></span>1 / 5
+                </span>
+              )}
+            </div>
+            {previewType === 'quiz' ? (
+              <>
+                <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', marginBottom: 8 }}>What’s your perfect next move?</div>
+                <div style={{ fontSize: 14, opacity: 0.75, marginBottom: 20 }}>Answer a few questions to get a personalized recommendation.</div>
+                <div style={{ border: '1px solid rgba(128,128,128,0.25)', borderRadius: 8, padding: 18 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>1. What best describes your goal right now?</div>
+                  {['Grow my audience', 'Improve my existing content', 'Launch something new', 'I’m just exploring'].map((o, i) => (
+                    <div key={o} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', marginBottom: 8, borderRadius: 6, border: '1px solid ' + (i === 0 ? brandAccent : 'rgba(128,128,128,0.25)'), fontSize: 14 }}>
+                      <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid ' + (i === 0 ? brandPrimary : 'rgba(128,128,128,0.5)'), background: i === 0 ? brandPrimary : 'transparent' }} />{o}
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 22px', borderRadius: 6, background: brandPrimary, color: onPrimary, fontWeight: 600, fontSize: 15 }}>Next question →</span>
+                    <span style={{ fontSize: 11, opacity: 0.6 }}>Powered by SQUARESPELL</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, opacity: 0.6, marginBottom: 6 }}>Subject: Your quiz result is in</div>
+                <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.15, marginBottom: 12 }}>Hi {'{{first_name}}'}, here’s your result.</div>
+                <div style={{ fontSize: 15, lineHeight: 1.6, opacity: 0.85, marginBottom: 20 }}>Thanks for taking our quiz. Based on your answers, we picked a few next steps that fit where you are right now.</div>
+                <span style={{ display: 'inline-flex', alignItems: 'center', height: 44, padding: '0 24px', borderRadius: 6, background: brandPrimary, color: onPrimary, fontWeight: 600, fontSize: 15 }}>See my recommendation</span>
+                <div style={{ borderTop: '1px solid rgba(128,128,128,0.25)', marginTop: 24, paddingTop: 14, fontSize: 12, opacity: 0.6 }}>{kit?.site_name || 'Your brand'} · You received this because you took our quiz.</div>
+              </>
+            )}
+          </div>
+          <div style={{ fontSize: 13, color: C.GRAY_500, marginTop: 12 }}>Preview uses your brand colours and font{kit?.font_family ? ' (' + kit.font_family + ')' : ''}; sample text is illustrative.</div>
+        </section>
+      </div>
     </DashboardShell>
   );
 }
