@@ -67,7 +67,7 @@ function areasFor(connectEnabled: boolean): Area[] {
           href: '/dashboard/quizzes', label: 'Quizzes', tour: 'quizzes',
           match: function(p) { return starts(p, '/dashboard/quizzes') || starts(p, '/dashboard/quiz') || starts(p, '/dashboard/translations') || isEditorRoute(p); },
         },
-        { href: '/dashboard/templates', label: 'Templates' },
+        { href: '/dashboard/templates', label: 'Templates', tour: 'templates' },
         {
           href: publishChildren[0].href, label: 'Publish',
           match: function(p) { return starts(p, '/dashboard/sites') || starts(p, '/dashboard/embed'); },
