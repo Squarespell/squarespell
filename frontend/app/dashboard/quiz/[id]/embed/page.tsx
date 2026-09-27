@@ -50,7 +50,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
 
   if (loading) return (
     <div style={{ background:'#F7F7F5', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ width:32, height:32, border:'2px solid rgba(13,115,119,.2)', borderTopColor:'#0f7377', borderRadius:'50%', animation:'spin .7s linear infinite' }} />
+      <div style={{ width:32, height:32, border:'2px solid rgba(49, 84, 255,.2)', borderTopColor:'#3154FF', borderRadius:'50%', animation:'spin .7s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -67,7 +67,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
         body{font-family:'Inter',system-ui,sans-serif;background:#F7F7F5;color:#1A1A1A}
-        :root{--acc:#0f7377;--g1:rgba(0,0,0,.055);--g2:rgba(0,0,0,.034);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.058);--t1:#1A1A1A;--t3:rgba(26,26,26,.42);--t4:rgba(26,26,26,.22)}
+        :root{--acc:#3154FF;--g1:rgba(0,0,0,.055);--g2:rgba(0,0,0,.034);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.058);--t1:#1A1A1A;--t3:rgba(26,26,26,.42);--t4:rgba(26,26,26,.22)}
       `}</style>
 
       <div style={{ maxWidth:760, margin:'0 auto', padding:'48px 24px' }}>
@@ -110,7 +110,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
               <p style={{ fontSize:12, color:'var(--t3)' }}>3 steps to go live</p>
             </div>
           </div>
-          <div style={{ background:'rgba(13,115,119,.08)', border:'1px solid rgba(13,115,119,.18)', borderRadius:8, padding:'10px 14px', marginBottom:16, fontSize:12, color:'rgba(26,26,26,.6)', lineHeight:1.6 }}>
+          <div style={{ background:'rgba(49, 84, 255,.08)', border:'1px solid rgba(49, 84, 255,.18)', borderRadius:8, padding:'10px 14px', marginBottom:16, fontSize:12, color:'rgba(26,26,26,.6)', lineHeight:1.6 }}>
             <strong style={{ color:'var(--t1)' }}>Important:</strong> Use a <strong>Code Block</strong> on your page, not Code Injection (Settings &rarr; Advanced). Code Injection goes in the page header where the quiz container can be stripped.
           </div>
           {[
@@ -142,7 +142,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
               {copiedFull ? 'Copied!' : 'Copy URL'}
             </button>
           </div>
-          <div style={{ background:'#EEEDE9', borderRadius:9, padding:'12px 16px', fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(13,115,119,.8)', border:'.5px solid var(--b2)' }}>
+          <div style={{ background:'#EEEDE9', borderRadius:9, padding:'12px 16px', fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(49, 84, 255,.8)', border:'.5px solid var(--b2)' }}>
             {quizUrl}
           </div>
         </div>

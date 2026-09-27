@@ -210,7 +210,7 @@ describe('Sites dashboard', () => {
     const calls = stubFetch((m, p) => (p === '/api/connect/config' ? json(CONFIG) : p === '/api/connect/sites' ? json({ sites: [] }) : p === '/api/quizzes' ? json([]) : undefined));
     render(<SitesRoute />);
     expect(await screen.findByTestId('sites-empty')).toBeTruthy();
-    expect(screen.getByText('Connect your website once')).toBeTruthy();
+    expect(screen.getByText('Connect once. Publish any quiz.')).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Connect website' }).length).toBeGreaterThan(0);
     expect(document.body.textContent).not.toMatch(/riverlight|Photography Style|Brand Voice|1 of 3|Healthy/);
     expect(calls.some((c) => c.path === '/api/connect/sites')).toBe(true);

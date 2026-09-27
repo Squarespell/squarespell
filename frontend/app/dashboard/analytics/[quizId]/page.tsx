@@ -97,8 +97,8 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
                   style={{
                     padding: '5px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600,
                     cursor: 'pointer', border: 'none', transition: 'all 0.15s ease',
-                    background: active ? 'rgba(13,115,119,0.15)' : 'transparent',
-                    color: active ? '#0f7377' : 'rgba(0,0,0,0.4)',
+                    background: active ? 'rgba(49, 84, 255,0.15)' : 'transparent',
+                    color: active ? '#3154FF' : 'rgba(0,0,0,0.4)',
                   }}
                 >
                   {r === 'all' ? 'All' : r}
@@ -112,9 +112,9 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
               cursor: 'pointer', transition: 'all 0.15s ease',
-              background: excludeBots ? 'rgba(13,115,119,0.1)' : 'rgba(0,0,0,0.06)',
-              border: excludeBots ? '1px solid rgba(13,115,119,0.3)' : '1px solid rgba(0,0,0,0.12)',
-              color: excludeBots ? '#0f7377' : 'rgba(0,0,0,0.5)',
+              background: excludeBots ? 'rgba(49, 84, 255,0.1)' : 'rgba(0,0,0,0.06)',
+              border: excludeBots ? '1px solid rgba(49, 84, 255,0.3)' : '1px solid rgba(0,0,0,0.12)',
+              color: excludeBots ? '#3154FF' : 'rgba(0,0,0,0.5)',
             }}
             title={excludeBots ? 'Bot traffic is excluded from analytics' : 'Bot traffic is included in analytics'}
           >
@@ -217,7 +217,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
           <h2 className={styles.sectionTitle}>Question heatmap</h2>
           {heatmap.questions.map(function (q: any, qi: number) {
             var maxCount = Math.max(1, ...(q.options || []).map(function (o: any) { return o.count; }));
-            var barColors = ['#0f7377', '#2D6A4F', '#4a9e3f', '#3b7dd8', '#9b59b6', '#e67e22', '#e74c3c', '#1abc9c'];
+            var barColors = ['#3154FF', '#2D6A4F', '#4a9e3f', '#3b7dd8', '#9b59b6', '#e67e22', '#e74c3c', '#1abc9c'];
             return (
               <div key={qi} className={styles.heatmapQuestion}>
                 <div className={styles.heatmapQHeader}>

@@ -82,6 +82,8 @@ export interface QuizBlockEditorProps {
   /** When provided, overrides the default preview behaviour (opening /quiz/:slug).
    *  Use this in the anonymous URL funnel where there is no slug yet. */
   onPreview?: () => void;
+  /** Quiz title shown in the editor header (falls back to "Untitled quiz"). */
+  quizTitle?: string;
 }
 
 var API_BASE = (typeof window !== 'undefined' && (window as any).__NEXT_PUBLIC_API_URL)
@@ -518,9 +520,9 @@ function ScoreBadge({ score, onChange }: { score: number; onChange: (s: number) 
       title="Click to edit score"
       style={{
         fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-        background: (score || 0) >= 3 ? 'rgba(13,115,119,0.12)' : 'rgba(0,0,0,0.04)',
+        background: (score || 0) >= 3 ? 'rgba(49, 84, 255,0.12)' : 'rgba(0,0,0,0.04)',
         color: (score || 0) >= 3 ? C.ACCENT : C.TEXT_MUTED,
-        border: '1px solid ' + ((score || 0) >= 3 ? 'rgba(13,115,119,0.2)' : 'rgba(0,0,0,0.06)'),
+        border: '1px solid ' + ((score || 0) >= 3 ? 'rgba(49, 84, 255,0.2)' : 'rgba(0,0,0,0.06)'),
         cursor: 'pointer', flexShrink: 0,
       }}
     >
@@ -2371,8 +2373,8 @@ function QuestionCanvas({
           onChange={function(t) { onChange(Object.assign({}, block, { text: t }) as QuestionBlock); }}
           placeholder="Enter your question here..."
           style={{
-            width: '100%', fontSize: 26, fontWeight: 700, color: C.TEXT,
-            fontFamily: C.FONT, lineHeight: 1.3, minHeight: 40,
+            width: '100%', fontSize: 38, fontWeight: 800, color: C.INK, fontFamily: C.DISPLAY_FONT, letterSpacing: '-0.035em', lineHeight: 1.08,
+            minHeight: 40,
           }}
         />
         {block.subtitle && (
@@ -2799,11 +2801,11 @@ function SettingsPanel({
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Theme Color</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input type="color" value={settings?.primary_color || '#0f7377'}
+                <input type="color" value={settings?.primary_color || '#3154FF'}
                   onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
                   style={{ width: 36, height: 36, borderRadius: 8, border: '2px solid ' + C.BORDER, cursor: 'pointer', padding: 0 }} />
                 <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Primary</span>
-                <input type="text" value={settings?.primary_color || '#0f7377'}
+                <input type="text" value={settings?.primary_color || '#3154FF'}
                   onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
                   style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' as const, fontFamily: C.FONT }} />
               </div>
@@ -3073,6 +3075,7 @@ export function QuizBlockEditor({
   saveState,
   onPublish,
   publishLabel = 'Publish',
+  quizTitle,
   onPreview,
 }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
@@ -3189,38 +3192,43 @@ export function QuizBlockEditor({
 
         {/* Top Bar */}
         <div style={{
-          height: 56, minHeight: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 20px', borderBottom: '1px solid ' + C.BORDER, background: C.SURFACE,
+          height: 76, minHeight: 76, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 24px', borderBottom: '1px solid ' + C.BORDER, background: C.SURFACE,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <a href={backUrl || '/dashboard/quizzes'} style={{ display: 'flex', alignItems: 'center', color: C.TEXT_MUTED, textDecoration: 'none' }}>
-              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+            <a href={backUrl || '/dashboard/quizzes'} aria-label="Back to quizzes" style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid ' + C.BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.INK, textDecoration: 'none', flexShrink: 0 }}>
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
             </a>
-            <span style={{ fontSize: 15, fontWeight: 700, color: C.TEXT, letterSpacing: '-0.02em' }}>Quiz Editor</span>
-            <span style={{ fontSize: 12, color: C.TEXT_SUBTLE, fontWeight: 500 }}>{questionBlocks.length} questions</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 22, fontWeight: 800, color: C.INK, letterSpacing: '-0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 420 }}>{quizTitle || 'Untitled quiz'}</div>
+              <div style={{ fontSize: 13, color: C.GRAY_500 }}>{questionBlocks.length} {questionBlocks.length === 1 ? 'question' : 'questions'}</div>
+            </div>
           </div>
 
           {/* Save state */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 999, background: saveState === 'error' ? C.DANGER_LIGHT : C.PERIWINKLE_SOFT, marginRight: 'auto', marginLeft: 16 }}>
             {saveState === 'saving' && (
               <>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', border: '1.5px solid ' + C.ACCENT, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-                <span style={{ fontSize: 11, fontWeight: 600, color: C.TEXT_MUTED }}>Saving...</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.BRAND_700 }}>Saving...</span>
               </>
             )}
-            {(saveState === 'saved' || saveState === 'idle' || !saveState) && (
+            {(saveState === 'idle' || !saveState) && !quizId && (
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.BRAND_700 }}>Draft · not saved yet</span>
+            )}
+            {(saveState === 'saved' || ((saveState === 'idle' || !saveState) && !!quizId)) && (
               <>
-                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={saveState === 'saved' ? '#16A34A' : C.TEXT_SUBTLE} strokeWidth={2.5} strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
-                <span style={{ fontSize: 11, fontWeight: 600, color: saveState === 'saved' ? '#16A34A' : C.TEXT_SUBTLE }}>Saved</span>
+                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth={2.5} strokeLinecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.BRAND_700 }}>Saved</span>
               </>
             )}
             {saveState === 'error' && (
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626' }}>Save failed</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.DANGER }}>Save failed</span>
             )}
           </div>
 
           {/* Right actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* Undo/Redo */}
             <button type="button" onClick={function() { history.undo(); }} disabled={!history.canUndo} title="Undo (Cmd+Z)"
               style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid ' + C.BORDER, background: 'transparent', color: history.canUndo ? C.TEXT : C.BORDER, cursor: history.canUndo ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: history.canUndo ? 1 : 0.4 }}>
@@ -3266,14 +3274,14 @@ export function QuizBlockEditor({
               }
             }} title="Preview quiz"
               style={{
-                height: 34, padding: '0 12px', borderRadius: 8,
-                background: C.ACCENT, border: 'none',
-                color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
-                transition: 'all 0.12s',
+                height: 42, padding: '0 16px', borderRadius: 6,
+                background: '#fff', border: '1px solid ' + C.BORDER,
+                color: C.INK, cursor: 'pointer', fontSize: 15, fontWeight: 500,
+                display: 'flex', alignItems: 'center', gap: 8, fontFamily: C.FONT,
+                transition: 'border-color 0.12s',
               }}
-              onMouseEnter={function(e) { e.currentTarget.style.opacity = '0.9'; }}
-              onMouseLeave={function(e) { e.currentTarget.style.opacity = '1'; }}
+              onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.GRAY_300; }}
+              onMouseLeave={function(e) { e.currentTarget.style.borderColor = C.BORDER; }}
             >
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3" />
@@ -3287,12 +3295,12 @@ export function QuizBlockEditor({
                 window.location.href = '/dashboard/quiz/' + quizId + '/ab-testing';
               }} title="A/B Testing"
                 style={{
-                  height: 34, padding: '0 12px', borderRadius: 8,
-                  background: 'transparent',
+                  height: 42, padding: '0 16px', borderRadius: 6,
+                  background: '#fff',
                   border: '1px solid ' + C.BORDER,
-                  color: C.TEXT,
-                  cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                  display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
+                  color: C.INK,
+                  cursor: 'pointer', fontSize: 15, fontWeight: 500,
+                  display: 'flex', alignItems: 'center', gap: 8, fontFamily: C.FONT,
                 }}
                 onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_LIGHT; e.currentTarget.style.borderColor = C.ACCENT + '40'; e.currentTarget.style.color = C.ACCENT; }}
                 onMouseLeave={function(e) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.BORDER; e.currentTarget.style.color = C.TEXT; }}
@@ -3307,12 +3315,12 @@ export function QuizBlockEditor({
             {/* Settings gear */}
             <button type="button" onClick={function() { setSettingsOpen(!settingsOpen); }} title="Quiz settings"
               style={{
-                height: 34, padding: '0 12px', borderRadius: 8,
-                background: settingsOpen ? C.ACCENT_LIGHT : 'transparent',
+                height: 42, padding: '0 16px', borderRadius: 6,
+                background: settingsOpen ? C.ACCENT_LIGHT : '#fff',
                 border: '1px solid ' + (settingsOpen ? C.ACCENT + '40' : C.BORDER),
-                color: settingsOpen ? C.ACCENT : C.TEXT,
-                cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
+                color: settingsOpen ? C.ACCENT : C.INK,
+                cursor: 'pointer', fontSize: 15, fontWeight: 500,
+                display: 'flex', alignItems: 'center', gap: 8, fontFamily: C.FONT,
               }}>
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <circle cx={12} cy={12} r={3} />
@@ -3327,14 +3335,13 @@ export function QuizBlockEditor({
                 <div style={{ width: 1, height: 20, background: C.BORDER, margin: '0 4px' }} />
                 <button type="button" onClick={onPublish}
                   style={{
-                    height: 34, padding: '0 16px', borderRadius: 8,
-                    background: '#0f3d38', border: 'none',
-                    color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                    height: 42, padding: '0 24px', borderRadius: 6,
+                    background: C.ACCENT, border: 'none',
+                    color: '#fff', cursor: 'pointer', fontSize: 15, fontWeight: 500,
                     display: 'flex', alignItems: 'center', gap: 6, fontFamily: C.FONT,
-                    letterSpacing: '-0.01em',
                   }}
-                  onMouseEnter={function(e) { e.currentTarget.style.opacity = '0.88'; }}
-                  onMouseLeave={function(e) { e.currentTarget.style.opacity = '1'; }}
+                  onMouseEnter={function(e) { e.currentTarget.style.background = C.ACCENT_HOVER; }}
+                  onMouseLeave={function(e) { e.currentTarget.style.background = C.ACCENT; }}
                 >
                   {publishLabel}
                 </button>
@@ -3353,7 +3360,7 @@ export function QuizBlockEditor({
             {blocks.length === 0 ? (
               <div style={{ textAlign: 'center', marginTop: 120 }}>
                 <div style={{
-                  width: 64, height: 64, borderRadius: 16, background: 'rgba(13,115,119,0.08)',
+                  width: 64, height: 64, borderRadius: 16, background: 'rgba(49, 84, 255,0.08)',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   marginBottom: 16, color: C.ACCENT,
                 }}>
@@ -3451,13 +3458,13 @@ export function QuizBlockEditor({
           background: transparent;
         }
         .qte-wrap:hover .qte-ta {
-          border-color: rgba(15,115,119,0.25);
-          background: rgba(15,115,119,0.03);
+          border-color: rgba(49, 84, 255,0.25);
+          background: rgba(49, 84, 255,0.03);
         }
         .qte-wrap:focus-within .qte-ta {
-          border-color: #0f7377 !important;
+          border-color: #3154FF !important;
           background: #fff !important;
-          box-shadow: 0 0 0 3px rgba(15,115,119,0.08);
+          box-shadow: 0 0 0 3px rgba(49, 84, 255,0.08);
         }
         .qte-pencil { opacity: 0; transition: opacity 0.15s; }
         .qte-wrap:hover:not(:focus-within) .qte-pencil { opacity: 0.55; }
@@ -3468,11 +3475,11 @@ export function QuizBlockEditor({
           border: 1.5px solid #EAECF0;
         }
         .sq-answer-row:hover {
-          border-color: rgba(15,115,119,0.35) !important;
+          border-color: rgba(49, 84, 255,0.35) !important;
         }
         .sq-answer-row:focus-within {
-          border-color: #0f7377 !important;
-          box-shadow: 0 0 0 3px rgba(15,115,119,0.08) !important;
+          border-color: #3154FF !important;
+          box-shadow: 0 0 0 3px rgba(49, 84, 255,0.08) !important;
         }
         .sq-answer-row input::placeholder { color: rgba(0,0,0,0.28); }
         .sq-ans-ta { -webkit-appearance: none; appearance: none; }
