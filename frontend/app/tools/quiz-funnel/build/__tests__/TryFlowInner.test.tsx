@@ -191,9 +191,9 @@ describe('buildQuiz() server failure', () => {
       fireEvent.click(screen.getByText('Generate my quiz'));
     });
 
-    // Must NOT be stuck on the infinite "Building your quiz" spinner.
+    // Must NOT be stuck on the infinite "Your quiz is taking shape" spinner.
     await waitFor(() => {
-      expect(screen.queryByText('Building your quiz')).toBeNull();
+      expect(screen.queryByText('Your quiz is taking shape')).toBeNull();
     });
 
     // The error is visible (this funnel renders the same errorMsg state in
@@ -240,7 +240,7 @@ describe('buildQuiz() timeout', () => {
 
     // Confirm it's actually hanging on the building screen before the
     // timeout fires.
-    expect(screen.getByText('Building your quiz')).toBeTruthy();
+    expect(screen.getByText('Your quiz is taking shape')).toBeTruthy();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(PREVIEW_REQUEST_TIMEOUT_MS + 1000);
@@ -248,7 +248,7 @@ describe('buildQuiz() timeout', () => {
     vi.useRealTimers();
 
     await waitFor(() => {
-      expect(screen.queryByText('Building your quiz')).toBeNull();
+      expect(screen.queryByText('Your quiz is taking shape')).toBeNull();
     });
     await waitFor(() => {
       expect(screen.getAllByText(/took too long/i).length).toBeGreaterThan(0);

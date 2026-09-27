@@ -7,13 +7,55 @@ import { DashboardShell } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { PageLoading } from '../_components/PageShell';
 import { connectApi, ConnectApiError, ConnectConfig, Installation, QuizSummary, Site, SiteEvent } from '@/lib/connect/client';
-import { MODE_LABEL, PLATFORM_LABEL, PLATFORM_METHOD, PRODUCT_PROMISE, eventIsProblem, eventText, friendlyError, relativeTime } from '@/lib/connect/copy';
+import { MODE_LABEL, PLATFORM_CHOICES, PLATFORM_LABEL, PLATFORM_METHOD, eventIsProblem, eventText, friendlyError, relativeTime } from '@/lib/connect/copy';
 import { AnnounceProvider, Modal, PlatformLogo, SitesStyles, StatusBadge } from './_components/primitives';
 import { ConnectWizard } from './_components/ConnectWizard';
 import { PublishFlow } from './_components/PublishFlow';
 import { SiteDetailDrawer } from './_components/SiteDetail';
 
 type Detail = { site: Site; installations: Installation[]; events: SiteEvent[] };
+
+function PlusIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
+}
+function CodeIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5M16 7l5 5-5 5" /></svg>;
+}
+
+/** Miniature browser showing a connected site with a quiz on it (illustrative, no real data). */
+function ConnectIllustration() {
+  return (
+    <svg viewBox="0 0 560 400" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+      <rect x="60" y="70" width="170" height="250" rx="10" fill="#BFCAFF" />
+      <rect x="120" y="36" width="300" height="230" rx="8" fill="#fff" stroke="#E4E2DA" />
+      <path d="M140 52h10v5h-6v1h6v9h-10v-5h6v-1h-6z" fill="#161719" />
+      <text x="158" y="63" fontSize="12" fontWeight="700" fill="#161719" fontFamily="Inter" letterSpacing=".04em">SQUARESPELL</text>
+      <rect x="330" y="46" width="92" height="28" rx="6" fill="#fff" stroke="#E4E2DA" />
+      <circle cx="346" cy="60" r="4" fill="#1F9D57" />
+      <text x="356" y="64" fontSize="11" fill="#161719" fontFamily="Inter">Connected</text>
+      <rect x="155" y="100" width="290" height="210" rx="8" fill="#fff" stroke="#E4E2DA" />
+      <circle cx="172" cy="118" r="4" fill="#161719" /><circle cx="186" cy="118" r="4" fill="#9B9A93" /><circle cx="200" cy="118" r="4" fill="#CFCDC4" />
+      <text x="222" y="122" fontSize="11" fill="#35352F" fontFamily="Inter">yourwebsite.com</text>
+      <line x1="155" y1="134" x2="445" y2="134" stroke="#EFEEE7" />
+      <rect x="170" y="148" width="130" height="146" fill="#F4F3ED" />
+      <text x="182" y="192" fontSize="21" fill="#161719" fontFamily="'Instrument Serif', Georgia, serif">A smarter</text>
+      <text x="182" y="216" fontSize="21" fill="#161719" fontFamily="'Instrument Serif', Georgia, serif">way to quiz.</text>
+      <rect x="182" y="236" width="78" height="26" rx="4" fill="#161719" />
+      <text x="192" y="253" fontSize="10.5" fill="#fff" fontFamily="Inter">Start quiz →</text>
+      <rect x="310" y="148" width="120" height="146" fill="#DDE3FF" />
+      <path d="M310 294 C 340 240, 380 250, 430 200 L 430 294 Z" fill="#8FA2FF" />
+      <path d="M310 294 C 350 270, 390 280, 430 250 L 430 294 Z" fill="#3154FF" />
+      <rect x="36" y="200" width="58" height="58" rx="8" fill="#fff" stroke="#E4E2DA" />
+      <path d="M58 234l8-8M55 229l-3 3a5 5 0 007 7l3-3M69 231l3-3a5 5 0 00-7-7l-3 3" fill="none" stroke="#161719" strokeWidth="2" strokeLinecap="round" />
+      <path d="M94 229 H 118 V 270 H 155" fill="none" stroke="#161719" strokeDasharray="3 4" />
+      <rect x="400" y="280" width="104" height="84" rx="4" fill="#E4F75A" />
+      <text x="412" y="304" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">PUBLISH</text>
+      <text x="412" y="320" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">UPDATE</text>
+      <text x="412" y="336" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">PAUSE</text>
+      <text x="412" y="352" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">MOVE</text>
+    </svg>
+  );
+}
 
 function SitesPage() {
   const { token, status } = useDashboardAuth();
@@ -102,13 +144,12 @@ function SitesPage() {
           <SitesStyles />
           <header className="sx-hero">
             <div>
-              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--teal)' }}>Website connections</p>
-              <h1>Publish without pasting code every time.</h1>
+              <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>Website connections</p>
+              <h1>Your websites, connected<i>.</i></h1>
               <p>Publish without pasting code every time. Connect each website once. Then publish, update, pause, move or remove any quiz from one place.</p>
             </div>
-            <div className="sx-actions">
-              <Link className="sx-btn" href="/dashboard/embed">Manual embed</Link>
-              <button type="button" className="sx-btn sx-btn-primary" onClick={() => openWizard(null)}>Connect website</button>
+            <div className="sx-actions" style={{ paddingTop: 34 }}>
+              <button type="button" className="sx-btn sx-btn-primary sx-btn-lg" onClick={() => openWizard(null)}><PlusIcon /> Connect website</button>
             </div>
           </header>
 
@@ -117,19 +158,35 @@ function SitesPage() {
           ) : null}
 
           {!error && sites.length === 0 ? (
-            <div className="sx-empty" data-testid="sites-empty">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0f7377" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" /></svg>
-              <h2>Connect your website once</h2>
-              <p>{PRODUCT_PROMISE} No more copying embed code each time you publish a quiz.</p>
-              <div className="sx-how">
-                <div><b>1. Connect</b>Add your domain and paste one small loader, once.</div>
-                <div><b>2. Verify</b>We check your live page and confirm the connection.</div>
-                <div><b>3. Publish</b>Choose any quiz, choose where it appears, and publish.</div>
+            <div data-testid="sites-empty">
+              <div className="sx-start">
+                <div className="sx-start-art" aria-hidden="true"><ConnectIllustration /></div>
+                <div className="sx-start-body">
+                  <p className="sx-eyebrow">Get started</p>
+                  <h2>Connect once. Publish any quiz.</h2>
+                  <p className="sx-lead">Add your website, verify the connection, and publish quizzes from here. You paste one small loader once; after that there is no more copying embed code each time you make a change.</p>
+                  <div className="sx-actions">
+                    <button type="button" className="sx-btn sx-btn-primary sx-btn-lg" onClick={() => openWizard(null)}><PlusIcon /> Connect website</button>
+                    <Link className="sx-btn sx-btn-lg" href="/dashboard/embed"><CodeIcon /> Manual embed</Link>
+                  </div>
+                  <div className="sx-platform-strip">
+                    <p className="sx-eyebrow">Supported platforms</p>
+                    <ul>
+                      {PLATFORM_CHOICES.slice(0, 4).map((c) => (
+                        <li key={c.id} className={c.availability === 'Available' ? '' : 'is-planned'}>
+                          <span className="sx-logo-sm"><PlatformLogo id={c.sprite} size={20} /></span>
+                          <span><b>{c.id === 'html' ? 'Custom HTML' : c.label}</b><small className={c.availability === 'Available' ? 'sx-tag-ok' : 'sx-tag-muted'}>{c.availability === 'Available' ? 'Manual setup' : c.availability}</small></span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
-              <div className="sx-actions" style={{ justifyContent: 'center' }}>
-                <button type="button" className="sx-btn sx-btn-primary" onClick={() => openWizard(null)}>Connect website</button>
-                <Link className="sx-btn" href="/dashboard/embed">Use manual embed instead</Link>
-              </div>
+              <ol className="sx-steps3">
+                <li><span>1</span><div><b>Connect</b>Add your domain and paste one small loader, once.</div></li>
+                <li><span>2</span><div><b>Verify</b>We check your live page and confirm the connection.</div></li>
+                <li><span>3</span><div><b>Publish</b>Choose any quiz, choose where it appears, and publish.</div></li>
+              </ol>
             </div>
           ) : null}
 

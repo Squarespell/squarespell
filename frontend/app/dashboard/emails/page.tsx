@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { listCampaigns, getQuota, deleteCampaign, createCampaign, Campaign } from '../../../lib/emails';
+import { DisplayTitle, PageLoading } from '../_components/PageShell';
+import { QuizCover } from '../_components/QuizCover';
 
 /* ─── helpers ─── */
 function campaignType(c: Campaign): 'broadcast' | 'automation' | 'quiz-result' | 'follow-up' {
@@ -16,41 +18,62 @@ function campaignType(c: Campaign): 'broadcast' | 'automation' | 'quiz-result' |
 }
 
 var TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
-  'broadcast':   { label: 'Broadcast',        color: '#0f7377', bg: '#E0F5F6' },
-  'automation':  { label: 'Automation',        color: '#6941C6', bg: '#F4EBFF' },
-  'quiz-result': { label: 'Quiz Result Email', color: '#0f7377', bg: '#E0F5F6' },
-  'follow-up':   { label: 'Follow-up',         color: '#DC6803', bg: '#FEF0C7' },
+  'broadcast':   { label: 'Broadcast',    color: '#161719', bg: '#EFEEE7' },
+  'automation':  { label: 'Automation',   color: '#2442E6', bg: '#EEF1FF' },
+  'quiz-result': { label: 'Result email', color: '#1B33B8', bg: '#DDE3FF' },
+  'follow-up':   { label: 'Follow-up',    color: '#161719', bg: '#F6FBD0' },
 };
-
-function CampaignIcon({ type }: { type: string }) {
-  var s = 22;
-  var props = { width: s, height: s, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: '1.8', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  if (type === 'broadcast') return <svg {...props}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>;
-  if (type === 'automation') return <svg {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>;
-  if (type === 'quiz-result') return <svg {...props}><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>;
-  return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
-}
-
-function iconBg(type: string): string {
-  if (type === 'automation') return '#7F56D9';
-  if (type === 'follow-up') return '#DC6803';
-  return C.ACCENT;
-}
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#\d+;/g, '').replace(/\s+/g, ' ').trim();
 }
 
-/* ─── shared card style ─── */
-var cardBase: React.CSSProperties = {
-  background: '#fff',
-  border: '1px solid ' + C.GRAY_200,
-  borderRadius: 16,
-  boxShadow: C.SHADOW_XS,
-  boxSizing: 'border-box' as const,
-};
+function statusOf(c: Campaign): { label: string; dot: string; bg: string; fg: string } {
+  var live = { dot: '#1F9D57', bg: '#EAF6EE', fg: '#0E7A3F' };
+  var neutral = { dot: '#6E6D68', bg: '#EFEEE7', fg: '#35352F' };
+  if (c.status === 'failed') return { label: 'Failed', dot: '#C0271B', bg: '#FDF0EE', fg: '#C0271B' };
+  if (c.mode === 'live') return c.status === 'draft' ? Object.assign({ label: 'Draft' }, neutral) : Object.assign({ label: 'Live' }, live);
+  if (c.status === 'sent') return Object.assign({ label: 'Sent' }, live);
+  if (c.status === 'sending') return Object.assign({ label: 'Sending' }, live);
+  if (c.status === 'scheduled') return { label: 'Scheduled', dot: '#3154FF', bg: '#EEF1FF', fg: '#2442E6' };
+  return Object.assign({ label: 'Draft' }, neutral);
+}
 
-/* ─── page ─── */
+function relTime(s?: string | null): string {
+  if (!s) return '—';
+  var ms = Date.now() - new Date(s).getTime();
+  var m = Math.floor(ms / 60000), h = Math.floor(ms / 3600000), d = Math.floor(ms / 86400000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + (m === 1 ? ' minute ago' : ' minutes ago');
+  if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+  if (d < 30) return d + (d === 1 ? ' day ago' : ' days ago');
+  return new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+var PAGE_CSS = `
+  .ec-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(300px, 380px); align-items: center; gap: 0; margin-bottom: 32px; }
+  .ec-metric { display: flex; gap: 20px; padding: 0 32px; min-width: 0; }
+  .ec-metric + .ec-metric { border-left: 1px solid ${C.BORDER}; }
+  .ec-metric:first-child { padding-left: 0; }
+  .ec-row:hover { background: ${C.GRAY_25}; }
+  .ec-btn { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 6px; border: 1px solid ${C.BORDER}; background: #fff; color: ${C.INK}; font: 500 15px ${C.FONT}; cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .ec-btn:hover { border-color: ${C.GRAY_300}; }
+  .ec-menu-item { display: block; width: 100%; text-align: left; padding: 9px 12px; border: none; background: none; border-radius: 6px; font: 400 14px ${C.FONT}; color: ${C.INK}; cursor: pointer; }
+  .ec-menu-item:hover { background: ${C.GRAY_50}; }
+  .ec-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 1250px) { .ec-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; } .ec-upgrade { grid-column: 1 / -1; } .ec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 800px) { .ec-metrics { grid-template-columns: 1fr; } .ec-metric + .ec-metric { border-left: none; } .ec-metric { padding: 0; } .ec-grid { grid-template-columns: 1fr; } }
+`;
+
+function MetricIcon({ d }: { d: string }) {
+  return (
+    <span style={{ width: 50, height: 50, borderRadius: '50%', border: '1px solid ' + C.BORDER, background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: C.INK, flexShrink: 0 }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
+    </span>
+  );
+}
+
+/* ─── page (2026 redesign, screen 20) ─── */
 export default function EmailCampaignsPage() {
   var { token, status: authStatus } = useDashboardAuth();
   var router = useRouter();
@@ -59,12 +82,14 @@ export default function EmailCampaignsPage() {
   var [loading, setLoading] = useState(true);
   var [filter, setFilter] = useState<'all' | 'draft' | 'live' | 'automations'>('all');
   var [search, setSearch] = useState('');
+  var [sortBy, setSortBy] = useState('updated');
+  var [view, setView] = useState<'list' | 'grid'>('list');
   var [menuOpen, setMenuOpen] = useState<string | null>(null);
   var [actionLoading, setActionLoading] = useState<string | null>(null);
   var [err, setErr] = useState<string | null>(null);
   var menuRef = useRef<HTMLDivElement>(null);
   var [page, setPage] = useState(1);
-  var perPage = 6;
+  var perPage = 10;
 
   useEffect(function () {
     if (!token) return;
@@ -76,7 +101,7 @@ export default function EmailCampaignsPage() {
           getQuota().catch(function () { return null; }),
         ]);
         if (cancelled) return;
-        setItems(results[0] || []);
+        setItems(Array.isArray(results[0]) ? results[0] : []);
         setQuota(results[1]);
       } catch (e: any) {
         if (!cancelled) setErr(e?.message || 'Could not load campaigns');
@@ -119,570 +144,259 @@ export default function EmailCampaignsPage() {
     setActionLoading(null);
   }
 
+  function isLive(c: Campaign) { var l = statusOf(c).label; return l === 'Live' || l === 'Sent' || l === 'Sending'; }
+
+  var counts = {
+    all: items.length,
+    draft: items.filter(function (c) { return statusOf(c).label === 'Draft'; }).length,
+    live: items.filter(isLive).length,
+    automations: items.filter(function (c) { return c.mode === 'live'; }).length,
+  };
+
   var filtered = items.filter(function (c) {
-    if (filter === 'draft' && c.status !== 'draft') return false;
-    if (filter === 'live' && c.status !== 'sent' && c.status !== 'sending') return false;
+    if (filter === 'draft' && statusOf(c).label !== 'Draft') return false;
+    if (filter === 'live' && !isLive(c)) return false;
     if (filter === 'automations' && c.mode !== 'live') return false;
     if (search) {
       var q = search.toLowerCase();
       return (c.name || '').toLowerCase().includes(q) || (c.subject || '').toLowerCase().includes(q);
     }
     return true;
+  }).sort(function (a, b) {
+    if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (sortBy === 'sent') return (b.sent_count || 0) - (a.sent_count || 0);
+    return new Date(b.last_run_at || b.created_at).getTime() - new Date(a.last_run_at || a.created_at).getTime();
   });
 
   var totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  var paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  var safePage = Math.min(page, totalPages);
+  var paginated = filtered.slice((safePage - 1) * perPage, safePage * perPage);
 
   var totalSent = items.reduce(function (s, c) { return s + (c.sent_count || 0); }, 0);
   var sentItems = items.filter(function (c) { return (c.sent_count || 0) > 0; });
   var avgOpen = sentItems.length > 0
-    ? sentItems.reduce(function (s, c) {
-        var sent = c.sent_count || 0;
-        var opened = (c as any).opened_count || 0;
-        return s + (sent > 0 ? (opened / sent) * 100 : 0);
-      }, 0) / sentItems.length
+    ? sentItems.reduce(function (s, c) { var sent = c.sent_count || 0; var opened = (c as any).opened_count || 0; return s + (sent > 0 ? (opened / sent) * 100 : 0); }, 0) / sentItems.length
     : 0;
-
-  var bestCampaign = items.reduce(function (best, c) {
-    var sent = c.sent_count || 0;
-    var opened = (c as any).opened_count || 0;
-    var rate = sent > 0 ? (opened / sent) * 100 : 0;
-    var score = rate > 0 ? rate * 1000 + sent : sent;
-    var bestScore = best ? (best.rate > 0 ? best.rate * 1000 + best.sent : best.sent) : -1;
-    var displayName = (c.name || c.subject || 'Untitled').replace(/\{\{[^}]*\}\}/g, '').trim();
-    if (score > bestScore) return { name: displayName, rate: rate, sent: sent };
-    return best;
-  }, null as { name: string; rate: number; sent: number } | null);
-
+  var unlimited = !quota || quota.cap < 0;
   var pct = quota && quota.cap > 0 ? Math.min(100, Math.round((quota.used / quota.cap) * 100)) : 0;
+  var showUpgrade = !!quota && quota.cap > 0 && (quota.plan || '').toLowerCase() !== 'business';
 
   if (authStatus !== 'ready' || loading) {
+    return <DashboardShell title="Email campaigns"><PageLoading /></DashboardShell>;
+  }
+
+  var th: React.CSSProperties = { textAlign: 'left', padding: '16px 14px', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.GRAY_500, borderBottom: '1px solid ' + C.BORDER, whiteSpace: 'nowrap' };
+  var td: React.CSSProperties = { padding: '12px 14px', fontSize: 15, color: C.INK, borderBottom: '1px solid ' + C.BORDER_LIGHT, verticalAlign: 'middle' };
+
+  function Actions({ c }: { c: Campaign }) {
     return (
-      <DashboardShell title="Email Campaigns">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, fontFamily: C.FONT, color: C.GRAY_400, fontSize: 14 }}>
-          Loading...
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-end' }}>
+        <button type="button" className="ec-btn" onClick={function () { window.open('/dashboard/emails/' + c.id + '?preview=1', '_blank'); }}>Preview</button>
+        <Link href={'/dashboard/emails/' + c.id} className="ec-btn">Edit</Link>
+        <div style={{ position: 'relative' }} ref={menuOpen === c.id ? menuRef : undefined}>
+          <button type="button" className="ec-btn" aria-label={'More actions for ' + (c.name || 'campaign')} aria-haspopup="menu" aria-expanded={menuOpen === c.id}
+            onClick={function (e) { e.stopPropagation(); setMenuOpen(menuOpen === c.id ? null : c.id); }} style={{ width: 40, padding: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+          </button>
+          {menuOpen === c.id && (
+            <div role="menu" style={{ position: 'absolute', right: 0, top: 46, zIndex: 30, minWidth: 170, padding: 6, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, boxShadow: C.SHADOW_LG }}>
+              <button type="button" role="menuitem" className="ec-menu-item" disabled={actionLoading === c.id} onClick={function () { handleDuplicate(c); }}>Duplicate</button>
+              <button type="button" role="menuitem" className="ec-menu-item" disabled={actionLoading === c.id} onClick={function () { handleArchive(c); }} style={{ color: C.DANGER }}>Archive</button>
+            </div>
+          )}
         </div>
-      </DashboardShell>
+      </div>
     );
   }
 
+  function TypePill({ c }: { c: Campaign }) {
+    var t = TYPE_META[campaignType(c)];
+    return <span style={{ display: 'inline-flex', height: 28, alignItems: 'center', padding: '0 12px', borderRadius: 4, background: t.bg, color: t.color, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap' }}>{t.label}</span>;
+  }
+
+  function StatusPill({ c }: { c: Campaign }) {
+    var st = statusOf(c);
+    return <span style={{ display: 'inline-flex', height: 28, alignItems: 'center', gap: 8, padding: '0 12px', borderRadius: 4, background: st.bg, color: st.fg, fontSize: 13, fontWeight: 500 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: st.dot }} />{st.label}</span>;
+  }
+
   return (
-    <DashboardShell title="Email Campaigns">
-      <style>{`
-        .ec-card { transition: box-shadow 0.2s, border-color 0.2s; }
-        .ec-card:hover { box-shadow: ${C.SHADOW_MD}; border-color: ${C.GRAY_300}; }
-        .ec-action { transition: background 0.15s; }
-        .ec-action:hover { background: ${C.GRAY_50} !important; }
-        .ec-filter-tab { transition: all 0.15s; }
-        .ec-filter-tab:hover { opacity: 0.85; }
-        .ec-create-btn { transition: background 0.15s; }
-        .ec-create-btn:hover { background: ${C.ACCENT_HOVER} !important; }
-        .ec-search:focus { border-color: ${C.ACCENT} !important; box-shadow: ${C.FOCUS_RING} !important; }
-        .ec-menu-item { transition: background 0.1s; }
-        .ec-menu-item:hover { background: ${C.GRAY_50} !important; }
-        .ec-page-btn { transition: all 0.15s; }
-        .ec-page-btn:hover:not(:disabled) { background: ${C.GRAY_50} !important; }
-        .ec-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-        .ec-campaign-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
-        @media (max-width: 1200px) {
-          .ec-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .ec-campaign-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 900px) {
-          .ec-stats-grid { grid-template-columns: 1fr !important; }
-          .ec-campaign-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+    <DashboardShell title="Email campaigns">
+      <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
 
-      {/* ── Outer wrapper to prevent horizontal overflow ── */}
-      <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 36 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Engage</div>
+          <DisplayTitle size="xl">Email campaigns.</DisplayTitle>
+          <p style={{ margin: '14px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Send campaigns and automations to your leads.</p>
+        </div>
+        <Link href="/dashboard/emails/new" style={{ display: 'inline-flex', alignItems: 'center', gap: 12, height: 56, padding: '0 28px', marginTop: 28, borderRadius: 6, background: C.ACCENT, color: '#fff', fontSize: 18, fontWeight: 500, textDecoration: 'none' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          Create campaign
+        </Link>
+      </div>
 
-        {/* ── Header ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, gap: 16, flexWrap: 'wrap' as const }}>
-          <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.3 }}>
-              Email Campaigns
-            </h1>
-            <p style={{ margin: '4px 0 0', fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT }}>
-              Send campaigns and automations to your leads.
-            </p>
-          </div>
+      {err && (
+        <div role="alert" style={{ padding: '12px 16px', background: C.DANGER_LIGHT, borderRadius: 6, color: C.DANGER, fontSize: 14, marginBottom: 20, display: 'flex', justifyContent: 'space-between' }}>
+          {err}
+          <button type="button" aria-label="Dismiss" onClick={function () { setErr(null); }} style={{ background: 'none', border: 'none', color: C.DANGER, cursor: 'pointer', fontSize: 18 }}>&times;</button>
+        </div>
+      )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' as const, flexShrink: 0 }}>
-            {/* Search */}
-            <div style={{ position: 'relative', width: 220, minWidth: 160 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.GRAY_400} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text" className="ec-search" placeholder="Search campaigns..."
-                value={search} onChange={function (e) { setSearch(e.target.value); setPage(1); }}
-                style={{
-                  width: '100%', padding: '9px 14px 9px 38px',
-                  border: '1px solid ' + C.GRAY_200, borderRadius: 10,
-                  fontSize: 14, fontFamily: C.FONT, color: C.GRAY_900,
-                  outline: 'none', background: '#fff', boxSizing: 'border-box' as const,
-                }}
-              />
-            </div>
-
-            {/* Filter tabs */}
-            <div style={{ display: 'inline-flex', background: C.GRAY_50, borderRadius: 10, padding: 3, border: '1px solid ' + C.GRAY_200, flexShrink: 0 }}>
-              {(['all', 'draft', 'live', 'automations'] as const).map(function (f) {
-                var active = filter === f;
-                return (
-                  <button key={f} type="button" className="ec-filter-tab"
-                    onClick={function () { setFilter(f); setPage(1); }}
-                    style={{
-                      padding: '7px 14px', fontSize: 13, fontWeight: 600,
-                      color: active ? '#fff' : C.GRAY_500,
-                      background: active ? C.ACCENT : 'transparent',
-                      border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: C.FONT,
-                      whiteSpace: 'nowrap' as const,
-                    }}>
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Create Campaign */}
-            <Link href="/dashboard/emails/new" style={{ textDecoration: 'none', flexShrink: 0 }}>
-              <button type="button" className="ec-create-btn" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '10px 20px', borderRadius: 10, border: 'none',
-                background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600,
-                fontFamily: C.FONT, cursor: 'pointer', boxShadow: C.SHADOW_XS, whiteSpace: 'nowrap' as const,
-              }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 3.333v9.334M3.333 8h9.334" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                Create Campaign
-              </button>
-            </Link>
+      {/* Metrics */}
+      <div className="ec-metrics">
+        <div className="ec-metric stat">
+          <MetricIcon d="M22 2 11 13M22 2l-7 20-4-9-9-4z" />
+          <div>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{totalSent.toLocaleString()}</div>
+            <div style={{ fontSize: 17, color: C.INK, marginTop: 6 }}>emails sent</div>
+            <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{totalSent > 0 ? 'across ' + sentItems.length + ' ' + (sentItems.length === 1 ? 'campaign' : 'campaigns') : 'No emails sent yet'}</div>
           </div>
         </div>
-
-        {/* ── Error ── */}
-        {err && (
-          <div style={{
-            padding: '10px 16px', background: C.DANGER_LIGHT,
-            border: '1px solid #FEE4E2', borderRadius: 10,
-            color: C.DANGER, fontSize: 13, fontFamily: C.FONT, marginBottom: 20,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            {err}
-            <button onClick={function () { setErr(null); }} style={{ background: 'none', border: 'none', color: C.DANGER, cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>&times;</button>
-          </div>
-        )}
-
-        {/* ── Stats row ── */}
-        <div className="ec-stats-grid">
-          {/* Emails Sent */}
-          <div style={{ ...cardBase, padding: 20, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: C.BRAND_50, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 6 }}>Emails Sent</div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1 }}>
-                {totalSent.toLocaleString()}
-              </div>
-              <div style={{ fontSize: 12, color: totalSent > 0 ? '#12B76A' : C.GRAY_400, fontFamily: C.FONT, marginTop: 8 }}>
-                {totalSent > 0 ? totalSent + ' emails delivered' : '— No emails sent yet'}
-              </div>
-            </div>
-          </div>
-
-          {/* Average Open Rate */}
-          <div style={{ ...cardBase, padding: 20, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F4EBFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 6 }}>Average Open Rate</div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1 }}>
-                {avgOpen > 0 ? avgOpen.toFixed(0) + '%' : '0%'}
-              </div>
-              <div style={{ fontSize: 12, color: avgOpen > 0 ? '#12B76A' : C.GRAY_400, fontFamily: C.FONT, marginTop: 8 }}>
-                {avgOpen > 0 ? 'across ' + items.filter(function(c) { return c.status === 'sent'; }).length + ' campaigns' : '— Send campaigns to track'}
-              </div>
-            </div>
-          </div>
-
-          {/* Best Performing */}
-          <div style={{ ...cardBase, padding: 20, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FEF0C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC6803" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="6" /><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
-              </svg>
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 6 }}>Best Performing</div>
-              <div style={{
-                fontSize: 16, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.3,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-              }}>
-                {bestCampaign ? bestCampaign.name : 'No campaigns'}
-              </div>
-              <div style={{ fontSize: 13, color: '#12B76A', fontFamily: C.FONT, marginTop: 6, fontWeight: 600 }}>
-                {bestCampaign && bestCampaign.rate > 0
-                  ? bestCampaign.rate.toFixed(0) + '% open rate'
-                  : bestCampaign && bestCampaign.sent > 0
-                    ? bestCampaign.sent + ' emails sent'
-                    : 'Send your first campaign'}
-              </div>
-            </div>
-          </div>
-
-          {/* Monthly Email Usage */}
-          <div style={{ ...cardBase, padding: 20 }}>
-            <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT, fontWeight: 500, marginBottom: 8 }}>
-              Monthly Email Usage
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
-              <span style={{ fontSize: 26, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1 }}>
-                {quota ? quota.used.toLocaleString() : '0'}
-              </span>
-              <span style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
-                / {quota ? quota.cap.toLocaleString() : '500'} emails
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <div style={{ flex: 1, height: 8, background: C.GRAY_100, borderRadius: 999, overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%', width: pct + '%',
-                  background: pct >= 90 ? '#F04438' : pct >= 70 ? '#F79009' : C.ACCENT,
-                  borderRadius: 999, transition: 'width 400ms ease',
-                }} />
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_700, fontFamily: C.FONT, minWidth: 36, textAlign: 'right' as const }}>
-                {pct}%
-              </span>
-            </div>
-            {/* Upsell */}
-            <div style={{
-              display: 'flex', gap: 12, alignItems: 'flex-start',
-              padding: '12px 14px', background: C.GRAY_50, borderRadius: 10,
-            }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 8, background: C.BRAND_50,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                </svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.GRAY_900, fontFamily: C.FONT, marginBottom: 2 }}>
-                  Reaching more leads!
-                </div>
-                <div style={{ fontSize: 12, color: C.GRAY_500, fontFamily: C.FONT, lineHeight: 1.4 }}>
-                  Upgrade to unlock more emails.
-                </div>
-                <Link href="/dashboard/billing" style={{ textDecoration: 'none' }}>
-                  <button type="button" style={{
-                    marginTop: 8, padding: '5px 12px', borderRadius: 8,
-                    border: '1px solid ' + C.GRAY_300, background: '#fff',
-                    color: C.GRAY_700, fontSize: 12, fontWeight: 600,
-                    fontFamily: C.FONT, cursor: 'pointer',
-                  }}>
-                    Upgrade Plan
-                  </button>
-                </Link>
-              </div>
-            </div>
+        <div className="ec-metric stat">
+          <MetricIcon d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6" />
+          <div>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{Math.round(avgOpen)}%</div>
+            <div style={{ fontSize: 17, color: C.INK, marginTop: 6 }}>average open rate</div>
+            <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{sentItems.length > 0 ? 'across sent campaigns' : 'Send campaigns to track'}</div>
           </div>
         </div>
-
-        {/* ── Campaign cards grid ── */}
-        {filtered.length === 0 ? (
-          <div style={{
-            ...cardBase, padding: '60px 20px', textAlign: 'center' as const,
-          }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 14, background: C.BRAND_50,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
-            }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
+        <div className="ec-metric stat" style={{ alignItems: 'flex-start' }}>
+          <MetricIcon d="M12 3c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>
+              {(quota?.used || 0).toLocaleString()}<span style={{ fontSize: 22, fontWeight: 600 }}> / {unlimited ? 'Unlimited' : (quota?.cap || 0).toLocaleString()}</span>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, margin: '0 0 6px' }}>
-              No campaigns yet
-            </h3>
-            <p style={{ fontSize: 14, color: C.GRAY_500, fontFamily: C.FONT, margin: '0 0 20px' }}>
-              Create your first campaign to send branded emails to your leads.
-            </p>
-            <Link href="/dashboard/emails/new" style={{ textDecoration: 'none' }}>
-              <button type="button" className="ec-create-btn" style={{
-                padding: '10px 20px', borderRadius: 10, border: 'none',
-                background: C.ACCENT, color: '#fff', fontSize: 14, fontWeight: 600,
-                fontFamily: C.FONT, cursor: 'pointer',
-              }}>
-                Create your first campaign
-              </button>
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className="ec-campaign-grid">
-              {paginated.map(function (c) {
-                var type = campaignType(c);
-                var meta = TYPE_META[type];
-                var isLive = c.status === 'sent' || c.status === 'sending' || c.mode === 'live';
-                var sent = c.sent_count || 0;
-                var opened = (c as any).opened_count || 0;
-                var rate = sent > 0 ? ((opened / sent) * 100).toFixed(1) + '%' : '0%';
-                var isLoading = actionLoading === c.id;
-
-                return (
-                  <div key={c.id} className="ec-card" style={{
-                    ...cardBase, padding: 0, opacity: isLoading ? 0.5 : 1,
-                    display: 'flex', flexDirection: 'column' as const, overflow: 'hidden',
-                  }}>
-                    {/* Card header */}
-                    <div style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{
-                        display: 'inline-block', padding: '3px 10px', borderRadius: 6,
-                        fontSize: 11, fontWeight: 700, fontFamily: C.FONT,
-                        color: meta.color, background: meta.bg,
-                      }}>
-                        {meta.label}
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                        <span style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 5,
-                          fontSize: 12, fontWeight: 600, fontFamily: C.FONT,
-                          color: isLive ? '#12B76A' : C.GRAY_500,
-                        }}>
-                          {isLive && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#12B76A', flexShrink: 0 }} />}
-                          {isLive ? 'Live' : 'Draft'}
-                        </span>
-                        {/* 3-dot menu */}
-                        <div style={{ position: 'relative' }} ref={menuOpen === c.id ? menuRef : undefined}>
-                          <button type="button"
-                            onClick={function (e) { e.stopPropagation(); setMenuOpen(menuOpen === c.id ? null : c.id); }}
-                            style={{
-                              width: 28, height: 28, borderRadius: 6, border: 'none',
-                              background: 'transparent', color: C.GRAY_400, cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-                            </svg>
-                          </button>
-                          {menuOpen === c.id && (
-                            <div style={{
-                              position: 'absolute', right: 0, top: 32, zIndex: 50,
-                              background: '#fff', border: '1px solid ' + C.GRAY_200,
-                              borderRadius: 10, boxShadow: C.SHADOW_LG, minWidth: 150, overflow: 'hidden',
-                            }}>
-                              <button className="ec-menu-item" onClick={function () { handleDuplicate(c); }} style={{
-                                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                                padding: '10px 14px', border: 'none', background: 'transparent',
-                                color: C.GRAY_700, fontSize: 13, fontWeight: 500, fontFamily: C.FONT,
-                                cursor: 'pointer', textAlign: 'left' as const,
-                              }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
-                                Duplicate
-                              </button>
-                              <div style={{ height: 1, background: C.GRAY_100 }} />
-                              <button className="ec-menu-item" onClick={function () { handleArchive(c); }} style={{
-                                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                                padding: '10px 14px', border: 'none', background: 'transparent',
-                                color: '#F04438', fontSize: 13, fontWeight: 500, fontFamily: C.FONT,
-                                cursor: 'pointer', textAlign: 'left' as const,
-                              }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" /><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
-                                Archive
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Card body */}
-                    <div style={{ padding: '16px 20px 0', flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                        <div style={{
-                          width: 44, height: 44, borderRadius: 12, background: iconBg(type),
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}>
-                          <CampaignIcon type={type} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            fontSize: 15, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT,
-                            marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-                          }}>
-                            {(c.name || 'Untitled').replace(/\{\{[^}]*\}\}/g, '').trim() || 'Untitled'}
-                          </div>
-                          <div style={{
-                            fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT,
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, marginBottom: 4,
-                          }}>
-                            {(c.subject || 'No subject').replace(/\{\{[^}]*\}\}/g, '').trim() || 'No subject'}
-                          </div>
-                          <div style={{
-                            fontSize: 12, color: C.GRAY_400, fontFamily: C.FONT, lineHeight: 1.4,
-                            overflow: 'hidden', textOverflow: 'ellipsis',
-                            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any,
-                          }}>
-                            {c.html ? stripHtml(c.html).replace(/\{\{[^}]*\}\}/g, '').slice(0, 80) || 'No preview' : 'No preview available'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stats row */}
-                    <div style={{
-                      display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-                      padding: '14px 20px', borderTop: '1px solid ' + C.GRAY_100, marginTop: 16,
-                    }}>
-                      {[
-                        { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>, val: sent.toLocaleString(), label: 'Sent' },
-                        { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#12B76A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>, val: opened.toLocaleString(), label: 'Opened' },
-                        { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>, val: rate, label: 'Open Rate' },
-                      ].map(function (stat, i) {
-                        return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                            <span style={{ flexShrink: 0 }}>{stat.icon}</span>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 700, color: C.GRAY_900, fontFamily: C.FONT, lineHeight: 1.2 }}>{stat.val}</div>
-                              <div style={{ fontSize: 11, color: C.GRAY_400, fontFamily: C.FONT }}>{stat.label}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Actions row */}
-                    <div style={{
-                      display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto',
-                      borderTop: '1px solid ' + C.GRAY_100,
-                    }}>
-                      <Link href={'/dashboard/emails/' + c.id} style={{ textDecoration: 'none' }}>
-                        <button type="button" className="ec-action" style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                          padding: '12px 0', width: '100%', border: 'none', background: 'transparent',
-                          color: C.GRAY_500, fontSize: 13, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer',
-                          borderRadius: '0 0 0 16px',
-                        }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          Edit
-                        </button>
-                      </Link>
-                      <div style={{ borderLeft: '1px solid ' + C.GRAY_100 }}>
-                        <button type="button" className="ec-action" onClick={function () {
-                          window.open('/dashboard/emails/' + c.id + '?preview=1', '_blank');
-                        }} style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                          padding: '12px 0', width: '100%', border: 'none', background: 'transparent',
-                          color: C.GRAY_500, fontSize: 13, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer',
-                        }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                          </svg>
-                          Preview
-                        </button>
-                      </div>
-                      <div style={{ borderLeft: '1px solid ' + C.GRAY_100 }}>
-                        <button type="button" className="ec-action" onClick={function () { handleDuplicate(c); }} style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                          padding: '12px 0', width: '100%', border: 'none', background: 'transparent',
-                          color: C.GRAY_500, fontSize: 13, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer',
-                        }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                          </svg>
-                          Duplicate
-                        </button>
-                      </div>
-                      <div style={{ borderLeft: '1px solid ' + C.GRAY_100 }}>
-                        <Link href={'/dashboard/emails/' + c.id} style={{ textDecoration: 'none' }}>
-                          <button type="button" className="ec-action" style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            padding: '12px 14px', border: 'none', background: 'transparent',
-                            color: C.GRAY_400, cursor: 'pointer', borderRadius: '0 0 16px 0',
-                          }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="9 18 15 12 9 6" />
-                            </svg>
-                          </button>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', flexWrap: 'wrap' as const, gap: 12,
-              }}>
-                <div style={{ fontSize: 13, color: C.GRAY_500, fontFamily: C.FONT }}>
-                  Showing {Math.min((page - 1) * perPage + 1, filtered.length)}–{Math.min(page * perPage, filtered.length)} of {filtered.length}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <button type="button" className="ec-page-btn" disabled={page <= 1}
-                    onClick={function () { setPage(page - 1); }}
-                    style={{
-                      width: 32, height: 32, borderRadius: 8, border: '1px solid ' + C.GRAY_200,
-                      background: '#fff', color: page <= 1 ? C.GRAY_300 : C.GRAY_500,
-                      cursor: page <= 1 ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                  </button>
-                  {Array.from({ length: totalPages }, function (_, i) {
-                    return (
-                      <button key={i} type="button" className="ec-page-btn" onClick={function () { setPage(i + 1); }}
-                        style={{
-                          width: 32, height: 32, borderRadius: 8,
-                          border: '1px solid ' + (page === i + 1 ? C.ACCENT : C.GRAY_200),
-                          background: page === i + 1 ? C.ACCENT : '#fff',
-                          color: page === i + 1 ? '#fff' : C.GRAY_700,
-                          cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: C.FONT,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                        {i + 1}
-                      </button>
-                    );
-                  })}
-                  <button type="button" className="ec-page-btn" disabled={page >= totalPages}
-                    onClick={function () { setPage(page + 1); }}
-                    style={{
-                      width: 32, height: 32, borderRadius: 8, border: '1px solid ' + C.GRAY_200,
-                      background: '#fff', color: page >= totalPages ? C.GRAY_300 : C.GRAY_500,
-                      cursor: page >= totalPages ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </button>
-                </div>
+            <div style={{ fontSize: 17, color: C.INK, marginTop: 6 }}>monthly email usage</div>
+            {!unlimited && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
+                <div style={{ flex: 1, height: 8, borderRadius: 4, background: C.GRAY_100, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: C.ACCENT }} /></div>
+                <span style={{ fontSize: 14, color: C.INK }}>{pct}%</span>
               </div>
             )}
-          </>
+          </div>
+        </div>
+        {showUpgrade && (
+          <div className="ec-upgrade" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 20px', borderRadius: 6, background: C.ACID_SOFT }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.INK} strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 16, fontWeight: 600, color: C.INK }}>Reaching more leads?</div><div style={{ fontSize: 14, color: C.GRAY_600 }}>Upgrade to unlock more emails.</div></div>
+            <Link href="/dashboard/billing" className="ec-btn">Upgrade plan</Link>
+          </div>
         )}
-
       </div>
+
+      {/* Toolbar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+        <label style={{ position: 'relative', display: 'flex', alignItems: 'center', width: 380, maxWidth: '100%' }}>
+          <span style={{ position: 'absolute', left: 16, color: C.GRAY_600, display: 'flex' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg></span>
+          <input type="search" aria-label="Search campaigns" placeholder="Search campaigns..." value={search} onChange={function (e) { setSearch(e.target.value); setPage(1); }}
+            style={{ width: '100%', height: 46, padding: '0 14px 0 46px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', fontSize: 15, fontFamily: C.FONT, color: C.INK }} />
+        </label>
+        <div role="group" aria-label="Filter campaigns" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {([['all', 'All'], ['draft', 'Draft'], ['live', 'Live'], ['automations', 'Automations']] as const).map(function (f) {
+            var active = filter === f[0];
+            return (
+              <button key={f[0]} type="button" aria-pressed={active} onClick={function () { setFilter(f[0]); setPage(1); }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 999, border: '1px solid ' + (active ? C.INK : C.BORDER), background: active ? C.INK : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
+                {f[1]}<span style={{ fontSize: 12, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(255,255,255,.18)' : C.GRAY_100, color: active ? '#fff' : C.GRAY_600 }}>{counts[f[0]]}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+          <select aria-label="Sort campaigns" value={sortBy} onChange={function (e) { setSortBy(e.target.value); }} style={{ height: 46, minWidth: 180, padding: '0 14px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', fontSize: 15, fontFamily: C.FONT, color: C.INK, cursor: 'pointer' }}>
+            <option value="updated">Recently updated</option>
+            <option value="sent">Most sent</option>
+            <option value="name">Name A–Z</option>
+          </select>
+          <div role="group" aria-label="View" style={{ display: 'flex', border: '1px solid ' + C.BORDER, borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+            {(['list', 'grid'] as const).map(function (v) {
+              return (
+                <button key={v} type="button" aria-pressed={view === v} aria-label={v === 'list' ? 'List view' : 'Grid view'} onClick={function () { setView(v); }}
+                  style={{ width: 52, height: 44, border: 'none', background: view === v ? C.INK : '#fff', color: view === v ? '#fff' : C.INK, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {v === 'list'
+                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" /></svg>
+                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1" /></svg>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <div style={{ padding: '56px 20px', textAlign: 'center', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: C.INK }}>No campaigns yet.</div>
+          <p style={{ margin: '6px 0 20px', fontSize: 16, color: C.GRAY_600 }}>Send a one-off campaign or set up an automation that follows up after every quiz.</p>
+          <Link href="/dashboard/emails/new" className="ec-btn" style={{ background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>Create campaign</Link>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={{ padding: '40px 20px', textAlign: 'center', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, color: C.GRAY_600 }}>No campaigns match.</div>
+      ) : view === 'list' ? (
+        <div style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
+            <thead>
+              <tr><th style={{ ...th, paddingLeft: 24 }}>Campaign</th><th style={th}>Type</th><th style={th}>Status</th><th style={th}>Sent</th><th style={th}>Opened</th><th style={th}>Updated</th><th style={{ ...th, textAlign: 'right', paddingRight: 24 }}>Actions</th></tr>
+            </thead>
+            <tbody>
+              {paginated.map(function (c) {
+                var sent = c.sent_count || 0;
+                var opened = (c as any).opened_count || 0;
+                var snippet = stripHtml(c.html || '').slice(0, 90);
+                return (
+                  <tr key={c.id} className="ec-row">
+                    <td style={{ ...td, paddingLeft: 24 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                        <span style={{ width: 118, height: 66, borderRadius: 4, overflow: 'hidden', flexShrink: 0, border: '1px solid ' + C.BORDER_LIGHT }}><QuizCover id={c.id} title={c.subject || c.name} height={66} compact /></span>
+                        <div style={{ minWidth: 0, maxWidth: 320 }}>
+                          <Link href={'/dashboard/emails/' + c.id} style={{ fontSize: 17, fontWeight: 500, color: C.INK, textDecoration: 'none' }}>{c.name || c.subject || 'Untitled'}</Link>
+                          <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{snippet || c.subject}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={td}><TypePill c={c} /></td>
+                    <td style={td}><StatusPill c={c} /></td>
+                    <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{sent.toLocaleString()}</td>
+                    <td style={td}><div style={{ fontVariantNumeric: 'tabular-nums' }}>{opened.toLocaleString()}</div><div style={{ fontSize: 13, color: C.GRAY_500 }}>{sent > 0 ? Math.round((opened / sent) * 100) + '%' : '—'}</div></td>
+                    <td style={{ ...td, color: C.GRAY_600, whiteSpace: 'nowrap' }}>{relTime(c.last_run_at || c.created_at)}</td>
+                    <td style={{ ...td, paddingRight: 24 }}><Actions c={c} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="ec-grid">
+          {paginated.map(function (c) {
+            return (
+              <article key={c.id} style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+                <div style={{ borderRadius: '7px 7px 0 0', overflow: 'hidden' }}><QuizCover id={c.id} title={c.subject || c.name} height={140} /></div>
+                <div style={{ padding: 18 }}>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}><TypePill c={c} /><StatusPill c={c} /></div>
+                  <div style={{ fontSize: 17, fontWeight: 500, color: C.INK }}>{c.name || c.subject || 'Untitled'}</div>
+                  <div style={{ fontSize: 14, color: C.GRAY_500, margin: '4px 0 14px' }}>{(c.sent_count || 0).toLocaleString()} sent · {relTime(c.last_run_at || c.created_at)}</div>
+                  <Actions c={c} />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {filtered.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, gap: 12 }}>
+          <span style={{ fontSize: 15, color: C.GRAY_600 }}>Showing {paginated.length} of {filtered.length} {filtered.length === 1 ? 'campaign' : 'campaigns'}</span>
+          <nav aria-label="Pagination" style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="ec-btn" aria-label="Previous page" disabled={safePage <= 1} onClick={function () { setPage(safePage - 1); }} style={{ width: 42, padding: 0, color: safePage <= 1 ? C.GRAY_300 : C.INK }}>←</button>
+            {Array.from({ length: totalPages }).map(function (_, i) {
+              var n = i + 1;
+              return <button key={n} type="button" className="ec-btn" aria-current={n === safePage ? 'page' : undefined} onClick={function () { setPage(n); }} style={{ width: 42, padding: 0, background: n === safePage ? C.ACCENT : '#fff', color: n === safePage ? '#fff' : C.INK, borderColor: n === safePage ? C.ACCENT : C.BORDER }}>{n}</button>;
+            })}
+            <button type="button" className="ec-btn" aria-label="Next page" disabled={safePage >= totalPages} onClick={function () { setPage(safePage + 1); }} style={{ width: 42, padding: 0, color: safePage >= totalPages ? C.GRAY_300 : C.INK }}>→</button>
+          </nav>
+        </div>
+      )}
     </DashboardShell>
   );
 }
