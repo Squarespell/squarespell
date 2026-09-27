@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Stripe from 'stripe';
 import { api, makeUser, bearer } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
-import { outbox, resetOutbox } from '../helpers/resendFake';
+import { getCapturedTestEmails, clearCapturedTestEmails } from '../../services/email/testProvider';
 import { stripeCalls, resetStripe } from '../helpers/stripeFake';
 
 const stripe = new Stripe('sk_test_local_fixture');
@@ -21,7 +21,7 @@ function post(evt: any, opts: { secret?: string; header?: string | null; body?: 
   return api().then((a) => { let r = a.post('/api/stripe/webhook').set('content-type', 'application/json'); if (sig) r = r.set('stripe-signature', sig); return r.send(payload); });
 }
 
-beforeEach(async () => { await resetData(); resetOutbox(); resetStripe(); });
+beforeEach(async () => { await resetData(); clearCapturedTestEmails(); resetStripe(); });
 
 describe('Stripe webhook: signature verification', () => {
   it('missing signature header -> 400 invalid_signature, nothing processed', async () => {
@@ -77,12 +77,12 @@ describe('Stripe webhook: processing and idempotency', () => {
     const evt = event('checkout.session.completed', { id: 'cs_2', customer: 'cus_2', subscription: 'sub_2', metadata: { db_user_id: u.id, plan: 'pro' } }, 'evt_dup_1');
     const a = await post(evt);
     await new Promise((r) => setTimeout(r, 200));
-    const emailsAfterFirst = outbox.length;
+    const emailsAfterFirst = getCapturedTestEmails().length;
     const b = await post(evt);
     await new Promise((r) => setTimeout(r, 200));
     expect(a.status).toBe(200); expect(b.status).toBe(200);
     expect(b.body.duplicate).toBe(true);
-    expect(outbox.length).toBe(emailsAfterFirst);
+    expect(getCapturedTestEmails().length).toBe(emailsAfterFirst);
     expect(await sql(`select 1 from stripe_webhook_events where event_id='evt_dup_1'`)).toHaveLength(1);
   });
 

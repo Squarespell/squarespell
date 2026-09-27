@@ -4,7 +4,7 @@ import { isUnsubscribed, buildUnsubscribeHeaders, canSpamFooterHtml } from '../s
 import { applyMergeTags, buildMergeContextFromData, MergeContext } from '../services/mergeTags';
 import { requireAuth, attachUser } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
-import { resendProvider } from '../services/email/resendProvider';
+import { emailProvider } from '../services/email';
 import { emailQuota } from '../middleware/emailQuota';
 import { limitFor } from '../services/email/limits';
 
@@ -487,13 +487,13 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     }
   }
 
-  // ── Prepare all emails, then send in batches of 100 via Resend batch API ──
+  // ── Prepare all emails, then send in batches of 100 via the email provider's batch API ──
   const BATCH_SIZE = 100;
   const results: any[] = [];
   let totalSent = 0;
 
   // 1. Insert all email_sends rows and build payloads
-  type Prepared = { to: string; sendId: string; payload: Parameters<typeof resendProvider.send>[0] };
+  type Prepared = { to: string; sendId: string; payload: Parameters<typeof emailProvider.send>[0] };
   const prepared: Prepared[] = [];
   for (const to of allowed) {
     const { data: send, error: sendErr } = await supabase.from('email_sends').insert({
@@ -532,7 +532,7 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
 
     for (var attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const { messageIds } = await resendProvider.sendBatch(chunk.map(p => p.payload));
+        const { messageIds } = await emailProvider.sendBatch(chunk.map(p => p.payload));
         const now = new Date().toISOString();
         for (let j = 0; j < chunk.length; j++) {
           const mid = messageIds[j] || '';
@@ -634,7 +634,7 @@ r.post('/campaigns/:id/test-send', async (req, res) => {
   }
 
   try {
-    const { messageId } = await resendProvider.send({
+    const { messageId } = await emailProvider.send({
       to, from: c.from_email, fromName: c.from_name,
       subject: '[TEST] ' + resolvedSubject, html: resolvedHtml,
       headers: { ...buildUnsubscribeHeaders(to) },

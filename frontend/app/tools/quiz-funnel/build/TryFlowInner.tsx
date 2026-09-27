@@ -1910,10 +1910,10 @@ export function TryFlowInner({
             </div>
 
             <div className="s5-title">Sign in to publish</div>
-            <div className="s5-sub">Create a free account or sign in. Your quiz comes with you.</div>
+            <div className="s5-sub">We’ll email you a 6-digit code. No password needed, and your quiz comes with you.</div>
 
             <button className="btn btn-primary btn-block s5-submit" onClick={goSignUp} type="button">
-              Continue to sign up
+              Continue with email
             </button>
 
             <div className="s5-foot">

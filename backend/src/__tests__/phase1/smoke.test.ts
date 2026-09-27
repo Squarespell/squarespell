@@ -25,10 +25,11 @@ function run(args: string[], env: Record<string, string> = {}): Promise<{ code: 
 describe('smoke script', () => {
   it('passes every step against a healthy backend, tags its data P1-SMOKE, archives the quiz, and never prints the token', async () => {
     const u = await makeUser({ plan: 'pro' });
-    const r = await run(['--base-url', base], { SMOKE_CLERK_TOKEN: u.token });
+    const r = await run(['--base-url', base], { SMOKE_SESSION_TOKEN: u.token, SMOKE_CSRF_TOKEN: u.csrfToken });
     expect(r.code, r.out).toBe(0);
     expect(r.out).toMatch(/13\/13 steps passed/);
     expect(r.out).not.toContain(u.token);
+    expect(r.out).not.toContain(u.csrfToken);
     const quiz = (await sql<any>(`select title, status from quizzes`))[0];
     expect(quiz.title).toContain('P1-SMOKE');
     expect(quiz.status).toBe('archived');
@@ -36,25 +37,31 @@ describe('smoke script', () => {
     expect(lead.email).toContain('p1-smoke-');
   });
 
-  it('exits 1 with a clear failing step when the backend misbehaves (expired token)', async () => {
-    const { signToken } = await import('../helpers/clerkFake');
-    const expired = signToken('user_smoke_expired', { issuedAtSec: Math.floor(Date.now() / 1000) - 4000, notBeforeSec: Math.floor(Date.now() / 1000) - 4000, expiresInSec: -3600 });
-    const r = await run(['--base-url', base], { SMOKE_CLERK_TOKEN: expired });
+  it('exits 1 with a clear failing step when the backend misbehaves (expired session)', async () => {
+    const crypto = await import('node:crypto');
+    const u = await makeUser({ plan: 'pro' });
+    const expiredToken = crypto.randomBytes(32).toString('hex');
+    const expiredHash = crypto.createHash('sha256').update(expiredToken).digest('hex');
+    await sql(
+      `INSERT INTO auth_sessions (user_id, token_hash, expires_at) VALUES ($1,$2,$3)`,
+      [u.id, expiredHash, new Date(Date.now() - 3600_000).toISOString()],
+    );
+    const r = await run(['--base-url', base], { SMOKE_SESSION_TOKEN: expiredToken, SMOKE_CSRF_TOKEN: u.csrfToken });
     expect(r.code).toBe(1);
     expect(r.out).toMatch(/FAIL\s+auth: session token accepted.*token_expired/);
   });
 
   it('refuses live hosts without --allow-live (exit 3) before making any request', async () => {
     for (const url of ['https://squarespell-api.onrender.com', 'https://app.squarespell.com', 'https://www.squarespellquiz.com']) {
-      const r = await run(['--base-url', url], { SMOKE_CLERK_TOKEN: 'placeholder' });
+      const r = await run(['--base-url', url], { SMOKE_SESSION_TOKEN: 'placeholder', SMOKE_CSRF_TOKEN: 'placeholder' });
       expect(r.code, url).toBe(3);
       expect(r.out).toMatch(/Refusing to run/);
     }
   });
 
-  it('requires the token from the environment', async () => {
+  it('requires the session and csrf tokens from the environment', async () => {
     const r = await run(['--base-url', base]);
     expect(r.code).toBe(2);
-    expect(r.out).toMatch(/SMOKE_CLERK_TOKEN is not set/);
+    expect(r.out).toMatch(/SMOKE_SESSION_TOKEN \/ SMOKE_CSRF_TOKEN are not set/);
   });
 });

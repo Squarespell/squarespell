@@ -52,13 +52,16 @@ export async function verifySite(input: { hostname: string; siteKey: string; pat
   const fail = (reason: ReasonCode, status: number | null = null): VerifyResult => ({ ok: false, reason, url, status, loaderFound: false, slots: [] });
   let res;
   try {
-    res = await safeFetch(url, input.fetchOptions);
+    // Squarespace pages routinely exceed 512 KB and Code Injection footer code sits near the end, so read up to 4 MB.
+    res = await safeFetch(url, { maxBytes: 4 * 1024 * 1024, ...input.fetchOptions });
   } catch (e: any) {
     if (e instanceof SafeFetchError) return fail(e.code === 'timeout' ? 'timeout' : 'unreachable');
     return fail('unreachable');
   }
   const finalHost = hostnameFromHeader(res.finalUrl);
   if (!finalHost || finalHost !== input.hostname) return fail('wrong_domain', res.status);
+  // Squarespace serves a private (not password protected) site as 401 with a "Private Site" page and no password form.
+  if ((res.status === 401 || res.status === 403) && /<title>\s*Private Site\s*<\/title>/i.test(res.body) && !/type\s*=\s*["']password["']/i.test(res.body)) return fail('site_private', res.status);
   if (res.status === 401 || res.status === 403) return fail('page_requires_login', res.status);
   if (res.status >= 400) return fail('unreachable', res.status);
   if (PASSWORD_PAGE.test(res.body) && /type\s*=\s*["']password["']/i.test(res.body)) return fail('page_requires_login', res.status);

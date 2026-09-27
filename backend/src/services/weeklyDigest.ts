@@ -1,8 +1,7 @@
 import { log } from '../lib/logger';
-import { Resend } from 'resend';
+import { emailProvider } from './email';
+import { PLATFORM_FROM_ADDRESS } from './email/provider';
 import { supabase } from '../db/supabaseClient';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 interface WeeklyDigestParams {
   userId: string;
@@ -14,11 +13,6 @@ interface WeeklyDigestParams {
  * Computes last 7 days stats for user's active quizzes and sends summary email.
  */
 export async function sendWeeklyDigest(params: WeeklyDigestParams): Promise<boolean> {
-  if (!resend) {
-    log.info('[WeeklyDigest] Resend not configured, skipping');
-    return false;
-  }
-
   const { userId, userEmail } = params;
 
   try {
@@ -122,13 +116,13 @@ export async function sendWeeklyDigest(params: WeeklyDigestParams): Promise<bool
 </body>
 </html>`;
 
-    const digestResult: any = await resend.emails.send({
-      from: 'Squarespell <digest@squarespell.com>',
+    await emailProvider.send({
+      from: PLATFORM_FROM_ADDRESS,
+      fromName: 'Squarespell',
       to: userEmail,
       subject: `Weekly Quiz Digest: ${totalLeads} new leads`,
       html
     });
-    if (digestResult?.error) throw new Error(digestResult.error.message || 'digest rejected by provider'); // Resend v3 does not throw
 
     // Log email delivery
     try {

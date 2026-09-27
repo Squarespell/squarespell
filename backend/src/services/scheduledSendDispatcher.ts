@@ -4,7 +4,7 @@ import { log } from '../lib/logger';
 // the manual /campaigns/:id/send route.
 
 import { supabase } from '../db/supabaseClient';
-import { resendProvider } from './email/resendProvider';
+import { emailProvider } from './email';
 import { limitFor } from './email/limits';
 import { buildUnsubscribeHeaders, canSpamFooterHtml } from './unsubscribe';
 import { applyMergeTags, buildMergeContextFromData } from './mergeTags';
@@ -112,9 +112,9 @@ async function sendCampaign(campaign: any): Promise<{
     }
   }
 
-  // ── Prepare all emails, then send in batches of 100 via Resend batch API ──
+  // ── Prepare all emails, then send in batches of 100 via the email provider's batch API ──
   const BATCH_SIZE = 100;
-  type Prepared = { to: string; sendId: string; payload: Parameters<typeof resendProvider.send>[0] };
+  type Prepared = { to: string; sendId: string; payload: Parameters<typeof emailProvider.send>[0] };
   const prepared: Prepared[] = [];
   for (const to of allowed) {
     const { data: send, error: sendErr } = await supabase.from('email_sends').insert({
@@ -149,7 +149,7 @@ async function sendCampaign(campaign: any): Promise<{
   for (let i = 0; i < prepared.length; i += BATCH_SIZE) {
     const chunk = prepared.slice(i, i + BATCH_SIZE);
     try {
-      const { messageIds } = await resendProvider.sendBatch(chunk.map(p => p.payload));
+      const { messageIds } = await emailProvider.sendBatch(chunk.map(p => p.payload));
       const now = new Date().toISOString();
       for (let j = 0; j < chunk.length; j++) {
         const mid = messageIds[j] || '';

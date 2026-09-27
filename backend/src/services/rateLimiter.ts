@@ -110,3 +110,16 @@ export async function safeLimit(limiter: RateLimiter, key: string): Promise<{ su
     return { success: true };
   }
 }
+
+// ── Email-code auth limiters ──────────────────────────────────────────────
+// 3 requests / 15 min per normalized email, 10 requests / 15 min per IP.
+// Not built via makeLimiter(): its window type only accepts '1 m' | '1 h'.
+const FIFTEEN_MIN_MS = 15 * 60_000;
+
+function makeCustomWindowLimiter(prefix: string, max: number, windowMs: number): RateLimiter {
+  if (!redis) return new MemoryLimiter(max, windowMs);
+  return new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(max, '15 m'), prefix: 'ratelimit:' + prefix, analytics: true });
+}
+
+export const authCodeEmailLimiter = makeCustomWindowLimiter('auth-code-email', 3, FIFTEEN_MIN_MS);
+export const authCodeIpLimiter = makeCustomWindowLimiter('auth-code-ip', 10, FIFTEEN_MIN_MS);

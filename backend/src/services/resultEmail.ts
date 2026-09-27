@@ -1,7 +1,8 @@
 import { log } from '../lib/logger';
-import { Resend } from 'resend';
+import { emailProvider } from './email';
+import { PLATFORM_FROM_ADDRESS } from './email/provider';
 import { generateReportToken } from './reportToken';
-import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterText } from './unsubscribe';
+import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed } from './unsubscribe';
 
 function appendUtm(url: string, slug: string): string {
   if (!url) return url;
@@ -14,8 +15,6 @@ function appendUtm(url: string, slug: string): string {
   } catch { return url; }
 }
 
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 interface ResultEmailParams {
   to: string;
@@ -43,11 +42,6 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
     return false;
   }
 
-  if (!resend) {
-    log.info('[ResultEmail] Resend not configured, skipping');
-    return false;
-  }
-
   const { to, quizTitle, outcomeTitle, outcomeDescription, ctaUrl, ctaText, branding, reportEnabled, leadId, ownerEmail, slug, quizId } = params;
   const primaryColor = branding.primaryColor || '#D2FF1D';
   const siteName = branding.siteName || 'Squarespell Quiz';
@@ -64,14 +58,13 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   try {
     const unsubUrl = buildUnsubscribeUrl(to, quizId);
     const unsubHeaders = buildUnsubscribeHeaders(to, quizId);
-    const plainText = [quizTitle,'',outcomeTitle,'',outcomeDescription.replace(/<[^>]+>/g,''),'',ctaUrl?`${ctaText||'Learn More'}: ${ctaUrl}`:'',reportUrl?`Download your report: ${reportUrl}`:'','',`Powered by Squarespell`,canSpamFooterText(to, { quizId })].filter(Boolean).join('\n');
 
-    const sendResult: any = await resend.emails.send({
-      from: `${siteName} <results@squarespell.com>`,
+    await emailProvider.send({
+      from: PLATFORM_FROM_ADDRESS,
+      fromName: siteName,
       to,
-      ...(ownerEmail ? { reply_to: ownerEmail } : {}),
+      ...(ownerEmail ? { replyTo: ownerEmail } : {}),
       subject: `Your Result: ${outcomeTitle}`,
-      text: plainText,
       headers: {
         ...unsubHeaders,
         'X-Entity-Ref-ID': leadId || '',
@@ -129,8 +122,6 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
 </html>`,
     });
     log.info(`[ResultEmail] Sent to ${to} for "${quizTitle}"`);
-    // Resend v3 returns { data, error } and does not throw on API errors (unverified domain, bad recipient, quota).
-    if (sendResult?.error) throw new Error(sendResult.error.message || 'result email rejected by provider');
     return true;
   } catch (err: any) {
     log.error('[ResultEmail] Failed:', { err: err.message });

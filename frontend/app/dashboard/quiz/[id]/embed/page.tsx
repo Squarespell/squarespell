@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
 import { embedScriptUrl, publicQuizUrl } from '@/lib/urls';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
@@ -9,25 +8,20 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender
 interface Quiz { id: string; title: string; slug: string; status: string; }
 
 export default function EmbedPage({ params }: { params: { id: string } }) {
-  const { getToken } = useAuth();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [copiedFull, setCopiedFull] = useState(false);
 
   useEffect(() => {
-    getToken().then(token => {
-      fetch(`${API}/api/quizzes`, {
-        headers: { Authorization: `Bearer ${token}` }
+    fetch(`${API}/api/quizzes`)
+      .then(r => r.json())
+      .then((quizzes: Quiz[]) => {
+        const found = quizzes.find(q => q.id === params.id);
+        setQuiz(found || null);
+        setLoading(false);
       })
-        .then(r => r.json())
-        .then((quizzes: Quiz[]) => {
-          const found = quizzes.find(q => q.id === params.id);
-          setQuiz(found || null);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    });
+      .catch(() => setLoading(false));
   }, []);
 
   const quizUrl = quiz ? publicQuizUrl(quiz.slug) : '';

@@ -5,12 +5,12 @@
  *
  * Lives at admin.squarespell.com, completely separate from the user-facing app.
  * Shows KPI cards, growth metrics, user breakdown, revenue summary.
- * Protected by Clerk auth + ADMIN_EMAILS check on the backend.
+ * Protected by session-cookie auth + ADMIN_EMAILS check on the backend.
  */
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
+import { useSessionAuth } from '@/lib/useSessionAuth';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -175,7 +175,7 @@ async function fetchMetricsOnce(token: string | null): Promise<Response> {
 
 function AdminDashboard() {
   var router = useRouter();
-  var { isLoaded, isSignedIn, getToken } = useAuth();
+  var { isLoaded, isSignedIn, getToken } = useSessionAuth();
   var [data, setData] = useState<AdminMetrics | null>(null);
   var [error, setError] = useState<string>('');
   var [isLoadingData, setIsLoadingData] = useState(true);

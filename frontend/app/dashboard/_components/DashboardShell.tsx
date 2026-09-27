@@ -18,7 +18,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth, useClerk, useUser } from '@clerk/nextjs';
+import { authApi } from '@/lib/authApi';
 import { TopBanner } from './TopBanner';
 import { NotificationBell } from './NotificationBell';
 import { CommandPalette } from './CommandPalette';
@@ -346,9 +346,7 @@ export function DashboardShell({
   var isOnEditor = isEditorRoute(pathname);
   var hideChrome = hideSidebar !== undefined ? hideSidebar : isOnEditor;
   var router = useRouter();
-  var { signOut: clerkSignOut } = useClerk();
-  var { user } = useUser();
-  var { getToken } = useAuth();
+  var [userEmail, setUserEmail] = useState('');
   var [isMobile, setIsMobile] = useState(false);
   var [bannerToken, setBannerToken] = useState<string | null>(null);
   var [connectEnabled, setConnectEnabled] = useState(false);
@@ -365,17 +363,10 @@ export function DashboardShell({
   }, []);
 
   useEffect(function() {
-    var cancelled = false;
-    (async function() {
-      try {
-        var t = await getToken();
-        if (!cancelled) setBannerToken(t);
-      } catch { /* ignore */ }
-    })();
-    return function() { cancelled = true; };
-  }, [getToken]);
-
-  var userEmail = user?.primaryEmailAddress?.emailAddress || '';
+    // The session cookie authenticates every request (lib/authFetch.ts); this is only a truthy sentinel so the
+    // effects below that gate on `bannerToken` run once mounted.
+    setBannerToken('session');
+  }, []);
 
   // One-button connect feature flag (server-side, off by default): decides whether Sites appears under Publish.
   useEffect(function() {
@@ -423,6 +414,7 @@ export function DashboardShell({
               quizzesUsed: data.quiz_count ?? 0,
               quizzesLimit: data.limits?.quizzes ?? 0,
             });
+            setUserEmail(data.email || '');
           }
         }
       } catch {}
@@ -433,7 +425,7 @@ export function DashboardShell({
   var areas = areasFor(connectEnabled);
   var currentArea = areaFor(areas, pathname);
 
-  var signOut = function() { clerkSignOut(function() { router.push('/sign-in'); }); };
+  var signOut = function() { authApi.logout().finally(function() { router.push('/sign-in'); }); };
   var openSearch = function() { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true })); };
   var sidePad = isMobile ? 16 : 40;
 

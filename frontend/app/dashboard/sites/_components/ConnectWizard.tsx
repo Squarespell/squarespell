@@ -9,8 +9,8 @@ type Step = 1 | 2 | 3 | 4 | 5;
 type Check = 'idle' | 'wait' | 'pass' | 'fail';
 const STEP_NAMES = ['Platform', 'Website', 'Install once', 'Verify'];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const NO_RETRY = ['page_requires_login', 'wrong_domain'];
-const NOT_REACHABLE = ['unreachable', 'timeout', 'wrong_domain', 'page_requires_login'];
+const NO_RETRY = ['page_requires_login', 'site_private', 'wrong_domain'];
+const NOT_REACHABLE = ['unreachable', 'timeout', 'wrong_domain', 'page_requires_login', 'site_private'];
 
 const CHECK_TEXT: Record<Check, string> = { idle: 'Not started', wait: 'Checking', pass: 'Passed', fail: 'Did not pass' };
 
@@ -208,8 +208,8 @@ export function ConnectWizard({ open, token, existingSite, onClose, onVerified }
         <ol className="sx-guide">
           {sq ? (
             <>
-              <li><span><b>Open Code Injection.</b> In Squarespace, open Settings, then Advanced, then Code Injection. Menu names can change, so look for Code Injection.</span></li>
-              <li><span><b>Paste into Footer.</b> Add the single loader line below to the Footer field.</span></li>
+              <li><span><b>Open Code Injection.</b> In Squarespace, open Website, then Pages, then Custom Code, then Code Injection. Menu names can change, so look for Code Injection.</span></li>
+              <li><span><b>Paste into Footer.</b> Add the single loader line below at the very top of the Footer field, above any code already there. Code placed after an unfinished script can stop it from running.</span></li>
               <li><span><b>Save your changes.</b> Return here and we will verify the live website.</span></li>
             </>
           ) : (
@@ -224,6 +224,7 @@ export function ConnectWizard({ open, token, existingSite, onClose, onVerified }
           <b style={{ fontSize: 14 }}>Squarespell site loader</b>
           <CopyButton text={snippet} label="Copy loader" doneLabel="Loader copied" announceText="Site loader copied to clipboard" small />
         </div>
+        {sq ? <p style={{ margin: '8px 0' }}><a className="sx-btn sx-btn-sm" href={'https://' + (site?.hostname || domain) + '/config'} target="_blank" rel="noopener noreferrer">Open Squarespace settings</a> <span style={{ fontSize: 13, color: 'var(--muted)' }}>Opens your Squarespace sign-in in a new tab. Squarespell never sees your Squarespace password and cannot install the loader for you.</span></p> : null}
         <pre className="sx-code" aria-label="Site loader code">{snippet}</pre>
         <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>The site key identifies this website. It is not an account password and cannot access your {sq ? 'Squarespace ' : ''}account.</p>
         {sq ? <div className="sx-note sx-warn" style={{ marginTop: 12 }}>Code Injection needs a Squarespace plan that includes custom code. If you cannot find it, tell us in the next step.</div> : null}

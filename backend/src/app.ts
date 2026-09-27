@@ -24,6 +24,7 @@ import unsubscribeRouter from './routes/unsubscribe';
 import { connectRouter, publicConnectRouter } from './routes/connect';
 import { connectFixtureRouter } from './routes/connectFixture';
 import clerkWebhookRoute from './routes/clerkWebhook';
+import { authEmailRouter } from './routes/authEmail';
 import { log } from './lib/logger';
 import { requestLogger } from './middleware/requestLogger';
 import { requireAuth, attachUser } from './middleware/auth';
@@ -70,8 +71,12 @@ const envOrigins = (process.env.CORS_ORIGINS || '')
 
 const legacyOrigin = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
 
+// CORS_STRICT_ORIGINS=true (set on staging) drops the built-in production origins so credentialed
+// requests are accepted only from the exact origins listed in CORS_ORIGINS / FRONTEND_URL.
+const STRICT_ORIGINS = process.env.CORS_STRICT_ORIGINS === 'true';
+
 const ALLOWED_ORIGINS = Array.from(
-  new Set([...DEFAULT_ALLOWED_ORIGINS, ...envOrigins, ...legacyOrigin]),
+  new Set([...(STRICT_ORIGINS ? [] : DEFAULT_ALLOWED_ORIGINS), ...envOrigins, ...legacyOrigin]),
 );
 
 const PUBLIC_PATH_PREFIXES = [
@@ -105,8 +110,13 @@ const publicCors = cors({
 });
 
 app.use((req, res, next) => {
-  const isPublic = PUBLIC_PATH_PREFIXES.some((p) => req.path.startsWith(p));
-  if (isPublic) return publicCors(req, res, next);
+  // '/api/quizzes' (the authenticated quiz CRUD) only shares the text prefix '/api/quiz' with the public quiz
+  // runtime; it must never get the credential-less wildcard CORS, or the browser blocks every cookie-authenticated call.
+  const isPublic = !req.path.startsWith('/api/quizzes') && PUBLIC_PATH_PREFIXES.some((p) => req.path.startsWith(p));
+  // Our own frontends call a few public-prefix routes with the session cookie (e.g. /api/scrape-brand), so they get the
+  // credentialed exact-origin CORS; every other origin (customer sites embedding a quiz) keeps the wildcard.
+  const origin = req.headers.origin;
+  if (isPublic && !(origin && ALLOWED_ORIGINS.includes(origin))) return publicCors(req, res, next);
   return restrictedCors(req, res, next);
 });
 
@@ -117,6 +127,9 @@ app.use(requestLogger);
 
 // Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
+
+// First-party passwordless email-code auth (request-code, verify-code, session, logout, logout-all).
+app.use('/api/auth', authEmailRouter);
 
 app.use('/api/public', publicReportRouter);
 app.use('/api/public', unsubscribeRouter);

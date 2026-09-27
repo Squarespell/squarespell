@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';

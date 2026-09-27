@@ -7,9 +7,9 @@ const TOOLS = [
   { name: 'Mailchimp', logo: LOGOS.mailchimp },
   { name: 'Klaviyo', logo: LOGOS.klaviyo },
   { name: 'ConvertKit', logo: LOGOS.kit },
-  { name: 'HubSpot', logo: LOGOS.hubspot },
+  { name: 'HubSpot (planned)', logo: LOGOS.hubspot },
   { name: 'Google Sheets', logo: LOGOS.googleSheets },
-  { name: 'Zapier', logo: LOGOS.zapier },
+  { name: 'Zapier (planned)', logo: LOGOS.zapier },
   { name: 'Webhooks', logo: LOGOS.webhooks },
 ];
 

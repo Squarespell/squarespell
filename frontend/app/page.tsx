@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { pageSeo } from '@/lib/site';
-import { auth } from '@clerk/nextjs/server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import HomePage from '@/components/marketing/home/HomePage';
 
@@ -21,7 +21,11 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  const { userId } = auth();
-  if (userId) redirect('/dashboard');
+  // Presence-only check (fast, no round-trip): a stale/invalid cookie still
+  // lands on /dashboard, whose client-side useDashboardAuth then validates
+  // the real session via GET /api/auth/session and bounces back to
+  // /sign-in if it's not actually valid.
+  const hasSession = !!cookies().get('sq_session')?.value;
+  if (hasSession) redirect('/dashboard');
   return <HomePage />;
 }

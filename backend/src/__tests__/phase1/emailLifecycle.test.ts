@@ -1,12 +1,14 @@
 /**
- * Phase 1 - email lifecycle with a stub for Resend (nothing is sent to a real provider).
+ * Phase 1 - email lifecycle with the in-memory test email transport (nothing is sent to a real provider).
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { api, makeUser, makeQuiz, waitFor, nextIp } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
-import { outbox, resetOutbox, resendBehaviour } from '../helpers/resendFake';
+import { getCapturedTestEmails, clearCapturedTestEmails, testEmailBehaviour } from '../../services/email/testProvider';
 
-beforeEach(async () => { await resetData(); resetOutbox(); });
+const outbox = () => getCapturedTestEmails();
+
+beforeEach(async () => { await resetData(); clearCapturedTestEmails(); });
 
 const lead = (over: Record<string, any> = {}) => ({ name: 'Ada Lovelace', email: 'ada@customer.example', answers: { 0: 2, 1: 2 }, ...over });
 const CRON = () => ({ 'x-cron-secret': process.env.CRON_SECRET! });
@@ -17,36 +19,36 @@ describe('lead confirmation and owner notification', () => {
     const quiz = await makeQuiz(owner, { slug: 'mail' });
     const r = await (await api()).post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead());
     expect(r.status).toBe(201);
-    expect(await waitFor(() => outbox.length >= 2)).toBe(true);
+    expect(await waitFor(() => outbox().length >= 2)).toBe(true);
     await new Promise((res) => setTimeout(res, 200));
-    const toLead = outbox.filter((m) => String(m.to) === 'ada@customer.example');
-    const toOwner = outbox.filter((m) => String(m.to) === 'owner@business.example');
+    const toLead = outbox().filter((m) => String(m.to) === 'ada@customer.example');
+    const toOwner = outbox().filter((m) => String(m.to) === 'owner@business.example');
     expect(toLead).toHaveLength(1);
     expect(toOwner).toHaveLength(1);
     expect(toLead[0].subject).toContain('High');
-    expect(toLead[0].headers['List-Unsubscribe']).toContain('/api/public/unsubscribe');
-    expect(toLead[0].headers['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
+    expect(toLead[0].headers!['List-Unsubscribe']).toContain('/api/public/unsubscribe');
+    expect(toLead[0].headers!['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
     expect(toOwner[0].subject).toContain('New lead');
   });
 
-  it('when the email provider reports an error the lead is still saved and the API still answers success', async () => {
+  it('when the email provider throws, the lead is still saved and the API still answers success', async () => {
     const owner = await makeUser({ plan: 'pro' });
     const quiz = await makeQuiz(owner, { slug: 'mail-fail' });
-    resendBehaviour.mode = 'error-result';
+    testEmailBehaviour.mode = 'throw';
     const r = await (await api()).post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead());
     expect(r.status).toBe(201);
     expect(await sql(`select 1 from leads`)).toHaveLength(1);
   });
 
-  it('the result-email service reports failure honestly when the provider returns an error (Resend v3 returns {error}, it does not throw)', async () => {
+  it('the result-email service reports failure honestly when the provider throws', async () => {
     const { sendResultEmail } = await import('../../services/resultEmail');
-    resendBehaviour.mode = 'error-result';
+    testEmailBehaviour.mode = 'throw';
     const ok = await sendResultEmail({ to: 'x@customer.example', quizTitle: 'Q', outcomeTitle: 'O', outcomeDescription: 'd', branding: {}, leadId: 'l1', quizId: 'q1' });
     expect(ok).toBe(false);
-    resetOutbox();
+    clearCapturedTestEmails();
     const ok2 = await sendResultEmail({ to: 'y@customer.example', quizTitle: 'Q', outcomeTitle: 'O', outcomeDescription: 'd', branding: {}, leadId: 'l2', quizId: 'q1' });
     expect(ok2).toBe(true);
-    expect(outbox).toHaveLength(1);
+    expect(outbox()).toHaveLength(1);
   });
 });
 
@@ -79,10 +81,10 @@ describe('unsubscribe', () => {
     await app.post('/api/public/unsubscribe').type('form').send({ email: 'ada@customer.example' });
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead()).expect(201);
     await new Promise((res) => setTimeout(res, 300));
-    expect(outbox.filter((m) => String(m.to) === 'ada@customer.example')).toHaveLength(0);
+    expect(outbox().filter((m) => String(m.to) === 'ada@customer.example')).toHaveLength(0);
     await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example' }).expect(200);
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'again@customer.example' })).expect(201);
-    expect(await waitFor(() => outbox.some((m) => String(m.to) === 'again@customer.example'))).toBe(true);
+    expect(await waitFor(() => outbox().some((m) => String(m.to) === 'again@customer.example'))).toBe(true);
   });
 });
 
@@ -95,7 +97,7 @@ describe('follow-up sequences (email_sequence_queue)', () => {
     const r = await (await api()).post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email }));
     expect(r.status).toBe(201);
     await waitFor(async () => (await sql(`select 1 from email_sequence_queue`)).length === delayDays.length);
-    resetOutbox();
+    clearCapturedTestEmails();
     return { owner, quiz, leadId: r.body.lead_id as string };
   }
   const run = async () => (await api()).post('/api/cron/process-email-queue').set(CRON()).send({});
@@ -106,53 +108,53 @@ describe('follow-up sequences (email_sequence_queue)', () => {
     expect((await statuses()).map((s: any) => s.status)).toEqual(['pending', 'pending']);
     const r1 = await run();
     expect(r1.status).toBe(200);
-    expect(outbox.filter((m) => m.subject === 'Step 1')).toHaveLength(1);
-    expect(outbox.filter((m) => m.subject === 'Step 2')).toHaveLength(0);
+    expect(outbox().filter((m) => m.subject === 'Step 1')).toHaveLength(1);
+    expect(outbox().filter((m) => m.subject === 'Step 2')).toHaveLength(0);
     expect((await statuses()).map((s: any) => s.status)).toEqual(['sent', 'pending']);
     await run();
-    expect(outbox.filter((m) => m.subject === 'Step 1')).toHaveLength(1); // not re-sent
+    expect(outbox().filter((m) => m.subject === 'Step 1')).toHaveLength(1); // not re-sent
   });
 
   it('every sequence email carries the CAN-SPAM footer and unsubscribe headers', async () => {
     await seed([0]);
     await run();
-    const m = outbox.find((x) => x.subject === 'Step 1')!;
+    const m = outbox().find((x) => x.subject === 'Step 1')!;
     expect(m.html).toMatch(/Unsubscribe/);
-    expect(m.headers['List-Unsubscribe']).toBeTruthy();
+    expect(m.headers!['List-Unsubscribe']).toBeTruthy();
   });
 
   it('a recipient who unsubscribed after enqueueing is skipped once and never retried', async () => {
     await seed([0]);
     await (await api()).post('/api/public/unsubscribe').type('form').send({ email: 'ada@customer.example' });
     await run();
-    expect(outbox).toHaveLength(0);
+    expect(outbox()).toHaveLength(0);
     expect((await statuses())[0].status).toBe('skipped');
     await run();
-    expect(outbox).toHaveLength(0);
+    expect(outbox()).toHaveLength(0);
   });
 
-  it('provider errors (returned, not thrown) are retried with backoff and are not marked sent', async () => {
+  it('provider failures are retried with backoff and are not marked sent', async () => {
     await seed([0]);
-    resendBehaviour.mode = 'error-result';
+    testEmailBehaviour.mode = 'throw';
     await run();
     let s = (await statuses())[0];
     expect(s.status).toBe('retry');
     expect(s.retry_count).toBe(1);
     const next = (await sql<any>(`select send_at from email_sequence_queue`))[0].send_at;
     expect(new Date(next).getTime()).toBeGreaterThan(Date.now());
-    resendBehaviour.mode = 'ok';
+    testEmailBehaviour.mode = 'ok';
     await run(); // not due yet: no send storm
-    expect(outbox).toHaveLength(0);
+    expect(outbox()).toHaveLength(0);
     await sql(`update email_sequence_queue set send_at = now() - interval '1 minute'`);
     await run();
-    expect(outbox).toHaveLength(1);
+    expect(outbox()).toHaveLength(1);
     s = (await statuses())[0];
     expect(s.status).toBe('sent');
   });
 
   it('after the maximum number of retries the item is marked failed and stops being attempted', async () => {
     await seed([0]);
-    resendBehaviour.mode = 'throw';
+    testEmailBehaviour.mode = 'throw';
     for (let i = 0; i < 7; i++) {
       await sql(`update email_sequence_queue set send_at = now() - interval '1 minute' where status in ('pending','retry')`);
       await run();
@@ -166,9 +168,9 @@ describe('GDPR deletion e-mail', () => {
     const owner = await makeUser({ plan: 'pro' });
     const quiz = await makeQuiz(owner, { slug: 'gdpr-del' });
     await (await api()).post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'forget@customer.example' })).expect(201);
-    resetOutbox();
+    clearCapturedTestEmails();
     await (await api()).post('/api/gdpr/delete-request').set('X-Forwarded-For', nextIp()).send({ email: 'forget@customer.example', quiz_slug: quiz.slug }).expect(200);
-    const mail = outbox.find((m) => String(m.to) === 'forget@customer.example')!;
+    const mail = outbox().find((m) => String(m.to) === 'forget@customer.example')!;
     const href = mail.html!.match(/href="([^"]+confirm-delete[^"]+)"/)![1];
     expect(href.startsWith(process.env.BACKEND_URL!)).toBe(true);
     const u = new URL(href);

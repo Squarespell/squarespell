@@ -254,7 +254,7 @@ describe('Connect Website wizard', () => {
     expect(screen.getByText(/WordPress is planned/)).toBeTruthy();
     expect(cont.hasAttribute('disabled')).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: /Squarespace/ }));
-    expect(screen.getByText(/does not provide a page API/)).toBeTruthy();
+    expect(screen.getByText(/does not let apps add code or blocks/)).toBeTruthy();
     expect(cont.hasAttribute('disabled')).toBe(false);
   });
 

@@ -1,49 +1,16 @@
 'use client';
-import { ClerkProvider, useAuth } from '@clerk/nextjs';
 import { useEffect } from 'react';
-import { Inter } from 'next/font/google';
-import { setAuthToken } from '../lib/api';
+import '../lib/authFetch';
 import { startKeepAlive } from '../lib/keepAlive';
 import { ToastProvider } from '../lib/toast';
 import './globals.css';
 
-// Self-hosted, optimized loading (no render-blocking Google Fonts request).
-// Inter is the platform's primary typeface — see SQUARESPELL-SYSTEM-DESIGN.md
-// typography section for rationale. Exposed as --font-inter and consumed by
-// the --font / --font-body CSS variables in globals.css.
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-function AuthTokenSync() {
-  const { getToken, isSignedIn, isLoaded } = useAuth();
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (isSignedIn) {
-      // Pass the getToken *function* so every API call fetches a fresh token
-      // instead of caching a single string that goes stale on rotation.
-      setAuthToken(
-        () => getToken().then(t => t || ''),
-        () => getToken({ skipCache: true } as any).then(t => t || '')
-      );
-    } else {
-      // Grace period: when Clerk rotates the session token, isSignedIn can
-      // briefly flip to false. Do NOT nuke the token immediately — wait 12s
-      // to see if Clerk recovers (matches the useDashboardAuth grace window).
-      const timer = setTimeout(() => {
-        // Re-check: if still not signed in after the grace period, clear it.
-        getToken().then(t => {
-          if (!t) setAuthToken(null);
-        }).catch(() => setAuthToken(null));
-      }, 12000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoaded, isSignedIn, getToken]);
-  return null;
-}
+// next/font/google was removed: it fetches font metadata from Google's
+// servers at *build* time (not just runtime), which made CI builds fail
+// whenever that network call was unreliable. --font-inter is now simply
+// unset, so the var(--font-inter, 'Inter') fallback chain already in
+// globals.css degrades straight to the system font stack -- see the
+// typography section of SQUARESPELL-SYSTEM-DESIGN.md for the prior rationale.
 
 function KeepAlive() {
   useEffect(() => { startKeepAlive(); }, []);
@@ -59,23 +26,20 @@ function Footer() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html lang="en" className={inter.variable}>
-        <head>
-          {/* 2026 redesign display typefaces: Inter Tight for headings, Instrument Serif for editorial quiz cover art. */}
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=Instrument+Serif&display=swap" />
-        </head>
-        <body>
-          <ToastProvider>
-          <AuthTokenSync />
-          <KeepAlive />
-          {children}
-          <Footer />
-          </ToastProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <head>
+        {/* 2026 redesign typefaces, loaded at runtime (not at build time, see note above): Inter for UI text, Inter Tight for display headings, Instrument Serif for editorial quiz cover art. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=Instrument+Serif&display=swap" />
+      </head>
+      <body>
+        <ToastProvider>
+        <KeepAlive />
+        {children}
+        <Footer />
+        </ToastProvider>
+      </body>
+    </html>
   );
 }

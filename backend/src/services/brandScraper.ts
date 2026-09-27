@@ -1,5 +1,5 @@
 import { log } from '../lib/logger';
-import fetch from 'node-fetch';
+import { safeFetch, SafeFetchError } from './connect/urlSafety';
 
 /**
  * Thrown when the URL is not a Squarespace site.
@@ -27,18 +27,9 @@ export async function scrapeBrand(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'identity',
-        'Cache-Control': 'no-cache',
-      },
-      redirect: 'follow',
-    });
-    const html = await res.text();
+    // SSRF guard: public hosts only, DNS-pinned, redirects re-validated, size and time capped.
+    const res = await safeFetch(url, { timeoutMs: 15000, maxBytes: 3 * 1024 * 1024, allowLoopbackForTests: true });
+    const html = res.body;
     log.info(`[Scraper] Fetched ${url} - ${html.length} chars, status ${res.status}`);
 
     // ── Site identity ──────────────────────────────────────────────────────
@@ -319,9 +310,9 @@ export async function scrapeBrand(url: string) {
     for (const href of rankedHrefs.slice(0, 5)) {
       const sheetUrl = absolutize(href);
       try {
-        const r = await fetch(sheetUrl, { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const r = await safeFetch(sheetUrl, { timeoutMs: 8000, maxBytes: 2 * 1024 * 1024, allowLoopbackForTests: true });
         // Raise truncation cap so large Squarespace site.css files (1MB+) still include the :root HSL triples at the top
-        externalCss += (await r.text()).slice(0, 300000) + '\n';
+        externalCss += r.body.slice(0, 300000) + '\n';
         fetchedSheets++;
       } catch {}
     }
@@ -659,6 +650,12 @@ export async function scrapeBrand(url: string) {
   } catch (err: any) {
     // NotSquarespaceError bubbles up so routes can return a clean 422
     if (err instanceof NotSquarespaceError) throw err;
+    // Internal/unsafe targets get the same answer as any non-Squarespace site, so the endpoint is no reachability oracle.
+    if (err instanceof SafeFetchError && ['blocked_address', 'blocked_port', 'invalid_url', 'unsupported_protocol'].includes(err.code)) {
+      let host = 'that address';
+      try { host = new URL(url).hostname; } catch {}
+      throw new NotSquarespaceError(host);
+    }
     log.error('[Scraper] FAILED for ${url}:', { err: err.message });
     // Network/parse failures fall through to a detected:false result so the
     // frontend can show a neutral dark theme and continue (no hard block here)

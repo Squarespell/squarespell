@@ -13,12 +13,16 @@
  */
 
 import { supabase } from '../db/supabaseClient';
-import { resendProvider } from './email/resendProvider';
+import { emailProvider } from './email';
+import { PLATFORM_FROM_ADDRESS } from './email/provider';
 import { log } from '../lib/logger';
 
 var APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
 var MARKETING_URL = process.env.MARKETING_URL || 'https://squarespell.com';
-var FROM_EMAIL = process.env.PLATFORM_EMAIL_FROM || 'Squarespell <hello@squarespell.com>';
+// Historically a combined "Name <email>" string for Resend's `from` field;
+// the SMTP client needs the address and display name separate (see
+// PLATFORM_FROM_ADDRESS), so PLATFORM_EMAIL_FROM is now just a display name.
+var FROM_NAME = process.env.PLATFORM_EMAIL_FROM || 'Squarespell';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -120,8 +124,9 @@ export async function sendPlatformEmail(opts: PlatformEmailOpts): Promise<boolea
   }
 
   try {
-    var result = await resendProvider.send({
-      from: FROM_EMAIL,
+    var result = await emailProvider.send({
+      from: PLATFORM_FROM_ADDRESS,
+      fromName: FROM_NAME,
       to: email,
       subject: template.subject,
       html: template.html,
@@ -460,7 +465,7 @@ function renderTemplate(type: PlatformEmailType, firstName: string, data: Record
     case 'weekly_digest':
       // Weekly digest is handled by the existing cron. This template is here
       // for completeness but the existing weekly-digest cron sends directly
-      // via Resend. We keep this to allow future migration.
+      // via emailProvider. We keep this to allow future migration.
       return null;
 
     case 'monthly_report':

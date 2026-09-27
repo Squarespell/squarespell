@@ -28,7 +28,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { APP_URL } from '@/lib/urls';
-import { useAuth } from '@clerk/nextjs';
+import { useSessionAuth } from '@/lib/useSessionAuth';
 import { PLANS } from '@/lib/planCatalog';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
@@ -78,7 +78,7 @@ export default function PricingEmbed() {
 }
 
 function PricingEmbedInner() {
-  const { getToken, isSignedIn, isLoaded } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useSessionAuth();
   const [billing, setBilling] = useState<Billing>('yearly');
   const [loading, setLoading] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
