@@ -343,7 +343,7 @@ export default function BrandKitPage() {
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Brand kit</div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Brand kit</div>
           <DisplayTitle size="xl">Make every quiz feel like you.</DisplayTitle>
           <p style={{ margin: '14px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Set your brand defaults for quizzes, emails and popups.</p>
         </div>
@@ -440,7 +440,7 @@ export default function BrandKitPage() {
                     </div>
                   ))}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 22px', borderRadius: 6, background: brandPrimary, color: onPrimary, fontWeight: 600, fontSize: 15 }}>Next question →</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 22px', borderRadius: 6, background: brandPrimary, color: onPrimary, fontWeight: 600, fontSize: 15 }}>Next question</span>
                     <span style={{ fontSize: 11, opacity: 0.6 }}>Powered by SQUARESPELL</span>
                   </div>
                 </div>

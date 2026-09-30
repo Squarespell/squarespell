@@ -226,7 +226,7 @@ export default function EmailCampaignsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 36 }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Engage</div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Engage</div>
           <DisplayTitle size="xl">Email campaigns.</DisplayTitle>
           <p style={{ margin: '14px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Send campaigns and automations to your leads.</p>
         </div>
@@ -297,7 +297,7 @@ export default function EmailCampaignsPage() {
             var active = filter === f[0];
             return (
               <button key={f[0]} type="button" aria-pressed={active} onClick={function () { setFilter(f[0]); setPage(1); }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 999, border: '1px solid ' + (active ? C.INK : C.BORDER), background: active ? C.INK : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 999, border: '1px solid ' + (active ? C.ACCENT : C.BORDER), background: active ? C.ACCENT : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
                 {f[1]}<span style={{ fontSize: 12, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(255,255,255,.18)' : C.GRAY_100, color: active ? '#fff' : C.GRAY_600 }}>{counts[f[0]]}</span>
               </button>
             );

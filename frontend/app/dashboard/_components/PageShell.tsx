@@ -391,7 +391,7 @@ export function UnderlineTabs({ tabs, value, onChange }: { tabs: { value: string
             onClick={function() { onChange(t.value); }}
             style={{
               background: 'transparent', border: 'none', padding: '0 2px 12px', marginBottom: -1, fontSize: 15,
-              fontWeight: active ? 600 : 500, color: active ? C.INK : C.GRAY_600, borderBottom: '2px solid ' + (active ? C.ACCENT : 'transparent'),
+              fontWeight: active ? 600 : 500, color: active ? C.ACCENT : C.GRAY_600, borderBottom: '2px solid ' + (active ? C.ACCENT : 'transparent'),
               fontFamily: C.FONT, whiteSpace: 'nowrap', cursor: 'pointer',
             }}
           >
@@ -458,7 +458,7 @@ export function SettingsTabs() {
             aria-current={active ? 'page' : undefined}
             style={{
               padding: '0 2px 13px', marginBottom: -1, fontSize: 15, fontWeight: active ? 600 : 500,
-              color: active ? C.INK : C.GRAY_600, borderBottom: '2px solid ' + (active ? C.ACCENT : 'transparent'), whiteSpace: 'nowrap', fontFamily: C.FONT,
+              color: active ? C.ACCENT : C.GRAY_600, borderBottom: '2px solid ' + (active ? C.ACCENT : 'transparent'), whiteSpace: 'nowrap', fontFamily: C.FONT,
             }}
           >
             {t.label}

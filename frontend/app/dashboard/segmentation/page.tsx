@@ -164,7 +164,7 @@ export default function SegmentationPage() {
         @media (max-width: 1100px) { .sq-seg-top { grid-template-columns: 1fr; } .sq-seg-tips { grid-template-columns: 1fr; } .sq-seg-tips > div + div { border-left: none; border-top: 1px solid ${C.BORDER}; } }
       ` }} />
 
-      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Segmentation</div>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Segmentation</div>
       <DisplayTitle size="xl">Know your audience better.</DisplayTitle>
       <p style={{ margin: '14px 0 24px', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Organize leads with tags and dynamic segments.</p>
 

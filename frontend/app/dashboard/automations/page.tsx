@@ -237,7 +237,7 @@ export default function AutomationsPage() {
                     <div style={{ fontSize: 17, fontWeight: 600, color: C.INK }}>{rule.name}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap', fontSize: 14 }}>
                       <span style={{ padding: '3px 10px', borderRadius: 4, background: C.PERIWINKLE_SOFT, color: C.BRAND_700 }}>{TRIGGER_LABELS[rule.trigger_config?.type] || rule.trigger_config?.type}{quiz ? ': ' + quiz.title : ''}</span>
-                      <span aria-hidden="true" style={{ color: C.GRAY_400 }}>→</span>
+                      <span aria-hidden="true" style={{ color: C.GRAY_400 }}></span>
                       <span style={{ padding: '3px 10px', borderRadius: 4, background: C.ACID_SOFT, color: C.INK }}>{ACTION_LABELS[rule.action_config?.type] || rule.action_config?.type}</span>
                     </div>
                   </div>
@@ -270,7 +270,7 @@ export default function AutomationsPage() {
               <div style={{ position: 'relative' }}>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: C.INK }}>{r.name}</h3>
                 <p style={{ margin: '6px 0 14px', fontSize: 15, color: C.GRAY_600, lineHeight: 1.45 }}>{r.body}</p>
-                <button type="button" className="au-btn" onClick={function () { applyRecipe(r); }}>Use recipe <span aria-hidden="true">→</span></button>
+                <button type="button" className="au-btn" onClick={function () { applyRecipe(r); }}>Use recipe <span aria-hidden="true"></span></button>
               </div>
             </article>
           );

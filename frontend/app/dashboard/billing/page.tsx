@@ -697,7 +697,7 @@ export default function BillingPage() {
           var active = tab === t.key;
           return (
             <button key={t.key} type="button" role="tab" aria-selected={active} onClick={function() { changeTab(t.key); }}
-              style={{ height: 40, padding: '0 18px', borderRadius: 999, border: '1px solid ' + (active ? C.INK : C.BORDER), background: active ? C.INK : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
+              style={{ height: 40, padding: '0 18px', borderRadius: 999, border: '1px solid ' + (active ? C.ACCENT : C.BORDER), background: active ? C.ACCENT : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
               {t.label}
             </button>
           );
@@ -723,8 +723,8 @@ export default function BillingPage() {
                 <div style={{ fontSize: 18, marginTop: 14, opacity: 0.9 }}>{isTrial ? 'Free trial, no billing yet' : 'Billed through Stripe'}</div>
                 <div style={{ marginTop: 28 }}>
                   {isPaid
-                    ? <button type="button" onClick={openPortal} className="bl-btn" style={{ border: 'none' }}>Manage billing →</button>
-                    : <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ border: 'none' }}>Choose a plan →</button>}
+                    ? <button type="button" onClick={openPortal} className="bl-btn" style={{ border: 'none' }}>Manage billing</button>
+                    : <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ border: 'none' }}>Choose a plan</button>}
                 </div>
               </div>
               <div style={{ position: 'relative', borderLeft: '1px solid rgba(255,255,255,0.35)', paddingLeft: 28 }}>
@@ -746,7 +746,7 @@ export default function BillingPage() {
           </div>
 
           <div className="bl-duo">
-            <section style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, border: '1px solid ' + C.BORDER, background: '#F7F4EE', padding: '30px 36px', minHeight: 200 }}>
+            <section style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, border: '1px solid ' + C.BORDER, background: '#F5F7FF', padding: '30px 36px', minHeight: 200 }}>
               <svg aria-hidden="true" width="170" height="170" viewBox="0 0 170 170" style={{ position: 'absolute', right: 150, bottom: 0 }}>
                 <path d="M170 0 A 170 170 0 0 0 0 170 L 170 170 Z" fill={C.PERIWINKLE} />
                 <path d="M170 80 A 90 90 0 0 0 80 170 L 170 170 Z" fill={C.INK} />
@@ -757,7 +757,7 @@ export default function BillingPage() {
               <div style={{ position: 'relative', maxWidth: 360 }}>
                 <h3 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 500, letterSpacing: '-0.035em', color: C.INK }}>Compare plans</h3>
                 <p style={{ margin: '8px 0 20px', fontSize: 17, color: C.GRAY_600, lineHeight: 1.45 }}>See what’s included in each plan and find the right fit for your needs.</p>
-                <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>View plans →</button>
+                <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>View plans</button>
               </div>
             </section>
             <section style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, border: '1px solid ' + C.BORDER, background: C.ACID_SOFT, padding: '30px 36px', minHeight: 200 }}>
@@ -767,7 +767,7 @@ export default function BillingPage() {
                 <p style={{ margin: '8px 0 20px', fontSize: 17, color: C.GRAY_600, lineHeight: 1.45 }}>
                   {isBusiness ? 'Explore capacity options for Core and Pro. Your Business plan already includes unlimited leads and emails.' : 'Add extra leads or emails to your plan without upgrading.'}
                 </p>
-                <button type="button" onClick={function() { changeTab('addons'); }} className="bl-btn">Explore add-ons →</button>
+                <button type="button" onClick={function() { changeTab('addons'); }} className="bl-btn">Explore add-ons</button>
               </div>
             </section>
           </div>
@@ -802,7 +802,7 @@ export default function BillingPage() {
                 </div>
               );
             })}
-            <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn">Compare plans →</button>
+            <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn">Compare plans</button>
           </section>
         </>
       )}

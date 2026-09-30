@@ -661,7 +661,7 @@ export function DesignStep({
                 <div style={{
                   background: state.abEnabled
                     ? 'linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%)'
-                    : '#FAFAF8',
+                    : '#FAFBFF',
                   border: '1.5px solid ' + (state.abEnabled ? '#3154FF' : C.BORDER),
                   borderRadius: 12, padding: 16,
                   transition: 'all 0.2s',

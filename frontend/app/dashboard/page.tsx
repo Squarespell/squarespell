@@ -171,9 +171,8 @@ var DASH_CSS = `
   @media (max-width: 720px) { .sq-dash-trio { grid-template-columns: 1fr; } .sq-kpis { grid-template-columns: 1fr; } .sq-kpi { border-right: none; } }
 `;
 
-var ARROW = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-);
+/* Text links carry no arrow, matching the landing page. */
+var ARROW = null;
 
 /** Hairline white panel with an optional header row. */
 function Panel({ title, subtitle, action, children, bodyPad = '4px 24px 24px' }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode; bodyPad?: string }) {
@@ -265,7 +264,7 @@ function PerformanceChart({ data, period, onPeriodChange }: { data: ChartPoint[]
             type="button"
             aria-pressed={isActive}
             onClick={function() { onPeriodChange(p.v); }}
-            style={{ padding: '6px 12px', borderRadius: 5, fontSize: 13, fontWeight: 500, color: isActive ? C.INK : C.GRAY_500, background: isActive ? '#fff' : 'transparent', border: 'none', cursor: 'pointer', fontFamily: C.FONT, boxShadow: isActive ? C.SHADOW_SM : 'none' }}
+            style={{ padding: '6px 12px', borderRadius: 5, fontSize: 13, fontWeight: 500, color: isActive ? C.ACCENT : C.GRAY_500, background: isActive ? '#fff' : 'transparent', border: 'none', cursor: 'pointer', fontFamily: C.FONT, boxShadow: isActive ? C.SHADOW_SM : 'none' }}
           >
             {p.l}
           </button>

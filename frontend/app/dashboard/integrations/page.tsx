@@ -798,8 +798,6 @@ export default function IntegrationsPage() {
         <svg className="sq-int-art" width="420" height="160" viewBox="0 0 420 160" aria-hidden="true" style={{ flexShrink: 0 }}>
           <text x="10" y="54" fontSize="22" fill={C.INK} fontFamily="'Instrument Serif', Georgia, serif" fontStyle="italic">More leads.</text>
           <text x="10" y="82" fontSize="22" fill={C.INK} fontFamily="'Instrument Serif', Georgia, serif" fontStyle="italic">More possibilities.</text>
-          <path d="M60 120 C 100 150, 150 140, 180 118" fill="none" stroke={C.INK} strokeWidth="1.2" />
-          <path d="M170 116 L 180 118 L 176 128" fill="none" stroke={C.INK} strokeWidth="1.2" strokeLinecap="round" />
           <path d="M200 30 A 90 90 0 0 1 290 120 L 200 120 Z" fill={C.PERIWINKLE} />
           <rect x="240" y="80" width="72" height="72" fill={C.ACCENT} />
           <circle cx="330" cy="40" r="36" fill={C.ACID} />

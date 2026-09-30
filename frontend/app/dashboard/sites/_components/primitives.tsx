@@ -119,8 +119,8 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#0B1233;--muted:#4A5275;--su
 .sx-place[aria-checked="true"]{border-color:var(--teal);box-shadow:0 0 0 3px rgba(49, 84, 255,.12)}
 .sx-place-visual{height:116px;background:#EBEFFF;position:relative;overflow:hidden;flex:none}
 .sx-wire{position:absolute;inset:15px;background:#fff;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.06);padding:9px}
-.sx-wire::before{content:"";display:block;width:34%;height:5px;border-radius:5px;background:#DDDAD0;margin-bottom:7px}
-.sx-wire::after{content:"";display:block;width:72%;height:4px;border-radius:4px;background:#E9E7E0}
+.sx-wire::before{content:"";display:block;width:34%;height:5px;border-radius:5px;background:#DCE3FF;margin-bottom:7px}
+.sx-wire::after{content:"";display:block;width:72%;height:4px;border-radius:4px;background:#E2E7FF}
 .sx-art-inline{height:45px;border-radius:5px;background:linear-gradient(135deg,#2443E0,#8FA2FF);margin-top:11px}
 .sx-art-popup{position:absolute;width:66%;height:72%;left:17%;top:16%;border-radius:7px;background:#fff;box-shadow:0 9px 23px rgba(12,35,31,.22);border-top:20px solid var(--teal)}
 .sx-art-tab{position:absolute;right:0;top:45%;transform:translateY(-50%);padding:9px 6px;background:var(--teal);color:#fff;border-radius:6px 0 0 6px;font-size:9px;font-weight:700;writing-mode:vertical-rl}
@@ -135,7 +135,7 @@ export const SITES_CSS = String.raw`.sx-scope{--ink:#0B1233;--muted:#4A5275;--su
 .sx-site-mock[data-device="mobile"]{width:340px}
 .sx-mock-page{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.06);min-height:270px}
 .sx-mock-brand{font:700 10px/1.2 Inter,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;text-align:center;color:var(--muted);margin-bottom:12px;overflow-wrap:anywhere}
-.sx-mock-line{height:6px;border-radius:6px;background:#E9E7E0;margin:8px 0}
+.sx-mock-line{height:6px;border-radius:6px;background:#E2E7FF;margin:8px 0}
 .sx-mock-line.w40{width:40%}.sx-mock-line.w55{width:55%}.sx-mock-line.w70{width:70%}
 .sx-mock-quiz{margin:12px 0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
 .sx-mock-quiz iframe,.sx-mock-dialog iframe,.sx-mock-panel iframe{display:block;width:100%;height:300px;border:0}

@@ -157,8 +157,6 @@ function LeadCardArt({ small }: { small?: boolean }) {
       <path d="M216 126c2-8 9-12 16-12s14 4 16 12" fill="none" stroke={C.INK} strokeWidth="2.2" strokeLinecap="round" />
       <path d="M272 98h60M272 112h60M272 126h44" stroke={C.GRAY_300} strokeWidth="2.5" strokeLinecap="round" />
       <path d="M340 30l-12 22M356 44l-18 10" stroke={C.INK} strokeWidth="2" strokeLinecap="round" />
-      {!small && <path d="M20 220 C 50 150, 80 120, 110 130 C 140 140, 120 170, 100 150 C 80 130, 120 90, 150 60" fill="none" stroke={C.INK} strokeWidth="1.6" />}
-      {!small && <path d="M140 60 L 150 60 L 150 70" fill="none" stroke={C.INK} strokeWidth="1.6" strokeLinecap="round" />}
     </svg>
   );
 }
@@ -276,7 +274,7 @@ export default function LeadsPage() {
       {/* Header */}
       <div className="sq-leads-hero">
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Leads</div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Leads</div>
           <DisplayTitle size="xl">Your next customer starts here.</DisplayTitle>
           <p style={{ margin: '16px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Capture leads from your quizzes and grow your audience.</p>
         </div>
@@ -340,7 +338,7 @@ export default function LeadsPage() {
             {(['all', 'high', 'new', 'low'] as const).map(function (k) {
               var label = { all: 'Any score', high: 'High intent', new: 'New', low: 'Low score' }[k];
               var active = filter === k;
-              return <button key={k} type="button" aria-pressed={active} onClick={function () { setFilter(k); setPage(1); }} style={{ height: 36, padding: '0 12px', borderRadius: 999, border: '1px solid ' + (active ? C.INK : C.BORDER), background: active ? C.INK : '#fff', color: active ? '#fff' : C.INK, fontSize: 13, fontFamily: C.FONT, cursor: 'pointer' }}>{label}</button>;
+              return <button key={k} type="button" aria-pressed={active} onClick={function () { setFilter(k); setPage(1); }} style={{ height: 36, padding: '0 12px', borderRadius: 999, border: '1px solid ' + (active ? C.ACCENT : C.BORDER), background: active ? C.ACCENT : '#fff', color: active ? '#fff' : C.INK, fontSize: 13, fontFamily: C.FONT, cursor: 'pointer' }}>{label}</button>;
             })}
           </div>
         )}

@@ -471,7 +471,7 @@ export default function QuizzesPage() {
     }
     return (
       <a className="sq-chip-btn" href={'/dashboard/' + quiz.id} aria-label={'Edit ' + quiz.title}>
-        Edit quiz {ICON.arrow}
+        Edit quiz
       </a>
     );
   }
@@ -600,7 +600,7 @@ export default function QuizzesPage() {
                       aria-pressed={active}
                       aria-label={mode === 'grid' ? 'Grid view' : 'List view'}
                       onClick={function() { changeView(mode); }}
-                      style={{ width: 52, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: active ? C.INK : '#fff', color: active ? '#fff' : C.INK, cursor: 'pointer' }}
+                      style={{ width: 52, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: active ? C.ACCENT : '#fff', color: active ? '#fff' : C.INK, cursor: 'pointer' }}
                     >
                       {mode === 'grid' ? ICON.grid : ICON.list}
                     </button>

@@ -41,7 +41,7 @@ function ConnectIllustration() {
       <text x="182" y="192" fontSize="21" fill="#0B1233" fontFamily="'Instrument Serif', Georgia, serif">A smarter</text>
       <text x="182" y="216" fontSize="21" fill="#0B1233" fontFamily="'Instrument Serif', Georgia, serif">way to quiz.</text>
       <rect x="182" y="236" width="78" height="26" rx="4" fill="#0B1233" />
-      <text x="192" y="253" fontSize="10.5" fill="#fff" fontFamily="Inter">Start quiz →</text>
+      <text x="192" y="253" fontSize="10.5" fill="#fff" fontFamily="Inter">Start quiz</text>
       <rect x="310" y="148" width="120" height="146" fill="#DCE3FF" />
       <path d="M310 294 C 340 240, 380 250, 430 200 L 430 294 Z" fill="#8FA2FF" />
       <path d="M310 294 C 350 270, 390 280, 430 250 L 430 294 Z" fill="#3154FF" />

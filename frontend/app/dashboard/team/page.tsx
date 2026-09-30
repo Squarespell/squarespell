@@ -229,7 +229,7 @@ export default function TeamPage() {
       ` }} />
 
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Team</div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Team</div>
         <DisplayTitle size="xl">Better quizzes, together.</DisplayTitle>
         <p style={{ margin: '14px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Manage your teams and collaborate with your members.</p>
       </div>
@@ -256,7 +256,7 @@ export default function TeamPage() {
           <section style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 20 }}>
             <div style={{ fontSize: 16, fontWeight: 600, color: C.INK }}>Need help?</div>
             <p style={{ margin: '6px 0 12px', fontSize: 14, color: C.GRAY_600 }}>Learn more about teams in our help center.</p>
-            <a href="https://squarespell.com/help" target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.ACCENT, textDecoration: 'none' }}>View documentation →</a>
+            <a href="https://squarespell.com/help" target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.ACCENT, textDecoration: 'none' }}>View documentation</a>
           </section>
         </aside>
 
@@ -333,7 +333,7 @@ export default function TeamPage() {
                 <div role="tablist" aria-label="Team" style={{ display: 'flex', gap: 28, borderBottom: '1px solid ' + C.BORDER, marginTop: 20 }}>
                   {([['members', 'Members (' + activeMembers.length + ')'], ['quizzes', 'Shared quizzes (' + teamQuizzes.length + ')'], ['invites', 'Invitations (' + pendingInvites.length + ')']] as const).map(function (t) {
                     var active = memberTab === t[0];
-                    return <button key={t[0]} type="button" role="tab" aria-selected={active} onClick={function () { setMemberTab(t[0]); }} style={{ padding: '0 2px 12px', marginBottom: -1, border: 'none', borderBottom: '2px solid ' + (active ? C.ACCENT : 'transparent'), background: 'none', fontSize: 15, fontWeight: active ? 600 : 400, color: active ? C.INK : C.GRAY_600, cursor: 'pointer', fontFamily: C.FONT }}>{t[1]}</button>;
+                    return <button key={t[0]} type="button" role="tab" aria-selected={active} onClick={function () { setMemberTab(t[0]); }} style={{ padding: '0 2px 12px', marginBottom: -1, border: 'none', borderBottom: '2px solid ' + (active ? C.ACCENT : 'transparent'), background: 'none', fontSize: 15, fontWeight: active ? 600 : 400, color: active ? C.ACCENT : C.GRAY_600, cursor: 'pointer', fontFamily: C.FONT }}>{t[1]}</button>;
                   })}
                 </div>
 

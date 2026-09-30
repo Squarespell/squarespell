@@ -44,13 +44,13 @@ function Art({ variant }: { variant: number }) {
         </svg>
       );
     case 1:
-      // White sweeping line ending in an arrow.
+      // White sweeping growth line ending in a dot.
       return (
         <svg viewBox="0 0 240 180" preserveAspectRatio="xMaxYMid meet" style={{ ...common, width: '56%' }} aria-hidden="true">
           <g fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 150 L 70 150 C 120 150, 140 60, 222 58" />
-            <path d="M210 50 L 222 58 L 210 66" />
+            <path d="M10 150 L 70 150 C 120 150, 140 60, 216 58" />
           </g>
+          <circle cx="220" cy="58" r="5" fill="#FFFFFF" />
         </svg>
       );
     case 2:
@@ -59,13 +59,13 @@ function Art({ variant }: { variant: number }) {
         <svg viewBox="0 0 220 180" preserveAspectRatio="xMaxYMid meet" style={{ ...common, width: '50%' }} aria-hidden="true">
           <rect x="18" y="44" width="76" height="116" rx="4" fill="#FFFFFF" stroke="#E2E7FF" />
           <circle cx="28" cy="54" r="2.5" fill="#0B1233" /><circle cx="36" cy="54" r="2.5" fill="#0B1233" /><circle cx="44" cy="54" r="2.5" fill="#CDD6FF" />
-          <rect x="26" y="64" width="60" height="84" rx="2" fill="#B8AE9F" />
+          <rect x="26" y="64" width="60" height="84" rx="2" fill="#8FA2FF" />
           <rect x="84" y="18" width="104" height="142" rx="4" fill="#FFFFFF" stroke="#E2E7FF" />
           <circle cx="94" cy="28" r="2.5" fill="#0B1233" /><circle cx="102" cy="28" r="2.5" fill="#0B1233" /><circle cx="110" cy="28" r="2.5" fill="#0B1233" />
           <rect x="94" y="40" width="64" height="40" fill="#1C2447" />
           <rect x="104" y="72" width="46" height="46" fill="#FFFFFF" stroke="#E2E7FF" />
           <rect x="152" y="80" width="46" height="46" rx="3" fill="#0B1233" />
-          <path d="M166 112 L 184 94 M 172 94 L 184 94 L 184 106" stroke="#FFFFFF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="175" cy="103" r="9" fill="#3154FF" />
         </svg>
       );
     case 3:
@@ -73,10 +73,10 @@ function Art({ variant }: { variant: number }) {
       return (
         <svg viewBox="0 0 240 180" preserveAspectRatio="xMaxYMid slice" style={{ ...common, width: '60%' }} aria-hidden="true">
           <circle cx="210" cy="30" r="110" fill="#EBEFFF" opacity="0.8" />
-          <circle cx="60" cy="210" r="120" fill="#CFC6BA" opacity="0.55" />
-          <rect x="80" y="42" width="120" height="96" fill="#A8A195" />
+          <circle cx="60" cy="210" r="120" fill="#CDD6FF" opacity="0.55" />
+          <rect x="80" y="42" width="120" height="96" fill="#8FA2FF" />
           <path d="M80 110 C 110 90, 140 120, 200 88 L 200 138 L 80 138 Z" fill="#E2E7FF" />
-          <path d="M80 70 L 200 58 L 200 72 L 80 90 Z" fill="#C9C2B7" />
+          <path d="M80 70 L 200 58 L 200 72 L 80 90 Z" fill="#BFCAFF" />
         </svg>
       );
     case 4:
