@@ -54,7 +54,7 @@ export default function QuizFunnelPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 14, letterSpacing: '0.2em', color: C.GRAY_600, marginBottom: 30 }}>
             <span aria-hidden="true" style={{ width: 70, borderTop: '1px solid ' + C.GRAY_400 }} />AI-POWERED QUIZ CREATION
           </div>
-          <h1 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(52px, 6.4vw, 104px)', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 0.92 }}>
+          <h1 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(52px, 6.4vw, 104px)', fontWeight: 500, letterSpacing: '-0.05em', lineHeight: 0.92 }}>
             Turn your website into a quiz<span style={{ color: C.ACCENT }}>.</span>
           </h1>
           <p style={{ fontSize: 'clamp(19px, 1.8vw, 26px)', color: C.GRAY_600, lineHeight: 1.4, margin: '30px 0 40px', maxWidth: 560 }}>
@@ -92,7 +92,7 @@ export default function QuizFunnelPage() {
           <div style={{ position: 'absolute', left: 0, top: 170, display: 'flex', alignItems: 'center', gap: 10 }}>
             {QUESTIONS.map((q, qi) => (
               <div key={q.n} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 236, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 16, boxShadow: '0 20px 40px -24px rgba(22,23,25,0.25)' }}>
+                <div style={{ width: 236, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 16, boxShadow: '0 20px 40px -24px rgba(11, 18, 51,0.25)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, letterSpacing: '0.16em', color: C.GRAY_500, marginBottom: 12 }}><span>{q.n}. QUESTION</span><span>•••</span></div>
                   <div style={{ fontSize: 16, fontWeight: 500, lineHeight: 1.3, marginBottom: 14, minHeight: 62 }}>{q.q}</div>
                   {q.opts.map((o, i) => (
@@ -105,7 +105,7 @@ export default function QuizFunnelPage() {
               </div>
             ))}
           </div>
-          <div style={{ position: 'absolute', left: 170, top: 520, width: 440, display: 'flex', gap: 18, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 12, boxShadow: '0 20px 40px -24px rgba(22,23,25,0.25)' }}>
+          <div style={{ position: 'absolute', left: 170, top: 520, width: 440, display: 'flex', gap: 18, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 12, boxShadow: '0 20px 40px -24px rgba(11, 18, 51,0.25)' }}>
             <svg width="150" height="170" viewBox="0 0 150 170" style={{ flexShrink: 0, borderRadius: 4 }}>
               <rect width="150" height="170" fill="#EFE9E0" />
               <path d="M0 120 C 40 100, 90 130, 150 110 V 170 H 0 Z" fill="#E2D9CC" />

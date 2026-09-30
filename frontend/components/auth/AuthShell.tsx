@@ -34,7 +34,7 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
   )
 
   const quizCard = (
-    <div style={{ width: 320, background: '#fff', borderRadius: 8, padding: '22px 22px 24px', boxShadow: '0 24px 48px -24px rgba(22,23,25,0.25)', border: '1px solid ' + C.BORDER }}>
+    <div style={{ width: 320, background: '#fff', borderRadius: 8, padding: '22px 22px 24px', boxShadow: '0 24px 48px -24px rgba(11, 18, 51,0.25)', border: '1px solid ' + C.BORDER }}>
       <div style={{ fontSize: 12, color: C.GRAY_500, marginBottom: 12 }}>1 / 5</div>
       <div style={{ fontFamily: C.SERIF_FONT, fontSize: 28, lineHeight: 1.05, color: C.INK, marginBottom: 16 }}>What makes your dog truly thrive?</div>
       {['Mental stimulation', 'Regular exercise', 'A balanced diet', 'Lots of love'].map((o, i) => (
@@ -60,7 +60,7 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
           <div style={{ position: 'relative', padding: '0 clamp(24px, 5vw, 80px)' }}>
             <div style={{ height: 96, display: 'flex', alignItems: 'center' }}><a href="/" aria-label="Squarespell Quiz home" style={{ textDecoration: 'none', pointerEvents: 'auto' }}><Wordmark size={34} /></a></div>
             <div style={{ fontSize: 14, letterSpacing: '0.2em', color: C.INK, lineHeight: 1.6, marginBottom: 30 }}>QUIZZES FOR<br />BRIGHTER TOMORROW</div>
-            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(48px, 5vw, 76px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.98, color: C.INK }}>Welcome back to your workspace<span style={{ color: ACC }}>.</span></div>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(48px, 5vw, 76px)', fontWeight: 500, letterSpacing: '-0.04em', lineHeight: 0.98, color: C.INK }}>Welcome back to your workspace<span style={{ color: ACC }}>.</span></div>
             <p style={{ fontSize: 21, color: C.GRAY_600, margin: '24px 0 40px', maxWidth: 440, lineHeight: 1.4 }}>Sign in to create, edit and publish quizzes that turn curiosity into connection.</p>
             <div aria-hidden="true" style={{ marginLeft: 50 }}>{quizCard}</div>
           </div>
@@ -71,7 +71,7 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
             <div style={{ width: '100%', maxWidth: 520 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 34 }}>
                 <BrandMark size={36} />
-                <span style={{ fontFamily: C.DISPLAY_FONT, fontWeight: 800, fontSize: 24, letterSpacing: '0.01em', color: C.INK }}>SQUARESPELL QUIZ</span>
+                <span style={{ fontFamily: C.DISPLAY_FONT, fontWeight: 500, fontSize: 24, letterSpacing: '0.01em', color: C.INK }}>SQUARESPELL QUIZ</span>
               </div>
               {form}
             </div>
@@ -88,7 +88,7 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
       <main className="sq-signup" style={{ flex: 1, padding: '10px clamp(20px, 5vw, 80px) 50px' }}>
         <section style={{ minWidth: 0, paddingTop: 30 }}>
           <div style={{ fontSize: 14, letterSpacing: '0.2em', color: C.GRAY_600, marginBottom: 22 }}>QUIZZES FOR A BRIGHTER TOMORROW</div>
-          <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(46px, 5vw, 78px)', fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 0.96, color: C.INK }}>Your next great quiz starts here<span style={{ color: ACC }}>.</span></h2>
+          <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(46px, 5vw, 78px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: 0.96, color: C.INK }}>Your next great quiz starts here<span style={{ color: ACC }}>.</span></h2>
           <p style={{ fontSize: 22, color: C.GRAY_600, margin: '22px 0 34px', lineHeight: 1.4 }}>Turn your ideas into engaging quizzes, in minutes.<br />Create. Customize. Share. Grow.</p>
           <div className="sq-signup-art" aria-hidden="true" style={{ position: 'relative', height: 470 }}>
             <svg width="740" height="470" viewBox="0 0 740 470" style={{ position: 'absolute', left: 0, top: 0, maxWidth: '100%' }}>
@@ -98,7 +98,7 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
               <path d="M680 330 A 50 50 0 0 1 740 390 L 680 390 Z" fill={C.PERIWINKLE} />
             </svg>
             <div style={{ position: 'absolute', left: 90, top: 40 }}>{quizCard}</div>
-            <div style={{ position: 'absolute', left: 420, top: 86, width: 270, background: C.PERIWINKLE_SOFT, borderRadius: 8, border: '1px solid ' + C.BORDER, overflow: 'hidden', boxShadow: '0 24px 48px -24px rgba(22,23,25,0.25)' }}>
+            <div style={{ position: 'absolute', left: 420, top: 86, width: 270, background: C.PERIWINKLE_SOFT, borderRadius: 8, border: '1px solid ' + C.BORDER, overflow: 'hidden', boxShadow: '0 24px 48px -24px rgba(11, 18, 51,0.25)' }}>
               <div style={{ padding: '20px 20px 0' }}>
                 <div style={{ fontSize: 13, color: C.GRAY_500 }}>Your result</div>
                 <div style={{ fontFamily: C.SERIF_FONT, fontSize: 28, lineHeight: 1.05, color: C.INK, margin: '10px 0 10px' }}>The Curious Companion</div>

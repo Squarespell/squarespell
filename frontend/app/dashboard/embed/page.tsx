@@ -240,7 +240,7 @@ export default function EmbedPage() {
     return (
       <DashboardShell title="Embed & install">
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: C.INK, marginBottom: 8 }}>Could not load quizzes</div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, color: C.INK, marginBottom: 8 }}>Could not load quizzes</div>
           <div style={{ fontSize: 15, color: C.GRAY_600, marginBottom: 20 }}>The server may be starting up. Please try again.</div>
           <PrimaryButton onClick={() => fetchQuizzes()}>Retry</PrimaryButton>
         </div>
@@ -269,7 +269,7 @@ export default function EmbedPage() {
         <aside className="sq-emb-side" aria-label="Choose a quiz">
           <div style={{ padding: '0 14px' }}>
             <div style={{ fontSize: 15, color: C.GRAY_600, marginBottom: 6 }}>Publish</div>
-            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 34, fontWeight: 800, letterSpacing: '-0.035em', color: C.INK }}>Choose a quiz</h2>
+            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 34, fontWeight: 500, letterSpacing: '-0.035em', color: C.INK }}>Choose a quiz</h2>
             <p style={{ margin: '6px 0 20px', fontSize: 15, color: C.GRAY_600 }}>Select a quiz to get its embed code.</p>
             <label style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: 14 }}>
               <span style={{ position: 'absolute', left: 14, color: C.GRAY_500, display: 'flex' }}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg></span>
@@ -303,7 +303,7 @@ export default function EmbedPage() {
         {/* Configurator */}
         <div className="sq-emb-main">
           <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 12 }}>Embed &amp; install</div>
-          <h1 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(38px, 4.4vw, 60px)', fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Embed your quiz</h1>
+          <h1 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(38px, 4.4vw, 60px)', fontWeight: 500, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Embed your quiz</h1>
           <p style={{ margin: '14px 0 28px', fontSize: 'clamp(16px, 1.4vw, 20px)', color: C.GRAY_600 }}>Grab your embed code and install it on your Squarespace site.</p>
 
           {quiz && (

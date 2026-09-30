@@ -142,7 +142,7 @@ export function TemplateStep({
             >
               {/* Preview thumbnail */}
               <div style={{
-                height: 180, overflow: 'hidden', background: '#F7F7F5',
+                height: 180, overflow: 'hidden', background: '#F5F7FF',
                 borderBottom: '1px solid ' + C.BORDER, position: 'relative',
               }}>
                 <iframe

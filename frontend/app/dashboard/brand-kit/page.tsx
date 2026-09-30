@@ -316,10 +316,10 @@ export default function BrandKitPage() {
   var mode = kit?.color_mode || 'dark';
   var brandPrimary = colors.primary || '#3154FF';
   var brandBg = colors.background || '#FFFFFF';
-  var brandText = colors.text || '#161719';
+  var brandText = colors.text || '#0B1233';
   var brandAccent = colors.accent || brandPrimary;
   var brandFont = kit?.font_family || 'inherit';
-  var onPrimary = isDark(brandPrimary) ? '#FFFFFF' : '#161719';
+  var onPrimary = isDark(brandPrimary) ? '#FFFFFF' : '#0B1233';
   var HINTS: Record<string, string> = { primary: 'Buttons, links, highlights', background: 'Page and card backgrounds', text: 'Headings and body text', accent: 'Secondary elements' };
 
   function switchMode(m: ColorMode) {

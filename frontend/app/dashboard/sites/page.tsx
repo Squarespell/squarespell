@@ -27,32 +27,32 @@ function ConnectIllustration() {
   return (
     <svg viewBox="0 0 560 400" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
       <rect x="60" y="70" width="170" height="250" rx="10" fill="#BFCAFF" />
-      <rect x="120" y="36" width="300" height="230" rx="8" fill="#fff" stroke="#E4E2DA" />
-      <path d="M140 52h10v5h-6v1h6v9h-10v-5h6v-1h-6z" fill="#161719" />
-      <text x="158" y="63" fontSize="12" fontWeight="700" fill="#161719" fontFamily="Inter" letterSpacing=".04em">SQUARESPELL</text>
-      <rect x="330" y="46" width="92" height="28" rx="6" fill="#fff" stroke="#E4E2DA" />
+      <rect x="120" y="36" width="300" height="230" rx="8" fill="#fff" stroke="#E2E7FF" />
+      <path d="M140 52h10v5h-6v1h6v9h-10v-5h6v-1h-6z" fill="#0B1233" />
+      <text x="158" y="63" fontSize="12" fontWeight="700" fill="#0B1233" fontFamily="Inter" letterSpacing=".04em">SQUARESPELL</text>
+      <rect x="330" y="46" width="92" height="28" rx="6" fill="#fff" stroke="#E2E7FF" />
       <circle cx="346" cy="60" r="4" fill="#1F9D57" />
-      <text x="356" y="64" fontSize="11" fill="#161719" fontFamily="Inter">Connected</text>
-      <rect x="155" y="100" width="290" height="210" rx="8" fill="#fff" stroke="#E4E2DA" />
-      <circle cx="172" cy="118" r="4" fill="#161719" /><circle cx="186" cy="118" r="4" fill="#9B9A93" /><circle cx="200" cy="118" r="4" fill="#CFCDC4" />
-      <text x="222" y="122" fontSize="11" fill="#35352F" fontFamily="Inter">yourwebsite.com</text>
-      <line x1="155" y1="134" x2="445" y2="134" stroke="#EFEEE7" />
-      <rect x="170" y="148" width="130" height="146" fill="#F4F3ED" />
-      <text x="182" y="192" fontSize="21" fill="#161719" fontFamily="'Instrument Serif', Georgia, serif">A smarter</text>
-      <text x="182" y="216" fontSize="21" fill="#161719" fontFamily="'Instrument Serif', Georgia, serif">way to quiz.</text>
-      <rect x="182" y="236" width="78" height="26" rx="4" fill="#161719" />
+      <text x="356" y="64" fontSize="11" fill="#0B1233" fontFamily="Inter">Connected</text>
+      <rect x="155" y="100" width="290" height="210" rx="8" fill="#fff" stroke="#E2E7FF" />
+      <circle cx="172" cy="118" r="4" fill="#0B1233" /><circle cx="186" cy="118" r="4" fill="#8B93B5" /><circle cx="200" cy="118" r="4" fill="#CDD6FF" />
+      <text x="222" y="122" fontSize="11" fill="#3B4466" fontFamily="Inter">yourwebsite.com</text>
+      <line x1="155" y1="134" x2="445" y2="134" stroke="#EBEFFF" />
+      <rect x="170" y="148" width="130" height="146" fill="#F5F7FF" />
+      <text x="182" y="192" fontSize="21" fill="#0B1233" fontFamily="'Instrument Serif', Georgia, serif">A smarter</text>
+      <text x="182" y="216" fontSize="21" fill="#0B1233" fontFamily="'Instrument Serif', Georgia, serif">way to quiz.</text>
+      <rect x="182" y="236" width="78" height="26" rx="4" fill="#0B1233" />
       <text x="192" y="253" fontSize="10.5" fill="#fff" fontFamily="Inter">Start quiz →</text>
-      <rect x="310" y="148" width="120" height="146" fill="#DDE3FF" />
+      <rect x="310" y="148" width="120" height="146" fill="#DCE3FF" />
       <path d="M310 294 C 340 240, 380 250, 430 200 L 430 294 Z" fill="#8FA2FF" />
       <path d="M310 294 C 350 270, 390 280, 430 250 L 430 294 Z" fill="#3154FF" />
-      <rect x="36" y="200" width="58" height="58" rx="8" fill="#fff" stroke="#E4E2DA" />
-      <path d="M58 234l8-8M55 229l-3 3a5 5 0 007 7l3-3M69 231l3-3a5 5 0 00-7-7l-3 3" fill="none" stroke="#161719" strokeWidth="2" strokeLinecap="round" />
-      <path d="M94 229 H 118 V 270 H 155" fill="none" stroke="#161719" strokeDasharray="3 4" />
-      <rect x="400" y="280" width="104" height="84" rx="4" fill="#E4F75A" />
-      <text x="412" y="304" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">PUBLISH</text>
-      <text x="412" y="320" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">UPDATE</text>
-      <text x="412" y="336" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">PAUSE</text>
-      <text x="412" y="352" fontSize="9.5" letterSpacing="2" fill="#161719" fontFamily="Inter">MOVE</text>
+      <rect x="36" y="200" width="58" height="58" rx="8" fill="#fff" stroke="#E2E7FF" />
+      <path d="M58 234l8-8M55 229l-3 3a5 5 0 007 7l3-3M69 231l3-3a5 5 0 00-7-7l-3 3" fill="none" stroke="#0B1233" strokeWidth="2" strokeLinecap="round" />
+      <path d="M94 229 H 118 V 270 H 155" fill="none" stroke="#0B1233" strokeDasharray="3 4" />
+      <rect x="400" y="280" width="104" height="84" rx="4" fill="#DCE3FF" />
+      <text x="412" y="304" fontSize="9.5" letterSpacing="2" fill="#0B1233" fontFamily="Inter">PUBLISH</text>
+      <text x="412" y="320" fontSize="9.5" letterSpacing="2" fill="#0B1233" fontFamily="Inter">UPDATE</text>
+      <text x="412" y="336" fontSize="9.5" letterSpacing="2" fill="#0B1233" fontFamily="Inter">PAUSE</text>
+      <text x="412" y="352" fontSize="9.5" letterSpacing="2" fill="#0B1233" fontFamily="Inter">MOVE</text>
     </svg>
   );
 }

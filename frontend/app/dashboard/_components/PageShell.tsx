@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * PageShell - reusable primitives for dashboard pages (2026 cobalt-and-ivory redesign).
+ * PageShell - reusable primitives for dashboard pages, styled to match the squarespellquiz.com landing page.
  *
- * Oversized editorial headings (a trailing period renders in cobalt), compact inline metrics separated by fine rules,
- * hairline cards with 8px corners, outlined status badges and cobalt primary actions.
+ * Inter Tight 500 headings where the last word of a title ending in "." is set in Instrument Serif italic blue,
+ * pill eyebrows, compact inline metrics separated by fine rules, 16px hairline cards and 12px blue primary actions.
  * Every export keeps its previous name and props, so existing pages keep working; new optional props add the
  * redesign's eyebrow, breadcrumb and heading-size options.
  */
@@ -14,12 +14,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DASHBOARD_COLORS as C } from './dashboardColors';
 
-/** Display heading. A trailing "." is rendered as a cobalt dot, as in the design. */
+/** Display heading. For a title ending in ".", the last word is set in Instrument Serif italic blue, as on the landing page. */
 export function DisplayTitle({ children, size = 'lg', as = 'h1' }: { children: string; size?: 'xl' | 'lg' | 'md'; as?: 'h1' | 'h2' }) {
   var fontSize = size === 'xl' ? 'clamp(40px, 5.6vw, 76px)' : size === 'lg' ? 'clamp(34px, 4.4vw, 60px)' : 'clamp(26px, 3vw, 40px)';
   var text = children || '';
   var hasDot = text.endsWith('.');
-  var body = hasDot ? text.slice(0, -1) : text;
+  var cut = hasDot ? text.lastIndexOf(' ') : -1;
+  var body = hasDot ? text.slice(0, cut + 1) : text;
+  var accent = hasDot ? text.slice(cut + 1) : '';
   var Tag = as;
   return (
     <Tag
@@ -27,21 +29,22 @@ export function DisplayTitle({ children, size = 'lg', as = 'h1' }: { children: s
         margin: 0,
         fontFamily: C.DISPLAY_FONT,
         fontSize: fontSize,
-        fontWeight: 800,
-        letterSpacing: '-0.035em',
-        lineHeight: 1,
+        fontWeight: 500,
+        letterSpacing: '-0.04em',
+        lineHeight: 1.02,
         color: C.INK,
       }}
     >
       {body}
-      {hasDot && <span style={{ color: C.ACCENT }}>.</span>}
+      {hasDot && <em style={{ fontFamily: C.SERIF_FONT, fontStyle: 'italic', fontWeight: 400, letterSpacing: '-0.01em', color: C.ACCENT }}>{accent}</em>}
     </Tag>
   );
 }
 
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 12, fontFamily: C.FONT }}>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16, fontFamily: C.FONT }}>
+      <i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />
       {children}
     </div>
   );
@@ -94,7 +97,7 @@ export function PageHeader({
         {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
         <DisplayTitle size={size}>{title}</DisplayTitle>
         {subtitle && (
-          <p style={{ margin: '14px 0 0 0', fontSize: 'clamp(16px, 1.5vw, 20px)', color: C.GRAY_600, lineHeight: 1.45, maxWidth: 720, fontFamily: C.FONT }}>
+          <p style={{ margin: '16px 0 0 0', fontSize: 'clamp(16px, 1.35vw, 19px)', color: C.TEXT_SECONDARY, lineHeight: 1.6, maxWidth: 720, fontFamily: C.FONT }}>
             {subtitle}
           </p>
         )}
@@ -147,7 +150,7 @@ export function InlineMetrics({ items, style }: { items: { value: ReactNode; lab
             }}
             title={m.hint}
           >
-            <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(26px, 2.4vw, 34px)', fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+            <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(26px, 2.4vw, 34px)', fontWeight: 500, letterSpacing: '-0.035em', color: C.INK, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
               {m.value}
             </span>
             <span style={{ fontSize: 15, color: C.GRAY_600 }}>{m.label}</span>
@@ -166,7 +169,7 @@ export function StatCard({ label, value, accent, sub }: { label: string; value: 
           style={{
             fontFamily: C.DISPLAY_FONT,
             fontSize: 30,
-            fontWeight: 700,
+            fontWeight: 500,
             color: accent ? C.ACCENT : C.INK,
             letterSpacing: '-0.03em',
             lineHeight: 1,
@@ -212,7 +215,7 @@ export function EmptyState({
           {icon}
         </div>
       )}
-      <h2 style={{ margin: '0 0 8px 0', fontFamily: C.DISPLAY_FONT, fontSize: 22, fontWeight: 700, color: C.INK, letterSpacing: '-0.02em' }}>
+      <h2 style={{ margin: '0 0 8px 0', fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 500, color: C.INK, letterSpacing: '-0.025em' }}>
         {title}
       </h2>
       {body && (
@@ -230,11 +233,11 @@ var BTN_BASE: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: 8,
-  height: 40,
+  height: 42,
   padding: '0 18px',
   borderRadius: C.RADIUS_SM,
-  fontSize: 14,
-  fontWeight: 600,
+  fontSize: 15,
+  fontWeight: 500,
   textDecoration: 'none',
   fontFamily: C.FONT,
   whiteSpace: 'nowrap',
@@ -258,9 +261,9 @@ export function PrimaryButton({
 }) {
   var style: React.CSSProperties = {
     ...BTN_BASE,
-    height: size === 'lg' ? 52 : 40,
+    height: size === 'lg' ? 52 : 42,
     padding: size === 'lg' ? '0 26px' : '0 18px',
-    fontSize: size === 'lg' ? 16 : 14,
+    fontSize: size === 'lg' ? 16.5 : 15,
     background: disabled ? C.BRAND_100 : C.ACCENT,
     color: disabled ? C.BRAND_300 : '#FFFFFF',
     border: '1px solid ' + (disabled ? C.BRAND_100 : C.ACCENT),
@@ -270,10 +273,12 @@ export function PrimaryButton({
     if (disabled) return;
     e.currentTarget.style.background = C.ACCENT_HOVER;
     e.currentTarget.style.borderColor = C.ACCENT_HOVER;
+    e.currentTarget.style.boxShadow = '0 14px 30px -14px rgba(49,84,255,0.8)';
   }
   function hoverOut(e: any) {
     e.currentTarget.style.background = disabled ? C.BRAND_100 : C.ACCENT;
     e.currentTarget.style.borderColor = disabled ? C.BRAND_100 : C.ACCENT;
+    e.currentTarget.style.boxShadow = 'none';
   }
   if (href) {
     return (
@@ -306,16 +311,16 @@ export function GhostButton({
     ...BTN_BASE,
     background: C.SURFACE,
     color: C.INK,
-    border: '1px solid ' + C.BORDER,
+    border: '1px solid ' + C.GRAY_300,
     cursor: 'pointer',
   };
   function hover(e: any) {
-    e.currentTarget.style.borderColor = C.GRAY_300;
-    e.currentTarget.style.background = C.GRAY_25;
+    e.currentTarget.style.borderColor = C.ACCENT;
+    e.currentTarget.style.color = C.ACCENT;
   }
   function leave(e: any) {
-    e.currentTarget.style.borderColor = C.BORDER;
-    e.currentTarget.style.background = C.SURFACE;
+    e.currentTarget.style.borderColor = C.GRAY_300;
+    e.currentTarget.style.color = C.INK;
   }
   if (href) {
     return (
@@ -331,7 +336,7 @@ export function GhostButton({
   );
 }
 
-/** Minimal outlined status badge: Live in cobalt, Draft in ink, others in their semantic tone. */
+/** Minimal outlined status badge: Live in blue, Draft in navy, others in their semantic tone. */
 export function Pill({
   children,
   variant = 'neutral',
@@ -398,7 +403,7 @@ export function UnderlineTabs({ tabs, value, onChange }: { tabs: { value: string
   );
 }
 
-/** Segmented pill filter (All / Live / Drafts ...). Active segment is solid ink. */
+/** Segmented pill filter (All / Live / Drafts ...). Active segment is solid blue. */
 export function SegmentedFilter({ options, value, onChange }: { options: { value: string; label: string; count?: number }[]; value: string; onChange: (v: string) => void }) {
   return (
     <div role="tablist" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -413,13 +418,13 @@ export function SegmentedFilter({ options, value, onChange }: { options: { value
             onClick={function() { onChange(o.value); }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, height: 38, padding: '0 16px', borderRadius: 999,
-              border: '1px solid ' + (active ? C.INK : C.BORDER), background: active ? C.INK : C.SURFACE,
+              border: '1px solid ' + (active ? C.ACCENT : C.GRAY_300), background: active ? C.ACCENT : C.SURFACE,
               color: active ? '#fff' : C.INK, fontSize: 14, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer',
             }}
           >
             {o.label}
             {typeof o.count === 'number' && (
-              <span style={{ fontSize: 12, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(255,255,255,0.18)' : C.GRAY_100, color: active ? '#fff' : C.GRAY_600 }}>
+              <span style={{ fontSize: 12, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(255,255,255,0.2)' : C.GRAY_100, color: active ? '#fff' : C.ACCENT }}>
                 {o.count}
               </span>
             )}

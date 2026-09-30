@@ -22,7 +22,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/Dashboa
 
 var ACCENT = C.ACCENT || '#3154FF';
 var ACCENT_LIGHT = C.ACCENT_LIGHT || '#E8F5F5';
-var PAPER = '#F7F7F5';
+var PAPER = '#F5F7FF';
 /* Shorthand aliases */
 var TEXT = C.TEXT;
 var MUTED = C.TEXT_MUTED;
@@ -325,7 +325,7 @@ export default function DashboardTemplateDetailPage() {
                     <div style={{ fontSize: 12, fontWeight: 600, color: ACCENT, marginBottom: 6 }}>
                       Question {currentStep + 1} of {questions.length}
                     </div>
-                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', margin: '0 0 4px', lineHeight: 1.4 }}>{q.text}</h2>
+                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0B1233', margin: '0 0 4px', lineHeight: 1.4 }}>{q.text}</h2>
                     {q.subtitle && <p style={{ fontSize: 13, color: '#888', margin: '0 0 18px' }}>{q.subtitle}</p>}
                     {!q.subtitle && <div style={{ height: 14 }} />}
 
@@ -416,7 +416,7 @@ export default function DashboardTemplateDetailPage() {
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                       </svg>
                     </div>
-                    <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', margin: '0 0 6px' }}>{gate.headline}</h2>
+                    <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0B1233', margin: '0 0 6px' }}>{gate.headline}</h2>
                     {gate.subtext && <p style={{ fontSize: 13, color: '#888', margin: '0 0 24px', lineHeight: 1.5 }}>{gate.subtext}</p>}
                     <div style={{ maxWidth: 300, margin: '0 auto' }}>
                       {(gate.fields || []).map(function(f: any) {
@@ -458,7 +458,7 @@ export default function DashboardTemplateDetailPage() {
                         <img src={o.imageUrl} alt={o.title} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     )}
-                    <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1a1a1a', margin: '0 0 10px' }}>{o.title}</h2>
+                    <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0B1233', margin: '0 0 10px' }}>{o.title}</h2>
                     <p style={{ fontSize: 14, color: '#555', lineHeight: 1.6, margin: '0 0 24px' }}>{o.description}</p>
                     {o.ctaText && (
                       <button style={{

@@ -229,7 +229,7 @@ export default function CommercePage() {
           <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'minmax(0, 0.9fr) minmax(0, 1.1fr)', gap: 28, alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', color: C.GRAY_600, marginBottom: 16 }}>QUIZ RESULTS → REAL PRODUCTS</div>
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(34px, 3.4vw, 50px)', fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Turn insights into sales<span style={{ color: C.ACCENT }}>.</span></div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(34px, 3.4vw, 50px)', fontWeight: 500, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Turn insights into sales<span style={{ color: C.ACCENT }}>.</span></div>
               <p style={{ margin: '18px 0 0', fontSize: 17, color: C.GRAY_600, lineHeight: 1.5 }}>Sync your products from Squarespace and map them to quiz outcomes, so every result can show a relevant product.</p>
             </div>
             <div style={{ display: 'grid', gap: 18 }}>

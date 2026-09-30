@@ -85,7 +85,7 @@ function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string;
       <span style={{ width: 56, height: 56, borderRadius: 6, background: C.PERIWINKLE_SOFT, color: C.INK, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 14, color: C.GRAY_600, marginBottom: 4 }}>{label}</div>
-        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 32, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
       </div>
     </div>
   );
@@ -107,10 +107,10 @@ function FunnelStep({ icon, label, value, tone }: { icon: React.ReactNode; label
   var bg = tone === 'acid' ? C.ACID_SOFT : C.PERIWINKLE_SOFT;
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', background: bg, borderRadius: 6, overflow: 'hidden' }}>
-      <span style={{ width: 64, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: tone === 'acid' ? C.INK : C.ACCENT, borderRight: '1px solid rgba(22,23,25,0.06)' }}>{icon}</span>
+      <span style={{ width: 64, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: tone === 'acid' ? C.INK : C.ACCENT, borderRight: '1px solid rgba(11, 18, 51,0.06)' }}>{icon}</span>
       <div style={{ padding: '14px 16px' }}>
         <div style={{ fontSize: 14, color: C.GRAY_600 }}>{label}</div>
-        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{fmt(value)}</div>
+        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 500, color: C.INK, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{fmt(value)}</div>
       </div>
     </div>
   );
@@ -255,7 +255,7 @@ export default function AnalyticsPage() {
     return (
       <DashboardShell title="Analytics">
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: C.INK, marginBottom: 8 }}>Could not load analytics</div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, color: C.INK, marginBottom: 8 }}>Could not load analytics</div>
           <div style={{ fontSize: 15, color: C.GRAY_600, marginBottom: 20 }}>The server may be starting up. Please try again.</div>
           <PrimaryButton onClick={function() { fetchData(); }}>Retry</PrimaryButton>
         </div>
@@ -339,13 +339,13 @@ export default function AnalyticsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 110px', columnGap: 16, rowGap: 0, alignItems: 'center' }}>
                 <FunnelStep icon={I.eye} label="Views" value={totals.views} tone="blue" />
                 <div>
-                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 20, fontWeight: 700, color: C.INK }}>{totals.views > 0 ? pct(totals.completion_rate) : '—'}</div>
+                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 20, fontWeight: 500, color: C.INK }}>{totals.views > 0 ? pct(totals.completion_rate) : '—'}</div>
                   <div style={{ fontSize: 13, color: C.GRAY_500 }}>to completion</div>
                 </div>
                 <div style={{ height: 18, marginLeft: 32, borderLeft: '1px solid ' + C.GRAY_400 }} /><div />
                 <FunnelStep icon={I.people} label="Completions" value={totals.completions} tone="blue" />
                 <div>
-                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 20, fontWeight: 700, color: C.INK }}>{totals.completions > 0 ? pct(totals.lead_from_completion) : '—'}</div>
+                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 20, fontWeight: 500, color: C.INK }}>{totals.completions > 0 ? pct(totals.lead_from_completion) : '—'}</div>
                   <div style={{ fontSize: 13, color: C.GRAY_500 }}>to lead</div>
                 </div>
                 <div style={{ height: 18, marginLeft: 32, borderLeft: '1px solid ' + C.GRAY_400 }} /><div />

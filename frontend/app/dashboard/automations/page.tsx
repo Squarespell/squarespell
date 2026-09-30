@@ -170,7 +170,7 @@ export default function AutomationsPage() {
           ].map(function (m) {
             return (
               <div key={m.l} className="stat">
-                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: m.v.length > 6 ? 26 : 42, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.05 }}>{m.v}</div>
+                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: m.v.length > 6 ? 26 : 42, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.05 }}>{m.v}</div>
                 <div style={{ fontSize: 16, color: C.INK, marginTop: 8 }}>{m.l}</div>
                 <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{m.s}</div>
               </div>
@@ -213,7 +213,7 @@ export default function AutomationsPage() {
               })}
             </div>
             <div style={{ textAlign: 'center', marginTop: 36 }}>
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK }}>Create your first automation</div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 500, letterSpacing: '-0.025em', color: C.INK }}>Create your first automation</div>
               <p style={{ margin: '6px 0 20px', fontSize: 17, color: C.GRAY_600 }}>Save time, engage your audience, and turn quiz results into action.</p>
               <button type="button" onClick={function () { setShowCreate(true); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 12, height: 52, padding: '0 30px', borderRadius: 6, border: 'none', background: C.ACCENT, color: '#fff', fontSize: 17, fontWeight: 500, fontFamily: C.FONT, cursor: 'pointer' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
@@ -225,7 +225,7 @@ export default function AutomationsPage() {
       ) : (
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK }}>Your automations</h2>
+            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 500, color: C.INK }}>Your automations</h2>
             <button type="button" onClick={function () { setShowCreate(true); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 6, border: 'none', background: C.ACCENT, color: '#fff', fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>+ Create automation</button>
           </div>
           <div style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
@@ -256,7 +256,7 @@ export default function AutomationsPage() {
 
       {/* Recipes */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: C.INK }}>Or try a recipe</h2>
+        <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 500, letterSpacing: '-0.02em', color: C.INK }}>Or try a recipe</h2>
         <span style={{ fontSize: 15, color: C.GRAY_600 }}>Quick ways to get started with common automation flows.</span>
       </div>
       <div className="au-recipes">
@@ -280,9 +280,9 @@ export default function AutomationsPage() {
       {/* Create dialog */}
       {showCreate && (
         <div role="dialog" aria-modal="true" aria-labelledby="au-create-title" onMouseDown={function (e) { if (e.target === e.currentTarget) setShowCreate(false); }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(22,23,25,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}>
+          style={{ position: 'fixed', inset: 0, background: 'rgba(11, 18, 51,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}>
           <div style={{ background: '#fff', borderRadius: 8, padding: 28, width: 520, maxWidth: '100%', maxHeight: '86vh', overflow: 'auto', boxShadow: C.SHADOW_LG }}>
-            <h2 id="au-create-title" style={{ margin: '0 0 22px', fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK }}>Create automation</h2>
+            <h2 id="au-create-title" style={{ margin: '0 0 22px', fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 500, color: C.INK }}>Create automation</h2>
             <div style={{ marginBottom: 16 }}>
               <label htmlFor="au-name" style={labelStyle}>Name</label>
               <input id="au-name" type="text" placeholder="e.g. Send welcome email on quiz completion" value={formName} onChange={function (e) { setFormName(e.target.value); }} style={inputStyle} />

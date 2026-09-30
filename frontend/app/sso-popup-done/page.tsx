@@ -10,9 +10,9 @@ export default function SSOPopupDone() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F7F7F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", system-ui, sans-serif' }}>
-      <div style={{ textAlign: 'center', color: '#1A1A1A' }}>
-        <p style={{ fontSize: '16px', color: '#6B6B6B' }}>Signing in...</p>
+    <div style={{ minHeight: '100vh', background: '#F5F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", system-ui, sans-serif' }}>
+      <div style={{ textAlign: 'center', color: '#0B1233' }}>
+        <p style={{ fontSize: '16px', color: '#646D8F' }}>Signing in...</p>
       </div>
     </div>
   )

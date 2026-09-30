@@ -706,7 +706,7 @@ var PAGE_CSS = `
 
 function LogoTile({ c, size = 64 }: { c: Catalog; size?: number }) {
   return (
-    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 8, background: c.color + '1A', color: c.color === '#FFE01B' ? '#161719' : c.color, border: '1px solid ' + C.BORDER_LIGHT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: size > 40 ? 20 : 13, fontWeight: 800, letterSpacing: '-0.02em', flexShrink: 0 }}>
+    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 8, background: c.color + '1A', color: c.color === '#FFE01B' ? '#0B1233' : c.color, border: '1px solid ' + C.BORDER_LIGHT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: size > 40 ? 20 : 13, fontWeight: 800, letterSpacing: '-0.02em', flexShrink: 0 }}>
       {c.icon}
     </span>
   );
@@ -920,7 +920,7 @@ export default function IntegrationsPage() {
       {/* Setup dialog */}
       {setupType && (
         <div role="dialog" aria-modal="true" aria-label={'Connect ' + labelFor(setupType)} onMouseDown={function(e) { if (e.target === e.currentTarget) setSetupType(null); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(22,23,25,0.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '8vh 16px', overflowY: 'auto' }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(11, 18, 51,0.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '8vh 16px', overflowY: 'auto' }}>
           <div style={{ width: 'min(620px, 100%)' }}>
             <Card>
               {setupType === 'webhook' && (

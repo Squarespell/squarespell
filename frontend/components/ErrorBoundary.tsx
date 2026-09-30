@@ -65,7 +65,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 600, color: '#1a1a1a' }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 600, color: '#0B1233' }}>
             {this.props.fallbackTitle || 'Something went wrong'}
           </h3>
           <p style={{ margin: '0 0 16px', fontSize: 14, color: '#666', maxWidth: 400 }}>
@@ -82,7 +82,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             style={{
-              background: '#0D7377',
+              background: '#3154FF',
               color: '#fff',
               border: 'none',
               padding: '10px 24px',

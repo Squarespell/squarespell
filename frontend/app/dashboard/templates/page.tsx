@@ -168,7 +168,7 @@ export default function DashboardTemplatesPage() {
 
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: C.INK }}>No templates found.</div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 500, color: C.INK }}>No templates found.</div>
           <p style={{ fontSize: 15, color: C.GRAY_600, margin: '6px 0 18px' }}>Try a different search or category.</p>
           <button type="button" onClick={function() { setActiveFilter('All'); setSearchQuery(''); }} className="sq-tbtn" style={{ flex: 'none', padding: '0 20px', background: C.ACCENT, color: '#fff', border: 'none' }}>Show all templates</button>
         </div>
@@ -183,7 +183,7 @@ export default function DashboardTemplatesPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img className="sq-timg" src={m.thumb} alt="" loading="lazy" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                   )}
-                  <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(22,23,25,0.55) 0%, rgba(22,23,25,0) 55%)' }} />
+                  <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(11, 18, 51,0.55) 0%, rgba(11, 18, 51,0) 55%)' }} />
                   <span style={{ position: 'absolute', left: 20, bottom: 18, maxWidth: '45%', fontSize: 10, fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff', lineHeight: 1.5 }}>{t.category}</span>
                 </Link>
                 <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>

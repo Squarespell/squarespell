@@ -381,7 +381,7 @@ export default function QuizzesPage() {
     return (
       <DashboardShell title="Quizzes">
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, marginBottom: 8 }}>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, marginBottom: 8 }}>
             Could not load your quizzes
           </div>
           <div style={{ fontSize: 15, color: C.GRAY_600, marginBottom: 20 }}>
@@ -643,7 +643,7 @@ export default function QuizzesPage() {
             <PageLoading />
           ) : paginatedQuizzes.length === 0 ? (
             <div style={{ padding: '56px 24px', textAlign: 'center', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: C.INK, marginBottom: 6 }}>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 500, letterSpacing: '-0.02em', color: C.INK, marginBottom: 6 }}>
                 {isArchivedView && !searchText ? 'Nothing archived.' : 'No quizzes match.'}
               </div>
               <div style={{ fontSize: 15, color: C.GRAY_600 }}>

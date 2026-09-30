@@ -18,10 +18,10 @@ function campaignType(c: Campaign): 'broadcast' | 'automation' | 'quiz-result' |
 }
 
 var TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
-  'broadcast':   { label: 'Broadcast',    color: '#161719', bg: '#EFEEE7' },
-  'automation':  { label: 'Automation',   color: '#2442E6', bg: '#EEF1FF' },
-  'quiz-result': { label: 'Result email', color: '#1B33B8', bg: '#DDE3FF' },
-  'follow-up':   { label: 'Follow-up',    color: '#161719', bg: '#F6FBD0' },
+  'broadcast':   { label: 'Broadcast',    color: '#0B1233', bg: '#EBEFFF' },
+  'automation':  { label: 'Automation',   color: '#2443E0', bg: '#EBEFFF' },
+  'quiz-result': { label: 'Result email', color: '#1A34C8', bg: '#DCE3FF' },
+  'follow-up':   { label: 'Follow-up',    color: '#0B1233', bg: '#EBEFFF' },
 };
 
 function stripHtml(html: string): string {
@@ -30,12 +30,12 @@ function stripHtml(html: string): string {
 
 function statusOf(c: Campaign): { label: string; dot: string; bg: string; fg: string } {
   var live = { dot: '#1F9D57', bg: '#EAF6EE', fg: '#0E7A3F' };
-  var neutral = { dot: '#6E6D68', bg: '#EFEEE7', fg: '#35352F' };
+  var neutral = { dot: '#646D8F', bg: '#EBEFFF', fg: '#3B4466' };
   if (c.status === 'failed') return { label: 'Failed', dot: '#C0271B', bg: '#FDF0EE', fg: '#C0271B' };
   if (c.mode === 'live') return c.status === 'draft' ? Object.assign({ label: 'Draft' }, neutral) : Object.assign({ label: 'Live' }, live);
   if (c.status === 'sent') return Object.assign({ label: 'Sent' }, live);
   if (c.status === 'sending') return Object.assign({ label: 'Sending' }, live);
-  if (c.status === 'scheduled') return { label: 'Scheduled', dot: '#3154FF', bg: '#EEF1FF', fg: '#2442E6' };
+  if (c.status === 'scheduled') return { label: 'Scheduled', dot: '#3154FF', bg: '#EBEFFF', fg: '#2443E0' };
   return Object.assign({ label: 'Draft' }, neutral);
 }
 
@@ -248,7 +248,7 @@ export default function EmailCampaignsPage() {
         <div className="ec-metric stat">
           <MetricIcon d="M22 2 11 13M22 2l-7 20-4-9-9-4z" />
           <div>
-            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{totalSent.toLocaleString()}</div>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{totalSent.toLocaleString()}</div>
             <div style={{ fontSize: 17, color: C.INK, marginTop: 6 }}>emails sent</div>
             <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{totalSent > 0 ? 'across ' + sentItems.length + ' ' + (sentItems.length === 1 ? 'campaign' : 'campaigns') : 'No emails sent yet'}</div>
           </div>
@@ -256,7 +256,7 @@ export default function EmailCampaignsPage() {
         <div className="ec-metric stat">
           <MetricIcon d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6" />
           <div>
-            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{Math.round(avgOpen)}%</div>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{Math.round(avgOpen)}%</div>
             <div style={{ fontSize: 17, color: C.INK, marginTop: 6 }}>average open rate</div>
             <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{sentItems.length > 0 ? 'across sent campaigns' : 'Send campaigns to track'}</div>
           </div>
@@ -264,7 +264,7 @@ export default function EmailCampaignsPage() {
         <div className="ec-metric stat" style={{ alignItems: 'flex-start' }}>
           <MetricIcon d="M12 3c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 38, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>
               {(quota?.used || 0).toLocaleString()}<span style={{ fontSize: 22, fontWeight: 600 }}> / {unlimited ? 'Unlimited' : (quota?.cap || 0).toLocaleString()}</span>
             </div>
             <div style={{ fontSize: 17, color: C.INK, marginTop: 6 }}>monthly email usage</div>
@@ -326,7 +326,7 @@ export default function EmailCampaignsPage() {
 
       {items.length === 0 ? (
         <div style={{ padding: '56px 20px', textAlign: 'center', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: C.INK }}>No campaigns yet.</div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, color: C.INK }}>No campaigns yet.</div>
           <p style={{ margin: '6px 0 20px', fontSize: 16, color: C.GRAY_600 }}>Send a one-off campaign or set up an automation that follows up after every quiz.</p>
           <Link href="/dashboard/emails/new" className="ec-btn" style={{ background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>Create campaign</Link>
         </div>

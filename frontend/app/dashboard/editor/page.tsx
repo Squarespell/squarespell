@@ -23,7 +23,7 @@ function EditorInner() {
 
 export default function DashboardEditorPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F7F7F5' }} />}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F5F7FF' }} />}>
       <EditorInner />
     </Suspense>
   );

@@ -321,12 +321,12 @@ export function DesignStep({
                   textAlign: 'left' as any, padding: 0, overflow: 'hidden',
                   borderRadius: 14, cursor: 'pointer', width: '100%',
                   border: '2px solid ' + (state.templateId === aiDesign.templateId ? C.ACCENT : C.BORDER),
-                  background: 'linear-gradient(135deg, #F0FDFA 0%, #F7F7F5 100%)',
+                  background: 'linear-gradient(135deg, #F0FDFA 0%, #F5F7FF 100%)',
                   transition: 'all 0.15s',
                 }}
               >
                 <div style={{
-                  height: 200, overflow: 'hidden', background: '#F7F7F5',
+                  height: 200, overflow: 'hidden', background: '#F5F7FF',
                   position: 'relative', borderBottom: '1px solid ' + C.BORDER,
                 }}>
                   <iframe
@@ -418,7 +418,7 @@ export function DesignStep({
                   }}
                 >
                   <div style={{
-                    height: 200, overflow: 'hidden', background: '#F7F7F5',
+                    height: 200, overflow: 'hidden', background: '#F5F7FF',
                     position: 'relative', borderBottom: '1px solid ' + C.BORDER,
                   }}>
                     <iframe
@@ -764,7 +764,7 @@ export function DesignStep({
               <div style={{ width: 320, flexShrink: 0 }}>
                 <div style={{
                   border: '1px solid ' + C.BORDER, borderRadius: 12, overflow: 'hidden',
-                  background: '#F7F7F5',
+                  background: '#F5F7FF',
                 }}>
                   <div style={{ padding: '10px 14px', borderBottom: '1px solid ' + C.BORDER, background: '#FFFFFF' }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: C.TEXT }}>

@@ -84,14 +84,14 @@ export default function ToolsHub() {
 
 const CSS = `
 .tools-hub {
-  --bg: #F7F7F5;
+  --bg: #F5F7FF;
   --panel: #FFFFFF;
   --border: rgba(0,0,0,0.08);
   --border-strong: rgba(0,0,0,0.14);
-  --text: #1A1A1A;
-  --muted: #6B6B6B;
+  --text: #0B1233;
+  --muted: #646D8F;
   --dim: #A0A0A0;
-  --accent: #0f7377;
+  --accent: #3154FF;
 
   background: var(--bg);
   color: var(--text);
@@ -109,7 +109,7 @@ const CSS = `
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #E4E3E0;
+  border-bottom: 1px solid #E2E7FF;
 }
 .th-logo {
   display: inline-flex;
@@ -153,7 +153,7 @@ const CSS = `
   margin: 0 0 20px;
 }
 .th-title-accent {
-  background: linear-gradient(180deg, #0f7377 0%, #0a5a5e 100%);
+  background: linear-gradient(180deg, #3154FF 0%, #0a5a5e 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -179,7 +179,7 @@ const CSS = `
   position: relative;
   padding: 40px 34px 34px;
   background: var(--panel);
-  border: 1px solid #E4E3E0;
+  border: 1px solid #E2E7FF;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
@@ -212,7 +212,7 @@ const CSS = `
 }
 .th-badge-soon {
   background: rgba(0,0,0,0.04);
-  border: 1px solid #E4E3E0;
+  border: 1px solid #E2E7FF;
   color: var(--muted);
 }
 .th-card-eyebrow {
@@ -246,7 +246,7 @@ const CSS = `
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 32px 40px;
-  border-top: 1px solid #E4E3E0;
+  border-top: 1px solid #E2E7FF;
   font-size: 12px;
   color: var(--dim);
   text-align: center;

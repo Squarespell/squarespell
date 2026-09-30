@@ -60,7 +60,7 @@ function getInitials(name: string | null, email: string): string {
   return email.slice(0, 2).toUpperCase();
 }
 
-var AVATAR_COLORS = ['#3154FF', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#2442E6'];
+var AVATAR_COLORS = ['#3154FF', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#2443E0'];
 function avatarColor(s: string) {
   var hash = 0;
   for (var i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
@@ -150,8 +150,8 @@ function LeadCardArt({ small }: { small?: boolean }) {
     <svg width={w} height={small ? 130 : 230} viewBox="0 0 400 230" aria-hidden="true">
       <rect x="120" y="10" width="150" height="190" fill={C.PERIWINKLE} opacity={small ? 0.8 : 1} />
       <circle cx="252" cy="36" r="36" fill={C.ACID} />
-      <rect x="196" y="78" width="176" height="110" rx="8" fill="#E4E2DA" />
-      <rect x="186" y="68" width="176" height="110" rx="8" fill="#fff" stroke="#E4E2DA" />
+      <rect x="196" y="78" width="176" height="110" rx="8" fill="#E2E7FF" />
+      <rect x="186" y="68" width="176" height="110" rx="8" fill="#fff" stroke="#E2E7FF" />
       <circle cx="232" cy="112" r="26" fill={C.PERIWINKLE_SOFT} />
       <circle cx="232" cy="104" r="8" fill="none" stroke={C.INK} strokeWidth="2.2" />
       <path d="M216 126c2-8 9-12 16-12s14 4 16 12" fill="none" stroke={C.INK} strokeWidth="2.2" strokeLinecap="round" />
@@ -258,7 +258,7 @@ export default function LeadsPage() {
     return (
       <DashboardShell title="Leads">
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: C.INK, marginBottom: 8 }}>Could not load leads</div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, color: C.INK, marginBottom: 8 }}>Could not load leads</div>
           <div style={{ fontSize: 15, color: C.GRAY_600, marginBottom: 20 }}>The server may be starting up. Please try again.</div>
           <PrimaryButton onClick={fetchLeads}>Retry</PrimaryButton>
         </div>
@@ -308,7 +308,7 @@ export default function LeadsPage() {
             ].map(function (m) {
               return (
                 <div key={m.l} className="stat">
-                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 34, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{m.v}</div>
+                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 34, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{m.v}</div>
                   <div style={{ fontSize: 14, color: C.GRAY_600, marginTop: 6 }}>{m.l}</div>
                 </div>
               );
@@ -394,7 +394,7 @@ export default function LeadsPage() {
           {empty ? (
             <div style={{ padding: '44px 20px 52px', textAlign: 'center' }}>
               <LeadCardArt small />
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK, margin: '10px 0 6px' }}>Ready for your first lead?</div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, letterSpacing: '-0.025em', color: C.INK, margin: '10px 0 6px' }}>Ready for your first lead?</div>
               <p style={{ margin: '0 0 22px', fontSize: 16, color: C.GRAY_600 }}>Publish a quiz and share it to start building your audience.</p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <PrimaryButton size="lg" href="/dashboard/embed">Get the embed code</PrimaryButton>

@@ -211,7 +211,7 @@ export default function ReferralsPage() {
           </svg>
           <div style={{ position: 'relative', maxWidth: '58%' }}>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: C.GRAY_700, marginBottom: 12 }}>REFER A FRIEND</div>
-            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(28px, 2.8vw, 42px)', fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Give your network better quizzes.</div>
+            <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(28px, 2.8vw, 42px)', fontWeight: 500, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Give your network better quizzes.</div>
             <div style={{ fontFamily: C.SERIF_FONT, fontSize: 'clamp(30px, 3vw, 46px)', lineHeight: 1.1, color: C.INK, marginTop: 6 }}>Earn $25 in credit<span style={{ color: C.ACCENT }}>.</span></div>
           </div>
         </section>
@@ -250,7 +250,7 @@ export default function ReferralsPage() {
                   </span>
                   <div>
                     <div style={{ fontSize: 16, color: C.GRAY_600 }}>{s.label}</div>
-                    <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 32, fontWeight: 700, color: C.INK, lineHeight: 1.15, marginTop: 4 }}>{s.value}</div>
+                    <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 32, fontWeight: 500, color: C.INK, lineHeight: 1.15, marginTop: 4 }}>{s.value}</div>
                     <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{s.sub}</div>
                   </div>
                 </div>

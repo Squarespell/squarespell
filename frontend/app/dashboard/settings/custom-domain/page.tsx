@@ -197,7 +197,7 @@ export default function CustomDomainPage() {
           <div style={{ fontSize: 14, lineHeight: 1.6, color: C.TEXT }}>
             <p style={{ margin: '0 0 12px 0' }}>To connect your custom domain, add a CNAME record in your DNS provider:</p>
             <div style={{
-              background: '#1D2939', borderRadius: 8, padding: 16, fontFamily: 'monospace',
+              background: '#1C2447', borderRadius: 8, padding: 16, fontFamily: 'monospace',
               fontSize: 13, color: '#E5E7EB', lineHeight: 1.5, marginBottom: 16,
             }}>
               <div style={{ marginBottom: 4 }}>

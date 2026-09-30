@@ -285,7 +285,7 @@ export default function TeamPage() {
 
           {!selectedTeam ? (
             <section style={{ padding: '48px 24px', textAlign: 'center', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK }}>No teams yet</div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 500, color: C.INK }}>No teams yet</div>
               <p style={{ margin: '6px 0 18px', fontSize: 16, color: C.GRAY_600 }}>Create a team to invite members and collaborate. Team seats are included with the Business plan.</p>
               <button type="button" className="tm-btn tm-primary" onClick={function () { setShowCreate(true); }}>+ New team</button>
             </section>
@@ -297,7 +297,7 @@ export default function TeamPage() {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5M17 11a3 3 0 100-6M22 21c0-3-1.8-5-4.5-5.7" /></svg>
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK }}>{selectedTeam.name}</div>
+                    <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 500, color: C.INK }}>{selectedTeam.name}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: C.GRAY_500, marginTop: 2 }}>
                       {selectedTeam.created_at && <span>Created {new Date(selectedTeam.created_at).toLocaleDateString()}</span>}
                       <span>· {activeMembers.length} {activeMembers.length === 1 ? 'member' : 'members'}</span>
