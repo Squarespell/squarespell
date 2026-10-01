@@ -25,7 +25,7 @@ import { ConfirmDialog, PublishModal } from '../_components/Modals';
 import { QuizCover } from '../_components/QuizCover';
 import { NewQuizModal } from './_components/NewQuizModal';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type Quiz = {
   id: string;

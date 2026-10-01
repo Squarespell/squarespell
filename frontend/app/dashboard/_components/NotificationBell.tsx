@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { useDashboardAuth } from './useDashboardAuth';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 var POLL_INTERVAL = 30000;
 
 type NotifItem = {

@@ -22,7 +22,7 @@ import { Suspense } from 'react';
 import EmbedQuizClient from './EmbedQuizClient';
 import { safeColor, brandFontStack } from '@/lib/safeCss';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface QuizOption {
   id: string;

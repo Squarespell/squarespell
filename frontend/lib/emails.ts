@@ -1,5 +1,5 @@
 import { getAuthToken } from '@/lib/auth/client';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 async function authHeaders(): Promise<Record<string, string>> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };

@@ -232,7 +232,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     setSubmitting(true);
     setErrorMsg("");
     try {
-      var API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+      var API = process.env.NEXT_PUBLIC_API_URL || "https://api.squarespellquiz.com";
       var headers: Record<string, string> = { "Content-Type": "application/json" };
       {
         const authToken = await getAuthToken();
@@ -294,7 +294,7 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     // Call the real backend scrape-brand endpoint. Keep this fast and silent:
     // if it fails or times out we still advance to the goal step - the
     // POST /api/quizzes/from-url call later re-scrapes server-side anyway.
-    const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+    const API = process.env.NEXT_PUBLIC_API_URL || "https://api.squarespellquiz.com";
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     {
       const authToken = await getAuthToken();

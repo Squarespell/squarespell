@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { safeHttpUrl, safeLinkUrl } from '@/lib/safeUrl';
 import { safeColor } from '@/lib/safeCss';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 // Dashboard preview (?preview=1): the quiz runs normally but records nothing (no analytics events, no leads).
 function isPreviewMode(): boolean {
@@ -1476,7 +1476,7 @@ export default function EmbedQuizClient({
 
           {showBranding && (
             <div className="sq-brand-foot">
-              <a href="https://squarespell.com" target="_top" rel="noopener noreferrer">
+              <a href="https://squarespellquiz.com" target="_top" rel="noopener noreferrer">
                 Powered by Squarespell Quiz
               </a>
             </div>

@@ -1,5 +1,5 @@
 import { getAuthToken } from './auth/client';
-var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 var _getToken: (() => Promise<string>) | null = null;
 var _getTokenFresh: (() => Promise<string>) | null = null;

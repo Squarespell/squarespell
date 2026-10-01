@@ -38,10 +38,9 @@ app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/js
 /* CORS                                                                */
 /* ------------------------------------------------------------------ */
 //
-// Squarespell now serves the same Next.js app from multiple subdomains:
-//   app.squarespell.com    - authenticated dashboard
-//   quiz.squarespell.com   - public /try flow + embed.js
-//   squarespell.com        - marketing site (root + www)
+// The dashboard runs on the app host (FRONTEND_URL / CORS_ORIGINS, e.g. https://app.squarespellquiz.com). Only those
+// origins get credentialed CORS (sign-in uses it for its session cookie); the marketing site and customer sites call
+// only the public (wildcard) endpoints.
 //
 // CORS_ORIGINS env var (comma-separated) is the canonical allowlist.
 // FRONTEND_URL is preserved for backward compatibility with the old
@@ -53,10 +52,7 @@ app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/js
 // wildcard headers) is fixed by routing them through a single dispatcher.
 
 const DEFAULT_ALLOWED_ORIGINS = [
-  'https://app.squarespell.com',
-  'https://quiz.squarespell.com',
-  'https://squarespell.com',
-  'https://www.squarespell.com',
+  'https://app.squarespellquiz.com',
 ];
 
 const envOrigins = (process.env.CORS_ORIGINS || '')

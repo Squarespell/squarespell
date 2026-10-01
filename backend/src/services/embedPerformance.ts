@@ -129,7 +129,7 @@ export function generateLightweightLoader(quizSlug: string, embedMode: string): 
   return '(function(){' +
     'var d=document,s=d.createElement("script");' +
     's.async=true;s.defer=true;' +
-    's.src="https://cdn.squarespell.com/embed/v2/loader.min.js";' +
+    's.src="' + (process.env.APP_URL || 'https://app.squarespellquiz.com').replace(/\/+$/, '') + '/embed.js";' +
     's.dataset.quiz="' + quizSlug + '";' +
     's.dataset.mode="' + (embedMode || 'inline') + '";' +
     'd.head.appendChild(s);' +

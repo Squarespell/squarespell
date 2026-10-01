@@ -5,7 +5,7 @@ import { useDashboardAuth } from '../../_components/useDashboardAuth';
 import { PageHeader, Card, PrimaryButton, GhostButton, PageLoading } from '../../_components/PageShell';
 import Link from 'next/link';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type ApiKey = {
   id: string; name: string; key_prefix: string;

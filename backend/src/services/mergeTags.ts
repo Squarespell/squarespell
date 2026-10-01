@@ -152,7 +152,7 @@ export async function buildMergeContext(leadId: string): Promise<MergeContext | 
   const firstName = nameParts[0] || '';
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
-  const appBase = process.env.FRONTEND_URL || 'https://app.squarespell.com';
+  const appBase = process.env.FRONTEND_URL || 'https://app.squarespellquiz.com';
   const quizSlug = quiz?.slug || lead.quiz_id;
 
   return {
@@ -215,7 +215,7 @@ export function buildMergeContextFromData(
   const firstName = nameParts[0] || '';
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
-  const appBase = process.env.FRONTEND_URL || 'https://app.squarespell.com';
+  const appBase = process.env.FRONTEND_URL || 'https://app.squarespellquiz.com';
 
   return {
     first_name: firstName,

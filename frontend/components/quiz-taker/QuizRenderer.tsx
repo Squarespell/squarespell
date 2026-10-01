@@ -1017,7 +1017,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
         {/* Branding footer */}
         {showBranding && (
           <div style={{ textAlign: 'center', marginTop: 22, fontSize: 11, opacity: 0.45 }}>
-            <a href="https://squarespell.com" target="_top" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+            <a href="https://squarespellquiz.com" target="_top" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
               Powered by Squarespell Quiz
             </a>
           </div>

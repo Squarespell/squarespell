@@ -48,7 +48,7 @@ export default function AutomationsPage() {
   var [formQuizId, setFormQuizId] = useState('');
   var [formAction, setFormAction] = useState('send_email');
 
-  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
   useEffect(function () {
     if (!token) return;

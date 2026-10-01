@@ -15,7 +15,7 @@ import {
   PageLoading,
 } from '../../../_components/PageShell';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface ROIData {
   total_leads: number;

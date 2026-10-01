@@ -26,7 +26,7 @@ import { PageLoading, DisplayTitle, Pill } from './_components/PageShell';
 import { QuizCover } from './_components/QuizCover';
 import { NewQuizModal } from './quizzes/_components/NewQuizModal';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 // ═══════ TYPES ═══════
 

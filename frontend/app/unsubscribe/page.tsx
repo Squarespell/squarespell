@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 function UnsubscribeContent() {
   const searchParams = useSearchParams();
@@ -168,7 +168,7 @@ function UnsubscribeContent() {
         )}
 
         <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #E2E7FF', fontSize: '12px', color: '#646D8F' }}>
-          <a href="https://squarespell.com" style={{ color: '#3154FF', textDecoration: 'none' }}>squarespell.com</a>
+          <a href="https://squarespellquiz.com" style={{ color: '#3154FF', textDecoration: 'none' }}>squarespellquiz.com</a>
         </div>
       </div>
     </div>

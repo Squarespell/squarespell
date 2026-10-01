@@ -23,7 +23,7 @@ import { assignTag } from './segmentation';
 import { enqueueSequenceEmails } from './emailSequence';
 
 var resend = getMailer(); // Hostinger SMTP; null when email is not configured
-var APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
+var APP_URL = process.env.APP_URL || 'https://app.squarespellquiz.com';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

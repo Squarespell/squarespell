@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-// NOTE: this page is served from app.squarespell.com (see middleware.ts —
+// NOTE: this page is served from app.squarespellquiz.com (see middleware.ts —
 // the bare squarespell.com domain is a separate Squarespace-hosted marketing
 // site, not this Next.js app).
 //
@@ -9,7 +9,7 @@ import type { Metadata } from 'next';
 // gateway (URL input + sign in/up) to avoid duplicating that marketing
 // copy across two domains, so it's marked noindex with a canonical
 // pointing at the page that should actually rank.
-var CANONICAL = 'https://squarespell.com/quiz';
+var CANONICAL = 'https://squarespellquiz.com';
 
 export var metadata: Metadata = {
   title: 'Squarespell Quiz — Build Your Quiz',

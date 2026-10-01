@@ -21,7 +21,7 @@
 import { useEffect, useState } from 'react';
 import { DASHBOARD_COLORS as C } from './dashboardColors';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 // -----------------------------------------------------------------------
 // Types

@@ -40,7 +40,7 @@ export default function SegmentationPage() {
   var [creating, setCreating] = useState(false);
   var [error, setError] = useState('');
 
-  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
   /* close color picker on outside click */
   useEffect(function () {

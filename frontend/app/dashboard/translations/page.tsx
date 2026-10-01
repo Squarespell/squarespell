@@ -82,7 +82,7 @@ export default function TranslationsPage() {
   var [editQuiz, setEditQuiz] = useState<Quiz | null>(null);
   var [savingEdit, setSavingEdit] = useState(false);
 
-  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
   function fetchData() {
     if (!token) return;

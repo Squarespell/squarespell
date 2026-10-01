@@ -4,7 +4,7 @@
  * Two production domains - both permanent, both hardcoded on purpose:
  *
  *   MARKETING_URL  - squarespell.com           (Squarespace marketing site)
- *   APP_URL        - app.squarespell.com       (the entire Squarespell Quiz app)
+ *   APP_URL        - app.squarespellquiz.com       (the entire Squarespell Quiz app)
  *
  * Everything user-facing in the product lives under APP_URL on a single
  * subdomain so visitors never see the URL bar bounce between subdomains.
@@ -21,14 +21,14 @@
  *   /dashboard, /dashboard/*         authenticated dashboard
  *
  * The quiz.squarespell.com subdomain is now a permanent 301 redirect to
- * app.squarespell.com (handled in middleware.ts) so any old embed code or
+ * app.squarespellquiz.com (handled in middleware.ts) so any old embed code or
  * shared links continue to work but resolve to the canonical home.
  *
  * If you ever need to change a domain, change the constant below in a PR.
  * That's strictly better than editing a Vercel env var in the dashboard.
  */
 
-export const MARKETING_URL = 'https://squarespell.com';
+export const MARKETING_URL = 'https://squarespellquiz.com';
 /** Public origin of this deployment. Set NEXT_PUBLIC_SITE_URL at build time; defaults to the production domain. */
 export const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://squarespellquiz.com').replace(/\/+$/, '');
 

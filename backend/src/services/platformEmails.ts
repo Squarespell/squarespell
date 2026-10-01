@@ -16,8 +16,8 @@ import { supabase } from '../db/supabaseClient';
 import { emailProvider } from './email/mailer';
 import { log } from '../lib/logger';
 
-var APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
-var MARKETING_URL = process.env.MARKETING_URL || 'https://squarespell.com';
+var APP_URL = process.env.APP_URL || 'https://app.squarespellquiz.com';
+var MARKETING_URL = process.env.MARKETING_URL || 'https://squarespellquiz.com';
 var FROM_EMAIL = process.env.PLATFORM_EMAIL_FROM || 'Squarespell <hello@squarespell.com>';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -153,7 +153,7 @@ function wrapEmail(body: string, preheader?: string): string {
     '<tr><td style="padding:0 0 24px">',
     '  <table cellpadding="0" cellspacing="0"><tr>',
     '    <td style="width:36px;height:36px;background:#0D7377;border-radius:10px;text-align:center;vertical-align:middle">',
-    '      <img src="https://app.squarespell.com/logo-icon-white.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle" />',
+    '      <img src="https://app.squarespellquiz.com/logo-icon-white.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle" />',
     '    </td>',
     '    <td style="padding-left:10px;font-size:17px;font-weight:700;color:#1A1A1A;letter-spacing:-0.02em">Squarespell</td>',
     '  </tr></table>',
@@ -168,7 +168,7 @@ function wrapEmail(body: string, preheader?: string): string {
     '    Squarespell &middot; Quiz funnels for Squarespace<br>',
     '    <a href="' + APP_URL + '/dashboard/billing" style="color:rgba(26,26,26,0.5);text-decoration:underline">Email preferences</a>',
     '    &nbsp;&middot;&nbsp;',
-    '    <a href="' + MARKETING_URL + '" style="color:rgba(26,26,26,0.5);text-decoration:underline">squarespell.com</a>',
+    '    <a href="' + MARKETING_URL + '" style="color:rgba(26,26,26,0.5);text-decoration:underline">squarespellquiz.com</a>',
     '  </p>',
     '</td></tr>',
     '</table>',

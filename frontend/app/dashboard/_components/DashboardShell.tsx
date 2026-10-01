@@ -254,7 +254,7 @@ function AccountMenu({ userEmail, plan, onSignOut }: { userEmail: string; plan: 
             {link('/dashboard/team', 'Team')}
             {link('/dashboard/referrals', 'Referrals')}
             {link('/dashboard/trash', 'Trash')}
-            <a href="https://docs.squarespell.com" target="_blank" rel="noopener noreferrer" role="menuitem" className="sq-menu-item">Help center</a>
+            <a href="/support" role="menuitem" className="sq-menu-item">Help center</a>
           </div>
           <div style={{ padding: 6, borderTop: '1px solid ' + C.BORDER }}>
             <button type="button" role="menuitem" onClick={onSignOut} className="sq-menu-item" style={{ color: C.DANGER }}>Sign out</button>
@@ -380,7 +380,7 @@ export function DashboardShell({
   useEffect(function() {
     if (!bannerToken) return;
     var cancelled = false;
-    var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+    var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
     fetch(apiBase + '/api/connect/config', { headers: { Authorization: 'Bearer ' + bannerToken } })
       .then(function(r) { return r.ok ? r.json() : { enabled: false }; })
       .then(function(d) { if (!cancelled) setConnectEnabled(!!(d && d.enabled)); })
@@ -392,7 +392,7 @@ export function DashboardShell({
   useEffect(function() {
     if (!bannerToken) return;
     var cancelled = false;
-    var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+    var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
     (async function() {
       try {
         var res = await fetch(apiBase + '/api/user/plan', { headers: { Authorization: 'Bearer ' + bannerToken } });

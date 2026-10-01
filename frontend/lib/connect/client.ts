@@ -27,7 +27,7 @@ export class ConnectApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); this.name = 'ConnectApiError'; }
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 /**
  * Access tokens last 15 minutes, but a dashboard page can stay open for hours. Every call therefore asks the sign-in

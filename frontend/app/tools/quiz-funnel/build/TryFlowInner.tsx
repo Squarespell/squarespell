@@ -14,7 +14,7 @@ import { Wordmark } from '@/app/dashboard/_components/Brand';
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 // Hard-abort long-running preview requests (analyze + build) so the UI never
 // waits forever on a hung/slow backend (e.g. Render's free tier cold-starting).

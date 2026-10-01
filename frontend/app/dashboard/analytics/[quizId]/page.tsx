@@ -63,7 +63,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
 
   function exportCsv() {
     setExporting(true);
-    var apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+    var apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
     getAuthToken().then(function(token: string) {
       var headers: Record<string, string> = {};
       if (token) headers['Authorization'] = 'Bearer ' + token;

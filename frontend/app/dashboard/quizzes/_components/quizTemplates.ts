@@ -124,7 +124,7 @@ export type CreateQuizFromUrlInput = {
 };
 
 export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<{ id: string }> {
-  const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+  const API = process.env.NEXT_PUBLIC_API_URL || "https://api.squarespellquiz.com";
 
   async function getAuthHeaders(): Promise<Record<string, string>> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };

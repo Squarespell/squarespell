@@ -90,7 +90,7 @@ export interface QuizBlockEditorProps {
 
 var API_BASE = (typeof window !== 'undefined' && (window as any).__NEXT_PUBLIC_API_URL)
   || process.env.NEXT_PUBLIC_API_URL
-  || 'https://squarespell-api.onrender.com';
+  || 'https://api.squarespellquiz.com';
 
 var LETTERS = 'ABCDEFGHIJKLMNOP';
 

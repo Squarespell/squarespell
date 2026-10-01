@@ -38,8 +38,8 @@ import { isTurnstileConfigured, verifyTurnstileToken } from '../services/turnsti
 const resend = getMailer(); // Hostinger SMTP; null when email is not configured
 
 // Canonical URLs used in outgoing emails. Set APP_URL/MARKETING_URL in env to swap domains.
-const APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
-const MARKETING_URL = process.env.MARKETING_URL || 'https://squarespell.com';
+const APP_URL = process.env.APP_URL || 'https://app.squarespellquiz.com';
+const MARKETING_URL = process.env.MARKETING_URL || 'https://squarespellquiz.com';
 
 function normalizeUrl(input: string): string {
   let url = input.trim().replace(/\/+$/, '');
@@ -71,7 +71,12 @@ function isAllowedRedirectUrl(rawUrl: string): boolean {
     const parsed = new URL(rawUrl);
     if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost') return false;
     const host = parsed.hostname.toLowerCase();
+    let appHost = '';
+    try { appHost = new URL(process.env.APP_URL || process.env.FRONTEND_URL || '').hostname.toLowerCase(); } catch { /* unset */ }
     return (
+      host === 'squarespellquiz.com' ||
+      host.endsWith('.squarespellquiz.com') ||
+      (!!appHost && host === appHost) ||
       host === 'squarespell.com' ||
       host.endsWith('.squarespell.com') ||
       host === 'localhost'
@@ -1197,7 +1202,7 @@ leadsRouter.post('/gdpr/delete-request', async (req, res) => {
 
     // Send verification email (if Resend is configured)
     if (resend) {
-      var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
+      var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://api.squarespellquiz.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
       await resend.emails.send({
         from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
         to: email,
@@ -2746,7 +2751,7 @@ cronRouter.post('/weekly-digest', async (req, res) => {
           '  <div style="padding:36px 32px 28px;background:#FFFFFF;border-radius:0 0 16px 16px">',
           '    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">',
           '      <div style="width:32px;height:32px;background:#0D7377;border-radius:10px;display:flex;align-items:center;justify-content:center">',
-          '        <img src="https://app.squarespell.com/logo-icon-white.png" width="14" height="14" alt="" style="display:block" />',
+          '        <img src="https://app.squarespellquiz.com/logo-icon-white.png" width="14" height="14" alt="" style="display:block" />',
           '      </div>',
           '      <span style="font-size:17px;font-weight:700;color:#1A1A1A;letter-spacing:-0.02em">Squarespell</span>',
           '    </div>',
@@ -3140,7 +3145,7 @@ quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
     // turn our own Stripe checkout into an open redirect / phishing vector
     // against a paying customer. Restrict to our own domains.
     if (!isAllowedRedirectUrl(success_url) || !isAllowedRedirectUrl(cancel_url)) {
-      return res.status(400).json({ error: 'success_url and cancel_url must point to a squarespell.com domain' });
+      return res.status(400).json({ error: 'success_url and cancel_url must point to a Squarespell Quiz domain' });
     }
 
     // amount_cents (if sent by the client) is informational only — the
@@ -3315,7 +3320,7 @@ referralsRouter.get('/code', requireAuth, attachUser, async function(req: Authen
       return res.status(500).json({ error: 'Failed to get referral code' });
     }
 
-    var appUrl = process.env.APP_URL || 'https://app.squarespell.com';
+    var appUrl = process.env.APP_URL || 'https://app.squarespellquiz.com';
     var referralUrl = appUrl + '/sign-up?ref=' + result.code;
 
     res.json({

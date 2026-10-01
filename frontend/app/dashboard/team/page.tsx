@@ -6,7 +6,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardS
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { DisplayTitle, PageLoading, SettingsTabs } from '../_components/PageShell';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type TeamRole = 'owner' | 'admin' | 'editor' | 'viewer';
 type TeamMember = {
@@ -256,7 +256,7 @@ export default function TeamPage() {
           <section style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: 20 }}>
             <div style={{ fontSize: 16, fontWeight: 600, color: C.INK }}>Need help?</div>
             <p style={{ margin: '6px 0 12px', fontSize: 14, color: C.GRAY_600 }}>Learn more about teams in our help center.</p>
-            <a href="https://squarespell.com/help" target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.ACCENT, textDecoration: 'none' }}>View documentation</a>
+            <a href="/support" target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.ACCENT, textDecoration: 'none' }}>View documentation</a>
           </section>
         </aside>
 

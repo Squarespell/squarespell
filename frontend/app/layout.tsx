@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from '../lib/auth/client';
 import { useEffect } from 'react';
 import { Inter } from 'next/font/google';
 import { setAuthToken } from '../lib/api';
-import { startKeepAlive } from '../lib/keepAlive';
 import { ToastProvider } from '../lib/toast';
 import './globals.css';
 
@@ -35,11 +34,6 @@ function AuthTokenSync() {
   return null;
 }
 
-function KeepAlive() {
-  useEffect(() => { startKeepAlive(); }, []);
-  return null;
-}
-
 function Footer() {
   // No footer on app domain - marketing site (squarespell.com) has its own
   // footer. The full footer markup previously lived below an early `return
@@ -60,7 +54,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body>
           <ToastProvider>
           <AuthTokenSync />
-          <KeepAlive />
           {children}
           <Footer />
           </ToastProvider>

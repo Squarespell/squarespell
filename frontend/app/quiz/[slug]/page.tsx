@@ -29,7 +29,7 @@ import QuizRenderer from '@/components/quiz-taker/QuizRenderer';
 import { safeHttpUrl } from '@/lib/safeUrl';
 import { safeColor, brandFontStack, safeStyleText } from '@/lib/safeCss';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface QuizOption {
   id: string;

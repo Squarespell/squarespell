@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PLANS } from '@/lib/planCatalog';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type Billing = 'monthly' | 'yearly';
 

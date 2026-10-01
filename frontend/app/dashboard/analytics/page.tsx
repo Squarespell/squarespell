@@ -17,7 +17,7 @@ import { DisplayTitle, EmptyState, PrimaryButton, Pill, PageLoading } from '../_
 import { QuizCover } from '../_components/QuizCover';
 import { TrendChart, TrendLegend, dayRange, shortDay } from '../_components/TrendChart';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type Quiz = {
   id: string;

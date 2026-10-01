@@ -160,7 +160,7 @@ Three plans billed monthly or yearly (yearly saves approximately 25-35%). A 14-d
 - Pro: 10 quizzes, 2,000 leads/month, 10,000 emails/month
 - Business: unlimited quizzes, 10,000 leads/month, 50,000 emails/month, Zapier and Webhook support
 
-Current prices and exact limits: https://app.squarespell.com/tools/quiz-funnel#pricing
+Current prices and exact limits: https://app.squarespellquiz.com/tools/quiz-funnel#pricing
 
 ## Who It Is For
 
@@ -189,6 +189,6 @@ Squarespell Quiz is built specifically for Squarespace site owners who want to c
 
 ## Key Pages
 
-- Product overview and pricing: https://app.squarespell.com/tools/quiz-funnel
-- Quiz builder: https://app.squarespell.com/tools/quiz-funnel/build
-- Main landing page: https://squarespell.com/quiz
+- Product overview and pricing: https://app.squarespellquiz.com/tools/quiz-funnel
+- Quiz builder: https://app.squarespellquiz.com/tools/quiz-funnel/build
+- Main landing page: https://squarespellquiz.com

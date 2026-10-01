@@ -9,7 +9,7 @@ import { PageHeader, Card, Pill, PrimaryButton } from '../../_components/PageShe
 import { useDashboardAuth } from '../../_components/useDashboardAuth';
 import { CANVA_TEMPLATES, CANVA_CATEGORIES } from '../../../../lib/email/canvaTemplates';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type SavedTemplate = {
   id: string;

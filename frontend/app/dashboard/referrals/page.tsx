@@ -5,7 +5,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardS
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { DisplayTitle, PageLoading, SettingsTabs } from '../_components/PageShell';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type ReferralStats = {
   totalReferred: number;

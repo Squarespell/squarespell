@@ -6,7 +6,7 @@ import { verifyUnsubscribeSignature } from '../services/unsubscribe';
 
 const r = Router();
 
-const APP_URL = process.env.FRONTEND_URL || 'https://app.squarespell.com';
+const APP_URL = process.env.FRONTEND_URL || 'https://app.squarespellquiz.com';
 
 /** Escape HTML entities to prevent XSS */
 function escHtml(s: string): string {
@@ -56,7 +56,7 @@ r.get('/unsubscribe', async (req, res) => {
   }
 
   // Show confirmation form
-  const formAction = `${process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com'}/api/public/unsubscribe`;
+  const formAction = `${process.env.BACKEND_URL || process.env.API_URL || 'https://api.squarespellquiz.com'}/api/public/unsubscribe`;
   res.send(buildPage('Unsubscribe', `
     <p>Unsubscribe <strong>${escHtml(email)}</strong> from all Squarespell emails?</p>
     <form method="POST" action="${escHtml(formAction)}">
@@ -213,7 +213,7 @@ function buildPage(title: string, body: string, showForm: boolean): string {
     <h1>${title}</h1>
     <div>${body}</div>
     <div class="footer">
-      <a href="https://squarespell.com">squarespell.com</a>
+      <a href="https://squarespellquiz.com">squarespellquiz.com</a>
     </div>
   </div>
 </body>

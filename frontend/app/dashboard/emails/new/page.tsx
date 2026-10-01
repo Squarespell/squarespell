@@ -214,7 +214,7 @@ function NewCampaignPageInner() {
             }}
             onSaveDraft={function() { saveOrSend(false); }}
             onSaveAsTemplate={async function(name: string, category: string, description: string) {
-              var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+              var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
               if (!token) throw new Error('Not signed in');
               var res = await fetch(API_URL + '/api/emails/templates/saved', {
                 method: 'POST',
