@@ -13,7 +13,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardS
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { DisplayTitle, PageLoading, SettingsTabs } from '../_components/PageShell';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 const PLAN_LABEL: Record<string, string> = { core: 'Core', pro: 'Pro', business: 'Business', trial: 'Trial', free: 'Free', starter: 'Core', growth: 'Pro', agency: 'Business' };
 
@@ -143,7 +143,7 @@ export default function SettingsPage() {
               <div style={{ fontSize: 17, fontWeight: 600, color: C.INK }}>Need help?</div>
               <div style={{ fontSize: 15, color: C.GRAY_600 }}>Visit our help center or contact our support team.</div>
             </div>
-            <a href="https://squarespell.com/help" target="_blank" rel="noopener noreferrer" className="st-btn" style={{ height: 46 }}>Help center ↗</a>
+            <a href="/support" target="_blank" rel="noopener noreferrer" className="st-btn" style={{ height: 46 }}>Help center ↗</a>
             <a href="mailto:support@squarespell.com" className="st-btn" style={{ height: 46, background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>Contact support</a>
           </section>
         </>

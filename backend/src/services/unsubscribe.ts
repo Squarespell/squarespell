@@ -1,6 +1,7 @@
+import crypto from 'crypto';
 import { supabase } from '../db/supabaseClient';
 
-const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com';
+const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || 'https://api.squarespellquiz.com';
 
 /**
  * Build an unsubscribe URL for a given email. Uses base64url-encoded token
@@ -10,7 +11,27 @@ export function buildUnsubscribeUrl(email: string, quizId?: string): string {
   const payload: Record<string, string> = { email };
   if (quizId) payload.quiz_id = quizId;
   const token = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  return `${BACKEND_URL}/api/public/unsubscribe?token=${token}`;
+  return `${BACKEND_URL}/api/public/unsubscribe?token=${token}&sig=${signUnsubscribe(email)}`;
+}
+
+/**
+ * Signature carried by unsubscribe links. Anyone may unsubscribe an address, but only someone holding a link that
+ * was emailed to it may check its status or subscribe it again.
+ */
+function unsubscribeSecret(): string {
+  return process.env.REPORT_SECRET || process.env.AUTH_SECRET || '';
+}
+
+export function signUnsubscribe(email: string): string {
+  const secret = unsubscribeSecret();
+  if (!secret) return '';
+  return crypto.createHmac('sha256', secret).update('unsubscribe:' + email.trim().toLowerCase()).digest('base64url').slice(0, 32);
+}
+
+export function verifyUnsubscribeSignature(email: string, sig: unknown): boolean {
+  const expected = signUnsubscribe(email);
+  if (!expected || typeof sig !== 'string' || sig.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
 
 /**
@@ -18,8 +39,10 @@ export function buildUnsubscribeUrl(email: string, quizId?: string): string {
  */
 export function buildUnsubscribeHeaders(email: string, quizId?: string): Record<string, string> {
   const url = buildUnsubscribeUrl(email, quizId);
+  // The mailto: alternative goes to our own Hostinger mailbox; without one, only the one-click URL is offered.
+  const mailbox = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
   return {
-    'List-Unsubscribe': `<${url}>, <mailto:unsubscribe@squarespell.com?subject=unsubscribe>`,
+    'List-Unsubscribe': mailbox ? `<${url}>, <mailto:${mailbox}?subject=unsubscribe>` : `<${url}>`,
     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
   };
 }
@@ -79,7 +102,7 @@ export function canSpamFooterHtml(
   const siteName = opts?.siteName || 'Squarespell';
   const address = opts?.businessAddress || DEFAULT_BUSINESS_ADDRESS;
   return `<div style="text-align:center;padding:20px 32px;font-size:12px;color:#999;line-height:1.6;">
-  <span>Sent by ${siteName} via <a href="https://squarespell.com" style="color:#888;text-decoration:none;">Squarespell</a></span><br/>
+  <span>Sent by ${siteName} via <a href="https://squarespellquiz.com" style="color:#888;text-decoration:none;">Squarespell</a></span><br/>
   <span style="color:#bbb;">${address}</span><br/>
   <a href="${url}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
 </div>`;

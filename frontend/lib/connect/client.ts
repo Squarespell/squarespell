@@ -1,3 +1,4 @@
+import { getAuthToken } from '@/lib/auth/client';
 /** Typed client for the one-button connect API. Every call needs the signed-in user's token; nothing here holds a secret. */
 export type Platform = 'squarespace' | 'html';
 export type SiteState = 'draft' | 'verifying' | 'verified' | 'needs_attention' | 'paused' | 'disconnected';
@@ -26,16 +27,15 @@ export class ConnectApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); this.name = 'ConnectApiError'; }
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 /**
- * Clerk session tokens live about a minute, but a dashboard page can stay open for hours. Every call therefore asks the live Clerk session
- * for a fresh token and only falls back to the one the page was given (tests, or a page without Clerk).
+ * Access tokens last 15 minutes, but a dashboard page can stay open for hours. Every call therefore asks the sign-in
+ * module for a current token and only falls back to the one the page was given (tests, or a signed-out page).
  */
 export async function freshToken(fallback: string): Promise<string> {
   try {
-    const clerk = (globalThis as any).Clerk;
-    const t = clerk && clerk.session ? await clerk.session.getToken() : null;
+    const t = await getAuthToken();
     return t || fallback;
   } catch {
     return fallback;
@@ -58,8 +58,8 @@ async function doFetch(bearer: string, method: string, path: string, body?: unkn
 }
 
 /**
- * A dashboard tab can sit backgrounded for a long time, and Clerk's own refresh timer is throttled while it is hidden.
- * The token freshToken() hands back can therefore still be the one that just expired. One 401 gets one retry with a
+ * A dashboard tab can sit backgrounded for a long time, so the token freshToken() hands back can still be the one that
+ * just expired. One 401 gets one retry with a
  * forced refresh (skipCache) before we give up and surface an error, so coming back to an old tab does not show
  * empty data or a false failure.
  */
@@ -68,8 +68,7 @@ async function call<T>(token: string, method: string, path: string, body?: unkno
     const bearer = await freshToken(token);
     let { res, data } = await doFetch(bearer, method, path, body);
     if (res.status === 401) {
-      const clerk = (globalThis as any).Clerk;
-      const retried: string | null = clerk?.session ? await clerk.session.getToken({ skipCache: true }).catch(() => null) : null;
+      const retried: string | null = (await getAuthToken({ skipCache: true }).catch(() => '')) || null;
       if (retried && retried !== bearer) ({ res, data } = await doFetch(retried, method, path, body));
     }
     if (!res.ok) throw new ConnectApiError(res.status, (data && data.code) || 'error', (data && data.error) || 'Something went wrong. Please try again.');

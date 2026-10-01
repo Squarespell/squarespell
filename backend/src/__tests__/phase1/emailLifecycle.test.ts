@@ -1,10 +1,11 @@
 /**
- * Phase 1 - email lifecycle with a stub for Resend (nothing is sent to a real provider).
+ * Phase 1 - email lifecycle against the local mailbox fake (nothing is sent to a real mail server).
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { api, makeUser, makeQuiz, waitFor, nextIp } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
-import { outbox, resetOutbox, resendBehaviour } from '../helpers/resendFake';
+import { outbox, resetOutbox, mailBehaviour } from '../helpers/mailFake';
+import { signUnsubscribe } from '../../services/unsubscribe';
 
 beforeEach(async () => { await resetData(); resetOutbox(); });
 
@@ -32,7 +33,7 @@ describe('lead confirmation and owner notification', () => {
   it('when the email provider reports an error the lead is still saved and the API still answers success', async () => {
     const owner = await makeUser({ plan: 'pro' });
     const quiz = await makeQuiz(owner, { slug: 'mail-fail' });
-    resendBehaviour.mode = 'error-result';
+    mailBehaviour.mode = 'refused';
     const r = await (await api()).post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead());
     expect(r.status).toBe(201);
     expect(await sql(`select 1 from leads`)).toHaveLength(1);
@@ -40,7 +41,7 @@ describe('lead confirmation and owner notification', () => {
 
   it('the result-email service reports failure honestly when the provider returns an error (Resend v3 returns {error}, it does not throw)', async () => {
     const { sendResultEmail } = await import('../../services/resultEmail');
-    resendBehaviour.mode = 'error-result';
+    mailBehaviour.mode = 'refused';
     const ok = await sendResultEmail({ to: 'x@customer.example', quizTitle: 'Q', outcomeTitle: 'O', outcomeDescription: 'd', branding: {}, leadId: 'l1', quizId: 'q1' });
     expect(ok).toBe(false);
     resetOutbox();
@@ -60,8 +61,10 @@ describe('unsubscribe', () => {
     expect(page.text).toContain('Confirm Unsubscribe');
     const done = await app.post('/api/public/unsubscribe').type('form').send({ email: 'Gone@Customer.example' });
     expect(done.status).toBe(200);
-    const status = await app.get('/api/public/unsubscribe/status?email=gone@customer.example');
+    const status = await app.get('/api/public/unsubscribe/status?email=gone@customer.example&sig=' + url.searchParams.get('sig'));
     expect(status.body.unsubscribed).toBe(true);
+    // Without the link signature nobody can look up whether an address unsubscribed.
+    expect((await app.get('/api/public/unsubscribe/status?email=gone@customer.example')).status).toBe(403);
   });
 
   it('RFC 8058 one-click POST (what Gmail/Apple Mail send) unsubscribes without a form', async () => {
@@ -69,7 +72,7 @@ describe('unsubscribe', () => {
     const url = new URL(buildUnsubscribeUrl('oneclick@customer.example'));
     const r = await (await api()).post(url.pathname + url.search).type('form').send({ 'List-Unsubscribe': 'One-Click' });
     expect(r.status).toBe(200);
-    expect((await (await api()).get('/api/public/unsubscribe/status?email=oneclick@customer.example')).body.unsubscribed).toBe(true);
+    expect((await (await api()).get('/api/public/unsubscribe/status?email=oneclick@customer.example&sig=' + signUnsubscribe('oneclick@customer.example'))).body.unsubscribed).toBe(true);
   });
 
   it('an unsubscribed address gets no result email and no sequence email; resubscribe restores delivery', async () => {
@@ -80,7 +83,10 @@ describe('unsubscribe', () => {
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead()).expect(201);
     await new Promise((res) => setTimeout(res, 300));
     expect(outbox.filter((m) => String(m.to) === 'ada@customer.example')).toHaveLength(0);
-    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example' }).expect(200);
+    // Someone else cannot undo the unsubscribe: re-subscribing needs the signed link that was emailed to the address.
+    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example' }).expect(403);
+    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example', sig: 'x'.repeat(32) }).expect(403);
+    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example', sig: signUnsubscribe('ada@customer.example') }).expect(200);
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'again@customer.example' })).expect(201);
     expect(await waitFor(() => outbox.some((m) => String(m.to) === 'again@customer.example'))).toBe(true);
   });
@@ -133,14 +139,14 @@ describe('follow-up sequences (email_sequence_queue)', () => {
 
   it('provider errors (returned, not thrown) are retried with backoff and are not marked sent', async () => {
     await seed([0]);
-    resendBehaviour.mode = 'error-result';
+    mailBehaviour.mode = 'refused';
     await run();
     let s = (await statuses())[0];
     expect(s.status).toBe('retry');
     expect(s.retry_count).toBe(1);
     const next = (await sql<any>(`select send_at from email_sequence_queue`))[0].send_at;
     expect(new Date(next).getTime()).toBeGreaterThan(Date.now());
-    resendBehaviour.mode = 'ok';
+    mailBehaviour.mode = 'ok';
     await run(); // not due yet: no send storm
     expect(outbox).toHaveLength(0);
     await sql(`update email_sequence_queue set send_at = now() - interval '1 minute'`);
@@ -152,7 +158,7 @@ describe('follow-up sequences (email_sequence_queue)', () => {
 
   it('after the maximum number of retries the item is marked failed and stops being attempted', async () => {
     await seed([0]);
-    resendBehaviour.mode = 'throw';
+    mailBehaviour.mode = 'throw';
     for (let i = 0; i < 7; i++) {
       await sql(`update email_sequence_queue set send_at = now() - interval '1 minute' where status in ('pending','retry')`);
       await run();

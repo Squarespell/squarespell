@@ -34,6 +34,12 @@ export async function ownsProduct(id: string, dbUserId?: string): Promise<boolea
   return !!data;
 }
 
+export async function ownsCampaign(id: string, dbUserId?: string): Promise<boolean> {
+  if (!dbUserId || !isUuid(id)) return false;
+  const { data } = await supabase.from('email_campaigns').select('id').eq('id', id).eq('tenant_id', dbUserId).maybeSingle();
+  return !!data;
+}
+
 /** ids of every quiz the user owns (used to scope cross-table privacy exports). */
 export async function ownedQuizIds(dbUserId?: string): Promise<string[]> {
   if (!dbUserId) return [];

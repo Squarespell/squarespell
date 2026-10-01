@@ -3,7 +3,7 @@
  *
  * This layout is used ONLY for embedded quizzes (/embed/[slug]).
  * It provides a clean HTML shell without:
- * - Clerk authentication providers
+ * - Sign-in providers
  * - Dashboard navigation
  * - Heavy client-side overhead
  *

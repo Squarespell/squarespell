@@ -5,11 +5,11 @@
  * packaged as a drop-in script tag that can be embedded anywhere
  * (squarespell.com landing page, marketing site, etc.):
  *
- *   <script src="https://app.squarespell.com/embed/squarespell-hook.js" async></script>
+ *   <script src="https://app.squarespellquiz.com/embed/squarespell-hook.js" async></script>
  *
  * The widget renders inline where the script tag is placed, takes a URL,
  * and redirects the visitor to
- * https://app.squarespell.com/tools/quiz-funnel/build?url=... where the
+ * https://app.squarespellquiz.com/tools/quiz-funnel/build?url=... where the
  * full Stage 1 -> 6 funnel takes over.
  *
  * Styling matches prototype-v4 tokens exactly - dark base, #0D7377 accent,
@@ -19,7 +19,7 @@
 (function () {
   'use strict';
 
-  var APP_URL = 'https://app.squarespell.com';
+  var APP_URL = 'https://app.squarespellquiz.com';
   var BUILDER_PATH = '/tools/quiz-funnel/build';
   var WIDGET_ID = 'squarespell-hook-widget';
 

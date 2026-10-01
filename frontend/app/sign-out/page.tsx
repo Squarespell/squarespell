@@ -1,13 +1,14 @@
 'use client'
-import { useClerk } from '@clerk/nextjs'
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { signOut } from '@/lib/auth/client'
 
 export default function SignOutPage() {
-  const { signOut } = useClerk()
+  const router = useRouter()
 
   useEffect(() => {
-    signOut({ redirectUrl: '/sign-in' })
-  }, [signOut])
+    signOut(() => router.replace('/sign-in'))
+  }, [router])
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -48,8 +48,6 @@ jobs:
         working-directory: frontend
     env:
       NEXT_PUBLIC_API_URL: http://localhost:3001
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
-      CLERK_SECRET_KEY: sk_test_ci_local_fixture
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v4
@@ -261,18 +259,20 @@ jobs:
           node - "$RUNNER_TEMP" <<'EOF'
           const crypto = require('crypto'), fs = require('fs');
           const tmp = process.argv[process.argv.length - 1];
-          const kp = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
-          fs.writeFileSync(tmp + '/clerk_public.pem', kp.publicKey.export({ type: 'spki', format: 'pem' }));
           const b = (x) => Buffer.from(x).toString('base64url');
           const now = Math.floor(Date.now() / 1000);
-          const data = b(JSON.stringify({ alg: 'RS256', typ: 'JWT', kid: 'ins_ci_local' })) + '.' + b(JSON.stringify({ sub: 'user_ci_smoke', iss: 'https://clerk.ci.local', iat: now - 5, nbf: now - 10, exp: now + 1800, sid: 'sess_ci' }));
-          fs.writeFileSync(tmp + '/smoke_token.txt', data + '.' + b(crypto.sign('RSA-SHA256', Buffer.from(data), kp.privateKey)));
+          // Access token in the format of our own sign-in (backend/src/services/auth/crypto.ts): HS256 with AUTH_SECRET.
+          const authSecret = crypto.randomBytes(32).toString('hex');
+          fs.writeFileSync(tmp + '/auth_secret.txt', authSecret);
+          const data = b(JSON.stringify({ alg: 'HS256', typ: 'JWT' })) + '.' + b(JSON.stringify({ sub: 'user_ci_smoke', uid: 'ci', sid: 'sess_ci', iat: now - 5, exp: now + 1800, iss: 'squarespell-auth' }));
+          fs.writeFileSync(tmp + '/smoke_token.txt', data + '.' + crypto.createHmac('sha256', authSecret).update(data).digest('base64url'));
           const secret = crypto.randomBytes(32).toString('hex');
           fs.writeFileSync(tmp + '/pgrst_secret.txt', secret);
           const h = b(JSON.stringify({ alg: 'HS256', typ: 'JWT' })) + '.' + b(JSON.stringify({ role: 'service_role', iss: 'ci-local', iat: now, exp: now + 7200 }));
           fs.writeFileSync(tmp + '/service_role.txt', h + '.' + crypto.createHmac('sha256', secret).update(h).digest('base64url'));
           EOF
           echo "::add-mask::$(cat "$RUNNER_TEMP/smoke_token.txt")"
+          echo "::add-mask::$(cat "$RUNNER_TEMP/auth_secret.txt")"
           echo "::add-mask::$(cat "$RUNNER_TEMP/service_role.txt")"
           echo "::add-mask::$(cat "$RUNNER_TEMP/pgrst_secret.txt")"
           docker run -d --name pgrst --network host \
@@ -303,15 +303,11 @@ jobs:
           export NODE_ENV=production PORT=3001
           export SUPABASE_URL=http://127.0.0.1:3100
           export SUPABASE_SERVICE_ROLE_KEY="$(cat "$RUNNER_TEMP/service_role.txt")"
-          export CLERK_SECRET_KEY=sk_test_ci_local_fixture
-          export CLERK_JWT_KEY="$(cat "$RUNNER_TEMP/clerk_public.pem")"
-          export CLERK_API_URL=http://127.0.0.1:9
-          export CLERK_WEBHOOK_SECRET=whsec_Y2lfbG9jYWxfZml4dHVyZV9jbGVya19zZWNyZXQ=
+          export AUTH_SECRET="$(cat "$RUNNER_TEMP/auth_secret.txt")"
           export STRIPE_SECRET_KEY=sk_test_ci_local_fixture
           export STRIPE_WEBHOOK_SECRET=whsec_ci_local_fixture_stripe_secret
-          export RESEND_API_KEY=re_ci_local_fixture
-          export RESEND_BASE_URL=http://127.0.0.1:9
-          export RESEND_WEBHOOK_SECRET=whsec_Y2lfbG9jYWxfZml4dHVyZV9yZXNlbmRfc2VjcmV0
+          # Mailbox on a closed local port: email sends fail fast and are recorded as failed; nothing leaves the runner.
+          export SMTP_HOST=127.0.0.1 SMTP_PORT=9 SMTP_USER=ci@example.test SMTP_PASS=ci-local-fixture
           export ANTHROPIC_API_KEY=sk-ant-ci-local-fixture
           export ANTHROPIC_BASE_URL=http://127.0.0.1:9
           export ENCRYPTION_KEY="$(node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))")"
@@ -326,7 +322,7 @@ jobs:
 
       - name: API smoke test (scripts/smoke/smoke.mjs against the temporary API)
         run: |
-          export SMOKE_CLERK_TOKEN="$(cat "$RUNNER_TEMP/smoke_token.txt")"
+          export SMOKE_AUTH_TOKEN="$(cat "$RUNNER_TEMP/smoke_token.txt")"
           node scripts/smoke/smoke.mjs --base-url http://127.0.0.1:3001 | tee "$RUNNER_TEMP/smoke.out"
           grep -q "13/13 steps passed" "$RUNNER_TEMP/smoke.out"
 
@@ -398,8 +394,7 @@ jobs:
           ENCRYPTION_KEY=dummy-encryption
           REPORT_SECRET=dummy-report
           CRON_SECRET=dummy-cron
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
-          CLERK_SECRET_KEY=dummy-clerk
+          AUTH_SECRET=dummy-auth-secret-dummy-auth-secret-123456
           EOF
           DC="docker compose --env-file $RUNNER_TEMP/dummy.env -f infra/hostinger/docker-compose.staging.yml"
           $DC config -q
@@ -440,8 +435,7 @@ jobs:
           ENCRYPTION_KEY=dummy-encryption
           REPORT_SECRET=dummy-report
           CRON_SECRET=dummy-cron
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
-          CLERK_SECRET_KEY=dummy-clerk
+          AUTH_SECRET=dummy-auth-secret-dummy-auth-secret-123456
           EOF
           DCP="docker compose --env-file $RUNNER_TEMP/dummy-prod.env -f infra/hostinger-production/docker-compose.production.yml"
           $DCP config -q
@@ -462,6 +456,9 @@ jobs:
             -e STAGING_APP_HOST=staging.example.test -e STAGING_API_HOST=api-staging.example.test -e ACME_EMAIL=ops@example.test \
             caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
           docker run --rm -v "$PWD/infra/hostinger/Caddyfile.rest:/etc/caddy/Caddyfile:ro" caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
+          docker run --rm -e PROD_APP_HOST=app.example.test -e PROD_API_HOST=api.example.test \
+            -v "$PWD/infra/hostinger-production/Caddyfile.production:/etc/caddy/Caddyfile:ro" caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
+          grep -qF 'trusted_proxies static private_ranges' infra/hostinger-production/Caddyfile.production
           grep -qF '@cron path /api/cron/*' infra/hostinger/Caddyfile
           grep -qF 'respond @cron 404' infra/hostinger/Caddyfile
           grep -qF 'X-Robots-Tag' infra/hostinger/Caddyfile
@@ -609,7 +606,6 @@ jobs:
         run: |
           docker build -f infra/hostinger/Dockerfile.frontend \
             --build-arg NEXT_PUBLIC_API_URL=https://api-staging.example.test \
-            --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsuZXhhbXBsZS5jb20k \
             -t sq-frontend:ci .
       - name: Frontend image is non-root and contains the production build
         run: |
@@ -641,7 +637,7 @@ jobs:
           E=/srv/squarespell-quiz/staging/.env
           out="$(bash "$R/gen-env.sh")"; echo "$out"
           [ "$(stat -c %a "$E")" = 600 ] || { echo "::error::env file is not mode 600"; exit 1; }
-          for n in POSTGRES_PASSWORD AUTHENTICATOR_PASSWORD PGRST_JWT_SECRET SUPABASE_SERVICE_ROLE_KEY ENCRYPTION_KEY REPORT_SECRET CRON_SECRET; do
+          for n in POSTGRES_PASSWORD AUTHENTICATOR_PASSWORD PGRST_JWT_SECRET SUPABASE_SERVICE_ROLE_KEY ENCRYPTION_KEY REPORT_SECRET CRON_SECRET AUTH_SECRET; do
             v="$(grep -m1 "^$n=" "$E" | cut -d= -f2-)"
             [ -n "$v" ] || { echo "::error::$n was not generated"; exit 1; }
             if echo "$out" | grep -qF "$v"; then echo "::error::$n value was printed"; exit 1; fi
@@ -649,8 +645,8 @@ jobs:
           node -e "const c=require('crypto'),fs=require('fs');const e=Object.fromEntries(fs.readFileSync('$E','utf8').split('\n').filter(l=>/^[A-Z_]+=/.test(l)).map(l=>[l.split('=')[0],l.slice(l.indexOf('=')+1)]));const [h,p,s]=e.SUPABASE_SERVICE_ROLE_KEY.split('.');if(c.createHmac('sha256',e.PGRST_JWT_SECRET).update(h+'.'+p).digest('base64url')!==s)process.exit(1);if(JSON.parse(Buffer.from(p,'base64url')).role!=='service_role')process.exit(1);console.log('service_role JWT signature verifies')"
           again="$(bash "$R/gen-env.sh")"; echo "$again" | grep -q 'not overwriting'
           printf '%s\n' 'ops@example.test' | bash "$R/set-secret.sh" ACME_EMAIL
-          printf '%s\n' 'pk_test_Y2xlcmsuZXhhbXBsZS5jb20k' | bash "$R/set-secret.sh" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-          printf '%s\n' 'dummy-clerk-secret' | bash "$R/set-secret.sh" CLERK_SECRET_KEY
+          printf '%s\n' 'staging-mailbox@example.test' | bash "$R/set-secret.sh" SMTP_USER
+          printf '%s\n' 'dummy-mailbox-password' | bash "$R/set-secret.sh" SMTP_PASS
           if printf '%s\n' 'sk_live_dummyvalue' | bash "$R/set-secret.sh" STRIPE_SECRET_KEY; then echo "::error::set-secret accepted a live Stripe key"; exit 1; fi
           grep -q '^STRIPE_SECRET_KEY=$' "$E"
           [ "$(stat -c %a "$E")" = 600 ]

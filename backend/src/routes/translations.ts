@@ -111,6 +111,8 @@ publicTranslationsRouter.get('/quiz/:slug/translated', async function(req, res) 
       .single();
 
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+    // Same as the untranslated public quiz: never expose the owner's internal account id.
+    delete (quiz as any).user_id;
 
     var enabledLangs = (quiz.enabled_languages || ['en']) as string[];
     var defaultLang = quiz.default_language || 'en';

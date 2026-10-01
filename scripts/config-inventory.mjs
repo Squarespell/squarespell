@@ -36,6 +36,16 @@ const OWN = {
   NEXT_PUBLIC_CLERK_SIGN_UP_URL: V('Clerk', 'prod (Vercel)', 'yes', 'review (redirect paths)', ''),
   NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: V('Clerk', 'prod (Vercel)', 'yes', 'review', ''),
   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: V('Clerk', 'prod (Vercel)', 'yes', 'review', ''),
+  // Our own sign-in (replaced Clerk on the Hostinger relaunch)
+  AUTH_SECRET: V('Squarespell sign-in', 'prod + staging (Hostinger): signs the 15-minute access tokens', 'yes', 'n/a - generated on the server by deploy.sh / gen-env.sh', 'at least 32 characters; rotating it signs everyone out of their current tab once'),
+  GOOGLE_CLIENT_ID: V('Google Cloud OAuth', 'optional: "Sign in with Google"', 'yes', 'YES - OAuth client with redirect URI https://<API host>/api/auth/google/callback', 'unset = the Google button is hidden'),
+  GOOGLE_CLIENT_SECRET: V('Google Cloud OAuth', 'optional: "Sign in with Google"', 'yes', 'YES - pairs with GOOGLE_CLIENT_ID', ''),
+  // Hostinger mailbox (replaced Resend)
+  SMTP_HOST: V('Hostinger email', 'prod + staging: SMTP server', 'yes', 'no (default smtp.hostinger.com)', ''),
+  SMTP_PORT: V('Hostinger email', 'prod + staging: SMTP port', 'yes', 'no (default 465, implicit TLS)', ''),
+  SMTP_USER: V('Hostinger email', 'prod + staging: the mailbox every email is sent from', 'yes', 'YES - a mailbox on squarespellquiz.com', 'unset = no email is sent'),
+  SMTP_PASS: V('Hostinger email', 'prod + staging: mailbox password', 'yes', 'YES', 'entered with set-secret.sh only'),
+  SMTP_FROM: V('Hostinger email', 'optional: sending address when it is an alias of SMTP_USER', 'yes', 'no', 'unset = SMTP_USER'),
   // Stripe
   STRIPE_SECRET_KEY: V('Stripe', 'prod (Render) - LIVE key of the account shared with the marketplace', 'yes (account shared; restrict key scope)', 'no (same Squarespell Limited account) - consider a restricted key', ''),
   STRIPE_WEBHOOK_SECRET: V('Stripe', 'prod (Render) - endpoint currently DISABLED', 'yes', 'YES if the endpoint URL changes', 'endpoint /api/stripe/webhook'),

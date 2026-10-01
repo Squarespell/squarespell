@@ -1,3 +1,4 @@
+import { getAuthToken } from '@/lib/auth/client';
 /**
  * quizTemplates.ts - frontend catalog of quiz archetypes.
  *
@@ -123,18 +124,13 @@ export type CreateQuizFromUrlInput = {
 };
 
 export async function createQuizFromUrl(input: CreateQuizFromUrlInput): Promise<{ id: string }> {
-  const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+  const API = process.env.NEXT_PUBLIC_API_URL || "https://api.squarespellquiz.com";
 
   async function getAuthHeaders(): Promise<Record<string, string>> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (typeof window !== "undefined") {
-      const clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
-      if (clerk?.session) {
-        try {
-          const token = await clerk.session.getToken();
-          if (token) headers["Authorization"] = "Bearer " + token;
-        } catch {}
-      }
+    {
+      const authToken = await getAuthToken();
+      if (authToken) headers["Authorization"] = "Bearer " + authToken;
     }
     return headers;
   }

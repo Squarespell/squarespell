@@ -8,7 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { api, makeUser, makeQuiz, bearer, waitFor, nextIp } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
-import { outbox, resetOutbox } from '../helpers/resendFake';
+import { outbox, resetOutbox } from '../helpers/mailFake';
 
 beforeEach(async () => { await resetData(); resetOutbox(); });
 

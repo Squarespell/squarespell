@@ -17,7 +17,7 @@ import { useDashboardAuth } from '../../_components/useDashboardAuth';
 import { PageHeader, Card, PageLoading } from '../../_components/PageShell';
 import Link from 'next/link';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface DomainSettings {
   custom_domain: string | null;

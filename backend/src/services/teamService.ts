@@ -98,6 +98,15 @@ export async function getTeamDetails(teamId: string): Promise<any> {
 // ── Member Management ──────────────────────────────────────────────────────
 
 /**
+ * A team has exactly one owner, set when it is created. Admins manage members but can never make anyone the owner
+ * or change the owner's role (that would let an admin take over or lock out the owner). Routes answer 403.
+ */
+export class TeamRuleError extends Error {
+  status = 403;
+  constructor(message: string) { super(message); this.name = 'TeamRuleError'; }
+}
+
+/**
  * Invite a member to a team.
  * Creates a pending invitation (accepted_at is null until they accept).
  */
@@ -107,6 +116,7 @@ export async function inviteMember(
   role: TeamRole,
   invitedBy: string
 ): Promise<any> {
+  if (role === 'owner') throw new TeamRuleError('A team has one owner; invite members as admin, editor or viewer.');
   // For now, we'll generate a temporary user_id based on email
   // In a real system, you'd lookup the user by email or use a separate invite code system
   const user_id = email.replace(/[^a-z0-9]/g, '_').toLowerCase();
@@ -201,6 +211,8 @@ export async function updateMemberRole(
   userId: string,
   newRole: TeamRole
 ): Promise<any> {
+  if (newRole === 'owner') throw new TeamRuleError('A team has one owner; that role cannot be given to another member.');
+  if ((await getUserTeamRole(teamId, userId)) === 'owner') throw new TeamRuleError("The team owner's role cannot be changed.");
   const { data, error } = await supabase
     .from('team_members')
     .update({ role: newRole, updated_at: new Date().toISOString() })

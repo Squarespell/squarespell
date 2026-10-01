@@ -38,7 +38,7 @@ export default function CommercePage() {
   var [connecting, setConnecting] = useState(false);
   var [connectError, setConnectError] = useState('');
 
-  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+  var apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
   useEffect(function () {
     if (!token) return;

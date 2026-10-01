@@ -7,7 +7,7 @@
  *
  *   <div style="width:100%;max-width:1160px;margin:0 auto">
  *     <iframe id="sq-pricing-frame"
- *       src="https://app.squarespell.com/pricing-embed"
+ *       src="https://app.squarespellquiz.com/pricing-embed"
  *       width="100%" height="900" frameborder="0" scrolling="no"
  *       allowtransparency="true" allow="payment"
  *       style="border:none;display:block;background:transparent;transition:height .25s ease">
@@ -15,7 +15,7 @@
  *   </div>
  *   <script>
  *     window.addEventListener('message', function(e) {
- *       if (e.origin !== 'https://app.squarespell.com') return;
+ *       if (e.origin !== 'https://app.squarespellquiz.com') return;
  *       if (e.data && e.data.type === 'sq-price-height')
  *         document.getElementById('sq-pricing-frame').height = e.data.height + 48;
  *     });
@@ -28,10 +28,10 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { APP_URL } from '@/lib/urls';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/lib/auth/client';
 import { PLANS } from '@/lib/planCatalog';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 const APP = APP_URL;
 
 type Billing = 'monthly' | 'yearly';

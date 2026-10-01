@@ -4,7 +4,7 @@ import { isUnsubscribed, buildUnsubscribeHeaders, canSpamFooterHtml } from '../s
 import { applyMergeTags, buildMergeContextFromData, MergeContext } from '../services/mergeTags';
 import { requireAuth, attachUser } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
-import { resendProvider } from '../services/email/resendProvider';
+import { emailProvider } from '../services/email/mailer';
 import { emailQuota } from '../middleware/emailQuota';
 import { limitFor } from '../services/email/limits';
 
@@ -354,6 +354,8 @@ r.post('/campaigns', async (req, res) => {
     mode, source_quiz_id, source_filters,
     trigger_type, trigger_delay_minutes,
   } = req.body;
+  // A campaign may only draw recipients and merge data from one of this account's quizzes.
+  if (source_quiz_id && !(await ownsQuiz(source_quiz_id, tenantId))) return res.status(404).json({ error: 'Quiz not found' });
   const { data, error } = await supabase.from('email_campaigns').insert({
     tenant_id: tenantId, name, subject, from_name, from_email, html,
     mode: mode || 'blast',
@@ -382,6 +384,7 @@ r.patch('/campaigns/:id', async (req, res) => {
     if (req.body[k] !== undefined) updates[k] = req.body[k];
   }
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No valid fields' });
+  if (updates.source_quiz_id && !(await ownsQuiz(updates.source_quiz_id, tenantId))) return res.status(404).json({ error: 'Quiz not found' });
   const { data, error } = await supabase.from('email_campaigns')
     .update(updates).eq('id', req.params.id).eq('tenant_id', tenantId).select().single();
   if (error) return res.status(500).json({ error: error.message });
@@ -471,7 +474,7 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
   if (c.source_quiz_id) {
     const { data: qd } = await supabase.from('quizzes')
       .select('title, slug, questions, outcomes, branding')
-      .eq('id', c.source_quiz_id).single();
+      .eq('id', c.source_quiz_id).eq('user_id', tenantId).single();
     quizData = qd;
   }
   // Batch-fetch leads for all allowed recipients in one query
@@ -480,6 +483,7 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
     const { data: leadRows } = await supabase.from('leads')
       .select('email, name, answers, outcome_id, score')
       .eq('quiz_id', c.source_quiz_id)
+      .eq('user_id', tenantId)
       .in('email', allowed);
     for (const row of leadRows || []) {
       const e = (row.email || '').trim().toLowerCase();
@@ -493,7 +497,7 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
   let totalSent = 0;
 
   // 1. Insert all email_sends rows and build payloads
-  type Prepared = { to: string; sendId: string; payload: Parameters<typeof resendProvider.send>[0] };
+  type Prepared = { to: string; sendId: string; payload: Parameters<typeof emailProvider.send>[0] };
   const prepared: Prepared[] = [];
   for (const to of allowed) {
     const { data: send, error: sendErr } = await supabase.from('email_sends').insert({
@@ -532,10 +536,16 @@ r.post('/campaigns/:id/send', emailQuota, async (req, res) => {
 
     for (var attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const { messageIds } = await resendProvider.sendBatch(chunk.map(p => p.payload));
+        const { messageIds } = await emailProvider.sendBatch(chunk.map(p => p.payload));
         const now = new Date().toISOString();
         for (let j = 0; j < chunk.length; j++) {
           const mid = messageIds[j] || '';
+          if (!mid) {
+            // This address was refused by the mail server; the rest of the batch went out.
+            await supabase.from('email_sends').update({ status: 'failed' }).eq('id', chunk[j].sendId);
+            results.push({ to: chunk[j].to, ok: false });
+            continue;
+          }
           await supabase.from('email_sends').update({
             provider_message_id: mid, status: 'sent', sent_at: now,
           }).eq('id', chunk[j].sendId);
@@ -634,7 +644,7 @@ r.post('/campaigns/:id/test-send', async (req, res) => {
   }
 
   try {
-    const { messageId } = await resendProvider.send({
+    const { messageId } = await emailProvider.send({
       to, from: c.from_email, fromName: c.from_name,
       subject: '[TEST] ' + resolvedSubject, html: resolvedHtml,
       headers: { ...buildUnsubscribeHeaders(to) },
@@ -776,10 +786,12 @@ r.post('/suppressions', async (req, res) => {
 // DELETE /api/emails/suppressions/:id - remove an entry from suppression list
 r.delete('/suppressions/:id', async (req, res) => {
   try {
+    // Only the account's own suppression entries; another tenant's (or the platform's) are never touched.
     const { error } = await supabase
       .from('email_unsubscribes')
       .delete()
-      .eq('id', req.params.id);
+      .eq('id', req.params.id)
+      .eq('tenant_id', req.dbUserId);
 
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
@@ -865,6 +877,7 @@ r.get('/unsplash/search', async (req, res) => {
 
 import { generateAiEmailDesign } from '../services/claudeService';
 import type { AiDesignInput, TemplateOption } from '../services/claudeService';
+import { ownsQuiz } from '../utils/ownership';
 
 r.post('/ai-design', async (req, res) => {
   try {

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
-const REPORT_SECRET = process.env.REPORT_SECRET || process.env.CLERK_SECRET_KEY || 'fallback-secret-key';
+// Production sets REPORT_SECRET. Without one, a random per-process key keeps links unforgeable (they stop working on restart).
+const REPORT_SECRET = process.env.REPORT_SECRET || process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 const TOKEN_VALIDITY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /**

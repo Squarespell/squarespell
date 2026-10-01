@@ -140,13 +140,17 @@ describe('embed runtime', () => {
     const r = await request(await getApp()).get('/api/user/plan').set('Origin', 'https://evil.example');
     expect(r.headers['access-control-allow-origin']).not.toBe('https://evil.example');
   });
-  it('the embed loader script and the vercel embed headers permit framing on customer sites', async () => {
-    const vercel = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../../frontend/vercel.json'), 'utf8'));
-    const embedRule = vercel.headers.find((h: any) => h.source === '/embed/:slug');
-    const csp = embedRule.headers.find((h: any) => h.key === 'Content-Security-Policy').value;
-    expect(csp).toContain('frame-ancestors *');
+  it('the embed loader script and the production proxy embed headers permit framing on customer sites', async () => {
+    const caddy = fs.readFileSync(path.resolve(__dirname, '../../../../infra/hostinger-production/Caddyfile.production'), 'utf8');
+    expect(caddy).toMatch(/header @embedpage Content-Security-Policy "frame-ancestors \*"/);
+    expect(caddy).toContain('rewrite /embed.js /embed/quiz-embed.js');
+    // Per-visitor rate limits need the visitor's IP from the edge: the private proxy must trust the private network.
+    expect(caddy).toMatch(/trusted_proxies static private_ranges/);
     expect(fs.existsSync(path.resolve(__dirname, '../../../../frontend/public/embed/quiz-embed.js'))).toBe(true);
-    expect(vercel.rewrites).toContainEqual({ source: '/embed.js', destination: '/embed/quiz-embed.js' });
+    // The app's own headers keep every other page out of foreign frames but leave the embeddable pages alone.
+    const nextConfig = fs.readFileSync(path.resolve(__dirname, '../../../../frontend/next.config.js'), 'utf8');
+    expect(nextConfig).toContain("frame-ancestors 'self'");
+    expect(nextConfig).toMatch(/\(\?!embed\/\|embed\\\\\.js\|quiz\/\|q\/\|pricing-embed\)/);
   });
 });
 

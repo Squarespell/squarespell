@@ -21,7 +21,7 @@
 import { useEffect, useState } from 'react';
 import { DASHBOARD_COLORS as C } from './dashboardColors';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 // -----------------------------------------------------------------------
 // Types
@@ -77,7 +77,7 @@ const closeIcon = (
 // -----------------------------------------------------------------------
 
 interface TopBannerProps {
-  /** Auth token from Clerk for API calls */
+  /** Access token for API calls */
   token: string | null;
   /** Optional static announcement to show (lowest priority) */
   announcement?: { message: string; ctaLabel?: string; ctaHref?: string; dismissKey: string } | null;

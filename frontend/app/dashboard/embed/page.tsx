@@ -18,7 +18,7 @@ import { EmptyState, PrimaryButton, Pill, PageLoading } from '../_components/Pag
 import { QuizCover } from '../_components/QuizCover';
 import { embedSnippet, embedScriptUrl, publicQuizUrl } from '@/lib/urls';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type Quiz = { id: string; title: string; slug: string; status: 'live' | 'draft'; created_at?: string };
 type EmbedMode = 'inline' | 'popup' | 'tab';

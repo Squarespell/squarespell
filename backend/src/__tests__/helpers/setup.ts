@@ -2,13 +2,12 @@
  * Vitest setup for the hermetic integration suite.
  *
  * Every value below is a LOCAL TEST FIXTURE that isolates external services
- * (Supabase, Clerk, Stripe, Resend, Anthropic). None is a real credential and
+ * (Supabase, Stripe, the SMTP mailbox, Anthropic). None is a real credential and
  * none is used to hide a product failure: the code under test still runs its
  * real verification/parsing/limit logic against local fakes.
  */
 import crypto from 'crypto';
 import { vi, beforeEach } from 'vitest';
-import { PUBLIC_PEM } from './clerkFake';
 import { startAnthropicStub } from './anthropicStub';
 import { createFakeSupabase } from './fakeSupabase';
 import { getDb } from './db';
@@ -19,13 +18,11 @@ process.env.NODE_ENV = 'test';
 process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL || 'error';
 set('SUPABASE_URL', 'http://127.0.0.1:9/fixture-supabase');
 set('SUPABASE_SERVICE_ROLE_KEY', 'fixture-service-role');
-set('CLERK_SECRET_KEY', 'sk_test_local_fixture');
-process.env.CLERK_JWT_KEY = PUBLIC_PEM;
+set('AUTH_SECRET', crypto.randomBytes(32).toString('hex'));
 set('STRIPE_SECRET_KEY', 'sk_test_local_fixture');
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('hex');
-process.env.CLERK_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('base64');
-set('RESEND_API_KEY', 're_local_fixture');
-process.env.RESEND_WEBHOOK_SECRET = 'whsec_' + crypto.randomBytes(24).toString('base64');
+set('SMTP_USER', 'hello@quiz-mail.example');
+set('SMTP_PASS', 'local-smtp-fixture');
 set('ANTHROPIC_API_KEY', 'sk-ant-local-fixture');
 set('ENCRYPTION_KEY', crypto.randomBytes(32).toString('hex'));
 set('REPORT_SECRET', 'local-report-secret');
@@ -55,10 +52,10 @@ const lazyDb: any = { query: async (...a: any[]) => (await getDb()).query(...(a 
 const fake = createFakeSupabase(lazyDb);
 
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => fake }));
-vi.mock('resend', async () => ({ Resend: (await import('./resendFake')).FakeResend }));
-vi.mock('@clerk/clerk-sdk-node', async () => ({
-  clerkClient: { users: { getUser: async (id: string) => (await import('./clerkDirectory')).getClerkUser(id) } },
-}));
+vi.mock('nodemailer', async () => {
+  const f = await import('./mailFake');
+  return { default: { createTransport: f.createTransport }, createTransport: f.createTransport };
+});
 vi.mock('stripe', async (importOriginal) => {
   const mod: any = await importOriginal();
   const Real = mod.default ?? mod;

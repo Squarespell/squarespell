@@ -3,11 +3,11 @@
  *
  * This is a minimal, SSR-rendered quiz page optimized for embedding in iframes.
  * It fetches quiz data server-side and renders a clean quiz interface with zero
- * Clerk/Supabase/auth overhead.
+ * sign-in/database client overhead.
  *
  * Key features:
  * - Server-side quiz data fetching
- * - No Clerk provider or authentication
+ * - No sign-in provider or authentication
  * - Minimal CSS-in-JS to keep bundle small
  * - Client-side handles: answer selection, form submission, postMessage to parent
  * - Uses quiz branding (colors, fonts) from the quiz data or query params
@@ -20,8 +20,9 @@
 
 import { Suspense } from 'react';
 import EmbedQuizClient from './EmbedQuizClient';
+import { safeColor, brandFontStack } from '@/lib/safeCss';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface QuizOption {
   id: string;
@@ -184,14 +185,11 @@ export default async function EmbedPage({ params }: { params: { slug: string } }
 
   // Derive branding from quiz settings (matches the main /quiz/[slug] logic)
   const brand = quiz.branding;
-  const brandBg = brand?.colors?.background || '#ffffff';
-  const brandText = brand?.colors?.text || '#1a1a1a';
-  const brandPrimary =
-    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor || '#0a0a0a';
-  const brandFont =
-    brand?.font_family && brand.font_family !== 'sans-serif'
-      ? `'${brand.font_family}', system-ui, sans-serif`
-      : "'Inter', system-ui, sans-serif";
+  const brandBg = safeColor(brand?.colors?.background, '#ffffff');
+  const brandText = safeColor(brand?.colors?.text, '#1a1a1a');
+  const brandPrimary = safeColor(
+    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor, '#0a0a0a');
+  const brandFont = brandFontStack(brand?.font_family);
 
   return (
     <Suspense fallback={<ErrorView />}>

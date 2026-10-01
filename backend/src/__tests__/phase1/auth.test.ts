@@ -1,21 +1,40 @@
 /**
- * Phase 1 - sign-up / sign-in / sign-out / session expiry at the API boundary.
- * Clerk itself (hosted UI, OAuth) cannot run hermetically; what the API owns is
- * verifying the Clerk session JWT and mapping it to a database user.
+ * Phase 1 - our own sign-in (routes/auth.ts + middleware/auth.ts): sign-up, sign-in, sign-out, sessions, email
+ * links, accounts moved from Clerk, rate limits and the admin rule. Everything runs against the real routes, the
+ * real password hashing and token signing, PGlite and the local mailbox fake.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { api, makeUser, bearer } from '../helpers/testkit';
-import { signToken } from '../helpers/clerkFake';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { api, makeUser, bearer, nextIp } from '../helpers/testkit';
+import { signToken } from '../helpers/authFake';
 import { resetData, sql } from '../helpers/db';
-import { clerkDirectory, clerkBehaviour } from '../helpers/clerkDirectory';
 import { dbFault } from '../helpers/fakeSupabase';
 import { getApp } from '../helpers/testkit';
 import { listRoutes } from '../helpers/routes';
+import { outbox, resetOutbox } from '../helpers/mailFake';
+import { hashPassword } from '../../services/auth/crypto';
+import { isAdminUser } from '../../routes/allRoutes';
 
-describe('session JWT verification (requireAuth)', () => {
+const PASSWORD = 'correct horse battery';
+
+function sessionCookie(res: any): string {
+  const all: string[] = [].concat(res.headers['set-cookie'] || []);
+  const c = all.find((x) => x.startsWith('sq_session=') && !/Max-Age=0/.test(x));
+  return c ? c.split(';')[0] : '';
+}
+
+function linkToken(mail: any): string {
+  const m = /token=([A-Za-z0-9_\-%]+)/.exec(String(mail?.text || mail?.html || ''));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+async function signup(email: string, password = PASSWORD, ip = nextIp()) {
+  return (await api()).post('/api/auth/signup').set('x-forwarded-for', ip).send({ email, password, firstName: 'Ada' });
+}
+
+describe('access tokens (requireAuth)', () => {
   beforeEach(resetData);
 
-  it('valid session token -> 200 and the request is scoped to that user', async () => {
+  it('valid token -> 200 and the request is scoped to that user', async () => {
     const u = await makeUser();
     const r = await (await api()).get('/api/quizzes').set(bearer(u));
     expect(r.status).toBe(200);
@@ -33,26 +52,64 @@ describe('session JWT verification (requireAuth)', () => {
     expect(r.status).toBe(401);
   });
 
-  it('expired token (session expiry) -> 401 with code token_expired so the client can refresh/sign in again', async () => {
+  it('expired token -> 401 token_expired so the client fetches a fresh one', async () => {
     const u = await makeUser();
-    const expired = signToken(u.clerkId, { issuedAtSec: Math.floor(Date.now() / 1000) - 4000, notBeforeSec: Math.floor(Date.now() / 1000) - 4000, expiresInSec: -3600 });
-    const r = await (await api()).get('/api/quizzes').set('Authorization', `Bearer ${expired}`);
+    const r = await (await api()).get('/api/quizzes').set('Authorization', `Bearer ${signToken(u.clerkId, { uid: u.id, expiresInSec: -60 })}`);
     expect(r.status).toBe(401);
     expect(r.body.code).toBe('token_expired');
   });
 
-  it('token signed by a different key (forged) -> 401 token_invalid', async () => {
+  it('token signed with another secret (forged) -> 401 token_invalid', async () => {
     const u = await makeUser();
-    const forged = signToken(u.clerkId, { wrongKey: true });
-    const r = await (await api()).get('/api/quizzes').set('Authorization', `Bearer ${forged}`);
+    const r = await (await api()).get('/api/quizzes').set('Authorization', `Bearer ${signToken(u.clerkId, { wrongKey: true })}`);
     expect(r.status).toBe(401);
     expect(r.body.code).toBe('token_invalid');
+  });
+
+  it('a token with alg "none" or an edited payload is rejected', async () => {
+    const u = await makeUser();
+    const [h, p, s] = u.token.split('.');
+    const none = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url') + '.' + p + '.';
+    const claims = JSON.parse(Buffer.from(p, 'base64url').toString());
+    const edited = h + '.' + Buffer.from(JSON.stringify({ ...claims, sub: 'someone_else' })).toString('base64url') + '.' + s;
+    for (const t of [none, edited]) {
+      const r = await (await api()).get('/api/quizzes').set('Authorization', `Bearer ${t}`);
+      expect(r.status).toBe(401);
+    }
   });
 
   it('garbage token -> 401 token_invalid (not a 500)', async () => {
     const r = await (await api()).get('/api/quizzes').set('Authorization', 'Bearer abc.def.ghi');
     expect(r.status).toBe(401);
     expect(r.body.code).toBe('token_invalid');
+  });
+
+  it('a valid token for an account that no longer exists -> 401 account_not_found (no account is created)', async () => {
+    const r = await (await api()).get('/api/user/plan').set('Authorization', `Bearer ${signToken('usr_deleted')}`);
+    expect(r.status).toBe(401);
+    expect(r.body.code).toBe('account_not_found');
+    expect(await sql(`select 1 from users where clerk_user_id='usr_deleted'`)).toHaveLength(0);
+  });
+
+  it('a database outage returns 503 db_unavailable instead of continuing without a user', async () => {
+    const u = await makeUser();
+    dbFault.on = true;
+    try {
+      const r = await (await api()).get('/api/user/plan').set(bearer(u));
+      expect(r.status).toBe(503);
+      expect(r.body.code).toBe('db_unavailable');
+    } finally { dbFault.on = false; }
+  });
+
+  it('without AUTH_SECRET the API answers 503 auth_provider_unavailable (never 200)', async () => {
+    const u = await makeUser();
+    const saved = process.env.AUTH_SECRET;
+    delete process.env.AUTH_SECRET;
+    try {
+      const r = await (await api()).get('/api/quizzes').set(bearer(u));
+      expect(r.status).toBe(503);
+      expect(r.body.code).toBe('auth_provider_unavailable');
+    } finally { process.env.AUTH_SECRET = saved; }
   });
 
   it('a signed-out client (no token) cannot reach any authenticated route', async () => {
@@ -66,96 +123,207 @@ describe('session JWT verification (requireAuth)', () => {
   });
 });
 
-describe('Clerk verification outage', () => {
-  it('when the JWKS endpoint is unreachable the API answers 503 auth_provider_unavailable (never 200, never a generic 401)', async () => {
-    const saved = { key: process.env.CLERK_JWT_KEY, url: process.env.CLERK_API_URL };
-    delete process.env.CLERK_JWT_KEY;
-    process.env.CLERK_API_URL = 'http://127.0.0.1:9'; // closed local port: no live Clerk call is made
-    try {
-      const token = signToken('user_outage_probe');
-      const r = await (await api()).get('/api/quizzes').set('Authorization', `Bearer ${token}`);
-      expect(r.status).toBe(503);
-      expect(r.body.code).toBe('auth_provider_unavailable');
-    } finally {
-      process.env.CLERK_JWT_KEY = saved.key;
-      if (saved.url === undefined) delete process.env.CLERK_API_URL; else process.env.CLERK_API_URL = saved.url;
+describe('sign-up, sign-in, session and sign-out', () => {
+  beforeEach(async () => { await resetData(); resetOutbox(); });
+
+  it('sign-up creates one account, signs in with a secure HttpOnly cookie and emails a confirmation link', async () => {
+    const r = await signup('Ada@Customer.Example');
+    expect(r.status).toBe(201);
+    expect(r.body.user).toMatchObject({ email: 'ada@customer.example', firstName: 'Ada', emailVerified: false });
+    const set = [].concat(r.headers['set-cookie']).join('\n');
+    expect(set).toMatch(/sq_session=[^;]+; Path=\/api\/auth; Max-Age=2592000; HttpOnly; SameSite=Lax/);
+    const rows = await sql<any>(`select clerk_user_id, email, plan, password_hash, email_verified_at from users`);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].clerk_user_id).toMatch(/^usr_[0-9a-f]{24}$/);
+    expect(rows[0].plan).toBe('free');
+    expect(rows[0].password_hash).toMatch(/^scrypt\$32768\$8\$1\$/);
+    expect(rows[0].password_hash).not.toContain(PASSWORD);
+    expect(rows[0].email_verified_at).toBeNull();
+    const stored = await sql<any>(`select token_hash from auth_sessions`);
+    expect(stored).toHaveLength(1);
+    expect(sessionCookie(r)).not.toContain(stored[0].token_hash);
+    await new Promise((res) => setTimeout(res, 50));
+    expect(outbox.some((m) => m.subject === 'Confirm your email for Squarespell Quiz' && String(m.to) === 'ada@customer.example')).toBe(true);
+  });
+
+  it('the session cookie gives a short-lived access token that works on the API; sign-out ends it', async () => {
+    const r = await signup('ada@customer.example');
+    const c = sessionCookie(r);
+    const s = await (await api()).get('/api/auth/session').set('Cookie', c);
+    expect(s.status).toBe(200);
+    expect(s.headers['cache-control']).toBe('no-store');
+    expect(s.body.user.email).toBe('ada@customer.example');
+    expect(s.body.expiresAt - Date.now()).toBeLessThanOrEqual(15 * 60 * 1000);
+    const q = await (await api()).get('/api/quizzes').set('Authorization', 'Bearer ' + s.body.token);
+    expect(q.status).toBe(200);
+
+    const out = await (await api()).post('/api/auth/logout').set('Cookie', c);
+    expect(out.status).toBe(200);
+    expect([].concat(out.headers['set-cookie']).join('\n')).toMatch(/sq_session=; Path=\/api\/auth; Max-Age=0/);
+    const after = await (await api()).get('/api/auth/session').set('Cookie', c);
+    expect(after.status).toBe(401);
+  });
+
+  it('a second account for the same email (any case) is refused', async () => {
+    await signup('ada@customer.example');
+    const r = await signup('ADA@customer.example');
+    expect(r.status).toBe(409);
+    expect(r.body.code).toBe('account_exists');
+    expect(await sql(`select 1 from users`)).toHaveLength(1);
+  });
+
+  it('sign-up validates the email and password length', async () => {
+    expect((await signup('not-an-email')).body.code).toBe('invalid_email');
+    expect((await signup('a@customer.example', 'short')).body.code).toBe('weak_password');
+    expect(await sql(`select 1 from users`)).toHaveLength(0);
+  });
+
+  it('sign-in works with the right password (email in any case) and gives one generic error otherwise', async () => {
+    await signup('ada@customer.example');
+    const ok = await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: ' ADA@customer.example ', password: PASSWORD });
+    expect(ok.status).toBe(200);
+    expect(sessionCookie(ok)).toMatch(/^sq_session=/);
+    const wrong = await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example', password: 'wrong password!!' });
+    const unknown = await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: 'nobody@customer.example', password: PASSWORD });
+    expect(wrong.status).toBe(401);
+    expect(unknown.status).toBe(401);
+    expect(wrong.body).toEqual(unknown.body);
+    expect(sessionCookie(wrong)).toBe('');
+  });
+
+  it('repeated wrong passwords for one account are rate limited', async () => {
+    await signup('ada@customer.example');
+    let last: any;
+    for (let i = 0; i < 11; i++) {
+      last = await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example', password: 'wrong password ' + i });
     }
+    expect(last.status).toBe(429);
+    const right = await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example', password: PASSWORD });
+    expect(right.status).toBe(429);
+  });
+
+  it('an expired or revoked session cookie is signed out', async () => {
+    const r = await signup('ada@customer.example');
+    const c = sessionCookie(r);
+    await sql(`update auth_sessions set expires_at = now() - interval '1 minute'`);
+    expect((await (await api()).get('/api/auth/session').set('Cookie', c)).status).toBe(401);
+    await sql(`update auth_sessions set expires_at = now() + interval '1 day', revoked_at = now()`);
+    expect((await (await api()).get('/api/auth/session').set('Cookie', c)).status).toBe(401);
   });
 });
 
-describe('sign-up: first authenticated request creates exactly one database user (attachUser)', () => {
-  beforeEach(resetData);
-  afterEach(() => { dbFault.on = false; clerkBehaviour.fail = false; });
+describe('email links: confirm address, forgot password, accounts moved from Clerk', () => {
+  beforeEach(async () => { await resetData(); resetOutbox(); });
 
-  it('a brand-new Clerk user gets a database row on first request (plan free, email from Clerk)', async () => {
-    const clerkId = 'user_signup_1';
-    clerkDirectory[clerkId] = 'newuser@quiz-test.example';
-    const r = await (await api()).get('/api/user/plan').set('Authorization', `Bearer ${signToken(clerkId)}`);
+  it('the confirmation link marks the address confirmed and works only once', async () => {
+    await signup('ada@customer.example');
+    await new Promise((res) => setTimeout(res, 50));
+    const token = linkToken(outbox.find((m) => m.subject.startsWith('Confirm your email')));
+    expect(token).not.toBe('');
+    expect((await (await api()).post('/api/auth/verify-email').send({ token })).status).toBe(200);
+    expect((await sql<any>(`select email_verified_at from users`))[0].email_verified_at).not.toBeNull();
+    const again = await (await api()).post('/api/auth/verify-email').send({ token });
+    expect(again.status).toBe(400);
+    expect(again.body.code).toBe('invalid_token');
+  });
+
+  it('forgot password answers the same for unknown emails and sends a working reset link for real ones', async () => {
+    await signup('ada@customer.example');
+    resetOutbox();
+    const unknown = await (await api()).post('/api/auth/forgot-password').set('x-forwarded-for', nextIp()).send({ email: 'nobody@customer.example' });
+    const known = await (await api()).post('/api/auth/forgot-password').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example' });
+    expect(unknown.body).toEqual(known.body);
+    expect(outbox).toHaveLength(1);
+    expect(outbox[0].subject).toBe('Reset your Squarespell Quiz password');
+
+    const token = linkToken(outbox[0]);
+    const weak = await (await api()).post('/api/auth/reset-password').set('x-forwarded-for', nextIp()).send({ token, password: 'short' });
+    expect(weak.body.code).toBe('weak_password');
+    const r = await (await api()).post('/api/auth/reset-password').set('x-forwarded-for', nextIp()).send({ token, password: 'a brand new passphrase' });
     expect(r.status).toBe(200);
-    const rows = await sql(`select clerk_user_id, email, plan from users where clerk_user_id=$1`, [clerkId]);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ email: 'newuser@quiz-test.example', plan: 'free' });
+    expect(r.body.user.emailVerified).toBe(true);
+    // The old password stops working, the new one works, and the link cannot be reused.
+    expect((await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example', password: PASSWORD })).status).toBe(401);
+    expect((await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example', password: 'a brand new passphrase' })).status).toBe(200);
+    expect((await (await api()).post('/api/auth/reset-password').set('x-forwarded-for', nextIp()).send({ token, password: 'another passphrase!' })).status).toBe(400);
   });
 
-  it('the dashboard fires several calls at once on first login: all succeed and only one user row is created', async () => {
-    const clerkId = 'user_signup_race';
-    clerkDirectory[clerkId] = 'race@quiz-test.example';
-    const h = { Authorization: `Bearer ${signToken(clerkId)}` };
-    const app = await api();
-    const results = await Promise.all([
-      app.get('/api/user/plan').set(h), app.get('/api/quizzes').set(h), app.get('/api/leads').set(h),
-      app.get('/api/user/brand-kit').set(h), app.get('/api/dashboard/activity').set(h),
-    ]);
-    expect(results.map((r) => r.status)).toEqual([200, 200, 200, 200, 200]);
-    const rows = await sql(`select id from users where clerk_user_id=$1`, [clerkId]);
-    expect(rows).toHaveLength(1);
+  it('resetting the password signs out every other browser', async () => {
+    const first = await signup('ada@customer.example');
+    const oldCookie = sessionCookie(first);
+    resetOutbox();
+    await (await api()).post('/api/auth/forgot-password').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example' });
+    await (await api()).post('/api/auth/reset-password').set('x-forwarded-for', nextIp()).send({ token: linkToken(outbox[0]), password: 'a brand new passphrase' });
+    expect((await (await api()).get('/api/auth/session').set('Cookie', oldCookie)).status).toBe(401);
   });
 
-  it('a database outage during sign-in returns 503 db_unavailable instead of silently continuing without a user (fail-open)', async () => {
-    const clerkId = 'user_outage_db';
-    clerkDirectory[clerkId] = 'outage@quiz-test.example';
-    dbFault.on = true;
-    const r = await (await api()).get('/api/user/plan').set('Authorization', `Bearer ${signToken(clerkId)}`);
-    expect(r.status).toBe(503);
-    expect(r.body.code).toBe('db_unavailable');
+  it('an expired reset link is refused', async () => {
+    await signup('ada@customer.example');
+    resetOutbox();
+    await (await api()).post('/api/auth/forgot-password').set('x-forwarded-for', nextIp()).send({ email: 'ada@customer.example' });
+    await sql(`update auth_tokens set expires_at = now() - interval '1 minute' where purpose='reset_password'`);
+    const r = await (await api()).post('/api/auth/reset-password').set('x-forwarded-for', nextIp()).send({ token: linkToken(outbox[0]), password: 'a brand new passphrase' });
+    expect(r.status).toBe(400);
   });
 
-  it('Clerk Backend API being down does not block sign-in (email is filled in later); user row is still created', async () => {
-    const clerkId = 'user_clerk_down';
-    clerkBehaviour.fail = true;
-    const r = await (await api()).get('/api/user/plan').set('Authorization', `Bearer ${signToken(clerkId)}`);
-    expect(r.status).toBe(200);
-    expect(await sql(`select 1 from users where clerk_user_id=$1`, [clerkId])).toHaveLength(1);
+  it('an account from Clerk (no password yet) keeps its id and data: signing in emails a set-password link', async () => {
+    const legacy = await makeUser({ email: 'Owner@Business.Example' });
+    const quizRows = await sql<any>(`insert into quizzes (user_id, title, slug, status, questions, outcomes) values ($1,'Old quiz','old-quiz-1','live','[]','[]') returning id`, [legacy.id]);
+    const r = await (await api()).post('/api/auth/login').set('x-forwarded-for', nextIp()).send({ email: 'owner@business.example', password: 'anything at all' });
+    expect(r.status).toBe(409);
+    expect(r.body.code).toBe('password_not_set');
+    expect(outbox).toHaveLength(1);
+    expect(outbox[0].subject).toBe('Set your Squarespell Quiz password');
+
+    const set = await (await api()).post('/api/auth/reset-password').set('x-forwarded-for', nextIp()).send({ token: linkToken(outbox[0]), password: 'my new passphrase' });
+    expect(set.status).toBe(200);
+    const s = await (await api()).get('/api/auth/session').set('Cookie', sessionCookie(set));
+    expect(s.status).toBe(200);
+    // Same account: same users.id, same sign-in identity, and the old quiz is still theirs.
+    const rows = await sql<any>(`select id, clerk_user_id from users`);
+    expect(rows).toEqual([{ id: legacy.id, clerk_user_id: legacy.clerkId }]);
+    const quizzes = await (await api()).get('/api/quizzes').set('Authorization', 'Bearer ' + s.body.token);
+    expect(quizzes.body.map((q: any) => q.id)).toContain(quizRows[0].id);
   });
 });
 
-describe('Clerk webhook (svix signature) - user.created', () => {
+describe('admin access and redirects', () => {
   beforeEach(resetData);
-  async function signed(body: any, secret = process.env.CLERK_WEBHOOK_SECRET!) {
-    const { Webhook } = await import('svix');
-    const payload = JSON.stringify(body);
-    const id = 'msg_' + Math.random().toString(36).slice(2);
-    const ts = new Date();
-    const sig = new Webhook(secret).sign(id, ts, payload);
-    return { payload, headers: { 'svix-id': id, 'svix-timestamp': String(Math.floor(ts.getTime() / 1000)), 'svix-signature': sig, 'content-type': 'application/json' } };
-  }
-  it('valid signature creates the user once; replaying the same event is idempotent', async () => {
-    const evt = { type: 'user.created', data: { id: 'user_wh_1', email_addresses: [{ email_address: 'wh1@quiz-test.example' }], first_name: 'Wh' } };
-    const s = await signed(evt);
-    const a = await (await api()).post('/api/clerk/webhook').set(s.headers).send(s.payload);
-    const b = await (await api()).post('/api/clerk/webhook').set(s.headers).send(s.payload);
-    expect(a.status).toBe(200); expect(b.status).toBe(200);
-    expect(await sql(`select 1 from users where clerk_user_id='user_wh_1'`)).toHaveLength(1);
+
+  it('admin needs a listed email that is confirmed; letter case does not matter', () => {
+    expect(isAdminUser({ email: 'Admin@Example.Test', email_verified_at: new Date().toISOString() })).toBe(true);
+    expect(isAdminUser({ email: 'admin@example.test', email_verified_at: null })).toBe(false);
+    expect(isAdminUser({ email: 'someone@example.test', email_verified_at: new Date().toISOString() })).toBe(false);
   });
-  it('bad signature -> 400 and no user is created', async () => {
-    const evt = { type: 'user.created', data: { id: 'user_wh_bad', email_addresses: [{ email_address: 'x@quiz-test.example' }] } };
-    const s = await signed(evt, 'whsec_' + Buffer.from('some-other-secret-value-1234').toString('base64'));
-    const r = await (await api()).post('/api/clerk/webhook').set(s.headers).send(s.payload);
-    expect(r.status).toBe(400);
-    expect(await sql(`select 1 from users where clerk_user_id='user_wh_bad'`)).toHaveLength(0);
+
+  it('an unconfirmed account using an admin address gets 403 from the admin API', async () => {
+    const u = await makeUser({ email: 'admin@example.test' });
+    const r = await (await api()).get('/api/admin/metrics').set(bearer(u));
+    expect(r.status).toBe(403);
+    await sql(`update users set email_verified_at = now() where id = $1`, [u.id]);
+    const ok = await (await api()).get('/api/admin/metrics').set(bearer(u));
+    expect(ok.status).toBe(200);
   });
-  it('missing svix headers -> 400', async () => {
-    const r = await (await api()).post('/api/clerk/webhook').set('content-type', 'application/json').send('{"type":"user.created"}');
-    expect(r.status).toBe(400);
+
+  it('Google sign-in only redirects back to paths on our own site', async () => {
+    const saved = { id: process.env.GOOGLE_CLIENT_ID, secret: process.env.GOOGLE_CLIENT_SECRET };
+    process.env.GOOGLE_CLIENT_ID = 'client.apps.googleusercontent.com';
+    process.env.GOOGLE_CLIENT_SECRET = 'local-google-fixture';
+    try {
+      for (const next of ['https://evil.example/x', '//evil.example', '/\\evil.example']) {
+        const r = await (await api()).get('/api/auth/google/start').query({ next });
+        expect(r.status).toBe(302);
+        expect(r.headers.location).toMatch(/^https:\/\/accounts\.google\.com\//);
+        expect(decodeURIComponent([].concat(r.headers['set-cookie']).join(''))).toContain('|/dashboard.');
+      }
+      // A callback without the matching state cookie is refused.
+      const cb = await (await api()).get('/api/auth/google/callback').query({ state: 'x', code: 'y' });
+      expect(cb.status).toBe(302);
+      expect(cb.headers.location).toMatch(/\/sign-in\?error=google_failed$/);
+    } finally {
+      process.env.GOOGLE_CLIENT_ID = saved.id; process.env.GOOGLE_CLIENT_SECRET = saved.secret;
+      if (saved.id === undefined) delete process.env.GOOGLE_CLIENT_ID;
+      if (saved.secret === undefined) delete process.env.GOOGLE_CLIENT_SECRET;
+    }
   });
 });

@@ -4,6 +4,13 @@
 {
 	admin off
 	auto_https off
+	# The public edge (another Caddy on the private Docker network) sets X-Forwarded-For to the visitor's IP. Trust it
+	# only from private addresses, so the API's per-visitor rate limits see the real visitor. Without this every
+	# request looked like it came from the edge container and all visitors shared one rate-limit bucket. A visitor
+	# cannot spoof the header: the edge itself does not trust what arrives from the internet.
+	servers {
+		trusted_proxies static private_ranges
+	}
 }
 
 http://{$PROD_APP_HOST} {

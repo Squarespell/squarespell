@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/lib/auth/client';
 
 /**
  * True when the one-button connect feature is enabled on the server (CONNECT_ENABLED). Asked once per page load and cached.
@@ -20,7 +20,7 @@ export function useConnectEnabled(): boolean {
       try {
         const token = await getToken();
         if (!token) return false;
-        const base = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+        const base = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
         const r = await fetch(base + '/api/connect/config', { headers: { Authorization: 'Bearer ' + token } });
         const d = r.ok ? await r.json() : { enabled: false };
         cached = !!(d && d.enabled);

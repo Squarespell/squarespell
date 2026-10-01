@@ -2,10 +2,11 @@ import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
 import { isUuid } from '../utils/ownership';
+import { verifyUnsubscribeSignature } from '../services/unsubscribe';
 
 const r = Router();
 
-const APP_URL = process.env.FRONTEND_URL || 'https://app.squarespell.com';
+const APP_URL = process.env.FRONTEND_URL || 'https://app.squarespellquiz.com';
 
 /** Escape HTML entities to prevent XSS */
 function escHtml(s: string): string {
@@ -55,7 +56,7 @@ r.get('/unsubscribe', async (req, res) => {
   }
 
   // Show confirmation form
-  const formAction = `${process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com'}/api/public/unsubscribe`;
+  const formAction = `${process.env.BACKEND_URL || process.env.API_URL || 'https://api.squarespellquiz.com'}/api/public/unsubscribe`;
   res.send(buildPage('Unsubscribe', `
     <p>Unsubscribe <strong>${escHtml(email)}</strong> from all Squarespell emails?</p>
     <form method="POST" action="${escHtml(formAction)}">
@@ -147,6 +148,8 @@ r.post('/unsubscribe', async (req, res) => {
 r.get('/unsubscribe/status', async (req, res) => {
   const email = ((req.query.email as string) || '').trim().toLowerCase();
   if (!email) return res.json({ unsubscribed: false });
+  // Only the holder of a link emailed to this address may see its status (no lookups of other people's addresses).
+  if (!verifyUnsubscribeSignature(email, req.query.sig)) return res.status(403).json({ error: 'Invalid or missing link signature' });
 
   const { data } = await supabase
     .from('email_unsubscribes')
@@ -165,6 +168,9 @@ r.get('/unsubscribe/status', async (req, res) => {
 r.post('/resubscribe', async (req, res) => {
   const email = (req.body?.email || '').trim().toLowerCase();
   if (!email) return res.status(400).json({ error: 'email required' });
+  // Subscribing an address again needs the signed link that was emailed to it; otherwise anyone could undo
+  // someone else's unsubscribe.
+  if (!verifyUnsubscribeSignature(email, req.body?.sig)) return res.status(403).json({ error: 'Invalid or missing link signature' });
 
   const { error } = await supabase
     .from('email_unsubscribes')
@@ -207,7 +213,7 @@ function buildPage(title: string, body: string, showForm: boolean): string {
     <h1>${title}</h1>
     <div>${body}</div>
     <div class="footer">
-      <a href="https://squarespell.com">squarespell.com</a>
+      <a href="https://squarespellquiz.com">squarespellquiz.com</a>
     </div>
   </div>
 </body>

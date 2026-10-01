@@ -1,10 +1,10 @@
 import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
-import { Resend } from 'resend';
+import { getMailer } from './email/mailer';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterHtml } from './unsubscribe';
 import { applyMergeTags, buildMergeContextFromData } from './mergeTags';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = getMailer(); // Hostinger SMTP; null when email is not configured
 
 function appendUtm(url: string, campaign: string): string {
   if (!url) return url;

@@ -9,6 +9,7 @@ import { getCustomCss, saveCustomCss } from '../services/customCss';
 import { logEmbedPerformance, getEmbedPerformanceStats, generateLightweightLoader } from '../services/embedPerformance';
 import { validateShowConditions } from '../services/skipLogic';
 import { QUESTION_TYPES, validateQuestionAnswer } from '../services/questionTypes';
+import { ownsQuiz } from '../utils/ownership';
 
 export var extendedFeaturesRouter = Router();
 export var publicExtendedRouter = Router();
@@ -18,6 +19,7 @@ export var publicExtendedRouter = Router();
 // GET /api/quizzes/:id/custom-css
 extendedFeaturesRouter.get('/quizzes/:id/custom-css', requireAuth, attachUser, async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsQuiz(req.params.id, req.dbUserId))) return res.status(404).json({ error: 'Quiz not found' });
     var css = await getCustomCss(req.params.id);
     res.json({ css: css });
   } catch (err: any) { res.status(500).json({ error: err.message }); }

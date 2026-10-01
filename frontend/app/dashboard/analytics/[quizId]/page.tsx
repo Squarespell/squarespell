@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import styles from './analytics.module.css';
+import { getAuthToken } from '@/lib/auth/client';
 export default function AnalyticsPage({ params }: { params: { quizId: string } }) {
   const router = useRouter();
   const [quiz, setQuiz] = useState<any>(null);
@@ -62,10 +63,8 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
 
   function exportCsv() {
     setExporting(true);
-    var apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
-    var clerk = typeof window !== 'undefined' ? (window as any).Clerk : null;
-    var tokenPromise = clerk && clerk.session ? clerk.session.getToken() : Promise.resolve('');
-    tokenPromise.then(function(token: string) {
+    var apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
+    getAuthToken().then(function(token: string) {
       var headers: Record<string, string> = {};
       if (token) headers['Authorization'] = 'Bearer ' + token;
       return fetch(apiUrl + '/api/quizzes/' + params.quizId + '/leads/export', { headers: headers });

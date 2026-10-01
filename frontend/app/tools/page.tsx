@@ -8,8 +8,8 @@
  * plugins, services) will be added.
  *
  * Hosted at:
- *   - https://squarespell.com/tools
- *   - https://app.squarespell.com/tools
+ *   - https://squarespellquiz.com/tools
+ *   - https://app.squarespellquiz.com/tools
  */
 
 import Link from 'next/link';
@@ -48,7 +48,7 @@ export default function ToolsHub() {
         </Link>
         <nav className="th-nav-links">
           <Link href="/tools">Tools</Link>
-          <a href="https://squarespell.com">Main site</a>
+          <a href="https://squarespellquiz.com">Main site</a>
         </nav>
       </header>
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
-const APP_URL = 'https://app.squarespell.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
+const APP_URL = 'https://app.squarespellquiz.com';
 
 interface QuizMeta {
   title?: string;

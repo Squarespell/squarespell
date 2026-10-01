@@ -26,8 +26,10 @@ import { useParams } from 'next/navigation';
 import { addUtmParams, quizUtm } from '@/lib/urls';
 import generatePdfReport from './generatePdfReport';
 import QuizRenderer from '@/components/quiz-taker/QuizRenderer';
+import { safeHttpUrl } from '@/lib/safeUrl';
+import { safeColor, brandFontStack, safeStyleText } from '@/lib/safeCss';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface QuizOption {
   id: string;
@@ -618,22 +620,19 @@ export default function QuizPage() {
 
   /* ---------- brand derivation ---------- */
   var brand = quiz?.branding;
-  var brandBg = brand?.colors?.background || '#ffffff';
-  var brandSurface = brand?.colors?.surface || brandBg;
-  var brandText = brand?.colors?.text || '#1a1a1a';
-  var brandPrimary =
-    brand?.colors?.primary || quiz?.settings?.primary_color || quiz?.settings?.primaryColor || '#0a0a0a';
+  var brandBg = safeColor(brand?.colors?.background, '#ffffff');
+  var brandSurface = safeColor(brand?.colors?.surface, brandBg);
+  var brandText = safeColor(brand?.colors?.text, '#1a1a1a');
+  var brandPrimary = safeColor(
+    brand?.colors?.primary || quiz?.settings?.primary_color || quiz?.settings?.primaryColor, '#0a0a0a');
   var brandBorder = 'rgba(0,0,0,0.10)';
-  var brandFont =
-    brand?.font_family && brand.font_family !== 'sans-serif'
-      ? "'" + brand.font_family + "', system-ui, sans-serif"
-      : "'Inter', system-ui, sans-serif";
+  var brandFont = brandFontStack(brand?.font_family);
   var brandName = brand?.site_name || '';
   var showBranding = quiz?.settings?.show_branding !== false && !quiz?.settings?.remove_branding;
   var showProgressBar = quiz?.settings?.show_progress_bar !== false;
   var transitionType = quiz?.settings?.transition_type || 'slide';
-  var customCss = quiz?.settings?.custom_css || '';
-  var redirectUrl = quiz?.settings?.redirect_url || '';
+  var customCss = safeStyleText(quiz?.settings?.custom_css);
+  var redirectUrl = safeHttpUrl(quiz?.settings?.redirect_url);
   var redirectDelay = quiz?.settings?.redirect_delay || 5;
   var logoUrl = quiz?.settings?.logo_url || '';
   var consentRequired = quiz?.settings?.consent_required || false;

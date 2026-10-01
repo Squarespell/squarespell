@@ -3,7 +3,7 @@
 /**
  * /dashboard/admin - Redirect to standalone admin dashboard
  *
- * The admin dashboard now lives at admin.squarespell.com.
+ * The admin dashboard lives at /admin.
  * This page exists only as a redirect for anyone who bookmarked the old URL.
  */
 
@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 
 export default function AdminRedirect() {
   useEffect(function() {
-    window.location.href = 'https://admin.squarespell.com';
+    window.location.href = '/admin';
   }, []);
 
   return (

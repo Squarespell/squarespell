@@ -1,14 +1,14 @@
 /*!
  * Squarespell Quiz Preview Widget v1.2.0
  * Drop this into any Squarespace Code Block to add a "Paste your URL" input
- * that sends visitors to app.squarespell.com/tools/quiz-funnel/build to
+ * that sends visitors to app.squarespellquiz.com/tools/quiz-funnel/build to
  * preview a quiz.
  *
- * Usage: <script src="https://app.squarespell.com/embed/quiz-preview-widget.js" async></script>
+ * Usage: <script src="https://app.squarespellquiz.com/embed/quiz-preview-widget.js" async></script>
  */
 (function(){
 'use strict';
-var APP_URL = 'https://app.squarespell.com';
+var APP_URL = 'https://app.squarespellquiz.com';
 var BUILDER_PATH = '/tools/quiz-funnel/build';
 
 function init() {

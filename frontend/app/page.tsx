@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { pageSeo } from '@/lib/site';
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import SignedInRedirect from '@/components/auth/SignedInRedirect';
 import HomePage from '@/components/marketing/home/HomePage';
 
 /**
@@ -21,7 +20,10 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  const { userId } = auth();
-  if (userId) redirect('/dashboard');
-  return <HomePage />;
+  return (
+    <>
+      <SignedInRedirect />
+      <HomePage />
+    </>
+  );
 }

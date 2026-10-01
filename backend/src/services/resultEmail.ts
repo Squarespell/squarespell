@@ -1,5 +1,5 @@
 import { log } from '../lib/logger';
-import { Resend } from 'resend';
+import { getMailer } from './email/mailer';
 import { generateReportToken } from './reportToken';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterText } from './unsubscribe';
 
@@ -15,7 +15,7 @@ function appendUtm(url: string, slug: string): string {
 }
 
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = getMailer(); // Hostinger SMTP; null when email is not configured
 
 interface ResultEmailParams {
   to: string;
@@ -57,7 +57,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
   let reportUrl = '';
   if (reportEnabled && leadId) {
     const token = generateReportToken(leadId);
-    const backendBase = process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com';
+    const backendBase = process.env.BACKEND_URL || process.env.API_URL || 'https://api.squarespellquiz.com';
       reportUrl = `${backendBase}/api/public/leads/${leadId}/report?token=${token}`;
   }
 
@@ -117,7 +117,7 @@ export async function sendResultEmail(params: ResultEmailParams): Promise<boolea
           </tr>
           <tr>
             <td style="padding:14px 32px 22px;background:#fafafa;color:#999;font-size:12px;line-height:1.5;text-align:center;">
-              Sent by ${siteName} via <a href="https://squarespell.com" style="color:#888;text-decoration:none;">Squarespell</a>.<br/>
+              Sent by ${siteName} via <a href="https://squarespellquiz.com" style="color:#888;text-decoration:none;">Squarespell</a>.<br/>
               <span style="color:#bbb;">Squarespell, 651 N Broad St, Suite 201, Middletown, DE 19709</span><br/>
               <a href="${unsubUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
             </td>

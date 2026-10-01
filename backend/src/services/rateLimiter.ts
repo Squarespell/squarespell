@@ -40,7 +40,7 @@ class MemoryLimiter implements RateLimiter {
 /** Test hook: clear all in-memory counters. */
 export function resetMemoryLimiters() { memoryStores.forEach((m) => m.clear()); }
 
-function makeLimiter(prefix: string, max: number, upstashWindow: '1 m' | '1 h', windowMs: number): RateLimiter {
+export function makeLimiter(prefix: string, max: number, upstashWindow: '1 m' | '1 h', windowMs: number): RateLimiter {
   if (!redis) return new MemoryLimiter(max, windowMs);
   return new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(max, upstashWindow), prefix: 'ratelimit:' + prefix, analytics: true });
 }

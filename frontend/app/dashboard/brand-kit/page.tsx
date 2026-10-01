@@ -21,7 +21,7 @@ import {
 } from '../_components/PageShell';
 import { api } from '@/lib/api';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type ColorMode = 'light' | 'dark';
 

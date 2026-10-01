@@ -1,9 +1,8 @@
 'use client';
-import { ClerkProvider, useAuth } from '@clerk/nextjs';
+import { AuthProvider, useAuth } from '../lib/auth/client';
 import { useEffect } from 'react';
 import { Inter } from 'next/font/google';
 import { setAuthToken } from '../lib/api';
-import { startKeepAlive } from '../lib/keepAlive';
 import { ToastProvider } from '../lib/toast';
 import './globals.css';
 
@@ -23,30 +22,15 @@ function AuthTokenSync() {
   useEffect(() => {
     if (!isLoaded) return;
     if (isSignedIn) {
-      // Pass the getToken *function* so every API call fetches a fresh token
-      // instead of caching a single string that goes stale on rotation.
+      // Pass the getToken *function* so every API call gets a current token (cached until shortly before expiry).
       setAuthToken(
         () => getToken().then(t => t || ''),
-        () => getToken({ skipCache: true } as any).then(t => t || '')
+        () => getToken({ skipCache: true }).then(t => t || '')
       );
     } else {
-      // Grace period: when Clerk rotates the session token, isSignedIn can
-      // briefly flip to false. Do NOT nuke the token immediately — wait 12s
-      // to see if Clerk recovers (matches the useDashboardAuth grace window).
-      const timer = setTimeout(() => {
-        // Re-check: if still not signed in after the grace period, clear it.
-        getToken().then(t => {
-          if (!t) setAuthToken(null);
-        }).catch(() => setAuthToken(null));
-      }, 12000);
-      return () => clearTimeout(timer);
+      setAuthToken(null);
     }
   }, [isLoaded, isSignedIn, getToken]);
-  return null;
-}
-
-function KeepAlive() {
-  useEffect(() => { startKeepAlive(); }, []);
   return null;
 }
 
@@ -59,7 +43,7 @@ function Footer() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <AuthProvider>
       <html lang="en" className={inter.variable}>
         <head>
           {/* 2026 redesign display typefaces: Inter Tight for headings, Instrument Serif for editorial quiz cover art. */}
@@ -70,12 +54,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body>
           <ToastProvider>
           <AuthTokenSync />
-          <KeepAlive />
           {children}
           <Footer />
           </ToastProvider>
         </body>
       </html>
-    </ClerkProvider>
+    </AuthProvider>
   );
 }

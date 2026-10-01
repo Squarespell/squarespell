@@ -1,4 +1,5 @@
-var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+import { getAuthToken } from './auth/client';
+var API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 var _getToken: (() => Promise<string>) | null = null;
 var _getTokenFresh: (() => Promise<string>) | null = null;
@@ -22,11 +23,8 @@ async function getHeaders(fresh?: boolean): Promise<Record<string, string>> {
       var token = await tokenFn();
       if (token) headers['Authorization'] = 'Bearer ' + token;
     } else if (typeof window !== 'undefined') {
-      var clerk = (window as any).Clerk;
-      if (clerk && clerk.session) {
-        var token2 = await clerk.session.getToken();
-        if (token2) headers['Authorization'] = 'Bearer ' + token2;
-      }
+      var token2 = await getAuthToken(fresh ? { skipCache: true } : undefined);
+      if (token2) headers['Authorization'] = 'Bearer ' + token2;
     }
   } catch (e) {}
   return headers;

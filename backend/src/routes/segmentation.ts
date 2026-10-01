@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { ownsLead, ownsTag } from '../utils/ownership';
+import { ownsLead, ownsTag, ownsQuiz } from '../utils/ownership';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { supabase } from '../db/supabaseClient';
 import {
@@ -182,6 +182,10 @@ segmentationRouter.post('/auto-tag-rules', requireAuth, attachUser, async functi
   try {
     var { tag_id, conditions, quiz_id } = req.body;
     if (!tag_id) return res.status(400).json({ error: 'tag_id required' });
+    // The tag (and the quiz, when the rule is limited to one) must belong to this account.
+    if (!(await ownsTag(tag_id, req.dbUserId)) || (quiz_id && !(await ownsQuiz(quiz_id, req.dbUserId)))) {
+      return res.status(404).json({ error: 'Tag or quiz not found' });
+    }
     var { data, error } = await supabase
       .from('auto_tag_rules')
       .insert({

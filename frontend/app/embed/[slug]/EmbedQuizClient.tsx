@@ -2,8 +2,10 @@
 import { addUtmParams, quizUtm } from '@/lib/urls';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { safeHttpUrl, safeLinkUrl } from '@/lib/safeUrl';
+import { safeColor } from '@/lib/safeCss';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 // Dashboard preview (?preview=1): the quiz runs normally but records nothing (no analytics events, no leads).
 function isPreviewMode(): boolean {
@@ -192,7 +194,7 @@ export default function EmbedQuizClient({
   // Custom redirect after quiz completion
   useEffect(function() {
     if (stage !== 'result') return;
-    var redirectUrl = quiz.settings?.redirect_url;
+    var redirectUrl = safeHttpUrl(quiz.settings?.redirect_url);
     if (!redirectUrl) return;
     var delay = quiz.settings?.redirect_delay ?? 5;
     setRedirectCountdown(delay);
@@ -213,7 +215,7 @@ export default function EmbedQuizClient({
   }, [stage, quiz.settings?.redirect_url, quiz.settings?.redirect_delay]);
 
   const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const brandSurface = quiz.branding?.colors?.surface || brandBg;
+  const brandSurface = safeColor(quiz.branding?.colors?.surface, brandBg);
   const brandBorder = 'rgba(0,0,0,0.10)';
   const brandName = quiz.branding?.site_name || '';
   const PAID_PLANS = ['core', 'starter', 'growth', 'pro', 'business', 'agency'];
@@ -1419,7 +1421,7 @@ export default function EmbedQuizClient({
                             {quiz.settings?.gdpr_policy_url && (
                               <span>
                                 {' '}
-                                <a href={quiz.settings.gdpr_policy_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', opacity: 0.8 }}>
+                                <a href={safeLinkUrl(quiz.settings.gdpr_policy_url) || undefined} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', opacity: 0.8 }}>
                                   Privacy Policy
                                 </a>
                               </span>
@@ -1474,7 +1476,7 @@ export default function EmbedQuizClient({
 
           {showBranding && (
             <div className="sq-brand-foot">
-              <a href="https://squarespell.com" target="_top" rel="noopener noreferrer">
+              <a href="https://squarespellquiz.com" target="_top" rel="noopener noreferrer">
                 Powered by Squarespell Quiz
               </a>
             </div>

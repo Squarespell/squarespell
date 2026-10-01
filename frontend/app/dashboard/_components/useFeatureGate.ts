@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { planHasFeature, isFreeTier, type PlanFeatures } from '@/lib/plans';
 import { useDashboardAuth } from './useDashboardAuth';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type GateFeature = keyof PlanFeatures | 'quizLimit' | 'leadLimit' | 'emailLimit';
 

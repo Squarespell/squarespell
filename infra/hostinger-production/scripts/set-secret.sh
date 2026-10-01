@@ -32,11 +32,10 @@ case "$VALUE" in *"|"*|*$'\n'*) echo "value contains a character this helper can
 
 need_prefix() { case "$VALUE" in $1) ;; *) echo "REFUSED: $NAME must start with $1"; exit 1;; esac; }
 case "$NAME" in
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) need_prefix 'pk_live_*';;
-  CLERK_SECRET_KEY) need_prefix 'sk_live_*';;
+  SMTP_USER|SMTP_FROM) case "$VALUE" in *@*.*) ;; *) echo "REFUSED: $NAME must be the mailbox email address"; exit 1;; esac;;
+  AUTH_SECRET) [ ${#VALUE} -ge 32 ] || { echo "REFUSED: AUTH_SECRET needs at least 32 characters (openssl rand -hex 32)"; exit 1; };;
   STRIPE_WEBHOOK_SECRET) need_prefix 'whsec_*';;
   ANTHROPIC_API_KEY) need_prefix 'sk-ant-*';;
-  RESEND_API_KEY) need_prefix 're_*';;
   STRIPE_SECRET_KEY)
     case "$VALUE" in
       sk_live_*|rk_live_*)

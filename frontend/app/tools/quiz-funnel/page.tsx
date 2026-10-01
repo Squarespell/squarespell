@@ -133,7 +133,7 @@ export default function QuizFunnelPage() {
       <footer style={{ padding: '24px clamp(20px, 4vw, 60px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div style={{ fontSize: 15, color: C.GRAY_500 }}>© 2026 Squarespell Quiz. All rights reserved.</div>
         <div style={{ display: 'flex', gap: 28 }}>
-          {[{ label: 'Privacy', href: '/privacy' }, { label: 'Terms', href: '/terms' }, { label: 'squarespell.com', href: 'https://squarespell.com/quiz' }].map((l) => (
+          {[{ label: 'Privacy', href: '/privacy' }, { label: 'Terms', href: '/terms' }, { label: 'squarespell.com', href: 'https://squarespellquiz.com' }].map((l) => (
             <a key={l.label} href={l.href} style={{ fontSize: 15, color: C.GRAY_500, textDecoration: 'none' }}>{l.label}</a>
           ))}
         </div>

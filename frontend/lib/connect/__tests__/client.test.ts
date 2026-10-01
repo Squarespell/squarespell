@@ -1,16 +1,21 @@
 /** The connect API client: a long-open dashboard page must never send an expired token. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
+
+// The sign-in module's token source, controlled per test (lib/auth/client.getAuthToken).
+const tokenSource = vi.hoisted(() => ({ get: async (_opts?: { skipCache?: boolean }): Promise<string> => '' }));
+vi.mock('@/lib/auth/client', () => ({ getAuthToken: (opts?: { skipCache?: boolean }) => tokenSource.get(opts) }));
+
 import { connectApi, ConnectApiError, freshToken } from '../client';
 
-afterEach(() => { vi.unstubAllGlobals(); delete (globalThis as any).Clerk; });
+afterEach(() => { vi.unstubAllGlobals(); tokenSource.get = async () => ''; });
 
 const okFetch = () => { const f = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ sites: [] }) }); vi.stubGlobal('fetch', f); return f; };
 const sent = (f: ReturnType<typeof vi.fn>) => (f.mock.calls[0][1] as any).headers.Authorization as string;
 
 describe('token freshness', () => {
-  it('asks the live Clerk session for a new token on every call, not the one captured at page load', async () => {
+  it('asks the sign-in module for a current token on every call, not the one captured at page load', async () => {
     let n = 0;
-    (globalThis as any).Clerk = { session: { getToken: vi.fn(async () => 'fresh-' + ++n) } };
+    tokenSource.get = async () => 'fresh-' + ++n;
     const f = okFetch();
     const api = connectApi('captured-at-page-load');
     await api.listSites();
@@ -18,24 +23,22 @@ describe('token freshness', () => {
     expect((f.mock.calls[0][1] as any).headers.Authorization).toBe('Bearer fresh-1');
     expect((f.mock.calls[1][1] as any).headers.Authorization).toBe('Bearer fresh-2');
   });
-  it('falls back to the given token without Clerk, or when Clerk cannot answer', async () => {
+  it('falls back to the given token when signed out, or when the sign-in module cannot answer', async () => {
     const f = okFetch();
     await connectApi('given').listSites();
     expect(sent(f)).toBe('Bearer given');
-    (globalThis as any).Clerk = { session: { getToken: vi.fn(async () => { throw new Error('offline'); }) } };
+    tokenSource.get = async () => { throw new Error('offline'); };
     const g = okFetch();
     await connectApi('given').listSites();
     expect(sent(g)).toBe('Bearer given');
-    (globalThis as any).Clerk = { session: { getToken: vi.fn(async () => null) } };
-    expect(await freshToken('given')).toBe('given');
-    (globalThis as any).Clerk = {};
+    tokenSource.get = async () => '';
     expect(await freshToken('given')).toBe('given');
   });
 });
 
 describe('a stale token from a backgrounded tab', () => {
   it('retries once with a forced refresh on a 401, and the caller never sees it', async () => {
-    (globalThis as any).Clerk = { session: { getToken: vi.fn(async (opts?: { skipCache?: boolean }) => (opts?.skipCache ? 'forced-fresh' : 'stale')) } };
+    tokenSource.get = async (opts) => (opts?.skipCache ? 'forced-fresh' : 'stale');
     const f = vi.fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ code: 'token_expired' }) })
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ sites: [] }) });
@@ -47,12 +50,12 @@ describe('a stale token from a backgrounded tab', () => {
     expect((f.mock.calls[1][1] as any).headers.Authorization).toBe('Bearer forced-fresh');
   });
   it('still fails cleanly when the retry is also rejected', async () => {
-    (globalThis as any).Clerk = { session: { getToken: vi.fn(async () => 'still-stale') } };
+    tokenSource.get = async () => 'still-stale';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ code: 'token_expired' }) }));
     await expect(connectApi('given').listSites()).rejects.toMatchObject({ status: 401, code: 'token_expired' });
   });
   it('does not retry a non-401 failure', async () => {
-    (globalThis as any).Clerk = { session: { getToken: vi.fn(async () => 'tok') } };
+    tokenSource.get = async () => 'tok';
     const f = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({ code: 'error' }) });
     vi.stubGlobal('fetch', f);
     await expect(connectApi('given').listSites()).rejects.toMatchObject({ status: 500 });

@@ -4,8 +4,9 @@ A dependency-free (Node >= 18) end-to-end check of the Quiz API: health, readine
 hosted link, embed, lead submit, lead visible in the owner dashboard, analytics, cleanup.
 
 ```bash
-# 1. get a CURRENT Clerk session token for a TEST account (browser: window.Clerk.session.getToken())
-export SMOKE_CLERK_TOKEN='<jwt>'            # read from the environment only; never passed on the command line, never printed
+# 1. get a CURRENT access token for a TEST account: sign in to the app as that account, then open
+#    <api url>/api/auth/session in the same browser and copy the "token" value (it lasts 15 minutes)
+export SMOKE_AUTH_TOKEN='<jwt>'            # read from the environment only; never passed on the command line, never printed
 
 # 2. run against staging / a preview backend / a local server
 node scripts/smoke/smoke.mjs --base-url https://<staging-api> --frontend-url https://<staging-app>

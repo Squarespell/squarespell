@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/lib/auth/client';
 import Link from 'next/link';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
@@ -15,7 +15,7 @@ import {
   PageLoading,
 } from '../../../_components/PageShell';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface ROIData {
   total_leads: number;

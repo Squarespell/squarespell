@@ -25,6 +25,8 @@
 import { useRef } from 'react';
 import { addUtmParams, quizUtm } from '@/lib/urls';
 import FitImage from './FitImage';
+import { safeHttpUrl, safeLinkUrl } from '@/lib/safeUrl';
+import { safeColor, brandFontStack, safeStyleText } from '@/lib/safeCss';
 
 export interface QuizOption {
   id: string;
@@ -278,16 +280,13 @@ export default function QuizRenderer(props: QuizRendererProps) {
 
   /* ---------- brand derivation ---------- */
   var brand = quiz.branding;
-  var brandBg = brand?.colors?.background || '#ffffff';
-  var brandSurface = brand?.colors?.surface || brandBg;
-  var brandText = brand?.colors?.text || '#1a1a1a';
-  var brandPrimary =
-    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor || '#0a0a0a';
+  var brandBg = safeColor(brand?.colors?.background, '#ffffff');
+  var brandSurface = safeColor(brand?.colors?.surface, brandBg);
+  var brandText = safeColor(brand?.colors?.text, '#1a1a1a');
+  var brandPrimary = safeColor(
+    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor, '#0a0a0a');
   var brandBorder = 'rgba(0,0,0,0.10)';
-  var brandFont =
-    brand?.font_family && brand.font_family !== 'sans-serif'
-      ? "'" + brand.font_family + "', system-ui, sans-serif"
-      : "'Inter', system-ui, sans-serif";
+  var brandFont = brandFontStack(brand?.font_family);
   var brandName = brand?.site_name || '';
   var showBranding = quiz.settings?.show_branding !== false && !quiz.settings?.remove_branding;
   var showProgressBar = quiz.settings?.show_progress_bar !== false;
@@ -676,7 +675,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                   style={{ marginTop: 3, width: 16, height: 16, cursor: 'pointer', accentColor: brandPrimary }} />
                 <span style={{ fontSize: 12, color: brandText, opacity: 0.7, lineHeight: 1.4 }}>
                   I agree to the {privacyPolicyUrl ? (
-                    <a href={privacyPolicyUrl} target="_blank" rel="noopener noreferrer" style={{ color: brandPrimary, textDecoration: 'underline' }}>privacy policy</a>
+                    <a href={safeLinkUrl(privacyPolicyUrl) || undefined} target="_blank" rel="noopener noreferrer" style={{ color: brandPrimary, textDecoration: 'underline' }}>privacy policy</a>
                   ) : 'privacy policy'} and consent to having my data processed.
                 </span>
               </div>
@@ -818,7 +817,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
 
               {/* Booking CTA */}
               {showBooking && (outcome.bookingUrl || outcome.booking_url) && (
-                <a href={outcome.bookingUrl || outcome.booking_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', marginTop: 10 }}>
+                <a href={safeLinkUrl(outcome.bookingUrl || outcome.booking_url) || undefined} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', marginTop: 10 }}>
                   <button type="button" style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     width: '100%', padding: '12px 20px', background: 'transparent', color: brandPrimary,
@@ -892,7 +891,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                   {outcome.products.map(function(p, i) {
                     var imgUrl = p.imageUrl || p.image_url;
                     return (
-                      <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <a key={i} href={safeLinkUrl(p.url) || undefined} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div style={{
                           display: 'flex', gap: 14, alignItems: 'center', padding: '12px 14px',
                           border: '1px solid ' + brandBorder, borderRadius: 10, cursor: 'pointer',
@@ -1018,7 +1017,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
         {/* Branding footer */}
         {showBranding && (
           <div style={{ textAlign: 'center', marginTop: 22, fontSize: 11, opacity: 0.45 }}>
-            <a href="https://squarespell.com" target="_top" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+            <a href="https://squarespellquiz.com" target="_top" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
               Powered by Squarespell Quiz
             </a>
           </div>

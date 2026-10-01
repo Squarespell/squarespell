@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../../_components/DashboardShell';
 import { useDashboardAuth } from '../../../_components/useDashboardAuth';
 
-var API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 interface Variant {
   variant_id: string;

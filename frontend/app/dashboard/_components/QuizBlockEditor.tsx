@@ -12,6 +12,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { APP_URL } from '@/lib/urls';
 import FitImage from '@/components/quiz-taker/FitImage';
+import { getAuthToken } from '@/lib/auth/client';
 import {
   QuizBlock,
   QuizBlockType,
@@ -89,7 +90,7 @@ export interface QuizBlockEditorProps {
 
 var API_BASE = (typeof window !== 'undefined' && (window as any).__NEXT_PUBLIC_API_URL)
   || process.env.NEXT_PUBLIC_API_URL
-  || 'https://squarespell-api.onrender.com';
+  || 'https://api.squarespellquiz.com';
 
 var LETTERS = 'ABCDEFGHIJKLMNOP';
 
@@ -184,11 +185,8 @@ function blockPreview(b: QuizBlock): string {
   }
 }
 
-function getClerkToken(): Promise<string> {
-  if (typeof window !== 'undefined' && (window as any).Clerk) {
-    return (window as any).Clerk.session?.getToken().then(function(t: string) { return t || ''; }).catch(function() { return ''; });
-  }
-  return Promise.resolve('');
+function getSessionToken(): Promise<string> {
+  return getAuthToken().catch(function() { return ''; });
 }
 
 /* ------------------------------------------------------------------ */
@@ -819,7 +817,7 @@ function AnswerImagePicker({
   function searchPexels(query: string) {
     if (!query.trim()) return;
     setPexelsLoading(true);
-    getClerkToken().then(function(token) {
+    getSessionToken().then(function(token) {
       fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(query), {
         headers: token ? { Authorization: 'Bearer ' + token } : {},
       })
@@ -837,7 +835,7 @@ function AnswerImagePicker({
     var reader = new FileReader();
     reader.onload = function() {
       var base64 = (reader.result as string).split(',')[1];
-      getClerkToken().then(function(token) {
+      getSessionToken().then(function(token) {
         fetch(API_BASE + '/api/media/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
@@ -976,7 +974,7 @@ function GridAnswerCard({
     var reader = new FileReader();
     reader.onload = function() {
       var base64 = (reader.result as string).split(',')[1];
-      getClerkToken().then(function(token) {
+      getSessionToken().then(function(token) {
         fetch(API_BASE + '/api/media/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
@@ -1809,7 +1807,7 @@ function ImagePicker({
   function searchPexels(query: string) {
     if (!query.trim()) return;
     setPexelsLoading(true);
-    getClerkToken().then(function(token) {
+    getSessionToken().then(function(token) {
       fetch(API_BASE + '/api/media/search?q=' + encodeURIComponent(query), {
         headers: token ? { Authorization: 'Bearer ' + token } : {},
       })
@@ -1830,7 +1828,7 @@ function ImagePicker({
     var reader = new FileReader();
     reader.onload = function() {
       var base64 = (reader.result as string).split(',')[1];
-      getClerkToken().then(function(token) {
+      getSessionToken().then(function(token) {
         fetch(API_BASE + '/api/media/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },
@@ -2004,7 +2002,7 @@ function VideoPicker({
     reader.onload = function() {
       var result = reader.result as string;
       var base64 = result.indexOf(',') >= 0 ? result.split(',')[1] : result;
-      getClerkToken().then(function(token) {
+      getSessionToken().then(function(token) {
         fetch(API_BASE + '/api/media/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: token ? 'Bearer ' + token : '' },

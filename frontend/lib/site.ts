@@ -27,16 +27,3 @@ export function pageSeo(path: string, opts: { title?: string; description?: stri
   };
 }
 
-/**
- * Social sign-in buttons stay hidden until the provider has OAuth credentials configured in Clerk. Google is switched on in the production
- * Clerk instance but has no client id/secret yet, so its button would end on a Google error page. Set to true once it is configured.
- */
-export const SOCIAL_SIGN_IN_READY = false;
-export const HIDE_SOCIAL_ELEMENTS = SOCIAL_SIGN_IN_READY
-  ? {}
-  : {
-      socialButtonsRoot: { display: 'none' },
-      socialButtons: { display: 'none' },
-      socialButtonsBlockButton: { display: 'none' },
-      dividerRow: { display: 'none' },
-    };

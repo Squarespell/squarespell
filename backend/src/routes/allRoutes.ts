@@ -29,17 +29,17 @@ import { markPartialAsConverted } from '../services/partialCompletion';
 import { processAutomationEvent } from '../services/automationEngine';
 import { sendPlatformEmail } from '../services/platformEmails';
 import Stripe from 'stripe';
-import { Resend } from 'resend';
+import { getMailer } from '../services/email/mailer';
 import { UAParser } from 'ua-parser-js';
 import { validateEmail } from '../services/emailValidator';
 import { validateName } from '../services/nameValidator';
 import { isTurnstileConfigured, verifyTurnstileToken } from '../services/turnstile';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = getMailer(); // Hostinger SMTP; null when email is not configured
 
 // Canonical URLs used in outgoing emails. Set APP_URL/MARKETING_URL in env to swap domains.
-const APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
-const MARKETING_URL = process.env.MARKETING_URL || 'https://squarespell.com';
+const APP_URL = process.env.APP_URL || 'https://app.squarespellquiz.com';
+const MARKETING_URL = process.env.MARKETING_URL || 'https://squarespellquiz.com';
 
 function normalizeUrl(input: string): string {
   let url = input.trim().replace(/\/+$/, '');
@@ -71,7 +71,12 @@ function isAllowedRedirectUrl(rawUrl: string): boolean {
     const parsed = new URL(rawUrl);
     if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost') return false;
     const host = parsed.hostname.toLowerCase();
+    let appHost = '';
+    try { appHost = new URL(process.env.APP_URL || process.env.FRONTEND_URL || '').hostname.toLowerCase(); } catch { /* unset */ }
     return (
+      host === 'squarespellquiz.com' ||
+      host.endsWith('.squarespellquiz.com') ||
+      (!!appHost && host === appHost) ||
       host === 'squarespell.com' ||
       host.endsWith('.squarespell.com') ||
       host === 'localhost'
@@ -338,6 +343,16 @@ setInterval(function() {
 
 // ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
 import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, processOtherLimiter, getClientIp, safeLimit } from '../services/rateLimiter';
+
+/**
+ * Admin = an account whose email is listed in ADMIN_EMAILS (comma-separated, any letter case) AND confirmed:
+ * the address was proven by an email link or by Google. Signing up with someone else's address grants nothing.
+ */
+export function isAdminUser(user: { email?: string | null; email_verified_at?: string | null } | null | undefined): boolean {
+  if (!user || !user.email || !user.email_verified_at) return false;
+  const admins = (process.env.ADMIN_EMAILS || '').split(',').map(function (e) { return e.trim().toLowerCase(); }).filter(Boolean);
+  return admins.includes(user.email.trim().toLowerCase());
+}
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
   // Rate limit via Redis-backed Upstash limiter (replaces in-memory Map)
@@ -1187,7 +1202,7 @@ leadsRouter.post('/gdpr/delete-request', async (req, res) => {
 
     // Send verification email (if Resend is configured)
     if (resend) {
-      var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
+      var confirmUrl = (process.env.BACKEND_URL || process.env.API_URL || 'https://api.squarespellquiz.com') + '/api/gdpr/confirm-delete?token=' + deleteToken; // the route lives on the API host; APP_URL is the Next.js app and has no /api/gdpr
       await resend.emails.send({
         from: process.env.EMAIL_FROM || 'Squarespell <hello@squarespell.com>',
         to: email,
@@ -2736,7 +2751,7 @@ cronRouter.post('/weekly-digest', async (req, res) => {
           '  <div style="padding:36px 32px 28px;background:#FFFFFF;border-radius:0 0 16px 16px">',
           '    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">',
           '      <div style="width:32px;height:32px;background:#0D7377;border-radius:10px;display:flex;align-items:center;justify-content:center">',
-          '        <img src="https://app.squarespell.com/logo-icon-white.png" width="14" height="14" alt="" style="display:block" />',
+          '        <img src="https://app.squarespellquiz.com/logo-icon-white.png" width="14" height="14" alt="" style="display:block" />',
           '      </div>',
           '      <span style="font-size:17px;font-weight:700;color:#1A1A1A;letter-spacing:-0.02em">Squarespell</span>',
           '    </div>',
@@ -3078,7 +3093,7 @@ cleanupRouter.post('/cleanup', async (req: AuthenticatedRequest, res) => {
     // Get user from database to check if admin
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, email')
+      .select('id, email, email_verified_at')
       .eq('id', req.dbUserId)
       .single();
 
@@ -3087,8 +3102,7 @@ cleanupRouter.post('/cleanup', async (req: AuthenticatedRequest, res) => {
     }
 
     // Check if user is admin - allow specific admin emails
-    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-    const isAdmin = adminEmails.length > 0 && adminEmails.includes(userData.email);
+    const isAdmin = isAdminUser(userData);
 
     if (!isAdmin) {
       return res.status(403).json({ error: 'Forbidden - admin access required' });
@@ -3131,7 +3145,7 @@ quizPaymentsRouter.post('/public/quiz/:slug/checkout', async (req, res) => {
     // turn our own Stripe checkout into an open redirect / phishing vector
     // against a paying customer. Restrict to our own domains.
     if (!isAllowedRedirectUrl(success_url) || !isAllowedRedirectUrl(cancel_url)) {
-      return res.status(400).json({ error: 'success_url and cancel_url must point to a squarespell.com domain' });
+      return res.status(400).json({ error: 'success_url and cancel_url must point to a Squarespell Quiz domain' });
     }
 
     // amount_cents (if sent by the client) is informational only — the
@@ -3306,7 +3320,7 @@ referralsRouter.get('/code', requireAuth, attachUser, async function(req: Authen
       return res.status(500).json({ error: 'Failed to get referral code' });
     }
 
-    var appUrl = process.env.APP_URL || 'https://app.squarespell.com';
+    var appUrl = process.env.APP_URL || 'https://app.squarespellquiz.com';
     var referralUrl = appUrl + '/sign-up?ref=' + result.code;
 
     res.json({
@@ -3522,7 +3536,7 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     // Get user from database to check if admin
     var userResult = await supabase
       .from('users')
-      .select('id, email')
+      .select('id, email, email_verified_at')
       .eq('id', req.dbUserId)
       .single();
 
@@ -3531,8 +3545,7 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     }
 
     // Check if user is admin - allow specific admin emails
-    var adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(function(e) { return e.trim(); }).filter(Boolean);
-    var isAdmin = adminEmails.length > 0 && adminEmails.includes(userResult.data.email);
+    var isAdmin = isAdminUser(userResult.data);
 
     if (!isAdmin) {
       return res.status(403).json({ error: 'Forbidden - admin access required' });

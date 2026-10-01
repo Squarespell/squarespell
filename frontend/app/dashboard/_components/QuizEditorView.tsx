@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth/client";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -261,7 +261,7 @@ export interface QuizEditorViewProps {
 export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
   const { getToken } = useAuth();
 
-  // Wire Clerk token into the shared api client BEFORE any request fires.
+  // Wire the sign-in token into the shared api client BEFORE any request fires.
   // Provides a cached token for normal requests, and a fresh (skipCache)
   // token for automatic 401 retry inside req().
   useEffect(function() {
@@ -284,7 +284,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
     try {
       setPublishing(true);
       setPublishError(null);
-      const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
+      const API = process.env.NEXT_PUBLIC_API_URL || "https://api.squarespellquiz.com";
       const qid = (quiz as any)?.id || quizId || "";
       if (!qid) throw new Error("Quiz id not ready yet. Give the editor a second to load.");
       // One-shot retry: if the first token is stale and the server returns 401,
@@ -415,7 +415,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
     let cancelled = false;
     async function fetchPlan() {
       try {
-        const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+        const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
         const token = await getToken();
         if (!token || cancelled) return;
         const res = await fetch(`${API}/api/user/plan`, {

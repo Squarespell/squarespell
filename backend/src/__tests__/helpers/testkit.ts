@@ -1,23 +1,21 @@
 import request from 'supertest';
-import { signToken } from './clerkFake';
+import { signToken } from './authFake';
 import { sql } from './db';
-import { clerkDirectory } from './clerkDirectory';
 
 let n = 0;
 export type TestUser = { clerkId: string; id: string; email: string; token: string };
 
-/** Insert a DB user row directly (as the Clerk webhook / first-login flow would) and return a valid local Clerk token. */
+/** Insert a DB user row directly (as sign-up would) and return a valid access token for it. */
 export async function makeUser(opts: { plan?: string; createdDaysAgo?: number; quizCount?: number; email?: string } = {}): Promise<TestUser> {
   n++;
   const clerkId = `user_local_${Date.now()}_${n}`;
   const email = opts.email ?? `owner${n}@quiz-test.example`;
-  clerkDirectory[clerkId] = email;
   const created = new Date(Date.now() - (opts.createdDaysAgo ?? 1) * 86400000).toISOString();
   const rows = await sql<{ id: string }>(
     `INSERT INTO users (clerk_user_id, email, plan, quiz_count, created_at) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
     [clerkId, email, opts.plan ?? 'pro', opts.quizCount ?? 0, created],
   );
-  return { clerkId, id: rows[0].id, email, token: signToken(clerkId) };
+  return { clerkId, id: rows[0].id, email, token: signToken(clerkId, { uid: rows[0].id }) };
 }
 
 export const bearer = (u: { token: string }) => ({ Authorization: `Bearer ${u.token}` });

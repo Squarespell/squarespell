@@ -4,7 +4,7 @@
  * Two production domains - both permanent, both hardcoded on purpose:
  *
  *   MARKETING_URL  - squarespell.com           (Squarespace marketing site)
- *   APP_URL        - app.squarespell.com       (the entire Squarespell Quiz app)
+ *   APP_URL        - app.squarespellquiz.com       (the entire Squarespell Quiz app)
  *
  * Everything user-facing in the product lives under APP_URL on a single
  * subdomain so visitors never see the URL bar bounce between subdomains.
@@ -17,18 +17,18 @@
  *   /tools/quiz-funnel/build         public no-login quiz builder (Stages 1-6)
  *   /q/:slug                         public published quiz (lead capture)
  *   /embed.js                        embed loader for site owners
- *   /sign-in, /sign-up               Clerk auth
+ *   /sign-in, /sign-up               our own sign-in (lib/auth/client.tsx)
  *   /dashboard, /dashboard/*         authenticated dashboard
  *
  * The quiz.squarespell.com subdomain is now a permanent 301 redirect to
- * app.squarespell.com (handled in middleware.ts) so any old embed code or
+ * app.squarespellquiz.com (handled in middleware.ts) so any old embed code or
  * shared links continue to work but resolve to the canonical home.
  *
  * If you ever need to change a domain, change the constant below in a PR.
  * That's strictly better than editing a Vercel env var in the dashboard.
  */
 
-export const MARKETING_URL = 'https://squarespell.com';
+export const MARKETING_URL = 'https://squarespellquiz.com';
 /** Public origin of this deployment. Set NEXT_PUBLIC_SITE_URL at build time; defaults to the production domain. */
 export const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://squarespellquiz.com').replace(/\/+$/, '');
 
@@ -101,6 +101,8 @@ export function addUtmParams(
   }
   try {
     const u = new URL(url, 'https://placeholder.invalid');
+    // Quiz authors write these URLs: never pass through a script/data scheme (it would run on our origin).
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
     const mapping: Array<[string, string | undefined]> = [
       ['utm_source', params.source],
       ['utm_medium', params.medium],
@@ -119,7 +121,7 @@ export function addUtmParams(
     }
     return u.toString();
   } catch {
-    return url;
+    return '';
   }
 }
 

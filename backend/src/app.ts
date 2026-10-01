@@ -8,7 +8,6 @@ import quizRoutes from './routes/quiz';
 import quizzesFromUrlRoutes from './routes/quizzesFromUrl';
 import { generateRouter, publicQuizRouter, leadsRouter, analyticsRouter, scrapeBrandRouter, userRouter, stripeRouter, cronRouter, trialReminderRouter, integrationsRouter, previewRouter, mediaRouter, referralsRouter, publicReferralRouter, whiteLabelRouter, publicWhiteLabelRouter, adminAnalyticsRouter, quizPaymentsRouter } from './routes/allRoutes';
 import emailsRouter from './routes/emails';
-import resendWebhookRouter from './routes/resendWebhook';
 import { segmentationRouter } from './routes/segmentation';
 import { questionAnalyticsRouter, publicQuestionEventsRouter } from './routes/questionAnalytics';
 import { publicPartialRouter, partialAnalyticsRouter } from './routes/partialCompletion';
@@ -23,7 +22,7 @@ import teamsRouter from './routes/teams';
 import unsubscribeRouter from './routes/unsubscribe';
 import { connectRouter, publicConnectRouter } from './routes/connect';
 import { connectFixtureRouter } from './routes/connectFixture';
-import clerkWebhookRoute from './routes/clerkWebhook';
+import authRouter from './routes/auth';
 import { log } from './lib/logger';
 import { requestLogger } from './middleware/requestLogger';
 import { requireAuth, attachUser } from './middleware/auth';
@@ -32,9 +31,6 @@ import { supabase } from './db/supabaseClient';
 export const app = express();
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
-app.use('/api/clerk/webhook', express.raw({ type: 'application/json' }));
-// Resend (Svix-signed) webhooks: the signature covers the exact raw bytes
-app.use('/api/webhooks/resend', express.raw({ type: 'application/json' }));
 // Quiz-payment Stripe webhook also needs the raw body for signature verification
 app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/json' }));
 
@@ -42,10 +38,9 @@ app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/js
 /* CORS                                                                */
 /* ------------------------------------------------------------------ */
 //
-// Squarespell now serves the same Next.js app from multiple subdomains:
-//   app.squarespell.com    - authenticated dashboard
-//   quiz.squarespell.com   - public /try flow + embed.js
-//   squarespell.com        - marketing site (root + www)
+// The dashboard runs on the app host (FRONTEND_URL / CORS_ORIGINS, e.g. https://app.squarespellquiz.com). Only those
+// origins get credentialed CORS (sign-in uses it for its session cookie); the marketing site and customer sites call
+// only the public (wildcard) endpoints.
 //
 // CORS_ORIGINS env var (comma-separated) is the canonical allowlist.
 // FRONTEND_URL is preserved for backward compatibility with the old
@@ -57,10 +52,7 @@ app.use('/api/webhooks/stripe-quiz-payment', express.raw({ type: 'application/js
 // wildcard headers) is fixed by routing them through a single dispatcher.
 
 const DEFAULT_ALLOWED_ORIGINS = [
-  'https://app.squarespell.com',
-  'https://quiz.squarespell.com',
-  'https://squarespell.com',
-  'https://www.squarespell.com',
+  'https://app.squarespellquiz.com',
 ];
 
 const envOrigins = (process.env.CORS_ORIGINS || '')
@@ -115,6 +107,9 @@ app.use('/api/media', express.json({ limit: '25mb' }));
 app.use(express.json());
 app.use(requestLogger);
 
+// Our own sign-in (sessions, passwords, email links, Google). See routes/auth.ts.
+app.use('/api/auth', authRouter);
+
 // Public preview endpoint (no auth, rate-limited)  -  registered BEFORE auth routes
 app.use('/api', previewRouter);
 
@@ -132,7 +127,6 @@ app.use('/api/stripe', stripeRouter);
 // "pay to see results" checkout flow 404'd in production. Mounting at /api so its internal paths
 // (/public/quiz/:slug/checkout etc.) resolve exactly as the frontend already calls them.
 app.use('/api', quizPaymentsRouter);
-app.use('/api/clerk', clerkWebhookRoute);
 app.use('/api/quiz', publicQuizRouter);
 app.use('/api/user', userRouter);
 app.use('/api/integrations', integrationsRouter);
@@ -140,7 +134,6 @@ app.use('/api/cron', cronRouter);
 app.use('/api/cron', trialReminderRouter);
 app.use('/api/emails', emailsRouter);
 app.use('/api/media', mediaRouter);
-app.use('/api/webhooks', resendWebhookRouter);
 app.use('/api/referrals', referralsRouter);
 app.use('/api/public/referral', publicReferralRouter);
 app.use('/api/white-label', whiteLabelRouter);

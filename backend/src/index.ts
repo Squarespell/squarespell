@@ -86,7 +86,7 @@ app.listen(PORT, () => {
     log.info('Preview cache cleanup scheduler enabled (every 30 min)');
 
     // Follow-up email sequences: leads enqueue rows in email_sequence_queue, but nothing ever called processEmailQueue()
-    // (the only schedule lived in backend/vercel.json, which is not deployed - the API runs on Render). Drain it in-process
+    // (there is no external schedule for it). Drain it in-process
     // every 5 minutes. Do not also schedule POST /api/cron/process-email-queue elsewhere: runs are not claimed atomically.
     // Set DISABLE_INPROCESS_EMAIL_QUEUE=true to switch this off.
     if (process.env.DISABLE_INPROCESS_EMAIL_QUEUE !== 'true') {

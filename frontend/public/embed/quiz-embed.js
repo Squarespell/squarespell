@@ -4,15 +4,15 @@
  *
  * Usage (Code Block):
  *   <div data-squarespell-quiz="YOUR_SLUG"></div>
- *   <script src="https://quiz.squarespell.com/embed/quiz-embed.js" async></script>
+ *   <script src="https://app.squarespellquiz.com/embed/quiz-embed.js" async></script>
  *
  * Legacy usage still supported:
- *   <script src="https://quiz.squarespell.com/embed/quiz-embed.js" data-quiz="YOUR_SLUG" async></script>
+ *   <script src="https://app.squarespellquiz.com/embed/quiz-embed.js" data-quiz="YOUR_SLUG" async></script>
  */
 (function () {
   'use strict';
 
-  // Quizzes load from the origin this script was served from when that is a Squarespell Quiz host; otherwise the legacy host.
+  // Quizzes load from the origin this script was served from when that is a Squarespell Quiz host; otherwise the app host.
   var BASE_URL = (function () {
     try {
       var s = document.currentScript;
@@ -21,7 +21,7 @@
         if (/(^|\.)squarespellquiz\.com$/.test(u.hostname)) return u.origin;
       }
     } catch (e) { /* fall through */ }
-    return 'https://quiz.squarespell.com';
+    return 'https://app.squarespellquiz.com';
   })();
   var EMBED_VERSION = '2.3.1';
   var INIT_ATTR = 'data-squarespell-init';
@@ -301,8 +301,8 @@
     messageListenerAttached = true;
 
     window.addEventListener('message', function (e) {
-      // Validate origin — accept both quiz.squarespell.com and legacy app.squarespell.com
-      if (e.origin !== BASE_URL && e.origin !== 'https://app.squarespell.com') return;
+      // Validate origin: only the quiz iframe's own host (or the app host) may message this page
+      if (e.origin !== BASE_URL && e.origin !== 'https://app.squarespellquiz.com') return;
 
       var d = e.data;
       if (!d || d.source !== 'squarespell') return;

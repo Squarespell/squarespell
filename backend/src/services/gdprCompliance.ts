@@ -8,6 +8,7 @@
 import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
 import crypto from 'crypto';
+import { ownedQuizIds } from '../utils/ownership';
 
 // ── Consent Recording ────────────────────────────────────────────────────────
 
@@ -212,18 +213,24 @@ export async function confirmAndExecuteDeletion(token: string, quizOwnerId: stri
       .eq('user_id', userId);
     deleted.leads = leadCount || 0;
 
+    // Partial completions and consent records: only those on this business's own quizzes. The same person may
+    // have answered other businesses' quizzes, and those records are not this business's to delete.
+    var ownQuizIds = await ownedQuizIds(userId);
+
     // Delete partial completions
-    var { count: partialCount } = await supabase
+    var { count: partialCount } = ownQuizIds.length ? await supabase
       .from('partial_completions')
       .delete({ count: 'exact' })
-      .eq('email', email);
+      .eq('email', email)
+      .in('quiz_id', ownQuizIds) : { count: 0 };
     deleted.partial_completions = partialCount || 0;
 
     // Delete consent records
-    var { count: consentCount } = await supabase
+    var { count: consentCount } = ownQuizIds.length ? await supabase
       .from('consent_records')
       .delete({ count: 'exact' })
-      .eq('email', email);
+      .eq('email', email)
+      .in('quiz_id', ownQuizIds) : { count: 0 };
     deleted.consent_records = consentCount || 0;
 
     // Mark completed

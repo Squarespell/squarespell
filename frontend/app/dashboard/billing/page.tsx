@@ -25,7 +25,7 @@ import {
 
 import { PLAN_CATALOG } from '@/lib/planCatalog';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type AddonInfo = {
   key: string;

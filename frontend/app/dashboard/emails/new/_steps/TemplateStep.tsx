@@ -145,7 +145,7 @@ export function TemplateStep({
                 height: 180, overflow: 'hidden', background: '#F5F7FF',
                 borderBottom: '1px solid ' + C.BORDER, position: 'relative',
               }}>
-                <iframe
+                <iframe sandbox=""
                   title={t.title + ' preview'}
                   srcDoc={t.html}
                   style={{
