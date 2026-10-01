@@ -1173,10 +1173,8 @@ export function TryFlowInner({
   const currentQ = quiz && selectedIdx >= 0 ? quiz.questions[selectedIdx] : null;
 
   /* ======================== Sign in -> claim flow ====================== */
-  // Sign-up must happen on app.squarespell.com so Clerk session cookies land on
-  // the right origin. If we push a relative /sign-up from quiz.squarespell.com
-  // Clerk will set the session cookie on quiz.* and the dashboard (on app.*)
-  // won't see it - user ends up stuck on quiz.*/dashboard with no sidebar.
+  // Sign-up always happens on the app host (APP_URL) so the visitor lands in the dashboard there, even when this
+  // builder was opened from a legacy host.
   const goSignUp = () => {
     const claim = claimToken || (typeof window !== 'undefined' ? sessionStorage.getItem('sq_claim_token') || '' : '');
     const params = new URLSearchParams({ from: 'try', url });

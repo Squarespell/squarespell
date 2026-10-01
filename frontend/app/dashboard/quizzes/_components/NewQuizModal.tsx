@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createQuizFromUrl } from "./quizTemplates";
 import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData, getTemplateSettings } from '../../../../lib/quiz/templates';
+import { getAuthToken } from '@/lib/auth/client';
 
 type Stage = "choose" | "templates" | "site" | "loading" | "pick" | "generating" | "error";
 type GateCode = "trial_expired" | "quiz_limit_reached" | null;
@@ -233,14 +234,9 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     try {
       var API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
       var headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (typeof window !== "undefined") {
-        var clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
-        if (clerk?.session) {
-          try {
-            var token = await clerk.session.getToken();
-            if (token) headers["Authorization"] = "Bearer " + token;
-          } catch {}
-        }
+      {
+        const authToken = await getAuthToken();
+        if (authToken) headers["Authorization"] = "Bearer " + authToken;
       }
       // Import blocksToLegacy dynamically to convert blocks to the API format
       var { blocksToLegacy } = await import('../../../../lib/quiz/blocks');
@@ -300,14 +296,9 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
     // POST /api/quizzes/from-url call later re-scrapes server-side anyway.
     const API = process.env.NEXT_PUBLIC_API_URL || "https://squarespell-api.onrender.com";
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (typeof window !== "undefined") {
-      const clerk = (window as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
-      if (clerk?.session) {
-        try {
-          const token = await clerk.session.getToken();
-          if (token) headers["Authorization"] = "Bearer " + token;
-        } catch {}
-      }
+    {
+      const authToken = await getAuthToken();
+      if (authToken) headers["Authorization"] = "Bearer " + authToken;
     }
 
     const ctl = new AbortController();

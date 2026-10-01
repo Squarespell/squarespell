@@ -1,14 +1,12 @@
+import { getAuthToken } from '@/lib/auth/client';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
 async function authHeaders(): Promise<Record<string, string>> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
   try {
     if (typeof window !== 'undefined') {
-      const clerk = (window as any).Clerk;
-      if (clerk?.session) {
-        const t = await clerk.session.getToken();
-        if (t) h['Authorization'] = 'Bearer ' + t;
-      }
+      const t = await getAuthToken();
+      if (t) h['Authorization'] = 'Bearer ' + t;
     }
   } catch {}
   return h;

@@ -18,7 +18,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth, useClerk, useUser } from '@clerk/nextjs';
+import { useAuth, useUser, signOut as authSignOut } from '@/lib/auth/client';
 import { TopBanner } from './TopBanner';
 import { NotificationBell } from './NotificationBell';
 import { CommandPalette } from './CommandPalette';
@@ -346,7 +346,6 @@ export function DashboardShell({
   var isOnEditor = isEditorRoute(pathname);
   var hideChrome = hideSidebar !== undefined ? hideSidebar : isOnEditor;
   var router = useRouter();
-  var { signOut: clerkSignOut } = useClerk();
   var { user } = useUser();
   var { getToken } = useAuth();
   var [isMobile, setIsMobile] = useState(false);
@@ -433,7 +432,7 @@ export function DashboardShell({
   var areas = areasFor(connectEnabled);
   var currentArea = areaFor(areas, pathname);
 
-  var signOut = function() { clerkSignOut(function() { router.push('/sign-in'); }); };
+  var signOut = function() { authSignOut(function() { router.push('/sign-in'); }); };
   var openSearch = function() { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true })); };
   var sidePad = isMobile ? 16 : 40;
 

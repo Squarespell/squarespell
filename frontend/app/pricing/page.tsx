@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, Suspense, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PLANS } from '@/lib/planCatalog';
 

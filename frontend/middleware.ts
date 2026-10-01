@@ -1,112 +1,59 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
-
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/admin(.*)'])
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * Host + path routing rules.
  *
- * Single-subdomain architecture: everything user-facing in the Squarespell
- * product lives under app.squarespell.com. The marketing site
- * (squarespell.com) is hosted on Squarespace.
+ * Everything user-facing lives on the app host (app.<domain>):
+ *   /                              public homepage (signed-in visitors are sent to /dashboard by the page)
+ *   /tools/quiz-funnel/build       public no-login quiz builder
+ *   /q/:slug, /quiz/:slug          public published quiz
+ *   /embed.js, /embed/*            embed loader assets
+ *   /sign-in, /sign-up, /forgot-password, /reset-password, /verify-email
+ *                                  our own sign-in (sessions live on the API host, see lib/auth/client.tsx)
+ *   /dashboard, /admin             signed-in pages; useDashboardAuth sends signed-out visitors to /sign-in and the
+ *                                  API refuses every request without a valid access token
  *
- *   app.squarespell.com
- *     /                              redirect → /tools/quiz-funnel
- *     /tools                         tools hub
- *     /tools/quiz-funnel             quiz tool marketing landing
- *     /tools/quiz-funnel/build       public no-login quiz builder
- *     /q/:slug                       public published quiz
- *     /embed.js, /embed/*            embed loader assets
- *     /sign-in, /sign-up             Clerk auth
- *     /dashboard, /dashboard/*       authenticated dashboard (Clerk-protected)
- *
- *   quiz.squarespell.com (legacy subdomain - will be sunset)
- *     ALL paths                      301 → app.squarespell.com<path>
- *     This keeps every old embed snippet, every shared quiz link, and every
- *     piece of marketing collateral that mentions quiz.squarespell.com
- *     working forever, while consolidating the canonical URL on the app host.
- *
- *   /try (legacy app-host path)      308 → /tools/quiz-funnel/build
- *     Same idea: anyone who saved /try in a bookmark or has it in old code
- *     gets transparently moved to the canonical URL.
+ *   quiz.<domain> (legacy)         ALL paths 301 → app.<domain><path>, so old embed snippets and shared links work
+ *   admin.<domain>                 302 → app.<domain>/admin
+ *   /try (legacy path)             308 → /tools/quiz-funnel/build
  */
-const APP_HOST = 'app.squarespell.com'
 const QUIZ_HOST_PREFIX = 'quiz.'
 const ADMIN_HOST_PREFIX = 'admin.'
 
-function isQuizHost(host: string | null): boolean {
-  if (!host) return false
-  const h = host.toLowerCase()
-  return h.startsWith(QUIZ_HOST_PREFIX)
+function appHostFor(host: string, prefix: string): string {
+  return 'app.' + host.slice(prefix.length)
 }
 
-function isAdminHost(host: string | null): boolean {
-  if (!host) return false
-  const h = host.toLowerCase()
-  return h.startsWith(ADMIN_HOST_PREFIX)
-}
-
-export default clerkMiddleware((auth, req) => {
-  const host = req.headers.get('host')
+export default function middleware(req: NextRequest) {
+  const host = (req.headers.get('host') || '').toLowerCase()
   const pathname = req.nextUrl.pathname
 
-  // 1a. admin.squarespell.com → redirect to app.squarespell.com/admin.
-  //     The admin dashboard lives at /admin on the app host (standalone page, no
-  //     dashboard shell). We redirect instead of rewrite so the Clerk session
-  //     cookie (scoped to app.squarespell.com) is available.
-  if (isAdminHost(host)) {
+  if (host.startsWith(ADMIN_HOST_PREFIX)) {
     const target = req.nextUrl.clone()
     target.protocol = 'https:'
-    target.host = APP_HOST
+    target.host = appHostFor(host, ADMIN_HOST_PREFIX)
     target.pathname = '/admin'
     return NextResponse.redirect(target, 302)
   }
 
-  // 1b. Legacy quiz.squarespell.com → permanent 301 to app.squarespell.com.
-  //     Preserves path, query, and hash so /q/abc?ref=foo continues to work.
-  if (isQuizHost(host)) {
+  if (host.startsWith(QUIZ_HOST_PREFIX)) {
     const target = req.nextUrl.clone()
     target.protocol = 'https:'
-    target.host = APP_HOST
+    target.host = appHostFor(host, QUIZ_HOST_PREFIX)
     return NextResponse.redirect(target, 301)
   }
 
-  // 2. Legacy /try path → /tools/quiz-funnel/build (with query preserved).
   if (pathname === '/try' || pathname.startsWith('/try/')) {
     const target = req.nextUrl.clone()
     target.pathname = pathname.replace(/^\/try/, '/tools/quiz-funnel/build')
     return NextResponse.redirect(target, 308)
   }
 
-  // 3. Bare root → tools landing (the marketing page is the de-facto home
-  //    of the app subdomain). Signed-in users on root will fall through to
-  //    page.tsx which redirects them to /dashboard.
-  //    (Handled inside app/page.tsx, not here, so we don't break SSR.)
-
-  // Let client-side useDashboardAuth handle auth for page routes.
-  // The middleware only needs to protect server API routes under /dashboard.
-  // Page navigations get through to the client, where useDashboardAuth has
-  // a grace window for Clerk token rotation — the middleware does not, so
-  // it was bouncing users to /sign-in during brief rotation gaps.
-  if (isProtectedRoute(req)) {
-    const authObj = auth();
-    if (!authObj.userId) {
-      // For API/trpc routes, hard-block — they can't do client-side retry
-      if (pathname.startsWith('/api/') || pathname.startsWith('/trpc/')) {
-        authObj.protect({
-          unauthenticatedUrl: new URL('/sign-in', req.url).toString(),
-        });
-      }
-      // For page routes, let them through — useDashboardAuth handles it
-      // with retry logic and a grace window for token rotation.
-    }
-  }
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: [
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
   ],
 }

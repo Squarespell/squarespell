@@ -9,7 +9,7 @@ const BG = C.BG
 /**
  * 2026 redesign auth shell (screens 07 and 08). Focused layout: logo, Help and the other-mode link only, no
  * workspace navigation. Sign-up shows an editorial panel with illustrative quiz and result cards; sign-in uses a
- * pale periwinkle panel. The form itself is passed in as children (Clerk's own <SignIn>/<SignUp>), so the shell
+ * pale periwinkle panel. The form itself is passed in as children (components/auth/AuthForms), so the shell
  * only restyles the page and never changes how authentication works.
  */
 export default function AuthShell({ mode, otherModeHref, children }: { mode: 'sign-in' | 'sign-up'; otherModeHref: string; children: ReactNode }) {

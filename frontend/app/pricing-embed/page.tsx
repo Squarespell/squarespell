@@ -28,7 +28,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { APP_URL } from '@/lib/urls';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/lib/auth/client';
 import { PLANS } from '@/lib/planCatalog';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';

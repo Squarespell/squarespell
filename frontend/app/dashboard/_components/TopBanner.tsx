@@ -77,7 +77,7 @@ const closeIcon = (
 // -----------------------------------------------------------------------
 
 interface TopBannerProps {
-  /** Auth token from Clerk for API calls */
+  /** Access token for API calls */
   token: string | null;
   /** Optional static announcement to show (lowest priority) */
   announcement?: { message: string; ctaLabel?: string; ctaHref?: string; dismissKey: string } | null;

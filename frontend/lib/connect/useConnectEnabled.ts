@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/lib/auth/client';
 
 /**
  * True when the one-button connect feature is enabled on the server (CONNECT_ENABLED). Asked once per page load and cached.

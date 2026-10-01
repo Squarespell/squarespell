@@ -21,6 +21,7 @@ import Link from 'next/link';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from './_components/DashboardShell';
 import { useDashboardAuth } from './_components/useDashboardAuth';
+import { useUser } from '@/lib/auth/client';
 import { PageLoading, DisplayTitle, Pill } from './_components/PageShell';
 import { QuizCover } from './_components/QuizCover';
 import { NewQuizModal } from './quizzes/_components/NewQuizModal';
@@ -1033,13 +1034,11 @@ function OverviewInner() {
     try { if (localStorage.getItem('sq_ab_banner_dismissed') === '1') setShowABBanner(false); } catch {}
   }, []);
 
-  // Resolve username from Clerk
+  // Greet the signed-in user by first name.
+  var signedInUser = useUser().user;
   useEffect(function() {
-    try {
-      var el = document.querySelector('[data-clerk-user-firstname]');
-      if (el && el.textContent) setUserName(el.textContent);
-    } catch {}
-  }, []);
+    if (signedInUser && signedInUser.firstName) setUserName(signedInUser.firstName);
+  }, [signedInUser]);
 
   if (authStatus === 'loading' || loading) {
     return (

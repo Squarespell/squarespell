@@ -17,7 +17,7 @@
  *   /tools/quiz-funnel/build         public no-login quiz builder (Stages 1-6)
  *   /q/:slug                         public published quiz (lead capture)
  *   /embed.js                        embed loader for site owners
- *   /sign-in, /sign-up               Clerk auth
+ *   /sign-in, /sign-up               our own sign-in (lib/auth/client.tsx)
  *   /dashboard, /dashboard/*         authenticated dashboard
  *
  * The quiz.squarespell.com subdomain is now a permanent 301 redirect to

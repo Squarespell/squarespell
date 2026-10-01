@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth/client";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -261,7 +261,7 @@ export interface QuizEditorViewProps {
 export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
   const { getToken } = useAuth();
 
-  // Wire Clerk token into the shared api client BEFORE any request fires.
+  // Wire the sign-in token into the shared api client BEFORE any request fires.
   // Provides a cached token for normal requests, and a fresh (skipCache)
   // token for automatic 401 retry inside req().
   useEffect(function() {

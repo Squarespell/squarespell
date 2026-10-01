@@ -3,11 +3,11 @@
  *
  * This is a minimal, SSR-rendered quiz page optimized for embedding in iframes.
  * It fetches quiz data server-side and renders a clean quiz interface with zero
- * Clerk/Supabase/auth overhead.
+ * sign-in/database client overhead.
  *
  * Key features:
  * - Server-side quiz data fetching
- * - No Clerk provider or authentication
+ * - No sign-in provider or authentication
  * - Minimal CSS-in-JS to keep bundle small
  * - Client-side handles: answer selection, form submission, postMessage to parent
  * - Uses quiz branding (colors, fonts) from the quiz data or query params
