@@ -13,6 +13,7 @@ import {
   checkTeamPermission,
   getUserTeamRole,
   deleteTeam,
+  TeamRuleError,
 } from '../services/teamService';
 
 const router = Router();
@@ -158,6 +159,7 @@ router.patch('/:id/members/:userId', async (req: AuthenticatedRequest, res: Resp
     const updated = await updateMemberRole(teamId, targetUserId, role);
     res.json(updated);
   } catch (err: any) {
+    if (err instanceof TeamRuleError) return res.status(403).json({ error: err.message });
     res.status(500).json({ error: err.message || 'Failed to update role' });
   }
 });

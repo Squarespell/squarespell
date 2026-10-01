@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { supabase } from '../db/supabaseClient';
 
 const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || 'https://squarespell-api.onrender.com';
@@ -10,7 +11,27 @@ export function buildUnsubscribeUrl(email: string, quizId?: string): string {
   const payload: Record<string, string> = { email };
   if (quizId) payload.quiz_id = quizId;
   const token = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  return `${BACKEND_URL}/api/public/unsubscribe?token=${token}`;
+  return `${BACKEND_URL}/api/public/unsubscribe?token=${token}&sig=${signUnsubscribe(email)}`;
+}
+
+/**
+ * Signature carried by unsubscribe links. Anyone may unsubscribe an address, but only someone holding a link that
+ * was emailed to it may check its status or subscribe it again.
+ */
+function unsubscribeSecret(): string {
+  return process.env.REPORT_SECRET || process.env.AUTH_SECRET || '';
+}
+
+export function signUnsubscribe(email: string): string {
+  const secret = unsubscribeSecret();
+  if (!secret) return '';
+  return crypto.createHmac('sha256', secret).update('unsubscribe:' + email.trim().toLowerCase()).digest('base64url').slice(0, 32);
+}
+
+export function verifyUnsubscribeSignature(email: string, sig: unknown): boolean {
+  const expected = signUnsubscribe(email);
+  if (!expected || typeof sig !== 'string' || sig.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
 
 /**

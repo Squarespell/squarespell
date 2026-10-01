@@ -95,7 +95,7 @@ async function sendCampaign(campaign: any): Promise<{
   if (campaign.source_quiz_id) {
     const { data: qd } = await supabase.from('quizzes')
       .select('title, slug, questions, outcomes, branding')
-      .eq('id', campaign.source_quiz_id).single();
+      .eq('id', campaign.source_quiz_id).eq('user_id', tenantId).single();
     quizData = qd;
   }
 
@@ -105,6 +105,7 @@ async function sendCampaign(campaign: any): Promise<{
     const { data: leadRows } = await supabase.from('leads')
       .select('email, name, answers, outcome_id, score')
       .eq('quiz_id', campaign.source_quiz_id)
+      .eq('user_id', tenantId)
       .in('email', allowed);
     for (const row of leadRows || []) {
       const e = (row.email || '').trim().toLowerCase();

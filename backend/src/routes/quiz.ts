@@ -10,6 +10,7 @@ import { generateReportToken, verifyReportToken } from '../services/reportToken'
 import * as teamService from '../services/teamService';
 import { notifyQuizPublished } from '../services/notifications';
 import { makeUniqueSlug, isLegacyRandomSlug } from '../utils/slug';
+import { ownsQuiz } from '../utils/ownership';
 
 interface EmailInSequence {
   delay_days: number;
@@ -737,6 +738,11 @@ router.post('/:id/ab-tests', requireFeature('abTesting'), async (req: Authentica
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Every variant must be one of this account's quizzes (results are counted per variant quiz).
+    for (const v of variants) {
+      if (!(await ownsQuiz(v.quiz_id, req.dbUserId))) return res.status(404).json({ error: 'Variant quiz not found' });
+    }
+
     const test = await abTesting.createTest(req.dbUserId, quizId, name, variants);
     res.status(201).json(test);
   } catch (err: any) {
@@ -945,6 +951,7 @@ router.post('/teams/:teamId/members', async (req: AuthenticatedRequest, res) => 
     const member = await teamService.inviteMember(teamId, email.trim(), role, req.userId!);
     res.status(201).json(member);
   } catch (err: any) {
+    if (err instanceof teamService.TeamRuleError) return res.status(403).json({ error: err.message });
     log.error('Invite member error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to invite member' });
   }
@@ -969,6 +976,7 @@ router.patch('/teams/:teamId/members/:userId', async (req: AuthenticatedRequest,
     const member = await teamService.updateMemberRole(teamId, userId, role);
     res.json(member);
   } catch (err: any) {
+    if (err instanceof teamService.TeamRuleError) return res.status(403).json({ error: err.message });
     log.error('Update member role error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to update member role' });
   }

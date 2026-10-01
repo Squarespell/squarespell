@@ -52,6 +52,7 @@ import {
   checkAndDeclareWinner,
 } from '../services/emailAbTesting';
 import { supabase } from '../db/supabaseClient';
+import { ownsCampaign, ownsQuiz } from '../utils/ownership';
 
 export var aiEmailRouter = Router();
 aiEmailRouter.use(requireAuth, attachUser);
@@ -134,6 +135,7 @@ aiEmailRouter.post('/smart-campaign', async function(req: AuthenticatedRequest, 
     if (!quiz_id || !brand_name || !from_name || !from_email) {
       return res.status(400).json({ error: 'quiz_id, brand_name, from_name, from_email required' });
     }
+    if (!(await ownsQuiz(quiz_id, tenantId))) return res.status(404).json({ error: 'Quiz not found' });
 
     var result = await buildSmartCampaigns({
       tenant_id: tenantId,
@@ -272,6 +274,7 @@ aiEmailRouter.post('/ab-test', async function(req: AuthenticatedRequest, res) {
     if (!campaign_id || !variants || !Array.isArray(variants) || variants.length < 2) {
       return res.status(400).json({ error: 'campaign_id and at least 2 variants required' });
     }
+    if (!(await ownsCampaign(campaign_id, req.dbUserId))) return res.status(404).json({ error: 'Campaign not found' });
     var result = await createEmailAbTest(campaign_id, {
       variants: variants,
       sample_percentage: sample_percentage || 20,
@@ -291,12 +294,14 @@ aiEmailRouter.post('/ab-test/ai-generate', async function(req: AuthenticatedRequ
     if (!campaign_id || !goal) {
       return res.status(400).json({ error: 'campaign_id and goal required' });
     }
+    if (!(await ownsCampaign(campaign_id, req.dbUserId))) return res.status(404).json({ error: 'Campaign not found' });
 
     // Get current campaign HTML
     var { data: campaign } = await supabase
       .from('email_campaigns')
       .select('html')
       .eq('id', campaign_id)
+      .eq('tenant_id', req.dbUserId)
       .single();
 
     if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
@@ -315,6 +320,7 @@ aiEmailRouter.post('/ab-test/ai-generate', async function(req: AuthenticatedRequ
 
 aiEmailRouter.get('/ab-test/:campaignId', async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsCampaign(req.params.campaignId, req.dbUserId))) return res.status(404).json({ error: 'No A/B test found for this campaign' });
     var results = await getAbTestResults(req.params.campaignId);
     if (!results) return res.status(404).json({ error: 'No A/B test found for this campaign' });
     res.json(results);
@@ -325,6 +331,7 @@ aiEmailRouter.get('/ab-test/:campaignId', async function(req: AuthenticatedReque
 
 aiEmailRouter.post('/ab-test/:campaignId/check-winner', async function(req: AuthenticatedRequest, res) {
   try {
+    if (!(await ownsCampaign(req.params.campaignId, req.dbUserId))) return res.status(404).json({ error: 'Campaign not found' });
     var minConfidence = req.body?.min_confidence || 80;
     var result = await checkAndDeclareWinner(req.params.campaignId, minConfidence);
     res.json(result);

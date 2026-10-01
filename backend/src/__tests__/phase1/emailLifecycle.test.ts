@@ -1,10 +1,11 @@
 /**
- * Phase 1 - email lifecycle with a stub for Resend (nothing is sent to a real provider).
+ * Phase 1 - email lifecycle against the local mailbox fake (nothing is sent to a real mail server).
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { api, makeUser, makeQuiz, waitFor, nextIp } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
 import { outbox, resetOutbox, mailBehaviour } from '../helpers/mailFake';
+import { signUnsubscribe } from '../../services/unsubscribe';
 
 beforeEach(async () => { await resetData(); resetOutbox(); });
 
@@ -60,8 +61,10 @@ describe('unsubscribe', () => {
     expect(page.text).toContain('Confirm Unsubscribe');
     const done = await app.post('/api/public/unsubscribe').type('form').send({ email: 'Gone@Customer.example' });
     expect(done.status).toBe(200);
-    const status = await app.get('/api/public/unsubscribe/status?email=gone@customer.example');
+    const status = await app.get('/api/public/unsubscribe/status?email=gone@customer.example&sig=' + url.searchParams.get('sig'));
     expect(status.body.unsubscribed).toBe(true);
+    // Without the link signature nobody can look up whether an address unsubscribed.
+    expect((await app.get('/api/public/unsubscribe/status?email=gone@customer.example')).status).toBe(403);
   });
 
   it('RFC 8058 one-click POST (what Gmail/Apple Mail send) unsubscribes without a form', async () => {
@@ -69,7 +72,7 @@ describe('unsubscribe', () => {
     const url = new URL(buildUnsubscribeUrl('oneclick@customer.example'));
     const r = await (await api()).post(url.pathname + url.search).type('form').send({ 'List-Unsubscribe': 'One-Click' });
     expect(r.status).toBe(200);
-    expect((await (await api()).get('/api/public/unsubscribe/status?email=oneclick@customer.example')).body.unsubscribed).toBe(true);
+    expect((await (await api()).get('/api/public/unsubscribe/status?email=oneclick@customer.example&sig=' + signUnsubscribe('oneclick@customer.example'))).body.unsubscribed).toBe(true);
   });
 
   it('an unsubscribed address gets no result email and no sequence email; resubscribe restores delivery', async () => {
@@ -80,7 +83,10 @@ describe('unsubscribe', () => {
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead()).expect(201);
     await new Promise((res) => setTimeout(res, 300));
     expect(outbox.filter((m) => String(m.to) === 'ada@customer.example')).toHaveLength(0);
-    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example' }).expect(200);
+    // Someone else cannot undo the unsubscribe: re-subscribing needs the signed link that was emailed to the address.
+    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example' }).expect(403);
+    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example', sig: 'x'.repeat(32) }).expect(403);
+    await app.post('/api/public/resubscribe').send({ email: 'ada@customer.example', sig: signUnsubscribe('ada@customer.example') }).expect(200);
     await app.post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead({ email: 'again@customer.example' })).expect(201);
     expect(await waitFor(() => outbox.some((m) => String(m.to) === 'again@customer.example'))).toBe(true);
   });

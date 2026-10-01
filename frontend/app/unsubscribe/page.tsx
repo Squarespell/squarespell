@@ -9,6 +9,8 @@ function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
   const token = searchParams.get('token') || '';
+  // Signature from the emailed link; needed to see the current status or subscribe again.
+  const sig = searchParams.get('sig') || '';
 
   const [status, setStatus] = useState<'loading' | 'subscribed' | 'unsubscribed' | 'error'>('loading');
   const [working, setWorking] = useState(false);
@@ -31,12 +33,17 @@ function UnsubscribeContent() {
       setStatus('error');
       return;
     }
+    // Without the link signature the status cannot be looked up; offer unsubscribing only.
+    if (!sig) {
+      setStatus('subscribed');
+      return;
+    }
     // Check current status
-    fetch(`${API}/api/public/unsubscribe/status?email=${encodeURIComponent(e)}`)
+    fetch(`${API}/api/public/unsubscribe/status?email=${encodeURIComponent(e)}&sig=${encodeURIComponent(sig)}`)
       .then(r => r.json())
       .then(data => setStatus(data.unsubscribed ? 'unsubscribed' : 'subscribed'))
       .catch(() => setStatus('error'));
-  }, [email, token]);
+  }, [email, token, sig]);
 
   async function handleUnsubscribe() {
     setWorking(true);
@@ -60,7 +67,7 @@ function UnsubscribeContent() {
       const res = await fetch(`${API}/api/public/resubscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resolvedEmail }),
+        body: JSON.stringify({ email: resolvedEmail, sig }),
       });
       if (res.ok) setStatus('subscribed');
       else setStatus('error');

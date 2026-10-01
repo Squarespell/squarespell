@@ -2,6 +2,7 @@ import { log } from '../lib/logger';
 import { Router } from 'express';
 import { supabase } from '../db/supabaseClient';
 import { isUuid } from '../utils/ownership';
+import { verifyUnsubscribeSignature } from '../services/unsubscribe';
 
 const r = Router();
 
@@ -147,6 +148,8 @@ r.post('/unsubscribe', async (req, res) => {
 r.get('/unsubscribe/status', async (req, res) => {
   const email = ((req.query.email as string) || '').trim().toLowerCase();
   if (!email) return res.json({ unsubscribed: false });
+  // Only the holder of a link emailed to this address may see its status (no lookups of other people's addresses).
+  if (!verifyUnsubscribeSignature(email, req.query.sig)) return res.status(403).json({ error: 'Invalid or missing link signature' });
 
   const { data } = await supabase
     .from('email_unsubscribes')
@@ -165,6 +168,9 @@ r.get('/unsubscribe/status', async (req, res) => {
 r.post('/resubscribe', async (req, res) => {
   const email = (req.body?.email || '').trim().toLowerCase();
   if (!email) return res.status(400).json({ error: 'email required' });
+  // Subscribing an address again needs the signed link that was emailed to it; otherwise anyone could undo
+  // someone else's unsubscribe.
+  if (!verifyUnsubscribeSignature(email, req.body?.sig)) return res.status(403).json({ error: 'Invalid or missing link signature' });
 
   const { error } = await supabase
     .from('email_unsubscribes')
