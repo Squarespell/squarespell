@@ -62,6 +62,13 @@ for _ in $(seq 1 60); do
 done
 "${DC[@]}" exec -T backend node -e "fetch('http://127.0.0.1:3001/api/health/ready').then(r=>{console.log('ready',r.status);process.exit(r.ok?0:1)}).catch(()=>process.exit(1))" || die "API readiness check failed"
 
+# The proxy reads its Caddyfile from a bind mount (admin API off), so a changed file needs a restart to take effect.
+CADDY_SUM="$(sha256sum "$REPO/infra/hostinger-production/Caddyfile.production" | cut -d' ' -f1)"
+if [ "$CADDY_SUM" != "$(cat "$ROOT/.proxy-caddyfile.sha256" 2>/dev/null || true)" ]; then
+  "${DC[@]}" restart proxy
+  echo "$CADDY_SUM" > "$ROOT/.proxy-caddyfile.sha256"
+fi
+
 echo "$(date -u +%FT%TZ) $TARGET" >> "$HIST"
 "${DC[@]}" ps
 echo "deployed $TARGET"

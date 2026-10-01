@@ -144,6 +144,8 @@ describe('embed runtime', () => {
     const caddy = fs.readFileSync(path.resolve(__dirname, '../../../../infra/hostinger-production/Caddyfile.production'), 'utf8');
     expect(caddy).toMatch(/header @embedpage Content-Security-Policy "frame-ancestors \*"/);
     expect(caddy).toContain('rewrite /embed.js /embed/quiz-embed.js');
+    // Per-visitor rate limits need the visitor's IP from the edge: the private proxy must trust the private network.
+    expect(caddy).toMatch(/trusted_proxies static private_ranges/);
     expect(fs.existsSync(path.resolve(__dirname, '../../../../frontend/public/embed/quiz-embed.js'))).toBe(true);
     // The app's own headers keep every other page out of foreign frames but leave the embeddable pages alone.
     const nextConfig = fs.readFileSync(path.resolve(__dirname, '../../../../frontend/next.config.js'), 'utf8');
