@@ -124,7 +124,7 @@ function UsageRow({ icon, label, used, limit }: { icon: string; label: string; u
         )}
       </div>
       <div style={{ textAlign: 'right' }}>
-        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 22, fontWeight: 700, color: C.INK, fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 22, fontWeight: 500, color: C.INK, fontVariantNumeric: 'tabular-nums' }}>
           {used.toLocaleString()} <span style={{ fontWeight: 500, color: C.GRAY_500 }}>/ {unlimited ? '∞' : (limit as number).toLocaleString()}</span>
         </div>
         <div style={{ fontSize: 13, color: C.GRAY_500 }}>{unlimited ? 'Unlimited' : pct + '% used'}</div>
@@ -478,7 +478,7 @@ export default function BillingPage() {
 
   var portalStrip = (
     <section style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '22px 26px', marginTop: 20, background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, flexWrap: 'wrap' }}>
-      <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 800, letterSpacing: '-0.04em', color: '#635BFF', paddingRight: 24, borderRight: '1px solid ' + C.BORDER }}>stripe</span>
+      <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 500, letterSpacing: '-0.04em', color: '#635BFF', paddingRight: 24, borderRight: '1px solid ' + C.BORDER }}>stripe</span>
       <div style={{ flex: '1 1 320px' }}>
         <div style={{ fontSize: 18, fontWeight: 600, color: C.INK }}>Payment methods &amp; invoices</div>
         <div style={{ fontSize: 15, color: C.GRAY_600, marginTop: 4 }}>Manage payment methods, view invoices and update billing details in the secure Stripe customer portal.</div>
@@ -524,7 +524,7 @@ export default function BillingPage() {
                 <p style={{ margin: '8px 0 16px', fontSize: 16, lineHeight: 1.4, color: t.sub, minHeight: 45 }}>{p.tagline}</p>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   {yearly && <span style={{ fontSize: 20, textDecoration: 'line-through', opacity: 0.7 }}>${p.monthlyPrice}</span>}
-                  <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 46, fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1 }}>${moPrice}</span>
+                  <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 46, fontWeight: 500, letterSpacing: '-0.04em', lineHeight: 1 }}>${moPrice}</span>
                   <span style={{ fontSize: 18, opacity: 0.85 }}>/mo</span>
                 </div>
                 <div style={{ fontSize: 15, marginTop: 6, color: t.sub }}>{yearly ? 'Billed $' + p.yearlyPrice + '/year' : 'Billed monthly'}</div>
@@ -562,7 +562,7 @@ export default function BillingPage() {
     var sub: Record<string, string> = { core: 'For getting started', pro: 'For growing businesses', business: 'For teams and custom brands' };
     return (
       <section style={{ marginTop: 40 }}>
-        <h2 style={{ margin: '0 0 6px', fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(30px, 3vw, 44px)', fontWeight: 800, letterSpacing: '-0.035em', color: C.INK }}>Compare every feature<span style={{ color: C.ACCENT }}>.</span></h2>
+        <h2 style={{ margin: '0 0 6px', fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(30px, 3vw, 44px)', fontWeight: 500, letterSpacing: '-0.035em', color: C.INK }}>Compare every feature<span style={{ color: C.ACCENT }}>.</span></h2>
         <p style={{ margin: '0 0 20px', fontSize: 17, color: C.GRAY_600 }}>Choose the plan that fits your goals. Upgrade, downgrade or manage your billing at any time.</p>
         <div style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 820 }}>
@@ -697,7 +697,7 @@ export default function BillingPage() {
           var active = tab === t.key;
           return (
             <button key={t.key} type="button" role="tab" aria-selected={active} onClick={function() { changeTab(t.key); }}
-              style={{ height: 40, padding: '0 18px', borderRadius: 999, border: '1px solid ' + (active ? C.INK : C.BORDER), background: active ? C.INK : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
+              style={{ height: 40, padding: '0 18px', borderRadius: 999, border: '1px solid ' + (active ? C.ACCENT : C.BORDER), background: active ? C.ACCENT : '#fff', color: active ? '#fff' : C.INK, fontSize: 15, fontFamily: C.FONT, cursor: 'pointer' }}>
               {t.label}
             </button>
           );
@@ -715,7 +715,7 @@ export default function BillingPage() {
               <div style={{ position: 'relative' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.16em', opacity: 0.85 }}>CURRENT PLAN</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 18, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 52, fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1 }}>{displayPlanName}</span>
+                  <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 52, fontWeight: 500, letterSpacing: '-0.04em', lineHeight: 1 }}>{displayPlanName}</span>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 999, background: C.ACID, color: C.INK, fontSize: 15 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#1F9D57' }} />{isTrial ? trialDaysLeft + ' days left' : 'Active'}
                   </span>
@@ -723,8 +723,8 @@ export default function BillingPage() {
                 <div style={{ fontSize: 18, marginTop: 14, opacity: 0.9 }}>{isTrial ? 'Free trial, no billing yet' : 'Billed through Stripe'}</div>
                 <div style={{ marginTop: 28 }}>
                   {isPaid
-                    ? <button type="button" onClick={openPortal} className="bl-btn" style={{ border: 'none' }}>Manage billing →</button>
-                    : <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ border: 'none' }}>Choose a plan →</button>}
+                    ? <button type="button" onClick={openPortal} className="bl-btn" style={{ border: 'none' }}>Manage billing</button>
+                    : <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ border: 'none' }}>Choose a plan</button>}
                 </div>
               </div>
               <div style={{ position: 'relative', borderLeft: '1px solid rgba(255,255,255,0.35)', paddingLeft: 28 }}>
@@ -746,7 +746,7 @@ export default function BillingPage() {
           </div>
 
           <div className="bl-duo">
-            <section style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, border: '1px solid ' + C.BORDER, background: '#F7F4EE', padding: '30px 36px', minHeight: 200 }}>
+            <section style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, border: '1px solid ' + C.BORDER, background: '#F5F7FF', padding: '30px 36px', minHeight: 200 }}>
               <svg aria-hidden="true" width="170" height="170" viewBox="0 0 170 170" style={{ position: 'absolute', right: 150, bottom: 0 }}>
                 <path d="M170 0 A 170 170 0 0 0 0 170 L 170 170 Z" fill={C.PERIWINKLE} />
                 <path d="M170 80 A 90 90 0 0 0 80 170 L 170 170 Z" fill={C.INK} />
@@ -755,19 +755,19 @@ export default function BillingPage() {
                 {['CORE', 'PRO', 'BUSINESS'].map(function(n) { return <div key={n} style={{ color: displayPlanName.toUpperCase() === n ? C.INK : C.GRAY_600, fontWeight: displayPlanName.toUpperCase() === n ? 700 : 400 }}>{n}</div>; })}
               </div>
               <div style={{ position: 'relative', maxWidth: 360 }}>
-                <h3 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 800, letterSpacing: '-0.035em', color: C.INK }}>Compare plans</h3>
+                <h3 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 500, letterSpacing: '-0.035em', color: C.INK }}>Compare plans</h3>
                 <p style={{ margin: '8px 0 20px', fontSize: 17, color: C.GRAY_600, lineHeight: 1.45 }}>See what’s included in each plan and find the right fit for your needs.</p>
-                <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>View plans →</button>
+                <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn" style={{ background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>View plans</button>
               </div>
             </section>
             <section style={{ position: 'relative', overflow: 'hidden', borderRadius: 8, border: '1px solid ' + C.BORDER, background: C.ACID_SOFT, padding: '30px 36px', minHeight: 200 }}>
               <svg aria-hidden="true" width="140" height="160" viewBox="0 0 140 160" style={{ position: 'absolute', right: 0, bottom: 0 }}><path d="M140 20 A 140 140 0 0 0 0 160 L 140 160 Z" fill={C.ACID} opacity="0.8" /></svg>
               <div style={{ position: 'relative', maxWidth: 440 }}>
-                <h3 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 800, letterSpacing: '-0.035em', color: C.INK }}>Add capacity</h3>
+                <h3 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 500, letterSpacing: '-0.035em', color: C.INK }}>Add capacity</h3>
                 <p style={{ margin: '8px 0 20px', fontSize: 17, color: C.GRAY_600, lineHeight: 1.45 }}>
                   {isBusiness ? 'Explore capacity options for Core and Pro. Your Business plan already includes unlimited leads and emails.' : 'Add extra leads or emails to your plan without upgrading.'}
                 </p>
-                <button type="button" onClick={function() { changeTab('addons'); }} className="bl-btn">Explore add-ons →</button>
+                <button type="button" onClick={function() { changeTab('addons'); }} className="bl-btn">Explore add-ons</button>
               </div>
             </section>
           </div>
@@ -802,7 +802,7 @@ export default function BillingPage() {
                 </div>
               );
             })}
-            <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn">Compare plans →</button>
+            <button type="button" onClick={function() { changeTab('plans'); }} className="bl-btn">Compare plans</button>
           </section>
         </>
       )}
@@ -817,9 +817,9 @@ export default function BillingPage() {
       {/* ── Plan Switch Confirmation Modal ── */}
       {switchModal && (
         <div role="dialog" aria-modal="true" aria-labelledby="bl-switch-title" onClick={function() { if (!switchLoading) setSwitchModal(null); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(22,23,25,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(11, 18, 51,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={function(e) { e.stopPropagation(); }} style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, padding: '28px 26px', maxWidth: 460, width: '100%', boxShadow: C.SHADOW_LG }}>
-            <h3 id="bl-switch-title" style={{ margin: '0 0 6px', fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 700, color: C.INK }}>Switch to {switchModal.targetName}</h3>
+            <h3 id="bl-switch-title" style={{ margin: '0 0 6px', fontFamily: C.DISPLAY_FONT, fontSize: 26, fontWeight: 500, color: C.INK }}>Switch to {switchModal.targetName}</h3>
             <p style={{ margin: '0 0 20px', fontSize: 15, color: C.GRAY_600, lineHeight: 1.5 }}>Your plan will change immediately. Stripe will automatically adjust your billing.</p>
             <div style={{ background: C.GRAY_50, borderRadius: 6, padding: '16px 18px', marginBottom: 20, fontSize: 15 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}><span style={{ color: C.GRAY_600 }}>Proration adjustment</span><b style={{ color: switchModal.prorationAmount >= 0 ? C.INK : C.ACCENT }}>{switchModal.prorationFormatted}</b></div>

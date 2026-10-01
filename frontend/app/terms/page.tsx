@@ -11,8 +11,8 @@ export const metadata = {
 
 const S: 'left' = 'left';
 const W = '#ffffff';
-const T = '#1A1A1A';
-const M = '#6B6B6B';
+const T = '#0B1233';
+const M = '#646D8F';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -55,7 +55,7 @@ export default function TermsPage() {
         <Section title="Your content">
           You retain ownership of the quiz content, branding, and lead data you create or collect.
           We process it only to operate the Service on your behalf and as described in our{' '}
-          <a href="/privacy" style={{ color: '#0f7377' }}>Privacy Policy</a>.
+          <a href="/privacy" style={{ color: '#3154FF' }}>Privacy Policy</a>.
         </Section>
 
         <Section title="Service availability">
@@ -77,7 +77,7 @@ export default function TermsPage() {
 
         <Section title="Contact">
           Questions about these terms can be sent to{' '}
-          <a href="mailto:info@squarespell.com" style={{ color: '#0f7377' }}>info@squarespell.com</a>.
+          <a href="mailto:info@squarespell.com" style={{ color: '#3154FF' }}>info@squarespell.com</a>.
         </Section>
       </div>
     </div>

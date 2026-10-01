@@ -49,14 +49,14 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
   };
 
   if (loading) return (
-    <div style={{ background:'#F7F7F5', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{ background:'#F5F7FF', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ width:32, height:32, border:'2px solid rgba(49, 84, 255,.2)', borderTopColor:'#3154FF', borderRadius:'50%', animation:'spin .7s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (!quiz) return (
-    <div style={{ background:'#F7F7F5', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'#1A1A1A', fontFamily:'Inter, sans-serif' }}>
+    <div style={{ background:'#F5F7FF', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'#0B1233', fontFamily:'Inter, sans-serif' }}>
       <p>Quiz not found.</p>
     </div>
   );
@@ -66,8 +66,8 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-        body{font-family:'Inter',system-ui,sans-serif;background:#F7F7F5;color:#1A1A1A}
-        :root{--acc:#3154FF;--g1:rgba(0,0,0,.055);--g2:rgba(0,0,0,.034);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.058);--t1:#1A1A1A;--t3:rgba(26,26,26,.42);--t4:rgba(26,26,26,.22)}
+        body{font-family:'Inter',system-ui,sans-serif;background:#F5F7FF;color:#0B1233}
+        :root{--acc:#3154FF;--g1:rgba(0,0,0,.055);--g2:rgba(0,0,0,.034);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.058);--t1:#0B1233;--t3:rgba(11, 18, 51,.42);--t4:rgba(11, 18, 51,.22)}
       `}</style>
 
       <div style={{ maxWidth:760, margin:'0 auto', padding:'48px 24px' }}>
@@ -96,7 +96,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
               {copied ? 'Copied!' : 'Copy code'}
             </button>
           </div>
-          <div style={{ background:'#EEEDE9', borderRadius:10, padding:18, fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(26,26,26,.7)', lineHeight:1.7, overflowX:'auto', border:'.5px solid var(--b2)', whiteSpace:'pre' }}>
+          <div style={{ background:'#EBEFFF', borderRadius:10, padding:18, fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(11, 18, 51,.7)', lineHeight:1.7, overflowX:'auto', border:'.5px solid var(--b2)', whiteSpace:'pre' }}>
             {`<div data-squarespell-quiz="${quiz.slug}"></div>\n<script src="${embedScriptUrl()}" data-quiz="${quiz.slug}" async><\/script>`}
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
               <p style={{ fontSize:12, color:'var(--t3)' }}>3 steps to go live</p>
             </div>
           </div>
-          <div style={{ background:'rgba(49, 84, 255,.08)', border:'1px solid rgba(49, 84, 255,.18)', borderRadius:8, padding:'10px 14px', marginBottom:16, fontSize:12, color:'rgba(26,26,26,.6)', lineHeight:1.6 }}>
+          <div style={{ background:'rgba(49, 84, 255,.08)', border:'1px solid rgba(49, 84, 255,.18)', borderRadius:8, padding:'10px 14px', marginBottom:16, fontSize:12, color:'rgba(11, 18, 51,.6)', lineHeight:1.6 }}>
             <strong style={{ color:'var(--t1)' }}>Important:</strong> Use a <strong>Code Block</strong> on your page, not Code Injection (Settings &rarr; Advanced). Code Injection goes in the page header where the quiz container can be stripped.
           </div>
           {[
@@ -119,7 +119,7 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
             { step:'Paste and save', detail:'Paste the embed code above into the code block, uncheck "Display Source", and click Save.' },
           ].map((item, i) => (
             <div key={i} style={{ display:'flex', gap:14, marginBottom: i < 2 ? 16 : 0 }}>
-              <div style={{ width:22, height:22, borderRadius:'50%', background:'var(--g2)', border:'.5px solid var(--b2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'rgba(26,26,26,.42)', flexShrink:0, marginTop:1 }}>{i+1}</div>
+              <div style={{ width:22, height:22, borderRadius:'50%', background:'var(--g2)', border:'.5px solid var(--b2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'rgba(11, 18, 51,.42)', flexShrink:0, marginTop:1 }}>{i+1}</div>
               <div>
                 <p style={{ fontSize:14, fontWeight:600, marginBottom:3 }}>{item.step}</p>
                 <p style={{ fontSize:12, color:'var(--t3)' }}>{item.detail}</p>
@@ -142,14 +142,14 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
               {copiedFull ? 'Copied!' : 'Copy URL'}
             </button>
           </div>
-          <div style={{ background:'#EEEDE9', borderRadius:9, padding:'12px 16px', fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(49, 84, 255,.8)', border:'.5px solid var(--b2)' }}>
+          <div style={{ background:'#EBEFFF', borderRadius:9, padding:'12px 16px', fontFamily:'DM Mono, monospace', fontSize:13, color:'rgba(49, 84, 255,.8)', border:'.5px solid var(--b2)' }}>
             {quizUrl}
           </div>
         </div>
 
         {/* Preview link */}
         <div style={{ textAlign:'center', paddingTop:8 }}>
-          <a href={quizUrl} target="_blank" rel="noopener noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, color:'rgba(26,26,26,.42)', textDecoration:'none', transition:'color .2s' }}>
+          <a href={quizUrl} target="_blank" rel="noopener noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, color:'rgba(11, 18, 51,.42)', textDecoration:'none', transition:'color .2s' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Preview your quiz
           </a>

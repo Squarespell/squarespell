@@ -302,7 +302,7 @@ function QuestionFlowPanel({
           {questionBlocks.length > 1 && (
             <div style={{
               position: 'absolute', left: 13, top: 22, bottom: 16,
-              width: 1.5, background: '#E4E7EC',
+              width: 1.5, background: '#E2E7FF',
             }} />
           )}
 
@@ -314,7 +314,7 @@ function QuestionFlowPanel({
             var hasBranch = q.branchRules && q.branchRules.length > 0;
             var optCount = q.options ? q.options.length : 0;
             var isComplete = progress >= 100;
-            var statusColor = isComplete ? '#16A34A' : (progress > 0 ? '#D97706' : '#98A2B3');
+            var statusColor = isComplete ? '#16A34A' : (progress > 0 ? '#D97706' : '#8B93B5');
             var statusText = isComplete ? 'Complete' : (progress + '%');
 
             return (
@@ -323,8 +323,8 @@ function QuestionFlowPanel({
                 <div style={{
                   position: 'absolute', left: -21, top: 11,
                   width: 22, height: 22, borderRadius: '50%',
-                  background: isSelected ? C.ACCENT : '#E4E7EC',
-                  color: isSelected ? '#fff' : '#667085',
+                  background: isSelected ? C.ACCENT : '#E2E7FF',
+                  color: isSelected ? '#fff' : '#646D8F',
                   fontSize: 11, fontWeight: 600,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   zIndex: 1, boxShadow: '0 0 0 3px ' + C.SURFACE,
@@ -343,7 +343,7 @@ function QuestionFlowPanel({
                     background: isSelected ? '#F0F9F7' : 'transparent',
                     transition: 'all 0.12s', fontFamily: C.FONT,
                   }}
-                  onMouseEnter={function(e) { if (!isSelected) e.currentTarget.style.background = '#F9FAFB'; }}
+                  onMouseEnter={function(e) { if (!isSelected) e.currentTarget.style.background = '#FAFBFF'; }}
                   onMouseLeave={function(e) { if (!isSelected) e.currentTarget.style.background = isSelected ? '#F0F9F7' : 'transparent'; }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -354,7 +354,7 @@ function QuestionFlowPanel({
                       {q.text || 'Untitled question'}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <span style={{ fontSize: 11, color: '#98A2B3' }}>
+                      <span style={{ fontSize: 11, color: '#8B93B5' }}>
                         {optCount} option{optCount !== 1 ? 's' : ''}
                       </span>
                       <span style={{ fontSize: 11, fontWeight: 500, color: statusColor }}>
@@ -370,7 +370,7 @@ function QuestionFlowPanel({
                       overflow: 'hidden',
                     }}>
                       {q.mediaType === 'video' ? (
-                        <div style={{ width: '100%', height: '100%', background: '#1D2939', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: '100%', height: '100%', background: '#1C2447', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <svg width={14} height={14} viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                         </div>
                       ) : (
@@ -396,7 +396,7 @@ function QuestionFlowPanel({
 
         {/* Divider before special blocks */}
         {(outcomeBlocks.length > 0 || leadGateBlock) && (
-          <div style={{ height: 0.5, background: '#E4E7EC', margin: '8px 0 8px 28px' }} />
+          <div style={{ height: 0.5, background: '#E2E7FF', margin: '8px 0 8px 28px' }} />
         )}
 
         {/* Lead gate + Outcomes section */}
@@ -412,7 +412,7 @@ function QuestionFlowPanel({
                 background: selectedId === leadGateBlock.id ? '#FFF7ED' : 'transparent',
                 transition: 'all 0.12s', fontFamily: C.FONT,
               }}
-              onMouseEnter={function(e) { if (selectedId !== leadGateBlock!.id) e.currentTarget.style.background = '#F9FAFB'; }}
+              onMouseEnter={function(e) { if (selectedId !== leadGateBlock!.id) e.currentTarget.style.background = '#FAFBFF'; }}
               onMouseLeave={function(e) { e.currentTarget.style.background = selectedId === leadGateBlock!.id ? '#FFF7ED' : 'transparent'; }}
             >
               <div style={{
@@ -425,7 +425,7 @@ function QuestionFlowPanel({
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Lead gate</div>
-                <div style={{ fontSize: 11, color: '#98A2B3' }}>Collect contact info</div>
+                <div style={{ fontSize: 11, color: '#8B93B5' }}>Collect contact info</div>
               </div>
             </button>
           )}
@@ -444,7 +444,7 @@ function QuestionFlowPanel({
                   background: isSelected ? '#F0FDF4' : 'transparent',
                   transition: 'all 0.12s', fontFamily: C.FONT,
                 }}
-                onMouseEnter={function(e) { if (!isSelected) e.currentTarget.style.background = '#F9FAFB'; }}
+                onMouseEnter={function(e) { if (!isSelected) e.currentTarget.style.background = '#FAFBFF'; }}
                 onMouseLeave={function(e) { e.currentTarget.style.background = isSelected ? '#F0FDF4' : 'transparent'; }}
               >
                 <div style={{
@@ -457,7 +457,7 @@ function QuestionFlowPanel({
                 </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>{o.title || 'Outcome'}</div>
-                  <div style={{ fontSize: 11, color: '#98A2B3' }}>Show results</div>
+                  <div style={{ fontSize: 11, color: '#8B93B5' }}>Show results</div>
                 </div>
               </button>
             );
@@ -467,13 +467,13 @@ function QuestionFlowPanel({
           <button type="button" onClick={function() { onAddBlock('outcome'); }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: '8px 0', borderRadius: 8, border: '1px dashed #D0D5DD',
+              padding: '8px 0', borderRadius: 8, border: '1px dashed #CDD6FF',
               background: 'transparent', cursor: 'pointer', width: '100%',
-              fontSize: 12, fontWeight: 500, color: '#667085',
+              fontSize: 12, fontWeight: 500, color: '#646D8F',
               fontFamily: C.FONT, transition: 'all 0.12s', marginTop: 4,
             }}
             onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; e.currentTarget.style.color = C.ACCENT; }}
-            onMouseLeave={function(e) { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.color = '#667085'; }}
+            onMouseLeave={function(e) { e.currentTarget.style.borderColor = '#CDD6FF'; e.currentTarget.style.color = '#646D8F'; }}
           >
             <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1={12} y1={5} x2={12} y2={19} /><line x1={5} y1={12} x2={19} y2={12} /></svg>
             Add outcome
@@ -854,17 +854,17 @@ function AnswerImagePicker({
     <>
       <div style={{ position: 'fixed', inset: 0, zIndex: 45, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
       <div onClick={function(e) { e.stopPropagation(); }} style={{
-        background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
+        background: '#fff', borderRadius: 14, border: '1px solid #E2E7FF',
         width: 400, maxWidth: 'calc(100vw - 32px)', padding: 18, boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
         zIndex: 50,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>Choose image</div>
-          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B93B5', padding: 4 }}>
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
           </button>
         </div>
-        <div style={{ display: 'flex', gap: 0, marginBottom: 12, background: '#F2F4F7', borderRadius: 9, padding: 3 }}>
+        <div style={{ display: 'flex', gap: 0, marginBottom: 12, background: '#F5F7FF', borderRadius: 9, padding: 3 }}>
           {(['upload', 'browse'] as const).map(function(t) {
             var active = tab === t;
             var label = t === 'upload' ? 'Upload' : 'Browse images';
@@ -872,7 +872,7 @@ function AnswerImagePicker({
               <button key={t} type="button" onClick={function() { setTab(t); }}
                 style={{
                   flex: 1, padding: '6px 6px', borderRadius: 7, border: 'none',
-                  background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#667085',
+                  background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#646D8F',
                   fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
                   boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                 }}>
@@ -886,15 +886,15 @@ function AnswerImagePicker({
             <button type="button" onClick={function() { fileRef.current?.click(); }}
               style={{
                 width: '100%', padding: '22px 12px', borderRadius: 10,
-                border: '2px dashed #D0D5DD', background: '#FAFBFC',
+                border: '2px dashed #CDD6FF', background: '#FAFBFC',
                 cursor: uploading ? 'default' : 'pointer',
-                fontSize: 12, fontWeight: 600, color: '#344054', fontFamily: C.FONT,
+                fontSize: 12, fontWeight: 600, color: '#3B4466', fontFamily: C.FONT,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                 opacity: uploading ? 0.6 : 1,
               }}>
-              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#646D8F" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
               {uploading ? 'Uploading...' : 'Click to upload'}
-              <span style={{ fontSize: 10, color: '#98A2B3', fontWeight: 400 }}>PNG, JPG, GIF up to 20MB</span>
+              <span style={{ fontSize: 10, color: '#8B93B5', fontWeight: 400 }}>PNG, JPG, GIF up to 20MB</span>
             </button>
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
           </>
@@ -905,7 +905,7 @@ function AnswerImagePicker({
               <input type="text" value={pexelsQuery} onChange={function(e) { setPexelsQuery(e.target.value); }}
                 placeholder="Search free photos..."
                 onKeyDown={function(e) { if (e.key === 'Enter') searchPexels(pexelsQuery); }}
-                style={{ flex: 1, padding: '8px 10px', border: '1px solid #D0D5DD', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+                style={{ flex: 1, padding: '8px 10px', border: '1px solid #CDD6FF', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
               <button type="button" onClick={function() { searchPexels(pexelsQuery); }}
                 style={{ padding: '8px 12px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
                 {pexelsLoading ? '...' : 'Search'}
@@ -916,7 +916,7 @@ function AnswerImagePicker({
                 {pexelsResults.map(function(img) {
                   return (
                     <button key={img.id} type="button" onClick={function() { onSelect(img.regular); onClose(); }}
-                      style={{ padding: 0, border: '2px solid transparent', borderRadius: 6, overflow: 'hidden', cursor: 'pointer', background: '#F2F4F7', transition: 'border-color 0.1s' }}
+                      style={{ padding: 0, border: '2px solid transparent', borderRadius: 6, overflow: 'hidden', cursor: 'pointer', background: '#F5F7FF', transition: 'border-color 0.1s' }}
                       onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
                       onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}>
                       <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 65, objectFit: 'cover', display: 'block' }} />
@@ -925,11 +925,11 @@ function AnswerImagePicker({
                 })}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: '#98A2B3', fontSize: 12 }}>
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#8B93B5', fontSize: 12 }}>
                 {pexelsLoading ? 'Loading...' : 'Search for free stock photos'}
               </div>
             )}
-            <div style={{ marginTop: 6, fontSize: 10, color: '#98A2B3', textAlign: 'center' }}>Photos provided by Pexels</div>
+            <div style={{ marginTop: 6, fontSize: 10, color: '#8B93B5', textAlign: 'center' }}>Photos provided by Pexels</div>
           </>
         )}
       </div>
@@ -1012,7 +1012,7 @@ function GridAnswerCard({
 
       {/* Image area */}
       <div style={{
-        height: isFullBg ? 160 : 120, background: opt.imageUrl ? 'transparent' : '#F2F4F7',
+        height: isFullBg ? 160 : 120, background: opt.imageUrl ? 'transparent' : '#F5F7FF',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', cursor: opt.imageUrl ? 'default' : 'pointer',
         borderRadius: '12px 12px 0 0', overflow: 'hidden',
@@ -1055,7 +1055,7 @@ function GridAnswerCard({
               style={{
                 padding: '5px 10px', borderRadius: 6,
                 background: 'rgba(255,255,255,0.92)', border: 'none',
-                color: '#344054', fontSize: 11, fontWeight: 600,
+                color: '#3B4466', fontSize: 11, fontWeight: 600,
                 cursor: 'pointer', fontFamily: C.FONT,
               }}>
               Replace
@@ -1175,7 +1175,7 @@ function ThumbnailAnswerRow({
         ref={thumbRef}
         style={{
           width: 56, height: 56, borderRadius: 8, overflow: 'hidden',
-          background: '#F2F4F7', flexShrink: 0, position: 'relative',
+          background: '#F5F7FF', flexShrink: 0, position: 'relative',
           cursor: 'pointer',
         }}
         onMouseEnter={function() { setThumbHover(true); }}
@@ -1199,7 +1199,7 @@ function ThumbnailAnswerRow({
           }}>
             <button type="button" onClick={function(e) { e.stopPropagation(); setShowPicker(true); }}
               title="Replace"
-              style={{ width: 22, height: 22, borderRadius: 4, background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#344054' }}>
+              style={{ width: 22, height: 22, borderRadius: 4, background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B4466' }}>
               <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
             </button>
             <button type="button" onClick={function(e) { e.stopPropagation(); onClearImage(); }}
@@ -1621,7 +1621,7 @@ function QuestionToolbar({
     <div style={{
       display: 'flex', alignItems: 'center', gap: 2,
       padding: '8px 0 0', margin: '8px 36px 0',
-      borderTop: '1px solid #F2F4F7',
+      borderTop: '1px solid #F5F7FF',
     }}>
       <button type="button" ref={imageRef} onClick={onAddImage}
         title="Add image to this question"
@@ -1629,7 +1629,7 @@ function QuestionToolbar({
           height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
           background: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT_LIGHT : 'transparent',
           fontSize: 11, fontWeight: 600,
-          color: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT : '#667085',
+          color: block.mediaUrl && block.mediaType !== 'video' ? C.ACCENT : '#646D8F',
           cursor: 'pointer', fontFamily: C.FONT,
           display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
         }}
@@ -1643,7 +1643,7 @@ function QuestionToolbar({
           height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
           background: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT_LIGHT : 'transparent',
           fontSize: 11, fontWeight: 600,
-          color: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT : '#667085',
+          color: block.mediaUrl && block.mediaType === 'video' ? C.ACCENT : '#646D8F',
           cursor: 'pointer', fontFamily: C.FONT,
           display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
         }}
@@ -1651,13 +1651,13 @@ function QuestionToolbar({
         <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x={2} y={4} width={14} height={16} rx={2} /><path d="M16 8l4.586-2.293A1 1 0 0122 6.586v10.828a1 1 0 01-1.414.879L16 16" /></svg>
         Video
       </button>
-      <div style={{ width: 1, height: 18, background: '#E4E7EC', margin: '0 4px' }} />
+      <div style={{ width: 1, height: 18, background: '#E2E7FF', margin: '0 4px' }} />
       <button type="button" onClick={onAddHelp}
         title="Add subtitle / help text"
         style={{
           height: 32, padding: '0 10px', borderRadius: 6, border: 'none',
           background: block.subtitle ? C.ACCENT_LIGHT : 'transparent', fontSize: 11, fontWeight: 600,
-          color: block.subtitle ? C.ACCENT : '#667085', cursor: 'pointer', fontFamily: C.FONT,
+          color: block.subtitle ? C.ACCENT : '#646D8F', cursor: 'pointer', fontFamily: C.FONT,
           display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
         }}
       >
@@ -1699,7 +1699,7 @@ function InlineMediaPreview({
     <div
       style={{
         margin: '12px 36px 0', borderRadius: 12, overflow: 'hidden',
-        position: 'relative', background: isVideo ? '#000' : '#F2F4F7',
+        position: 'relative', background: isVideo ? '#000' : '#F5F7FF',
       }}
       onMouseEnter={function() { setHovered(true); }}
       onMouseLeave={function() { setHovered(false); }}
@@ -1730,7 +1730,7 @@ function InlineMediaPreview({
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
               background: 'rgba(255,255,255,0.95)', border: 'none',
-              color: '#344054', fontSize: 12, fontWeight: 600,
+              color: '#3B4466', fontSize: 12, fontWeight: 600,
               cursor: 'pointer', fontFamily: C.FONT,
             }}>
             <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></svg>
@@ -1852,20 +1852,20 @@ function ImagePicker({
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 45, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
     <div ref={pickerRef} onClick={function(e) { e.stopPropagation(); }} style={{
-      background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
+      background: '#fff', borderRadius: 14, border: '1px solid #E2E7FF',
       width: 440, maxWidth: 'calc(100vw - 32px)', padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
       zIndex: 50,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>Add Image</div>
-        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
+        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B93B5', padding: 4 }}>
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
         </button>
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 14, background: '#F2F4F7', borderRadius: 9, padding: 3 }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 14, background: '#F5F7FF', borderRadius: 9, padding: 3 }}>
         {(['upload', 'browse'] as const).map(function(t) {
           var active = tab === t;
           var label = t === 'upload' ? 'Upload' : 'Browse images';
@@ -1873,7 +1873,7 @@ function ImagePicker({
             <button key={t} type="button" onClick={function() { setTab(t); }}
               style={{
                 flex: 1, padding: '7px 6px', borderRadius: 7, border: 'none',
-                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#667085',
+                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#646D8F',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
                 boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                 transition: 'all 0.12s',
@@ -1889,15 +1889,15 @@ function ImagePicker({
           <button type="button" onClick={function() { fileRef.current?.click(); }}
             style={{
               width: '100%', padding: '28px 16px', borderRadius: 10,
-              border: '2px dashed #D0D5DD', background: '#FAFBFC',
+              border: '2px dashed #CDD6FF', background: '#FAFBFC',
               cursor: uploading ? 'default' : 'pointer',
-              fontSize: 13, fontWeight: 600, color: '#344054', fontFamily: C.FONT,
+              fontSize: 13, fontWeight: 600, color: '#3B4466', fontFamily: C.FONT,
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
               opacity: uploading ? 0.6 : 1,
             }}>
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#646D8F" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
             {uploading ? 'Uploading...' : 'Click to upload image'}
-            <span style={{ fontSize: 11, color: '#98A2B3', fontWeight: 400 }}>PNG, JPG, GIF up to 20MB</span>
+            <span style={{ fontSize: 11, color: '#8B93B5', fontWeight: 400 }}>PNG, JPG, GIF up to 20MB</span>
           </button>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
         </>
@@ -1909,7 +1909,7 @@ function ImagePicker({
             <input type="text" value={pexelsQuery} onChange={function(e) { setPexelsQuery(e.target.value); }}
               placeholder="Search free photos..."
               onKeyDown={function(e) { if (e.key === 'Enter') searchPexels(pexelsQuery); }}
-              style={{ flex: 1, padding: '9px 12px', border: '1px solid #D0D5DD', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+              style={{ flex: 1, padding: '9px 12px', border: '1px solid #CDD6FF', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
             <button type="button" onClick={function() { searchPexels(pexelsQuery); }}
               style={{ padding: '9px 14px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
               {pexelsLoading ? '...' : 'Search'}
@@ -1920,7 +1920,7 @@ function ImagePicker({
               {pexelsResults.map(function(img) {
                 return (
                   <button key={img.id} type="button" onClick={function() { onSelect(img.regular); onClose(); }}
-                    style={{ padding: 0, border: '2px solid transparent', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: '#F2F4F7', transition: 'border-color 0.1s' }}
+                    style={{ padding: 0, border: '2px solid transparent', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: '#F5F7FF', transition: 'border-color 0.1s' }}
                     onMouseEnter={function(e) { e.currentTarget.style.borderColor = C.ACCENT; }}
                     onMouseLeave={function(e) { e.currentTarget.style.borderColor = 'transparent'; }}>
                     <img src={img.thumb} alt={img.alt} style={{ width: '100%', height: 76, objectFit: 'cover', display: 'block' }} />
@@ -1929,11 +1929,11 @@ function ImagePicker({
               })}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#98A2B3', fontSize: 12 }}>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: '#8B93B5', fontSize: 12 }}>
               {pexelsLoading ? 'Loading images...' : 'Search for free stock photos'}
             </div>
           )}
-          <div style={{ marginTop: 8, fontSize: 10, color: '#98A2B3', textAlign: 'center' }}>
+          <div style={{ marginTop: 8, fontSize: 10, color: '#8B93B5', textAlign: 'center' }}>
             Photos provided by Pexels
           </div>
         </>
@@ -2031,20 +2031,20 @@ function VideoPicker({
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 45, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
     <div onClick={function(e) { e.stopPropagation(); }} style={{
-      background: '#fff', borderRadius: 14, border: '1px solid #E4E7EC',
+      background: '#fff', borderRadius: 14, border: '1px solid #E2E7FF',
       width: 440, maxWidth: 'calc(100vw - 32px)', padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
       zIndex: 50,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: C.TEXT }}>Add Video</div>
-        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#98A2B3', padding: 4 }}>
+        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B93B5', padding: 4 }}>
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} /></svg>
         </button>
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 14, background: '#F2F4F7', borderRadius: 9, padding: 3 }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 14, background: '#F5F7FF', borderRadius: 9, padding: 3 }}>
         {(['url', 'upload'] as const).map(function(t) {
           var active = tab === t;
           var label = t === 'url' ? 'YouTube / Vimeo' : 'Upload';
@@ -2052,7 +2052,7 @@ function VideoPicker({
             <button key={t} type="button" onClick={function() { setTab(t); }}
               style={{
                 flex: 1, padding: '7px 6px', borderRadius: 7, border: 'none',
-                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#667085',
+                background: active ? '#fff' : 'transparent', color: active ? C.TEXT : '#646D8F',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT,
                 boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                 transition: 'all 0.12s',
@@ -2069,13 +2069,13 @@ function VideoPicker({
             <input type="text" value={urlInput} onChange={function(e) { setUrlInput(e.target.value); }}
               placeholder="Paste YouTube or Vimeo URL..."
               onKeyDown={function(e) { if (e.key === 'Enter') handleUrlSubmit(); }}
-              style={{ flex: 1, padding: '10px 12px', border: '1px solid #D0D5DD', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
+              style={{ flex: 1, padding: '10px 12px', border: '1px solid #CDD6FF', borderRadius: 8, fontSize: 12, fontFamily: C.FONT, outline: 'none' }} />
             <button type="button" onClick={handleUrlSubmit}
               style={{ padding: '10px 16px', background: C.ACCENT, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>
               Add
             </button>
           </div>
-          <div style={{ marginTop: 10, fontSize: 11, color: '#98A2B3' }}>
+          <div style={{ marginTop: 10, fontSize: 11, color: '#8B93B5' }}>
             Supports YouTube, Vimeo, and direct video URLs
           </div>
         </>
@@ -2086,15 +2086,15 @@ function VideoPicker({
           <button type="button" onClick={function() { fileRef.current?.click(); }}
             style={{
               width: '100%', padding: '28px 16px', borderRadius: 10,
-              border: '2px dashed #D0D5DD', background: '#FAFBFC',
+              border: '2px dashed #CDD6FF', background: '#FAFBFC',
               cursor: uploading ? 'default' : 'pointer',
-              fontSize: 13, fontWeight: 600, color: '#344054', fontFamily: C.FONT,
+              fontSize: 13, fontWeight: 600, color: '#3B4466', fontFamily: C.FONT,
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
               opacity: uploading ? 0.6 : 1,
             }}>
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#646D8F" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1={12} y1={3} x2={12} y2={15} /></svg>
             {uploading ? 'Uploading video...' : 'Click to upload video'}
-            <span style={{ fontSize: 11, color: '#98A2B3', fontWeight: 400 }}>MP4, MOV, WebM up to 20MB</span>
+            <span style={{ fontSize: 11, color: '#8B93B5', fontWeight: 400 }}>MP4, MOV, WebM up to 20MB</span>
           </button>
           <input ref={fileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
         </>
@@ -2195,7 +2195,7 @@ function QuestionCanvas({
         {/* Left: media panel — click to add image or video */}
         <div
           style={{
-            background: block.mediaUrl ? 'transparent' : 'linear-gradient(135deg, #1D2939, #344054)',
+            background: block.mediaUrl ? 'transparent' : 'linear-gradient(135deg, #1C2447, #3B4466)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             position: 'relative', overflow: 'hidden',
           }}
@@ -2373,7 +2373,7 @@ function QuestionCanvas({
           onChange={function(t) { onChange(Object.assign({}, block, { text: t }) as QuestionBlock); }}
           placeholder="Enter your question here..."
           style={{
-            width: '100%', fontSize: 38, fontWeight: 800, color: C.INK, fontFamily: C.DISPLAY_FONT, letterSpacing: '-0.035em', lineHeight: 1.08,
+            width: '100%', fontSize: 38, fontWeight: 500, color: C.INK, fontFamily: C.DISPLAY_FONT, letterSpacing: '-0.035em', lineHeight: 1.08,
             minHeight: 40,
           }}
         />
@@ -2534,7 +2534,7 @@ function FloatingToolbar({
     <div style={{
       position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', gap: 0,
-      background: '#fff', border: '1px solid #D0D5DD',
+      background: '#fff', border: '1px solid #CDD6FF',
       borderRadius: 24, padding: '6px 12px',
       boxShadow: '0 6px 24px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)',
       zIndex: 40,
@@ -2548,7 +2548,7 @@ function FloatingToolbar({
         Option
       </button>
 
-      <div style={{ width: 1, height: 24, background: '#E4E7EC' }} />
+      <div style={{ width: 1, height: 24, background: '#E2E7FF' }} />
 
       {/* Timer */}
       <div style={{ position: 'relative' }}>
@@ -2580,7 +2580,7 @@ function FloatingToolbar({
         )}
       </div>
 
-      <div style={{ width: 1, height: 24, background: '#E4E7EC' }} />
+      <div style={{ width: 1, height: 24, background: '#E2E7FF' }} />
 
       {/* Branch */}
       <button type="button" style={Object.assign({}, btnStyle, (block.branchRules && block.branchRules.length > 0) ? { color: '#7C3AED' } : {})}
@@ -2594,7 +2594,7 @@ function FloatingToolbar({
         Branch
       </button>
 
-      <div style={{ width: 1, height: 24, background: '#E4E7EC' }} />
+      <div style={{ width: 1, height: 24, background: '#E2E7FF' }} />
 
       {/* Layout */}
       <div style={{ position: 'relative' }}>
@@ -2684,7 +2684,7 @@ function SettingsPanel({
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid ' + C.BORDER, background: '#F9FAFB', padding: '0 16px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid ' + C.BORDER, background: '#FAFBFF', padding: '0 16px' }}>
         {(['behavior', 'design', 'advanced'] as const).map(function(t) {
           var active = tab === t;
           var label = t === 'behavior' ? 'Behavior' : t === 'design' ? 'Design' : 'Advanced';
@@ -2710,14 +2710,14 @@ function SettingsPanel({
         {tab === 'behavior' && (
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Quiz Flow</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F5F7FF' }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Progress bar</span>
               <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { show_progress_bar: !(settings?.show_progress_bar !== false) })); }}
                 style={{ width: 40, height: 22, borderRadius: 11, background: settings?.show_progress_bar !== false ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
                 <span style={{ position: 'absolute', top: 2, left: settings?.show_progress_bar !== false ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s' }} />
               </button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F5F7FF' }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Shuffle questions</span>
               <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { shuffle_questions: !(settings?.shuffle_questions) })); }}
                 style={{ width: 40, height: 22, borderRadius: 11, background: settings?.shuffle_questions ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
@@ -2750,7 +2750,7 @@ function SettingsPanel({
 
             {/* GDPR / Privacy */}
             <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14, marginTop: 28 }}>GDPR / Privacy</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F5F7FF' }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Require consent</span>
               <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { consent_required: !(settings?.consent_required) })); }}
                 style={{ width: 40, height: 22, borderRadius: 11, background: settings?.consent_required ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
@@ -2780,7 +2780,7 @@ function SettingsPanel({
             ] as { key: string; label: string; defaultOn: boolean; badge?: string }[]).map(function(item) {
               var isOn = (settings as any)?.[item.key] !== undefined ? !!(settings as any)[item.key] : item.defaultOn;
               return (
-                <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #F2F4F7' }}>
+                <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #F5F7FF' }}>
                   <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>
                     {item.label}
                     {item.badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F0F9FF', color: '#0284C7', textTransform: 'uppercase' as const, marginLeft: 6 }}>{item.badge}</span>}
@@ -2814,7 +2814,7 @@ function SettingsPanel({
             {/* Branding */}
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Branding</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F5F7FF' }}>
                 <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Remove branding <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB', textTransform: 'uppercase' }}>STARTER</span></span>
                 <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { remove_branding: !(settings?.remove_branding) })); }}
                   style={{ width: 40, height: 22, borderRadius: 11, background: settings?.remove_branding ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' }}>
@@ -2843,7 +2843,7 @@ function SettingsPanel({
           <div>
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Embed Code</div>
-              <div style={{ background: '#1D2939', borderRadius: 8, padding: 14, fontFamily: 'monospace', fontSize: 11, color: '#E5E7EB', lineHeight: 1.6, wordBreak: 'break-all' as const, marginBottom: 12 }}>
+              <div style={{ background: '#1C2447', borderRadius: 8, padding: 14, fontFamily: 'monospace', fontSize: 11, color: '#E5E7EB', lineHeight: 1.6, wordBreak: 'break-all' as const, marginBottom: 12 }}>
                 {'<div data-squarespell-quiz="' + (quizSlug || quizId || 'your-slug') + '"></div>'}
                 <br />
                 {'<script src="' + APP_URL + '/embed/quiz-embed.js" async></script>'}
@@ -2920,7 +2920,7 @@ function SettingsPanel({
               <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
                 Quiz Scheduling <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: '#F5F3FF', color: '#7C3AED', textTransform: 'uppercase' }}>PRO</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F2F4F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid #F5F7FF' }}>
                 <span style={{ fontSize: 13, fontWeight: 500, color: C.TEXT }}>Enable scheduling</span>
                 <button type="button" onClick={function() { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { schedule_enabled: !(settings?.schedule_enabled) })); }}
                   style={{ width: 40, height: 22, borderRadius: 11, background: settings?.schedule_enabled ? C.ACCENT : C.BORDER, border: 'none', cursor: 'pointer', position: 'relative' as const }}>
@@ -3200,7 +3200,7 @@ export function QuizBlockEditor({
               <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
             </a>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 22, fontWeight: 800, color: C.INK, letterSpacing: '-0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 420 }}>{quizTitle || 'Untitled quiz'}</div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 22, fontWeight: 500, color: C.INK, letterSpacing: '-0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 420 }}>{quizTitle || 'Untitled quiz'}</div>
               <div style={{ fontSize: 13, color: C.GRAY_500 }}>{questionBlocks.length} {questionBlocks.length === 1 ? 'question' : 'questions'}</div>
             </div>
           </div>
@@ -3472,7 +3472,7 @@ export function QuizBlockEditor({
 
         /* ── Answer rows (sq-answer-row) ─────────────────────────── */
         .sq-answer-row {
-          border: 1.5px solid #EAECF0;
+          border: 1.5px solid #E2E7FF;
         }
         .sq-answer-row:hover {
           border-color: rgba(49, 84, 255,0.35) !important;

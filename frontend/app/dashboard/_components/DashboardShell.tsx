@@ -466,7 +466,7 @@ export function DashboardShell({
       </div>
 
       {/* Contextual bar */}
-      <div style={{ minHeight: 52, display: 'flex', alignItems: 'center', gap: 16, padding: '0 ' + sidePad + 'px', borderBottom: '1px solid ' + C.BORDER, background: 'rgba(251,251,248,0.95)' }}>
+      <div style={{ minHeight: 52, display: 'flex', alignItems: 'center', gap: 16, padding: '0 ' + sidePad + 'px', borderBottom: '1px solid ' + C.BORDER, background: 'rgba(250,251,255,0.95)' }}>
         <nav aria-label={currentArea.label} className="sq-scroll-x" style={{ display: 'flex', alignItems: 'stretch', gap: isMobile ? 18 : 30, alignSelf: 'stretch', minWidth: 0, flex: 1 }}>
           {currentArea.key === 'workspace' && !isMobile && (
             <span style={{ display: 'flex', alignItems: 'center', fontSize: 14, color: C.GRAY_600, paddingRight: 18, borderRight: '1px solid ' + C.BORDER, margin: '14px 0' }}>

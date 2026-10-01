@@ -23,12 +23,12 @@ import {
 } from '../../../lib/quiz/templates';
 
 var COLORS = {
-  bg: '#F9FAFB',
+  bg: '#FAFBFF',
   card: '#FFFFFF',
-  accent: '#0f7377',
-  accentLight: '#E8F4F4',
-  text: '#1A1A1A',
-  muted: '#6B6B6B',
+  accent: '#3154FF',
+  accentLight: '#EBEFFF',
+  text: '#0B1233',
+  muted: '#646D8F',
   border: '#E5E7EB',
 };
 

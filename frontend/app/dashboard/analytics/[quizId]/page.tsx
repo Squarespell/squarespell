@@ -203,7 +203,7 @@ export default function AnalyticsPage({ params }: { params: { quizId: string } }
                     borderRadius: 8,
                     fontSize: 13,
                   }}>
-                    <div style={{ fontWeight: 600, color: '#1A1A1A' }}>{outcomeTitle}</div>
+                    <div style={{ fontWeight: 600, color: '#0B1233' }}>{outcomeTitle}</div>
                     <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', marginTop: 2 }}>{count} lead{count !== 1 ? 's' : ''}</div>
                   </div>
                 );

@@ -1,8 +1,9 @@
 /**
- * Shared color tokens for the Squarespell Quiz dashboard theme (2026 redesign).
+ * Shared color tokens for the Squarespell Quiz dashboard theme.
  *
- * Cobalt-and-ivory direction: electric cobalt #3154FF on warm ivory #F4F3ED, near-black #161719 ink,
- * pale periwinkle surfaces and tiny acid-yellow details. Precise 6-8px corners, hairline dividers, no heavy shadows.
+ * Matches the squarespellquiz.com landing page: blue #3154FF and white, navy #0B1233 ink, cool blue-grey text,
+ * soft blue tints for surfaces, Inter Tight 500 headings with Instrument Serif italic accents, 12-16px corners.
+ * ACID keys are kept for compatibility and now map to blue tints, so the app stays blue and white.
  * Extracted to its own module so any component can import without creating a circular dependency through DashboardShell.
  * Key names are kept from the previous theme so every existing page picks up the new palette.
  */
@@ -14,56 +15,56 @@ export var DASHBOARD_COLORS = {
   MONO_FONT: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
 
   // Backgrounds
-  BG: '#F4F3ED',
-  CANVAS: '#F4F3ED',
+  BG: '#F5F7FF',
+  CANVAS: '#F5F7FF',
   SURFACE: '#FFFFFF',
   ELEVATED: '#FFFFFF',
   SIDEBAR: '#FFFFFF',
-  SIDEBAR_HOVER: '#F7F6F1',
-  SIDEBAR_ACTIVE: '#EEF1FF',
+  SIDEBAR_HOVER: '#F5F7FF',
+  SIDEBAR_ACTIVE: '#EBEFFF',
 
   // Warm neutral scale (key names kept for compatibility)
-  GRAY_25: '#FBFBF8',
-  GRAY_50: '#F7F6F1',
-  GRAY_100: '#EFEEE7',
-  GRAY_200: '#E4E2DA',
-  GRAY_300: '#CFCDC4',
-  GRAY_400: '#9B9A93',
-  GRAY_500: '#6E6D68',
-  GRAY_600: '#4F4E4A',
-  GRAY_700: '#35352F',
-  GRAY_800: '#232420',
-  GRAY_900: '#161719',
+  GRAY_25: '#FAFBFF',
+  GRAY_50: '#F5F7FF',
+  GRAY_100: '#EBEFFF',
+  GRAY_200: '#E2E7FF',
+  GRAY_300: '#CDD6FF',
+  GRAY_400: '#8B93B5',
+  GRAY_500: '#646D8F',
+  GRAY_600: '#4A5275',
+  GRAY_700: '#3B4466',
+  GRAY_800: '#1C2447',
+  GRAY_900: '#0B1233',
 
   // Borders
-  BORDER: '#E4E2DA',
-  BORDER_LIGHT: '#EFEEE7',
-  HAIRLINE: '#E4E2DA',
+  BORDER: '#E2E7FF',
+  BORDER_LIGHT: '#EBEFFF',
+  HAIRLINE: '#E2E7FF',
 
   // Text
-  INK: '#161719',
-  TEXT: '#161719',
-  TEXT_SECONDARY: '#35352F',
-  TEXT_MUTED: '#4F4E4A',
-  TEXT_SUBTLE: '#6E6D68',
+  INK: '#0B1233',
+  TEXT: '#0B1233',
+  TEXT_SECONDARY: '#3B4466',
+  TEXT_MUTED: '#4A5275',
+  TEXT_SUBTLE: '#646D8F',
 
   // Accent: electric cobalt
   ACCENT: '#3154FF',
-  ACCENT_LIGHT: '#EEF1FF',
-  ACCENT_HOVER: '#2442E6',
+  ACCENT_LIGHT: '#EBEFFF',
+  ACCENT_HOVER: '#2443E0',
   BRAND_25: '#F5F7FF',
-  BRAND_50: '#EEF1FF',
-  BRAND_100: '#DDE3FF',
+  BRAND_50: '#EBEFFF',
+  BRAND_100: '#DCE3FF',
   BRAND_300: '#8FA2FF',
   BRAND_500: '#3154FF',
-  BRAND_600: '#2442E6',
-  BRAND_700: '#1B33B8',
+  BRAND_600: '#2443E0',
+  BRAND_700: '#1A34C8',
 
   // Pale periwinkle and acid-yellow details
-  PERIWINKLE: '#DDE3FF',
-  PERIWINKLE_SOFT: '#EEF1FF',
-  ACID: '#E4F75A',
-  ACID_SOFT: '#F6FBD0',
+  PERIWINKLE: '#DCE3FF',
+  PERIWINKLE_SOFT: '#EBEFFF',
+  ACID: '#DCE3FF',
+  ACID_SOFT: '#EBEFFF',
 
   // Semantic
   SUCCESS: '#0E7A3F',
@@ -81,17 +82,17 @@ export var DASHBOARD_COLORS = {
   // Secondary chart tones (periwinkle family instead of purple)
   PURPLE_500: '#8FA2FF',
   PURPLE_300: '#BFCAFF',
-  PURPLE_100: '#EEF1FF',
+  PURPLE_100: '#EBEFFF',
 
   // Shadows: hairline-first, very soft
-  SHADOW_XS: '0 1px 0 rgba(22, 23, 25, 0.03)',
-  SHADOW_SM: '0 1px 2px rgba(22, 23, 25, 0.05)',
-  SHADOW_MD: '0 6px 16px -8px rgba(22, 23, 25, 0.14)',
-  SHADOW_LG: '0 16px 40px -16px rgba(22, 23, 25, 0.22)',
+  SHADOW_XS: '0 1px 0 rgba(11, 18, 51, 0.03)',
+  SHADOW_SM: '0 1px 2px rgba(11, 18, 51, 0.05)',
+  SHADOW_MD: '0 20px 40px -26px rgba(11, 18, 51, 0.28)',
+  SHADOW_LG: '0 40px 70px -40px rgba(49, 84, 255, 0.45)',
 
   // Radii
-  RADIUS: 8,
-  RADIUS_SM: 6,
+  RADIUS: 16,
+  RADIUS_SM: 12,
 
   // Focus ring
   FOCUS_RING: '0 0 0 3px rgba(49, 84, 255, 0.22)',

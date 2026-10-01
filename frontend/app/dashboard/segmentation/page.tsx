@@ -14,7 +14,7 @@ type Segment = {
 
 /* ─── color presets ─── */
 var TAG_COLORS = [
-  '#3154FF', '#8FA2FF', '#161719', '#6E6D68',
+  '#3154FF', '#8FA2FF', '#0B1233', '#646D8F',
   '#C9D93F', '#1F9D57', '#E09B1A', '#C0271B',
 ];
 
@@ -164,7 +164,7 @@ export default function SegmentationPage() {
         @media (max-width: 1100px) { .sq-seg-top { grid-template-columns: 1fr; } .sq-seg-tips { grid-template-columns: 1fr; } .sq-seg-tips > div + div { border-left: none; border-top: 1px solid ${C.BORDER}; } }
       ` }} />
 
-      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Segmentation</div>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Segmentation</div>
       <DisplayTitle size="xl">Know your audience better.</DisplayTitle>
       <p style={{ margin: '14px 0 24px', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Organize leads with tags and dynamic segments.</p>
 
@@ -182,7 +182,7 @@ export default function SegmentationPage() {
         <>
           <div className="sq-seg-top">
             <section style={{ ...card, padding: '28px 28px 30px' }}>
-              <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK }}>Create a tag</h2>
+              <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 500, letterSpacing: '-0.025em', color: C.INK }}>Create a tag</h2>
               <p style={{ margin: '6px 0 22px', fontSize: 16, color: C.GRAY_600 }}>Add a tag to categorize and organize your leads.</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto auto', gap: 20, alignItems: 'end' }}>
                 <div>
@@ -221,7 +221,7 @@ export default function SegmentationPage() {
               <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 20 }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: C.GRAY_600, marginBottom: 18 }}>EXAMPLES</div>
-                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1.05, color: C.INK }}>Simple tags<span style={{ color: C.ACCENT }}>.</span><br />Bigger insights<span style={{ color: C.ACCENT }}>.</span></div>
+                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 36, fontWeight: 500, letterSpacing: '-0.035em', lineHeight: 1.05, color: C.INK }}>Simple tags<span style={{ color: C.ACCENT }}>.</span><br />Bigger insights<span style={{ color: C.ACCENT }}>.</span></div>
                   <p style={{ margin: '16px 0 0', fontSize: 16, color: C.GRAY_700, lineHeight: 1.5, maxWidth: 340 }}>Use tags to group leads by interest, intent or source. Later, turn them into dynamic segments for targeted campaigns.</p>
                 </div>
                 <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
@@ -239,7 +239,7 @@ export default function SegmentationPage() {
                 <span style={{ width: 76, height: 76, borderRadius: '50%', background: C.PERIWINKLE_SOFT, color: C.BRAND_700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8zM7.5 7.5h.01" /></svg>
                 </span>
-                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: C.INK }}>No tags yet</div>
+                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 500, color: C.INK }}>No tags yet</div>
                 <p style={{ margin: '6px 0 18px', fontSize: 16, color: C.GRAY_600 }}>Create tags to categorize and organize your leads.</p>
                 <button type="button" onClick={function () { tagInputRef.current?.focus(); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, height: 44, padding: '0 20px', borderRadius: 6, border: '1px solid ' + C.BORDER, background: '#fff', color: C.INK, fontSize: 16, fontFamily: C.FONT, cursor: 'pointer' }}>+ Create your first tag</button>
               </div>
@@ -264,7 +264,7 @@ export default function SegmentationPage() {
       ) : (
         <>
           <section style={{ ...card, padding: '28px', marginBottom: 20 }}>
-            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK }}>Create a segment</h2>
+            <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 500, letterSpacing: '-0.025em', color: C.INK }}>Create a segment</h2>
             <p style={{ margin: '6px 0 22px', fontSize: 16, color: C.GRAY_600 }}>Group leads for targeted campaigns and automations.</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.4fr) auto', gap: 16, alignItems: 'end' }}>
               <div><label htmlFor="sq-seg-name" style={label}>Segment name</label><input id="sq-seg-name" value={newSegName} onChange={function (e) { setNewSegName(e.target.value); }} onKeyDown={function (e) { if (e.key === 'Enter') createSegment(); }} placeholder="Enter segment name..." style={input} /></div>
@@ -275,7 +275,7 @@ export default function SegmentationPage() {
           <section style={{ ...card, marginBottom: 20 }}>
             {segments.length === 0 ? (
               <div style={{ padding: '44px 20px', textAlign: 'center' }}>
-                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 700, color: C.INK }}>No segments yet</div>
+                <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 24, fontWeight: 500, color: C.INK }}>No segments yet</div>
                 <p style={{ margin: '6px 0 0', fontSize: 16, color: C.GRAY_600 }}>Create a segment to target a group of leads in campaigns and automations.</p>
               </div>
             ) : (
@@ -305,7 +305,7 @@ export default function SegmentationPage() {
       <section className="sq-seg-tips" style={{ ...card, padding: '26px 0' }}>
         <div style={{ padding: '0 28px' }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: C.GRAY_600, marginBottom: 10 }}>TIPS</div>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.05, color: C.INK }}>Get more from segmentation<span style={{ color: C.ACCENT }}>.</span></div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1.05, color: C.INK }}>Get more from segmentation<span style={{ color: C.ACCENT }}>.</span></div>
         </div>
         {TIPS.map(function (t) {
           return (

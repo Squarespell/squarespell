@@ -19,12 +19,12 @@ export function coverVariantFor(id: string): number {
 }
 
 var PALETTES = [
-  { bg: '#DDE3FF', fg: '#161719', serif: true },
+  { bg: '#DCE3FF', fg: '#0B1233', serif: true },
   { bg: '#3154FF', fg: '#FFFFFF', serif: false },
-  { bg: 'linear-gradient(90deg, #EEF6A8 0%, #F6FBD0 58%, #F7F4E6 100%)', fg: '#161719', serif: true },
-  { bg: 'linear-gradient(120deg, #D8D0C5 0%, #E9E4DC 60%, #DCD4C9 100%)', fg: '#161719', serif: true },
-  { bg: '#E6ECFD', fg: '#1B33B8', serif: true },
-  { bg: '#161719', fg: '#FFFFFF', serif: false },
+  { bg: 'linear-gradient(90deg, #DCE3FF 0%, #EBEFFF 58%, #F5F7FF 100%)', fg: '#0B1233', serif: true },
+  { bg: 'linear-gradient(120deg, #1A34C8 0%, #3154FF 60%, #6B84FF 100%)', fg: '#FFFFFF', serif: true },
+  { bg: '#E6ECFD', fg: '#1A34C8', serif: true },
+  { bg: '#0B1233', fg: '#FFFFFF', serif: false },
 ];
 
 function Art({ variant }: { variant: number }) {
@@ -34,49 +34,49 @@ function Art({ variant }: { variant: number }) {
       // Fine ink line art: overlapping contour arcs.
       return (
         <svg viewBox="0 0 220 180" preserveAspectRatio="xMaxYMid meet" style={{ ...common, width: '52%' }} aria-hidden="true">
-          <g fill="none" stroke="#161719" strokeWidth="1.1" strokeLinecap="round">
+          <g fill="none" stroke="#0B1233" strokeWidth="1.1" strokeLinecap="round">
             <path d="M40 170 C 60 110, 90 60, 150 48 C 185 42, 205 60, 212 84" />
             <path d="M70 176 C 88 128, 116 92, 160 84 C 188 80, 204 94, 208 112" />
-            <circle cx="150" cy="70" r="3" fill="#161719" />
+            <circle cx="150" cy="70" r="3" fill="#0B1233" />
             <path d="M118 40 C 130 24, 152 18, 170 24" />
             <path d="M100 176 C 112 150, 132 132, 160 126" />
           </g>
         </svg>
       );
     case 1:
-      // White sweeping line ending in an arrow.
+      // White sweeping growth line ending in a dot.
       return (
         <svg viewBox="0 0 240 180" preserveAspectRatio="xMaxYMid meet" style={{ ...common, width: '56%' }} aria-hidden="true">
           <g fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 150 L 70 150 C 120 150, 140 60, 222 58" />
-            <path d="M210 50 L 222 58 L 210 66" />
+            <path d="M10 150 L 70 150 C 120 150, 140 60, 216 58" />
           </g>
+          <circle cx="220" cy="58" r="5" fill="#FFFFFF" />
         </svg>
       );
     case 2:
       // Modular browser tiles.
       return (
         <svg viewBox="0 0 220 180" preserveAspectRatio="xMaxYMid meet" style={{ ...common, width: '50%' }} aria-hidden="true">
-          <rect x="18" y="44" width="76" height="116" rx="4" fill="#FFFFFF" stroke="#E4E2DA" />
-          <circle cx="28" cy="54" r="2.5" fill="#161719" /><circle cx="36" cy="54" r="2.5" fill="#161719" /><circle cx="44" cy="54" r="2.5" fill="#CFCDC4" />
-          <rect x="26" y="64" width="60" height="84" rx="2" fill="#B8AE9F" />
-          <rect x="84" y="18" width="104" height="142" rx="4" fill="#FFFFFF" stroke="#E4E2DA" />
-          <circle cx="94" cy="28" r="2.5" fill="#161719" /><circle cx="102" cy="28" r="2.5" fill="#161719" /><circle cx="110" cy="28" r="2.5" fill="#161719" />
-          <rect x="94" y="40" width="64" height="40" fill="#232420" />
-          <rect x="104" y="72" width="46" height="46" fill="#FFFFFF" stroke="#E4E2DA" />
-          <rect x="152" y="80" width="46" height="46" rx="3" fill="#161719" />
-          <path d="M166 112 L 184 94 M 172 94 L 184 94 L 184 106" stroke="#FFFFFF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="18" y="44" width="76" height="116" rx="4" fill="#FFFFFF" stroke="#E2E7FF" />
+          <circle cx="28" cy="54" r="2.5" fill="#0B1233" /><circle cx="36" cy="54" r="2.5" fill="#0B1233" /><circle cx="44" cy="54" r="2.5" fill="#CDD6FF" />
+          <rect x="26" y="64" width="60" height="84" rx="2" fill="#8FA2FF" />
+          <rect x="84" y="18" width="104" height="142" rx="4" fill="#FFFFFF" stroke="#E2E7FF" />
+          <circle cx="94" cy="28" r="2.5" fill="#0B1233" /><circle cx="102" cy="28" r="2.5" fill="#0B1233" /><circle cx="110" cy="28" r="2.5" fill="#0B1233" />
+          <rect x="94" y="40" width="64" height="40" fill="#1C2447" />
+          <rect x="104" y="72" width="46" height="46" fill="#FFFFFF" stroke="#E2E7FF" />
+          <rect x="152" y="80" width="46" height="46" rx="3" fill="#0B1233" />
+          <circle cx="175" cy="103" r="9" fill="#3154FF" />
         </svg>
       );
     case 3:
       // Warm abstract landscape panel with soft circles.
       return (
         <svg viewBox="0 0 240 180" preserveAspectRatio="xMaxYMid slice" style={{ ...common, width: '60%' }} aria-hidden="true">
-          <circle cx="210" cy="30" r="110" fill="#E9E4DC" opacity="0.8" />
-          <circle cx="60" cy="210" r="120" fill="#CFC6BA" opacity="0.55" />
-          <rect x="80" y="42" width="120" height="96" fill="#A8A195" />
-          <path d="M80 110 C 110 90, 140 120, 200 88 L 200 138 L 80 138 Z" fill="#E4E2DA" />
-          <path d="M80 70 L 200 58 L 200 72 L 80 90 Z" fill="#C9C2B7" />
+          <circle cx="210" cy="30" r="110" fill="#EBEFFF" opacity="0.8" />
+          <circle cx="60" cy="210" r="120" fill="#CDD6FF" opacity="0.55" />
+          <rect x="80" y="42" width="120" height="96" fill="#8FA2FF" />
+          <path d="M80 110 C 110 90, 140 120, 200 88 L 200 138 L 80 138 Z" fill="#E2E7FF" />
+          <path d="M80 70 L 200 58 L 200 72 L 80 90 Z" fill="#BFCAFF" />
         </svg>
       );
     case 4:

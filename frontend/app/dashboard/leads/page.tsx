@@ -60,7 +60,7 @@ function getInitials(name: string | null, email: string): string {
   return email.slice(0, 2).toUpperCase();
 }
 
-var AVATAR_COLORS = ['#3154FF', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#2442E6'];
+var AVATAR_COLORS = ['#3154FF', '#059669', '#2563EB', '#D85A30', '#7F56D9', '#D97706', '#DC2626', '#2443E0'];
 function avatarColor(s: string) {
   var hash = 0;
   for (var i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
@@ -150,15 +150,13 @@ function LeadCardArt({ small }: { small?: boolean }) {
     <svg width={w} height={small ? 130 : 230} viewBox="0 0 400 230" aria-hidden="true">
       <rect x="120" y="10" width="150" height="190" fill={C.PERIWINKLE} opacity={small ? 0.8 : 1} />
       <circle cx="252" cy="36" r="36" fill={C.ACID} />
-      <rect x="196" y="78" width="176" height="110" rx="8" fill="#E4E2DA" />
-      <rect x="186" y="68" width="176" height="110" rx="8" fill="#fff" stroke="#E4E2DA" />
+      <rect x="196" y="78" width="176" height="110" rx="8" fill="#E2E7FF" />
+      <rect x="186" y="68" width="176" height="110" rx="8" fill="#fff" stroke="#E2E7FF" />
       <circle cx="232" cy="112" r="26" fill={C.PERIWINKLE_SOFT} />
       <circle cx="232" cy="104" r="8" fill="none" stroke={C.INK} strokeWidth="2.2" />
       <path d="M216 126c2-8 9-12 16-12s14 4 16 12" fill="none" stroke={C.INK} strokeWidth="2.2" strokeLinecap="round" />
       <path d="M272 98h60M272 112h60M272 126h44" stroke={C.GRAY_300} strokeWidth="2.5" strokeLinecap="round" />
       <path d="M340 30l-12 22M356 44l-18 10" stroke={C.INK} strokeWidth="2" strokeLinecap="round" />
-      {!small && <path d="M20 220 C 50 150, 80 120, 110 130 C 140 140, 120 170, 100 150 C 80 130, 120 90, 150 60" fill="none" stroke={C.INK} strokeWidth="1.6" />}
-      {!small && <path d="M140 60 L 150 60 L 150 70" fill="none" stroke={C.INK} strokeWidth="1.6" strokeLinecap="round" />}
     </svg>
   );
 }
@@ -258,7 +256,7 @@ export default function LeadsPage() {
     return (
       <DashboardShell title="Leads">
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, color: C.INK, marginBottom: 8 }}>Could not load leads</div>
+          <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, color: C.INK, marginBottom: 8 }}>Could not load leads</div>
           <div style={{ fontSize: 15, color: C.GRAY_600, marginBottom: 20 }}>The server may be starting up. Please try again.</div>
           <PrimaryButton onClick={fetchLeads}>Retry</PrimaryButton>
         </div>
@@ -276,7 +274,7 @@ export default function LeadsPage() {
       {/* Header */}
       <div className="sq-leads-hero">
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Leads</div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Leads</div>
           <DisplayTitle size="xl">Your next customer starts here.</DisplayTitle>
           <p style={{ margin: '16px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Capture leads from your quizzes and grow your audience.</p>
         </div>
@@ -308,7 +306,7 @@ export default function LeadsPage() {
             ].map(function (m) {
               return (
                 <div key={m.l} className="stat">
-                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 34, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{m.v}</div>
+                  <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 34, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1 }}>{m.v}</div>
                   <div style={{ fontSize: 14, color: C.GRAY_600, marginTop: 6 }}>{m.l}</div>
                 </div>
               );
@@ -340,7 +338,7 @@ export default function LeadsPage() {
             {(['all', 'high', 'new', 'low'] as const).map(function (k) {
               var label = { all: 'Any score', high: 'High intent', new: 'New', low: 'Low score' }[k];
               var active = filter === k;
-              return <button key={k} type="button" aria-pressed={active} onClick={function () { setFilter(k); setPage(1); }} style={{ height: 36, padding: '0 12px', borderRadius: 999, border: '1px solid ' + (active ? C.INK : C.BORDER), background: active ? C.INK : '#fff', color: active ? '#fff' : C.INK, fontSize: 13, fontFamily: C.FONT, cursor: 'pointer' }}>{label}</button>;
+              return <button key={k} type="button" aria-pressed={active} onClick={function () { setFilter(k); setPage(1); }} style={{ height: 36, padding: '0 12px', borderRadius: 999, border: '1px solid ' + (active ? C.ACCENT : C.BORDER), background: active ? C.ACCENT : '#fff', color: active ? '#fff' : C.INK, fontSize: 13, fontFamily: C.FONT, cursor: 'pointer' }}>{label}</button>;
             })}
           </div>
         )}
@@ -394,7 +392,7 @@ export default function LeadsPage() {
           {empty ? (
             <div style={{ padding: '44px 20px 52px', textAlign: 'center' }}>
               <LeadCardArt small />
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK, margin: '10px 0 6px' }}>Ready for your first lead?</div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 28, fontWeight: 500, letterSpacing: '-0.025em', color: C.INK, margin: '10px 0 6px' }}>Ready for your first lead?</div>
               <p style={{ margin: '0 0 22px', fontSize: 16, color: C.GRAY_600 }}>Publish a quiz and share it to start building your audience.</p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <PrimaryButton size="lg" href="/dashboard/embed">Get the embed code</PrimaryButton>

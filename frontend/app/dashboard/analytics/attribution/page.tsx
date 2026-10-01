@@ -67,14 +67,9 @@ function JourneyStep({ icon, label, value, caption, last, acid }: { icon: string
       <span style={{ width: 52, height: 52, borderRadius: '50%', background: acid ? C.ACID_SOFT : C.PERIWINKLE_SOFT, color: C.INK, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ICONS[icon]}</span>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 17, fontWeight: 500, color: C.INK, marginTop: 12 }}>{label}</div>
-        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 42, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.1, margin: '6px 0 8px', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 42, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.1, margin: '6px 0 8px', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
         <div style={{ fontSize: 14, color: C.GRAY_500 }}>{caption}</div>
       </div>
-      {!last && (
-        <span className="sq-journey-arrow" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-        </span>
-      )}
     </div>
   );
 }
@@ -155,7 +150,7 @@ export default function AttributionPage() {
       {/* Per-quiz performance */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap', marginBottom: 20 }}>
         <div>
-          <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', color: C.INK }}>Quiz performance</h2>
+          <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 500, letterSpacing: '-0.025em', color: C.INK }}>Quiz performance</h2>
           <p style={{ margin: '6px 0 0', fontSize: 16, color: C.GRAY_600 }}>See how each quiz contributes to your growth.</p>
         </div>
         {quizzes.length > 0 && (

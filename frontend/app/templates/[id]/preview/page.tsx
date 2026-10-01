@@ -46,12 +46,12 @@ function matchOutcome(blocks: QuizBlock[], totalScore: number) {
 /* ------------------------------------------------------------------ */
 
 var COLORS = {
-  bg: '#F7F7F5',
+  bg: '#F5F7FF',
   card: '#FFFFFF',
-  accent: '#0f7377',
-  accentLight: '#E8F4F4',
-  text: '#1A1A1A',
-  muted: '#6B6B6B',
+  accent: '#3154FF',
+  accentLight: '#EBEFFF',
+  text: '#0B1233',
+  muted: '#646D8F',
   border: '#E5E7EB',
 };
 

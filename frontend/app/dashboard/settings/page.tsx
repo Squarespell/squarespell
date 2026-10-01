@@ -27,7 +27,7 @@ function Icon({ d, bg }: { d: string; bg: string }) {
 
 const ROWS = [
   { id: 'integrations', title: 'Integrations', desc: 'Manage webhooks and integrations. Zapier and API keys are planned.', href: '/dashboard/integrations', btn: 'Manage', bg: C.PERIWINKLE_SOFT, icon: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM17 14v6M14 17h6' },
-  { id: 'billing', title: 'Subscription & usage', desc: 'View your plan, usage and billing details.', href: '/dashboard/billing', btn: 'Manage', bg: '#F7EFE6', icon: 'M2 6a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2zM2 10h20' },
+  { id: 'billing', title: 'Subscription & usage', desc: 'View your plan, usage and billing details.', href: '/dashboard/billing', btn: 'Manage', bg: '#EBEFFF', icon: 'M2 6a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2zM2 10h20' },
   { id: 'white-label', title: 'White-label branding', desc: 'Customize your branding and remove Squarespell branding.', href: '/dashboard/settings/white-label', btn: 'Manage', bg: C.ACID_SOFT, icon: 'M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z' },
   { id: 'custom-domain', title: 'Custom quiz domain', desc: 'Custom quiz domains are planned. See what is coming.', href: '/dashboard/settings/custom-domain', btn: 'View', bg: C.PERIWINKLE_SOFT, icon: 'M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20' },
 ];
@@ -90,7 +90,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="st-head" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, marginBottom: 32 }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Settings</div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Settings</div>
           <DisplayTitle size="xl">Workspace settings.</DisplayTitle>
           <p style={{ margin: '14px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Manage your account preferences and workspace settings.</p>
         </div>

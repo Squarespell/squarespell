@@ -85,7 +85,7 @@ export default function UpgradePrompt({
         {/* Add-on packs section — shown for paid users hitting lead/email limits */}
         {showAddons && (
           <div style={{ marginBottom: plans.length > 0 ? 24 : 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#4a6020', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#3154FF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
               Quick fix — add extra capacity
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -102,18 +102,18 @@ export default function UpgradePrompt({
                       gap: 4,
                       padding: '14px 18px',
                       background: '#141f0a',
-                      border: '1px solid #2a3e14',
+                      border: '1px solid #1A34C8',
                       borderRadius: 12,
                       cursor: 'pointer',
                       transition: 'border-color 0.15s',
                       minWidth: 130,
                       fontFamily: '"DM Sans",system-ui,sans-serif',
                     }}
-                    onMouseEnter={function(e) { e.currentTarget.style.borderColor = '#0D7377'; }}
-                    onMouseLeave={function(e) { e.currentTarget.style.borderColor = '#2a3e14'; }}
+                    onMouseEnter={function(e) { e.currentTarget.style.borderColor = '#3154FF'; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.borderColor = '#1A34C8'; }}
                   >
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#e8f5c8' }}>{a.label}</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: '#0D7377' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#EBEFFF' }}>{a.label}</span>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: '#3154FF' }}>
                       {loading === a.key ? '...' : '$' + a.price + '/mo'}
                     </span>
                   </button>
@@ -127,7 +127,7 @@ export default function UpgradePrompt({
         {plans.length > 0 && (
           <>
             {showAddons && (
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#4a6020', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#3154FF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
                 Or upgrade your plan
               </div>
             )}

@@ -270,7 +270,7 @@ export default function EmailTemplatesPage() {
                   <div style={{
                     height: 220, overflow: 'hidden',
                     borderBottom: '1px solid ' + C.BORDER,
-                    background: '#F7F7F5', position: 'relative',
+                    background: '#F5F7FF', position: 'relative',
                   }}>
                     <iframe
                       title={t.name + ' preview'}

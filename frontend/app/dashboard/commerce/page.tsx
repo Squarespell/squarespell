@@ -130,7 +130,7 @@ export default function CommercePage() {
       {/* Header */}
       <div className="co-hero">
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.GRAY_500, marginBottom: 14 }}>Commerce</div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 500, letterSpacing: '0.02em', color: C.ACCENT, background: C.GRAY_50, border: '1px solid ' + C.BORDER, padding: '6px 13px', borderRadius: 999, marginBottom: 16 }}><i style={{ width: 6, height: 6, borderRadius: '50%', background: C.ACCENT, display: 'inline-block' }} />Commerce</div>
           <DisplayTitle size="xl">Match every result to the right product.</DisplayTitle>
           <p style={{ margin: '16px 0 0', fontSize: 'clamp(17px, 1.5vw, 21px)', color: C.GRAY_600 }}>Connect your Squarespace store and map products to quiz outcomes.</p>
         </div>
@@ -228,8 +228,8 @@ export default function CommercePage() {
           <svg aria-hidden="true" width="260" height="180" viewBox="0 0 260 180" style={{ position: 'absolute', right: 0, top: 0 }}><path d="M0 0 H 260 V 180 C 140 170, 40 100, 0 0 Z" fill={C.PERIWINKLE} /></svg>
           <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'minmax(0, 0.9fr) minmax(0, 1.1fr)', gap: 28, alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', color: C.GRAY_600, marginBottom: 16 }}>QUIZ RESULTS → REAL PRODUCTS</div>
-              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(34px, 3.4vw, 50px)', fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Turn insights into sales<span style={{ color: C.ACCENT }}>.</span></div>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', color: C.GRAY_600, marginBottom: 16 }}>QUIZ RESULTS REAL PRODUCTS</div>
+              <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(34px, 3.4vw, 50px)', fontWeight: 500, letterSpacing: '-0.035em', lineHeight: 1, color: C.INK }}>Turn insights into sales<span style={{ color: C.ACCENT }}>.</span></div>
               <p style={{ margin: '18px 0 0', fontSize: 17, color: C.GRAY_600, lineHeight: 1.5 }}>Sync your products from Squarespace and map them to quiz outcomes, so every result can show a relevant product.</p>
             </div>
             <div style={{ display: 'grid', gap: 18 }}>
@@ -244,10 +244,10 @@ export default function CommercePage() {
                       <div style={{ fontFamily: C.SERIF_FONT, fontSize: 24, color: C.INK, margin: '4px 0 10px' }}>{r.result}</div>
                       <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 999, background: '#fff', color: C.GRAY_600 }}>Quiz result</span>
                     </div>
-                    <span aria-hidden="true" style={{ textAlign: 'center', fontSize: 20, color: C.INK }}>→</span>
+                    <span aria-hidden="true" style={{ textAlign: 'center', fontSize: 20, color: C.INK }}></span>
                     <div style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 6, overflow: 'hidden' }}>
-                      <div style={{ position: 'relative', height: 70, background: 'linear-gradient(135deg, #EFEAE2, #DDD5C8)' }}>
-                        <svg aria-hidden="true" width="100%" height="70" viewBox="0 0 160 70"><rect x="68" y="14" width="22" height="46" rx="6" fill="#F7F4EE" stroke="#D2C8B8" /><rect x="74" y="6" width="10" height="10" fill="#D2C8B8" /></svg>
+                      <div style={{ position: 'relative', height: 70, background: 'linear-gradient(135deg, #EBEFFF, #DCE3FF)' }}>
+                        <svg aria-hidden="true" width="100%" height="70" viewBox="0 0 160 70"><rect x="68" y="14" width="22" height="46" rx="6" fill="#F5F7FF" stroke="#CDD6FF" /><rect x="74" y="6" width="10" height="10" fill="#CDD6FF" /></svg>
                         <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 11, padding: '2px 8px', borderRadius: 4, background: C.ACID, color: C.INK }}>Preview</span>
                       </div>
                       <div style={{ padding: '8px 10px' }}>

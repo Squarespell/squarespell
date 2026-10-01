@@ -11,9 +11,9 @@ export const metadata = {
 
 const S: 'left' = 'left';
 const W = '#ffffff';
-const T = '#1A1A1A';
-const M = '#6B6B6B';
-const B = '#E4E3E0';
+const T = '#0B1233';
+const M = '#646D8F';
+const B = '#E2E7FF';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -78,7 +78,7 @@ export default function PrivacyPage() {
 
         <Section title="Contact">
           Questions about this policy can be sent to{' '}
-          <a href="mailto:info@squarespell.com" style={{ color: '#0f7377' }}>info@squarespell.com</a>.
+          <a href="mailto:info@squarespell.com" style={{ color: '#3154FF' }}>info@squarespell.com</a>.
         </Section>
       </div>
     </div>

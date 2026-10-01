@@ -141,7 +141,7 @@ const FAQS = [
 
 function CheckIcon({ color }: { color?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color || '#0f7377'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color || '#3154FF'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -149,7 +149,7 @@ function CheckIcon({ color }: { color?: string }) {
 
 function CrossIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(26,26,26,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(11, 18, 51,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -211,12 +211,12 @@ function PricingInner() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         html { font-size: 16px; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: #F7F7F5; color: #1A1A1A; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #F5F7FF; color: #0B1233; }
         button { cursor: pointer; font-family: inherit; }
         :root {
-          --acc: #0f7377; --acc-dark: #0B6165; --acc-bg: rgba(13,115,119,0.06);
-          --t1: #1A1A1A; --t2: rgba(26,26,26,0.85); --t3: rgba(26,26,26,0.55); --t4: rgba(26,26,26,0.35);
-          --card: #FFFFFF; --border: #E4E3E0; --bg: #F7F7F5;
+          --acc: #3154FF; --acc-dark: #0B6165; --acc-bg: rgba(13,115,119,0.06);
+          --t1: #0B1233; --t2: rgba(11, 18, 51,0.85); --t3: rgba(11, 18, 51,0.55); --t4: rgba(11, 18, 51,0.35);
+          --card: #FFFFFF; --border: #E2E7FF; --bg: #F5F7FF;
           --green: #059669; --green-bg: rgba(5,150,105,0.08);
         }
 
@@ -238,7 +238,7 @@ function PricingInner() {
         .toggle-section { display: flex; justify-content: center; align-items: center; gap: 14px; margin-bottom: 44px; flex-wrap: wrap; }
         .toggle-pills { display: flex; background: #EEEEED; border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
         .tpill { padding: 10px 28px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; transition: all .15s; display: flex; align-items: center; gap: 8px; }
-        .tpill.on { background: var(--t1); color: #F7F7F5; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+        .tpill.on { background: var(--t1); color: #F5F7FF; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
         .tpill.off { background: transparent; color: var(--t3); }
         .save-pill { background: var(--green-bg); color: var(--green); font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 100px; border: 1px solid rgba(5,150,105,.2); }
 
@@ -281,7 +281,7 @@ function PricingInner() {
         .feat-item { display: flex; align-items: flex-start; gap: 10px; }
         .feat-icon { flex-shrink: 0; margin-top: 2px; }
         .feat-text { font-size: 15px; line-height: 1.45; color: var(--t2); }
-        .feat-text.off { color: rgba(26,26,26,.35); }
+        .feat-text.off { color: rgba(11, 18, 51,.35); }
         .upgrade-hint { margin-top: 16px; padding: 10px 14px; background: var(--acc-bg); border-radius: 8px; font-size: 13px; color: var(--acc); font-weight: 600; text-align: center; }
 
         /* ── ADD-ON SECTION ── */
@@ -467,7 +467,7 @@ function PricingInner() {
                     {plan.included.map(function (f, i) {
                       return (
                         <div key={i} className="feat-item">
-                          <span className="feat-icon"><CheckIcon color={plan.featured ? '#0f7377' : '#059669'} /></span>
+                          <span className="feat-icon"><CheckIcon color={plan.featured ? '#3154FF' : '#059669'} /></span>
                           <span className="feat-text">{f}</span>
                         </div>
                       );
@@ -598,7 +598,7 @@ function PricingInner() {
                               {(['core', 'pro', 'business'] as const).map(function (p) {
                                 var val = row[p];
                                 if (typeof val === 'boolean') {
-                                  return <td key={p}>{val ? <CheckIcon color={p === 'pro' ? '#0f7377' : '#059669'} /> : <CrossIcon />}</td>;
+                                  return <td key={p}>{val ? <CheckIcon color={p === 'pro' ? '#3154FF' : '#059669'} /> : <CrossIcon />}</td>;
                                 }
                                 return <td key={p}><span className={'cell-val' + (p === 'pro' ? ' pro-val' : '')}>{val}</span></td>;
                               })}

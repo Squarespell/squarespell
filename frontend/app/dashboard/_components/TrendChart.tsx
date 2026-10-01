@@ -102,7 +102,7 @@ export function TrendChart({
           <path d={lineD(series[0].values) + ' L' + x(n - 1) + ' ' + baseY + ' L' + x(0) + ' ' + baseY + ' Z'} fill="url(#sqTrendGrad)" />
         )}
         {!empty && series.slice().reverse().map(function(s) {
-          return <path key={s.key} d={lineD(s.values)} fill="none" stroke={s.color === C.ACID ? '#C9D93F' : s.color} strokeWidth={s === series[0] ? 2.25 : 2} strokeLinejoin="round" />;
+          return <path key={s.key} d={lineD(s.values)} fill="none" stroke={s.color === C.ACID ? '#8FA2FF' : s.color} strokeWidth={s === series[0] ? 2.25 : 2} strokeLinejoin="round" />;
         })}
       </svg>
       {empty && (

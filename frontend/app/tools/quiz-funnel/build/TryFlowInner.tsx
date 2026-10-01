@@ -1028,7 +1028,7 @@ export function TryFlowInner({
 
   const brandBg = safeColor(brand?.colors?.background, '#ffffff');
   const brandSurface = brandBg;
-  const brandText = safeColor(brand?.colors?.text, '#1a1a1a');
+  const brandText = safeColor(brand?.colors?.text, '#0B1233');
   // Primary: prefer scraped primary, then scraped accent, then a safe dark default.
   const rawPrimary = isUsableColor(brand?.colors?.primary) ? brand!.colors!.primary : null;
   const rawAccent = isUsableColor(brand?.colors?.accent) ? brand!.colors!.accent : null;

@@ -32,8 +32,8 @@ export default function GlobalError({
     <div
       style={{
         minHeight: '100svh',
-        background: '#F7F7F5',
-        color: '#1A1A1A',
+        background: '#F5F7FF',
+        color: '#0B1233',
         fontFamily: '"Inter", system-ui, sans-serif',
         display: 'flex',
         alignItems: 'center',
@@ -55,7 +55,7 @@ export default function GlobalError({
           }}
           aria-hidden
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3154FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -77,7 +77,7 @@ export default function GlobalError({
             style={{
               padding: '12px 22px',
               borderRadius: 100,
-              background: '#0f7377',
+              background: '#3154FF',
               color: '#FFFFFF',
               border: 0,
               fontSize: 13,
@@ -94,8 +94,8 @@ export default function GlobalError({
               padding: '12px 22px',
               borderRadius: 100,
               background: 'transparent',
-              color: '#1A1A1A',
-              border: '1px solid #E4E3E0',
+              color: '#0B1233',
+              border: '1px solid #E2E7FF',
               fontSize: 13,
               fontWeight: 600,
               textDecoration: 'none',

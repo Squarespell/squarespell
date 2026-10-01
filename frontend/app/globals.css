@@ -3,25 +3,28 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #F7F7F5; --s1: #F0EFED; --s2: #FFFFFF;
-  --accent: #0f7377; --text: #1A1A1A; --muted: #6B6B6B;
-  --border: #E4E3E0;
+  /* Matches the squarespellquiz.com landing page: blue #3154FF and white, navy ink, cool blue-grey text. */
+  --bg: #F5F7FF; --s1: #EBEFFF; --s2: #FFFFFF;
+  --accent: #3154FF; --text: #0B1233; --muted: #646D8F;
+  --border: #E2E7FF;
+  --font-display: 'Inter Tight', var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
   --font: var(--font-inter, 'Inter'), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-body: var(--font-inter, 'Inter'), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --r-card: 10px; --r-pill: 20px;
+  --r-card: 12px; --r-pill: 999px;
 
   /* ---------- Typography scale ---------- */
   /* Sizes use rem so they respect user font-size preferences; line-heights
      are unitless ratios per type rather than fixed px, so they scale with
      the font-size. Weights lean on Inter's variable axis (400/500/600/700/800). */
-  --fs-h1: 2.5rem;   --lh-h1: 1.12; --fw-h1: 700; --ls-h1: -0.02em;
-  --fs-h2: 1.875rem; --lh-h2: 1.18; --fw-h2: 700; --ls-h2: -0.015em;
-  --fs-h3: 1.375rem; --lh-h3: 1.25; --fw-h3: 600; --ls-h3: -0.01em;
-  --fs-h4: 1.125rem; --lh-h4: 1.3;  --fw-h4: 600; --ls-h4: -0.005em;
+  --fs-h1: 2.5rem;   --lh-h1: 1.05; --fw-h1: 500; --ls-h1: -0.04em;
+  --fs-h2: 1.875rem; --lh-h2: 1.1;  --fw-h2: 500; --ls-h2: -0.035em;
+  --fs-h3: 1.375rem; --lh-h3: 1.2;  --fw-h3: 500; --ls-h3: -0.02em;
+  --fs-h4: 1.125rem; --lh-h4: 1.3;  --fw-h4: 500; --ls-h4: -0.01em;
   --fs-body: 1rem;      --lh-body: 1.55; --fw-body: 400;
   --fs-body-sm: 0.875rem; --lh-body-sm: 1.5; --fw-body-sm: 400;
   --fs-caption: 0.75rem; --lh-caption: 1.45; --fw-caption: 500;
-  --fs-button: 0.9375rem; --lh-button: 1; --fw-button: 600; --ls-button: -0.005em;
+  --fs-button: 0.9375rem; --lh-button: 1; --fw-button: 500; --ls-button: -0.005em;
   --fs-input: 0.9375rem; --lh-input: 1.4; --fw-input: 400;
   --fs-nav: 0.875rem; --lh-nav: 1.2; --fw-nav: 500;
   --fs-error: 0.8125rem; --lh-error: 1.4; --fw-error: 500;
@@ -32,9 +35,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); font
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; font-family: var(--font); }
 input, textarea { font-family: var(--font-body); font-size: var(--fs-input); line-height: var(--lh-input); background: var(--s2); border: 1px solid var(--border); color: var(--text); border-radius: var(--r-card); padding: 12px 16px; width: 100%; outline: none; transition: border-color 0.2s; }
-input:focus, textarea:focus { border-color: var(--accent); }
+input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(49, 84, 255, 0.15); }
+::selection { background: #DCE3FF; color: #0B1233; }
 
 /* ---------- Typography utility classes ---------- */
+h1, h2, h3, h4, .text-h1, .text-h2, .text-h3, .text-h4 { font-family: var(--font-display); color: var(--text); }
 h1, .text-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: var(--fw-h1); letter-spacing: var(--ls-h1); }
 h2, .text-h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: var(--fw-h2); letter-spacing: var(--ls-h2); }
 h3, .text-h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: var(--fw-h3); letter-spacing: var(--ls-h3); }
@@ -58,6 +63,6 @@ h4, .text-h4 { font-size: var(--fs-h4); line-height: var(--lh-h4); font-weight: 
 /* Thin minimal scrollbars across entire app */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
-* { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.15) transparent; }
+::-webkit-scrollbar-thumb { background: rgba(11,18,51,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(11,18,51,0.25); }
+* { scrollbar-width: thin; scrollbar-color: rgba(11,18,51,0.15) transparent; }

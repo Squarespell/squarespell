@@ -11,8 +11,8 @@ export default function NotFound() {
     <div
       style={{
         minHeight: '100svh',
-        background: '#F7F7F5',
-        color: '#1A1A1A',
+        background: '#F5F7FF',
+        color: '#0B1233',
         fontFamily: '"Inter", system-ui, sans-serif',
         display: 'flex',
         alignItems: 'center',
@@ -27,7 +27,7 @@ export default function NotFound() {
             fontWeight: 700,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: '#0f7377',
+            color: '#3154FF',
             margin: '0 0 10px',
           }}
         >
@@ -46,7 +46,7 @@ export default function NotFound() {
             style={{
               padding: '12px 22px',
               borderRadius: 100,
-              background: '#0f7377',
+              background: '#3154FF',
               color: '#FFFFFF',
               fontSize: 13,
               fontWeight: 700,
@@ -63,8 +63,8 @@ export default function NotFound() {
               padding: '12px 22px',
               borderRadius: 100,
               background: 'transparent',
-              color: '#1A1A1A',
-              border: '1px solid #E4E3E0',
+              color: '#0B1233',
+              border: '1px solid #E2E7FF',
               fontSize: 13,
               fontWeight: 600,
               textDecoration: 'none',

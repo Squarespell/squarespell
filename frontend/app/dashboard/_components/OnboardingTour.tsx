@@ -64,7 +64,7 @@ var TOUR_STEPS: TourStep[] = [
 ];
 
 var POPOVER_W = 356;
-var SCRIM = 'rgba(22, 23, 25, 0.38)';
+var SCRIM = 'rgba(11, 18, 51, 0.38)';
 
 function isVisible(el: Element | null): el is HTMLElement {
   if (!el) return false;
@@ -184,7 +184,7 @@ export function OnboardingTour() {
           maxWidth: 'calc(100vw - 32px)',
           background: '#fff',
           borderRadius: 8,
-          boxShadow: '0 20px 48px -12px rgba(22,23,25,0.35)',
+          boxShadow: '0 20px 48px -12px rgba(11, 18, 51,0.35)',
           zIndex: 10000,
           padding: '22px 22px 18px',
           fontFamily: C.FONT,

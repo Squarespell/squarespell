@@ -147,7 +147,7 @@ function clearCookie(name: string) {
   document.cookie = name + '=;path=/;max-age=0';
 }
 
-var SOURCE_COLORS = ['#3154FF', '#8FA2FF', '#BFCAFF', '#161719', '#9B9A93'];
+var SOURCE_COLORS = ['#3154FF', '#8FA2FF', '#BFCAFF', '#0B1233', '#8B93B5'];
 
 var DASH_CSS = `
   .sq-dash-hero { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 32px; align-items: start; margin-bottom: 32px; }
@@ -171,9 +171,8 @@ var DASH_CSS = `
   @media (max-width: 720px) { .sq-dash-trio { grid-template-columns: 1fr; } .sq-kpis { grid-template-columns: 1fr; } .sq-kpi { border-right: none; } }
 `;
 
-var ARROW = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-);
+/* Text links carry no arrow, matching the landing page. */
+var ARROW = null;
 
 /** Hairline white panel with an optional header row. */
 function Panel({ title, subtitle, action, children, bodyPad = '4px 24px 24px' }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode; bodyPad?: string }) {
@@ -181,7 +180,7 @@ function Panel({ title, subtitle, action, children, bodyPad = '4px 24px 24px' }:
     <section style={{ background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8, minWidth: 0 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '22px 24px 14px' }}>
         <div style={{ minWidth: 0 }}>
-          <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em', color: C.INK }}>{title}</h2>
+          <h2 style={{ margin: 0, fontFamily: C.DISPLAY_FONT, fontSize: 21, fontWeight: 500, letterSpacing: '-0.02em', color: C.INK }}>{title}</h2>
           {subtitle && <div style={{ fontSize: 14, color: C.GRAY_500, marginTop: 4 }}>{subtitle}</div>}
         </div>
         {action}
@@ -217,7 +216,7 @@ function Kpi({ icon, value, label }: { icon: ReactNode; value: ReactNode; label:
     <div className="sq-kpi">
       {icon}
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.05, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+        <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 30, fontWeight: 500, letterSpacing: '-0.03em', color: C.INK, lineHeight: 1.05, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
         <div style={{ fontSize: 15, color: C.GRAY_600, marginTop: 4 }}>{label}</div>
       </div>
     </div>
@@ -265,7 +264,7 @@ function PerformanceChart({ data, period, onPeriodChange }: { data: ChartPoint[]
             type="button"
             aria-pressed={isActive}
             onClick={function() { onPeriodChange(p.v); }}
-            style={{ padding: '6px 12px', borderRadius: 5, fontSize: 13, fontWeight: 500, color: isActive ? C.INK : C.GRAY_500, background: isActive ? '#fff' : 'transparent', border: 'none', cursor: 'pointer', fontFamily: C.FONT, boxShadow: isActive ? C.SHADOW_SM : 'none' }}
+            style={{ padding: '6px 12px', borderRadius: 5, fontSize: 13, fontWeight: 500, color: isActive ? C.ACCENT : C.GRAY_500, background: isActive ? '#fff' : 'transparent', border: 'none', cursor: 'pointer', fontFamily: C.FONT, boxShadow: isActive ? C.SHADOW_SM : 'none' }}
           >
             {p.l}
           </button>

@@ -706,7 +706,7 @@ var PAGE_CSS = `
 
 function LogoTile({ c, size = 64 }: { c: Catalog; size?: number }) {
   return (
-    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 8, background: c.color + '1A', color: c.color === '#FFE01B' ? '#161719' : c.color, border: '1px solid ' + C.BORDER_LIGHT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: size > 40 ? 20 : 13, fontWeight: 800, letterSpacing: '-0.02em', flexShrink: 0 }}>
+    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 8, background: c.color + '1A', color: c.color === '#FFE01B' ? '#0B1233' : c.color, border: '1px solid ' + C.BORDER_LIGHT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: size > 40 ? 20 : 13, fontWeight: 800, letterSpacing: '-0.02em', flexShrink: 0 }}>
       {c.icon}
     </span>
   );
@@ -798,8 +798,6 @@ export default function IntegrationsPage() {
         <svg className="sq-int-art" width="420" height="160" viewBox="0 0 420 160" aria-hidden="true" style={{ flexShrink: 0 }}>
           <text x="10" y="54" fontSize="22" fill={C.INK} fontFamily="'Instrument Serif', Georgia, serif" fontStyle="italic">More leads.</text>
           <text x="10" y="82" fontSize="22" fill={C.INK} fontFamily="'Instrument Serif', Georgia, serif" fontStyle="italic">More possibilities.</text>
-          <path d="M60 120 C 100 150, 150 140, 180 118" fill="none" stroke={C.INK} strokeWidth="1.2" />
-          <path d="M170 116 L 180 118 L 176 128" fill="none" stroke={C.INK} strokeWidth="1.2" strokeLinecap="round" />
           <path d="M200 30 A 90 90 0 0 1 290 120 L 200 120 Z" fill={C.PERIWINKLE} />
           <rect x="240" y="80" width="72" height="72" fill={C.ACCENT} />
           <circle cx="330" cy="40" r="36" fill={C.ACID} />
@@ -920,7 +918,7 @@ export default function IntegrationsPage() {
       {/* Setup dialog */}
       {setupType && (
         <div role="dialog" aria-modal="true" aria-label={'Connect ' + labelFor(setupType)} onMouseDown={function(e) { if (e.target === e.currentTarget) setSetupType(null); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(22,23,25,0.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '8vh 16px', overflowY: 'auto' }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(11, 18, 51,0.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '8vh 16px', overflowY: 'auto' }}>
           <div style={{ width: 'min(620px, 100%)' }}>
             <Card>
               {setupType === 'webhook' && (
