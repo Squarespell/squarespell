@@ -101,6 +101,8 @@ export function addUtmParams(
   }
   try {
     const u = new URL(url, 'https://placeholder.invalid');
+    // Quiz authors write these URLs: never pass through a script/data scheme (it would run on our origin).
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
     const mapping: Array<[string, string | undefined]> = [
       ['utm_source', params.source],
       ['utm_medium', params.medium],
@@ -119,7 +121,7 @@ export function addUtmParams(
     }
     return u.toString();
   } catch {
-    return url;
+    return '';
   }
 }
 

@@ -20,6 +20,7 @@
 
 import { Suspense } from 'react';
 import EmbedQuizClient from './EmbedQuizClient';
+import { safeColor, brandFontStack } from '@/lib/safeCss';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://squarespell-api.onrender.com';
 
@@ -184,14 +185,11 @@ export default async function EmbedPage({ params }: { params: { slug: string } }
 
   // Derive branding from quiz settings (matches the main /quiz/[slug] logic)
   const brand = quiz.branding;
-  const brandBg = brand?.colors?.background || '#ffffff';
-  const brandText = brand?.colors?.text || '#1a1a1a';
-  const brandPrimary =
-    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor || '#0a0a0a';
-  const brandFont =
-    brand?.font_family && brand.font_family !== 'sans-serif'
-      ? `'${brand.font_family}', system-ui, sans-serif`
-      : "'Inter', system-ui, sans-serif";
+  const brandBg = safeColor(brand?.colors?.background, '#ffffff');
+  const brandText = safeColor(brand?.colors?.text, '#1a1a1a');
+  const brandPrimary = safeColor(
+    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor, '#0a0a0a');
+  const brandFont = brandFontStack(brand?.font_family);
 
   return (
     <Suspense fallback={<ErrorView />}>

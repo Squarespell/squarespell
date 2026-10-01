@@ -329,7 +329,7 @@ export function DesignStep({
                   height: 200, overflow: 'hidden', background: '#F5F7FF',
                   position: 'relative', borderBottom: '1px solid ' + C.BORDER,
                 }}>
-                  <iframe
+                  <iframe sandbox=""
                     title="AI designed preview"
                     srcDoc={aiDesign.html}
                     style={{
@@ -421,7 +421,7 @@ export function DesignStep({
                     height: 200, overflow: 'hidden', background: '#F5F7FF',
                     position: 'relative', borderBottom: '1px solid ' + C.BORDER,
                   }}>
-                    <iframe
+                    <iframe sandbox=""
                       title={t.title + ' preview'}
                       srcDoc={t.html}
                       style={{
@@ -546,7 +546,7 @@ export function DesignStep({
                 </div>
               </div>
               <div style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', background: '#F3F4F6', padding: previewDevice === 'mobile' ? '20px 0' : 0 }}>
-                <iframe
+                <iframe sandbox=""
                   title="Template preview"
                   srcDoc={previewItem.html}
                   style={{
@@ -772,7 +772,7 @@ export function DesignStep({
                     </div>
                   </div>
                   <div style={{ height: 400, overflow: 'hidden' }}>
-                    <iframe
+                    <iframe sandbox=""
                       title="Selected template preview"
                       srcDoc={state.html || '<div style="padding:40px;text-align:center;color:#9CA3AF">Select a template</div>'}
                       style={{

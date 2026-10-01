@@ -272,7 +272,7 @@ export default function EmailTemplatesPage() {
                     borderBottom: '1px solid ' + C.BORDER,
                     background: '#F5F7FF', position: 'relative',
                   }}>
-                    <iframe
+                    <iframe sandbox=""
                       title={t.name + ' preview'}
                       srcDoc={t.html}
                       style={{
@@ -376,7 +376,7 @@ export default function EmailTemplatesPage() {
 
             {/* Preview */}
             <div style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', background: '#F3F4F6', padding: previewDevice === 'mobile' ? '20px 0' : 0 }}>
-              <iframe
+              <iframe sandbox=""
                 title="Template preview"
                 srcDoc={selected.html}
                 style={{
