@@ -1,18 +1,17 @@
 'use client';
 import { AuthProvider, useAuth } from '../lib/auth/client';
 import { useEffect } from 'react';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import { setAuthToken } from '../lib/api';
 import { ToastProvider } from '../lib/toast';
 import './globals.css';
 
-// Self-hosted, optimized loading (no render-blocking Google Fonts request).
-// Inter is the platform's primary typeface — see SQUARESPELL-SYSTEM-DESIGN.md
-// typography section for rationale. Exposed as --font-inter and consumed by
-// the --font / --font-body CSS variables in globals.css.
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+// Inter, bundled with the app (npm @fontsource-variable/inter) and served by next/font from our own server: no
+// request to Google Fonts at build time or in the browser. Exposed as --font-inter for the --font / --font-body
+// variables in globals.css.
+const inter = localFont({
+  src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
+  weight: '100 900',
   variable: '--font-inter',
   display: 'swap',
 });
