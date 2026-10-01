@@ -18,6 +18,7 @@ import {
   getTemplateQuestionCount,
 } from '../../../../lib/quiz/templates';
 import type { QuizBlock } from '../../../../lib/quiz/blocks';
+import FitImage from '../../../../components/quiz-taker/FitImage';
 import { DashboardShell, DASHBOARD_COLORS as C } from '../../_components/DashboardShell';
 
 var ACCENT = C.ACCENT || '#3154FF';
@@ -146,7 +147,7 @@ export default function DashboardTemplateDetailPage() {
         <div>
           {/* Hero image */}
           {thumb && (
-            <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20, height: 220, background: '#f0f0f0' }}>
+            <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20, aspectRatio: '1200 / 630', background: '#f0f0f0' }}>
               <img src={thumb} alt={template.name} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           )}
@@ -314,11 +315,13 @@ export default function DashboardTemplateDetailPage() {
                   <div>
                     {/* Question media — image or video */}
                     {q.mediaUrl && (
-                      <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20, height: 160 }}>
+                      <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
                         {q.mediaType === 'video' ? (
-                          <video src={q.mediaUrl} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ aspectRatio: '16 / 9', background: '#000' }}>
+                            <video src={q.mediaUrl} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                          </div>
                         ) : (
-                          <img src={q.mediaUrl} alt="" onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <FitImage src={q.mediaUrl} maxHeight={320} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                         )}
                       </div>
                     )}
@@ -372,7 +375,7 @@ export default function DashboardTemplateDetailPage() {
                                 transition: 'all 0.15s',
                               }}
                             >
-                              <img src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
+                              <img src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', display: 'block' }} />
                               <div style={{
                                 padding: '8px 10px', fontSize: 13, fontWeight: 600,
                                 color: isSelected ? ACCENT : '#333',
@@ -454,8 +457,8 @@ export default function DashboardTemplateDetailPage() {
                 return (
                   <div style={{ textAlign: 'center' as const }}>
                     {o.imageUrl && (
-                      <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20, height: 180 }}>
-                        <img src={o.imageUrl} alt={o.title} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ marginBottom: 20 }}>
+                        <FitImage src={o.imageUrl} alt={o.title} maxHeight={320} radius={12} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                       </div>
                     )}
                     <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0B1233', margin: '0 0 10px' }}>{o.title}</h2>

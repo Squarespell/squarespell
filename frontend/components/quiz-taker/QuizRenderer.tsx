@@ -24,6 +24,7 @@
 
 import { useRef } from 'react';
 import { addUtmParams, quizUtm } from '@/lib/urls';
+import FitImage from './FitImage';
 
 export interface QuizOption {
   id: string;
@@ -193,8 +194,8 @@ function QuestionMedia({ mediaUrl, mediaType }: { mediaUrl: string; mediaType: s
     );
   }
   return (
-    <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
-      <img src={mediaUrl} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'cover', display: 'block' }} />
+    <div style={{ marginBottom: 20 }}>
+      <FitImage src={mediaUrl} maxHeight={420} radius={12} />
     </div>
   );
 }
@@ -356,6 +357,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                   background: '#0a0a0a',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   position: 'relative', overflow: 'hidden',
+                  aspectRatio: isMobile ? '4 / 3' : undefined,
                 }}>
                   {qMediaUrl && (qMediaType === 'video' || /youtube\.com|youtu\.be|vimeo\.com/.test(qMediaUrl)) ? (function() {
                     var ytM = qMediaUrl!.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
@@ -363,9 +365,9 @@ export default function QuizRenderer(props: QuizRendererProps) {
                     var eUrl = ytM ? 'https://www.youtube.com/embed/' + ytM[1] : viM ? 'https://player.vimeo.com/video/' + viM[1] : '';
                     return eUrl
                       ? <iframe src={eUrl} style={{ width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                      : <video src={qMediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+                      : <video src={qMediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
                   })() : qMediaUrl ? (
-                    <img src={qMediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <FitImage src={qMediaUrl} fill />
                   ) : (
                     <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
                       <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2}><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><polyline points="21 15 16 10 5 21" /></svg>
@@ -479,7 +481,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                 {/* Answer options — layout-aware */}
                 {isGrid ? (
                   /* Grid / Full-background layout */
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 8 : 12 }}>
                     {currentQ.options.map(function(opt, oi) {
                       var optImg = getOptionImage(opt);
                       var picked = answers[qIdx] === oi;
@@ -500,7 +502,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                           }}>
                           {/* Image area */}
                           <div style={{
-                            width: '100%', height: isFullBg ? 140 : 110,
+                            width: '100%', aspectRatio: isFullBg ? '1 / 1' : '4 / 3',
                             background: optImg ? 'transparent' : 'rgba(0,0,0,0.03)',
                             position: 'relative', overflow: 'hidden',
                           }}>
@@ -530,7 +532,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 fontSize: 9, fontWeight: 700,
                               }}>{LETTERS[oi]}</div>
-                              <div style={{ fontSize: 12, fontWeight: 500 }}>{opt.text}</div>
+                              <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>{opt.text}</div>
                             </div>
                           )}
                         </button>
@@ -558,7 +560,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                           }}>
                           {/* Thumbnail */}
                           <div style={{
-                            width: 52, height: 52, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+                            width: 64, height: 64, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
                             background: optImg ? 'transparent' : 'rgba(0,0,0,0.04)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
@@ -737,8 +739,8 @@ export default function QuizRenderer(props: QuizRendererProps) {
 
               {/* Outcome image */}
               {(outcome.imageUrl || outcome.image_url) && (
-                <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 16, maxWidth: 400, margin: '0 auto 16px' }}>
-                  <img src={outcome.imageUrl || outcome.image_url} alt="" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', display: 'block' }} />
+                <div style={{ margin: '0 auto 16px' }}>
+                  <FitImage src={(outcome.imageUrl || outcome.image_url) as string} maxHeight={360} radius={12} />
                 </div>
               )}
 
@@ -896,7 +898,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                           border: '1px solid ' + brandBorder, borderRadius: 10, cursor: 'pointer',
                           transition: 'box-shadow 0.2s',
                         }}>
-                          {imgUrl && <img src={imgUrl} alt="" style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />}
+                          {imgUrl && <img src={imgUrl} alt="" style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />}
                           <div style={{ flex: 1, textAlign: 'left' }}>
                             <div style={{ fontSize: 14, fontWeight: 700, color: brandText }}>{p.title}</div>
                             {p.price && <div style={{ fontSize: 15, fontWeight: 800, color: brandPrimary, marginTop: 2 }}>{p.price}</div>}
