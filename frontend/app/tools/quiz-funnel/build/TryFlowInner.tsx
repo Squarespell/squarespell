@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import FLOW_CSS from './flow-css';
 import { api } from '@/lib/api';
 import { publicQuizUrl, embedSnippet, APP_URL } from '@/lib/urls';
-import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '@/lib/quiz/templates';
+import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData, getTemplateSettings } from '@/lib/quiz/templates';
 import { blocksToLegacy, legacyToBlocks } from '@/lib/quiz/blocks';
 import { QuizBlockEditor } from '@/app/dashboard/_components/QuizBlockEditor';
 import QuizRenderer, { RendererQuiz, RendererStage } from '@/components/quiz-taker/QuizRenderer';
@@ -482,7 +482,7 @@ export function TryFlowInner({
         questions: legacy.questions || [],
         outcomes: legacy.outcomes || [],
         leadGate: legacy.leadGate,
-        settings: {},
+        settings: getTemplateSettings(tpl.id),
       };
 
       // If user is logged in, save directly and open full dashboard editor

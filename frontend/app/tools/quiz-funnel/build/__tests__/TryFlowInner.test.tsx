@@ -326,7 +326,7 @@ describe('template pick with no matched templates', () => {
     });
     const editor = screen.getByTestId('quiz-block-editor');
     const blockTexts: string[] = JSON.parse(editor.getAttribute('data-block-texts') || '[]');
-    expect(blockTexts).toContain('What kind of dining experience are you in the mood for?');
+    expect(blockTexts).toContain('What kind of meal are you in the mood for?');
     expect(blockTexts).not.toContain('What moment matters most to you on your big day?');
   });
 });

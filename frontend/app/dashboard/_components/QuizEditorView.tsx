@@ -21,7 +21,7 @@ import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 import { PublishModal } from "./Modals";
 import { QuizBlockEditor, QuizSettings, SaveState } from './QuizBlockEditor';
 import { QuizBlock, legacyToBlocks, blocksToLegacy } from '@/lib/quiz/blocks';
-import { findTemplateData } from '@/lib/quiz/templates';
+import { findTemplateData, getTemplateSettings } from '@/lib/quiz/templates';
 
 interface DbQuiz {
   id: string;
@@ -359,6 +359,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
             questions: legacy.questions,
             outcomes: legacy.outcomes,
             settings: {
+              ...getTemplateSettings(templateId),
               editor_blocks: tplBlocks,
               show_progress_bar: true,
               transition_type: 'slide',
