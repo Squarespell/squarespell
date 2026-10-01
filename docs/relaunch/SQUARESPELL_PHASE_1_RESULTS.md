@@ -161,8 +161,8 @@ Resend variables in the tables above are historical: the code no longer reads th
 | Variable | Service | Purpose | Value |
 |---|---|---|---|
 | `AUTH_SECRET` | Squarespell sign-in | signs the 15-minute access tokens | generated on the server (`deploy.sh`, `gen-env.sh`) |
-| `GOOGLE_CLIENT_ID` | Google Cloud OAuth | optional "Sign in with Google" | owner creates the OAuth client |
-| `GOOGLE_CLIENT_SECRET` | Google Cloud OAuth | pairs with the client id | owner, via `set-secret.sh` |
+| `GOOGLE_CLIENT_ID` | Google Cloud OAuth | "Sign in with Google" (public client id; no secret) | built into the code, override only |
+| `GOOGLE_CERTS_URL` | Google Cloud OAuth | tests only: Google signing-key URL | unset in production |
 | `SMTP_HOST` | Hostinger email | SMTP server | default `smtp.hostinger.com` |
 | `SMTP_PORT` | Hostinger email | SMTP port | default `465` |
 | `SMTP_USER` | Hostinger email | mailbox every email is sent from | owner, via `set-secret.sh` |

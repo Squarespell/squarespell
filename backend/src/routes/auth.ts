@@ -5,7 +5,7 @@
  * GET /api/auth/session for a 15-minute access token and sends that as "Authorization: Bearer" to every other
  * endpoint (middleware/auth.ts verifies it locally). Signing out revokes the session row.
  *
- *   GET  /config                 which sign-in methods are on (Google needs GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)
+ *   GET  /config                 which sign-in methods are on, and the public Google client id for its button
  *   POST /signup                 { email, password, firstName? }   creates the account and signs in
  *   POST /login                  { email, password }
  *   POST /logout
@@ -14,7 +14,7 @@
  *   POST /reset-password         { token, password }   also confirms the email address and signs out other browsers
  *   POST /verify-email           { token }
  *   POST /resend-verification    (signed in)
- *   GET  /google/start?next=/x   GET /google/callback
+ *   POST /google                 { credential }   an ID token from Google's own button; signs in or creates the account
  *
  * Accounts that came from Clerk have no password yet: signing in (or signing up again) with that address emails
  * them a link to set one.
@@ -30,11 +30,11 @@ import {
   normalizeEmail, looksLikeEmail, authConfigured,
 } from '../services/auth/crypto';
 import { sendAuthEmail } from '../services/auth/authEmails';
+import { googleClientId, verifyGoogleIdToken } from '../services/auth/google';
 
 const router = Router();
 
 export const SESSION_COOKIE = 'sq_session';
-const OAUTH_COOKIE = 'sq_oauth';
 const SESSION_DAYS = 30;
 const DAY_MS = 86400000;
 
@@ -80,13 +80,6 @@ function appendCookie(res: Response, value: string) {
   const prev = res.getHeader('Set-Cookie');
   const list = Array.isArray(prev) ? prev.map(String) : prev ? [String(prev)] : [];
   res.setHeader('Set-Cookie', list.concat(value));
-}
-
-/** Only same-site relative paths may be used as the post-sign-in destination (no open redirects). */
-export function safeNext(value: unknown): string {
-  const v = typeof value === 'string' ? value : '';
-  if (!v.startsWith('/') || v.startsWith('//') || v.startsWith('/\\') || /[\r\n]/.test(v)) return '/dashboard';
-  return v;
 }
 
 function publicUser(u: any) {
@@ -181,11 +174,11 @@ function notConfigured(res: Response) {
 }
 
 function googleEnabled(): boolean {
-  return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  return !!googleClientId();
 }
 
 router.get('/config', function (_req, res) {
-  res.json({ google: googleEnabled() });
+  res.json({ google: googleEnabled(), googleClientId: googleClientId() || null });
 });
 
 router.post('/signup', async function (req: Request, res: Response) {
@@ -362,92 +355,48 @@ router.post('/resend-verification', async function (req: Request, res: Response)
   }
 });
 
-/* ---------------- Google sign-in (optional) ---------------- */
+/* ---------------- Sign in with Google ---------------- */
 
-function googleRedirectUri(): string {
-  return apiUrl() + '/api/auth/google/callback';
-}
+const googleLimiter = makeLimiter('auth-google-ip', 30, '1 m', 60000);
 
-function signOauthState(value: string): string {
-  return value + '.' + crypto.createHmac('sha256', process.env.AUTH_SECRET || '').update('oauth:' + value).digest('base64url');
-}
-
-function readOauthState(signed: string): { state: string; next: string } | null {
-  const i = signed.lastIndexOf('.');
-  if (i <= 0) return null;
-  const value = signed.slice(0, i);
-  const expected = signOauthState(value);
-  if (expected.length !== signed.length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signed))) return null;
-  const sep = value.indexOf('|');
-  if (sep <= 0) return null;
-  return { state: value.slice(0, sep), next: safeNext(value.slice(sep + 1)) };
-}
-
-router.get('/google/start', function (req: Request, res: Response) {
-  if (!authConfigured() || !googleEnabled()) return res.redirect(302, appUrl() + '/sign-in?error=google_unavailable');
-  const state = randomToken();
-  const next = safeNext(req.query.next);
-  appendCookie(res, cookie(OAUTH_COOKIE, signOauthState(state + '|' + next), { path: '/api/auth/google', maxAgeSec: 600 }));
-  const params = new URLSearchParams({
-    client_id: process.env.GOOGLE_CLIENT_ID!, redirect_uri: googleRedirectUri(), response_type: 'code',
-    scope: 'openid email profile', state, prompt: 'select_account',
-  });
-  res.redirect(302, 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString());
-});
-
-router.get('/google/callback', async function (req: Request, res: Response) {
-  const fail = function (code: string) { return res.redirect(302, appUrl() + '/sign-in?error=' + code); };
-  if (!authConfigured() || !googleEnabled()) return fail('google_unavailable');
-  const saved = readOauthState(readCookie(req, OAUTH_COOKIE));
-  appendCookie(res, cookie(OAUTH_COOKIE, '', { path: '/api/auth/google', maxAgeSec: 0 }));
-  const state = typeof req.query.state === 'string' ? req.query.state : '';
-  const code = typeof req.query.code === 'string' ? req.query.code : '';
-  if (!saved || !state || saved.state.length !== state.length || !crypto.timingSafeEqual(Buffer.from(saved.state), Buffer.from(state)) || !code) {
-    return fail('google_failed');
+router.post('/google', async function (req: Request, res: Response) {
+  if (!authConfigured()) return notConfigured(res);
+  if (!googleEnabled()) return res.status(503).json({ error: 'Google sign-in is not available right now.', code: 'google_unavailable' });
+  if (!(await safeLimit(googleLimiter, getClientIp(req))).success) return res.status(429).json({ error: 'Too many attempts. Try again in a minute.', code: 'rate_limited' });
+  let identity;
+  try {
+    identity = await verifyGoogleIdToken(req.body?.credential);
+  } catch (e: any) {
+    log.warn('[auth] google token rejected', { reason: e?.message });
+    return res.status(401).json({ error: 'Google sign-in did not finish. Please try again.', code: 'google_failed' });
   }
   try {
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code, client_id: process.env.GOOGLE_CLIENT_ID!, client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirect_uri: googleRedirectUri(), grant_type: 'authorization_code',
-      }).toString(),
-      signal: AbortSignal.timeout(10000),
-    });
-    const tokens: any = await tokenRes.json().catch(function () { return {}; });
-    if (!tokenRes.ok || !tokens.access_token) throw new Error('token exchange ' + tokenRes.status);
-    const infoRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-      headers: { authorization: 'Bearer ' + tokens.access_token }, signal: AbortSignal.timeout(10000),
-    });
-    const info: any = await infoRes.json().catch(function () { return {}; });
-    const email = normalizeEmail(info.email);
-    if (!infoRes.ok || !info.sub || !email || info.email_verified !== true) return fail('google_unverified');
-
     const now = new Date().toISOString();
-    let { data: user } = await supabase.from('users').select(USER_FIELDS).eq('google_sub', String(info.sub)).maybeSingle();
+    let { data: user } = await supabase.from('users').select(USER_FIELDS).eq('google_sub', identity.sub).maybeSingle();
     if (!user) {
-      user = await findUserByEmail(email);
+      user = await findUserByEmail(identity.email);
       if (user) {
         // Google confirmed this address belongs to the person signing in, so link it to the existing account.
-        await supabase.from('users').update({ google_sub: String(info.sub), email_verified_at: user.email_verified_at || now }).eq('id', user.id);
+        await supabase.from('users').update({ google_sub: identity.sub, email_verified_at: user.email_verified_at || now }).eq('id', user.id);
+        user = { ...user, google_sub: identity.sub, email_verified_at: user.email_verified_at || now };
       } else {
-        const firstName = typeof info.given_name === 'string' ? info.given_name.slice(0, 80) : '';
         const created = await supabase.from('users').insert({
           clerk_user_id: 'usr_' + crypto.randomBytes(12).toString('hex'),
-          email, first_name: firstName || null, google_sub: String(info.sub), email_verified_at: now,
+          email: identity.email, first_name: identity.givenName || null, google_sub: identity.sub, email_verified_at: now,
           plan: 'free', quiz_count: 0,
         }).select(USER_FIELDS).single();
         if (created.error || !created.data) throw new Error(created.error?.message || 'insert failed');
         user = created.data;
-        sendPlatformEmail({ userId: user.id, email, emailType: 'welcome', firstName }).catch(function () {});
+        sendPlatformEmail({ userId: user.id, email: identity.email, emailType: 'welcome', firstName: identity.givenName }).catch(function () {});
+        await startSession(req, res, user);
+        return res.status(201).json({ user: publicUser(user), created: true });
       }
     }
     await startSession(req, res, user);
-    return res.redirect(302, appUrl() + saved.next);
+    return res.json({ user: publicUser(user) });
   } catch (e: any) {
     log.error('[auth] google sign-in failed', { err: e?.message });
-    return fail('google_failed');
+    return res.status(500).json({ error: 'Could not sign in with Google. Try again.', code: 'google_failed' });
   }
 });
 
