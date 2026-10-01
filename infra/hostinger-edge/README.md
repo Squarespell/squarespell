@@ -15,6 +15,14 @@ One Caddy container (`squarespell-quiz-edge`) owns ports 80/443 and routes by ho
 `/api/stripe/webhook`, `/api/clerk/webhook` and `/api/webhooks/resend` stay reachable so provider webhooks can be tested. No password or secret is involved.
 While the gate is on, production always sends `X-Robots-Tag: noindex, nofollow`.
 
+`GATE_PASSWORD_MODE=true` (only together with `SITE_AUTH_ENABLED=true`): the site password replaces the IP allowlist, so the owner can reach the app from any connection. The app host then needs only the password; the API host also lets through requests whose `Origin` header is the app host (the calls the app's own pages make), while everything else on the API host still gets the 503 and the webhook paths behave as before. The allowlisted IPs keep working in both modes. Switch it with:
+
+```bash
+F=/opt/squarespell-quiz/edge.env
+sed -i '/^GATE_PASSWORD_MODE=/d' $F && echo 'GATE_PASSWORD_MODE=true' >> $F
+docker compose $E run --rm --no-deps -T edge caddy validate --config /etc/caddy/Caddyfile && docker compose $E up -d --force-recreate
+```
+
 ## Cutover
 
 ```bash
