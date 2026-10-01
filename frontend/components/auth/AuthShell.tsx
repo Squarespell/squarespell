@@ -43,6 +43,8 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
     ? { kicker: 'QUIZZES FOR A BRIGHTER TOMORROW', title: 'Welcome back to your workspace', sub: 'Sign in to create, edit and publish quizzes that turn curiosity into connection.' }
     : { kicker: 'QUIZZES FOR A BRIGHTER TOMORROW', title: 'Your next great quiz starts here', sub: 'Turn your ideas into engaging quizzes, in minutes. Create. Customize. Share. Grow.' }
 
+  const points = ['AI drafts your quiz from your website', 'Capture leads with a built-in form', 'Embed on Squarespace and any website']
+
   const css = [
     '.sq-auth{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:100vh;height:100dvh;overflow:hidden}',
     '.sq-auth-main{overflow-y:auto}',
@@ -50,7 +52,7 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
     '.sq-auth-art{transform-origin:left bottom}',
     // Shorter laptop screens: shrink the illustration; very short ones: leave it out so nothing is cut.
     '@media (max-height:900px){.sq-auth-art{transform:scale(.82)}}',
-    '@media (max-height:780px){.sq-auth-art{display:none!important}}',
+    '@media (max-height:780px){.sq-auth-art{display:none!important}.sq-auth-copy{margin-top:auto!important;margin-bottom:auto}.sq-auth-points{display:grid!important}}',
     // Phones and narrow windows: one column, normal page scrolling.
     '@media (max-width:900px){.sq-auth{grid-template-columns:1fr;height:auto;min-height:100dvh;overflow:visible}.sq-auth-panel{display:none!important}.sq-auth-main{overflow:visible}.sq-auth-brand-mobile{display:inline-flex}}',
     '@media (max-width:420px){.sq-auth-help-label{display:none}}',
@@ -70,10 +72,21 @@ export default function AuthShell({ mode, otherModeHref, children }: { mode: 'si
         <div style={{ position: 'relative', height: 'clamp(64px, 10vh, 96px)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <a href="/" aria-label="Squarespell Quiz home" style={{ textDecoration: 'none' }}><Wordmark size={32} /></a>
         </div>
-        <div style={{ position: 'relative', flexShrink: 0, marginTop: 'clamp(8px, 3vh, 36px)' }}>
+        <div className="sq-auth-copy" style={{ position: 'relative', flexShrink: 0, marginTop: 'clamp(8px, 3vh, 36px)' }}>
           <div style={{ fontSize: 13, letterSpacing: '0.2em', color: C.INK, lineHeight: 1.6, marginBottom: 'clamp(12px, 2.4vh, 26px)', maxWidth: 260 }}>{copy.kicker}</div>
           <div style={{ fontFamily: C.DISPLAY_FONT, fontSize: 'clamp(38px, min(4.6vw, 7.2vh), 72px)', fontWeight: 500, letterSpacing: '-0.04em', lineHeight: 0.98, color: C.INK, maxWidth: 560 }}>{copy.title}<span style={{ color: ACC }}>.</span></div>
           <p style={{ fontSize: 'clamp(16px, 2.2vh, 20px)', color: C.GRAY_600, margin: 'clamp(12px, 2.4vh, 22px) 0 0', maxWidth: 440, lineHeight: 1.45 }}>{copy.sub}</p>
+          {/* Shown instead of the illustration on shorter screens, so the panel never looks empty. */}
+          <ul className="sq-auth-points" style={{ display: 'none', gap: 10, listStyle: 'none', padding: 0, margin: 'clamp(16px, 3vh, 28px) 0 0', maxWidth: 440 }}>
+            {points.map((p) => (
+              <li key={p} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.75)', border: '1px solid ' + C.BORDER, borderRadius: 10, padding: '10px 14px', fontSize: 15, color: C.INK }}>
+                <span aria-hidden="true" style={{ flexShrink: 0, width: 24, height: 24, borderRadius: 7, background: ACC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                </span>
+                {p}
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="sq-auth-art" aria-hidden="true" style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', alignItems: 'flex-end', gap: 22, paddingTop: 20 }}>
           <div style={{ marginLeft: 40 }}>{quizCard}</div>

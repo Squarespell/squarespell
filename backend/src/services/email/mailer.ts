@@ -140,3 +140,27 @@ export const emailProvider: EmailProvider = {
     return { messageIds: ids };
   },
 };
+
+export type MailStatus = 'ok' | 'not_configured' | 'auth_failed' | 'connection_failed';
+let statusCache: { value: MailStatus; at: number } | null = null;
+
+/**
+ * Whether the mailbox accepts our login, checked with an SMTP handshake (no email is sent) and cached for five
+ * minutes. Reported by /api/health/ready and logged at start-up so a wrong mailbox password shows up immediately;
+ * only this one word is exposed, never the address or the server's reply.
+ */
+export async function mailStatus(force = false): Promise<MailStatus> {
+  if (!mailConfigured()) return 'not_configured';
+  if (!force && statusCache && Date.now() - statusCache.at < 300000) return statusCache.value;
+  let value: MailStatus = 'ok';
+  try {
+    await Promise.race([
+      getTransporter().verify(),
+      new Promise(function (_r, reject) { setTimeout(function () { reject(Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' })); }, 12000); }),
+    ]);
+  } catch (err: any) {
+    value = err && (err.code === 'EAUTH' || err.responseCode === 535) ? 'auth_failed' : 'connection_failed';
+  }
+  statusCache = { value, at: Date.now() };
+  return value;
+}

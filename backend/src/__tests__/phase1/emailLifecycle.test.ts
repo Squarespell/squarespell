@@ -183,3 +183,25 @@ describe('GDPR deletion e-mail', () => {
     expect(await sql(`select 1 from leads where email='forget@customer.example'`)).toHaveLength(0);
   });
 });
+
+describe('mailbox status (readiness report and start-up log)', () => {
+  it('readiness reports ok, a refused login, an unreachable server and a missing mailbox, without failing readiness', async () => {
+    const { mailStatus } = await import('../../services/email/mailer');
+    const r = await (await api()).get('/api/health/ready');
+    expect(r.status).toBe(200);
+    expect(r.body.checks.email).toBe('ok');
+    mailBehaviour.mode = 'bad-login';
+    expect(await mailStatus(true)).toBe('auth_failed');
+    mailBehaviour.mode = 'throw';
+    expect(await mailStatus(true)).toBe('connection_failed');
+    const saved = process.env.SMTP_PASS;
+    delete process.env.SMTP_PASS;
+    try {
+      expect(await mailStatus(true)).toBe('not_configured');
+      const r2 = await (await api()).get('/api/health/ready');
+      expect(r2.status).toBe(200);
+      expect(r2.body.checks.email).toBe('not_configured');
+      expect(JSON.stringify(r2.body)).not.toContain('@');
+    } finally { process.env.SMTP_PASS = saved; mailBehaviour.mode = 'ok'; await mailStatus(true); }
+  });
+});

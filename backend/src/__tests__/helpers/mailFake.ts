@@ -5,7 +5,7 @@
  */
 export type SentMail = { to: any; subject: string; from: any; replyTo?: any; html?: string; text?: string; headers?: any };
 export const outbox: SentMail[] = [];
-export const mailBehaviour = { mode: 'ok' as 'ok' | 'refused' | 'throw' };
+export const mailBehaviour = { mode: 'ok' as 'ok' | 'refused' | 'throw' | 'bad-login' };
 export function resetOutbox() { outbox.length = 0; mailBehaviour.mode = 'ok'; }
 
 export function createTransport(_options: any) {
@@ -15,6 +15,11 @@ export function createTransport(_options: any) {
       if (mailBehaviour.mode === 'refused') throw Object.assign(new Error('550 5.7.1 Sender address rejected'), { responseCode: 550 });
       outbox.push(message);
       return { messageId: '<local-' + outbox.length + '@smtp.test>', accepted: [].concat(message.to), rejected: [] };
+    },
+    async verify() {
+      if (mailBehaviour.mode === 'bad-login') throw Object.assign(new Error('535 5.7.8 Authentication failed'), { code: 'EAUTH', responseCode: 535 });
+      if (mailBehaviour.mode === 'throw') throw Object.assign(new Error('connect ECONNREFUSED smtp.test:465'), { code: 'ESOCKET' });
+      return true;
     },
     close() {},
   };
