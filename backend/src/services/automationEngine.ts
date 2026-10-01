@@ -16,13 +16,13 @@
 
 import { log } from '../lib/logger';
 import { supabase } from '../db/supabaseClient';
-import { Resend } from 'resend';
+import { getMailer } from './email/mailer';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed } from './unsubscribe';
 import { applyMergeTags, buildMergeContextFromData } from './mergeTags';
 import { assignTag } from './segmentation';
 import { enqueueSequenceEmails } from './emailSequence';
 
-var resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+var resend = getMailer(); // Hostinger SMTP; null when email is not configured
 var APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
 
 // ── Types ────────────────────────────────────────────────────────────────────

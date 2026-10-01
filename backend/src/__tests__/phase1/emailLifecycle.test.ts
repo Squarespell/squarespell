@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { api, makeUser, makeQuiz, waitFor, nextIp } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
-import { outbox, resetOutbox, resendBehaviour } from '../helpers/resendFake';
+import { outbox, resetOutbox, mailBehaviour } from '../helpers/mailFake';
 
 beforeEach(async () => { await resetData(); resetOutbox(); });
 
@@ -32,7 +32,7 @@ describe('lead confirmation and owner notification', () => {
   it('when the email provider reports an error the lead is still saved and the API still answers success', async () => {
     const owner = await makeUser({ plan: 'pro' });
     const quiz = await makeQuiz(owner, { slug: 'mail-fail' });
-    resendBehaviour.mode = 'error-result';
+    mailBehaviour.mode = 'refused';
     const r = await (await api()).post(`/api/quiz/${quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead());
     expect(r.status).toBe(201);
     expect(await sql(`select 1 from leads`)).toHaveLength(1);
@@ -40,7 +40,7 @@ describe('lead confirmation and owner notification', () => {
 
   it('the result-email service reports failure honestly when the provider returns an error (Resend v3 returns {error}, it does not throw)', async () => {
     const { sendResultEmail } = await import('../../services/resultEmail');
-    resendBehaviour.mode = 'error-result';
+    mailBehaviour.mode = 'refused';
     const ok = await sendResultEmail({ to: 'x@customer.example', quizTitle: 'Q', outcomeTitle: 'O', outcomeDescription: 'd', branding: {}, leadId: 'l1', quizId: 'q1' });
     expect(ok).toBe(false);
     resetOutbox();
@@ -133,14 +133,14 @@ describe('follow-up sequences (email_sequence_queue)', () => {
 
   it('provider errors (returned, not thrown) are retried with backoff and are not marked sent', async () => {
     await seed([0]);
-    resendBehaviour.mode = 'error-result';
+    mailBehaviour.mode = 'refused';
     await run();
     let s = (await statuses())[0];
     expect(s.status).toBe('retry');
     expect(s.retry_count).toBe(1);
     const next = (await sql<any>(`select send_at from email_sequence_queue`))[0].send_at;
     expect(new Date(next).getTime()).toBeGreaterThan(Date.now());
-    resendBehaviour.mode = 'ok';
+    mailBehaviour.mode = 'ok';
     await run(); // not due yet: no send storm
     expect(outbox).toHaveLength(0);
     await sql(`update email_sequence_queue set send_at = now() - interval '1 minute'`);
@@ -152,7 +152,7 @@ describe('follow-up sequences (email_sequence_queue)', () => {
 
   it('after the maximum number of retries the item is marked failed and stops being attempted', async () => {
     await seed([0]);
-    resendBehaviour.mode = 'throw';
+    mailBehaviour.mode = 'throw';
     for (let i = 0; i < 7; i++) {
       await sql(`update email_sequence_queue set send_at = now() - interval '1 minute' where status in ('pending','retry')`);
       await run();

@@ -2,7 +2,7 @@
 /**
  * Squarespell Quiz - end-to-end smoke test (API level). No dependencies; Node >= 18.
  *
- *   SMOKE_CLERK_TOKEN=<session JWT> node scripts/smoke/smoke.mjs --base-url https://staging-api.example [--frontend-url https://staging-app.example] [--keep] [--allow-live]
+ *   SMOKE_AUTH_TOKEN=<session JWT> node scripts/smoke/smoke.mjs --base-url https://staging-api.example [--frontend-url https://staging-app.example] [--keep] [--allow-live]
  *
  * Flow: health -> readiness -> auth -> create -> save -> publish -> hosted link -> embed -> lead submit -> lead visible
  *       -> analytics -> cleanup (archive).
@@ -11,7 +11,7 @@
  *  - Refuses any base URL whose host contains squarespell.com, squarespellquiz.com or onrender.com unless --allow-live is passed.
  *  - Everything it creates is tagged "P1-SMOKE" (quiz title and slug, lead email local part p1-smoke-<run>@example.com, event session ids)
  *    plus a run id. The lead NAME cannot carry the tag: the API's name validator rejects digits (that is why the name is "Smoke Tester").
- *  - The Clerk session token is read from the SMOKE_CLERK_TOKEN environment variable only, never from argv, and is never printed.
+ *  - The access token is read from the SMOKE_AUTH_TOKEN environment variable only, never from argv, and is never printed.
  *  - Cleanup ARCHIVES the quiz (soft delete). It never hard-deletes and never touches data it did not create.
  *  - A live lead submission sends real emails (result email to the lead address, notification to the owner). Use a test owner
  *    account, and expect the lead address to bounce.
@@ -24,13 +24,13 @@ const baseUrl = (opt('--base-url') || process.env.SMOKE_BASE_URL || '').replace(
 const frontendUrl = (opt('--frontend-url') || process.env.SMOKE_FRONTEND_URL || '').replace(/\/+$/, '');
 const allowLive = flag('--allow-live');
 const keep = flag('--keep');
-const token = process.env.SMOKE_CLERK_TOKEN;
+const token = process.env.SMOKE_AUTH_TOKEN;
 const TAG = 'P1-SMOKE';
 const runId = Date.now().toString(36);
 
 function fail(msg, code = 2) { console.error(msg); process.exit(code); }
 
-if (!baseUrl) fail('Usage: SMOKE_CLERK_TOKEN=... node scripts/smoke/smoke.mjs --base-url <api url> [--frontend-url <app url>] [--keep] [--allow-live]');
+if (!baseUrl) fail('Usage: SMOKE_AUTH_TOKEN=... node scripts/smoke/smoke.mjs --base-url <api url> [--frontend-url <app url>] [--keep] [--allow-live]');
 let host;
 try { host = new URL(baseUrl).hostname.toLowerCase(); } catch { fail('--base-url is not a valid URL'); }
 const LIVE = /(squarespell\.com|squarespellquiz\.com|onrender\.com)$/;
@@ -40,7 +40,7 @@ for (const u of [baseUrl, frontendUrl].filter(Boolean)) {
     fail(`Refusing to run against ${h}: it looks like a live host (squarespell.com / squarespellquiz.com / onrender.com). Pass --allow-live only if you really mean it.`, 3);
   }
 }
-if (!token) fail('SMOKE_CLERK_TOKEN is not set. Export a current Clerk session JWT for a TEST account (it is read from the environment only).');
+if (!token) fail('SMOKE_AUTH_TOKEN is not set. Export a current access token for a TEST account (it is read from the environment only).');
 if (LIVE.test(host)) console.warn('WARNING: --allow-live given; running against a live host. All data is tagged ' + TAG + '.');
 
 const results = [];

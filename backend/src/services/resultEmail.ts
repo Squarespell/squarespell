@@ -1,5 +1,5 @@
 import { log } from '../lib/logger';
-import { Resend } from 'resend';
+import { getMailer } from './email/mailer';
 import { generateReportToken } from './reportToken';
 import { buildUnsubscribeUrl, buildUnsubscribeHeaders, isUnsubscribed, canSpamFooterText } from './unsubscribe';
 
@@ -15,7 +15,7 @@ function appendUtm(url: string, slug: string): string {
 }
 
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = getMailer(); // Hostinger SMTP; null when email is not configured
 
 interface ResultEmailParams {
   to: string;

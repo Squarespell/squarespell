@@ -1,8 +1,8 @@
 import { log } from '../lib/logger';
-import { Resend } from 'resend';
+import { getMailer } from './email/mailer';
 import { supabase } from '../db/supabaseClient';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = getMailer(); // Hostinger SMTP; null when email is not configured
 
 interface WeeklyDigestParams {
   userId: string;

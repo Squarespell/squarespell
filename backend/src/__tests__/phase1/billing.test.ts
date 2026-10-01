@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Stripe from 'stripe';
 import { api, makeUser, bearer } from '../helpers/testkit';
 import { resetData, sql } from '../helpers/db';
-import { outbox, resetOutbox } from '../helpers/resendFake';
+import { outbox, resetOutbox } from '../helpers/mailFake';
 import { stripeCalls, resetStripe } from '../helpers/stripeFake';
 
 const stripe = new Stripe('sk_test_local_fixture');

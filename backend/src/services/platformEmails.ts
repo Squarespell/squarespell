@@ -13,7 +13,7 @@
  */
 
 import { supabase } from '../db/supabaseClient';
-import { resendProvider } from './email/resendProvider';
+import { emailProvider } from './email/mailer';
 import { log } from '../lib/logger';
 
 var APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
@@ -120,7 +120,7 @@ export async function sendPlatformEmail(opts: PlatformEmailOpts): Promise<boolea
   }
 
   try {
-    var result = await resendProvider.send({
+    var result = await emailProvider.send({
       from: FROM_EMAIL,
       to: email,
       subject: template.subject,

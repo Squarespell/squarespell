@@ -29,13 +29,13 @@ import { markPartialAsConverted } from '../services/partialCompletion';
 import { processAutomationEvent } from '../services/automationEngine';
 import { sendPlatformEmail } from '../services/platformEmails';
 import Stripe from 'stripe';
-import { Resend } from 'resend';
+import { getMailer } from '../services/email/mailer';
 import { UAParser } from 'ua-parser-js';
 import { validateEmail } from '../services/emailValidator';
 import { validateName } from '../services/nameValidator';
 import { isTurnstileConfigured, verifyTurnstileToken } from '../services/turnstile';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = getMailer(); // Hostinger SMTP; null when email is not configured
 
 // Canonical URLs used in outgoing emails. Set APP_URL/MARKETING_URL in env to swap domains.
 const APP_URL = process.env.APP_URL || 'https://app.squarespell.com';
@@ -338,6 +338,16 @@ setInterval(function() {
 
 // ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
 import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, processOtherLimiter, getClientIp, safeLimit } from '../services/rateLimiter';
+
+/**
+ * Admin = an account whose email is listed in ADMIN_EMAILS (comma-separated, any letter case) AND confirmed:
+ * the address was proven by an email link or by Google. Signing up with someone else's address grants nothing.
+ */
+export function isAdminUser(user: { email?: string | null; email_verified_at?: string | null } | null | undefined): boolean {
+  if (!user || !user.email || !user.email_verified_at) return false;
+  const admins = (process.env.ADMIN_EMAILS || '').split(',').map(function (e) { return e.trim().toLowerCase(); }).filter(Boolean);
+  return admins.includes(user.email.trim().toLowerCase());
+}
 export const previewRouter = Router();
 previewRouter.post('/preview-generate', async (req, res) => {
   // Rate limit via Redis-backed Upstash limiter (replaces in-memory Map)
@@ -3078,7 +3088,7 @@ cleanupRouter.post('/cleanup', async (req: AuthenticatedRequest, res) => {
     // Get user from database to check if admin
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, email')
+      .select('id, email, email_verified_at')
       .eq('id', req.dbUserId)
       .single();
 
@@ -3087,8 +3097,7 @@ cleanupRouter.post('/cleanup', async (req: AuthenticatedRequest, res) => {
     }
 
     // Check if user is admin - allow specific admin emails
-    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-    const isAdmin = adminEmails.length > 0 && adminEmails.includes(userData.email);
+    const isAdmin = isAdminUser(userData);
 
     if (!isAdmin) {
       return res.status(403).json({ error: 'Forbidden - admin access required' });
@@ -3522,7 +3531,7 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     // Get user from database to check if admin
     var userResult = await supabase
       .from('users')
-      .select('id, email')
+      .select('id, email, email_verified_at')
       .eq('id', req.dbUserId)
       .single();
 
@@ -3531,8 +3540,7 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     }
 
     // Check if user is admin - allow specific admin emails
-    var adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(function(e) { return e.trim(); }).filter(Boolean);
-    var isAdmin = adminEmails.length > 0 && adminEmails.includes(userResult.data.email);
+    var isAdmin = isAdminUser(userResult.data);
 
     if (!isAdmin) {
       return res.status(403).json({ error: 'Forbidden - admin access required' });
