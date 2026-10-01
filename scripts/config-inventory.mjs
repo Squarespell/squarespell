@@ -38,8 +38,8 @@ const OWN = {
   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: V('Clerk', 'prod (Vercel)', 'yes', 'review', ''),
   // Our own sign-in (replaced Clerk on the Hostinger relaunch)
   AUTH_SECRET: V('Squarespell sign-in', 'prod + staging (Hostinger): signs the 15-minute access tokens', 'yes', 'n/a - generated on the server by deploy.sh / gen-env.sh', 'at least 32 characters; rotating it signs everyone out of their current tab once'),
-  GOOGLE_CLIENT_ID: V('Google Cloud OAuth', 'optional: "Sign in with Google"', 'yes', 'YES - OAuth client with redirect URI https://<API host>/api/auth/google/callback', 'unset = the Google button is hidden'),
-  GOOGLE_CLIENT_SECRET: V('Google Cloud OAuth', 'optional: "Sign in with Google"', 'yes', 'YES - pairs with GOOGLE_CLIENT_ID', ''),
+  GOOGLE_CLIENT_ID: V('Google Cloud OAuth', '"Sign in with Google": public OAuth web client id (project squarespell-quiz)', 'yes', 'no - built into services/auth/google.ts; set only to override', 'public by design; no client secret is used'),
+  GOOGLE_CERTS_URL: V('Google Cloud OAuth', 'tests only: where Google\'s signing keys are fetched', 'yes', 'no (default https://www.googleapis.com/oauth2/v3/certs)', 'never set in production'),
   // Hostinger mailbox (replaced Resend)
   SMTP_HOST: V('Hostinger email', 'prod + staging: SMTP server', 'yes', 'no (default smtp.hostinger.com)', ''),
   SMTP_PORT: V('Hostinger email', 'prod + staging: SMTP port', 'yes', 'no (default 465, implicit TLS)', ''),

@@ -3,7 +3,7 @@
  * The sign-in, sign-up and password forms, shown inside AuthShell. They call our own sign-in API through
  * lib/auth/client (no third-party widget), so every message and field is ours to word and style.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DASHBOARD_COLORS as C } from '@/app/dashboard/_components/dashboardColors';
 import { authApi } from '@/lib/auth/client';
@@ -36,27 +36,58 @@ const S = {
   rule: { flex: 1, height: 1, background: C.BORDER },
 };
 
-function GoogleLogo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
-    </svg>
-  );
+
+/** Loads Google's own "Sign in with Google" button (Google Identity Services) once per page. */
+let gisScript: Promise<void> | null = null;
+function loadGis(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.reject(new Error('no window'));
+  if ((window as any).google?.accounts?.id) return Promise.resolve();
+  gisScript = gisScript || new Promise<void>(function (resolve, reject) {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = function () { resolve(); };
+    s.onerror = function () { gisScript = null; reject(new Error('Google sign-in could not load')); };
+    document.head.appendChild(s);
+  });
+  return gisScript;
 }
 
-function useGoogle(): boolean {
-  const [on, setOn] = useState(false);
-  useEffect(function () { authApi.config().then(function (c) { setOn(!!c.google); }); }, []);
-  return on;
+function useGoogleClientId(): string | null {
+  const [id, setId] = useState<string | null>(null);
+  useEffect(function () { authApi.config().then(function (c) { setId(c.google ? c.googleClientId : null); }); }, []);
+  return id;
 }
 
-function GoogleButton({ next, label }: { next: string; label: string }) {
+/** Google's official button. On success it signs in (or creates the account) and goes to `next`. */
+function GoogleButton({ clientId, next, text, onError }: { clientId: string; next: string; text: 'signin_with' | 'signup_with' | 'continue_with'; onError: (m: string) => void }) {
+  const router = useRouter();
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(function () {
+    let cancelled = false;
+    loadGis().then(function () {
+      const g = (window as any).google;
+      if (cancelled || !ref.current || !g?.accounts?.id) return;
+      g.accounts.id.initialize({
+        client_id: clientId,
+        ux_mode: 'popup',
+        callback: async function (resp: { credential?: string }) {
+          if (!resp?.credential) { onError('Google sign-in did not finish. Please try again.'); return; }
+          const r = await authApi.googleSignIn(resp.credential);
+          if (r.ok) router.replace(next);
+          else onError((r.data && r.data.error) || 'Google sign-in did not finish. Please try again.');
+        },
+      });
+      g.accounts.id.renderButton(ref.current, {
+        type: 'standard', theme: 'outline', size: 'large', shape: 'rectangular', text, logo_alignment: 'center',
+        width: Math.min(400, Math.max(240, ref.current.offsetWidth || 400)),
+      });
+    }).catch(function () { if (!cancelled) onError('Google sign-in could not load. Use your email and password.'); });
+    return function () { cancelled = true; };
+  }, [clientId, next, text, onError, router]);
   return (
     <>
-      <a href={authApi.googleUrl(next)} style={S.secondary}><GoogleLogo />{label}</a>
+      <div ref={ref} style={{ minHeight: 44, display: 'flex', justifyContent: 'center' }} />
       <div style={S.divider}><span style={S.rule} />or<span style={S.rule} /></div>
     </>
   );
@@ -70,11 +101,12 @@ const GOOGLE_ERRORS: Record<string, string> = {
 
 export function SignInForm({ next, signUpHref, errorCode }: { next: string; signUpHref: string; errorCode?: string }) {
   const router = useRouter();
-  const google = useGoogle();
+  const googleClientId = useGoogleClientId();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(errorCode ? GOOGLE_ERRORS[errorCode] || '' : '');
+  const onGoogleError = useCallback(function (m: string) { setError(m); }, []);
   const [notice, setNotice] = useState('');
 
   async function submit(e: React.FormEvent) {
@@ -91,7 +123,7 @@ export function SignInForm({ next, signUpHref, errorCode }: { next: string; sign
     <form onSubmit={submit} style={S.form} noValidate>
       <h1 style={S.title}>Sign in</h1>
       <p style={S.sub}>Welcome back. Sign in to your quizzes and leads.</p>
-      {google && <GoogleButton next={next} label="Continue with Google" />}
+      {googleClientId && <GoogleButton clientId={googleClientId} next={next} text="signin_with" onError={onGoogleError} />}
       {error && <div role="alert" style={S.error}>{error}</div>}
       {notice && <div role="status" style={S.notice}>{notice}</div>}
       <label style={S.label}>Email
@@ -109,13 +141,14 @@ export function SignInForm({ next, signUpHref, errorCode }: { next: string; sign
 
 export function SignUpForm({ next, signInHref }: { next: string; signInHref: string }) {
   const router = useRouter();
-  const google = useGoogle();
+  const googleClientId = useGoogleClientId();
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const onGoogleError = useCallback(function (m: string) { setError(m); }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -131,7 +164,7 @@ export function SignUpForm({ next, signInHref }: { next: string; signInHref: str
     <form onSubmit={submit} style={S.form} noValidate>
       <h1 style={S.title}>Create your account</h1>
       <p style={S.sub}>Build quiz funnels from your website in minutes.</p>
-      {google && <GoogleButton next={next} label="Sign up with Google" />}
+      {googleClientId && <GoogleButton clientId={googleClientId} next={next} text="signup_with" onError={onGoogleError} />}
       {error && <div role="alert" style={S.error}>{error}</div>}
       {notice && <div role="status" style={S.notice}>{notice}</div>}
       <label style={S.label}>First name

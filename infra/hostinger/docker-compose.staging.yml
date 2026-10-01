@@ -75,9 +75,8 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?set SUPABASE_SERVICE_ROLE_KEY}
       # Our own sign-in (routes/auth.ts): signs the 15-minute access tokens. Generated on the server (openssl rand -hex 32).
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
-      # Optional "Sign in with Google" (Google Cloud OAuth client; redirect URI https://<API host>/api/auth/google/callback).
+      # "Sign in with Google": overrides the public OAuth client id built into the code (no secret is needed).
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_CORE_PRICE_ID: ${STRIPE_CORE_PRICE_ID:-}

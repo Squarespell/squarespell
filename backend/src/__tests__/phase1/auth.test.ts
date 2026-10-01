@@ -3,7 +3,7 @@
  * links, accounts moved from Clerk, rate limits and the admin rule. Everything runs against the real routes, the
  * real password hashing and token signing, PGlite and the local mailbox fake.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { api, makeUser, bearer, nextIp } from '../helpers/testkit';
 import { signToken } from '../helpers/authFake';
 import { resetData, sql } from '../helpers/db';
@@ -13,6 +13,9 @@ import { listRoutes } from '../helpers/routes';
 import { outbox, resetOutbox } from '../helpers/mailFake';
 import { hashPassword } from '../../services/auth/crypto';
 import { isAdminUser } from '../../routes/allRoutes';
+import http from 'http';
+import crypto from 'crypto';
+import { resetGoogleKeyCache } from '../../services/auth/google';
 
 const PASSWORD = 'correct horse battery';
 
@@ -287,7 +290,7 @@ describe('email links: confirm address, forgot password, accounts moved from Cle
   });
 });
 
-describe('admin access and redirects', () => {
+describe('admin access', () => {
   beforeEach(resetData);
 
   it('admin needs a listed email that is confirmed; letter case does not matter', () => {
@@ -304,26 +307,88 @@ describe('admin access and redirects', () => {
     const ok = await (await api()).get('/api/admin/metrics').set(bearer(u));
     expect(ok.status).toBe(200);
   });
+});
 
-  it('Google sign-in only redirects back to paths on our own site', async () => {
-    const saved = { id: process.env.GOOGLE_CLIENT_ID, secret: process.env.GOOGLE_CLIENT_SECRET };
-    process.env.GOOGLE_CLIENT_ID = 'client.apps.googleusercontent.com';
-    process.env.GOOGLE_CLIENT_SECRET = 'local-google-fixture';
-    try {
-      for (const next of ['https://evil.example/x', '//evil.example', '/\\evil.example']) {
-        const r = await (await api()).get('/api/auth/google/start').query({ next });
-        expect(r.status).toBe(302);
-        expect(r.headers.location).toMatch(/^https:\/\/accounts\.google\.com\//);
-        expect(decodeURIComponent([].concat(r.headers['set-cookie']).join(''))).toContain('|/dashboard.');
-      }
-      // A callback without the matching state cookie is refused.
-      const cb = await (await api()).get('/api/auth/google/callback').query({ state: 'x', code: 'y' });
-      expect(cb.status).toBe(302);
-      expect(cb.headers.location).toMatch(/\/sign-in\?error=google_failed$/);
-    } finally {
-      process.env.GOOGLE_CLIENT_ID = saved.id; process.env.GOOGLE_CLIENT_SECRET = saved.secret;
-      if (saved.id === undefined) delete process.env.GOOGLE_CLIENT_ID;
-      if (saved.secret === undefined) delete process.env.GOOGLE_CLIENT_SECRET;
+describe('Sign in with Google (ID token from Google\'s button)', () => {
+  // A local stand-in for Google's key endpoint, with a key pair generated for this run.
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const other = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const CLIENT = 'client-123.apps.googleusercontent.com';
+  let server: http.Server;
+  const b64 = (x: any) => Buffer.from(typeof x === 'string' ? x : JSON.stringify(x)).toString('base64url');
+  function idToken(over: Record<string, any> = {}, key = privateKey, kid = 'k1') {
+    const now = Math.floor(Date.now() / 1000);
+    const data = b64({ alg: 'RS256', kid, typ: 'JWT' }) + '.' + b64({
+      iss: 'https://accounts.google.com', aud: CLIENT, sub: 'g-1001', email: 'Ada@Gmail.example', email_verified: true,
+      given_name: 'Ada', iat: now - 5, exp: now + 600, ...over,
+    });
+    return data + '.' + crypto.sign('RSA-SHA256', Buffer.from(data), key).toString('base64url');
+  }
+  const post = async (credential: string) => (await api()).post('/api/auth/google').set('x-forwarded-for', nextIp()).send({ credential });
+
+  beforeEach(async () => {
+    await resetData(); resetOutbox(); resetGoogleKeyCache();
+    const jwk = { ...publicKey.export({ format: 'jwk' }), kid: 'k1', alg: 'RS256', use: 'sig' };
+    server = http.createServer((_q, r) => { r.setHeader('cache-control', 'max-age=600'); r.end(JSON.stringify({ keys: [jwk] })); });
+    await new Promise<void>((ok) => server.listen(0, '127.0.0.1', () => ok()));
+    process.env.GOOGLE_CERTS_URL = 'http://127.0.0.1:' + (server.address() as any).port + '/certs';
+    process.env.GOOGLE_CLIENT_ID = CLIENT;
+  });
+  afterEach(async () => {
+    delete process.env.GOOGLE_CERTS_URL; delete process.env.GOOGLE_CLIENT_ID;
+    await new Promise((ok) => server.close(ok));
+  });
+
+  it('the config tells the app the public client id for the button', async () => {
+    const r = await (await api()).get('/api/auth/config');
+    expect(r.body).toEqual({ google: true, googleClientId: CLIENT });
+  });
+
+  it('a valid Google token creates a confirmed account once and signs in; the next time signs in to the same one', async () => {
+    const a = await post(idToken());
+    expect(a.status).toBe(201);
+    expect(a.body.user).toMatchObject({ email: 'ada@gmail.example', firstName: 'Ada', emailVerified: true });
+    expect(sessionCookie(a)).toMatch(/^sq_session=/);
+    const b = await post(idToken());
+    expect(b.status).toBe(200);
+    const rows = await sql<any>(`select email, google_sub, password_hash, email_verified_at from users`);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ email: 'ada@gmail.example', google_sub: 'g-1001', password_hash: null });
+    expect(rows[0].email_verified_at).not.toBeNull();
+  });
+
+  it('an existing account (e.g. from Clerk) with the same email is linked, not duplicated', async () => {
+    const legacy = await makeUser({ email: 'ada@gmail.example' });
+    const r = await post(idToken());
+    expect(r.status).toBe(200);
+    const rows = await sql<any>(`select id, google_sub from users`);
+    expect(rows).toEqual([{ id: legacy.id, google_sub: 'g-1001' }]);
+  });
+
+  it('rejects forged, foreign, expired and unverified tokens without creating anything', async () => {
+    const bad = [
+      idToken({}, other.privateKey),                        // signed by someone else
+      idToken({ aud: 'another-app.apps.googleusercontent.com' }),
+      idToken({ iss: 'https://evil.example' }),
+      idToken({ exp: Math.floor(Date.now() / 1000) - 10 }),
+      idToken({ email_verified: false }),
+      idToken({}, privateKey, 'unknown-kid'),
+      'not.a.token',
+    ];
+    for (const t of bad) {
+      const r = await post(t);
+      expect(r.status, t.slice(0, 20)).toBe(401);
+      expect(r.body.code).toBe('google_failed');
     }
+    expect(await sql(`select 1 from users`)).toHaveLength(0);
+  });
+
+  it('without an override it uses the built-in public client id, and tokens for another client are refused', async () => {
+    delete process.env.GOOGLE_CLIENT_ID;
+    const cfg = (await (await api()).get('/api/auth/config')).body;
+    expect(cfg.google).toBe(true);
+    expect(cfg.googleClientId).toMatch(/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/);
+    expect((await post(idToken())).status).toBe(401); // the test token is for CLIENT, not the built-in id
+    expect((await post(idToken({ aud: cfg.googleClientId }))).status).toBe(201);
   });
 });

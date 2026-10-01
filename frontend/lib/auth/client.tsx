@@ -96,15 +96,18 @@ export const authApi = {
   },
   verifyEmail(token: string) { return post('/verify-email', { token }); },
   resendVerification() { return post('/resend-verification'); },
-  async config(): Promise<{ google: boolean }> {
+  async config(): Promise<{ google: boolean; googleClientId: string | null }> {
     try {
       const res = await fetch(API_URL + '/api/auth/config', { credentials: 'include' });
       if (res.ok) return await res.json();
     } catch {}
-    return { google: false };
+    return { google: false, googleClientId: null };
   },
-  googleUrl(next?: string) {
-    return API_URL + '/api/auth/google/start?next=' + encodeURIComponent(next || '/dashboard');
+  /** Exchanges the ID token from Google's button for our own session. */
+  async googleSignIn(credential: string) {
+    const r = await post('/google', { credential });
+    if (r.ok) { cached = null; await fetchSession(); }
+    return r;
   },
 };
 

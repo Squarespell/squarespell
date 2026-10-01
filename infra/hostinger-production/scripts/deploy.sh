@@ -25,7 +25,7 @@ ensure_setting() { grep -q "^$1=" "$ENV_FILE" || printf '%s=%s\n' "$1" "$2" >> "
 grep -Eq '^AUTH_SECRET=.{32,}$' "$ENV_FILE" || { sed -i '/^AUTH_SECRET=/d' "$ENV_FILE"; ensure_setting AUTH_SECRET "$(openssl rand -hex 32)"; }
 ensure_setting SMTP_HOST smtp.hostinger.com
 ensure_setting SMTP_PORT 465
-for n in SMTP_USER SMTP_PASS SMTP_FROM GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do ensure_setting "$n" ""; done
+for n in SMTP_USER SMTP_PASS SMTP_FROM; do ensure_setting "$n" ""; done
 chmod 600 "$ENV_FILE"
 
 TARGET="${1:-}"
