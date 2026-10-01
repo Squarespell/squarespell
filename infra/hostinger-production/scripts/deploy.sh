@@ -19,6 +19,15 @@ if grep -Eq '^STRIPE_SECRET_KEY=(sk|rk)_live_' "$ENV_FILE" && ! grep -Eq '^STRIP
   die "a live Stripe key is set but STRIPE_LIVE_AUTHORISED=yes is not: live Stripe operation is not authorised"
 fi
 
+# Settings added after the first install. Created once, never overwritten:
+# AUTH_SECRET signs sign-in tokens (generated here); the SMTP_* names are filled in with set-secret.sh.
+ensure_setting() { grep -q "^$1=" "$ENV_FILE" || printf '%s=%s\n' "$1" "$2" >> "$ENV_FILE"; }
+grep -Eq '^AUTH_SECRET=.{32,}$' "$ENV_FILE" || { sed -i '/^AUTH_SECRET=/d' "$ENV_FILE"; ensure_setting AUTH_SECRET "$(openssl rand -hex 32)"; }
+ensure_setting SMTP_HOST smtp.hostinger.com
+ensure_setting SMTP_PORT 465
+for n in SMTP_USER SMTP_PASS SMTP_FROM GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do ensure_setting "$n" ""; done
+chmod 600 "$ENV_FILE"
+
 TARGET="${1:-}"
 [ -n "$TARGET" ] || die "usage: deploy.sh <full-commit-sha>"
 echo "$TARGET" | grep -Eq '^[0-9a-f]{40}$' || die "give the full 40-character commit SHA"
