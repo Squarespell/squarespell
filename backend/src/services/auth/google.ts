@@ -8,8 +8,11 @@
  */
 import crypto from 'crypto';
 
-/** The Squarespell Quiz OAuth web client. Public; GOOGLE_CLIENT_ID overrides it (staging, tests). */
-const DEFAULT_CLIENT_ID = '';
+/**
+ * The Squarespell Quiz OAuth web client (Google Cloud project "squarespell-quiz", origin https://app.squarespellquiz.com).
+ * Public by design: Google's button shows it to every visitor. GOOGLE_CLIENT_ID overrides it (staging, tests).
+ */
+const DEFAULT_CLIENT_ID = '1089949310881-j1bhkvk165q9cjgn5quecdtssu1pcqpb.apps.googleusercontent.com';
 
 export function googleClientId(): string {
   return (process.env.GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID).trim();

@@ -383,9 +383,12 @@ describe('Sign in with Google (ID token from Google\'s button)', () => {
     expect(await sql(`select 1 from users`)).toHaveLength(0);
   });
 
-  it('is off when no client id is configured', async () => {
+  it('without an override it uses the built-in public client id, and tokens for another client are refused', async () => {
     delete process.env.GOOGLE_CLIENT_ID;
-    expect((await (await api()).get('/api/auth/config')).body.google).toBe(false);
-    expect((await post(idToken())).status).toBe(503);
+    const cfg = (await (await api()).get('/api/auth/config')).body;
+    expect(cfg.google).toBe(true);
+    expect(cfg.googleClientId).toMatch(/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/);
+    expect((await post(idToken())).status).toBe(401); // the test token is for CLIENT, not the built-in id
+    expect((await post(idToken({ aud: cfg.googleClientId }))).status).toBe(201);
   });
 });
