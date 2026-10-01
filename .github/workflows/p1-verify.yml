@@ -456,6 +456,9 @@ jobs:
             -e STAGING_APP_HOST=staging.example.test -e STAGING_API_HOST=api-staging.example.test -e ACME_EMAIL=ops@example.test \
             caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
           docker run --rm -v "$PWD/infra/hostinger/Caddyfile.rest:/etc/caddy/Caddyfile:ro" caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
+          docker run --rm -e PROD_APP_HOST=app.example.test -e PROD_API_HOST=api.example.test \
+            -v "$PWD/infra/hostinger-production/Caddyfile.production:/etc/caddy/Caddyfile:ro" caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
+          grep -qF 'trusted_proxies static private_ranges' infra/hostinger-production/Caddyfile.production
           grep -qF '@cron path /api/cron/*' infra/hostinger/Caddyfile
           grep -qF 'respond @cron 404' infra/hostinger/Caddyfile
           grep -qF 'X-Robots-Tag' infra/hostinger/Caddyfile
