@@ -596,10 +596,13 @@ export default function EmbedQuizClient({
           color: ${brandBg};
         }
         .sq-q-media {
+          display: block;
           width: 100%;
+          height: auto;
           border-radius: 12px;
-          max-height: 320px;
-          object-fit: cover;
+          max-height: 420px;
+          object-fit: contain;
+          background: rgba(0,0,0,0.04);
           margin-bottom: 18px;
         }
         .sq-q-video-wrap {
@@ -656,7 +659,7 @@ export default function EmbedQuizClient({
         }
         .sq-opt-grid-img-area {
           width: 100%;
-          height: 150px;
+          aspect-ratio: 4 / 3;
           position: relative;
           overflow: hidden;
         }
@@ -822,13 +825,13 @@ export default function EmbedQuizClient({
         .sq-split-media img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           display: block;
         }
         .sq-split-media video {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           display: block;
         }
         .sq-split-media iframe {
@@ -881,7 +884,7 @@ export default function EmbedQuizClient({
             min-height: auto;
           }
           .sq-split-media {
-            height: 220px;
+            aspect-ratio: 4 / 3;
           }
           .sq-split-body {
             padding: 22px 20px;
@@ -893,7 +896,7 @@ export default function EmbedQuizClient({
             min-height: auto;
           }
           .sq-split-media {
-            height: 220px;
+            aspect-ratio: 4 / 3;
           }
           .sq-split-body {
             padding: 22px 20px;
@@ -1302,7 +1305,7 @@ export default function EmbedQuizClient({
                       <div className="sq-opts-grid">
                         {currentQ.options.map(function(opt, oi) {
                           return (
-                            <button key={opt.id + oi} className={'sq-opt-full' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button" style={{ minHeight: hasImages ? 160 : 120 }}>
+                            <button key={opt.id + oi} className={'sq-opt-full' + (answers[qIdx] === oi ? ' picked' : '')} onClick={function() { pickOption(oi); }} type="button" style={hasImages ? { aspectRatio: '1 / 1' } : { minHeight: 120 }}>
                               {opt.imageUrl ? (
                                 <img className="sq-opt-full-bg" src={opt.imageUrl} alt={opt.text} onError={function(e: any) { e.currentTarget.style.display = 'none'; }} />
                               ) : (

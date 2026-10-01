@@ -11,6 +11,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { APP_URL } from '@/lib/urls';
+import FitImage from '@/components/quiz-taker/FitImage';
 import {
   QuizBlock,
   QuizBlockType,
@@ -1012,7 +1013,7 @@ function GridAnswerCard({
 
       {/* Image area */}
       <div style={{
-        height: isFullBg ? 160 : 120, background: opt.imageUrl ? 'transparent' : '#F5F7FF',
+        aspectRatio: isFullBg ? '1 / 1' : '4 / 3', background: opt.imageUrl ? 'transparent' : '#F5F7FF',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', cursor: opt.imageUrl ? 'default' : 'pointer',
         borderRadius: '12px 12px 0 0', overflow: 'hidden',
@@ -1576,7 +1577,7 @@ function GenericBlockCanvas({ block, onChange }: { block: QuizBlock; onChange: (
             onChange={function(e) { onChange(Object.assign({}, block, { url: e.target.value })); }}
             style={fieldStyle} />
           {(block as ImageBlock).url && (
-            <img src={(block as ImageBlock).url} alt={(block as ImageBlock).alt} style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }}
+            <img src={(block as ImageBlock).url} alt={(block as ImageBlock).alt} style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 8, maxHeight: 360, objectFit: 'contain', background: 'rgba(0,0,0,0.04)' }}
               onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
           )}
         </>
@@ -1713,7 +1714,7 @@ function InlineMediaPreview({
           )}
         </div>
       ) : (
-        <img src={block.mediaUrl} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }}
+        <FitImage src={block.mediaUrl} maxHeight={360}
           onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
       )}
 
@@ -2209,9 +2210,9 @@ function QuestionCanvas({
             var eUrl = ytM ? 'https://www.youtube.com/embed/' + ytM[1] : viM ? 'https://player.vimeo.com/video/' + viM[1] : '';
             return eUrl
               ? <iframe src={eUrl} style={{ width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-              : <video src={block.mediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+              : <video src={block.mediaUrl} controls playsInline style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} />;
           })() : block.mediaUrl ? (
-            <img src={block.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            <FitImage src={block.mediaUrl} fill
               onError={function(e) { (e.target as HTMLImageElement).style.display = 'none'; }} />
           ) : null}
 

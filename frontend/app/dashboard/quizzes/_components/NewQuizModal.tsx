@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createQuizFromUrl } from "./quizTemplates";
-import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData } from '../../../../lib/quiz/templates';
+import { QUIZ_TEMPLATE_CATALOG, QuizTemplateData, getTemplateSettings } from '../../../../lib/quiz/templates';
 
 type Stage = "choose" | "templates" | "site" | "loading" | "pick" | "generating" | "error";
 type GateCode = "trial_expired" | "quiz_limit_reached" | null;
@@ -250,12 +250,12 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
-          title: tpl.name + " Quiz",
+          title: tpl.name,
           description: tpl.description,
           questions: legacy.questions,
           outcomes: legacy.outcomes,
           leadGate: legacy.leadGate,
-          settings: { template_id: tpl.id },
+          settings: { ...getTemplateSettings(tpl.id), template_id: tpl.id },
         }),
       });
       if (!res.ok) {

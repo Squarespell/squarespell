@@ -7,6 +7,9 @@
 # Runtime switches (environment, see .env.edge.example):
 #   GATE_ENABLED     true = only GATE_ALLOW_IPS reach production, plus the exact webhook paths below; everyone else gets 503.
 #   PROD_INDEXING    on = production stops sending X-Robots-Tag (only when the gate is also off). Staging always sends noindex.
+#   GATE_PASSWORD_MODE  true (with SITE_AUTH_ENABLED=true) = the site password replaces the IP allowlist: the app host needs only the
+#                    password, and the API host also accepts requests whose Origin is the app host (what the app's own pages send).
+#                    Everyone else still gets the 503 on the API host, and the webhook paths stay reachable as before.
 {
 	email {$ACME_EMAIL}
 }
@@ -38,7 +41,9 @@ www.{$PROD_APP_HOST} {
 	import prod_noindex
 	import site_password
 	@blocked {
-		expression `'{$GATE_ENABLED:true}' == 'true'`
+		# One expression only: Caddy keeps a single expression per matcher. In password mode the site password
+		# (checked above) is the gate, so any IP that knows it gets in.
+		expression `'{$GATE_ENABLED:true}' == 'true' && ('{$GATE_PASSWORD_MODE:false}' != 'true' || '{$SITE_AUTH_ENABLED:false}' != 'true')`
 		not remote_ip {$GATE_ALLOW_IPS:127.0.0.1}
 	}
 	handle @blocked {
@@ -55,7 +60,9 @@ www.{$PROD_APP_HOST} {
 	import prod_noindex
 	# While gated, only the three webhook endpoints stay reachable from anywhere. Exact paths, nothing else.
 	@blocked {
-		expression `'{$GATE_ENABLED:true}' == 'true'`
+		# One expression only (see above). In password mode, calls made by the app's own pages (Origin = the app host)
+		# pass, so the app works from any IP.
+		expression `'{$GATE_ENABLED:true}' == 'true' && ('{$GATE_PASSWORD_MODE:false}' != 'true' || '{$SITE_AUTH_ENABLED:false}' != 'true' || {http.request.header.Origin} != 'https://{$PROD_APP_HOST}')`
 		not remote_ip {$GATE_ALLOW_IPS:127.0.0.1}
 		not path /api/stripe/webhook /api/clerk/webhook /api/webhooks/resend
 	}

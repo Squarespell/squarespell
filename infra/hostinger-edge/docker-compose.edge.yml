@@ -21,6 +21,7 @@ services:
       STAGING_API_HOST: ${STAGING_API_HOST:?set STAGING_API_HOST}
       GATE_ENABLED: ${GATE_ENABLED:-true}
       GATE_ALLOW_IPS: ${GATE_ALLOW_IPS:-127.0.0.1}
+      GATE_PASSWORD_MODE: ${GATE_PASSWORD_MODE:-false}
       PROD_INDEXING: ${PROD_INDEXING:-off}
       # Site password (basic auth). Written to the server env file by set-site-password.sh; never committed.
       SITE_AUTH_ENABLED: ${SITE_AUTH_ENABLED:-false}
