@@ -324,8 +324,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
         };
         setBrand(next);
         setMatchedTemplates(matchTemplatesToBusiness(next.businessType || ''));
-        setIsSquarespace(true);
-        if (data.template_version) setTemplateVersion(data.template_version);
+        setIsSquarespace(data?.platform === 'squarespace');
+        if (data?.platform === 'squarespace' && data.template_version && data.template_version !== 'unknown') setTemplateVersion(data.template_version);
         const flags = new Set<keyof BrandScrape>();
         (Object.keys(next) as Array<keyof BrandScrape>).forEach(function (k) {
           const v = next[k];
@@ -336,8 +336,8 @@ export default function NewQuizModal({ open, onClose, onCreated }: Props) {
         setQuizIdeas(ideas.slice(0, 4));
       } else if (resp.status === 422) {
         const errData = await resp.json().catch(() => ({}));
-        if (errData.code === 'NOT_SQUARESPACE') {
-          setErrorMsg('This does not look like a Squarespace site. Squarespell Quiz is built exclusively for Squarespace - paste a Squarespace site URL to continue.');
+        if (errData.code === 'URL_NOT_PUBLIC') {
+          setErrorMsg('We can only read public websites. Check the address and try again.');
           setIsSquarespace(false);
           clearTimeout(timer);
           setStage('site');

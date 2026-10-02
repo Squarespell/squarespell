@@ -97,6 +97,8 @@ export interface SafeFetchOptions {
   timeoutMs?: number;
   maxBytes?: number;
   lookup?: LookupFn;
+  /** Overrides the default verifier User-Agent (the brand scraper presents a browser UA so sites serve their normal page). */
+  userAgent?: string;
   /** Honoured only when NODE_ENV is "test": lets the suite reach a LOOPBACK fixture server (127.0.0.0/8 and ::1 only; every other blocked range stays blocked). Ignored everywhere else. */
   allowLoopbackForTests?: boolean;
 }
@@ -114,14 +116,14 @@ async function resolvePublic(hostname: string, lookup: LookupFn, allowLoopback: 
   return addrs[0];
 }
 
-function once(url: URL, ip: LookupResult, timeoutMs: number, maxBytes: number): Promise<{ status: number; headers: Record<string, string>; body: string; truncated: boolean }> {
+function once(url: URL, ip: LookupResult, timeoutMs: number, maxBytes: number, userAgent: string): Promise<{ status: number; headers: Record<string, string>; body: string; truncated: boolean }> {
   return new Promise((resolve, reject) => {
     const mod = url.protocol === 'https:' ? https : http;
     const req = mod.request(
       {
         protocol: url.protocol, hostname: url.hostname.replace(/^\[|\]$/g, ''), port: url.port || (url.protocol === 'https:' ? 443 : 80),
         path: url.pathname + url.search, method: 'GET', timeout: timeoutMs,
-        headers: { 'user-agent': USER_AGENT, accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5', 'accept-encoding': 'identity', host: url.host },
+        headers: { 'user-agent': userAgent, accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5', 'accept-encoding': 'identity', host: url.host },
         // Connect to the address we already validated: a second DNS answer can never redirect the connection.
         lookup: (_h: string, opts: any, cb: any) => (opts && opts.all ? cb(null, [{ address: ip.address, family: ip.family }]) : cb(null, ip.address, ip.family)),
         servername: net.isIP(url.hostname) ? undefined : url.hostname,
@@ -169,7 +171,7 @@ export async function safeFetch(rawUrl: string, opts: SafeFetchOptions = {}): Pr
     const port = url.port ? Number(url.port) : url.protocol === 'https:' ? 443 : 80;
     if (!allowLoopback && port !== 80 && port !== 443) throw new SafeFetchError('blocked_port', 'Only standard web ports can be checked.');
     const ip = await resolvePublic(url.hostname, lookup, allowLoopback);
-    const res = await once(url, ip, timeoutMs, maxBytes);
+    const res = await once(url, ip, timeoutMs, maxBytes, opts.userAgent || USER_AGENT);
     if ([301, 302, 303, 307, 308].includes(res.status) && res.headers.location) {
       redirects.push(url.toString());
       if (hop === maxRedirects) throw new SafeFetchError('too_many_redirects', 'The website redirected too many times.');

@@ -7,7 +7,7 @@ import { log } from '../lib/logger';
 import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/auth';
 import { guardQuizCreation, checkQuizAllowance, requireFeature, effectivePlan, getPlanLimits, isTrialActive, entitledPlan } from '../middleware/planGuard';
 import { generateQuiz, processOtherAnswer, generateOnboardingQuestions, generateTailoredQuiz, analyzeBusinessProfile, suggestQuizIdeas } from '../services/claudeService';
-import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
+import { scrapeBrand, UnsafeUrlError } from '../services/brandScraper';
 import { generateLeadInsight } from '../services/leadInsights';
 import { sendResultEmail } from '../services/resultEmail';
 import { isUnsubscribed, buildUnsubscribeHeaders, buildUnsubscribeUrl } from '../services/unsubscribe';
@@ -382,11 +382,11 @@ previewRouter.post('/preview-generate', async (req, res) => {
     log.info(`[Preview] Quiz stored with claim token: ${claimToken.slice(0, 8)}...`);
     res.json({ brand, quiz, claim_token: claimToken });
   } catch (err: any) {
-    if (err instanceof NotSquarespaceError) {
-      log.warn('[Preview] Rejected non-Squarespace site', { hostname: err.hostname });
+    if (err instanceof UnsafeUrlError) {
+      log.warn('[Preview] Rejected non-public URL', { hostname: err.hostname });
       return res.status(422).json({
         error: err.message,
-        code: 'NOT_SQUARESPACE',
+        code: err.code,
         hostname: err.hostname,
       });
     }
@@ -443,11 +443,11 @@ previewRouter.post('/preview-analyze', async (req, res) => {
 
     res.json({ brand, onboarding_questions: onboardingQuestions, session_token: sessionToken, url: normalizedUrl });
   } catch (err: any) {
-    if (err instanceof NotSquarespaceError) {
-      log.warn('[PreviewAnalyze] Rejected non-Squarespace site', { hostname: err.hostname });
+    if (err instanceof UnsafeUrlError) {
+      log.warn('[PreviewAnalyze] Rejected non-public URL', { hostname: err.hostname });
       return res.status(422).json({
         error: err.message,
-        code: 'NOT_SQUARESPACE',
+        code: err.code,
         hostname: err.hostname,
       });
     }
@@ -1953,8 +1953,8 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
     merged.quiz_ideas = Array.isArray(ideas) ? ideas : [];
     res.json(merged);
   } catch (err: any) {
-    if (err instanceof NotSquarespaceError) {
-      return res.status(422).json({ error: err.message, code: 'NOT_SQUARESPACE', hostname: err.hostname });
+    if (err instanceof UnsafeUrlError) {
+      return res.status(422).json({ error: err.message, code: err.code, hostname: err.hostname });
     }
     log.error('[ScrapeBrand] Failed:', { err: err });
     res.status(500).json({ error: err?.message ?? 'Scrape failed' });

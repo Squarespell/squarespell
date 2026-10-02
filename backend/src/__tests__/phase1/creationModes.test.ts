@@ -69,11 +69,21 @@ describe('mode 3 - URL analysis (POST /api/quizzes/from-url)', () => {
     expect(row.questions.length).toBeGreaterThan(0);
     expect(row.outcomes.length).toBeGreaterThan(0);
   });
-  it('a non-Squarespace URL is rejected with 422 NOT_SQUARESPACE and no quiz is created', async () => {
+  it('a non-Squarespace website works too: the quiz is generated and stored', async () => {
     const u = await makeUser({ plan: 'pro' });
     const r = await (await api()).post('/api/quizzes/from-url').set(bearer(u)).send({ url: site.base + '/plain' });
-    expect(r.status).toBe(422);
-    expect(r.body.code).toBe('NOT_SQUARESPACE');
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+    expect(r.body.brand).toMatchObject({ detected: true, platform: 'website' });
+    expect(r.body.brand.business.summary).toContain('bike');
+    expect(await sql(`select 1 from quizzes`)).toHaveLength(1);
+  });
+  it('a private or metadata address is refused with 422 URL_NOT_PUBLIC and no quiz is created', async () => {
+    const u = await makeUser({ plan: 'pro' });
+    for (const url of ['http://169.254.169.254/latest/meta-data/', 'http://10.0.0.5/', 'http://[fd00:ec2::254]/']) {
+      const r = await (await api()).post('/api/quizzes/from-url').set(bearer(u)).send({ url });
+      expect(r.status, url).toBe(422);
+      expect(r.body.code).toBe('URL_NOT_PUBLIC');
+    }
     expect(await sql(`select 1 from quizzes`)).toHaveLength(0);
   });
   it('missing / invalid url -> 400', async () => {
