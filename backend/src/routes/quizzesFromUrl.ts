@@ -26,7 +26,7 @@ import { requireAuth, attachUser, AuthenticatedRequest } from '../middleware/aut
 import { checkQuizAllowance } from '../middleware/planGuard';
 import { respondIfAiError } from '../lib/aiErrors';
 import { supabase } from '../db/supabaseClient';
-import { scrapeBrand, NotSquarespaceError } from '../services/brandScraper';
+import { scrapeBrand, UnsafeUrlError } from '../services/brandScraper';
 import {
   analyzeBusinessProfile,
   generateTailoredQuiz,
@@ -276,14 +276,14 @@ router.post('/from-url', checkQuizAllowance, async (req: AuthenticatedRequest, r
       ...(aiFallback ? { ai_fallback: true, warning: 'The AI service was unavailable, so a generic starter quiz was created. Regenerate or edit it before publishing.' } : {}),
     });
   } catch (err: any) {
-    if (err instanceof NotSquarespaceError) {
-      log.warn(`[FromUrl] Rejected non-Squarespace site: ${err.hostname}`);
+    if (err instanceof UnsafeUrlError) {
+      log.warn(`[FromUrl] Rejected non-public URL: ${err.hostname}`);
       // Refund the rate-limit slot - the user didn't actually use AI generation
       const entry = fromUrlRateMap.get(userId);
       if (entry && entry.count > 0) entry.count -= 1;
       return res.status(422).json({
         error: err.message,
-        code: 'NOT_SQUARESPACE',
+        code: err.code,
         hostname: err.hostname,
       });
     }

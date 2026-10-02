@@ -54,7 +54,7 @@ export const publicQuizUrl = (slug: string): string =>
  *  The ?v= cache-buster forces browsers to fetch the new version even if an
  *  older copy is cached with a long max-age header. Bump EMBED_CACHE_VERSION
  *  whenever quiz-embed.js changes. */
-const EMBED_CACHE_VERSION = '231';
+const EMBED_CACHE_VERSION = '232';
 export const embedScriptUrl = (): string => `${APP_URL}/embed.js?v=${EMBED_CACHE_VERSION}`;
 
 /** Full embed snippet for copy/paste install (div + script format).
@@ -64,6 +64,15 @@ export const embedScriptUrl = (): string => `${APP_URL}/embed.js?v=${EMBED_CACHE
  *  the script element itself. */
 export const embedSnippet = (slug: string): string =>
   `<div data-squarespell-quiz="${slug}"></div>\n<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
+
+export type EmbedMode = 'inline' | 'popup' | 'tab';
+
+/** Copy/paste snippet for each embed mode. "tab" is the floating side tab, which quiz-embed.js calls "slidein". */
+export const embedSnippetForMode = (slug: string, mode: EmbedMode = 'inline'): string => {
+  if (mode === 'inline') return embedSnippet(slug);
+  if (mode === 'popup') return `<div data-squarespell-quiz="${slug}" data-mode="popup" data-button-text="Take the quiz"></div>\n<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
+  return `<div data-squarespell-quiz="${slug}" data-mode="slidein" data-button-text="Take our quiz"></div>\n<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
+};
 
 /** Authenticated dashboard landing URL. */
 export const dashboardUrl = (): string => `${APP_URL}/dashboard`;

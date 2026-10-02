@@ -55,12 +55,10 @@ const MATRIX = [
   {
     category: 'Integrations',
     rows: [
-      { label: 'Zapier', core: false, pro: true, business: true },
       { label: 'Webhooks', core: false, pro: true, business: true },
       { label: 'Mailchimp', core: false, pro: true, business: true },
       { label: 'Klaviyo', core: false, pro: true, business: true },
       { label: 'ConvertKit', core: false, pro: true, business: true },
-      { label: 'HubSpot', core: false, pro: true, business: true },
       { label: 'Google Sheets', core: false, pro: true, business: true },
     ],
   },
@@ -69,8 +67,7 @@ const MATRIX = [
     rows: [
       { label: 'Email support', core: true, pro: true, business: true },
       { label: 'Priority email support', core: false, pro: true, business: true },
-            { label: 'Team seats', core: false, pro: false, business: '3 included' },
-      { label: 'API access', core: false, pro: false, business: true },
+      { label: 'Team members', core: false, pro: false, business: true },
       { label: 'Dedicated onboarding call', core: false, pro: false, business: true },
     ],
   },
@@ -104,8 +101,8 @@ const EMAIL_PACKS = [
 
 const FAQS = [
   {
-    q: 'Do I need a Squarespace subscription?',
-    a: 'Yes, Squarespell Quiz works with any active Squarespace plan. You connect your site in one click through your dashboard. No code required.',
+    q: 'Do I need a Squarespace site?',
+    a: 'No. The AI can build a quiz from any public website, and the embed code works on any site that accepts custom code, including Squarespace, WordPress, Shopify, Wix and Webflow. Squarespace sites also get extra brand detection and the guided site connection in your dashboard.',
   },
   {
     q: 'What happens when my 14-day trial ends?',
@@ -129,11 +126,11 @@ const FAQS = [
   },
   {
     q: 'I run an agency. Can I manage multiple client sites?',
-    a: 'Yes. The Business plan at $29/mo annual includes unlimited quizzes and leads, white-label branding, custom domains, team seats, API access, and a dedicated onboarding call.',
+    a: 'Yes. The Business plan at $29/mo annual includes unlimited quizzes and leads, white-label branding, custom domains, team members and a dedicated onboarding call.',
   },
   {
     q: 'What integrations are included with Pro?',
-    a: 'Pro includes integrations with Zapier, Mailchimp, Klaviyo, ConvertKit, HubSpot and Google Sheets, plus webhooks. Each one needs to be set up with your own account, key or endpoint. See the integrations page for the status of each.',
+    a: 'Pro includes integrations with Mailchimp, Klaviyo, ConvertKit and Google Sheets, plus webhooks, so you can send leads to any tool that accepts them. Each one needs to be set up with your own account, key or endpoint. Zapier and HubSpot are planned and not available yet. See the integrations page for the status of each.',
   },
 ];
 

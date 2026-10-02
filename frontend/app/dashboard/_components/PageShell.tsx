@@ -441,10 +441,9 @@ var SETTINGS_TABS = [
   { href: '/dashboard/settings/custom-domain', label: 'Domains', match: function(p: string) { return p.startsWith('/dashboard/settings/custom-domain'); } },
   { href: '/dashboard/team', label: 'Team', match: function(p: string) { return p.startsWith('/dashboard/team'); } },
   { href: '/dashboard/billing', label: 'Billing', match: function(p: string) { return p.startsWith('/dashboard/billing'); } },
-  { href: '/dashboard/referrals', label: 'Referrals', match: function(p: string) { return p.startsWith('/dashboard/referrals'); } },
 ];
 
-/** Settings local navigation shared by General, Branding, Domains, Team, Billing and Referrals. */
+/** Settings local navigation shared by General, Branding, Domains, Team and Billing. */
 export function SettingsTabs() {
   var pathname = usePathname() || '';
   return (

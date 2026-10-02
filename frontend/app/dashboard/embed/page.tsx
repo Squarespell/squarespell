@@ -16,20 +16,11 @@ import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardS
 import { useDashboardAuth } from '../_components/useDashboardAuth';
 import { EmptyState, PrimaryButton, Pill, PageLoading } from '../_components/PageShell';
 import { QuizCover } from '../_components/QuizCover';
-import { embedSnippet, embedScriptUrl, publicQuizUrl } from '@/lib/urls';
+import { embedSnippetForMode, publicQuizUrl, type EmbedMode } from '@/lib/urls';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
 type Quiz = { id: string; title: string; slug: string; status: 'live' | 'draft'; created_at?: string };
-type EmbedMode = 'inline' | 'popup' | 'tab';
-
-function buildSnippet(slug: string, mode: EmbedMode = 'inline'): string {
-  if (mode === 'inline') return embedSnippet(slug);
-  if (mode === 'popup') return `<div data-squarespell-quiz="${slug}" data-mode="popup" data-button-text="Take the quiz"></div>
-<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
-  return `<div data-squarespell-quiz="${slug}" data-mode="tab" data-button-text="Take our quiz"></div>
-<script src="${embedScriptUrl()}" data-quiz="${slug}" async></script>`;
-}
 
 const MODE_LABELS: Record<EmbedMode, { label: string; desc: string }> = {
   inline: { label: 'Inline', desc: 'Embeds directly in the page flow' },
@@ -219,7 +210,7 @@ export default function EmbedPage() {
 
   const shown = quizzes.filter((q) => (filter === 'all' || q.status === filter) && (q.title || '').toLowerCase().includes(search.trim().toLowerCase()));
   const quiz = quizzes.find((q) => q.id === selectedId) || null;
-  const snippet = quiz ? buildSnippet(quiz.slug, mode) : '';
+  const snippet = quiz ? embedSnippetForMode(quiz.slug, mode) : '';
   const liveCount = quizzes.filter((q) => q.status === 'live').length;
   const draftCount = quizzes.filter((q) => q.status === 'draft').length;
 

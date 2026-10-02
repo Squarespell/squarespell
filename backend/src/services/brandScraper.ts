@@ -1,44 +1,77 @@
 import { log } from '../lib/logger';
-import fetch from 'node-fetch';
+import { safeFetch, SafeFetchError, SafeFetchOptions } from './connect/urlSafety';
 
 /**
- * Thrown when the URL is not a Squarespace site.
- * Squarespell is Squarespace-ONLY by design (per product decision).
+ * Thrown when the URL points somewhere the server must never fetch (private or loopback address, metadata endpoint,
+ * non-web port, non-http scheme, embedded credentials), including when a redirect leads there.
  * Route handlers catch this and return HTTP 422 with a user-facing message.
  */
-export class NotSquarespaceError extends Error {
+export class UnsafeUrlError extends Error {
   readonly hostname: string;
-  readonly code = 'NOT_SQUARESPACE' as const;
+  readonly code = 'URL_NOT_PUBLIC' as const;
   constructor(hostname: string) {
-    super(`${hostname} is not a Squarespace site. Squarespell only works with Squarespace websites.`);
-    this.name = 'NotSquarespaceError';
+    super(`${hostname || 'That address'} is not a public website we can read. Check the address and try again.`);
+    this.name = 'UnsafeUrlError';
     this.hostname = hostname;
   }
 }
 
+const UNSAFE_CODES = new Set(['blocked_address', 'blocked_port', 'unsupported_protocol', 'invalid_url']);
+const PAGE_MAX_BYTES = 2 * 1024 * 1024;
+// Large Squarespace site.css files (1MB+) declare the :root HSL triples near the top, so 300KB per sheet is enough.
+const SHEET_MAX_BYTES = 300 * 1024;
+const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+let testFetchOptions: SafeFetchOptions = {};
+/** Test-only: lets the suite point the scraper at a loopback fixture. Ignored unless NODE_ENV is "test". */
+export function setScraperFetchOptionsForTests(opts: SafeFetchOptions): void {
+  if (process.env.NODE_ENV === 'test') testFetchOptions = opts;
+}
+
+type Platform = 'squarespace' | 'wordpress' | 'shopify' | 'wix' | 'webflow' | 'website';
+
+function detectPlatform(html: string): Platform {
+  if (
+    html.includes('Static.SQUARESPACE_CONTEXT') ||
+    html.includes('static1.squarespace.com') ||
+    html.includes('static.squarespace') ||
+    /<meta[^>]+content="[^"]*Squarespace[^"]*"/i.test(html) ||
+    /generator"[^>]+content="Squarespace/i.test(html)
+  ) return 'squarespace';
+  if (/\/wp-content\/|\/wp-includes\/|generator"[^>]+content="WordPress/i.test(html)) return 'wordpress';
+  if (/cdn\.shopify\.com|Shopify\.theme/i.test(html)) return 'shopify';
+  if (/static\.wixstatic\.com|static\.parastorage\.com|generator"[^>]+content="Wix/i.test(html)) return 'wix';
+  if (/data-wf-site=|generator"[^>]+content="Webflow/i.test(html)) return 'webflow';
+  return 'website';
+}
+
 /**
- * Scrapes a SQUARESPACE website to extract:
- * 1. Brand visuals (colors, fonts, favicon, site name) from Squarespace CSS vars
+ * Scrapes any public website to extract:
+ * 1. Brand visuals (colors, fonts, favicon, site name) from CSS custom properties, meta tags and stylesheets
  * 2. Business context (what the company does) from meta, headings, paragraphs, JSON-LD
  *
- * Hard-fails with NotSquarespaceError if the URL is not a Squarespace site.
+ * Squarespace sites get extra extraction (template version, SQUARESPACE_CONTEXT, Squarespace CSS variables).
+ * Every request (the page, each redirect, each stylesheet) goes through safeFetch, so private, loopback and
+ * metadata addresses are never contacted. Throws UnsafeUrlError for such targets; other network failures return
+ * a detected:false result so generation can continue with neutral defaults.
  */
 export async function scrapeBrand(url: string) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'identity',
-        'Cache-Control': 'no-cache',
-      },
-      redirect: 'follow',
-    });
-    const html = await res.text();
+    let res;
+    try {
+      res = await safeFetch(url, { maxRedirects: 5, timeoutMs: 10000, maxBytes: PAGE_MAX_BYTES, userAgent: BROWSER_UA, ...testFetchOptions });
+    } catch (e: any) {
+      if (e instanceof SafeFetchError && UNSAFE_CODES.has(e.code)) {
+        let hostname = '';
+        try { hostname = new URL(url).hostname.replace(/^www\./, ''); } catch {}
+        log.warn('[Scraper] Refused unsafe URL', { hostname, code: e.code });
+        throw new UnsafeUrlError(hostname);
+      }
+      throw e;
+    }
+    const html = res.body;
+    // Resolve relative links against the page we actually landed on (after redirects).
+    url = res.finalUrl;
     log.info(`[Scraper] Fetched ${url} - ${html.length} chars, status ${res.status}`);
 
     // ── Site identity ──────────────────────────────────────────────────────
@@ -87,21 +120,11 @@ export async function scrapeBrand(url: string) {
       }
     }
 
-    // ── Strategy 2: Squarespace-specific data ─────────────────────────────
+    // ── Strategy 2: Squarespace-specific data (bonus path) ────────────────
     let squarespaceContext = '';
-    let isSquarespace = false;
-
-    // Detect Squarespace - Squarespell is Squarespace-ONLY, hard-fail otherwise
-    if (
-      html.includes('Static.SQUARESPACE_CONTEXT') ||
-      html.includes('static1.squarespace.com') ||
-      html.includes('static.squarespace') ||
-      /<meta[^>]+content="[^"]*Squarespace[^"]*"/i.test(html) ||
-      /generator"[^>]+content="Squarespace/i.test(html)
-    ) {
-      isSquarespace = true;
-      log.info('[Scraper] Squarespace site detected');
-    }
+    const platform = detectPlatform(html);
+    const isSquarespace = platform === 'squarespace';
+    log.info('[Scraper] Platform detected', { platform });
 
     // Detect Squarespace template family: 7.1 uses siteVersion or templateVersion in context
     let templateVersion: '7.0' | '7.1' | 'unknown' = 'unknown';
@@ -121,12 +144,6 @@ export async function scrapeBrand(url: string) {
         templateVersion = '7.0';
       }
       log.info('[Scraper] Template version:', { detail: templateVersion });
-    }
-
-    if (!isSquarespace) {
-      const hostname = new URL(url).hostname.replace(/^www\./, '');
-      log.warn(`[Scraper] HARD FAIL: ${hostname} is not a Squarespace site`);
-      throw new NotSquarespaceError(hostname);
     }
 
     const sqspMatch = html.match(/Static\.SQUARESPACE_CONTEXT\s*=\s*(\{[\s\S]*?\});/);
@@ -314,17 +331,17 @@ export async function scrapeBrand(url: string) {
       if (h.startsWith('/')) return `${base.origin}${h}`;
       return `${base.origin}/${h}`;
     };
-    let externalCss = '';
-    let fetchedSheets = 0;
-    for (const href of rankedHrefs.slice(0, 5)) {
-      const sheetUrl = absolutize(href);
+    // Fetched in parallel (order preserved: first HSL triple wins), each one SSRF-checked; failures are skipped.
+    const sheetBodies = await Promise.all(rankedHrefs.slice(0, 5).map(async (href) => {
       try {
-        const r = await fetch(sheetUrl, { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0' } });
-        // Raise truncation cap so large Squarespace site.css files (1MB+) still include the :root HSL triples at the top
-        externalCss += (await r.text()).slice(0, 300000) + '\n';
-        fetchedSheets++;
-      } catch {}
-    }
+        const r = await safeFetch(absolutize(href), { maxRedirects: 3, timeoutMs: 5000, maxBytes: SHEET_MAX_BYTES, userAgent: BROWSER_UA, ...testFetchOptions });
+        return r.status >= 200 && r.status < 300 ? r.body : null;
+      } catch {
+        return null;
+      }
+    }));
+    const fetchedSheets = sheetBodies.filter((b) => b !== null).length;
+    const externalCss = sheetBodies.filter((b): b is string => b !== null).join('\n');
     log.info('[Scraper] External stylesheets fetched', { fetched: fetchedSheets, total: rankedHrefs.length });
 
     const allCss = inlineStyles + '\n' + externalCss;
@@ -634,8 +651,8 @@ export async function scrapeBrand(url: string) {
 
     return {
       detected: true,
-      platform: 'squarespace',
-      template_version: templateVersion,
+      platform,
+      template_version: isSquarespace ? templateVersion : null,
       colors: {
         background: toHex(bgColor),
         primary: toHex(primaryColor),
@@ -657,9 +674,9 @@ export async function scrapeBrand(url: string) {
       } as Record<string, any>,
     };
   } catch (err: any) {
-    // NotSquarespaceError bubbles up so routes can return a clean 422
-    if (err instanceof NotSquarespaceError) throw err;
-    log.error('[Scraper] FAILED for ${url}:', { err: err.message });
+    // UnsafeUrlError bubbles up so routes can return a clean 422
+    if (err instanceof UnsafeUrlError) throw err;
+    log.error(`[Scraper] FAILED for ${url}:`, { err: err.message });
     // Network/parse failures fall through to a detected:false result so the
     // frontend can show a neutral dark theme and continue (no hard block here)
     return {
@@ -671,7 +688,5 @@ export async function scrapeBrand(url: string) {
       favicon_url: '',
       business: { summary: '', meta_description: '', headings: [], key_content: [], json_ld: null, nav_links: [], nav_pages: [] } as Record<string, any>,
     };
-  } finally {
-    clearTimeout(timeout);
   }
 }

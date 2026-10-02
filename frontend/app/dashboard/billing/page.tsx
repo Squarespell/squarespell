@@ -93,7 +93,7 @@ const MATRIX: { f: string; core: Cell; pro: Cell; business: Cell; tip?: string }
   { f: 'Advanced analytics and per-question drop-off', core: false, pro: true, business: true },
   { f: 'Custom CSS', core: false, pro: true, business: true },
   { f: 'White-label (your brand on everything)', core: false, pro: false, business: true },
-  { f: 'Team seats (3 included, $5/seat extra)', core: false, pro: false, business: true },
+  { f: 'Team members', core: false, pro: false, business: true },
   { f: 'Custom domain for quizzes', core: false, pro: false, business: 'planned' },
   { f: 'API access', core: false, pro: false, business: 'planned' },
   { f: 'Dedicated onboarding call', core: false, pro: false, business: true },

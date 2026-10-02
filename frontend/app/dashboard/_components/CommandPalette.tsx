@@ -45,7 +45,6 @@ const PAGES: SearchResult[] = [
   { id: 'p-integrations', type: 'page', title: 'Integrations', href: '/dashboard/integrations' },
   { id: 'p-brand', type: 'page', title: 'Brand kit', href: '/dashboard/brand-kit' },
   { id: 'p-team', type: 'page', title: 'Team', href: '/dashboard/team' },
-  { id: 'p-referrals', type: 'page', title: 'Referrals', href: '/dashboard/referrals' },
 ];
 
 /* ------------------------------------------------------------------ */

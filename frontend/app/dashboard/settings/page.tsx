@@ -3,7 +3,7 @@
 /**
  * /dashboard/settings - Workspace settings, General tab (2026 redesign, screen 23: "Workspace settings.").
  *
- * Settings sections share the horizontal SettingsTabs (General / Branding / Domains / Team / Billing / Referrals).
+ * Settings sections share the horizontal SettingsTabs (General / Branding / Domains / Team / Billing).
  * This page holds the lead-notification toggle and quick links to the other areas, plus a help strip.
  */
 

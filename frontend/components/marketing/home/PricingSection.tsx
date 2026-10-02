@@ -16,7 +16,7 @@ const TAGS: Record<string, string> = {
   pro: 'For serious lead generation',
   business: 'For teams and scale',
 };
-const BUSINESS_HIGHLIGHTS = /white-label|custom domain|team seats|api access|priority (email )?support|onboarding/i;
+const BUSINESS_HIGHLIGHTS = /white-label|custom domain|team members|priority (email )?support|onboarding/i;
 
 // Catalog wording is reused as written, with two display rules: no claim of
 // automatic page insertion ("one-click connect" reads "connect") and no em dashes.
