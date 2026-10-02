@@ -252,7 +252,6 @@ function AccountMenu({ userEmail, plan, onSignOut }: { userEmail: string; plan: 
             {link('/dashboard/settings', 'Workspace settings')}
             {link('/dashboard/brand-kit', 'Brand kit')}
             {link('/dashboard/team', 'Team')}
-            {link('/dashboard/referrals', 'Referrals')}
             {link('/dashboard/trash', 'Trash')}
             <a href="/support" role="menuitem" className="sq-menu-item">Help center</a>
           </div>
