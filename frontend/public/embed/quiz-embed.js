@@ -1,10 +1,13 @@
 /*!
- * Squarespell Quiz Embed v2.3.1
+ * Squarespell Quiz Embed v2.3.2
  * Rewritten for Squarespace 7.1 AJAX navigation compatibility.
  *
  * Usage (Code Block):
  *   <div data-squarespell-quiz="YOUR_SLUG"></div>
  *   <script src="https://app.squarespellquiz.com/embed/quiz-embed.js" async></script>
+ *
+ * Modes (data-mode): "inline" (default), "popup", "slidein" (floating side tab).
+ * "tab" and "floating_tab" are accepted as aliases of "slidein" for snippets copied before v2.3.2.
  *
  * Legacy usage still supported:
  *   <script src="https://app.squarespellquiz.com/embed/quiz-embed.js" data-quiz="YOUR_SLUG" async></script>
@@ -23,7 +26,7 @@
     } catch (e) { /* fall through */ }
     return 'https://app.squarespellquiz.com';
   })();
-  var EMBED_VERSION = '2.3.1';
+  var EMBED_VERSION = '2.3.2';
   var INIT_ATTR = 'data-squarespell-init';
 
   // ── Utility helpers ──────────────────────────────────────────────────────
@@ -122,13 +125,23 @@
 
   // ── Build a single embed widget ──────────────────────────────────────────
 
+  // Maps data-mode values (including aliases from older dashboard snippets) to a supported mode.
+  // Anything unrecognised falls back to inline so a typo never leaves an empty space on the page.
+  function normalizeMode(mode) {
+    var m = String(mode || '').trim().toLowerCase();
+    if (m === 'popup') return 'popup';
+    if (m === 'slidein' || m === 'slide-in' || m === 'tab' || m === 'floating_tab' || m === 'floating-tab') return 'slidein';
+    return 'inline';
+  }
+
   function buildWidget(slug, fixedHeight, mode, buttonText, accentColor) {
+    mode = normalizeMode(mode);
     var brand = detectHostBrand();
     var url = buildIframeUrl(slug, brand);
     var finalAccent = accentColor || brand.accent || '#0D7377';
 
     // Default mode is 'inline'
-    if (!mode || mode === 'inline') {
+    if (mode === 'inline') {
       var wrapper = document.createElement('div');
       wrapper.className = 'squarespell-wrapper';
       wrapper.id = 'squarespell-embed-' + slug;
