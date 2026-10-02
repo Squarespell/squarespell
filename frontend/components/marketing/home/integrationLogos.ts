@@ -8,9 +8,8 @@ export const CATALOG_INTEGRATIONS: IntegrationLogo[] = [
   { name: 'Mailchimp', logo: 'https://cdn.simpleicons.org/mailchimp/111111' },
   { name: 'Klaviyo', logo: 'https://www.google.com/s2/favicons?domain=klaviyo.com&sz=128' },
   { name: 'ConvertKit', logo: 'https://www.google.com/s2/favicons?domain=kit.com&sz=128' },
-  { name: 'HubSpot', logo: 'https://cdn.simpleicons.org/hubspot/FF7A59' },
   { name: 'Google Sheets', logo: 'https://cdn.simpleicons.org/googlesheets/34A853' },
-  { name: 'Zapier and webhooks', logo: 'https://cdn.simpleicons.org/zapier/FF4F00' },
+  { name: 'Webhooks', logo: 'https://cdn.simpleicons.org/webhooks/111111' },
 ];
 
 // Backend services exist for these (backend/src/services/integrations/) but each
