@@ -21,6 +21,7 @@ import { app } from './app';
 import { supabase } from './db/supabaseClient';
 import { log } from './lib/logger';
 import { processEmailQueue } from './services/emailSequence';
+import { mailStatus } from './services/email/mailer';
 
 const PORT = process.env.PORT || 3001;
 
@@ -31,6 +32,12 @@ if (process.env.SENTRY_DSN) {
 
 app.listen(PORT, () => {
   log.info('Backend running', { port: Number(PORT) });
+
+  // Log once whether the Hostinger mailbox accepts our login, so a wrong SMTP password is visible right away.
+  mailStatus(true).then(function (status) {
+    if (status === 'ok') log.info('Email: mailbox login OK');
+    else log.error('Email: mailbox not usable', { status });
+  }).catch(function () {});
 
   // Keep-alive self-ping to prevent Render cold starts.
   // Pings /health every 5 minutes. Only runs when RENDER_EXTERNAL_URL is set

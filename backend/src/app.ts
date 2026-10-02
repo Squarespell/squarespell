@@ -27,6 +27,7 @@ import { log } from './lib/logger';
 import { requestLogger } from './middleware/requestLogger';
 import { requireAuth, attachUser } from './middleware/auth';
 import { supabase } from './db/supabaseClient';
+import { mailStatus } from './services/email/mailer';
 
 export const app = express();
 
@@ -163,7 +164,7 @@ app.use('/api/public/connect', publicConnectRouter);
 app.use('/', connectFixtureRouter);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
-// Readiness: verifies the database answers. Details are logged, never returned.
+// Readiness: verifies the database answers and reports whether the mailbox accepts our login. Details are logged, never returned.
 async function readiness(_req: express.Request, res: express.Response) {
   let database: 'up' | 'down' = 'down';
   try {
@@ -176,7 +177,9 @@ async function readiness(_req: express.Request, res: express.Response) {
   } catch (err: any) {
     log.error('readiness: database check threw', { err: err?.message });
   }
-  res.status(database === 'up' ? 200 : 503).json({ ok: database === 'up', checks: { database } });
+  // Email is reported but never blocks readiness: the app (and deploys) keep working while a mailbox is fixed.
+  const email = await mailStatus().catch(function () { return 'connection_failed' as const; });
+  res.status(database === 'up' ? 200 : 503).json({ ok: database === 'up', checks: { database, email } });
 }
 app.get('/health/ready', readiness);
 app.get('/api/health/ready', readiness);
