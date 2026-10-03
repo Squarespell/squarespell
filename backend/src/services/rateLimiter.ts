@@ -16,8 +16,12 @@ const redis = process.env.UPSTASH_REDIS_REST_URL
 // the anonymous AI endpoints (cost) and the lead form (spam) completely unthrottled. They now fall back to a
 // per-process sliding window with the same limits: not shared across instances, but never "off".
 
-type LimitResult = { success: boolean };
-export interface RateLimiter { limit(key: string): Promise<LimitResult> }
+type LimitResult = { success: boolean; /** When refused: how long until a slot frees up (best estimate). */ retryAfterMs?: number };
+export interface RateLimiter {
+  limit(key: string): Promise<LimitResult>;
+  /** Give back one slot taken by limit() for this key (used when only some outcomes should count). */
+  refund?(key: string): Promise<void>;
+}
 
 const memoryStores: Map<string, number[]>[] = [];
 
@@ -27,13 +31,41 @@ class MemoryLimiter implements RateLimiter {
   async limit(key: string): Promise<LimitResult> {
     const now = Date.now();
     const hits = (this.store.get(key) || []).filter((t) => now - t < this.windowMs);
-    if (hits.length >= this.max) { this.store.set(key, hits); return { success: false }; }
+    if (hits.length >= this.max) {
+      this.store.set(key, hits);
+      // Hits are kept oldest first: a slot frees up when the oldest one leaves the window.
+      return { success: false, retryAfterMs: Math.max(1, hits[0] + this.windowMs - now) };
+    }
     hits.push(now);
     this.store.set(key, hits);
     if (this.store.size > 20000) { // bound memory: drop the oldest keys
       for (const k of Array.from(this.store.keys()).slice(0, 5000)) this.store.delete(k);
     }
     return { success: true };
+  }
+  async refund(key: string): Promise<void> {
+    const hits = this.store.get(key);
+    if (!hits || hits.length === 0) return;
+    hits.pop();
+    if (hits.length === 0) this.store.delete(key);
+  }
+}
+
+/**
+ * Upstash sliding window, adapted to RateLimiter. Refunds use the library's negative-rate support (@upstash/ratelimit
+ * >= 2.0). Upstash's sliding window weights the previous fixed window, so a slot is not guaranteed free at `reset` (the
+ * end of the current fixed window); one slot's share of the window is added so the Retry-After hint is not too early.
+ */
+export class UpstashLimiter implements RateLimiter {
+  constructor(private rl: Ratelimit, private max: number, private windowMs: number) {}
+  async limit(key: string): Promise<LimitResult> {
+    const r = await this.rl.limit(key);
+    if (r.success) return { success: true };
+    const estimate = r.reset - Date.now() + Math.ceil(this.windowMs / this.max);
+    return { success: false, retryAfterMs: Math.min(2 * this.windowMs, Math.max(1000, estimate)) };
+  }
+  async refund(key: string): Promise<void> {
+    await this.rl.limit(key, { rate: -1 });
   }
 }
 
@@ -42,12 +74,26 @@ export function resetMemoryLimiters() { memoryStores.forEach((m) => m.clear()); 
 
 export function makeLimiter(prefix: string, max: number, upstashWindow: '1 m' | '1 h', windowMs: number): RateLimiter {
   if (!redis) return new MemoryLimiter(max, windowMs);
-  return new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(max, upstashWindow), prefix: 'ratelimit:' + prefix, analytics: true });
+  return new UpstashLimiter(
+    new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(max, upstashWindow), prefix: 'ratelimit:' + prefix, analytics: true }),
+    max,
+    windowMs,
+  );
 }
 
 const MIN = 60_000, HOUR = 3_600_000;
-// Preview endpoints: 5 per hour per IP
+// Preview endpoints: 5 per hour per IP (now only POST /api/preview-generate; preview-analyze has its own pair below)
 export const previewLimiter = makeLimiter('preview', 5, '1 h', HOUR);
+// POST /api/preview-analyze (the public "Enter your website" builder). Counted by OUTCOME, per IP, sliding 1-hour windows:
+//   - successful analyses: 10 per hour (was 5 per hour counting every attempt; kept within 2x on purpose, it costs AI calls)
+//   - failed attempts (bad URL, not a Squarespace site, scrape/AI timeouts, 5xx): 20 per hour, in a separate bucket, so
+//     a visitor whose first try hits a hiccup is not locked out, while repeated failures (each still fetches a site and
+//     may call the AI) stay bounded.
+// See reserveByOutcome() below for how a slot is taken up front and handed back once the outcome is known.
+export const PREVIEW_ANALYZE_SUCCESS_LIMIT_PER_HOUR = 10;
+export const PREVIEW_ANALYZE_FAILURE_LIMIT_PER_HOUR = 20;
+export const previewAnalyzeSuccessLimiter = makeLimiter('preview-analyze-ok', PREVIEW_ANALYZE_SUCCESS_LIMIT_PER_HOUR, '1 h', HOUR);
+export const previewAnalyzeFailureLimiter = makeLimiter('preview-analyze-fail', PREVIEW_ANALYZE_FAILURE_LIMIT_PER_HOUR, '1 h', HOUR);
 // Lead submission: 3 per minute per IP per quiz
 export const leadLimiter = makeLimiter('lead', 3, '1 m', MIN);
 // Public quiz events: 60 per minute per IP (per quiz)
@@ -93,20 +139,76 @@ export function getClientIp(req: any): string {
 // ride out to whatever the platform's gateway timeout is. So this also
 // races the real call against a short timeout and fails open if neither the
 // success nor the error path wins in time.
-export async function safeLimit(limiter: RateLimiter, key: string): Promise<{ success: boolean }> {
+export async function safeLimit(limiter: RateLimiter, key: string): Promise<{ success: boolean; retryAfterSeconds?: number }> {
   try {
-    const result = await Promise.race([
+    const result = await Promise.race<LimitResult & { timedOut?: true }>([
       limiter.limit(key),
       new Promise<{ success: true; timedOut: true }>((resolve) =>
-        setTimeout(() => resolve({ success: true, timedOut: true }), 3000)
+        setTimeout(() => resolve({ success: true, timedOut: true }), 3000).unref?.()
       ),
     ]);
-    if ('timedOut' in result) {
+    if (result.timedOut) {
       log.error('[RateLimiter] limit() check timed out after 3s, failing open', { key });
+      return { success: true };
     }
-    return { success: result.success };
+    if (result.success) return { success: true };
+    return { success: false, retryAfterSeconds: toRetryAfterSeconds(result.retryAfterMs) };
   } catch (err) {
     log.error('[RateLimiter] limit() check failed, failing open', { key, err: (err as any)?.message });
     return { success: true };
   }
+}
+
+/** Whole seconds for a Retry-After header: at least 1; 60 when the limiter gave no estimate. */
+export function toRetryAfterSeconds(ms: number | undefined): number {
+  if (typeof ms !== 'number' || !Number.isFinite(ms) || ms <= 0) return 60;
+  return Math.max(1, Math.ceil(ms / 1000));
+}
+
+/** Hand back a slot taken by limit(). Best effort and never throws or hangs: rate limiting is defense in depth. */
+async function safeRefund(limiter: RateLimiter, key: string): Promise<void> {
+  if (!limiter.refund) return;
+  try {
+    await Promise.race([limiter.refund(key), new Promise<void>((resolve) => setTimeout(resolve, 3000).unref?.())]);
+  } catch (err) {
+    log.error('[RateLimiter] refund failed', { key, err: (err as any)?.message });
+  }
+}
+
+export type OutcomeReservation =
+  | { allowed: true; /** Call once, when the outcome is known. Further calls are ignored. */ settle(succeeded: boolean): Promise<void> }
+  | { allowed: false; retryAfterSeconds: number };
+
+/**
+ * Count-by-outcome limiting: successes count toward `success`, failures toward `failure`.
+ *
+ * A slot is taken in BOTH buckets before the work starts, so a burst of parallel requests cannot overshoot either cap,
+ * and the slot that does not apply is handed back by settle(). If either bucket is full the request is refused (and
+ * the slot it did get is handed straight back) with the longer of the two waits. Like safeLimit, a limiter error or
+ * timeout fails open.
+ */
+export async function reserveByOutcome(success: RateLimiter, failure: RateLimiter, key: string): Promise<OutcomeReservation> {
+  const [ok, fail] = await Promise.all([safeLimit(success, key), safeLimit(failure, key)]);
+  if (!ok.success || !fail.success) {
+    if (ok.success) await safeRefund(success, key);
+    if (fail.success) await safeRefund(failure, key);
+    return { allowed: false, retryAfterSeconds: Math.max(ok.retryAfterSeconds || 0, fail.retryAfterSeconds || 0) || 60 };
+  }
+  let settled = false;
+  return {
+    allowed: true,
+    async settle(succeeded: boolean) {
+      if (settled) return;
+      settled = true;
+      await (succeeded ? safeRefund(failure, key) : safeRefund(success, key));
+    },
+  };
+}
+
+/** Standard 429 for limited public endpoints: Retry-After header plus the same wait as JSON (browsers on another
+ *  origin cannot read the header unless it is exposed, so the page uses the JSON field). */
+export function sendRateLimited(res: any, retryAfterSeconds: number, error = 'Rate limit exceeded. Please try again later.') {
+  const seconds = Math.max(1, Math.ceil(retryAfterSeconds));
+  res.setHeader('Retry-After', String(seconds));
+  return res.status(429).json({ error, code: 'rate_limited', retryAfterSeconds: seconds });
 }

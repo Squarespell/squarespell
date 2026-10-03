@@ -95,6 +95,8 @@ const restrictedCors = cors({
 const publicCors = cors({
   origin: '*',
   credentials: false,
+  // Let pages on other origins read the wait time on a 429 (the JSON body also carries it as retryAfterSeconds).
+  exposedHeaders: ['Retry-After'],
 });
 
 app.use((req, res, next) => {

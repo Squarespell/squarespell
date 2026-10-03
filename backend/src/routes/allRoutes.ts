@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import crypto from 'crypto';
 import { requireCronSecret } from '../middleware/cronAuth';
 import { respondIfAiError } from '../lib/aiErrors';
@@ -342,7 +343,7 @@ setInterval(function() {
 }, 30 * 60 * 1000);
 
 // ── Public Preview Generate (no auth, rate-limited by IP via Redis) ──────────
-import { previewLimiter, leadLimiter, publicQuizLimiter, checkoutLimiter, processOtherLimiter, getClientIp, safeLimit } from '../services/rateLimiter';
+import { previewLimiter, previewAnalyzeSuccessLimiter, previewAnalyzeFailureLimiter, reserveByOutcome, sendRateLimited, leadLimiter, publicQuizLimiter, checkoutLimiter, processOtherLimiter, getClientIp, safeLimit } from '../services/rateLimiter';
 
 /**
  * Admin = an account whose email is listed in ADMIN_EMAILS (comma-separated, any letter case) AND confirmed:
@@ -397,11 +398,22 @@ previewRouter.post('/preview-generate', async (req, res) => {
 });
 
 // ── Stage 1 → Stage 2: Analyze the site and return 5 onboarding questions ───
+// Rate limit: only successful analyses count toward the main per-IP limit; failed attempts (validation errors,
+// NotSquarespaceError, scrape/AI timeouts, 5xx) count toward a separate, more generous one. Thresholds and reasoning
+// live next to previewAnalyzeSuccessLimiter in services/rateLimiter.ts. A 429 carries Retry-After + retryAfterSeconds.
 previewRouter.post('/preview-analyze', async (req, res) => {
   const ip = getClientIp(req);
-  const { success: analyzeRlOk } = await safeLimit(previewLimiter, 'analyze:' + ip);
-  if (!analyzeRlOk) return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
+  const slot = await reserveByOutcome(previewAnalyzeSuccessLimiter, previewAnalyzeFailureLimiter, 'analyze:' + ip);
+  if (!slot.allowed) return sendRateLimited(res, slot.retryAfterSeconds);
+  let succeeded = false;
+  try {
+    await analyzePreviewSite(req, res, () => { succeeded = true; });
+  } finally {
+    await slot.settle(succeeded);
+  }
+});
 
+async function analyzePreviewSite(req: ExpressRequest, res: ExpressResponse, markSucceeded: () => void) {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'url required' });
   let normalizedUrl: string;
@@ -441,6 +453,7 @@ previewRouter.post('/preview-analyze', async (req, res) => {
       if (Date.now() - v.createdAt > 86400000) previewSessionCache.delete(k);
     }
 
+    markSucceeded();
     res.json({ brand, onboarding_questions: onboardingQuestions, session_token: sessionToken, url: normalizedUrl });
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
@@ -455,7 +468,7 @@ previewRouter.post('/preview-analyze', async (req, res) => {
     log.error('[PreviewAnalyze] Failed:', { err: err });
     res.status(500).json({ error: 'Analyze failed', code: 'analyze_failed' });
   }
-});
+}
 
 // ── Stage 2 → Stage 3: Build the 10-question quiz using onboarding answers ───
 previewRouter.post('/preview-build-quiz', async (req, res) => {
