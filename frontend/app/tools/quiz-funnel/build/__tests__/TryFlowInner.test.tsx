@@ -575,7 +575,9 @@ describe('goAnalyze() reliability', () => {
     expect(analyzeCalls()).toHaveLength(2);
     expect(screen.queryByText(/Failed to fetch/i)).toBeNull();
     expect(screen.queryByText('Something went wrong')).toBeNull();
-    expect(gtag).not.toHaveBeenCalled(); // not a final failure
+    // Not a final failure, so no error event: only the start and the success.
+    expect(gtag.mock.calls.map((c) => c[1])).toEqual(['builder_analyze_start', 'builder_analyze_success']);
+    expect(typeof gtag.mock.calls[1][2].duration_ms).toBe('number');
     delete (window as any).gtag;
   });
 
@@ -597,8 +599,8 @@ describe('goAnalyze() reliability', () => {
     expect(screen.getByText('Limit reached')).toBeTruthy();
     expect(screen.getByText('Start from a template').closest('a')?.getAttribute('href')).toBe('/templates');
     expect(analyzeCalls()).toHaveLength(1);
-    expect(gtag).toHaveBeenCalledTimes(1);
-    const [, name, params] = gtag.mock.calls[0];
+    expect(gtag.mock.calls.map((c) => c[1])).toEqual(['builder_analyze_start', 'builder_analyze_error']);
+    const [, name, params] = gtag.mock.calls[1];
     expect(name).toBe('builder_analyze_error');
     expect(params).toMatchObject({ error_name: 'rate_limited', http_status: 429, retried: false });
     expect(typeof params.elapsed_ms).toBe('number');
