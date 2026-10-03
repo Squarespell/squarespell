@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import localFont from 'next/font/local';
 import { setAuthToken } from '../lib/api';
 import { ToastProvider } from '../lib/toast';
+import ConsentBanner from '../components/ConsentBanner';
 import './globals.css';
 
 // Inter, bundled with the app (npm @fontsource-variable/inter) and served by next/font from our own server: no
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthTokenSync />
           {children}
           <Footer />
+          <ConsentBanner />
           </ToastProvider>
         </body>
       </html>
