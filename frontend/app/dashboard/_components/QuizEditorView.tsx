@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth/client";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { track } from '@/lib/analytics';
 import { DashboardShell, DASHBOARD_COLORS as C } from './DashboardShell';
 import { PublishModal } from "./Modals";
 import { QuizBlockEditor, QuizSettings, SaveState } from './QuizBlockEditor';
@@ -282,6 +283,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
 
   async function handlePublish(): Promise<boolean> {
     try {
+      const firstPublish = ((quiz as any)?.status || 'draft') === 'draft';
       setPublishing(true);
       setPublishError(null);
       const API = process.env.NEXT_PUBLIC_API_URL || "https://api.squarespellquiz.com";
@@ -304,6 +306,7 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
         throw new Error(`Publish failed (${res.status}): ${body.slice(0, 200)}`);
       }
       const data = await res.json();
+      if (firstPublish) track('quiz_published');
       setPublishedSlug(data?.slug || (quiz as any)?.slug || "");
       setQuiz((prev) => {
         if (!prev) return prev;
