@@ -3,7 +3,7 @@
  * Cookie choice for the app: the same card and wording as squarespellquiz.com (SEO plan Segment 4, task 4.1). Shown
  * until the visitor chooses on either host; never on quiz-taker pages or inside an iframe (embedded quizzes).
  */
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { usePathname } from 'next/navigation';
 import { initAnalytics, isAnalyticsPage, readConsent, setConsent } from '@/lib/analytics';
 
@@ -19,6 +19,28 @@ export default function ConsentBanner() {
     setOpen(readConsent() === '');
   }, [pathname]);
 
+  // "Cookie settings" (any element with data-sqs-consent-open, as on squarespellquiz.com) reopens the choice and moves
+  // focus into it, so changing your mind is as easy as the first choice.
+  const reopened = useRef(false);
+  const firstButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(function () {
+    function onClick(e: MouseEvent) {
+      const t = e.target as Element | null;
+      if (!t || typeof t.closest !== 'function' || !t.closest('[data-sqs-consent-open]')) return;
+      if (window.self !== window.top || !isAnalyticsPage(pathname)) return;
+      e.preventDefault();
+      initAnalytics();
+      reopened.current = true;
+      setOpen(true);
+      if (firstButton.current) { firstButton.current.focus(); reopened.current = false; }
+    }
+    document.addEventListener('click', onClick);
+    return function () { document.removeEventListener('click', onClick); };
+  }, [pathname]);
+  useEffect(function () {
+    if (open && reopened.current && firstButton.current) { firstButton.current.focus(); reopened.current = false; }
+  }, [open]);
+
   if (!open) return null;
   function choose(v: 'granted' | 'denied') { setConsent(v); setOpen(false); }
   return (
@@ -29,7 +51,7 @@ export default function ConsentBanner() {
         <a href={PRIVACY} style={S.link}>Privacy policy</a>
       </p>
       <div style={S.row}>
-        <button type="button" style={S.button} onClick={function () { choose('denied'); }}>Reject</button>
+        <button type="button" ref={firstButton} style={S.button} onClick={function () { choose('denied'); }}>Reject</button>
         <button type="button" style={S.button} onClick={function () { choose('granted'); }}>Accept</button>
       </div>
     </div>
