@@ -23,11 +23,16 @@ vi.mock('@sentry/nextjs', () => ({
 
 import {
   ANALYZE_RETRY_DELAY_MS,
+  BUILD_FAILED_MESSAGE,
   NOT_SQUARESPACE_MESSAGE,
+  SERVER_PROBLEM_MESSAGE,
+  UNREADABLE_SITE_MESSAGE,
   analyzeErrorEvent,
+  analyzeFailureLabel,
   analyzeFailureMessage,
   analyzeFailureTitle,
   analyzeSite,
+  buildFailureMessage,
   rateLimitMessage,
   reportAnalyzeFailure,
 } from '../analyzeSite';
@@ -105,6 +110,7 @@ describe('analyzeSite(): automatic retry', () => {
     [400, { error: 'Invalid URL' }, 'invalid_url'],
     [404, { error: 'nope' }, 'http_error'],
     [422, { error: 'x is not a Squarespace site.', code: 'NOT_SQUARESPACE', hostname: 'x' }, 'not_squarespace'],
+    [422, { error: 'We could not read that website.', code: 'SITE_UNREADABLE' }, 'site_unreadable'],
     [429, { error: 'Rate limit exceeded', code: 'rate_limited', retryAfterSeconds: 300 }, 'rate_limited'],
     [500, { error: 'Analyze failed', code: 'analyze_failed' }, 'server_error'],
     [502, { error: 'The AI service is temporarily unavailable. Please try again shortly.', code: 'ai_unavailable' }, 'ai_unavailable'],
@@ -127,20 +133,21 @@ describe('messages', () => {
   it('429 uses retryAfterSeconds from the body, else the Retry-After header', async () => {
     const body = await analyzeSite(SITE, { ...OPTS, fetchImpl: vi.fn().mockResolvedValue(json(429, { retryAfterSeconds: 1140 })) as any });
     expect(body.failure!.retryAfterSeconds).toBe(1140);
-    expect(analyzeFailureMessage(body.failure!)).toBe('Too many tries. Please try again in about 19 minutes.');
-    expect(analyzeFailureTitle(body.failure!)).toBe('Too many tries');
+    expect(analyzeFailureMessage(body.failure!)).toBe('You have reached the limit for new drafts for now. Try again in about 19 minutes, or start from a template now.');
+    expect(analyzeFailureTitle(body.failure!)).toBe('Draft limit reached');
 
     const header = await analyzeSite(SITE, { ...OPTS, fetchImpl: vi.fn().mockResolvedValue(json(429, {}, { 'Retry-After': '90' })) as any });
     expect(header.failure!.retryAfterSeconds).toBe(90);
-    expect(analyzeFailureMessage(header.failure!)).toBe('Too many tries. Please try again in about 2 minutes.');
+    expect(analyzeFailureMessage(header.failure!)).toBe('You have reached the limit for new drafts for now. Try again in about 2 minutes, or start from a template now.');
   });
 
   it('rateLimitMessage rounds up to whole minutes, singular for one, and copes with no estimate', () => {
-    expect(rateLimitMessage(30)).toBe('Too many tries. Please try again in about 1 minute.');
-    expect(rateLimitMessage(60)).toBe('Too many tries. Please try again in about 1 minute.');
-    expect(rateLimitMessage(61)).toBe('Too many tries. Please try again in about 2 minutes.');
-    expect(rateLimitMessage(3600)).toBe('Too many tries. Please try again in about 60 minutes.');
-    expect(rateLimitMessage(undefined)).toBe('Too many tries. Please wait a little while and try again.');
+    const wait = (time: string) => `You have reached the limit for new drafts for now. Try again ${time}, or start from a template now.`;
+    expect(rateLimitMessage(30)).toBe(wait('in about 1 minute'));
+    expect(rateLimitMessage(60)).toBe(wait('in about 1 minute'));
+    expect(rateLimitMessage(61)).toBe(wait('in about 2 minutes'));
+    expect(rateLimitMessage(3600)).toBe(wait('in about 60 minutes'));
+    expect(rateLimitMessage(undefined)).toBe(wait('a little later'));
   });
 
   it('the Squarespace-only case gets its own heading and a clear, friendly message (not the raw server text)', () => {
@@ -153,7 +160,39 @@ describe('messages', () => {
   it('a network failure no longer surfaces the browser\'s bare "Failed to fetch"', () => {
     const msg = analyzeFailureMessage({ errorName: 'network_error', elapsedMs: 5000, retried: true });
     expect(msg).not.toMatch(/failed to fetch/i);
-    expect(msg).toMatch(/couldn't reach our server/i);
+    expect(msg).toMatch(/could not reach our servers/i);
+    expect(msg).toContain('info@squarespell.com');
+  });
+
+  it('an address that cannot be read says so and points to templates', () => {
+    const f = { errorName: 'site_unreadable' as const, httpStatus: 422, elapsedMs: 10, retried: false };
+    expect(analyzeFailureTitle(f)).toBe('We could not read that website');
+    expect(analyzeFailureMessage(f)).toBe(UNREADABLE_SITE_MESSAGE);
+    expect(UNREADABLE_SITE_MESSAGE).toMatch(/start from a template/);
+  });
+
+  it('server problems never show the status code or the server text', () => {
+    for (const errorName of ['server_error', 'http_error', 'invalid_response'] as const) {
+      const msg = analyzeFailureMessage({ errorName, httpStatus: 500, serverMessage: 'TypeError: x is undefined', elapsedMs: 10, retried: false });
+      expect(msg).toBe(SERVER_PROBLEM_MESSAGE);
+      expect(msg).not.toMatch(/500|TypeError/);
+    }
+  });
+
+  it('every failure has a short side-panel label', () => {
+    expect(analyzeFailureLabel('not_squarespace')).toBe('Not a Squarespace site');
+    expect(analyzeFailureLabel('rate_limited')).toBe('Limit reached');
+    expect(analyzeFailureLabel('network_error')).toBe('Connection problem');
+    expect(analyzeFailureLabel('site_unreadable')).toBe('Site not readable');
+    expect(analyzeFailureLabel('server_error')).toBe('Server problem');
+  });
+
+  it('a failed quiz build gets a next step, not the server text', () => {
+    expect(buildFailureMessage(500, { error: 'Quiz build failed', code: 'build_failed' })).toBe(BUILD_FAILED_MESSAGE);
+    expect(buildFailureMessage(404, { error: 'Session not found or expired. Please start again.' })).toMatch(/Enter your website again/);
+    expect(buildFailureMessage(429, { retryAfterSeconds: 600 })).toMatch(/in about 10 minutes/);
+    const ai = 'The AI service is temporarily unavailable. Please try again shortly.';
+    expect(buildFailureMessage(503, { error: ai, code: 'ai_unavailable' })).toBe(ai);
   });
 });
 
