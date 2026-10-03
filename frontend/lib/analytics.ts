@@ -8,7 +8,8 @@
  * email address, a name or a website address someone typed.
  */
 
-export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-GQ7K3MYJBL';
+// The squarespellquiz.com property, so site and app visits are counted in one place. A measurement ID is public.
+export const GA_ID = 'G-GQ7K3MYJBL';
 export const CONSENT_COOKIE = 'sqs_consent';
 const KEEP_SECONDS = 180 * 24 * 60 * 60;
 
