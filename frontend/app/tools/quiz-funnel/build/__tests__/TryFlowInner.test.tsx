@@ -298,7 +298,7 @@ describe('template pick with no matched templates', () => {
     // Instead, real, individually-clickable, distinct choices are shown, and
     // the copy makes clear nothing was actually matched/recommended.
     await screen.findByText(/no template matched your site/i);
-    const photoOption = screen.getByText('Photography Style Quiz');
+    const photoOption = screen.getByText('Wedding Photography Style Quiz');
     const menuOption = screen.getByText('Menu Recommendation Quiz');
     expect(photoOption).toBeTruthy();
     expect(menuOption).toBeTruthy();
@@ -339,7 +339,7 @@ describe('template picker selection integrity', () => {
     // Same no-match fallback setup as above (full catalog offered), but here
     // we specifically prove the click->selection->editor pipeline is wired
     // per-card and not hardcoded to matchedTemplates[0] / QUIZ_TEMPLATE_CATALOG[0]
-    // ("Photography Style Quiz") — the exact failure the PR review flagged:
+    // ("Wedding Photography Style Quiz") — the exact failure the PR review flagged:
     // every choice silently opened the first catalog template regardless of
     // which card was clicked.
     const noMatchBody = {
@@ -366,7 +366,7 @@ describe('template picker selection integrity', () => {
     });
 
     // Pick the third catalog entry ("Fitness Goal Quiz"), deliberately not
-    // index 0 ("Photography Style Quiz").
+    // index 0 ("Wedding Photography Style Quiz").
     const fitnessOption = await screen.findByText('Fitness Goal Quiz');
     await act(async () => {
       fireEvent.click(fitnessOption.closest('.s2-tpl-picker-item')!);
@@ -536,7 +536,7 @@ describe('template match recomputation after editing Business type', () => {
     // the "nothing matched" copy — not the original, specific 'photography'
     // match. Before the fix, matchedTemplates/noTemplateMatch were only ever
     // computed once in goAnalyze()'s success handler, so this would still
-    // show the stale 'photography' match: just "Photography Style Quiz"
+    // show the stale 'photography' match: just "Wedding Photography Style Quiz"
     // under "Pick a template to start from" copy, with no full-catalog
     // fallback and no "no template matched" messaging.
     await screen.findByText(/no template matched your site/i);
