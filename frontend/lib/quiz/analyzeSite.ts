@@ -17,6 +17,7 @@ export type AnalyzeErrorName =
   | 'rate_limited' // 429
   | 'not_squarespace' // 422 NOT_SQUARESPACE: the builder only accepts Squarespace sites
   | 'invalid_url' // 400
+  | 'site_unreadable' // 422 SITE_UNREADABLE: the address could not be fetched (unknown domain, site down or too slow)
   | 'ai_timeout'
   | 'ai_unavailable'
   | 'ai_rate_limited'
@@ -102,6 +103,7 @@ async function attemptOnce(url: string, opts: AnalyzeOptions): Promise<Attempt> 
     let errorName: AnalyzeErrorName;
     if (status === 429) errorName = 'rate_limited';
     else if (code === 'NOT_SQUARESPACE') errorName = 'not_squarespace';
+    else if (code === 'SITE_UNREADABLE') errorName = 'site_unreadable';
     else if (status === 400) errorName = 'invalid_url';
     else if ((AI_CODES as string[]).indexOf(code) !== -1) errorName = code as AnalyzeErrorName;
     else if (status >= 500) errorName = 'server_error';
@@ -142,20 +144,65 @@ export async function analyzeSite(url: string, opts: AnalyzeOptions): Promise<An
 /* Messages shown on the page                                          */
 /* ------------------------------------------------------------------ */
 
+/** Where visitors can write when trying again does not help. */
+export const SUPPORT_EMAIL = 'info@squarespell.com';
+
 export function rateLimitMessage(retryAfterSeconds?: number): string {
-  if (!retryAfterSeconds || retryAfterSeconds <= 0) return 'Too many tries. Please wait a little while and try again.';
+  if (!retryAfterSeconds || retryAfterSeconds <= 0) {
+    return 'You have reached the limit for new drafts for now. Try again a little later, or start from a template now.';
+  }
   const minutes = Math.max(1, Math.ceil(retryAfterSeconds / 60));
-  return `Too many tries. Please try again in about ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`;
+  return `You have reached the limit for new drafts for now. Try again in about ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}, or start from a template now.`;
 }
 
 export const NOT_SQUARESPACE_MESSAGE =
   "Squarespell Quiz works with Squarespace websites only, and this address doesn't look like a Squarespace site. " +
   'If your site is built with Squarespace, check the address (or use your yoursite.squarespace.com address) and try again.';
 
+// SEO plan Segment 3, task 3.9: every message says what to do next, and none shows a status code or exception text.
+export const UNREACHABLE_MESSAGE =
+  `We could not reach our servers. Check your connection and try again. If it keeps happening, email ${SUPPORT_EMAIL}.`;
+export const TIMEOUT_MESSAGE =
+  `Our servers took too long to answer. Try again in a moment. If it keeps happening, email ${SUPPORT_EMAIL}.`;
+export const UNREADABLE_SITE_MESSAGE = 'We could not read that website. Check the address, or start from a template instead.';
+export const SERVER_PROBLEM_MESSAGE =
+  `Something went wrong on our side. Try again in a moment. If it keeps happening, email ${SUPPORT_EMAIL}.`;
+export const BUILD_FAILED_MESSAGE =
+  `We could not build your quiz this time. Try again, or choose "Start from a template" above. If it keeps happening, email ${SUPPORT_EMAIL}.`;
+
 export function analyzeFailureTitle(f: AnalyzeFailure): string {
-  if (f.errorName === 'not_squarespace') return 'This builder is for Squarespace sites';
-  if (f.errorName === 'rate_limited') return 'Too many tries';
-  return 'Something went wrong';
+  switch (f.errorName) {
+    case 'not_squarespace':
+      return 'This builder is for Squarespace sites';
+    case 'rate_limited':
+      return 'Draft limit reached';
+    case 'network_error':
+    case 'timeout':
+      return 'We could not reach our servers';
+    case 'invalid_url':
+    case 'site_unreadable':
+      return 'We could not read that website';
+    default:
+      return 'Something went wrong on our side';
+  }
+}
+
+/** Short label for the chip in the builder's side panel. */
+export function analyzeFailureLabel(errorName: AnalyzeErrorName): string {
+  switch (errorName) {
+    case 'not_squarespace':
+      return 'Not a Squarespace site';
+    case 'rate_limited':
+      return 'Limit reached';
+    case 'network_error':
+    case 'timeout':
+      return 'Connection problem';
+    case 'invalid_url':
+    case 'site_unreadable':
+      return 'Site not readable';
+    default:
+      return 'Server problem';
+  }
 }
 
 export function analyzeFailureMessage(f: AnalyzeFailure): string {
@@ -164,24 +211,33 @@ export function analyzeFailureMessage(f: AnalyzeFailure): string {
       return rateLimitMessage(f.retryAfterSeconds);
     case 'not_squarespace':
       return NOT_SQUARESPACE_MESSAGE;
-    case 'timeout':
-      return 'That took too long. Our server may be waking up - please try again in a moment.';
     case 'network_error':
-      return "We couldn't reach our server. Check your internet connection and try again.";
+      return UNREACHABLE_MESSAGE;
+    case 'timeout':
+      return TIMEOUT_MESSAGE;
     case 'invalid_url':
-      return "That doesn't look like a website address. Check it and try again.";
-    case 'invalid_response':
-      return 'Invalid response from server. Please try again.';
+      return "That doesn't look like a website address. Check it and try again, or start from a template instead.";
+    case 'site_unreadable':
+      return UNREADABLE_SITE_MESSAGE;
     case 'ai_timeout':
     case 'ai_unavailable':
     case 'ai_rate_limited':
     case 'ai_bad_response':
+      // Our own wording (backend/src/lib/aiErrors.ts), not an exception message.
       return f.serverMessage || 'Our AI is busy right now. Please try again in a minute.';
-    case 'server_error':
-      return 'Something went wrong on our side while reading your site. Please try again.';
     default:
-      return f.serverMessage || `Analyze failed (${f.httpStatus || 'error'})`;
+      // server_error, http_error, invalid_response
+      return SERVER_PROBLEM_MESSAGE;
   }
+}
+
+/** Message for a failed POST /api/preview-build-quiz ("Generate my quiz"), shown on the screen with the template picker. */
+export function buildFailureMessage(status: number, body: any): string {
+  const code = body && typeof body.code === 'string' ? body.code : '';
+  if (status === 404) return 'This draft has expired. Enter your website again, or choose "Start from a template" above.';
+  if (status === 429) return rateLimitMessage(parseRetryAfter(body, null));
+  if ((AI_CODES as string[]).indexOf(code) !== -1 && typeof body.error === 'string') return body.error;
+  return BUILD_FAILED_MESSAGE;
 }
 
 /* ------------------------------------------------------------------ */
