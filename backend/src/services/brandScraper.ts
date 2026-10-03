@@ -1,5 +1,6 @@
 import { log } from '../lib/logger';
 import fetch from 'node-fetch';
+import { isSquarespaceSite } from './squarespaceDetect';
 
 /**
  * Thrown when the URL is not a Squarespace site.
@@ -91,14 +92,9 @@ export async function scrapeBrand(url: string) {
     let squarespaceContext = '';
     let isSquarespace = false;
 
-    // Detect Squarespace - Squarespell is Squarespace-ONLY, hard-fail otherwise
-    if (
-      html.includes('Static.SQUARESPACE_CONTEXT') ||
-      html.includes('static1.squarespace.com') ||
-      html.includes('static.squarespace') ||
-      /<meta[^>]+content="[^"]*Squarespace[^"]*"/i.test(html) ||
-      /generator"[^>]+content="Squarespace/i.test(html)
-    ) {
+    // Detect Squarespace - Squarespell is Squarespace-ONLY, hard-fail otherwise. Only marks Squarespace itself writes
+    // count: a page that merely mentions Squarespace is not one (see squarespaceDetect.ts).
+    if (isSquarespaceSite(html, res.headers.get('server'))) {
       isSquarespace = true;
       log.info('[Scraper] Squarespace site detected');
     }

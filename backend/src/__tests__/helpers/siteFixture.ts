@@ -1,4 +1,7 @@
-/** Local HTTP server that serves a Squarespace-looking page and a non-Squarespace page for the URL-analysis flow. */
+/**
+ * Local HTTP server for the URL-analysis flow: a Squarespace-looking page, a non-Squarespace page (/plain), and an
+ * address that cannot be read (/down drops the connection, like a site that is offline or a made-up domain).
+ */
 import http from 'http';
 import type { AddressInfo } from 'net';
 
@@ -12,6 +15,10 @@ const PLAIN = `<!doctype html><html><head><title>Plain Site</title></head><body>
 
 export function startSiteFixture(): Promise<{ base: string; close: () => void }> {
   const server = http.createServer((req, res) => {
+    if (req.url?.startsWith('/down')) {
+      req.socket.destroy();
+      return;
+    }
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(req.url?.startsWith('/plain') ? PLAIN : SQSP);
   });

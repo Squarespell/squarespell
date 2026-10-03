@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import FLOW_CSS from './flow-css';
 import { api } from '@/lib/api';
 import { publicQuizUrl, embedSnippet, APP_URL } from '@/lib/urls';
@@ -10,7 +11,10 @@ import { blocksToLegacy, legacyToBlocks } from '@/lib/quiz/blocks';
 import { QuizBlockEditor } from '@/app/dashboard/_components/QuizBlockEditor';
 import QuizRenderer, { RendererQuiz, RendererStage } from '@/components/quiz-taker/QuizRenderer';
 import { Wordmark } from '@/app/dashboard/_components/Brand';
-import { analyzeSite, analyzeFailureMessage, analyzeFailureTitle, reportAnalyzeFailure, AnalyzeErrorName } from '@/lib/quiz/analyzeSite';
+import {
+  analyzeSite, analyzeFailureLabel, analyzeFailureMessage, analyzeFailureTitle, buildFailureMessage, reportAnalyzeFailure,
+  AnalyzeErrorName, BUILD_FAILED_MESSAGE, TIMEOUT_MESSAGE, UNREACHABLE_MESSAGE,
+} from '@/lib/quiz/analyzeSite';
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
@@ -446,6 +450,16 @@ export function TryFlowInner({
     }
   }, []);
 
+  /** "Try a different address": back to the address field, ready to type. */
+  const focusUrlField = useCallback(() => {
+    setErrorMsg('');
+    setStage(1);
+    window.setTimeout(() => {
+      const field = document.getElementById('site-url') as HTMLInputElement | null;
+      if (field) { field.focus(); field.select(); }
+    }, 0);
+  }, []);
+
   useEffect(() => {
     if (mode !== 'preview') return;
     if (urlParam && !hasAutoStarted.current) {
@@ -502,8 +516,8 @@ export function TryFlowInner({
         document.getElementById('stage-3')?.scrollIntoView({ behavior: 'instant', block: 'start' });
         document.querySelector('.s3-main')?.scrollTo({ top: 0, behavior: 'instant' });
       }, 50);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to create quiz from template.');
+    } catch {
+      setErrorMsg('We could not open that template. Try again, or pick another one.');
     } finally {
       setBuildingQuiz(false);
     }
@@ -535,7 +549,10 @@ export function TryFlowInner({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Quiz build failed (${res.status})`);
+        // Back to the "choose" screen with a message that says what to do next, never the server's own text.
+        setErrorMsg(buildFailureMessage(res.status, err));
+        setS2SubStep('choose');
+        return;
       }
       const data = await res.json();
       const normalizedQuiz: Quiz = {
@@ -599,11 +616,12 @@ export function TryFlowInner({
       // quiz…" spinner running forever (it is gated purely on
       // s2SubStep === 'building', so nothing else ever recovers it).
       if (err?.name === 'AbortError') {
-        setErrorMsg(
-          "That took too long. Our server may be waking up - please try again in a moment.",
-        );
+        setErrorMsg(TIMEOUT_MESSAGE);
+      } else if (err instanceof TypeError) {
+        // fetch itself failed: offline, DNS, or a proxy error page without CORS headers
+        setErrorMsg(UNREACHABLE_MESSAGE);
       } else {
-        setErrorMsg(err.message || 'Failed to build quiz.');
+        setErrorMsg(BUILD_FAILED_MESSAGE);
       }
       setS2SubStep('choose');
     } finally {
@@ -1224,19 +1242,27 @@ export function TryFlowInner({
             </div>
           )}
 
-          {errorMsg && (
+          {stage === 1 && errorMsg && (
             <div className="hook-err show" role="alert">
               <div>{errorMsg}</div>
-              {/* Retrying the same non-Squarespace address cannot work: the field above is the way forward. */}
-              {analyzeErrorName !== 'not_squarespace' && (
-                <button
-                  type="button"
-                  className="hook-err-retry"
-                  onClick={() => { setErrorMsg(''); goAnalyze(url); }}
-                >
-                  Try again
+              {/* Every error offers a way forward. Retrying the same non-Squarespace address cannot work. */}
+              <div className="hook-err-actions">
+                {analyzeErrorName !== 'not_squarespace' && (
+                  <button
+                    type="button"
+                    className="hook-err-retry"
+                    onClick={() => { setErrorMsg(''); goAnalyze(url); }}
+                  >
+                    Try again
+                  </button>
+                )}
+                <button type="button" className="hook-err-retry" onClick={focusUrlField}>
+                  Try a different address
                 </button>
-              )}
+                <Link href="/templates" className="hook-err-retry">
+                  Start from a template
+                </Link>
+              </div>
             </div>
           )}
 
@@ -1259,7 +1285,7 @@ export function TryFlowInner({
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Error</div>
                 <div className="s2-left-site-name">{domain || 'Your site'}</div>
-                <div className="s2-left-type-chip">{analyzeErrorName === 'not_squarespace' ? 'Not a Squarespace site' : 'Could not analyze'}</div>
+                <div className="s2-left-type-chip">{analyzeErrorName ? analyzeFailureLabel(analyzeErrorName) : 'Something went wrong'}</div>
               </div>
               <div className="s2-left-footer">
                 <ol className="s2-left-step-dots" aria-label="Setup progress"><li className="s2-left-dot active">Website</li><li className="s2-left-dot">Brand</li><li className="s2-left-dot">Quiz</li></ol>
@@ -1276,19 +1302,22 @@ export function TryFlowInner({
                 </div>
                 {analyzeErrorName === 'not_squarespace' ? (
                   // Retrying the same address cannot work: lead with entering another one.
-                  <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); setStage(1); }}>
-                    Try a different URL
+                  <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={focusUrlField}>
+                    Try a different address
                   </button>
                 ) : (
                   <>
                     <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); goAnalyze(url); }}>
                       <SvgRefresh /> Try again
                     </button>
-                    <button type="button" className="btn btn-ghost" style={{ marginTop: 14, width: '100%', maxWidth: 280 }} onClick={function() { setErrorMsg(''); setStage(1); }}>
-                      ← Try a different URL
+                    <button type="button" className="btn btn-ghost" style={{ marginTop: 14, width: '100%', maxWidth: 280 }} onClick={focusUrlField}>
+                      Try a different address
                     </button>
                   </>
                 )}
+                <Link href="/templates" className="btn btn-ghost" style={{ marginTop: 14, width: '100%', maxWidth: 280 }}>
+                  Start from a template
+                </Link>
               </div>
             </div>
           </div>
@@ -1598,7 +1627,10 @@ export function TryFlowInner({
                 {errorMsg && (
                   <div className="s2-analyze-err" style={{ marginBottom: 16 }}>
                     <div>{errorMsg}</div>
-                    <button type="button" className="hook-err-retry" onClick={function() { setErrorMsg(''); handlePickGenerate(); }}>Try again</button>
+                    <div className="hook-err-actions">
+                      <button type="button" className="hook-err-retry" onClick={function() { setErrorMsg(''); handlePickGenerate(); }}>Try again</button>
+                      <button type="button" className="hook-err-retry" onClick={focusUrlField}>Try a different address</button>
+                    </div>
                   </div>
                 )}
 
