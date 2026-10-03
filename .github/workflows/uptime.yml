@@ -49,19 +49,23 @@ jobs:
         run: |
           set -uo pipefail
           UA='SquarespellUptime/1.0 (+https://github.com/Squarespell/squarespell)'
-          # address;status codes that count as up;text the answer must contain (optional).
-          # The app is behind a password until launch, so its 401 counts as up.
+          # address;status codes that count as up;text the answer must contain (optional);extra request header (optional).
+          # Until launch the app is behind a password, so its 401 counts as up. The API's pre-launch gate
+          # (infra/hostinger-edge/Caddyfile) answers 503 to everyone except the app's own pages, so the API check sends
+          # the app's Origin header, as those pages do. After launch the header changes nothing.
           targets=(
             'https://squarespellquiz.com/;200;'
             'https://app.squarespellquiz.com/sign-in;200|401;'
-            'https://api.squarespellquiz.com/api/health;200;"ok": *true'
+            'https://api.squarespellquiz.com/api/health;200;"ok": *true;Origin: https://app.squarespellquiz.com'
           )
           if [ -n "${SIMULATE:-}" ]; then targets+=('https://uptime-test.squarespellquiz.invalid/;200;'); fi
 
           check() {
-            local url want pat code re
-            IFS=';' read -r url want pat <<< "$1"
-            code=$(curl -sS -L --max-time 20 -A "$UA" -o body.txt -w '%{http_code}' "$url" 2> err.txt) || true
+            local url want pat hdr code re
+            local -a extra=()
+            IFS=';' read -r url want pat hdr <<< "$1"
+            if [ -n "$hdr" ]; then extra=(-H "$hdr"); fi
+            code=$(curl -sS -L --max-time 20 -A "$UA" "${extra[@]}" -o body.txt -w '%{http_code}' "$url" 2> err.txt) || true
             code=${code:-000}
             re="^(${want})$"
             if ! [[ $code =~ $re ]]; then
