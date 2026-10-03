@@ -1683,7 +1683,7 @@ function travelStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Easy Getaway",
-      description: "Our suggestion: a short, simple trip with great weather and nothing to organize.",
+      description: "Our suggestion: a short, simple trip with great weather and nothing to organize. We will find it for you.",
       ctaText: "See getaway deals", ctaUrl: "/trips/getaways",
       imageUrl: "https://images.unsplash.com/photo-1552674510-62c267e73ada?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -1804,7 +1804,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Active Volunteer",
-      description: "Our suggestion: volunteer days matched to your skills and your schedule.",
+      description: "Our suggestion: volunteer days matched to your skills and your schedule, so your time goes where it helps most.",
       ctaText: "Find volunteer days", ctaUrl: "/volunteer",
       imageUrl: "https://images.unsplash.com/photo-1599778150914-88e98e0c3a3e?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
