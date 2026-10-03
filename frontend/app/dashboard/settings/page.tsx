@@ -135,6 +135,15 @@ export default function SettingsPage() {
                 </Link>
               </div>
             ))}
+            {/* Reopens the cookie choice in components/ConsentBanner.tsx (SEO plan Segment 4, task 4.1). */}
+            <div className="st-row" style={{ ...row, borderTop: '1px solid ' + C.BORDER }}>
+              <Icon bg="#EBEFFF" d="M12 2a10 10 0 1010 10 4 4 0 01-5-5 4 4 0 01-5-5M8.5 8.5h.01M16 15.5h.01M11 17h.01M7 14h.01" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 19, fontWeight: 600, color: C.INK }}>Cookies</div>
+                <div style={{ fontSize: 16, color: C.GRAY_600, marginTop: 4 }}>Choose whether we count your visits with Google Analytics. The same choice applies on squarespellquiz.com.</div>
+              </div>
+              <button type="button" className="st-btn" data-sqs-consent-open="" style={{ cursor: 'pointer' }}>Change</button>
+            </div>
           </section>
 
           <section className="st-help" style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 20, marginTop: 16, padding: '18px 26px', background: '#fff', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
