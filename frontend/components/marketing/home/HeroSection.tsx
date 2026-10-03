@@ -12,11 +12,11 @@ import { ProofStrip } from './ProofStrip';
 const STEP_LABELS = ['Analyze', 'Build', 'Publish'] as const;
 
 // Copy shown in the hero product scene while it cycles. These mirror the
-// Photography Style template that ships in lib/quiz/templates.ts.
+// Wedding Photography Style template that ships in lib/quiz/templates.ts.
 const STAGES = [
-  { question: 'Which editing style are you drawn to?', count: 'QUESTION 2 OF 6', score: '84', label: 'high intent' },
-  { question: 'What is your photography budget?', count: 'QUESTION 4 OF 6', score: '92', label: 'qualified' },
-  { question: 'The Storyteller Collection', count: 'YOUR PHOTOGRAPHY MATCH', score: '1', label: 'new lead' },
+  { question: 'Which editing style are you drawn to?', count: 'QUESTION 2 OF 7', score: '84', label: 'high intent' },
+  { question: 'What is your photography budget?', count: 'QUESTION 5 OF 7', score: '92', label: 'qualified' },
+  { question: 'The Full-Day Collection', count: 'YOUR PHOTOGRAPHY MATCH', score: '1', label: 'new lead' },
 ];
 
 export function HeroSection() {
