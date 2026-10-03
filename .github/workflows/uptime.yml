@@ -1,0 +1,120 @@
+# Uptime check for squarespellquiz.com, the app and the API (SEO plan Segment 4, task 4.4).
+#
+# Every five minutes it requests three addresses. An address only counts as down when it fails twice in a row,
+# 90 seconds apart, so one slow answer never sends an alert.
+#
+# On the first confirmed failure the run fails and opens an issue titled "Uptime alert ..." that mentions
+# @Squarespell, so GitHub emails the owner. While that issue is open, later runs stay quiet instead of emailing
+# every five minutes. When every address answers again, the next run comments on the issue and closes it, which
+# emails the recovery.
+#
+# To test the alert email: Actions > Uptime > Run workflow, tick "Add an address that cannot answer". The next
+# scheduled run closes the test issue again.
+#
+# Free: public repositories have no Actions minute limit. GitHub pauses scheduled workflows in a public repository
+# after 60 days without a commit; if that happens, re-enable it on the Actions tab.
+name: Uptime
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      simulate_outage:
+        description: Add an address that cannot answer, to test the alert email
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - .github/workflows/uptime.yml
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: uptime-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Site, app and API answer
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Request each address, and re-check failures after 90 seconds
+        id: check
+        env:
+          SIMULATE: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_outage && '1' || '' }}
+        run: |
+          set -uo pipefail
+          UA='SquarespellUptime/1.0 (+https://github.com/Squarespell/squarespell)'
+          # address;status codes that count as up;text the answer must contain (optional).
+          # The app is behind a password until launch, so its 401 counts as up.
+          targets=(
+            'https://squarespellquiz.com/;200;'
+            'https://app.squarespellquiz.com/sign-in;200|401;'
+            'https://api.squarespellquiz.com/api/health;200;"ok": *true'
+          )
+          if [ -n "${SIMULATE:-}" ]; then targets+=('https://uptime-test.squarespellquiz.invalid/;200;'); fi
+
+          check() {
+            local url want pat code re
+            IFS=';' read -r url want pat <<< "$1"
+            code=$(curl -sS -L --max-time 20 -A "$UA" -o body.txt -w '%{http_code}' "$url" 2> err.txt) || true
+            code=${code:-000}
+            re="^(${want})$"
+            if ! [[ $code =~ $re ]]; then
+              echo "$url answered $code $(tr '\n' ' ' < err.txt | cut -c1-200)"
+              return 1
+            fi
+            if [ -n "$pat" ] && ! grep -Eq "$pat" body.txt; then
+              echo "$url answered $code, but without the expected text"
+              return 1
+            fi
+          }
+
+          first=()
+          for t in "${targets[@]}"; do
+            if msg=$(check "$t"); then echo "Up: ${t%%;*}"; else echo "No answer on the first try: $msg"; first+=("$t"); fi
+          done
+          down=()
+          if [ ${#first[@]} -gt 0 ]; then
+            echo "Checking again in 90 seconds"
+            sleep 90
+            for t in "${first[@]}"; do
+              if msg=$(check "$t"); then echo "Up on the second try: ${t%%;*}"; else echo "::error::Down twice in a row: $msg"; down+=("$msg"); fi
+            done
+          fi
+          {
+            echo 'down<<EOF_DOWN'
+            for d in "${down[@]}"; do echo "- $d"; done
+            echo 'EOF_DOWN'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open, keep or close the alert issue
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          DOWN: ${{ steps.check.outputs.down }}
+        run: |
+          set -euo pipefail
+          open=$(gh issue list --state open --limit 100 --json number,title --jq '[.[] | select(.title | startswith("Uptime alert"))][0].number // empty')
+          now=$(date -u '+%Y-%m-%d %H:%M UTC')
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ -n "$DOWN" ]; then
+            if [ -z "$open" ]; then
+              printf '@Squarespell an address stopped answering, twice in a row 90 seconds apart (%s):\n\n%s\n\nRun: %s\n\nThis issue closes by itself when everything answers again. Until then the check stays quiet.\n' "$now" "$DOWN" "$run_url" > issue.md
+              gh issue create --title "Uptime alert: down since $now" --body-file issue.md
+              echo "::error::Opened an uptime alert issue"
+              exit 1
+            fi
+            echo "::warning::Still down. Issue #$open is already open, so no new alert was sent."
+          elif [ -n "$open" ]; then
+            gh issue close "$open" --comment "Every address answers again ($now). Closed by the uptime check: $run_url"
+          fi
+
+      - name: Fail a pull request run when an address is down
+        if: github.event_name == 'pull_request' && steps.check.outputs.down != ''
+        run: exit 1
