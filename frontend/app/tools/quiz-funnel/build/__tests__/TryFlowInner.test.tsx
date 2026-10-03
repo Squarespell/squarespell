@@ -545,3 +545,93 @@ describe('template match recomputation after editing Business type', () => {
     expect(document.querySelectorAll('.s2-tpl-picker-item').length).toBeGreaterThan(1);
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* 8. Analyze (Stage 1 -> 2) reliability: SEO plan task 1.6             */
+/* ------------------------------------------------------------------ */
+// Audit 3 Oct 2026: the first load showed "Something went wrong. Failed to fetch" after ~5 s, while identical
+// requests moments later succeeded; later "Rate limit exceeded" with no hint how long to wait.
+describe('goAnalyze() reliability', () => {
+  const analyzeCalls = () => (global.fetch as any).mock.calls.filter((c: any[]) => String(c[0]).includes(ANALYZE_URL));
+
+  it('retries once automatically after "Failed to fetch" and carries on, without showing an error', async () => {
+    let n = 0;
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) {
+        n++;
+        if (n === 1) throw new TypeError('Failed to fetch');
+        return jsonResponse(200, ANALYZE_OK_BODY) as any;
+      }
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+    const gtag = vi.fn();
+    (window as any).gtag = gtag;
+
+    render(<TryFlowInner mode="preview" />);
+    await screen.findByText('Continue', {}, { timeout: 5000 });
+    expect(analyzeCalls()).toHaveLength(2);
+    expect(screen.queryByText(/Failed to fetch/i)).toBeNull();
+    expect(screen.queryByText('Something went wrong')).toBeNull();
+    expect(gtag).not.toHaveBeenCalled(); // not a final failure
+    delete (window as any).gtag;
+  });
+
+  it('on 429 shows the wait time from retryAfterSeconds, does not retry, and reports the failure without the site address', async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) {
+        return jsonResponse(429, { error: 'Rate limit exceeded. Please try again later.', code: 'rate_limited', retryAfterSeconds: 1200 }) as any;
+      }
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+    const gtag = vi.fn();
+    (window as any).gtag = gtag;
+
+    render(<TryFlowInner mode="preview" />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Too many tries. Please try again in about 20 minutes.').length).toBeGreaterThan(0);
+    });
+    expect(screen.getByText('Too many tries')).toBeTruthy();
+    expect(analyzeCalls()).toHaveLength(1);
+    expect(gtag).toHaveBeenCalledTimes(1);
+    const [, name, params] = gtag.mock.calls[0];
+    expect(name).toBe('builder_analyze_error');
+    expect(params).toMatchObject({ error_name: 'rate_limited', http_status: 429, retried: false });
+    expect(typeof params.elapsed_ms).toBe('number');
+    expect(JSON.stringify(params)).not.toMatch(/example\.com/);
+    delete (window as any).gtag;
+  });
+
+  it('a non-Squarespace site gets a clear Squarespace-only message, and the way forward is a different address', async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) {
+        return jsonResponse(422, { error: 'example.com is not a Squarespace site. Squarespell only works with Squarespace websites.', code: 'NOT_SQUARESPACE', hostname: 'example.com' }) as any;
+      }
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+
+    render(<TryFlowInner mode="preview" />);
+    await screen.findByText('This builder is for Squarespace sites');
+    expect(screen.getAllByText(/works with Squarespace websites only/).length).toBeGreaterThan(0);
+    expect(screen.getByText('Not a Squarespace site')).toBeTruthy();
+    expect(screen.queryByText('Something went wrong')).toBeNull();
+    // Retrying the same address is pointless: no "Try again", just "Try a different URL".
+    expect(screen.queryByText('Try again')).toBeNull();
+    expect(screen.getByText('Try a different URL')).toBeTruthy();
+    expect(analyzeCalls()).toHaveLength(1);
+  });
+
+  it('after two network failures shows a friendly error (not the bare "Failed to fetch") with a retry path', async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) throw new TypeError('Failed to fetch');
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+
+    render(<TryFlowInner mode="preview" />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/couldn't reach our server/i).length).toBeGreaterThan(0);
+    }, { timeout: 5000 });
+    expect(analyzeCalls()).toHaveLength(2);
+    expect(screen.queryByText(/Failed to fetch/)).toBeNull();
+    expect(screen.getAllByText('Try again').length).toBeGreaterThan(0);
+  });
+});
