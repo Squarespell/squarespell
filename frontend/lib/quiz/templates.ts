@@ -3,7 +3,7 @@
  *
  * Every template ships with:
  *   - 7 questions, each with helper text and a visual: an image per answer, a header photo, or a video
- *   - unique, licence-free Unsplash photography (no photo is reused across templates) and self-hosted video
+ *   - unique, license-free Unsplash photography (no photo is reused across templates) and self-hosted video
  *   - a lead gate before the results (email, first name, and phone where a call is the next step)
  *   - 3 scored outcomes covering every possible score (7-13, 14-20, 21-28) with a photo, 3 tips, a call to
  *     action and the result-page extras that fit the business: products, coupon, booking, before and after
@@ -61,7 +61,7 @@ function photographyStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'question', text: "Where would you love your photos taken?",
-      subtitle: "Your setting shapes the light, the colour and the whole feel of the gallery.",
+      subtitle: "Your setting shapes the light, the color and the whole feel of the gallery.",
       questionStyle: 'imageChoice', questionType: 'single', answerLayout: 'grid',
       options: [
         { id: uid(), text: "Garden or countryside", score: 4, imageUrl: "https://images.unsplash.com/photo-1572085313466-6710de8d7ba3?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -120,7 +120,7 @@ function photographyStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'leadGate', headline: "Your photography match is ready",
-      subtext: "Enter your email to see the package that fits your style, plus a pricing guide for your date.",
+      subtext: "Enter your email to see the package that fits your answers, plus a pricing guide for your date.",
       fields: [
         { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
         { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your first name' },
@@ -129,37 +129,37 @@ function photographyStyleBlocks(): QuizBlock[] {
       placement: 'before_results',
     },
     {
-      id: uid(), type: 'outcome', title: "The Storyteller Collection",
-      description: "You want a photographer who disappears into the day and captures raw, unscripted emotion. The Storyteller Collection includes full-day coverage, a second photographer and a curated gallery of 500+ edited images that tell the whole story, from getting ready to the last dance.",
+      id: uid(), type: 'outcome', title: "The Full-Day Collection",
+      description: "The Full-Day Collection includes full-day coverage, a second photographer and a curated gallery of 500+ edited images, from getting ready to the last dance.",
       ctaText: "Book a consultation", ctaUrl: "/contact",
       imageUrl: "https://images.unsplash.com/photo-1705290304455-35ffb433f560?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
-      shareText: "I matched with The Storyteller Collection. Find your photography style.",
+      shareText: "I matched with The Full-Day Collection. Find your wedding photography package.",
       tips: ["Send your date and venue so we can confirm availability.", "Plan an extra 30 minutes for golden-hour portraits.", "Share a list of the people and moments you must have."],
       bookingUrl: "/book", bookingText: "Book a 20-minute call",
       beforeText: "Worried you will forget the little moments.", afterText: "A gallery that tells your whole day, frame by frame.",
     },
     {
-      id: uid(), type: 'outcome', title: "The Portrait Session",
-      description: "You love beautifully composed, magazine-worthy portraits you will frame for years. The Portrait Session includes 6 hours of coverage, a planning call to build your shot list and 300+ carefully edited images in the style you chose.",
+      id: uid(), type: 'outcome', title: "The Signature Session",
+      description: "The Signature Session includes 6 hours of coverage, a planning call to build your shot list and 300+ edited images. It covers the ceremony, portraits and the first part of the reception.",
       ctaText: "View the portfolio", ctaUrl: "/portfolio",
       imageUrl: "https://images.unsplash.com/photo-1768050197707-5576b319e2d3?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
-      shareText: "The Portrait Session is my match. Take the quiz to find yours.",
+      shareText: "The Signature Session is my match. Take the quiz to find yours.",
       tips: ["Save 10 to 15 photos you love so we can match the look.", "Choose a portrait location with open shade.", "Book hair and makeup to finish 30 minutes early."],
-      bookingUrl: "/book", bookingText: "Plan my portrait session",
-      beforeText: "Not sure your photos will look like the ones you saved.", afterText: "Editorial portraits in exactly the style you love.",
+      bookingUrl: "/book", bookingText: "Plan my Signature Session",
+      beforeText: "Not sure your photos will look like the ones you saved.", afterText: "The ceremony, portraits and the start of the reception, all covered.",
     },
     {
       id: uid(), type: 'outcome', title: "The Essentials Package",
-      description: "You want stunning photos of the moments that matter, without the extras. The Essentials Package covers your ceremony and portraits with 4 hours of coverage and 150+ edited images in a private online gallery.",
+      description: "The Essentials Package covers the ceremony and portraits with 4 hours of coverage and 150+ edited images in a private online gallery. You can add hours later if your plans grow.",
       ctaText: "Check availability", ctaUrl: "/booking",
       imageUrl: "https://images.unsplash.com/photo-1763429450882-2f88073f2df5?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
       shareText: "The Essentials Package fits me perfectly. What is your match?",
       tips: ["Keep the ceremony and portraits close together.", "Pick one location for all your portraits.", "Add an hour later if your plans grow."],
       bookingUrl: "/book", bookingText: "Check my date",
-      beforeText: "Thinking great photography is out of budget.", afterText: "Beautiful ceremony and portrait photos that fit your plans.",
+      beforeText: "Not sure how much coverage you need.", afterText: "Beautiful ceremony and portrait photos that fit your plans.",
     },
   ];
 }
@@ -177,18 +177,18 @@ function restaurantMenuBlocks(): QuizBlock[] {
       options: [
         { id: uid(), text: "A slow, multi-course tasting", score: 4, imageUrl: "https://images.unsplash.com/photo-1785413287408-b4a4348412f6?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Something seasonal and fresh", score: 3, imageUrl: "https://images.unsplash.com/photo-1667657682263-86e924b34fd9?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "A cosy comfort classic", score: 2, imageUrl: "https://images.unsplash.com/photo-1664214649076-7b17006db5b5?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "A cozy comfort classic", score: 2, imageUrl: "https://images.unsplash.com/photo-1664214649076-7b17006db5b5?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Something quick and casual", score: 1, imageUrl: "https://images.unsplash.com/photo-1713330801172-03f8d1c0dde7?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
       ],
     },
     {
-      id: uid(), type: 'question', text: "Pick the flavours you love most.",
+      id: uid(), type: 'question', text: "Pick the flavors you love most.",
       subtitle: "Your answer helps our chef recommend the right dishes.",
       questionStyle: 'imageChoice', questionType: 'single', answerLayout: 'grid',
       options: [
         { id: uid(), text: "Bold and spicy", score: 4, imageUrl: "https://images.unsplash.com/photo-1591272216626-b09e38519371?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Herby and bright", score: 3, imageUrl: "https://images.unsplash.com/photo-1591291294701-4f651ddd3556?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "Rich and savoury", score: 2, imageUrl: "https://images.unsplash.com/photo-1593030668930-8130abedd2b0?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "Rich and savory", score: 2, imageUrl: "https://images.unsplash.com/photo-1593030668930-8130abedd2b0?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Sweet and simple", score: 1, imageUrl: "https://images.unsplash.com/photo-1628890444435-9e68e905773b?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
       ],
     },
@@ -263,7 +263,7 @@ function restaurantMenuBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Chef's Tasting Experience",
-      description: "You are here for the full experience. Our chef's tasting menu takes you through seven seasonal courses with optional wine pairings, served at an unhurried pace so you can enjoy every plate.",
+      description: "Our suggestion: the chef's tasting menu, seven seasonal courses with optional wine pairings, served at an unhurried pace so you can enjoy every plate.",
       ctaText: "Reserve a table", ctaUrl: "/reservations",
       imageUrl: "https://images.unsplash.com/photo-1698434939525-dd584e446a29?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -277,7 +277,7 @@ function restaurantMenuBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Seasonal Signature",
-      description: "You love food that tastes of the season. Start with our market plates, then choose one of our signature mains, all built around what our local growers bring in this week.",
+      description: "Our suggestion: start with our market plates, then choose one of our signature mains, all built around what our local growers bring in this week.",
       ctaText: "See the seasonal menu", ctaUrl: "/menu",
       imageUrl: "https://images.unsplash.com/photo-1712247452824-4c98e36925cc?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -291,12 +291,12 @@ function restaurantMenuBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Classic Comfort Plate",
-      description: "You want generous, familiar food done really well. Our comfort classics are slow-cooked, served hot and made for sharing, perfect for a relaxed night out.",
+      description: "Our suggestion: our comfort classics, slow-cooked, served hot and made for sharing, perfect for a relaxed night out.",
       ctaText: "Order or reserve", ctaUrl: "/menu#classics",
       imageUrl: "https://images.unsplash.com/photo-1783683275671-ce9e1de86f12?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
       shareText: "I got the Classic Comfort Plate. Take the quiz and find your dish.",
-      tips: ["Our classics are also available to take away.", "Order a side of house bread to share.", "Save room for dessert."],
+      tips: ["Our classics are also available for takeout.", "Order a side of house bread to share.", "Save room for dessert."],
       products: [
         { title: "House lasagne", price: "$21", url: "/menu#lasagne", imageUrl: "https://images.unsplash.com/photo-1654780105295-9227206f11ec?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { title: "Warm chocolate pudding", price: "$9", url: "/menu#dessert", imageUrl: "https://images.unsplash.com/photo-1590080875852-ba44f83ff2db?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -406,7 +406,7 @@ function fitnessGoalBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Transformation Program",
-      description: "You are ready to commit and want real results. The Transformation Program combines one-to-one coaching, a personalised strength plan and weekly check-ins for 12 weeks.",
+      description: "The Transformation Program combines one-to-one coaching, a personalized strength plan and weekly check-ins for 12 weeks. Book a first session to see how it fits your week.",
       ctaText: "Start my program", ctaUrl: "/programs/transformation",
       imageUrl: "https://images.unsplash.com/photo-1547919307-1ecb10702e6f?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -418,7 +418,7 @@ function fitnessGoalBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Balanced Lifestyle Plan",
-      description: "You want fitness that fits your life. The Balanced Lifestyle Plan mixes small group classes with a simple home routine, 3 to 4 sessions a week.",
+      description: "The Balanced Lifestyle Plan mixes small group classes with a simple home routine, 3 to 4 sessions a week.",
       ctaText: "See class times", ctaUrl: "/classes",
       imageUrl: "https://images.unsplash.com/photo-1632077804406-188472f1a810?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -430,12 +430,12 @@ function fitnessGoalBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Jumpstart Challenge",
-      description: "You are building the habit, and that is the hardest part. The 21-day Jumpstart Challenge gives you short, guided workouts and daily nudges to get moving.",
+      description: "The 21-day Jumpstart Challenge gives you short, guided workouts and daily nudges to get moving.",
       ctaText: "Join the challenge", ctaUrl: "/jumpstart",
       imageUrl: "https://images.unsplash.com/photo-1591291621164-2c6367723315?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
       shareText: "I am starting the Jumpstart Challenge. Take the quiz.",
-      tips: ["Start with 20 minutes, three times a week.", "Lay out your kit the night before.", "Celebrate every completed week."],
+      tips: ["Start with 20 minutes, three times a week.", "Lay out your workout clothes the night before.", "Celebrate every completed week."],
       couponCode: "JUMP10", couponLabel: "$10 off the 21-day challenge",
       bookingUrl: "/book", bookingText: "Talk to a coach",
       beforeText: "Not sure where to begin.", afterText: "A daily habit in 21 days.",
@@ -467,7 +467,7 @@ function productFinderBlocks(): QuizBlock[] {
       options: [
         { id: uid(), text: "Minimal and modern", score: 4, imageUrl: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Warm and natural", score: 3, imageUrl: "https://images.unsplash.com/photo-1762539747176-5d8f166346de?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "Bold and colourful", score: 2, imageUrl: "https://images.unsplash.com/photo-1559644704-0eda1aa40c7e?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "Bold and colorful", score: 2, imageUrl: "https://images.unsplash.com/photo-1559644704-0eda1aa40c7e?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Classic and timeless", score: 1, imageUrl: "https://images.unsplash.com/photo-1617177435596-1c9e30d6d608?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
       ],
     },
@@ -542,12 +542,12 @@ function productFinderBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Curated Collection",
-      description: "You want something truly special. The Curated Collection brings together our best-selling premium pieces, beautifully gift wrapped with a handwritten note.",
+      description: "The Curated Collection brings together our best-selling premium pieces. Gift wrapping and a handwritten note can be added at checkout.",
       ctaText: "Shop the collection", ctaUrl: "/shop/curated",
       imageUrl: "https://images.unsplash.com/photo-1759563874676-d551447de3a8?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
       shareText: "I found the perfect gift with this quiz.",
-      tips: ["Add a handwritten card at checkout.", "Order by 2pm for same-day dispatch.", "Free returns within 30 days."],
+      tips: ["Add a handwritten card at checkout.", "Order by 2pm for same-day shipping.", "Free returns within 30 days."],
       products: [
         { title: "Hand-poured candle set", price: "$68", url: "/shop/candle-set", imageUrl: "https://images.unsplash.com/photo-1777768785105-0a6245d28f28?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { title: "Ceramic vase", price: "$85", url: "/shop/vase", imageUrl: "https://images.unsplash.com/photo-1713191352960-911f277876a7?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -557,7 +557,7 @@ function productFinderBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Bestsellers Edit",
-      description: "You want a gift that is a guaranteed hit. The Bestsellers Edit is a selection of our most-loved products, each one rated highly by our customers.",
+      description: "The Bestsellers Edit is a selection of our most-loved products, each one rated highly by our customers.",
       ctaText: "Shop bestsellers", ctaUrl: "/shop/bestsellers",
       imageUrl: "https://images.unsplash.com/photo-1724693322842-ef58a38ac50a?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -571,7 +571,7 @@ function productFinderBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Starter Set",
-      description: "You want a thoughtful gift that does not break the bank. The Starter Set brings together small, useful pieces that make a lovely present.",
+      description: "The Starter Set brings together small, useful pieces that make a lovely present at a gentle price.",
       ctaText: "Shop gifts under $30", ctaUrl: "/shop/under-30",
       imageUrl: "https://images.unsplash.com/photo-1766512442064-0ffc39ce866f?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -604,7 +604,7 @@ function weddingStyleBlocks(): QuizBlock[] {
       ],
     },
     {
-      id: uid(), type: 'question', text: "Pick a colour palette.",
+      id: uid(), type: 'question', text: "Pick a color palette.",
       subtitle: "Your palette ties the flowers, stationery and decor together.",
       questionStyle: 'imageChoice', questionType: 'single', answerLayout: 'grid',
       options: [
@@ -615,8 +615,8 @@ function weddingStyleBlocks(): QuizBlock[] {
       ],
     },
     {
-      id: uid(), type: 'question', text: "Which centrepiece would you choose?",
-      subtitle: "Centrepieces set the mood for your reception.",
+      id: uid(), type: 'question', text: "Which centerpiece would you choose?",
+      subtitle: "Centerpieces set the mood for your reception.",
       questionStyle: 'imageChoice', questionType: 'single', answerLayout: 'grid',
       options: [
         { id: uid(), text: "Overflowing florals", score: 4, imageUrl: "https://images.unsplash.com/photo-1609670002360-153929958683?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -685,7 +685,7 @@ function weddingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "Garden Romance",
-      description: "Your wedding is soft, romantic and full of flowers. Think a garden ceremony, blush and ivory florals, candlelit tables and a long, golden evening.",
+      description: "Our suggestion: Garden Romance. Think a garden ceremony, blush and ivory florals, candlelit tables and a long, golden evening.",
       ctaText: "Plan my garden wedding", ctaUrl: "/services/full-planning",
       imageUrl: "https://images.unsplash.com/photo-1561593367-66c79c2294e6?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -699,7 +699,7 @@ function weddingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "Modern Elegance",
-      description: "You love clean lines, a striking palette and a polished, elegant celebration. Expect a statement venue, sculptural florals and sharp, modern details.",
+      description: "Our suggestion: Modern Elegance. Expect a statement venue, a striking palette, sculptural florals and sharp, modern details.",
       ctaText: "Plan my modern wedding", ctaUrl: "/services/partial-planning",
       imageUrl: "https://images.unsplash.com/photo-1649615644623-a4f6220f4352?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -713,7 +713,7 @@ function weddingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "Rustic Charm",
-      description: "You want a relaxed, heartfelt day with the people you love. Picture string lights, wildflowers, long tables and good food shared family style.",
+      description: "Our suggestion: Rustic Charm. Picture string lights, wildflowers, long tables and good food shared family style.",
       ctaText: "Plan my rustic wedding", ctaUrl: "/services/coordination",
       imageUrl: "https://images.unsplash.com/photo-1723832348105-2e69f948135a?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -828,7 +828,7 @@ function coachingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Accelerator",
-      description: "You have a proven business and you are ready to scale. The Accelerator is a 6-month, one-to-one program covering offers, systems and hiring, with fortnightly strategy sessions.",
+      description: "The Accelerator is a 6-month, one-to-one program covering offers, systems and hiring, with strategy sessions every two weeks.",
       ctaText: "Apply for the Accelerator", ctaUrl: "/programs/accelerator",
       imageUrl: "https://images.unsplash.com/photo-1571624436279-b272aff752b5?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -839,7 +839,7 @@ function coachingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Growth Blueprint",
-      description: "You have momentum and need a clear plan. The Growth Blueprint is a 12-week group program to package your offers, raise your prices and build a steady flow of clients.",
+      description: "The Growth Blueprint is a 12-week group program to package your offers, raise your prices and build a steady flow of clients.",
       ctaText: "Join the Growth Blueprint", ctaUrl: "/programs/blueprint",
       imageUrl: "https://images.unsplash.com/photo-1542621334-a254cf47733d?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -850,7 +850,7 @@ function coachingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Foundation Course",
-      description: "You are building the base of your business. The Foundation Course is a self-paced program to find your niche, shape your first offer and land your first clients.",
+      description: "The Foundation Course is a self-paced program to find your niche, shape your first offer and land your first clients.",
       ctaText: "Start the Foundation Course", ctaUrl: "/programs/foundation",
       imageUrl: "https://images.unsplash.com/photo-1679119790850-161688b0417e?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -875,19 +875,19 @@ function homeStyleBlocks(): QuizBlock[] {
       options: [
         { id: uid(), text: "A sunlit room full of plants", score: 4, imageUrl: "https://images.unsplash.com/photo-1656122381069-9ec666d95cf1?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "A sleek, calm kitchen", score: 3, imageUrl: "https://images.unsplash.com/photo-1610276099118-c929abaaa80a?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "A cosy reading nook", score: 2, imageUrl: "https://images.unsplash.com/photo-1765828313695-cd872255352f?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "A cozy reading nook", score: 2, imageUrl: "https://images.unsplash.com/photo-1765828313695-cd872255352f?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "A bold, collected lounge", score: 1, imageUrl: "https://images.unsplash.com/photo-1632119580908-ae947d4c7691?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
       ],
     },
     {
-      id: uid(), type: 'question', text: "Pick a colour palette.",
+      id: uid(), type: 'question', text: "Pick a color palette.",
       subtitle: "Your palette is the foundation of the whole design.",
       questionStyle: 'imageChoice', questionType: 'single', answerLayout: 'grid',
       options: [
         { id: uid(), text: "Warm whites and natural wood", score: 4, imageUrl: "https://images.unsplash.com/photo-1611072337226-1140ab367200?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "Soft greys and stone", score: 3, imageUrl: "https://images.unsplash.com/photo-1712730324696-f95697a14f97?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "Soft grays and stone", score: 3, imageUrl: "https://images.unsplash.com/photo-1712730324696-f95697a14f97?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Earthy terracotta and olive", score: 2, imageUrl: "https://images.unsplash.com/photo-1790343434182-872b9d1539c3?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "Deep, moody colours", score: 1, imageUrl: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "Deep, moody colors", score: 1, imageUrl: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
       ],
     },
     {
@@ -961,7 +961,7 @@ function homeStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "Organic Modern",
-      description: "You love calm, natural spaces full of light, texture and wood. Think warm whites, oak, linen, stone and plenty of plants.",
+      description: "Our suggestion: Organic Modern. Calm, natural spaces full of light, texture and wood: warm whites, oak, linen, stone and plenty of plants.",
       ctaText: "Book a design consultation", ctaUrl: "/services/full-design",
       imageUrl: "https://images.unsplash.com/photo-1649083048770-82e8ffd80431?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -975,12 +975,12 @@ function homeStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "Collected Eclectic",
-      description: "Your home tells a story. You mix vintage finds, art, colour and pattern into spaces that feel personal and alive.",
+      description: "Our suggestion: Collected Eclectic. Vintage finds, art, color and pattern mixed into spaces that feel personal and alive.",
       ctaText: "Book a styling session", ctaUrl: "/services/styling",
       imageUrl: "https://images.unsplash.com/photo-1696454821089-eba4e8fcc24d?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
       shareText: "My home style is Collected Eclectic. What is yours?",
-      tips: ["Repeat one colour three times in a room.", "Hang art at eye level, about 145cm to centre.", "Mix old and new in every space."],
+      tips: ["Repeat one color three times in a room.", "Hang art at eye level, about 57 inches to center.", "Mix old and new in every space."],
       products: [
         { title: "E-design package", price: "$950", url: "/services/e-design", imageUrl: "https://images.unsplash.com/photo-1561123760-0b8467594a63?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { title: "Vintage art print set", price: "$180", url: "/shop/art-prints", imageUrl: "https://images.unsplash.com/photo-1452457005517-a0dd81caca2a?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -989,12 +989,12 @@ function homeStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "Bold Contemporary",
-      description: "You are drawn to drama: deep colours, statement furniture and striking lighting that makes a room unforgettable.",
+      description: "Our suggestion: Bold Contemporary. Deep colors, statement furniture and striking lighting that make a room unforgettable.",
       ctaText: "Get my mood board", ctaUrl: "/services/mood-board",
       imageUrl: "https://images.unsplash.com/photo-1640357897497-599b4fc84f51?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
       shareText: "My home style is Bold Contemporary. Take the quiz.",
-      tips: ["Paint the ceiling the same colour as the walls.", "Choose one oversized light fitting.", "Use mirrors to balance dark colours."],
+      tips: ["Paint the ceiling the same color as the walls.", "Choose one oversized light fixture.", "Use mirrors to balance dark colors."],
       products: [
         { title: "Mood board and palette", price: "$290", url: "/services/mood-board", imageUrl: "https://images.unsplash.com/photo-1581079948988-537795b40f5f?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { title: "Statement lighting edit", price: "$650", url: "/shop/lighting", imageUrl: "https://images.unsplash.com/photo-1608128947626-09e25f109c59?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -1093,7 +1093,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'leadGate', headline: "Your skincare routine is ready",
-      subtext: "Enter your email to get your personalised routine and 15% off your first order.",
+      subtext: "Enter your email to get your personalized routine and 15% off your first order.",
       fields: [
         { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
         { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your first name' },
@@ -1103,7 +1103,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Glow Protocol",
-      description: "Your skin is ready for a results-driven routine. The Glow Protocol pairs a gentle exfoliant and targeted serum with barrier support and daily SPF.",
+      description: "The Glow Protocol pairs a gentle exfoliant and targeted serum with barrier support and daily SPF. Book a consultation to adjust it to your skin.",
       ctaText: "Shop the Glow Protocol", ctaUrl: "/shop/glow",
       imageUrl: "https://images.unsplash.com/photo-1631390179406-0bfe17e9f89d?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -1119,7 +1119,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Essential Facial",
-      description: "Your skin needs balance and consistency. The Essential Facial routine keeps it simple: a gentle cleanser, a hydrating serum and a lightweight moisturiser.",
+      description: "The Essential Facial routine keeps it simple: a gentle cleanser, a hydrating serum and a lightweight moisturizer.",
       ctaText: "Shop the essentials", ctaUrl: "/shop/essentials",
       imageUrl: "https://images.unsplash.com/photo-1556227703-b7668d8cff99?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -1134,7 +1134,7 @@ function skincareRoutineBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Skin Reset",
-      description: "Your skin needs comfort first. The Skin Reset is a three-step routine of soothing, fragrance-free products that repair your skin barrier.",
+      description: "The Skin Reset is a three-step routine of soothing, fragrance-free products that support your skin barrier.",
       ctaText: "Start my skin reset", ctaUrl: "/shop/reset",
       imageUrl: "https://images.unsplash.com/photo-1677726050564-6abb77837338?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -1249,7 +1249,7 @@ function creativeArchetypeBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Visionary",
-      description: "You are driven, prolific and ready to build something bigger. Your next step is turning your creativity into a business with clear offers and a loyal audience.",
+      description: "Our suggestion for your next step: turn your creativity into a business with clear offers and a loyal audience.",
       ctaText: "Join the mentorship", ctaUrl: "/mentorship",
       imageUrl: "https://images.unsplash.com/photo-1618331833071-ce81bd50d300?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -1262,12 +1262,12 @@ function creativeArchetypeBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Craftsperson",
-      description: "You care deeply about skill and process. You will thrive with structured practice, honest feedback and time to master your medium.",
+      description: "Our suggestion for your next step: structured practice, honest feedback and time to master your medium.",
       ctaText: "Explore the course", ctaUrl: "/courses",
       imageUrl: "https://images.unsplash.com/photo-1610128361323-6e941c97f023?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
       shareText: "My creative archetype is The Craftsperson. What is yours?",
-      tips: ["Practise one technique for 20 minutes daily.", "Keep a process journal.", "Share work in progress for feedback."],
+      tips: ["Practice one technique for 20 minutes daily.", "Keep a process journal.", "Share work in progress for feedback."],
       products: [
         { title: "8-week technique course", price: "$249", url: "/courses/technique", imageUrl: "https://images.unsplash.com/photo-1582571881821-380713f48b29?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { title: "Studio practice planner", price: "$19", url: "/shop/planner", imageUrl: "https://images.unsplash.com/photo-1562217180-021f74991332?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -1275,7 +1275,7 @@ function creativeArchetypeBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Explorer",
-      description: "You create for joy and curiosity. You will thrive with gentle prompts, a supportive community and permission to play.",
+      description: "Our suggestion for your next step: gentle prompts, a supportive community and permission to play.",
       ctaText: "Join the community", ctaUrl: "/community",
       imageUrl: "https://images.unsplash.com/photo-1535673774336-ef95d2851cf3?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -1358,7 +1358,7 @@ function podcastPersonalityBlocks(): QuizBlock[] {
       questionStyle: 'buttons', questionType: 'single', answerLayout: 'list',
       mediaUrl: "https://images.unsplash.com/photo-1649298173603-9c95aa950879?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80", mediaType: 'image',
       options: [
-        { id: uid(), text: "Monetising my show", score: 4 },
+        { id: uid(), text: "Monetizing my show", score: 4 },
         { id: uid(), text: "Growing my audience", score: 3 },
         { id: uid(), text: "Staying consistent", score: 2 },
         { id: uid(), text: "Getting started", score: 1 },
@@ -1388,7 +1388,7 @@ function podcastPersonalityBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Authority Builder",
-      description: "You have an audience and expertise. Your next step is turning your show into a business with sponsorships, premium content and a clear funnel.",
+      description: "Our suggestion for your next step: turn your show into a business with sponsorships, premium content and a clear funnel.",
       ctaText: "Book a growth audit", ctaUrl: "/services/audit",
       imageUrl: "https://images.unsplash.com/photo-1589903308904-1010c2294adc?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -1402,7 +1402,7 @@ function podcastPersonalityBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Storyteller",
-      description: "You connect through stories. You will grow fastest with a consistent schedule, stronger episode structure and clips that travel on social media.",
+      description: "Our suggestion for your next step: a consistent schedule, stronger episode structure and clips that travel on social media.",
       ctaText: "Join the creator course", ctaUrl: "/courses/creator",
       imageUrl: "https://images.unsplash.com/photo-1531651008558-ed1740375b39?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -1416,12 +1416,12 @@ function podcastPersonalityBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Rising Creator",
-      description: "You are at the exciting start. Focus on simple, reliable gear and a launch plan you can stick to.",
+      description: "Our suggestion for your next step: simple, reliable gear and a launch plan you can stick to.",
       ctaText: "Get the launch kit", ctaUrl: "/shop/launch-kit",
       imageUrl: "https://images.unsplash.com/photo-1660631228116-b3643559f611?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
       shareText: "I am a Rising Creator. Take the quiz.",
-      tips: ["Pick one format and one day to publish.", "Record in a small room with soft furnishings.", "Launch with three episodes at once."],
+      tips: ["Pick one format and one day to publish.", "Record in a small room with rugs and curtains.", "Launch with three episodes at once."],
       products: [
         { title: "Podcast launch kit", price: "$99", url: "/shop/launch-kit", imageUrl: "https://images.unsplash.com/photo-1553775282-20af80779df7?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { title: "30-day launch plan", price: "Free", url: "/resources/launch-plan", imageUrl: "https://images.unsplash.com/photo-1632772998001-cc9bf6f7c852?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -1485,7 +1485,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'question', text: "Which feature matters most?",
-      subtitle: "We will prioritise homes that have it.",
+      subtitle: "We will prioritize homes that have it.",
       questionStyle: 'imageChoice', questionType: 'single', answerLayout: 'grid',
       options: [
         { id: uid(), text: "A big kitchen", score: 4, imageUrl: "https://images.unsplash.com/photo-1609347744403-2306e8a9ae27?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
@@ -1531,7 +1531,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Power Buyer",
-      description: "You are ready to move and in a strong position. We will prepare a tailored shortlist, arrange private viewings and help you win the right home.",
+      description: "Our suggestion: a tailored shortlist, private viewings and help making a strong offer on the right home.",
       ctaText: "Book a buyer consultation", ctaUrl: "/contact",
       imageUrl: "https://images.unsplash.com/photo-1613545325278-f24b0cae1224?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -1541,7 +1541,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Smart Searcher",
-      description: "You know what you want and you are getting your finances in order. We will set up instant alerts and walk you through every step of buying.",
+      description: "Our suggestion: instant alerts for new listings and a walk-through of every step of buying.",
       ctaText: "Set up my home alerts", ctaUrl: "/alerts",
       imageUrl: "https://images.unsplash.com/photo-1698133468646-0fc9f395330b?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -1551,12 +1551,12 @@ function realEstateBuyerBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The First-Time Explorer",
-      description: "You are at the start of your journey. Our free first-time buyer guide and a no-pressure chat will help you plan the next steps with confidence.",
+      description: "Our suggestion: our free buyer's guide and a no-pressure chat to plan the next steps with confidence.",
       ctaText: "Get the buyer guide", ctaUrl: "/guides/first-time-buyer",
       imageUrl: "https://images.unsplash.com/photo-1643804926339-e94f0a655185?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
       shareText: "I am a First-Time Explorer. Take the quiz.",
-      tips: ["Check your credit score early.", "Save for a deposit and an emergency fund.", "Make a must-have and nice-to-have list."],
+      tips: ["Check your credit score early.", "Save for a down payment and an emergency fund.", "Make a must-have and nice-to-have list."],
       bookingUrl: "/book", bookingText: "Book a free chat",
     },
   ];
@@ -1569,7 +1569,7 @@ function realEstateBuyerBlocks(): QuizBlock[] {
 function travelStyleBlocks(): QuizBlock[] {
   return [
     {
-      id: uid(), type: 'question', text: "What does your ideal holiday look like?",
+      id: uid(), type: 'question', text: "What does your ideal vacation look like?",
       subtitle: "Pick the picture you would step into right now.",
       questionStyle: 'imageChoice', questionType: 'single', answerLayout: 'grid',
       options: [
@@ -1591,7 +1591,7 @@ function travelStyleBlocks(): QuizBlock[] {
       ],
     },
     {
-      id: uid(), type: 'question', text: "Who is travelling?",
+      id: uid(), type: 'question', text: "Who is traveling?",
       subtitle: "We will plan around everyone in your group.",
       questionStyle: 'buttons', questionType: 'single', answerLayout: 'list',
       mediaUrl: "https://images.unsplash.com/photo-1759038085950-1234ca8f5fed?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80", mediaType: 'image',
@@ -1661,7 +1661,7 @@ function travelStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Luxury Escape",
-      description: "You travel for beauty, comfort and unforgettable moments. Think boutique villas, private tours and tables at the best restaurants in town.",
+      description: "Our suggestion: boutique villas, private tours and tables at the best restaurants in town.",
       ctaText: "Plan my luxury escape", ctaUrl: "/trips/luxury",
       imageUrl: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -1672,18 +1672,18 @@ function travelStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Culture Explorer",
-      description: "You travel to learn, taste and wander. We will plan a trip full of food, history and neighbourhoods off the usual tourist path.",
+      description: "Our suggestion: a trip full of food, history and neighborhoods off the usual tourist path.",
       ctaText: "Plan my city trip", ctaUrl: "/trips/culture",
       imageUrl: "https://images.unsplash.com/photo-1557154628-fd945296f794?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
       shareText: "My travel style is The Culture Explorer. What is yours?",
-      tips: ["Base yourself in a walkable neighbourhood.", "Book one guided tour on your first day.", "Leave a free afternoon to wander."],
+      tips: ["Base yourself in a walkable neighborhood.", "Book one guided tour on your first day.", "Leave a free afternoon to wander."],
       couponCode: "EXPLORE10", couponLabel: "10% off your first trip",
       bookingUrl: "/book", bookingText: "Plan with an expert",
     },
     {
       id: uid(), type: 'outcome', title: "The Easy Getaway",
-      description: "You want a relaxing break without the stress. We will find a short, simple trip with great weather and nothing to organise.",
+      description: "Our suggestion: a short, simple trip with great weather and nothing to organize.",
       ctaText: "See getaway deals", ctaUrl: "/trips/getaways",
       imageUrl: "https://images.unsplash.com/photo-1552674510-62c267e73ada?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -1743,7 +1743,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
         { id: uid(), text: "Professional skills", score: 4, imageUrl: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Hands-on work", score: 3, imageUrl: "https://images.unsplash.com/photo-1596277922657-f80257171aec?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Teaching or mentoring", score: 2, imageUrl: "https://images.unsplash.com/photo-1711062717319-393e424a3538?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "Events and organising", score: 1, imageUrl: "https://images.unsplash.com/photo-1743385779431-45d26d9775b1?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "Events and organizing", score: 1, imageUrl: "https://images.unsplash.com/photo-1743385779431-45d26d9775b1?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
       ],
     },
     {
@@ -1794,7 +1794,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Changemaker",
-      description: "You are ready to make a lasting difference. Becoming a monthly supporter or volunteer lead lets you see the long-term impact of your help.",
+      description: "Our suggestion: become a monthly supporter or a volunteer lead, so you can see the long-term impact of your help.",
       ctaText: "Become a monthly supporter", ctaUrl: "/give/monthly",
       imageUrl: "https://images.unsplash.com/photo-1591255199673-4e2b706645a2?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -1804,7 +1804,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Active Volunteer",
-      description: "You love rolling up your sleeves. We will match you to volunteer days that fit your skills and your schedule.",
+      description: "Our suggestion: volunteer days matched to your skills and your schedule.",
       ctaText: "Find volunteer days", ctaUrl: "/volunteer",
       imageUrl: "https://images.unsplash.com/photo-1599778150914-88e98e0c3a3e?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -1814,7 +1814,7 @@ function nonprofitEngagementBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Generous Supporter",
-      description: "Every bit of support counts. A one-off gift or sharing our campaign helps more people than you might think.",
+      description: "Our suggestion: a one-off gift or sharing our campaign. Every bit of support helps more people than you might think.",
       ctaText: "Give today", ctaUrl: "/give",
       imageUrl: "https://images.unsplash.com/photo-1761065110340-59c17804489e?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -1916,7 +1916,7 @@ function videoFitnessChallengeBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'leadGate', headline: "Your challenge is ready",
-      subtext: "Enter your email to get your personalised 4-week video challenge.",
+      subtext: "Enter your email to get your personalized 4-week video challenge.",
       fields: [
         { id: uid(), type: 'email', label: 'Email address', required: true, placeholder: 'you@example.com' },
         { id: uid(), type: 'name', label: 'First name', required: false, placeholder: 'Your first name' },
@@ -1927,7 +1927,7 @@ function videoFitnessChallengeBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Power Athlete",
-      description: "You are fit and ready to push. Your 4-week challenge mixes heavy strength days with high-intensity conditioning, all on video so you can train anywhere.",
+      description: "Our suggestion: a 4-week challenge that mixes heavy strength days with high-intensity conditioning, all on video so you can train anywhere.",
       ctaText: "Start the advanced challenge", ctaUrl: "/challenge/advanced",
       imageUrl: "https://images.unsplash.com/photo-1521805103424-d8f8430e8933?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -1939,7 +1939,7 @@ function videoFitnessChallengeBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Balanced Mover",
-      description: "You have a good base and want all-round fitness. Your challenge balances strength, cardio and mobility, about 40 minutes a session.",
+      description: "Our suggestion: a challenge that balances strength, cardio and mobility, about 40 minutes a session.",
       ctaText: "Start the balanced challenge", ctaUrl: "/challenge/balanced",
       imageUrl: "https://images.unsplash.com/photo-1653647358769-c0465db60293?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -1951,7 +1951,7 @@ function videoFitnessChallengeBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Fresh Starter",
-      description: "You are building the habit, and that is the hardest part. Your challenge starts with short 20-minute videos you can follow at home.",
+      description: "Our suggestion: a challenge that starts with short 20-minute videos you can follow at home.",
       ctaText: "Start the beginner challenge", ctaUrl: "/challenge/beginner",
       imageUrl: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -2065,7 +2065,7 @@ function videoCookingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Creative Chef",
-      description: "You cook with confidence and love to experiment. Our advanced technique classes will push your skills further, from knife work to restaurant-style plating.",
+      description: "Our suggestion: advanced technique classes, from knife work to restaurant-style plating.",
       ctaText: "Book a technique class", ctaUrl: "/classes/advanced",
       imageUrl: "https://images.unsplash.com/photo-1604543248368-da42b20dce5b?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
@@ -2079,7 +2079,7 @@ function videoCookingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Confident Cook",
-      description: "You cook often and want fresh ideas. Our weekly recipe club brings new seasonal recipes straight to your inbox.",
+      description: "Our suggestion: the weekly recipe club, with new seasonal recipes sent straight to your inbox.",
       ctaText: "Join the recipe club", ctaUrl: "/recipe-club",
       imageUrl: "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -2093,7 +2093,7 @@ function videoCookingStyleBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Kitchen Starter",
-      description: "You are building your confidence, one dish at a time. Our beginner course teaches the ten recipes every cook should know.",
+      description: "Our suggestion: the beginner course, with the ten recipes every cook should know.",
       ctaText: "Start the beginner course", ctaUrl: "/courses/beginner",
       imageUrl: "https://images.unsplash.com/photo-1759965670306-f055ff093752?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
@@ -2180,7 +2180,7 @@ function videoBrandPersonalityBlocks(): QuizBlock[] {
       mediaUrl: "/template-media/brand-studio.mp4", mediaType: 'video',
       options: [
         { id: uid(), text: "A premium studio", score: 4, imageUrl: "https://images.unsplash.com/photo-1786325492063-8967ed6ad88d?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
-        { id: uid(), text: "A cosy home office", score: 3, imageUrl: "https://images.unsplash.com/photo-1588495756528-01247aa51ec8?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
+        { id: uid(), text: "A cozy home office", score: 3, imageUrl: "https://images.unsplash.com/photo-1588495756528-01247aa51ec8?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "A shared workspace", score: 2, imageUrl: "https://images.unsplash.com/photo-1720139290958-d8676702c3ed?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
         { id: uid(), text: "Anywhere with a laptop", score: 1, imageUrl: "https://images.unsplash.com/photo-1629893250923-eff7863b6e7d?auto=format&fit=crop&crop=entropy&w=600&h=450&q=80" },
       ],
@@ -2209,18 +2209,18 @@ function videoBrandPersonalityBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Visionary Leader",
-      description: "Your brand leads with authority and big ideas. Premium visuals, confident language and thought-leadership content will position you as the go-to expert.",
+      description: "Our suggestion: premium visuals, confident language and thought-leadership content to position you as the go-to expert.",
       ctaText: "Book a brand strategy session", ctaUrl: "/services/brand-strategy",
       imageUrl: "https://images.unsplash.com/photo-1718670013988-c6e3edb92345?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 21, maxScore: 28, shareEnabled: true,
       shareText: "My brand personality is The Visionary Leader. Find yours.",
-      tips: ["Publish one strong opinion every week.", "Use a consistent, premium colour palette.", "Lead with results, not features."],
+      tips: ["Publish one strong opinion every week.", "Use a consistent, premium color palette.", "Lead with results, not features."],
       bookingUrl: "/book", bookingText: "Book a strategy session",
       beforeText: "Great expertise, generic brand.", afterText: "A premium brand that matches your expertise.",
     },
     {
       id: uid(), type: 'outcome', title: "The Trusted Guide",
-      description: "Your brand is warm, personal and caring. Story-led messaging, natural photography and a friendly voice will help clients feel understood.",
+      description: "Our suggestion: story-led messaging, natural photography and a friendly voice that help clients feel understood.",
       ctaText: "Refresh my brand", ctaUrl: "/services/brand-refresh",
       imageUrl: "https://images.unsplash.com/photo-1627618997755-f12d6f6ae6fd?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 14, maxScore: 20, shareEnabled: true,
@@ -2231,12 +2231,12 @@ function videoBrandPersonalityBlocks(): QuizBlock[] {
     },
     {
       id: uid(), type: 'outcome', title: "The Clear Expert",
-      description: "Your brand is calm, clear and dependable. Simple design, plain language and proof of results will build trust fast.",
+      description: "Our suggestion: simple design, plain language and proof of results to build trust fast.",
       ctaText: "Get my messaging guide", ctaUrl: "/resources/messaging-guide",
       imageUrl: "https://images.unsplash.com/photo-1614036634955-ae5e90f9b9eb?auto=format&fit=crop&crop=entropy&w=1200&h=630&q=80",
       minScore: 7, maxScore: 13, shareEnabled: true,
       shareText: "My brand personality is The Clear Expert. Take the quiz.",
-      tips: ["Say what you do in one sentence.", "Add client results to your homepage.", "Keep your fonts and colours consistent."],
+      tips: ["Say what you do in one sentence.", "Add client results to your homepage.", "Keep your fonts and colors consistent."],
       bookingUrl: "/book", bookingText: "Ask a brand strategist",
       beforeText: "A message that is hard to explain.", afterText: "A clear brand people trust at first glance.",
     },
@@ -2322,9 +2322,9 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
   {
     id: 'photography_style',
     category: 'Photography',
-    name: 'Photography Style Quiz',
+    name: 'Wedding Photography Style Quiz',
     description: 'Help potential clients discover their photography style and match them to the right package. Captures emails, qualifies leads by budget, and books more consultations by making the first interaction personal and visual.',
-    audience: 'Wedding photographers, portrait photographers, event photographers',
+    audience: 'Wedding photographers',
     whyItWorks: 'Photography is a visual medium and clients struggle to articulate what they want. This quiz turns "I like your work" into a qualified lead with budget, timeline, and style preferences.',
     iconPath: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2zM12 17a5 5 0 100-10 5 5 0 000 10z',
     tags: ['photography', 'wedding', 'portrait', 'booking', 'style'],
@@ -2334,7 +2334,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'restaurant_menu',
     category: 'Food & Dining',
     name: 'Menu Recommendation Quiz',
-    description: 'Guide diners to their perfect dish while building your email list. Captures dietary preferences, party size, and taste profiles — then recommends the ideal menu experience. Boosts reservations and repeat visits.',
+    description: 'Guide diners to their perfect dish while building your email list. Captures dietary preferences, party size, and taste profiles, then recommends the ideal menu experience. Boosts reservations and repeat visits.',
     audience: 'Restaurants, cafes, catering companies, food trucks, bakeries',
     whyItWorks: 'Menu fatigue is real. A fun quiz that recommends dishes feels like a personalized concierge, not a marketing form. Diners share it with friends, driving organic referrals.',
     iconPath: 'M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3',
@@ -2367,7 +2367,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'wedding_style',
     category: 'Weddings & Events',
     name: 'Wedding Style Quiz',
-    description: 'Help engaged couples discover their wedding aesthetic and book a consultation. Captures dream venue, color palette, and guest count — qualifying leads before the first phone call.',
+    description: 'Help engaged couples discover their wedding aesthetic and book a consultation. Captures dream venue, color palette, and guest count, qualifying leads before the first phone call.',
     audience: 'Wedding planners, florists, event venues, bridal shops, invitation designers',
     whyItWorks: 'Couples planning a wedding are overwhelmed with choices. A quiz that crystallizes their style into a clear vision builds instant trust and positions you as the expert who understands them.',
     iconPath: 'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z',
@@ -2378,7 +2378,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'coaching_style',
     category: 'Coaches & Consultants',
     name: 'Coaching Readiness Quiz',
-    description: 'Segment potential clients by business stage and route them to the right offer. Captures revenue level, biggest challenge, and learning style — so your sales conversation starts where it matters.',
+    description: 'Segment potential clients by business stage and route them to the right offer. Captures revenue level, biggest challenge, and learning style, so your sales conversation starts where it matters.',
     audience: 'Business coaches, life coaches, consultants, course creators, mentors',
     whyItWorks: 'Knowing each lead’s stage helps you focus. The quiz pre-qualifies prospects so you spend call time with people who are ready for your level of service.',
     iconPath: 'M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3.01',
@@ -2389,7 +2389,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'home_style',
     category: 'Interior Design',
     name: 'Home Style Quiz',
-    description: 'Help potential clients discover their interior design style and visualize their dream space. Captures budget, room focus, and style preferences — qualifying leads before the consultation.',
+    description: 'Help potential clients discover their interior design style and visualize their dream space. Captures budget, room focus, and style preferences, qualifying leads before the consultation.',
     audience: 'Interior designers, home stagers, furniture stores, home decor shops',
     whyItWorks: 'Clients often cannot describe what they want until they see it. The image-heavy quiz helps them discover their style, and the result page proves you can deliver it.',
     iconPath: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 22V12h6v10',
@@ -2435,7 +2435,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     name: 'Home Buyer Quiz',
     description: 'Qualify potential buyers by capturing budget, timeline, neighborhood preferences, and must-haves. Route hot leads to your CRM and nurture browsers with curated listings until they are ready.',
     audience: 'Real estate agents, brokers, property developers, mortgage lenders',
-    whyItWorks: 'Real estate leads are expensive. This quiz pre-qualifies prospects for free, capturing the same info you would ask on a first call — but without the awkward cold outreach.',
+    whyItWorks: 'Real estate leads are expensive. This quiz pre-qualifies prospects for free, capturing the same info you would ask on a first call, but without the awkward cold outreach.',
     iconPath: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0zM12 7a3 3 0 100 6 3 3 0 000-6z',
     tags: ['real-estate', 'property', 'buyer', 'agent', 'home'],
     blocks: realEstateBuyerBlocks,
@@ -2446,7 +2446,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     name: 'Travel Style Quiz',
     description: 'Match travelers to their ideal trip type and capture leads for your travel packages. Segments by budget, style, and timeline so you can send personalized offers that convert.',
     audience: 'Travel agencies, tour operators, hotels, resorts, Airbnb hosts',
-    whyItWorks: 'Travelers dream before they book. A fun quiz that matches them to a destination or package captures that intent while the wanderlust is high — long before they comparison shop.',
+    whyItWorks: 'Travelers dream before they book. A fun quiz that matches them to a destination or package captures that intent while the wanderlust is high, long before they comparison shop.',
     iconPath: 'M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z',
     tags: ['travel', 'hotel', 'tourism', 'vacation', 'hospitality'],
     blocks: travelStyleBlocks,
@@ -2455,9 +2455,9 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'nonprofit_engagement',
     category: 'Nonprofits & Causes',
     name: 'Impact Path Quiz',
-    description: 'Help supporters discover how they can make the biggest difference — donating, volunteering, or advocating. Segments your audience so you can send the right ask to the right person.',
+    description: 'Help supporters discover how they can make the biggest difference: donating, volunteering or advocating. Segments your audience so you can send the right ask to the right person.',
     audience: 'Nonprofits, charities, foundations, community organizations, advocacy groups',
-    whyItWorks: 'Not every supporter wants the same thing. This quiz routes donors to donation pages, volunteers to sign-up forms, and advocates to share campaigns — maximizing engagement for everyone.',
+    whyItWorks: 'Not every supporter wants the same thing. This quiz routes donors to donation pages, volunteers to sign-up forms, and advocates to share campaigns, maximizing engagement for everyone.',
     iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
     tags: ['nonprofit', 'charity', 'volunteer', 'donation', 'cause'],
     blocks: nonprofitEngagementBlocks,
@@ -2466,7 +2466,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'video_fitness_challenge',
     category: 'Fitness & Wellness',
     name: 'Video Fitness Challenge Quiz',
-    description: 'Engage your audience with video-driven fitness questions. Show exercise demos, form checks, and workout clips — then match visitors to their ideal program. Video questions make the quiz feel more personal.',
+    description: 'Engage your audience with video-driven fitness questions. Show exercise demos, form checks, and workout clips, then match visitors to their ideal program. Video questions make the quiz feel more personal.',
     audience: 'Personal trainers, fitness studios, yoga instructors, online coaches',
     whyItWorks: 'Video questions show your expertise and build instant trust. Visitors see real workouts before signing up, so they know what to expect from your programs.',
     iconPath: 'M23 7l-7 5 7 5V7zM14 5H3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2z',
@@ -2488,7 +2488,7 @@ export var QUIZ_TEMPLATE_CATALOG: QuizTemplateData[] = [
     id: 'video_brand_personality',
     category: 'Coaches & Consultants',
     name: 'Video Brand Personality Quiz',
-    description: 'Use short video clips to reveal your brand personality and coaching style. Each question features a video scenario that visitors react to — creating a deeply engaging, memorable experience.',
+    description: 'Use short video clips to reveal your brand personality and coaching style. Each question features a video scenario that visitors react to, creating a deeply engaging, memorable experience.',
     audience: 'Brand strategists, business coaches, marketing consultants, course creators',
     whyItWorks: 'Video quizzes feel premium and personal. Prospects see your face, hear your voice, and connect with your brand before the first call.',
     iconPath: 'M23 7l-7 5 7 5V7zM14 5H3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2z',
