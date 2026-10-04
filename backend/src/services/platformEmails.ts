@@ -19,6 +19,9 @@ import { log } from '../lib/logger';
 var APP_URL = process.env.APP_URL || 'https://app.squarespellquiz.com';
 var MARKETING_URL = process.env.MARKETING_URL || 'https://squarespellquiz.com';
 var FROM_EMAIL = process.env.PLATFORM_EMAIL_FROM || 'Squarespell <hello@squarespell.com>';
+// Upgrade links open the billing page with Pro preselected and go straight to checkout after sign-in.
+var CHOOSE_PRO_URL = APP_URL + '/dashboard/billing?plan=pro&billing=yearly&checkout=1';
+var WINBACK_URL = APP_URL + '/dashboard/billing?plan=pro&billing=monthly&offer=winback&checkout=1';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +37,8 @@ export type PlatformEmailType =
   | 'trial_day11_3days'
   | 'trial_day13_lastday'
   | 'trial_day14_expired'
+  | 'trial_winback_day17'
+  | 'trial_winback_day30'
   // Billing (Stage 3)
   | 'payment_confirmed'
   | 'payment_failed'
@@ -340,7 +345,7 @@ function renderTemplate(type: PlatformEmailType, firstName: string, data: Record
           ]),
           '<div style="text-align:center;margin:28px 0">' + btn('Go to dashboard', APP_URL + '/dashboard') + '</div>',
           divider(),
-          para('Want to lock in your access? <a href="' + MARKETING_URL + '/pricing" style="color:#0D7377;font-weight:700;text-decoration:none">View plans &rarr;</a>'),
+          para('Choosing a plan now costs you no trial days: billing starts when your trial ends. <a href="' + CHOOSE_PRO_URL + '" style="color:#0D7377;font-weight:700;text-decoration:none">Choose a plan &rarr;</a>'),
         ].join('\n'), '7 days left — here\'s what you\'ve built so far.'),
       };
 
@@ -349,17 +354,16 @@ function renderTemplate(type: PlatformEmailType, firstName: string, data: Record
         subject: 'Only 3 days left on your Squarespell trial',
         html: wrapEmail([
           heading('3 days left'),
-          para(greeting + ' Your free trial ends in 3 days. After that, your quizzes will go offline and you won\'t be able to collect new leads.'),
-          para('Upgrade now to keep everything running:'),
+          para(greeting + ' Your free trial ends in 3 days. Your quizzes stay on your website after that, but new leads are held, not delivered, until you choose a plan.'),
+          para('Choose a plan now and nothing changes for your visitors:'),
           featureList([
-            'All your quizzes stay live and collecting leads',
-            'Keep your analytics history and lead data',
-            'Unlock unlimited email sequences',
-            'Priority support from our team',
+            'Every quiz keeps collecting leads, straight into your dashboard',
+            'Your follow-up emails and integrations keep running',
+            'Billing starts when your trial ends, so you lose no trial days',
           ]),
-          '<div style="text-align:center;margin:28px 0">' + btn('Upgrade now', MARKETING_URL + '/pricing') + '</div>',
-          infoBox('Plans start at just $19/month. Cancel any time, no contracts.'),
-        ].join('\n'), 'Your trial ends in 3 days — upgrade to keep your quizzes live.'),
+          '<div style="text-align:center;margin:28px 0">' + btn('Choose a plan', CHOOSE_PRO_URL) + '</div>',
+          infoBox('Plans start at $9 a month, billed yearly ($12 billed monthly). Cancel any time.'),
+        ].join('\n'), 'Your trial ends in 3 days. Choose a plan and your quizzes keep collecting leads.'),
       };
 
     case 'trial_day13_lastday':
@@ -367,12 +371,12 @@ function renderTemplate(type: PlatformEmailType, firstName: string, data: Record
         subject: 'Last day: Your Squarespell trial ends tomorrow',
         html: wrapEmail([
           heading('Your trial ends tomorrow'),
-          para(greeting + ' This is your last day with full access. After tomorrow, your quizzes will go offline.'),
-          para('Upgrading takes 30 seconds — pick a plan and your quizzes keep running without any interruption.'),
-          '<div style="text-align:center;margin:28px 0">' + btn('Keep my quizzes live', MARKETING_URL + '/pricing') + '</div>',
+          para(greeting + ' This is your last full day of the trial. From tomorrow, new leads from your quizzes are held for 30 days instead of reaching your dashboard, until you choose a plan.'),
+          para('Choosing a plan takes a minute, and your quizzes keep collecting leads without a gap.'),
+          '<div style="text-align:center;margin:28px 0">' + btn('Keep collecting leads', CHOOSE_PRO_URL) + '</div>',
           divider(),
-          '<div style="font-size:13px;color:rgba(26,26,26,0.5);line-height:1.5">Not ready? No problem. Your data is saved for 30 days. You can upgrade any time to pick up where you left off.</div>',
-        ].join('\n'), 'Tomorrow your quizzes go offline. Upgrade in 30 seconds.'),
+          '<div style="font-size:13px;color:rgba(26,26,26,0.5);line-height:1.5">Not ready? Your quizzes and the leads you already have stay in your account. Leads that arrive after the trial are kept for 30 days, then deleted.</div>',
+        ].join('\n'), 'From tomorrow new leads are held until you choose a plan.'),
       };
 
     case 'trial_day14_expired':
@@ -380,11 +384,31 @@ function renderTemplate(type: PlatformEmailType, firstName: string, data: Record
         subject: 'Your Squarespell trial has ended',
         html: wrapEmail([
           heading('Your trial has ended'),
-          para(greeting + ' Your 14-day free trial is over. Your quizzes are now offline and won\'t collect new leads or views.'),
-          para('The good news: all your data — quizzes, leads, analytics — is saved. Upgrade to reactivate everything instantly.'),
-          '<div style="text-align:center;margin:28px 0">' + btn('Reactivate my account', MARKETING_URL + '/pricing') + '</div>',
-          infoBox('Your data is kept for 30 days. After that it will be permanently deleted.'),
-        ].join('\n'), 'Your trial is over, but your data is safe for 30 days.'),
+          para(greeting + ' Your 14-day free trial is over. Your quizzes are still on your website and visitors still get their results, but new leads are now held instead of reaching your dashboard.'),
+          para('Held leads are kept for 30 days. Choose a plan and they appear in your dashboard straight away, along with every new one.'),
+          '<div style="text-align:center;margin:28px 0">' + btn('Choose a plan', CHOOSE_PRO_URL) + '</div>',
+          infoBox('Your quizzes and the leads you collected during the trial stay in your account.'),
+        ].join('\n'), 'New leads are held for 30 days. Choose a plan to see them.'),
+      };
+
+    case 'trial_winback_day17':
+    case 'trial_winback_day30':
+      var held = Number(data.heldLeads) || 0;
+      var heldLine = held > 0
+        ? (held === 1 ? '1 new lead is waiting for you.' : held + ' new leads are waiting for you.')
+        : 'Your quizzes are still on your website, ready to collect leads again.';
+      var lastCall = type === 'trial_winback_day30';
+      return {
+        subject: held > 0
+          ? (held === 1 ? '1 lead is waiting in your Squarespell account' : held + ' leads are waiting in your Squarespell account')
+          : (lastCall ? 'Last chance: 20% off Squarespell for 3 months' : 'Come back to Squarespell: 20% off for 3 months'),
+        html: wrapEmail([
+          heading(held > 0 ? heldLine : 'Pick up where you left off'),
+          para(greeting + ' ' + (held > 0 ? 'Visitors kept taking your quiz after your trial ended. Their answers are held for 30 days from when they arrive, then deleted.' : heldLine)),
+          para('Come back with 20% off your first 3 months on any monthly plan. Choosing a plan releases every held lead into your dashboard straight away.'),
+          '<div style="text-align:center;margin:28px 0">' + btn('Claim 20% off', WINBACK_URL) + '</div>',
+          infoBox(lastCall ? 'This is the last reminder we send about this offer.' : 'The offer is valid for 45 days after your trial ended.'),
+        ].join('\n'), held > 0 ? heldLine + ' Claim 20% off for 3 months.' : '20% off your first 3 months.'),
       };
 
     // ═══════════════════════════════════════════════════════════════════════

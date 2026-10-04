@@ -108,13 +108,15 @@ describe('lead submission', () => {
     expect(r.status).toBe(201);
   });
 
-  it('trial: an owner inside the 14-day trial collects leads; after day 14 collection stops with a clear trial_expired error', async () => {
+  it('trial: an owner inside the 14-day trial collects leads; after day 14 the lead is held for the owner (not delivered, not lost)', async () => {
     const inTrial = await liveQuiz('free', {}, 13);
     expect((await (await api()).post(`/api/quiz/${inTrial.quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead())).status).toBe(201);
     const expired = await liveQuiz('free', {}, 15);
     const r = await (await api()).post(`/api/quiz/${expired.quiz.slug}/lead`).set('X-Forwarded-For', nextIp()).send(lead());
-    expect(r.status).toBe(403);
-    expect(r.body.error).toBe('trial_expired');
+    expect(r.status).toBe(201);
+    expect(r.body).toMatchObject({ success: true, held: true });
+    expect(await sql<any>(`select id from leads where user_id=$1`, [expired.owner.id])).toHaveLength(0);
+    expect(await sql<any>(`select id from held_leads where user_id=$1`, [expired.owner.id])).toHaveLength(1);
   });
 
   it('GDPR gate: with consent required and not given, the lead is stored but no result email is sent; with consent it is', async () => {
