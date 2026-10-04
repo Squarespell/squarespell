@@ -25,6 +25,7 @@ import {
   ANALYZE_RETRY_DELAY_MS,
   BUILD_FAILED_MESSAGE,
   NOT_SQUARESPACE_MESSAGE,
+  PRIVATE_SITE_MESSAGE,
   SERVER_PROBLEM_MESSAGE,
   UNREADABLE_SITE_MESSAGE,
   analyzeErrorEvent,
@@ -111,6 +112,7 @@ describe('analyzeSite(): automatic retry', () => {
     [404, { error: 'nope' }, 'http_error'],
     [422, { error: 'x is not a Squarespace site.', code: 'NOT_SQUARESPACE', hostname: 'x' }, 'not_squarespace'],
     [422, { error: 'We could not read that website.', code: 'SITE_UNREADABLE' }, 'site_unreadable'],
+    [422, { error: 'x is private, so its pages cannot be read.', code: 'SITE_PRIVATE', hostname: 'x' }, 'site_private'],
     [429, { error: 'Rate limit exceeded', code: 'rate_limited', retryAfterSeconds: 300 }, 'rate_limited'],
     [500, { error: 'Analyze failed', code: 'analyze_failed' }, 'server_error'],
     [502, { error: 'The AI service is temporarily unavailable. Please try again shortly.', code: 'ai_unavailable' }, 'ai_unavailable'],
@@ -155,6 +157,13 @@ describe('messages', () => {
     expect(analyzeFailureTitle(f)).toBe('This builder is for Squarespace sites');
     expect(analyzeFailureMessage(f)).toBe(NOT_SQUARESPACE_MESSAGE);
     expect(NOT_SQUARESPACE_MESSAGE).toMatch(/Squarespace websites only/);
+  });
+
+  it('a private site (for example a Squarespace trial site) says so and explains how to make it public', () => {
+    const f = { errorName: 'site_private' as const, httpStatus: 422, serverMessage: 'x is private', elapsedMs: 10, retried: false };
+    expect(analyzeFailureTitle(f)).toBe('Your website is private');
+    expect(analyzeFailureMessage(f)).toBe(PRIVATE_SITE_MESSAGE);
+    expect(PRIVATE_SITE_MESSAGE).toMatch(/Site availability/);
   });
 
   it('a network failure no longer surfaces the browser\'s bare "Failed to fetch"', () => {

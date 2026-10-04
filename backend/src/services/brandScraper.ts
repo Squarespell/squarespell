@@ -9,12 +9,55 @@ import { isSquarespaceSite } from './squarespaceDetect';
  */
 export class NotSquarespaceError extends Error {
   readonly hostname: string;
-  readonly code = 'NOT_SQUARESPACE' as const;
-  constructor(hostname: string) {
-    super(`${hostname} is not a Squarespace site. Squarespell only works with Squarespace websites.`);
+  readonly code: 'NOT_SQUARESPACE' | 'SITE_PRIVATE' = 'NOT_SQUARESPACE';
+  constructor(hostname: string, message?: string) {
+    super(message || `${hostname} is not a Squarespace site. Squarespell only works with Squarespace websites.`);
     this.name = 'NotSquarespaceError';
     this.hostname = hostname;
   }
+}
+
+/**
+ * Thrown when the page is a private site or password screen (for example a Squarespace trial site that is not public yet).
+ * Building from it would produce a quiz about the lock screen ("Private Site", "Log In"), so the builder stops with a clear
+ * next step instead. A subclass so every route that rejects non-Squarespace sites rejects this too (422, rate-limit refund).
+ */
+export class SitePrivateError extends NotSquarespaceError {
+  readonly code = 'SITE_PRIVATE' as const;
+  constructor(hostname: string) {
+    super(hostname, `${hostname} is private, so its pages cannot be read. In Squarespace, open Settings, then Site availability, choose Public (or remove the site password) and try again.`);
+    this.name = 'SitePrivateError';
+  }
+}
+
+/** A private-site or password screen rather than real website content. */
+export function isPrivateSitePage(html: string, status?: number): boolean {
+  if (status === 401 || status === 403) return true;
+  if (/<title>\s*(private site|site (is )?private|password protected|site password required)\s*<\/title>/i.test(html)) return true;
+  if (/this site is (currently )?private/i.test(html)) return true;
+  return /(lock-screen|sqs-lock|sqs-password|site-password)/i.test(html) && /type\s*=\s*["']password["']/i.test(html);
+}
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function contrastRatio(a: string, b: string): number {
+  const x = hexToRgb(a), y = hexToRgb(b);
+  if (!x || !y) return 1;
+  const lum = (c: [number, number, number]) => {
+    const [r, g, bl] = c.map((v) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const l1 = lum(x), l2 = lum(y);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+/** Keeps detected text color when it reads on the detected background (4.5:1), else near-black or white. */
+export function readableTextColor(text: string, background: string): string {
+  if (contrastRatio(text, background) >= 4.5) return text;
+  return contrastRatio('#111111', background) >= contrastRatio('#ffffff', background) ? '#111111' : '#ffffff';
 }
 
 /**
@@ -41,6 +84,13 @@ export async function scrapeBrand(url: string) {
     });
     const html = await res.text();
     log.info(`[Scraper] Fetched ${url} - ${html.length} chars, status ${res.status}`);
+
+    // A private site or password screen has nothing to build from (and would give a quiz about the lock screen).
+    if (isPrivateSitePage(html, res.status)) {
+      const privateHost = new URL(url).hostname.replace(/^www\./, '');
+      log.warn(`[Scraper] ${privateHost} is private or password protected`);
+      throw new SitePrivateError(privateHost);
+    }
 
     // ── Site identity ──────────────────────────────────────────────────────
     const siteName =
@@ -635,7 +685,8 @@ export async function scrapeBrand(url: string) {
       colors: {
         background: toHex(bgColor),
         primary: toHex(primaryColor),
-        text: toHex(textColor),
+        // Never save a pair that cannot be read (for example white text detected on a white background).
+        text: readableTextColor(toHex(textColor), toHex(bgColor)),
         accent: toHex(accentColor),
       },
       font_family: fontFamily,
@@ -653,7 +704,7 @@ export async function scrapeBrand(url: string) {
       } as Record<string, any>,
     };
   } catch (err: any) {
-    // NotSquarespaceError bubbles up so routes can return a clean 422
+    // NotSquarespaceError (and SitePrivateError, a subclass) bubbles up so routes can return a clean 422
     if (err instanceof NotSquarespaceError) throw err;
     log.error('[Scraper] FAILED for ${url}:', { err: err.message });
     // Network/parse failures fall through to a detected:false result so the

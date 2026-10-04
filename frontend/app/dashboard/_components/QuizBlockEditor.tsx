@@ -11,6 +11,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
 import { APP_URL } from '@/lib/urls';
+import { LookSettings } from './LookSettings';
+import type { QuizStyle } from '@/lib/quizTheme';
 import FitImage from '@/components/quiz-taker/FitImage';
 import { getAuthToken } from '@/lib/auth/client';
 import {
@@ -44,6 +46,8 @@ export interface QuizSettings {
   redirect_url?: string;
   redirect_delay?: number;
   primary_color?: string;
+  /** The quiz look: match the website (default) or custom colors and font. See lib/quizTheme. */
+  style?: QuizStyle;
   logo_url?: string;
   consent_required?: boolean;
   privacy_policy_url?: string;
@@ -86,6 +90,10 @@ export interface QuizBlockEditorProps {
   onPreview?: () => void;
   /** Quiz title shown in the editor header (falls back to "Untitled quiz"). */
   quizTitle?: string;
+  /** The quiz's saved branding (detected website colors), used by the Look preview. */
+  branding?: any;
+  /** Settings tab to open first, for example 'design' when arriving from "Change look". */
+  initialSettingsTab?: 'behavior' | 'design' | 'advanced';
 }
 
 var API_BASE = (typeof window !== 'undefined' && (window as any).__NEXT_PUBLIC_API_URL)
@@ -2654,6 +2662,8 @@ function SettingsPanel({
   userPlan,
   quizId,
   quizSlug,
+  branding,
+  initialTab,
 }: {
   open: boolean;
   onClose: () => void;
@@ -2662,8 +2672,12 @@ function SettingsPanel({
   userPlan?: UserPlan;
   quizId?: string;
   quizSlug?: string;
+  branding?: any;
+  initialTab?: 'behavior' | 'design' | 'advanced';
 }) {
-  var [tab, setTab] = useState<'behavior' | 'design' | 'advanced'>('behavior');
+  var [tab, setTab] = useState<'behavior' | 'design' | 'advanced'>(initialTab || 'behavior');
+  // The requested tab can arrive after the first render (read from the address bar).
+  useEffect(function() { if (initialTab) setTab(initialTab); }, [initialTab]);
   var [copied, setCopied] = useState(false);
 
   if (!open) return null;
@@ -2796,19 +2810,8 @@ function SettingsPanel({
 
         {tab === 'design' && (
           <div>
-            {/* Primary Color */}
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Theme Color</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input type="color" value={settings?.primary_color || '#3154FF'}
-                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
-                  style={{ width: 36, height: 36, borderRadius: 8, border: '2px solid ' + C.BORDER, cursor: 'pointer', padding: 0 }} />
-                <span style={{ fontSize: 12, fontWeight: 500, color: C.TEXT_MUTED, flex: 1 }}>Primary</span>
-                <input type="text" value={settings?.primary_color || '#3154FF'}
-                  onChange={function(e) { if (onSettingsChange) onSettingsChange(Object.assign({}, settings, { primary_color: e.target.value })); }}
-                  style={{ width: 80, padding: '5px 8px', border: '1px solid ' + C.BORDER, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.TEXT, textAlign: 'center' as const, fontFamily: C.FONT }} />
-              </div>
-            </div>
+            {/* Look: match the website or custom colors and font */}
+            <LookSettings settings={settings || {}} branding={branding} onChange={function(next) { if (onSettingsChange) onSettingsChange(next); }} />
 
             {/* Branding */}
             <div style={{ marginBottom: 28 }}>
@@ -3076,6 +3079,8 @@ export function QuizBlockEditor({
   publishLabel = 'Publish',
   quizTitle,
   onPreview,
+  branding,
+  initialSettingsTab,
 }: QuizBlockEditorProps) {
   var history = useHistory(initialBlocks);
   var blocks = history.current;
@@ -3410,6 +3415,8 @@ export function QuizBlockEditor({
               userPlan={userPlan}
               quizId={quizId}
               quizSlug={quizSlug}
+              branding={branding}
+              initialTab={initialSettingsTab}
             />
           )}
         </div>

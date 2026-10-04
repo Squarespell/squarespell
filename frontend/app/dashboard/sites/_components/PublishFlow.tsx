@@ -358,6 +358,7 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
           <div className="sx-meta"><b>{site.hostname}</b><span>{confirmed ? 'Checked just now' : 'Published. Waiting for the live manifest to confirm.'}</span></div>
           <span className={'sx-badge ' + (confirmed ? 'sx-b-ok' : 'sx-b-warn')}><span aria-hidden="true">{confirmed ? '\u2713' : '!'}</span>{confirmed ? 'Live' : 'Not confirmed yet'}</span>
         </div>
+        <p className="sx-hint" style={{ textAlign: 'left' }}>The quiz takes your website{'\u2019'}s colors and font automatically. {quiz ? <a href={'/dashboard/' + encodeURIComponent(quiz.id) + '?panel=design'}>Change colors and font</a> : null}</p>
         {!confirmed ? <div className="sx-note sx-warn" style={{ textAlign: 'left' }}>Your change was saved. Visitors should see it within a minute. If it does not appear, open the website and use Re-check.</div> : null}
       </div>
     );

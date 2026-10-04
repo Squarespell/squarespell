@@ -3,7 +3,7 @@
  * It is a string so the server can inject the API and site origins at request time and so the tests can run the exact shipped code.
  * Behaviour is specified in docs/relaunch/SQUARESPELL_ONE_BUTTON_CONNECT_SPEC.md section 3.1.
  */
-export const LOADER_VERSION = '1.0.0';
+export const LOADER_VERSION = '1.1.0';
 
 export const LOADER_TEMPLATE = String.raw`(function () {
   'use strict';
@@ -99,15 +99,52 @@ export const LOADER_TEMPLATE = String.raw`(function () {
     (d.head || d.documentElement).appendChild(s);
   }
 
-  function iframeUrl(inst) {
+  // ---- the website's look (background, text color, button color, font) so quizzes match it. Nothing about the visitor. ----
+  function toHex(c) {
+    var m = String(c || '').match(/^rgba?\(\s*(\d{1,3})[,\s]+(\d{1,3})[,\s]+(\d{1,3})(?:[,\s\/]+([\d.]+)(%?))?\s*\)$/);
+    if (!m) return null;
+    if (m[4] !== undefined && (m[5] ? parseFloat(m[4]) / 100 : parseFloat(m[4])) < 0.5) return null;
+    var h = '#';
+    for (var i = 1; i <= 3; i++) { var n = Math.min(255, parseInt(m[i], 10)); h += (n < 16 ? '0' : '') + n.toString(16); }
+    return h;
+  }
+  function solidBackground(el) {
+    for (var e = el; e && e.nodeType === 1; e = e.parentElement) { var c = toHex(w.getComputedStyle(e).backgroundColor); if (c) return c; }
+    return null;
+  }
+  function fontOf(el) {
+    var f = el ? String(w.getComputedStyle(el).fontFamily || '').split(',')[0].replace(/^["'\s]+|["'\s]+$/g, '') : '';
+    return /^[\w .-]{1,60}$/.test(f) ? f : '';
+  }
+  function siteLook(anchor) {
+    try {
+      // Sample the section the quiz sits in (inline) or the first section with text (popup, tab), then walk up for its background.
+      var near = anchor && anchor.closest ? anchor.closest('section, .page-section, main, article') : null;
+      var text = (near && near.querySelector('p')) || d.querySelector('main p, article p, p') || d.body;
+      var base = anchor || (text.closest && text.closest('section, .page-section, main, article')) || d.body;
+      var btn = d.querySelector('.sqs-button-element--primary, .sqs-block-button-element--primary, .sqs-block-button-element, .btn--primary, .button--primary, button[type="submit"]');
+      return { bg: solidBackground(base) || solidBackground(d.body), fg: toHex(w.getComputedStyle(text).color), accent: btn ? toHex(w.getComputedStyle(btn).backgroundColor) : null, font: fontOf(text) };
+    } catch (e) { return {}; }
+  }
+  function readableOn(hex) {
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 160 ? '#111827' : '#ffffff';
+  }
+
+  function iframeUrl(inst, anchor) {
     var u = ORIGIN + '/embed/' + encodeURIComponent(inst.quiz) + '?embed=1&v=' + encodeURIComponent(VERSION);
+    var look = siteLook(anchor);
     var accent = inst.options && inst.options.accentColor;
-    if (typeof accent === 'string' && /^#[0-9a-f]{6}$/i.test(accent)) u += '&accent=' + encodeURIComponent(accent);
+    if (!(typeof accent === 'string' && /^#[0-9a-f]{6}$/i.test(accent))) accent = look.accent;
+    if (accent) u += '&accent=' + encodeURIComponent(accent);
+    if (look.bg) u += '&bg=' + encodeURIComponent(look.bg);
+    if (look.fg) u += '&fg=' + encodeURIComponent(look.fg);
+    if (look.font) u += '&font=' + encodeURIComponent(look.font);
     return u;
   }
-  function makeFrame(inst, height) {
+  function makeFrame(inst, height, anchor) {
     var f = d.createElement('iframe');
-    f.src = iframeUrl(inst);
+    f.src = iframeUrl(inst, anchor);
     f.title = 'Quiz';
     f.loading = 'lazy';
     f.setAttribute('allow', 'clipboard-write');
@@ -185,7 +222,7 @@ export const LOADER_TEMPLATE = String.raw`(function () {
       var wrap = d.createElement('div');
       wrap.className = 'sqc-inline';
       var fixed = inst.options && inst.options.height;
-      wrap.appendChild(makeFrame(inst, fixed || 600));
+      wrap.appendChild(makeFrame(inst, fixed || 600, slots[i]));
       wrap.setAttribute('data-sqc-fixed', fixed ? '1' : '');
       slots[i].appendChild(wrap);
       slots[i].setAttribute('data-squarespell-connect', inst.id);
@@ -235,7 +272,8 @@ export const LOADER_TEMPLATE = String.raw`(function () {
     tab.className = 'sqc-tab';
     tab.textContent = opts.buttonText || 'Take the quiz';
     tab.setAttribute('aria-haspopup', 'dialog');
-    if (typeof opts.accentColor === 'string' && /^#[0-9a-f]{6}$/i.test(opts.accentColor)) tab.style.background = opts.accentColor;
+    var tabColor = typeof opts.accentColor === 'string' && /^#[0-9a-f]{6}$/i.test(opts.accentColor) ? opts.accentColor : siteLook(null).accent;
+    if (tabColor) { tab.style.background = tabColor; tab.style.color = readableOn(tabColor); }
     var dialog = null;
     tab.addEventListener('click', function () {
       if (dialog) return;

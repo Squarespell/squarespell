@@ -283,7 +283,7 @@ router.post('/from-url', checkQuizAllowance, async (req: AuthenticatedRequest, r
       if (entry && entry.count > 0) entry.count -= 1;
       return res.status(422).json({
         error: err.message,
-        code: 'NOT_SQUARESPACE',
+        code: err.code,
         hostname: err.hostname,
       });
     }

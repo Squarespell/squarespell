@@ -27,7 +27,8 @@ import { addUtmParams, quizUtm } from '@/lib/urls';
 import generatePdfReport from './generatePdfReport';
 import QuizRenderer from '@/components/quiz-taker/QuizRenderer';
 import { safeHttpUrl } from '@/lib/safeUrl';
-import { safeColor, brandFontStack, safeStyleText } from '@/lib/safeCss';
+import { safeStyleText } from '@/lib/safeCss';
+import { resolveQuizTheme } from '@/lib/quizTheme';
 
 var API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
@@ -620,13 +621,15 @@ export default function QuizPage() {
 
   /* ---------- brand derivation ---------- */
   var brand = quiz?.branding;
-  var brandBg = safeColor(brand?.colors?.background, '#ffffff');
-  var brandSurface = safeColor(brand?.colors?.surface, brandBg);
-  var brandText = safeColor(brand?.colors?.text, '#1a1a1a');
-  var brandPrimary = safeColor(
-    brand?.colors?.primary || quiz?.settings?.primary_color || quiz?.settings?.primaryColor, '#0a0a0a');
+  // Colors and font from lib/quizTheme: the saved look or the owner's custom look, always adjusted to stay readable.
+  var theme = resolveQuizTheme({ branding: brand, settings: quiz?.settings });
+  var brandBg = theme.bg;
+  var brandSurface = theme.surface;
+  var brandText = theme.text;
+  var brandPrimary = theme.primary;
+  var brandOnPrimary = theme.onPrimary;
   var brandBorder = 'rgba(0,0,0,0.10)';
-  var brandFont = brandFontStack(brand?.font_family);
+  var brandFont = theme.fontStack;
   var brandName = brand?.site_name || '';
   var showBranding = quiz?.settings?.show_branding !== false && !quiz?.settings?.remove_branding;
   var showProgressBar = quiz?.settings?.show_progress_bar !== false;
@@ -817,7 +820,7 @@ export default function QuizPage() {
     <>
       {metaDescription && <meta name="description" content={metaDescription} />}
 
-      <style dangerouslySetInnerHTML={{ __html: "\n@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');\n*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }\nhtml, body { height: 100%; }\nbody {\n  font-family: " + brandFont + ";\n  background: " + brandBg + ";\n  color: " + brandText + ";\n}\n*:focus-visible { outline: 2px solid " + brandPrimary + "; outline-offset: 2px; }\n@keyframes sq-slide-in-fwd { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-slide-in-back { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-fade-in { from { opacity: 0; } to { opacity: 1; } }\n" + customCss + "\n" }} />
+      <style dangerouslySetInnerHTML={{ __html: "\n@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');\n" + (theme.fontHref ? "@import url('" + theme.fontHref + "');\n" : '') + "*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }\nhtml, body { height: 100%; }\nbody {\n  font-family: " + brandFont + ";\n  background: " + brandBg + ";\n  color: " + brandText + ";\n}\n*:focus-visible { outline: 2px solid " + brandPrimary + "; outline-offset: 2px; }\n@keyframes sq-slide-in-fwd { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-slide-in-back { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }\n@keyframes sq-fade-in { from { opacity: 0; } to { opacity: 1; } }\n" + customCss + "\n" }} />
 
       <div style={{ minHeight: '100svh' }}>
         <QuizRenderer

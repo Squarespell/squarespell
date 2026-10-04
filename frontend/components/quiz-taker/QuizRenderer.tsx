@@ -26,7 +26,8 @@ import { useRef } from 'react';
 import { addUtmParams, quizUtm } from '@/lib/urls';
 import FitImage from './FitImage';
 import { safeHttpUrl, safeLinkUrl } from '@/lib/safeUrl';
-import { safeColor, brandFontStack, safeStyleText } from '@/lib/safeCss';
+import { safeStyleText } from '@/lib/safeCss';
+import { resolveQuizTheme } from '@/lib/quizTheme';
 
 export interface QuizOption {
   id: string;
@@ -280,13 +281,15 @@ export default function QuizRenderer(props: QuizRendererProps) {
 
   /* ---------- brand derivation ---------- */
   var brand = quiz.branding;
-  var brandBg = safeColor(brand?.colors?.background, '#ffffff');
-  var brandSurface = safeColor(brand?.colors?.surface, brandBg);
-  var brandText = safeColor(brand?.colors?.text, '#1a1a1a');
-  var brandPrimary = safeColor(
-    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor, '#0a0a0a');
+  // Colors and font from lib/quizTheme: the saved look or the owner's custom look, always adjusted to stay readable.
+  var theme = resolveQuizTheme({ branding: brand, settings: quiz.settings });
+  var brandBg = theme.bg;
+  var brandSurface = theme.surface;
+  var brandText = theme.text;
+  var brandPrimary = theme.primary;
+  var brandOnPrimary = theme.onPrimary;
   var brandBorder = 'rgba(0,0,0,0.10)';
-  var brandFont = brandFontStack(brand?.font_family);
+  var brandFont = theme.fontStack;
   var brandName = brand?.site_name || '';
   var showBranding = quiz.settings?.show_branding !== false && !quiz.settings?.remove_branding;
   var showProgressBar = quiz.settings?.show_progress_bar !== false;
@@ -685,7 +688,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
               style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 width: '100%', padding: '14px 22px', marginTop: 10,
-                background: brandPrimary, color: brandBg, border: 0, borderRadius: 100,
+                background: brandPrimary, color: brandOnPrimary, border: 0, borderRadius: 100,
                 fontFamily: brandFont, fontSize: 14, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
                 transition: 'transform 0.2s', opacity: submitting || !email.trim() || (consentRequired && !consentGiven) ? 0.5 : 1,
               }}>
@@ -712,7 +715,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
             <button type="button" onClick={onViewResultsNow}
               style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                padding: '10px 18px', background: brandPrimary, color: brandBg,
+                padding: '10px 18px', background: brandPrimary, color: brandOnPrimary,
                 border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
                 cursor: 'pointer',
               }}>
@@ -786,7 +789,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                 )} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button type="button" style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandOnPrimary,
                     border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
                     cursor: 'pointer',
                   }}>
@@ -797,7 +800,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                 <a href={addUtmParams(quiz.settings.cta_url, quizUtm(slug))} target="_top" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button type="button" style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                    width: '100%', padding: '14px 22px', background: brandPrimary, color: brandOnPrimary,
                     border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
                     cursor: 'pointer',
                   }}>
@@ -807,7 +810,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
               ) : (
                 <button type="button" style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  width: '100%', padding: '14px 22px', background: brandPrimary, color: brandBg,
+                  width: '100%', padding: '14px 22px', background: brandPrimary, color: brandOnPrimary,
                   border: 0, borderRadius: 100, fontFamily: brandFont, fontSize: 14, fontWeight: 700,
                   cursor: 'pointer',
                 }}>
@@ -966,7 +969,7 @@ export default function QuizRenderer(props: QuizRendererProps) {
                       fontSize: 14, fontFamily: brandFont, color: brandText, outline: 'none',
                     }} />
                   <button type="button" disabled={resultEmailSending} onClick={onSendResultEmail} style={{
-                    padding: '10px 20px', background: brandPrimary, color: brandBg, border: 0,
+                    padding: '10px 20px', background: brandPrimary, color: brandOnPrimary, border: 0,
                     borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: resultEmailSending ? 'default' : 'pointer',
                     fontFamily: brandFont, opacity: resultEmailSending ? 0.6 : 1,
                   }}>{resultEmailSending ? 'Sending…' : 'Send'}</button>
