@@ -216,6 +216,11 @@ describe('server-side verification of a site (loopback fixture)', () => {
     const r = await run((_q, res) => res.end('<html>' + LOADER + '<div data-squarespell-slot="hero"></div></html>'));
     expect(r).toMatchObject({ ok: true, reason: null, loaderFound: true, slots: ['hero'] });
   });
+  it('finds the loader on a large page, past the general 512 KB fetch cap', async () => {
+    // Squarespace prints Code Injection after its inline styles and page data; real pages put the loader 600 to 800 KB in.
+    const r = await run((_q, res) => res.end('<html><head><style>' + 'x'.repeat(800 * 1024) + '</style>' + LOADER + '</head></html>'));
+    expect(r).toMatchObject({ ok: true, reason: null, loaderFound: true });
+  });
   it('accepts the www twin of the connected hostname', async () => {
     const port = await serve((q, res) => { if (q.headers.host!.startsWith('customer')) { res.statusCode = 301; res.setHeader('location', 'http://www.customer.example.test:' + port + '/'); res.end(); } else res.end(LOADER); });
     const r = await verifySite({ hostname: 'customer.example.test', siteKey: KEY, scheme: 'http', testPort: port, fetchOptions: { allowLoopbackForTests: true, lookup: LOOPBACK, timeoutMs: 1200 } });
