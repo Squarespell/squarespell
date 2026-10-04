@@ -3,7 +3,7 @@
  * It is a string so the server can inject the API and site origins at request time and so the tests can run the exact shipped code.
  * Behaviour is specified in docs/relaunch/SQUARESPELL_ONE_BUTTON_CONNECT_SPEC.md section 3.1.
  */
-export const LOADER_VERSION = '1.1.0';
+export const LOADER_VERSION = '1.1.1';
 
 export const LOADER_TEMPLATE = String.raw`(function () {
   'use strict';
@@ -172,6 +172,9 @@ export const LOADER_TEMPLATE = String.raw`(function () {
     overlay.className = 'sqc-overlay' + (panel ? ' sqc-panel' : '');
     var dlg = d.createElement('div');
     dlg.className = 'sqc-dialog';
+    // The website's background while the quiz loads, instead of a white flash on dark websites.
+    var dlgBg = siteLook(null).bg;
+    if (dlgBg) dlg.style.background = dlgBg;
     dlg.setAttribute('role', 'dialog');
     dlg.setAttribute('aria-modal', 'true');
     dlg.setAttribute('aria-label', 'Quiz');

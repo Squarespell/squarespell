@@ -166,6 +166,7 @@ describe('floating tab and popup', () => {
     expect(q.get('fg')).toBe('#fafafa');
     expect(q.get('accent')).toBe('#8bc34a');
     expect(q.get('font')).toBe('Poppins');
+    expect((document.querySelector('.sqc-dialog') as HTMLElement).style.background).toBe('rgb(16, 16, 16)');
   });
   it('keeps keyboard focus inside the dialog', async () => {
     await boot(manifest([inst()]));
