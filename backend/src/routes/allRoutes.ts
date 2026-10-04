@@ -387,7 +387,7 @@ previewRouter.post('/preview-generate', async (req, res) => {
       log.warn('[Preview] Rejected non-Squarespace site', { hostname: err.hostname });
       return res.status(422).json({
         error: err.message,
-        code: 'NOT_SQUARESPACE',
+        code: err.code,
         hostname: err.hostname,
       });
     }
@@ -467,7 +467,7 @@ async function analyzePreviewSite(req: ExpressRequest, res: ExpressResponse, mar
       log.warn('[PreviewAnalyze] Rejected non-Squarespace site', { hostname: err.hostname });
       return res.status(422).json({
         error: err.message,
-        code: 'NOT_SQUARESPACE',
+        code: err.code,
         hostname: err.hostname,
       });
     }
@@ -1974,7 +1974,7 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
     res.json(merged);
   } catch (err: any) {
     if (err instanceof NotSquarespaceError) {
-      return res.status(422).json({ error: err.message, code: 'NOT_SQUARESPACE', hostname: err.hostname });
+      return res.status(422).json({ error: err.message, code: err.code, hostname: err.hostname });
     }
     log.error('[ScrapeBrand] Failed:', { err: err });
     res.status(500).json({ error: err?.message ?? 'Scrape failed' });

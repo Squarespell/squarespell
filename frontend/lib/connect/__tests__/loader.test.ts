@@ -144,7 +144,8 @@ describe('floating tab and popup', () => {
     expect(dlg.getAttribute('aria-label')).toBeTruthy();
     expect(tab.getAttribute('aria-expanded')).toBe('true');
     const frame = dlg.querySelector('iframe') as HTMLIFrameElement;
-    expect(frame.getAttribute('src')).toBe(ORIGIN + '/embed/my-quiz?embed=1&v=' + LOADER_VERSION + '&accent=%230f7377');
+    // The owner's accent wins; the website's look follows as further parameters.
+    expect(frame.getAttribute('src')!.startsWith(ORIGIN + '/embed/my-quiz?embed=1&v=' + LOADER_VERSION + '&accent=%230f7377')).toBe(true);
     const close = dlg.querySelector('button') as HTMLButtonElement;
     expect(close.getAttribute('aria-label')).toBe('Close quiz');
     expect(document.activeElement).toBe(close);
@@ -152,6 +153,19 @@ describe('floating tab and popup', () => {
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     expect(document.activeElement).toBe(tab);
     expect(tab.getAttribute('aria-expanded')).toBe('false');
+  });
+  it('passes the website look (background, text color, button color, font) to the quiz so it matches the site', async () => {
+    document.body.innerHTML = '<main><section id="sec" style="background-color: rgb(16, 16, 16)"><p id="para" style="color: rgb(250, 250, 250); font-family: Poppins, sans-serif">Hello</p><a class="sqs-button-element--primary" style="background-color: rgb(139, 195, 74)">Go</a></section></main>';
+    await boot(manifest([inst()]));
+    const tab = document.querySelector('.sqc-tab') as HTMLButtonElement;
+    expect(tab.style.background).toBe('rgb(139, 195, 74)');
+    tab.click();
+    const src = (document.querySelector('[role="dialog"] iframe') as HTMLIFrameElement).getAttribute('src')!;
+    const q = new URL(src).searchParams;
+    expect(q.get('bg')).toBe('#101010');
+    expect(q.get('fg')).toBe('#fafafa');
+    expect(q.get('accent')).toBe('#8bc34a');
+    expect(q.get('font')).toBe('Poppins');
   });
   it('keeps keyboard focus inside the dialog', async () => {
     await boot(manifest([inst()]));

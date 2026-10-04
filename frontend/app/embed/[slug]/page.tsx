@@ -10,7 +10,8 @@
  * - No sign-in provider or authentication
  * - Minimal CSS-in-JS to keep bundle small
  * - Client-side handles: answer selection, form submission, postMessage to parent
- * - Uses quiz branding (colors, fonts) from the quiz data or query params
+ * - Colors and font come from lib/quizTheme: the website's look sent by the site loader (bg, fg, accent, font query
+ *   parameters) unless the owner chose a custom look, always adjusted so text stays readable
  * - Container queries for responsive embed sizing
  *
  * Usage:
@@ -20,7 +21,7 @@
 
 import { Suspense } from 'react';
 import EmbedQuizClient from './EmbedQuizClient';
-import { safeColor, brandFontStack } from '@/lib/safeCss';
+import { resolveQuizTheme, siteLookFromParams } from '@/lib/quizTheme';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
@@ -144,7 +145,7 @@ function ErrorView() {
   );
 }
 
-export default async function EmbedPage({ params }: { params: { slug: string } }) {
+export default async function EmbedPage({ params, searchParams }: { params: { slug: string }; searchParams?: Record<string, string | string[] | undefined> }) {
   const quiz = await fetchQuiz(params.slug);
 
   if (!quiz) {
@@ -183,22 +184,20 @@ export default async function EmbedPage({ params }: { params: { slug: string } }
     });
   }
 
-  // Derive branding from quiz settings (matches the main /quiz/[slug] logic)
-  const brand = quiz.branding;
-  const brandBg = safeColor(brand?.colors?.background, '#ffffff');
-  const brandText = safeColor(brand?.colors?.text, '#1a1a1a');
-  const brandPrimary = safeColor(
-    brand?.colors?.primary || quiz.settings?.primary_color || quiz.settings?.primaryColor, '#0a0a0a');
-  const brandFont = brandFontStack(brand?.font_family);
+  // Colors and font: the website's look (sent by the site loader) unless the owner chose a custom look; always readable.
+  const theme = resolveQuizTheme({ branding: quiz.branding, settings: quiz.settings, site: siteLookFromParams(searchParams) });
 
   return (
     <Suspense fallback={<ErrorView />}>
+      {theme.fontHref ? <link rel="stylesheet" href={theme.fontHref} /> : null}
       <EmbedQuizClient
         quiz={quiz}
-        brandBg={brandBg}
-        brandText={brandText}
-        brandPrimary={brandPrimary}
-        brandFont={brandFont}
+        brandBg={theme.bg}
+        brandText={theme.text}
+        brandPrimary={theme.primary}
+        brandFont={theme.fontStack}
+        brandSurface={theme.surface}
+        brandOnPrimary={theme.onPrimary}
       />
     </Suspense>
   );

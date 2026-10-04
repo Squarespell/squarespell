@@ -94,12 +94,17 @@ export default function EmbedQuizClient({
   brandText,
   brandPrimary,
   brandFont,
+  brandSurface: brandSurfaceProp,
+  brandOnPrimary: brandOnPrimaryProp,
 }: {
   quiz: Quiz;
   brandBg: string;
   brandText: string;
   brandPrimary: string;
   brandFont: string;
+  /** From lib/quizTheme; older callers that omit them get the previous behavior. */
+  brandSurface?: string;
+  brandOnPrimary?: string;
 }) {
   const [stage, setStage] = useState<'loading' | 'error' | 'question' | 'leadgate' | 'result'>('question');
   const [qIdx, setQIdx] = useState(0);
@@ -215,7 +220,8 @@ export default function EmbedQuizClient({
   }, [stage, quiz.settings?.redirect_url, quiz.settings?.redirect_delay]);
 
   const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const brandSurface = safeColor(quiz.branding?.colors?.surface, brandBg);
+  const brandSurface = brandSurfaceProp || safeColor(quiz.branding?.colors?.surface, brandBg);
+  const brandOnPrimary = brandOnPrimaryProp || brandBg;
   const brandBorder = 'rgba(0,0,0,0.10)';
   const brandName = quiz.branding?.site_name || '';
   const PAID_PLANS = ['core', 'starter', 'growth', 'pro', 'business', 'agency'];
@@ -595,7 +601,7 @@ export default function EmbedQuizClient({
         }
         .sq-opt.picked .sq-opt-letter {
           background: ${brandPrimary};
-          color: ${brandBg};
+          color: ${brandOnPrimary};
         }
         .sq-q-media {
           display: block;
@@ -961,7 +967,7 @@ export default function EmbedQuizClient({
           width: 100%;
           padding: 14px 22px;
           background: ${brandPrimary};
-          color: ${brandBg};
+          color: ${brandOnPrimary};
           border: 0;
           border-radius: 100px;
           font-family: ${brandFont};

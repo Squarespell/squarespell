@@ -494,16 +494,26 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
 
   // Quiz settings state
   var [quizSettings, setQuizSettings] = useState<QuizSettings>({});
+  // "Change look" links open the editor with ?panel=design.
+  var [initialSettingsTab, setInitialSettingsTab] = useState<'behavior' | 'design' | 'advanced' | undefined>(undefined);
+  useEffect(function() {
+    var p = new URLSearchParams(window.location.search).get('panel');
+    if (p === 'design' || p === 'advanced' || p === 'behavior') setInitialSettingsTab(p);
+  }, []);
   var settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize settings from quiz data
   useEffect(function() {
     if (quiz && quiz.settings) {
-      setQuizSettings({
+      // Load every saved setting (theme color, look, logo, custom CSS ...), not only the three toggles, so the panel shows
+      // what is saved and a later save never resets the rest. editor_blocks is managed separately.
+      var saved: any = Object.assign({}, quiz.settings);
+      delete saved.editor_blocks;
+      setQuizSettings(Object.assign(saved, {
         shuffle_questions: quiz.settings.shuffle_questions || false,
         show_progress_bar: quiz.settings.show_progress_bar !== false,
         transition_type: quiz.settings.transition_type || 'slide',
-      });
+      }));
     }
   }, [quiz]);
 
@@ -617,6 +627,8 @@ export function QuizEditorView({ quizId, templateId }: QuizEditorViewProps) {
         onPublish={handlePublish}
         publishLabel={publishing ? 'Publishing...' : 'Publish'}
         quizTitle={(quiz as any)?.title || undefined}
+        branding={(quiz as any)?.branding}
+        initialSettingsTab={initialSettingsTab}
       />
       {publishError && (
         <div style={{position:"fixed",top:16,right:16,zIndex:60,background:"#fee",color:"#900",padding:"10px 14px",borderRadius:8,fontSize:13,boxShadow:"0 6px 18px rgba(0,0,0,0.18)"}}>{publishError}</div>

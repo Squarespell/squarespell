@@ -118,6 +118,7 @@ export function SiteDetailBody({ token, siteId, quizzes, onChanged, onDisconnect
                     {!disconnected ? (
                       <ActionMenu label={'Actions for ' + (i.quiz?.title || 'quiz')} items={[
                         { label: 'Edit pages and options', onSelect: () => setEdit({ inst: i, kind: 'update' }) },
+                        { label: 'Change colors and font', onSelect: () => { window.location.href = '/dashboard/' + encodeURIComponent(i.quiz_id) + '?panel=design'; } },
                         { label: 'Move to other pages', onSelect: () => setEdit({ inst: i, kind: 'move' }) },
                         i.status === 'paused' ? { label: 'Resume', onSelect: () => run('inst', () => api.current.resume(i.id), 'Quiz resumed') } : { label: 'Pause', onSelect: () => run('inst', () => api.current.pause(i.id), 'Quiz paused') },
                         { label: 'Remove from website', danger: true, onSelect: () => setConfirm({ kind: 'remove', inst: i }) },

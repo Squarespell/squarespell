@@ -16,6 +16,7 @@ export type AnalyzeErrorName =
   | 'timeout' // no answer within the time limit (our own abort)
   | 'rate_limited' // 429
   | 'not_squarespace' // 422 NOT_SQUARESPACE: the builder only accepts Squarespace sites
+  | 'site_private' // 422 SITE_PRIVATE: the site is private or password protected (for example a Squarespace trial site)
   | 'invalid_url' // 400
   | 'site_unreadable' // 422 SITE_UNREADABLE: the address could not be fetched (unknown domain, site down or too slow)
   | 'ai_timeout'
@@ -103,6 +104,7 @@ async function attemptOnce(url: string, opts: AnalyzeOptions): Promise<Attempt> 
     let errorName: AnalyzeErrorName;
     if (status === 429) errorName = 'rate_limited';
     else if (code === 'NOT_SQUARESPACE') errorName = 'not_squarespace';
+    else if (code === 'SITE_PRIVATE') errorName = 'site_private';
     else if (code === 'SITE_UNREADABLE') errorName = 'site_unreadable';
     else if (status === 400) errorName = 'invalid_url';
     else if ((AI_CODES as string[]).indexOf(code) !== -1) errorName = code as AnalyzeErrorName;
@@ -165,6 +167,8 @@ export const UNREACHABLE_MESSAGE =
 export const TIMEOUT_MESSAGE =
   `Our servers took too long to answer. Try again in a moment. If it keeps happening, email ${SUPPORT_EMAIL}.`;
 export const UNREADABLE_SITE_MESSAGE = 'We could not read that website. Check the address, or start from a template instead.';
+export const PRIVATE_SITE_MESSAGE =
+  'Your website is private, so we can only see its lock screen. In Squarespace, open Settings, then Site availability, choose Public (or remove the site password), then try again.';
 export const SERVER_PROBLEM_MESSAGE =
   `Something went wrong on our side. Try again in a moment. If it keeps happening, email ${SUPPORT_EMAIL}.`;
 export const BUILD_FAILED_MESSAGE =
@@ -174,6 +178,8 @@ export function analyzeFailureTitle(f: AnalyzeFailure): string {
   switch (f.errorName) {
     case 'not_squarespace':
       return 'This builder is for Squarespace sites';
+    case 'site_private':
+      return 'Your website is private';
     case 'rate_limited':
       return 'Draft limit reached';
     case 'network_error':
@@ -192,6 +198,8 @@ export function analyzeFailureLabel(errorName: AnalyzeErrorName): string {
   switch (errorName) {
     case 'not_squarespace':
       return 'Not a Squarespace site';
+    case 'site_private':
+      return 'Website is private';
     case 'rate_limited':
       return 'Limit reached';
     case 'network_error':
@@ -211,6 +219,8 @@ export function analyzeFailureMessage(f: AnalyzeFailure): string {
       return rateLimitMessage(f.retryAfterSeconds);
     case 'not_squarespace':
       return NOT_SQUARESPACE_MESSAGE;
+    case 'site_private':
+      return PRIVATE_SITE_MESSAGE;
     case 'network_error':
       return UNREACHABLE_MESSAGE;
     case 'timeout':
