@@ -422,6 +422,13 @@ async function analyzePreviewSite(req: ExpressRequest, res: ExpressResponse, mar
   try {
     log.info(`[PreviewAnalyze] Scraping: ${normalizedUrl}`);
     const brand = await scrapeBrand(normalizedUrl);
+    // scrapeBrand answers a fetch failure (unknown domain, site down, too slow) with a blank detected:false brand. A quiz
+    // cannot be built from a page nobody could read, so say so: the builder then offers "Try a different address" and
+    // "Start from a template". Counts toward the failure limit like any other refusal. SEO plan Segment 3, task 3.9.
+    if (brand.detected === false) {
+      log.warn('[PreviewAnalyze] Could not read site', { url: normalizedUrl });
+      return res.status(422).json({ error: 'We could not read that website.', code: 'SITE_UNREADABLE' });
+    }
     log.info(`[PreviewAnalyze] Scrape done. Summary: ${brand.business?.summary?.length || 0} chars`);
 
     // Run AI analysis and onboarding questions in parallel for speed

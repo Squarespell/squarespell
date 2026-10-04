@@ -200,10 +200,13 @@ describe('buildQuiz() server failure', () => {
     // more than one always-mounted place, hence getAllByText) and there's a
     // working retry path back on the choose screen.
     await waitFor(() => {
-      expect(screen.getAllByText('Quiz build failed (500)').length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/We could not build your quiz this time/).length).toBeGreaterThan(0);
     });
+    // Never the server's own text (SEO plan 3.9).
+    expect(screen.queryByText(/Quiz build failed/)).toBeNull();
     expect(screen.getByText('Generate my quiz')).toBeTruthy();
     expect(screen.getAllByText('Try again').length).toBeGreaterThan(0);
+    expect(screen.getByText('Try a different address')).toBeTruthy();
   });
 });
 
@@ -588,9 +591,11 @@ describe('goAnalyze() reliability', () => {
 
     render(<TryFlowInner mode="preview" />);
     await waitFor(() => {
-      expect(screen.getAllByText('Too many tries. Please try again in about 20 minutes.').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('You have reached the limit for new drafts for now. Try again in about 20 minutes, or start from a template now.').length).toBeGreaterThan(0);
     });
-    expect(screen.getByText('Too many tries')).toBeTruthy();
+    expect(screen.getByText('Draft limit reached')).toBeTruthy();
+    expect(screen.getByText('Limit reached')).toBeTruthy();
+    expect(screen.getByText('Start from a template').closest('a')?.getAttribute('href')).toBe('/templates');
     expect(analyzeCalls()).toHaveLength(1);
     expect(gtag).toHaveBeenCalledTimes(1);
     const [, name, params] = gtag.mock.calls[0];
@@ -614,9 +619,10 @@ describe('goAnalyze() reliability', () => {
     expect(screen.getAllByText(/works with Squarespace websites only/).length).toBeGreaterThan(0);
     expect(screen.getByText('Not a Squarespace site')).toBeTruthy();
     expect(screen.queryByText('Something went wrong')).toBeNull();
-    // Retrying the same address is pointless: no "Try again", just "Try a different URL".
+    // Retrying the same address is pointless: no "Try again", just another address or a template.
     expect(screen.queryByText('Try again')).toBeNull();
-    expect(screen.getByText('Try a different URL')).toBeTruthy();
+    expect(screen.getByText('Try a different address')).toBeTruthy();
+    expect(screen.getByText('Start from a template').closest('a')?.getAttribute('href')).toBe('/templates');
     expect(analyzeCalls()).toHaveLength(1);
   });
 
@@ -628,10 +634,42 @@ describe('goAnalyze() reliability', () => {
 
     render(<TryFlowInner mode="preview" />);
     await waitFor(() => {
-      expect(screen.getAllByText(/couldn't reach our server/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/could not reach our servers/i).length).toBeGreaterThan(0);
     }, { timeout: 5000 });
     expect(analyzeCalls()).toHaveLength(2);
     expect(screen.queryByText(/Failed to fetch/)).toBeNull();
     expect(screen.getAllByText('Try again').length).toBeGreaterThan(0);
+    expect(screen.getByText('Try a different address')).toBeTruthy();
+    expect(screen.getByText('Start from a template')).toBeTruthy();
+  });
+
+  // SEO plan Segment 3, task 3.9: an address the server could not fetch (made-up domain, site down).
+  it('an address that cannot be read gets its own message and every way forward', async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) return jsonResponse(422, { error: 'We could not read that website.', code: 'SITE_UNREADABLE' }) as any;
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+
+    render(<TryFlowInner mode="preview" />);
+    await screen.findByText('We could not read that website');
+    expect(screen.getByText('We could not read that website. Check the address, or start from a template instead.')).toBeTruthy();
+    expect(screen.getByText('Site not readable')).toBeTruthy();
+    expect(screen.getByText('Try again')).toBeTruthy();
+    expect(screen.getByText('Try a different address')).toBeTruthy();
+    expect(screen.getByText('Start from a template').closest('a')?.getAttribute('href')).toBe('/templates');
+  });
+
+  it('"Try a different address" goes back to the address field, ready to type', async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes(ANALYZE_URL)) return jsonResponse(422, { error: 'We could not read that website.', code: 'SITE_UNREADABLE' }) as any;
+      throw new Error(`Unexpected fetch to ${url}`);
+    }) as any;
+
+    render(<TryFlowInner mode="preview" />);
+    fireEvent.click(await screen.findByText('Try a different address'));
+    expect(document.getElementById('stage-1')?.className).toContain('active');
+    await waitFor(() => {
+      expect(document.activeElement?.id).toBe('site-url');
+    });
   });
 });

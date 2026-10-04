@@ -2176,5 +2176,19 @@ export const FLOW_CSS = `
   @media (prefers-reduced-motion: reduce) { .s2-indeterminate::after { animation: none; left: 0; width: 30%; } }
   .btn-primary { background: #3154FF; border-radius: 6px; }
   .btn-primary:hover { background: #2443E0; }
+
+  /* Error next steps (SEO plan 3.9): every error offers a way forward. */
+  .hook-err-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+  .s2-analyze-err { flex-wrap: wrap; }
+  a.hook-err-retry, a.btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; text-decoration: none; }
+  @media (max-width: 560px) {
+    .hook-err.show { flex-direction: column; align-items: flex-start; }
+  }
+  /* Under 768 px the side panel sits above the content at full width. Repeated here because the overrides above
+     (width: 40%, wider padding) come later in this file than the first 768 px rule and would otherwise win. */
+  @media (max-width: 768px) {
+    .s2-left-panel { width: 100%; padding: 28px 24px; }
+    .s2-right-panel { padding: 32px 20px; }
+  }
 `;
 export default FLOW_CSS;

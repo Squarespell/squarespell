@@ -6,6 +6,7 @@
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { MARKETING_URL } from '@/lib/urls';
 
 // Without this the 404 had no <title> of its own (the root layout is a client component and sets none).
 // No robots entry needed: Next.js already adds <meta name="robots" content="noindex"> to the 404 response.
@@ -41,15 +42,14 @@ export default function NotFound() {
           404
         </p>
         <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 8px' }}>
-          We couldn&apos;t find that page
+          Page not found
         </h1>
         <p style={{ fontSize: 14, opacity: 0.66, lineHeight: 1.55, margin: '0 0 24px' }}>
-          This page doesn't exist. Try returning to the dashboard or going back
-          home.
+          This page doesn't exist or has moved. Go to your dashboard, or visit squarespellquiz.com.
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link
-            href="/"
+            href="/dashboard"
             style={{
               padding: '12px 22px',
               borderRadius: 100,
@@ -62,10 +62,10 @@ export default function NotFound() {
               alignItems: 'center',
             }}
           >
-            Go home
+            Go to dashboard
           </Link>
-          <Link
-            href="/dashboard"
+          <a
+            href={MARKETING_URL}
             style={{
               padding: '12px 22px',
               borderRadius: 100,
@@ -79,8 +79,8 @@ export default function NotFound() {
               alignItems: 'center',
             }}
           >
-            Dashboard
-          </Link>
+            Visit squarespellquiz.com
+          </a>
         </div>
       </div>
     </div>

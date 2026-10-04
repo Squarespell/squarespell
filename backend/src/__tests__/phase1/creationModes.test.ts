@@ -126,6 +126,12 @@ describe('mode 5 - public funnel: analyze -> build -> claim (and save-preview)',
     const again = await app.post('/api/claim-quiz').set(bearer(u)).send({ claim_token: token });
     expect(again.status).toBe(404);
   });
+  it('an address that cannot be read is refused with 422 SITE_UNREADABLE instead of building from a blank page', async () => {
+    const r = await (await api()).post('/api/preview-analyze').send({ url: site.base + '/down' });
+    expect(r.status).toBe(422);
+    expect(r.body.code).toBe('SITE_UNREADABLE');
+    expect(r.body.session_token).toBeUndefined();
+  });
   it('one-shot funnel generation (preview-generate) persists a claimable draft', async () => {
     const r = await (await api()).post('/api/preview-generate').send({ url: site.base });
     expect(r.status).toBe(200);
