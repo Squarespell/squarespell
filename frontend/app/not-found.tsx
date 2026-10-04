@@ -4,7 +4,14 @@
  * deleted quizzes, etc.).
  */
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+// Without this the 404 had no <title> of its own (the root layout is a client component and sets none).
+// No robots entry needed: Next.js already adds <meta name="robots" content="noindex"> to the 404 response.
+export const metadata: Metadata = {
+  title: 'Page not found | Squarespell Quiz',
+};
 
 export default function NotFound() {
   return (

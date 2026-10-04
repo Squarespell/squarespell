@@ -10,6 +10,7 @@ import { blocksToLegacy, legacyToBlocks } from '@/lib/quiz/blocks';
 import { QuizBlockEditor } from '@/app/dashboard/_components/QuizBlockEditor';
 import QuizRenderer, { RendererQuiz, RendererStage } from '@/components/quiz-taker/QuizRenderer';
 import { Wordmark } from '@/app/dashboard/_components/Brand';
+import { analyzeSite, analyzeFailureMessage, analyzeFailureTitle, reportAnalyzeFailure, AnalyzeErrorName } from '@/lib/quiz/analyzeSite';
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 export type TryFlowMode = 'preview' | 'authed';
@@ -18,6 +19,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com'
 
 // Hard-abort long-running preview requests (analyze + build) so the UI never
 // waits forever on a hung/slow backend (e.g. Render's free tier cold-starting).
+// For analyze this is per attempt: a network-level failure or timeout is retried once (lib/quiz/analyzeSite.ts).
 export const PREVIEW_REQUEST_TIMEOUT_MS = 75000;
 
 /* ========================================================================= */
@@ -280,6 +282,9 @@ export function TryFlowInner({
   // the background analyze call starts).
   const [loading, setLoading] = useState<boolean>(!!(mode === 'preview' && urlParam));
   const [errorMsg, setErrorMsg] = useState('');
+  /** Why the last analyze failed (null for other errors): picks the heading and which buttons make sense. */
+  const [analyzeErrorName, setAnalyzeErrorName] = useState<AnalyzeErrorName | null>(null);
+  const [analyzeErrorTitle, setAnalyzeErrorTitle] = useState('Something went wrong');
   /** Shown when the scraper is taking >3s (Render cold-start or slow site). */
   const [slowHint, setSlowHint] = useState(false);
 
@@ -383,43 +388,38 @@ export function TryFlowInner({
     setLoading(true);
     setSlowHint(false);
     setErrorMsg('');
+    setAnalyzeErrorName(null);
     let normalized = siteUrl.trim();
     if (!/^https?:\/\//i.test(normalized)) normalized = 'https://' + normalized;
 
     // Surface a "waking up servers" hint after 3s so users don't think it's
-    // broken when Render's free tier is cold-starting.
+    // broken when the server is slow to answer.
     const slowTimer = window.setTimeout(() => setSlowHint(true), 3000);
 
-    // Hard abort after 75s so the button doesn't stay disabled forever if the
-    // backend never responds.
-    const ac = new AbortController();
-    const killTimer = window.setTimeout(() => ac.abort(), PREVIEW_REQUEST_TIMEOUT_MS);
-
     // eslint-disable-next-line no-console
-    console.info('[squarespell] analyze start', { url: normalized, api: API });
+    console.info('[squarespell] analyze start', { api: API });
 
     try {
-      const res = await fetch(`${API}/api/preview-analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: normalized }),
-        signal: ac.signal,
-      });
-      // eslint-disable-next-line no-console
-      console.info('[squarespell] analyze response', { status: res.status, ok: res.ok });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Analyze failed (${res.status})`);
+      // Each attempt is hard-aborted after PREVIEW_REQUEST_TIMEOUT_MS so the button never stays disabled forever; a
+      // network-level failure or timeout is retried once after ~1.5 s, a 4xx/429/5xx answer never is.
+      const result = await analyzeSite(normalized, { apiBase: API, timeoutMs: PREVIEW_REQUEST_TIMEOUT_MS });
+      if (!result.ok) {
+        const failure = result.failure;
+        // eslint-disable-next-line no-console
+        console.error('[squarespell] analyze error', { error_name: failure.errorName, http_status: failure.httpStatus, retried: failure.retried });
+        reportAnalyzeFailure(failure);
+        setAnalyzeErrorName(failure.errorName);
+        setAnalyzeErrorTitle(analyzeFailureTitle(failure));
+        setErrorMsg(analyzeFailureMessage(failure));
+        return;
       }
-      const data = await res.json();
+      const data = result.data;
       // eslint-disable-next-line no-console
       console.info('[squarespell] analyze data', {
         hasBrand: !!data?.brand,
         hasSession: !!data?.session_token,
+        retried: result.retried,
       });
-      if (!data || !data.session_token) {
-        throw new Error('Invalid response from server. Please try again.');
-      }
       setBrand(data.brand ?? null);
       setSessionToken(data.session_token);
       setUrl(normalized);
@@ -439,21 +439,8 @@ export function TryFlowInner({
       setStage(2);
       // eslint-disable-next-line no-console
       console.info('[squarespell] advanced to Stage 2');
-    } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('[squarespell] analyze error', err);
-      if (err?.name === 'AbortError') {
-        setErrorMsg(
-          "That took too long. Our server may be waking up - please try again in a moment.",
-        );
-      } else {
-        setErrorMsg(
-          err?.message || "We couldn't reach that site. Check the URL and try again.",
-        );
-      }
     } finally {
       window.clearTimeout(slowTimer);
-      window.clearTimeout(killTimer);
       setSlowHint(false);
       setLoading(false);
     }
@@ -1238,15 +1225,18 @@ export function TryFlowInner({
           )}
 
           {errorMsg && (
-            <div className="hook-err show">
+            <div className="hook-err show" role="alert">
               <div>{errorMsg}</div>
-              <button
-                type="button"
-                className="hook-err-retry"
-                onClick={() => { setErrorMsg(''); goAnalyze(url); }}
-              >
-                Try again
-              </button>
+              {/* Retrying the same non-Squarespace address cannot work: the field above is the way forward. */}
+              {analyzeErrorName !== 'not_squarespace' && (
+                <button
+                  type="button"
+                  className="hook-err-retry"
+                  onClick={() => { setErrorMsg(''); goAnalyze(url); }}
+                >
+                  Try again
+                </button>
+              )}
             </div>
           )}
 
@@ -1269,7 +1259,7 @@ export function TryFlowInner({
               <div className="s2-left-body">
                 <div className="s2-left-analyzing">Error</div>
                 <div className="s2-left-site-name">{domain || 'Your site'}</div>
-                <div className="s2-left-type-chip">Could not analyze</div>
+                <div className="s2-left-type-chip">{analyzeErrorName === 'not_squarespace' ? 'Not a Squarespace site' : 'Could not analyze'}</div>
               </div>
               <div className="s2-left-footer">
                 <ol className="s2-left-step-dots" aria-label="Setup progress"><li className="s2-left-dot active">Website</li><li className="s2-left-dot">Brand</li><li className="s2-left-dot">Quiz</li></ol>
@@ -1280,14 +1270,25 @@ export function TryFlowInner({
                 <div className="s2-error-icon" style={{ marginBottom: 20 }}>
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>Something went wrong</div>
-                <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 28, maxWidth: 400, lineHeight: 1.5 }}>{errorMsg}</div>
-                <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); goAnalyze(url); }}>
-                  <SvgRefresh /> Try again
-                </button>
-                <button type="button" className="btn btn-ghost" style={{ marginTop: 14, width: '100%', maxWidth: 280 }} onClick={function() { setErrorMsg(''); setStage(1); }}>
-                  ← Try a different URL
-                </button>
+                <div role="alert">
+                  <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>{analyzeErrorName ? analyzeErrorTitle : 'Something went wrong'}</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 28, maxWidth: 400, lineHeight: 1.5 }}>{errorMsg}</div>
+                </div>
+                {analyzeErrorName === 'not_squarespace' ? (
+                  // Retrying the same address cannot work: lead with entering another one.
+                  <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); setStage(1); }}>
+                    Try a different URL
+                  </button>
+                ) : (
+                  <>
+                    <button type="button" className="s2-continue-btn" style={{ maxWidth: 280, animation: 'none' }} onClick={function() { setErrorMsg(''); goAnalyze(url); }}>
+                      <SvgRefresh /> Try again
+                    </button>
+                    <button type="button" className="btn btn-ghost" style={{ marginTop: 14, width: '100%', maxWidth: 280 }} onClick={function() { setErrorMsg(''); setStage(1); }}>
+                      ← Try a different URL
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
