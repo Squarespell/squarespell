@@ -4,6 +4,7 @@ import { addUtmParams, quizUtm } from '@/lib/urls';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { safeHttpUrl, safeLinkUrl } from '@/lib/safeUrl';
 import { safeColor } from '@/lib/safeCss';
+import { readableOn } from '@/lib/quizTheme';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
@@ -222,7 +223,10 @@ export default function EmbedQuizClient({
   const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
   const brandSurface = brandSurfaceProp || safeColor(quiz.branding?.colors?.surface, brandBg);
   const brandOnPrimary = brandOnPrimaryProp || brandBg;
-  const brandBorder = 'rgba(0,0,0,0.10)';
+  // Outlines and tints follow the background: faint black on light sites, faint white on dark ones (else invisible).
+  const darkBg = readableOn(brandBg) === '#ffffff';
+  const brandBorder = darkBg ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.10)';
+  const brandTint = darkBg ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)';
   const brandName = quiz.branding?.site_name || '';
   const PAID_PLANS = ['core', 'starter', 'growth', 'pro', 'business', 'agency'];
   const ownerPlan: string = (quiz as any).owner_plan || 'free';
@@ -613,7 +617,7 @@ export default function EmbedQuizClient({
           border-radius: 12px;
           max-height: 420px;
           object-fit: contain;
-          background: rgba(0,0,0,0.04);
+          background: ${brandTint};
           margin-bottom: 18px;
         }
         .sq-q-video-wrap {
@@ -718,7 +722,7 @@ export default function EmbedQuizClient({
           border-radius: 8px;
           overflow: hidden;
           flex-shrink: 0;
-          background: rgba(0,0,0,0.04);
+          background: ${brandTint};
           display: flex;
           align-items: center;
           justify-content: center;

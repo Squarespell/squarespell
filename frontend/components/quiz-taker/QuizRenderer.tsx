@@ -27,7 +27,7 @@ import { addUtmParams, quizUtm } from '@/lib/urls';
 import FitImage from './FitImage';
 import { safeHttpUrl, safeLinkUrl } from '@/lib/safeUrl';
 import { safeStyleText } from '@/lib/safeCss';
-import { resolveQuizTheme } from '@/lib/quizTheme';
+import { resolveQuizTheme, readableOn } from '@/lib/quizTheme';
 
 export interface QuizOption {
   id: string;
@@ -288,7 +288,8 @@ export default function QuizRenderer(props: QuizRendererProps) {
   var brandText = theme.text;
   var brandPrimary = theme.primary;
   var brandOnPrimary = theme.onPrimary;
-  var brandBorder = 'rgba(0,0,0,0.10)';
+  // Outlines follow the background: faint black on light backgrounds, faint white on dark ones.
+  var brandBorder = readableOn(brandBg) === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.10)';
   var brandFont = theme.fontStack;
   var brandName = brand?.site_name || '';
   var showBranding = quiz.settings?.show_branding !== false && !quiz.settings?.remove_branding;
