@@ -38,6 +38,9 @@ export function scanHtml(html: string, siteKey: string): PageScan {
   return { loaderFound, keyMatches, slots: slots.slice(0, 20) };
 }
 
+/** Squarespace prints Code Injection after its inline styles and page data, so the loader often sits 600 to 800 KB into a page. */
+const PAGE_MAX_BYTES = 5 * 1024 * 1024;
+
 const PASSWORD_PAGE = /(password[- ]protected|sqs-password|site-password|lock-screen|enter (the )?password)/i;
 
 /**
@@ -52,7 +55,7 @@ export async function verifySite(input: { hostname: string; siteKey: string; pat
   const fail = (reason: ReasonCode, status: number | null = null): VerifyResult => ({ ok: false, reason, url, status, loaderFound: false, slots: [] });
   let res;
   try {
-    res = await safeFetch(url, input.fetchOptions);
+    res = await safeFetch(url, { maxBytes: PAGE_MAX_BYTES, ...input.fetchOptions });
   } catch (e: any) {
     if (e instanceof SafeFetchError) return fail(e.code === 'timeout' ? 'timeout' : 'unreachable');
     return fail('unreachable');
