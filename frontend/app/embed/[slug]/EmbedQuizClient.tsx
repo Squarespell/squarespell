@@ -449,14 +449,17 @@ export default function EmbedQuizClient({
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        /* The whole frame is painted with the quiz background: the title and footer sit outside the card, and a
+           transparent frame showed the popup's white behind light text on dark websites. In "Match my website" the
+           background is the website section's own color, so inline quizzes still blend in. */
         body {
           font-family: ${brandFont};
-          background: transparent;
+          background: ${brandBg};
           color: ${brandText};
         }
         .sq-root {
           container-type: inline-size;
-          background: transparent;
+          background: ${brandBg};
           color: ${brandText};
           padding: 28px 20px 40px;
           font-family: ${brandFont};
