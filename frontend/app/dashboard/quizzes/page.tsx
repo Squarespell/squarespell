@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { track } from '@/lib/analytics';
 
 import { DashboardShell, DASHBOARD_COLORS as C } from '../_components/DashboardShell';
 import { useDashboardAuth } from '../_components/useDashboardAuth';
@@ -247,6 +248,7 @@ export default function QuizzesPage() {
       .then(function(res) { return res.json(); })
       .then(function(updated: any) {
         if (updated && updated.id) {
+          if (path === '/publish' && quiz.status === 'draft' && updated.status === 'live') track('quiz_published');
           setQuizzes(function(prev) { return prev.map(function(q) { return q.id === updated.id ? Object.assign({}, q, { status: updated.status }) : q; }); });
         }
       })

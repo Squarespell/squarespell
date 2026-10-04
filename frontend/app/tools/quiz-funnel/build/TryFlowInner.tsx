@@ -11,6 +11,7 @@ import { blocksToLegacy, legacyToBlocks } from '@/lib/quiz/blocks';
 import { QuizBlockEditor } from '@/app/dashboard/_components/QuizBlockEditor';
 import QuizRenderer, { RendererQuiz, RendererStage } from '@/components/quiz-taker/QuizRenderer';
 import { Wordmark } from '@/app/dashboard/_components/Brand';
+import { track } from '@/lib/analytics';
 import {
   analyzeSite, analyzeFailureLabel, analyzeFailureMessage, analyzeFailureTitle, buildFailureMessage, reportAnalyzeFailure,
   AnalyzeErrorName, BUILD_FAILED_MESSAGE, TIMEOUT_MESSAGE, UNREACHABLE_MESSAGE,
@@ -403,6 +404,9 @@ export function TryFlowInner({
     // eslint-disable-next-line no-console
     console.info('[squarespell] analyze start', { api: API });
 
+    const analyzeStarted = Date.now();
+    track('builder_analyze_start');
+
     try {
       // Each attempt is hard-aborted after PREVIEW_REQUEST_TIMEOUT_MS so the button never stays disabled forever; a
       // network-level failure or timeout is retried once after ~1.5 s, a 4xx/429/5xx answer never is.
@@ -418,6 +422,7 @@ export function TryFlowInner({
         return;
       }
       const data = result.data;
+      track('builder_analyze_success', { duration_ms: Date.now() - analyzeStarted });
       // eslint-disable-next-line no-console
       console.info('[squarespell] analyze data', {
         hasBrand: !!data?.brand,

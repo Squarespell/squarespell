@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DASHBOARD_COLORS as C } from '@/app/dashboard/_components/dashboardColors';
 import { authApi } from '@/lib/auth/client';
+import { track } from '@/lib/analytics';
 
 const ACC = C.ACCENT;
 
@@ -74,8 +75,10 @@ function GoogleButton({ clientId, next, text, onError }: { clientId: string; nex
         callback: async function (resp: { credential?: string }) {
           if (!resp?.credential) { onError('Google sign-in did not finish. Please try again.'); return; }
           const r = await authApi.googleSignIn(resp.credential);
-          if (r.ok) router.replace(next);
-          else onError((r.data && r.data.error) || 'Google sign-in did not finish. Please try again.');
+          if (r.ok) {
+            if (r.data && r.data.created) track('sign_up', { method: 'google' });
+            router.replace(next);
+          } else onError((r.data && r.data.error) || 'Google sign-in did not finish. Please try again.');
         },
       });
       g.accounts.id.renderButton(ref.current, {
@@ -155,7 +158,7 @@ export function SignUpForm({ next, signInHref }: { next: string; signInHref: str
     setBusy(true); setError(''); setNotice('');
     const r = await authApi.signUp(email, password, firstName);
     setBusy(false);
-    if (r.ok) { router.replace(next); return; }
+    if (r.ok) { track('sign_up', { method: 'email' }); router.replace(next); return; }
     if (r.data && r.data.code === 'password_not_set') { setNotice(r.data.error); return; }
     setError((r.data && r.data.error) || 'Could not create the account. Try again.');
   }
