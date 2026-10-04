@@ -11,6 +11,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DASHBOARD_COLORS as C } from './DashboardShell';
+import { PublishUpgradeCard } from './PublishUpgradeCard';
 import { embedSnippet, publicQuizUrl } from '@/lib/urls';
 import { minimumPlanFor, type PlanFeatures } from '@/lib/plans';
 import { api } from '@/lib/api';
@@ -354,6 +355,8 @@ export function PublishModal({
             </svg>
           </button>
         </div>
+
+        <PublishUpgradeCard placement="editor_publish" />
 
         {connectEnabled && (
           <a

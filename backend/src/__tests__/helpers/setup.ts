@@ -72,6 +72,14 @@ vi.mock('stripe', async (importOriginal) => {
           },
         },
       };
+      (this as any).coupons = {
+        retrieve: async (id: string) => {
+          const c = f.stripeCoupons.get(id);
+          if (!c) { const e: any = new Error('No such coupon: ' + id); e.code = 'resource_missing'; e.statusCode = 404; throw e; }
+          return c;
+        },
+        create: async (p: any) => { f.stripeCalls.couponsCreated.push(p); const c = { ...p, object: 'coupon' }; f.stripeCoupons.set(p.id, c); return c; },
+      };
       (this as any).subscriptions = {
         retrieve: async () => ({ items: { data: [{ id: 'si_local' }] } }),
         update: async (id: string, p: any) => { f.stripeCalls.subsUpdate.push({ id, p }); return { id }; },

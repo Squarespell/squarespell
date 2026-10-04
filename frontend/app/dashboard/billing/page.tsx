@@ -24,6 +24,7 @@ import {
 } from '../_components/PageShell';
 
 import { PLAN_CATALOG } from '@/lib/planCatalog';
+import { isUnpaid, startCheckout, formatDay } from '@/lib/billing';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.squarespellquiz.com';
 
@@ -40,6 +41,10 @@ type UserPlan = {
   limits: { quizzes: number; leads: number; emails: number };
   base_limits?: { leads: number; emails: number };
   trial_ends_at: string | null;
+  trial_active?: boolean;
+  held_leads?: { count: number; first_expires_at: string | null };
+  billing_starts_at?: string | null;
+  offer?: 'winback' | null;
   email: string;
   leads_this_month?: number;
   emails_this_month?: number;
@@ -190,10 +195,20 @@ export default function BillingPage() {
   var [emailPick, setEmailPick] = useState<string | null>(null);
 
   // Deep-link to a billing tab with ?tab=plans|addons|invoices (read on the client to avoid a Suspense boundary).
+  // Upgrade links add ?plan=&billing= (preselect) and &checkout=1 (go straight to Stripe once the plan has loaded).
+  var [intent, setIntent] = useState<{ plan: string; offer: 'winback' | null; checkout: boolean; from: string } | null>(null);
   useEffect(function() {
     try {
-      var t = new URLSearchParams(window.location.search).get('tab') as BillingTab | null;
+      var q = new URLSearchParams(window.location.search);
+      var t = q.get('tab') as BillingTab | null;
       if (t && BILLING_TABS.some(function(b) { return b.key === t; })) setTab(t);
+      if (q.get('billing') === 'monthly') setYearly(false);
+      if (q.get('billing') === 'yearly') setYearly(true);
+      var wanted = q.get('plan');
+      if (wanted && PLAN_CATALOG.some(function(p) { return p.id === wanted; })) {
+        setTab('plans');
+        setIntent({ plan: wanted, offer: q.get('offer') === 'winback' ? 'winback' : null, checkout: q.get('checkout') === '1', from: q.get('from') || 'link' });
+      }
     } catch (e) {}
   }, []);
 
@@ -250,8 +265,11 @@ export default function BillingPage() {
     return Math.max(0, Math.ceil(diff / 86400000));
   }, [plan]);
 
-  var isTrial = plan?.plan === 'trial';
+  // Unpaid accounts are stored as 'free' during the trial ('trial' is the older name). Treating 'free' as paid sent them to
+  // the plan-switch path, which needs a subscription they do not have, so they could not check out from this page.
+  var isTrial = !!plan && isUnpaid(plan.plan);
   var isPaid = plan && !isTrial;
+  var [checkoutNotice, setCheckoutNotice] = useState('');
   var [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   var [addonLoading, setAddonLoading] = useState<string | null>(null);
 
@@ -325,29 +343,26 @@ export default function BillingPage() {
     handlePreviewSwitch(planId);
   }
 
-  function handleCheckout(planId: string) {
+  function handleCheckout(planId: string, opts?: { billing?: 'monthly' | 'yearly'; offer?: 'winback' | null; placement?: string }) {
     if (!token) return;
     setCheckoutLoading(planId);
-    var billing = yearly ? 'yearly' : 'monthly';
-    fetch(API + '/api/stripe/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ plan: planId, billing: billing }),
-    })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          alert(data.error || 'Could not start checkout');
-          setCheckoutLoading(null);
-        }
-      })
-      .catch(function() {
-        alert('Something went wrong. Please try again.');
-        setCheckoutLoading(null);
-      });
+    setCheckoutNotice('');
+    var billing: 'monthly' | 'yearly' = opts && opts.billing ? opts.billing : (yearly ? 'yearly' : 'monthly');
+    // The win-back offer covers monthly billing (20% off the first 3 payments).
+    var offer = opts && opts.offer !== undefined ? opts.offer : (plan?.offer === 'winback' && billing === 'monthly' ? 'winback' : null);
+    startCheckout({ plan: planId, billing: billing, offer: offer, placement: (opts && opts.placement) || 'billing_page' }).then(function(err) {
+      if (err) { setCheckoutNotice(err); setCheckoutLoading(null); }
+    });
   }
+
+  // One-click upgrade links: start checkout as soon as the plan has loaded, once.
+  var [autoStarted, setAutoStarted] = useState(false);
+  useEffect(function() {
+    if (!intent || !intent.checkout || autoStarted || !plan || !token) return;
+    setAutoStarted(true);
+    if (!isUnpaid(plan.plan)) return; // already paying: show the plans to switch instead
+    handleCheckout(intent.plan, { billing: yearly ? 'yearly' : 'monthly', offer: intent.offer, placement: intent.from });
+  }, [intent, plan, token, autoStarted]);
 
   function handlePreviewSwitch(planId: string) {
     if (!token) return;
@@ -458,7 +473,8 @@ export default function BillingPage() {
   const PLAN_NAME_MAP: Record<string, string> = {
     trial: 'Trial', core: 'Core', starter: 'Core', pro: 'Pro', business: 'Business', agency: 'Business', free: 'Free',
   };
-  var displayPlanName = PLAN_NAME_MAP[plan.plan] || plan.plan;
+  var displayPlanName = isTrial ? 'Trial' : (PLAN_NAME_MAP[plan.plan] || plan.plan);
+  var trialOver = isTrial && plan.trial_active === false;
   var planKey = plan.plan === 'starter' ? 'core' : plan.plan === 'agency' ? 'business' : plan.plan;
   var isBusiness = planKey === 'business';
   var currentCatalog = PLAN_CATALOG.find(function(p) { return p.id === planKey; });
@@ -717,10 +733,10 @@ export default function BillingPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 18, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: C.DISPLAY_FONT, fontSize: 52, fontWeight: 500, letterSpacing: '-0.04em', lineHeight: 1 }}>{displayPlanName}</span>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 999, background: C.ACID, color: C.INK, fontSize: 15 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#1F9D57' }} />{isTrial ? trialDaysLeft + ' days left' : 'Active'}
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: trialOver ? '#C53030' : '#1F9D57' }} />{trialOver ? 'Ended' : isTrial ? trialDaysLeft + ' days left' : 'Active'}
                   </span>
                 </div>
-                <div style={{ fontSize: 18, marginTop: 14, opacity: 0.9 }}>{isTrial ? 'Free trial, no billing yet' : 'Billed through Stripe'}</div>
+                <div style={{ fontSize: 18, marginTop: 14, opacity: 0.9 }}>{trialOver ? 'Choose a plan to keep collecting leads' : isTrial ? 'Free trial, no billing yet' : 'Billed through Stripe'}</div>
                 <div style={{ marginTop: 28 }}>
                   {isPaid
                     ? <button type="button" onClick={openPortal} className="bl-btn" style={{ border: 'none' }}>Manage billing</button>
@@ -777,6 +793,15 @@ export default function BillingPage() {
 
       {tab === 'plans' && (
         <>
+          {isTrial && (plan.billing_starts_at || plan.offer === 'winback' || (plan.held_leads && plan.held_leads.count > 0) || checkoutNotice) ? (
+            <div role="status" style={{ margin: '0 0 22px', padding: '14px 18px', borderRadius: 8, background: C.ACCENT_LIGHT, border: '1px solid ' + C.ACCENT + '33', fontSize: 15, lineHeight: 1.5, color: C.INK }}>
+              {plan.held_leads && plan.held_leads.count > 0 ? <div><b>{plan.held_leads.count} {plan.held_leads.count === 1 ? 'lead is' : 'leads are'} waiting.</b> They appear in your dashboard as soon as you choose a plan.</div> : null}
+              {plan.billing_starts_at ? <div>Choose now and you won&rsquo;t be charged until {formatDay(plan.billing_starts_at)}, when your trial ends.</div> : null}
+              {plan.offer === 'winback' ? <div>Welcome back: 20% off your first 3 months on any monthly plan.{yearly ? ' Switch to Monthly above to use it.' : ' Applied at checkout.'}</div> : null}
+              {intent && intent.checkout && checkoutLoading ? <div>Taking you to checkout&hellip;</div> : null}
+              {checkoutNotice ? <div role="alert" style={{ color: C.DANGER }}>{checkoutNotice}</div> : null}
+            </div>
+          ) : null}
           <PlanCards />
           <Matrix />
           {portalStrip}

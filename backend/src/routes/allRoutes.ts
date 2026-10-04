@@ -29,6 +29,7 @@ import { runAutoTagRules } from '../services/segmentation';
 import { markPartialAsConverted } from '../services/partialCompletion';
 import { processAutomationEvent } from '../services/automationEngine';
 import { sendPlatformEmail } from '../services/platformEmails';
+import { HELD_LEAD_CAP, deferBillingUntil, winbackEligible, ensureWinbackCoupon, isUnpaidPlan, trialEndsAt } from '../services/upgradeOffers';
 import Stripe from 'stripe';
 import { getMailer } from '../services/email/mailer';
 import { UAParser } from 'ua-parser-js';
@@ -742,14 +743,10 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
     return res.status(503).json({ error: 'Service temporarily unavailable. Please try again.', code: 'db_unavailable' });
   }
 
-  // Block lead collection when the quiz owner's trial has expired
+  // The owner's trial has ended without a plan: the visitor still gets their result, and the lead is held for 30 days
+  // (held_leads, migration 036) until the owner chooses a plan. Refusing it lost the lead and showed the visitor an error.
   const ownerPlan = owner?.plan ?? 'free';
-  if ((ownerPlan === 'free' || ownerPlan === 'trial') && owner?.created_at && !isTrialActive(owner.created_at)) {
-    return res.status(403).json({
-      error: 'trial_expired',
-      message: 'This quiz is no longer collecting leads. The account owner\'s trial has ended.',
-    });
-  }
+  const ownerTrialEnded = (ownerPlan === 'free' || ownerPlan === 'trial') && !!owner?.created_at && !isTrialActive(owner.created_at);
 
   // New sign-ups are stored as plan 'free' and are on the 14-day trial: they get the trial allowance, not the 0-lead
   // free limit. Every lead of every in-trial account was being refused with "Lead limit reached".
@@ -834,6 +831,29 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   // Normalize for storage/dedup: trim name, lowercase+trim email
   const normalizedName = typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
   const normalizedEmail = email.trim().toLowerCase();
+
+  if (ownerTrialEnded) {
+    // Held, not delivered: no lead count, owner notification, integration, automation or email to the visitor until a plan is chosen.
+    const { data: held, error: holdErr } = await supabase.rpc('hold_lead', {
+      p_quiz_id: quiz.id,
+      p_user_id: quiz.user_id,
+      p_name: normalizedName,
+      p_email: normalizedEmail,
+      p_answers: answers ?? {},
+      p_outcome_id: resolvedOutcomeId,
+      p_metadata: metadata,
+      p_consent: consent === true,
+      p_consent_text: consent ? (consent_text || null) : null,
+      p_score: isScoredQuiz ? serverScoring.score : null,
+      p_cap: HELD_LEAD_CAP,
+    });
+    if (holdErr) {
+      log.error('[Leads] hold failed', { err: holdErr.message });
+      return res.status(503).json({ error: 'Service temporarily unavailable. Please try again.', code: 'db_unavailable' });
+    }
+    if (held === 'cap_reached') log.warn('[Leads] held-lead cap reached; lead not stored', { quizId: quiz.id });
+    return res.status(201).json({ success: true, held: true, duplicate: held === 'duplicate' });
+  }
 
   // Atomic lead insert with limit check — prevents race condition (C4 fix)
   const { data: leadResult, error } = await supabase.rpc('insert_lead_with_limit_check', {
@@ -1985,7 +2005,7 @@ scrapeBrandRouter.post('/scrape-brand', requireAuth, attachUser, async (req, res
 export const userRouter = Router();
 userRouter.use(requireAuth, attachUser);
 userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
-  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications,custom_domain,domain_verified,lead_addon,email_addon').eq('id', req.dbUserId).single();
+  const { data: user } = await supabase.from('users').select('plan,quiz_count,created_at,email,email_notifications,custom_domain,domain_verified,lead_addon,email_addon,stripe_subscription_id').eq('id', req.dbUserId).single();
   if (!user) return res.status(404).json({ error: 'Not found' });
   var plan = await entitledPlan(req.dbUserId, user.plan || 'free'); // active legacy entitlement -> Business
   // Map legacy 'starter' to 'free' for users who never paid
@@ -2006,6 +2026,20 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   ]);
   var leadsThisMonth = leadRes.count || 0;
   var emailsThisMonth = emailRes.count || 0;
+  // Leads held after the trial ended (migration 036). A paying account normally has none (the Stripe webhook releases
+  // them); release here too in case a plan was set another way.
+  if (!isUnpaidPlan(plan)) {
+    var { data: heldAny } = await supabase.from('held_leads').select('id').eq('user_id', req.dbUserId).limit(1);
+    if (heldAny && heldAny.length) await supabase.rpc('release_held_leads', { p_user_id: req.dbUserId });
+  }
+  var nowIso = new Date().toISOString();
+  var [heldRes, heldSoonest, totalLeadRes] = await Promise.all([
+    supabase.from('held_leads').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId).gt('expires_at', nowIso),
+    supabase.from('held_leads').select('expires_at').eq('user_id', req.dbUserId).gt('expires_at', nowIso).order('expires_at', { ascending: true }).limit(1),
+    supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId),
+  ]);
+  var heldLeads = { count: heldRes.count || 0, first_expires_at: (heldSoonest.data && heldSoonest.data[0] && heldSoonest.data[0].expires_at) || null };
+  var billingStartsAt = deferBillingUntil({ plan: plan, created_at: user.created_at, stripe_subscription_id: user.stripe_subscription_id });
   var totalViews = (viewsRes.data || []).reduce((sum: number, q: any) => sum + (q.view_count || 0), 0);
   // Compute effective limits including add-ons
   var effectiveLeads = getEffectiveLeadLimit(limits, user.lead_addon);
@@ -2024,7 +2058,13 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
     price: EMAIL_ADDON_PRICES[user.email_addon.key]?.price || 0,
     cancel_at_period_end: user.email_addon.cancel_at_period_end || false,
   } : null;
-  res.json({ plan: plan, quiz_count: user.quiz_count, limits: effectiveLimits, base_limits: { leads: limits.leads, emails: limits.emails }, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, usage: { views: totalViews, leads: leadsThisMonth, emails: emailsThisMonth }, custom_domain: user.custom_domain || null, domain_verified: user.domain_verified || false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics }, lead_addon: leadAddonInfo, email_addon: emailAddonInfo });
+  res.json({ plan: plan, quiz_count: user.quiz_count, limits: effectiveLimits,
+    trial_active: isUnpaidPlan(plan) && !!user.created_at && isTrialActive(user.created_at),
+    held_leads: heldLeads,
+    total_leads: totalLeadRes.count || 0,
+    // When a plan chosen now would start billing (the trial end), or null when it bills at checkout.
+    billing_starts_at: billingStartsAt ? new Date(billingStartsAt * 1000).toISOString() : null,
+    offer: winbackEligible({ plan: plan, created_at: user.created_at, stripe_subscription_id: user.stripe_subscription_id }) ? 'winback' : null, base_limits: { leads: limits.leads, emails: limits.emails }, trial_ends_at: trialEndsAt, email: user.email || '', email_notifications: user.email_notifications !== false, leads_this_month: leadsThisMonth, emails_this_month: emailsThisMonth, usage: { views: totalViews, leads: leadsThisMonth, emails: emailsThisMonth }, custom_domain: user.custom_domain || null, domain_verified: user.domain_verified || false, features: { removeBranding: limits.removeBranding, abTesting: limits.abTesting, zapier: limits.zapier, analytics: limits.analytics }, lead_addon: leadAddonInfo, email_addon: emailAddonInfo });
 });
 
 // PATCH /api/user/custom-domain — set custom domain (business plan only)
@@ -2232,10 +2272,26 @@ stripeRouter.post('/create-checkout', requireAuth, attachUser, async (req: Authe
   const billing = req.body.billing === 'yearly' ? 'yearly' : 'monthly';
   const priceId = priceOr4xx(res, req.body.plan, billing);
   if (!priceId) return;
-  const { data: user } = await supabase.from('users').select('email,stripe_customer_id').eq('id', req.dbUserId).single();
+  const { data: user } = await supabase.from('users').select('email,stripe_customer_id,stripe_subscription_id,plan,created_at').eq('id', req.dbUserId).single();
+  // During the trial, billing starts when the trial ends (no trial days lost). After a trial that ended without a plan,
+  // the win-back offer (20% off the first 3 monthly payments) applies when asked for and still valid.
+  const billingStarts = user ? deferBillingUntil(user) : null;
+  const wantsWinback = req.body.offer === 'winback' && billing === 'monthly' && !!user && winbackEligible(user);
   try {
-    const session = await stripe.checkout.sessions.create({ mode: 'subscription', payment_method_types: ['card'], customer_email: user?.stripe_customer_id ? undefined : user?.email, customer: user?.stripe_customer_id ?? undefined, line_items: [{ price: priceId, quantity: 1 }], success_url: `${process.env.FRONTEND_URL}/dashboard?upgraded=true`, cancel_url: `${process.env.FRONTEND_URL}/pricing`, metadata: { db_user_id: req.dbUserId!, plan: req.body.plan } });
-    res.json({ url: session.url });
+    const discounts = wantsWinback ? [{ coupon: await ensureWinbackCoupon(stripe) }] : undefined;
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      customer_email: user?.stripe_customer_id ? undefined : user?.email,
+      customer: user?.stripe_customer_id ?? undefined,
+      line_items: [{ price: priceId, quantity: 1 }],
+      ...(billingStarts ? { subscription_data: { trial_end: billingStarts } } : {}),
+      ...(discounts ? { discounts } : {}),
+      success_url: `${process.env.FRONTEND_URL}/dashboard?upgraded=true&plan=${encodeURIComponent(req.body.plan)}`,
+      cancel_url: `${process.env.FRONTEND_URL}/dashboard/billing`,
+      metadata: { db_user_id: req.dbUserId!, plan: req.body.plan, ...(wantsWinback ? { offer: 'winback' } : {}) },
+    });
+    res.json({ url: session.url, billing_starts_at: billingStarts ? new Date(billingStarts * 1000).toISOString() : null, offer: wantsWinback ? 'winback' : null });
   } catch (err: any) {
     log.error('[Billing] create-checkout failed', { err: err?.message });
     res.status(502).json({ error: 'The payment provider is unavailable. Please try again shortly.', code: 'billing_provider_unavailable' });
@@ -2342,6 +2398,10 @@ async function applyStripeEvent(event: Stripe.Event): Promise<Record<string, unk
     if (s.metadata.plan) {
       if (!isKnownPlan(s.metadata.plan)) throw new PlanMappingError('checkout session carries an unknown plan name');
       must(await supabase.from('users').update({ plan: s.metadata.plan, stripe_customer_id: s.customer as string, stripe_subscription_id: s.subscription as string }).eq('id', s.metadata.db_user_id), 'activate plan');
+      // Leads held while the trial was over now belong to the paying owner.
+      const released = await supabase.rpc('release_held_leads', { p_user_id: s.metadata.db_user_id });
+      if (released.error) throw new Error('release held leads: ' + released.error.message);
+      if (released.data) log.info('[StripeWebhook] Held leads released', { count: released.data });
       const { data: paidUser } = await supabase.from('users').select('id,email,first_name').eq('id', s.metadata.db_user_id).single();
       if (paidUser) {
         sendPlatformEmail({
@@ -2666,7 +2726,11 @@ cronRouter.post('/cleanup-preview-cache', async (req, res) => {
     var { cleanupExpiredCache } = await import('../services/previewCache');
     var deleted = await cleanupExpiredCache();
     log.info('[Cron] preview-cache cleanup: removed ' + deleted + ' expired entries');
-    res.json({ ok: true, deleted: deleted });
+    // Same hourly job: held leads are kept 30 days (migration 036, promised in the trial emails and the privacy policy).
+    var purged = await supabase.rpc('purge_expired_held_leads');
+    if (purged.error) throw new Error('purge held leads: ' + purged.error.message);
+    if (purged.data) log.info('[Cron] held leads purged after 30 days: ' + purged.data);
+    res.json({ ok: true, deleted: deleted, held_leads_purged: purged.data || 0 });
   } catch (err: any) {
     log.error('[Cron] cleanup-preview-cache failed:', { err: err });
     res.status(500).json({ error: err?.message || 'preview cache cleanup failed' });
@@ -2853,7 +2917,7 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
     // Get all users who are on trial or free (not yet paid)
     var { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id,email,first_name,created_at,plan,last_login_at');
+      .select('id,email,first_name,created_at,plan,last_login_at,stripe_subscription_id');
 
     if (usersError) throw usersError;
 
@@ -2924,6 +2988,17 @@ trialReminderRouter.post('/trial-reminders', async (req, res) => {
         if (daysSinceSignup === 14 && isTrial) {
           var sent7 = await sendPlatformEmail({ userId: user.id, email: user.email, emailType: 'trial_day14_expired', firstName: user.first_name || '' });
           if (sent7) emailsSent++;
+        }
+
+        // Win-back after a trial that ended without a plan: 3 and 16 days after it ended, with the waiting leads and the
+        // one offer (20% off the first 3 monthly payments, valid 45 days after the trial ended; see upgradeOffers.ts).
+        if ((daysSinceSignup === 17 || daysSinceSignup === 30) && isTrial && !(user as any).stripe_subscription_id) {
+          var { count: heldCount } = await supabase.from('held_leads').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gt('expires_at', now.toISOString());
+          var sentWb = await sendPlatformEmail({
+            userId: user.id, email: user.email, emailType: daysSinceSignup === 17 ? 'trial_winback_day17' : 'trial_winback_day30', firstName: user.first_name || '',
+            data: { heldLeads: heldCount || 0 },
+          });
+          if (sentWb) emailsSent++;
         }
 
         // ── STAGE 5: WIN-BACK (paid users who went inactive) ──

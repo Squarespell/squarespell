@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { connectApi, ConnectApiError, DisplayOptions, Installation, InstallMode, QuizSummary, Site, slotSnippet } from '@/lib/connect/client';
 import { MODE_LABEL, friendlyError, recoveryFor } from '@/lib/connect/copy';
 import { Modal, CopyButton, useAnnounce } from './primitives';
+import { PublishUpgradeCard } from '../../_components/PublishUpgradeCard';
 
 type Rule = 'all' | 'include' | 'exclude';
 type Prog = 'idle' | 'run' | 'done' | 'fail';
@@ -359,6 +360,7 @@ export function PublishFlow({ open, token, site, quizzes, presetQuizId, installa
           <span className={'sx-badge ' + (confirmed ? 'sx-b-ok' : 'sx-b-warn')}><span aria-hidden="true">{confirmed ? '\u2713' : '!'}</span>{confirmed ? 'Live' : 'Not confirmed yet'}</span>
         </div>
         <p className="sx-hint" style={{ textAlign: 'left' }}>The quiz takes your website{'\u2019'}s colors and font automatically. {quiz ? <a href={'/dashboard/' + encodeURIComponent(quiz.id) + '?panel=design'}>Change colors and font</a> : null}</p>
+        {!editing ? <div style={{ textAlign: 'left' }}><PublishUpgradeCard placement="website_publish" /></div> : null}
         {!confirmed ? <div className="sx-note sx-warn" style={{ textAlign: 'left' }}>Your change was saved. Visitors should see it within a minute. If it does not appear, open the website and use Re-check.</div> : null}
       </div>
     );
