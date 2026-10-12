@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 // The contact address is the one already published in this app's own terms and privacy pages.
-const SUPPORT_EMAIL = 'info@squarespell.com';
+const SUPPORT_EMAIL = 'info@squarespellquiz.com';
 
 export default function SupportPage() {
   return (

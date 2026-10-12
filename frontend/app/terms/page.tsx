@@ -77,7 +77,7 @@ export default function TermsPage() {
 
         <Section title="Contact">
           Questions about these terms can be sent to{' '}
-          <a href="mailto:info@squarespell.com" style={{ color: '#3154FF' }}>info@squarespell.com</a>.
+          <a href="mailto:info@squarespellquiz.com" style={{ color: '#3154FF' }}>info@squarespellquiz.com</a>.
         </Section>
       </div>
     </div>

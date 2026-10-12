@@ -174,7 +174,7 @@ export default function TemplatesGalleryPage() {
           <div style={{ padding: '20px 16px 0', borderTop: '1px solid ' + COLORS.border, marginTop: 16 }}>
             <p style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.5, margin: 0 }}>
               Missing a template?{' '}
-              <a href="mailto:info@squarespell.com" style={{ color: COLORS.accent, textDecoration: 'none', fontWeight: 500 }}>
+              <a href="mailto:info@squarespellquiz.com" style={{ color: COLORS.accent, textDecoration: 'none', fontWeight: 500 }}>
                 Let us know
               </a>
             </p>

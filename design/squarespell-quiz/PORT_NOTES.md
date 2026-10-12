@@ -24,7 +24,7 @@ Ported from `design/squarespell-quiz/index.html` (reviewed source a954105948bd97
 ### Wording decisions
 - Squarespace, WordPress, Shopify, Wix, Webflow and Framer are all "embed". No platform is described as one-click install. `planCatalog.ts` and `app/pricing/page.tsx` now say "Embed on Squarespace and custom-code websites".
 - Account connections (Mailchimp, Google Sheets and so on) are integrations that send lead data out. The integrations page states that they do not place a quiz on a page.
-- Business plan says "Priority email support". Support is email only (`mailto:info@squarespell.com`); no chat is offered or built.
+- Business plan says "Priority email support". Support is email only (`mailto:info@squarespellquiz.com`); no chat is offered or built.
 
 ### Integration status (homepage and /integrations)
 - Homepage shows only Mailchimp, Klaviyo, ConvertKit, HubSpot, Google Sheets, Zapier, Webhooks.
