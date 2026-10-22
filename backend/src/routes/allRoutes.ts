@@ -31,6 +31,7 @@ import { processAutomationEvent } from '../services/automationEngine';
 import { sendPlatformEmail } from '../services/platformEmails';
 import { HELD_LEAD_CAP, deferBillingUntil, winbackEligible, ensureWinbackCoupon, isUnpaidPlan, trialEndsAt } from '../services/upgradeOffers';
 import { buildCustomersReport, listStripeSubscriptions, activeMrrCents } from '../services/adminCustomers';
+import { siteHostname, siteTrialUsedElsewhere } from '../services/trialGuard';
 import Stripe from 'stripe';
 import { getMailer } from '../services/email/mailer';
 import { UAParser } from 'ua-parser-js';
@@ -699,7 +700,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   var { success: leadRlOk } = await safeLimit(leadLimiter, 'lead:' + leadIp + ':' + req.params.slug);
   if (!leadRlOk) return res.status(429).json({ error: 'Rate limit exceeded' });
 
-  const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId, website, cf_turnstile_response } = req.body;
+  const { name, email, answers, outcome_id, time_to_complete_ms, consent, consent_text, session_id: quizSessionId, website, cf_turnstile_response, site } = req.body;
   if (!email) return res.status(400).json({ error: 'email required' });
 
   // Honeypot: the frontend renders a hidden "website" field that real users
@@ -747,7 +748,13 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   // The owner's trial has ended without a plan: the visitor still gets their result, and the lead is held for 30 days
   // (held_leads, migration 036) until the owner chooses a plan. Refusing it lost the lead and showed the visitor an error.
   const ownerPlan = owner?.plan ?? 'free';
-  const ownerTrialEnded = (ownerPlan === 'free' || ownerPlan === 'trial') && !!owner?.created_at && !isTrialActive(owner.created_at);
+  const ownerUnpaid = ownerPlan === 'free' || ownerPlan === 'trial';
+  const ownerTrialEnded = ownerUnpaid && !!owner?.created_at && !isTrialActive(owner.created_at);
+  // One free trial per website (services/trialGuard.ts): on a website whose trial another account already used up, this
+  // account's leads are held as after any trial, so signing up again with a new email does not restart the trial there.
+  const leadSite = siteHostname(site);
+  const siteTrialUsed = await siteTrialUsedElsewhere({ id: quiz.user_id, created_at: owner?.created_at }, leadSite);
+  const holdLead = ownerTrialEnded || (ownerUnpaid && siteTrialUsed);
 
   // New sign-ups are stored as plan 'free' and are on the 14-day trial: they get the trial allowance, not the 0-lead
   // free limit. Every lead of every in-trial account was being refused with "Lead limit reached".
@@ -758,6 +765,8 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   if (typeof time_to_complete_ms === 'number') {
     metadata.time_to_complete_ms = time_to_complete_ms;
   }
+  if (leadSite) metadata.site = leadSite;
+  if (holdLead && !ownerTrialEnded) metadata.held_reason = 'site_trial_used';
 
   // Parse User-Agent and extract device info
   const userAgent = req.headers['user-agent'] || '';
@@ -833,7 +842,7 @@ leadsRouter.post('/quiz/:slug/lead', async (req, res) => {
   const normalizedName = typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
   const normalizedEmail = email.trim().toLowerCase();
 
-  if (ownerTrialEnded) {
+  if (holdLead) {
     // Held, not delivered: no lead count, owner notification, integration, automation or email to the visitor until a plan is chosen.
     const { data: held, error: holdErr } = await supabase.rpc('hold_lead', {
       p_quiz_id: quiz.id,
@@ -2034,12 +2043,17 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
     if (heldAny && heldAny.length) await supabase.rpc('release_held_leads', { p_user_id: req.dbUserId });
   }
   var nowIso = new Date().toISOString();
-  var [heldRes, heldSoonest, totalLeadRes] = await Promise.all([
+  var [heldRes, heldSoonest, totalLeadRes, heldMeta] = await Promise.all([
     supabase.from('held_leads').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId).gt('expires_at', nowIso),
     supabase.from('held_leads').select('expires_at').eq('user_id', req.dbUserId).gt('expires_at', nowIso).order('expires_at', { ascending: true }).limit(1),
     supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', req.dbUserId),
+    supabase.from('held_leads').select('metadata').eq('user_id', req.dbUserId).gt('expires_at', nowIso).limit(500),
   ]);
   var heldLeads = { count: heldRes.count || 0, first_expires_at: (heldSoonest.data && heldSoonest.data[0] && heldSoonest.data[0].expires_at) || null };
+  // Websites whose free trial another account already used (services/trialGuard.ts): their leads are held during this trial.
+  var siteTrialUsed = Array.from(new Set(((heldMeta && heldMeta.data) || [])
+    .filter(function(h: any) { return h.metadata && h.metadata.held_reason === 'site_trial_used' && h.metadata.site; })
+    .map(function(h: any) { return String(h.metadata.site); }))).slice(0, 5);
   var billingStartsAt = deferBillingUntil({ plan: plan, created_at: user.created_at, stripe_subscription_id: user.stripe_subscription_id });
   var totalViews = (viewsRes.data || []).reduce((sum: number, q: any) => sum + (q.view_count || 0), 0);
   // Compute effective limits including add-ons
@@ -2062,6 +2076,7 @@ userRouter.get('/plan', async (req: AuthenticatedRequest, res) => {
   res.json({ plan: plan, quiz_count: user.quiz_count, limits: effectiveLimits,
     trial_active: isUnpaidPlan(plan) && !!user.created_at && isTrialActive(user.created_at),
     held_leads: heldLeads,
+    site_trial_used: siteTrialUsed,
     total_leads: totalLeadRes.count || 0,
     // When a plan chosen now would start billing (the trial end), or null when it bills at checkout.
     billing_starts_at: billingStartsAt ? new Date(billingStartsAt * 1000).toISOString() : null,
@@ -2731,7 +2746,10 @@ cronRouter.post('/cleanup-preview-cache', async (req, res) => {
     var purged = await supabase.rpc('purge_expired_held_leads');
     if (purged.error) throw new Error('purge held leads: ' + purged.error.message);
     if (purged.data) log.info('[Cron] held leads purged after 30 days: ' + purged.data);
-    res.json({ ok: true, deleted: deleted, held_leads_purged: purged.data || 0 });
+    // Duplicate-account signals (migration 037): device hashes 12 months after last use, sign-up network hashes after 90 days.
+    var signals = await supabase.rpc('purge_old_signup_signals');
+    if (signals.error) log.warn('[Cron] purge signup signals failed', { err: signals.error.message });
+    res.json({ ok: true, deleted: deleted, held_leads_purged: purged.data || 0, signup_signals_purged: signals.data || 0 });
   } catch (err: any) {
     log.error('[Cron] cleanup-preview-cache failed:', { err: err });
     res.status(500).json({ error: err?.message || 'preview cache cleanup failed' });

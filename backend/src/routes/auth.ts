@@ -18,6 +18,10 @@
  *
  * Accounts that came from Clerk have no password yet: signing in (or signing up again) with that address emails
  * them a link to set one.
+ *
+ * One mailbox, one account (services/trialGuard.ts): Gmail dots, googlemail.com and "+tags" find the same account,
+ * throwaway inboxes cannot sign up, and a first-party security cookie (sq_device, only its hash is stored) lets the
+ * owner see accounts made from one browser.
  */
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
@@ -31,6 +35,7 @@ import {
 } from '../services/auth/crypto';
 import { sendAuthEmail } from '../services/auth/authEmails';
 import { googleClientId, verifyGoogleIdToken } from '../services/auth/google';
+import { canonicalEmail, isDisposableEmail, DEVICE_COOKIE, DEVICE_COOKIE_DAYS, newDeviceId, recordDevice, signalHash } from '../services/trialGuard';
 
 const router = Router();
 
@@ -95,6 +100,25 @@ async function findUserByEmail(email: string): Promise<any | null> {
   const { data } = await supabase.from('users').select(USER_FIELDS).ilike('email', email.replace(/[\\%_]/g, '\\$&'))
     .order('created_at', { ascending: true }).limit(1);
   return (data && data[0]) || null;
+}
+
+/** The account for this mailbox: the exact address first, then the same mailbox written differently (Gmail dots, +tags). */
+async function findUserByMailbox(email: string): Promise<any | null> {
+  const exact = await findUserByEmail(email);
+  if (exact) return exact;
+  const { data } = await supabase.from('users').select(USER_FIELDS).eq('email_canonical', canonicalEmail(email))
+    .order('created_at', { ascending: true }).limit(1);
+  return (data && data[0]) || null;
+}
+
+/** This browser's security cookie (set when missing), used only to show the owner accounts made from one browser. */
+function deviceId(req: Request, res: Response): string {
+  let id = readCookie(req, DEVICE_COOKIE);
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(id)) {
+    id = newDeviceId();
+    appendCookie(res, cookie(DEVICE_COOKIE, id, { path: '/api/auth', maxAgeSec: DEVICE_COOKIE_DAYS * 86400 }));
+  }
+  return id;
 }
 
 async function startSession(req: Request, res: Response, user: any): Promise<void> {
@@ -188,17 +212,20 @@ router.post('/signup', async function (req: Request, res: Response) {
   const email = normalizeEmail(req.body?.email);
   const firstName = typeof req.body?.firstName === 'string' ? req.body.firstName.trim().slice(0, 80) : '';
   if (!looksLikeEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.', code: 'invalid_email' });
+  if (isDisposableEmail(email)) {
+    return res.status(400).json({ error: 'Please use your own email address. Temporary inboxes cannot be used for an account.', code: 'disposable_email' });
+  }
   const problem = passwordProblem(req.body?.password);
   if (problem) return res.status(400).json({ error: problem, code: 'weak_password' });
 
   try {
-    const existing = await findUserByEmail(email);
+    const existing = await findUserByMailbox(email);
     if (existing) {
       if (!existing.password_hash) {
         if ((await safeLimit(emailLinkLimiter, email)).success) await sendSetPasswordLink(existing, 'set');
         return res.status(409).json({ error: 'You already have an account. We emailed you a link to set your password.', code: 'password_not_set' });
       }
-      return res.status(409).json({ error: 'An account with this email already exists. Sign in instead.', code: 'account_exists' });
+      return res.status(409).json({ error: 'An account with this email address already exists. Sign in instead.', code: 'account_exists' });
     }
     const { data: user, error } = await supabase.from('users').insert({
       clerk_user_id: 'usr_' + crypto.randomBytes(12).toString('hex'),
@@ -207,9 +234,11 @@ router.post('/signup', async function (req: Request, res: Response) {
       password_hash: await hashPassword(req.body.password),
       plan: 'free',
       quiz_count: 0,
+      signup_ip_hash: signalHash('ip', ip),
     }).select(USER_FIELDS).single();
     if (error || !user) throw new Error(error?.message || 'insert failed');
     await startSession(req, res, user);
+    await recordDevice(user.id, deviceId(req, res));
     sendVerificationLink(user).catch(function (e) { log.error('[auth] verification email failed', { err: e?.message }); });
     sendPlatformEmail({ userId: user.id, email, emailType: 'welcome', firstName }).catch(function (e) {
       log.error('[auth] welcome email failed', { err: e?.message });
@@ -231,7 +260,7 @@ router.post('/login', async function (req: Request, res: Response) {
   const invalid = function () { return res.status(401).json({ error: 'Wrong email or password.', code: 'invalid_credentials' }); };
   if (!looksLikeEmail(email) || !password || password.length > 200) return invalid();
   try {
-    const user = await findUserByEmail(email);
+    const user = await findUserByMailbox(email);
     if (!user) {
       await hashPassword(password); // same work as a real check, so timing does not reveal which emails exist
       return invalid();
@@ -244,6 +273,7 @@ router.post('/login', async function (req: Request, res: Response) {
     }
     if (!(await verifyPassword(password, user.password_hash))) return invalid();
     await startSession(req, res, user);
+    await recordDevice(user.id, deviceId(req, res));
     return res.json({ user: publicUser(user) });
   } catch (e: any) {
     log.error('[auth] login failed', { err: e?.message });
@@ -374,7 +404,9 @@ router.post('/google', async function (req: Request, res: Response) {
     const now = new Date().toISOString();
     let { data: user } = await supabase.from('users').select(USER_FIELDS).eq('google_sub', identity.sub).maybeSingle();
     if (!user) {
-      user = await findUserByEmail(identity.email);
+      // Google confirmed this mailbox belongs to the person signing in, so the same mailbox written differently
+      // (Gmail ignores dots) is the same account.
+      user = await findUserByMailbox(identity.email);
       if (user) {
         // Google confirmed this address belongs to the person signing in, so link it to the existing account.
         await supabase.from('users').update({ google_sub: identity.sub, email_verified_at: user.email_verified_at || now }).eq('id', user.id);
@@ -383,16 +415,18 @@ router.post('/google', async function (req: Request, res: Response) {
         const created = await supabase.from('users').insert({
           clerk_user_id: 'usr_' + crypto.randomBytes(12).toString('hex'),
           email: identity.email, first_name: identity.givenName || null, google_sub: identity.sub, email_verified_at: now,
-          plan: 'free', quiz_count: 0,
+          plan: 'free', quiz_count: 0, signup_ip_hash: signalHash('ip', getClientIp(req)),
         }).select(USER_FIELDS).single();
         if (created.error || !created.data) throw new Error(created.error?.message || 'insert failed');
         user = created.data;
         sendPlatformEmail({ userId: user.id, email: identity.email, emailType: 'welcome', firstName: identity.givenName }).catch(function () {});
         await startSession(req, res, user);
+        await recordDevice(user.id, deviceId(req, res));
         return res.status(201).json({ user: publicUser(user), created: true });
       }
     }
     await startSession(req, res, user);
+    await recordDevice(user.id, deviceId(req, res));
     return res.json({ user: publicUser(user) });
   } catch (e: any) {
     log.error('[auth] google sign-in failed', { err: e?.message });

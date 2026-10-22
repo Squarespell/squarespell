@@ -11,6 +11,7 @@ import { supabase } from '../db/supabaseClient';
 import { canonicalPlanName } from '../middleware/planGuard';
 import { priceIdToPlanName } from './billingPlans';
 import { isUnpaidPlan, trialEndsAt } from './upgradeOffers';
+import { duplicateHints, DuplicateHint } from './trialGuard';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Rows per request when reading whole tables, so a PostgREST row cap can never cut a count short. */
@@ -68,6 +69,8 @@ export interface AdminCustomer {
   quizzes: { total: number; published: number };
   views: number;
   leads: { total: number; last_30_days: number; held: number };
+  /** Other accounts used from the same browser, or signed up from the same network within 30 days. Shown, never acted on. */
+  possible_duplicates: { email: string; reason: DuplicateHint['reason'] }[];
 }
 
 export interface CustomersReport {
@@ -153,10 +156,13 @@ export function activeMrrCents(subs: SubscriptionSummary[]): number {
   return subs.filter((s) => s.status === 'active').reduce((sum, s) => sum + s.monthly_cents, 0);
 }
 
-async function selectAll(table: string, cols: string): Promise<any[]> {
+/** Every row of a table, in pages ordered by a unique key (one or more columns) so no row is skipped or repeated. */
+async function selectAll(table: string, cols: string, orderBy: string[] = ['id']): Promise<any[]> {
   const out: any[] = [];
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase.from(table).select(cols).order('id', { ascending: true }).range(from, from + PAGE - 1);
+    let q: any = supabase.from(table).select(cols);
+    for (const col of orderBy) q = q.order(col, { ascending: true });
+    const { data, error } = await q.range(from, from + PAGE - 1);
     if (error) throw error;
     out.push(...(data || []));
     if (!data || data.length < PAGE) return out;
@@ -186,13 +192,15 @@ export async function buildCustomersReport(opts: { stripe: Stripe; isAdmin: (u: 
   const now = opts.now ?? new Date();
   const since30 = now.getTime() - 30 * DAY_MS;
 
-  const [users, quizzes, leads, held, grants] = await Promise.all([
-    selectAll('users', 'id, email, first_name, plan, created_at, last_login_at, email_verified_at, google_sub, stripe_customer_id, stripe_subscription_id'),
+  const [users, quizzes, leads, held, grants, devices] = await Promise.all([
+    selectAll('users', 'id, email, first_name, plan, created_at, last_login_at, email_verified_at, google_sub, stripe_customer_id, stripe_subscription_id, signup_ip_hash'),
     selectAll('quizzes', 'id, user_id, status, view_count'),
     selectAll('leads', 'id, user_id, created_at'),
     selectAll('held_leads', 'id, user_id'),
     selectAll('legacy_entitlements', 'id, user_id, active'),
+    selectAll('account_devices', 'user_id, device_hash', ['user_id', 'device_hash']),
   ]);
+  const duplicates = duplicateHints(users, devices);
 
   let subs: SubscriptionSummary[] = [];
   let stripeError: string | null = null;
@@ -251,6 +259,7 @@ export async function buildCustomersReport(opts: { stripe: Stripe; isAdmin: (u: 
       quizzes: { total: q.total, published: q.published },
       views: q.views,
       leads: { total: l.total, last_30_days: l.recent, held: heldCount.get(u.id) || 0 },
+      possible_duplicates: (duplicates.get(u.id) || []).map((d) => ({ email: d.email, reason: d.reason })),
     };
   });
   customers.sort((a, b) => String(b.signed_up_at || '').localeCompare(String(a.signed_up_at || '')));

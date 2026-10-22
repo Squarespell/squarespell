@@ -105,6 +105,7 @@ type Customer = {
   quizzes: { total: number; published: number };
   views: number;
   leads: { total: number; last_30_days: number; held: number };
+  possible_duplicates?: { email: string; reason: 'same browser' | 'same network' }[];
 };
 
 type CustomersReport = {
@@ -179,11 +180,11 @@ function csvCell(v: any): string {
 }
 
 function downloadCustomersCsv(rows: Customer[]) {
-  var header = ['Name', 'Email', 'Status', 'Plan', 'Monthly revenue (USD)', 'Signed up', 'Last sign-in', 'Quizzes', 'Published', 'Views', 'Leads', 'Leads last 30 days', 'Held leads', 'Sign-in method', 'Email confirmed', 'Stripe customer'];
+  var header = ['Name', 'Email', 'Status', 'Plan', 'Monthly revenue (USD)', 'Signed up', 'Last sign-in', 'Quizzes', 'Published', 'Views', 'Leads', 'Leads last 30 days', 'Held leads', 'Sign-in method', 'Email confirmed', 'Stripe customer', 'Possible duplicate of'];
   var lines = [header.map(csvCell).join(',')];
   rows.forEach(function(c) {
     var label = (STATUS_INFO.find(function(s) { return s.key === c.status; }) || { label: c.status }).label;
-    lines.push([c.name, c.email, label, c.plan, (c.monthly_cents / 100).toFixed(2), formatDate(c.signed_up_at), formatDate(c.last_sign_in_at), c.quizzes.total, c.quizzes.published, c.views, c.leads.total, c.leads.last_30_days, c.leads.held, c.sign_in_with, c.email_confirmed ? 'Yes' : 'No', c.stripe_customer_id].map(csvCell).join(','));
+    lines.push([c.name, c.email, label, c.plan, (c.monthly_cents / 100).toFixed(2), formatDate(c.signed_up_at), formatDate(c.last_sign_in_at), c.quizzes.total, c.quizzes.published, c.views, c.leads.total, c.leads.last_30_days, c.leads.held, c.sign_in_with, c.email_confirmed ? 'Yes' : 'No', c.stripe_customer_id, (c.possible_duplicates || []).map(function(d) { return d.email + ' (' + d.reason + ')'; }).join('; ')].map(csvCell).join(','));
   });
   var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
   var url = URL.createObjectURL(blob);
@@ -290,6 +291,11 @@ function CustomersSection({ report, error, onRetry }: { report: CustomersReport 
                       {c.is_admin && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: C.GRAY_100, color: C.ACCENT, fontSize: 11, fontWeight: 700 }}>Admin</span>}
                     </div>
                     <div style={SUB}>{c.email}</div>
+                    {(c.possible_duplicates || []).length > 0 && (
+                      <div style={{ ...SUB, color: '#B54708' }}>
+                        Possible duplicate of {(c.possible_duplicates || []).map(function(d) { return d.email + ' (' + d.reason + ')'; }).join(', ')}
+                      </div>
+                    )}
                   </td>
                   <td style={TD}>
                     <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: info.bg, color: info.color, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>{info.label}</span>

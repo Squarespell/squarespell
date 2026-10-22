@@ -13,6 +13,17 @@ function isPreviewMode(): boolean {
   try { return new URLSearchParams(window.location.search).get('preview') === '1'; } catch { return false; }
 }
 
+// The website this quiz is embedded on (the parent page's origin), sent with each lead for the one-free-trial-per-website
+// rule. Null when the quiz is not inside a frame.
+function embeddingSite(): string | null {
+  try {
+    if (window.parent === window) return null;
+    const ancestors = (window.location as any).ancestorOrigins;
+    if (ancestors && ancestors.length) return String(ancestors[0]);
+    return document.referrer ? new URL(document.referrer).origin : null;
+  } catch { return null; }
+}
+
 interface QuizOption {
   id: string;
   text: string;
@@ -418,6 +429,7 @@ export default function EmbedQuizClient({
             session_id: sessionIdRef.current,
             consent: gdprRequired ? gdprConsent : undefined,
             consent_text: gdprRequired && gdprConsent ? consentText : undefined,
+            site: embeddingSite() || undefined,
           }),
           signal: controller.signal,
         });

@@ -83,6 +83,19 @@ export function computeBanners(data: any, opts: { now?: number; upgraded?: strin
         dismissKey: 'trial_ended_' + held,
         placement: 'banner_trial_ended',
       });
+    } else if (Array.isArray(data.site_trial_used) && data.site_trial_used.length > 0) {
+      // One free trial per website: this account's quiz is on a website whose trial another account already used.
+      const sites: string[] = data.site_trial_used.slice(0, 3);
+      banners.push({
+        variant: 'trial',
+        message: sites.join(', ') + (sites.length === 1 ? ' has' : ' have') + ' already had a free trial on another account, so new leads from '
+          + (sites.length === 1 ? 'it' : 'them') + ' are held until you choose a plan.'
+          + (held > 0 ? ' ' + held + plural(held, ' lead is', ' leads are') + ' waiting.' : ''),
+        ctaLabel: held > 0 ? 'Unlock my leads' : 'Choose a plan',
+        ctaHref: '/dashboard/billing?tab=plans&plan=pro&billing=yearly',
+        dismissKey: 'site_trial_' + sites.join(',') + '_' + held,
+        placement: 'banner_site_trial',
+      });
     } else if (daysLeft <= 14) {
       const urgent = daysLeft <= 3;
       const days = daysLeft + plural(daysLeft, ' day', ' days');

@@ -17,6 +17,8 @@ export interface PlanStatus {
   trial_ends_at: string | null;
   trial_active?: boolean;
   held_leads?: { count: number; first_expires_at: string | null };
+  /** Websites whose free trial another account already used; their leads are held during this trial. */
+  site_trial_used?: string[];
   total_leads?: number;
   billing_starts_at?: string | null;
   offer?: 'winback' | null;

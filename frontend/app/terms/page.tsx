@@ -39,7 +39,10 @@ export default function TermsPage() {
         <Section title="Plans, billing & trials">
           Paid plans are billed monthly or annually as selected at checkout. The 14-day free trial
           gives full Pro-tier access with no credit card required; after it ends you may choose a
-          paid plan or continue on a limited free tier. Annual plans are non-refundable but can be
+          paid plan or continue on a limited free tier. There is one free trial per person and per
+          website: an email address already used for an account cannot open another one, and a
+          website whose quiz already had a free trial on another account gets no new trial (new
+          leads from it are held until a plan is chosen). Annual plans are non-refundable but can be
           cancelled to prevent renewal. Monthly plans can be cancelled anytime and take effect
           immediately, with no further charges.
         </Section>
