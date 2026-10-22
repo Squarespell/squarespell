@@ -29,6 +29,13 @@ describe('dashboard banner', () => {
     expect(b[0].dismissKey).toBe('trial_ended_8');
   });
 
+  it('during the trial, a website that already had a trial on another account: says its leads are held', () => {
+    const b = computeBanners({ plan: 'free', trial_ends_at: iso(NOW + 9 * DAY), trial_active: true, held_leads: { count: 2 }, site_trial_used: ['example.com'] }, { now: NOW });
+    expect(b).toHaveLength(1);
+    expect(b[0].message).toBe('example.com has already had a free trial on another account, so new leads from it are held until you choose a plan. 2 leads are waiting.');
+    expect(b[0]).toMatchObject({ placement: 'banner_site_trial', ctaLabel: 'Unlock my leads' });
+  });
+
   it('after the trial with nothing waiting and no offer: says what happens to new leads', () => {
     const b = computeBanners({ plan: 'free', trial_ends_at: iso(NOW - 60 * DAY), trial_active: false, held_leads: { count: 0 }, offer: null }, { now: NOW });
     expect(b[0].message).toBe('Your trial has ended. Your quizzes are still live, but new leads are held until you choose a plan.');

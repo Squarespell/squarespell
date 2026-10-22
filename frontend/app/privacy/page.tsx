@@ -41,7 +41,11 @@ export default function PrivacyPage() {
         <Section title="What we collect">
           From Customers: account details (name, email, password hash), the Squarespace site URL
           you connect, billing information (processed by our payment provider — we do not store
-          full card numbers), and the quiz content you create or generate with AI.
+          full card numbers), and the quiz content you create or generate with AI. To keep free
+          trials to one per person and per website, we also record the website each quiz runs on,
+          a security cookie with a random value on the browsers you sign in from (we store only a
+          one-way hash of it), and a one-way hash of the network address used to sign up. These are
+          used only to spot repeat sign-ups.
           <br /><br />
           From End Users (your site visitors): name, email address, and quiz answers, only when
           they voluntarily submit them through a quiz's lead-capture step. We also collect basic
@@ -66,7 +70,10 @@ export default function PrivacyPage() {
         <Section title="Data retention & deletion">
           Customers can export or delete leads at any time from their dashboard. Account data is
           retained while a subscription is active and deleted within 30 days of account closure,
-          except where retention is required for legal or billing records.
+          except where retention is required for legal or billing records. The sign-up network hash
+          is deleted after 90 days and browser security hashes 12 months after last use. When an
+          account is closed we keep only each website's address and the date its free trial ended,
+          so the trial is not given again.
         </Section>
 
         <Section title="Your rights">

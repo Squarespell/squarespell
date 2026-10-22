@@ -29,8 +29,21 @@ const DISPOSABLE_DOMAINS = new Set([
   'kasmail.com', 'klassmaster.com', 'lhsdv.com', 'mailinater.com',
   'mailmetrash.com', 'mytempmail.com', 'nobulk.com', 'nospamfor.us',
   'owlpic.com', 'pookmail.com', 'proxymail.eu', 'rcpt.at', 'reallymymail.com',
-  'rtrtr.com', 'sharklasers.com', 'sogetthis.com', 'spamavert.com'
+  'rtrtr.com', 'sharklasers.com', 'sogetthis.com', 'spamavert.com',
+  'minuteinbox.com', 'mail.tm', 'tmpbox.net', 'inboxkitten.com', 'dropmail.me', '10minutemail.net',
+  'mailpoof.com', 'moakt.com', 'mailto.plus', 'fexpost.com', 'emailnax.com', 'tempmail.dev', 'tempmail.plus',
+  'luxusmail.org', 'mailbox.in.ua', 'guerrillamail.org', 'pokemail.net', 'spambox.us', 'tempmailer.com'
 ]);
+
+/** True for a throwaway-inbox domain or any subdomain of one (x.mailinator.com). */
+export function isDisposableDomain(domain: string): boolean {
+  let d = String(domain || '').trim().toLowerCase();
+  while (d.includes('.')) {
+    if (DISPOSABLE_DOMAINS.has(d)) return true;
+    d = d.slice(d.indexOf('.') + 1);
+  }
+  return false;
+}
 
 export function validateEmail(email: string): { valid: boolean; reason?: string } {
   if (!email || typeof email !== 'string') {
@@ -52,7 +65,7 @@ export function validateEmail(email: string): { valid: boolean; reason?: string 
     return { valid: false, reason: 'Invalid email domain' };
   }
 
-  if (DISPOSABLE_DOMAINS.has(domain)) {
+  if (isDisposableDomain(domain)) {
     return { valid: false, reason: 'Disposable email addresses are not allowed' };
   }
 
