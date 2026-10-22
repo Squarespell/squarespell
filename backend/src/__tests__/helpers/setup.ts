@@ -83,6 +83,13 @@ vi.mock('stripe', async (importOriginal) => {
       (this as any).subscriptions = {
         retrieve: async () => ({ items: { data: [{ id: 'si_local' }] } }),
         update: async (id: string, p: any) => { f.stripeCalls.subsUpdate.push({ id, p }); return { id }; },
+        list: async (p: any = {}) => {
+          if (f.stripeBehaviour.failSubscriptionsList) throw new Error('stripe unreachable (fixture)');
+          const all = f.stripeSubscriptions;
+          const start = p.starting_after ? all.findIndex((s: any) => s.id === p.starting_after) + 1 : 0;
+          const data = all.slice(start, start + (p.limit ?? 10));
+          return { object: 'list', data, has_more: start + data.length < all.length };
+        },
       };
     }
   }

@@ -56,7 +56,10 @@ type AdminMetrics = {
     avgPerUser: number;
   };
   revenue: {
-    mrr: number;
+    /** From Stripe's active subscriptions; null when Stripe could not be read. */
+    mrr: number | null;
+    mrrSource?: 'stripe' | 'unavailable';
+    activeSubscriptions?: number;
     totalRevenue: number;
     thisMonth: number;
     quizPaymentsCount: number;
@@ -68,12 +71,267 @@ type AdminMetrics = {
   };
 };
 
+type CustomerStatus = 'paying' | 'payment_failed' | 'card_trial' | 'canceled' | 'free_grant' | 'plan_not_paid' | 'trial' | 'trial_ended' | 'unverified';
+
+type Subscription = {
+  id: string;
+  status: string;
+  plan: string | null;
+  interval: string;
+  amount_cents: number;
+  monthly_cents: number;
+  discount_percent: number | null;
+  current_period_end: string | null;
+  trial_end: string | null;
+  cancel_at_period_end: boolean;
+};
+
+type Customer = {
+  id: string;
+  email: string;
+  name: string | null;
+  signed_up_at: string | null;
+  last_sign_in_at: string | null;
+  email_confirmed: boolean;
+  sign_in_with: 'Google' | 'Email';
+  is_admin: boolean;
+  plan: string;
+  status: CustomerStatus;
+  trial_ends_at: string | null;
+  free_grant: boolean;
+  stripe_customer_id: string | null;
+  monthly_cents: number;
+  subscriptions: Subscription[];
+  quizzes: { total: number; published: number };
+  views: number;
+  leads: { total: number; last_30_days: number; held: number };
+};
+
+type CustomersReport = {
+  generated_at: string;
+  stripe: { checked: boolean; error: string | null };
+  summary: {
+    total: number;
+    by_status: Record<CustomerStatus, number>;
+    mrr_cents: number | null;
+    currency: string;
+    unlinked_active_subscriptions: number;
+  };
+  customers: Customer[];
+};
+
+// Order of the filter chips, with the label and colour each status uses.
+var STATUS_INFO: { key: CustomerStatus; label: string; color: string; bg: string }[] = [
+  { key: 'paying', label: 'Paying', color: '#027A48', bg: '#ECFDF3' },
+  { key: 'card_trial', label: 'Trial, card saved', color: '#1D3BD1', bg: '#EEF1FF' },
+  { key: 'trial', label: 'Free trial', color: '#1D3BD1', bg: '#F5F7FF' },
+  { key: 'trial_ended', label: 'Trial ended', color: '#3B4466', bg: '#F2F4F7' },
+  { key: 'free_grant', label: 'Free grant', color: '#6941C6', bg: '#F4F3FF' },
+  { key: 'plan_not_paid', label: 'Plan not paid', color: '#B54708', bg: '#FFFAEB' },
+  { key: 'payment_failed', label: 'Payment failed', color: '#B42318', bg: '#FEF3F2' },
+  { key: 'canceled', label: 'Cancelled', color: '#3B4466', bg: '#F2F4F7' },
+  { key: 'unverified', label: 'Not checked', color: '#3B4466', bg: '#F2F4F7' },
+];
+
 function fmt(n: number): string {
   return n.toLocaleString('en-US');
 }
 
 function formatCurrency(n: number): string {
   return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+/** One line under the status badge explaining it, e.g. "$35.00 a month, renews Nov 3, 2026". */
+function statusDetail(c: Customer): string {
+  var sub = c.subscriptions.find(function(s) { return s.status === 'active' || s.status === 'trialing' || s.status === 'past_due'; }) || c.subscriptions[0];
+  switch (c.status) {
+    case 'paying': {
+      if (!sub) return formatCurrency(c.monthly_cents / 100) + ' a month';
+      var price = formatCurrency(sub.amount_cents / 100) + (sub.interval === 'year' ? ' a year' : ' a month');
+      if (sub.discount_percent) price += ' (' + sub.discount_percent + '% off)';
+      return price + (sub.cancel_at_period_end ? ', ends ' : ', renews ') + formatDate(sub.current_period_end);
+    }
+    case 'card_trial': return 'First charge ' + formatDate(sub ? sub.trial_end : null);
+    case 'trial': return 'Trial ends ' + formatDate(c.trial_ends_at);
+    case 'trial_ended': return c.trial_ends_at ? 'Ended ' + formatDate(c.trial_ends_at) : 'No plan';
+    case 'free_grant': return 'Business access, never paid';
+    case 'plan_not_paid': return capitalize(c.plan) + ' plan, no Stripe payment found';
+    case 'payment_failed': return 'Stripe: ' + (sub ? sub.status.replace('_', ' ') : 'payment failed');
+    case 'canceled': return 'Subscription ' + (sub ? sub.status.replace('_', ' ') : 'cancelled');
+    default: return 'Stripe could not be read';
+  }
+}
+
+/** Spreadsheet-safe CSV cell (quotes, and no leading = + - @ that a spreadsheet would run as a formula). */
+function csvCell(v: any): string {
+  var s = v === null || v === undefined ? '' : String(v);
+  if (/^[=+\-@]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+function downloadCustomersCsv(rows: Customer[]) {
+  var header = ['Name', 'Email', 'Status', 'Plan', 'Monthly revenue (USD)', 'Signed up', 'Last sign-in', 'Quizzes', 'Published', 'Views', 'Leads', 'Leads last 30 days', 'Held leads', 'Sign-in method', 'Email confirmed', 'Stripe customer'];
+  var lines = [header.map(csvCell).join(',')];
+  rows.forEach(function(c) {
+    var label = (STATUS_INFO.find(function(s) { return s.key === c.status; }) || { label: c.status }).label;
+    lines.push([c.name, c.email, label, c.plan, (c.monthly_cents / 100).toFixed(2), formatDate(c.signed_up_at), formatDate(c.last_sign_in_at), c.quizzes.total, c.quizzes.published, c.views, c.leads.total, c.leads.last_30_days, c.leads.held, c.sign_in_with, c.email_confirmed ? 'Yes' : 'No', c.stripe_customer_id].map(csvCell).join(','));
+  });
+  var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'squarespell-customers-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+var TH: React.CSSProperties = { padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.TEXT_SUBTLE, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', whiteSpace: 'nowrap', borderBottom: '1px solid ' + C.BORDER, background: C.GRAY_50 };
+var TD: React.CSSProperties = { padding: '12px', fontSize: 13, color: C.TEXT, verticalAlign: 'top', borderBottom: '1px solid ' + C.BORDER };
+var SUB: React.CSSProperties = { fontSize: 12, color: C.TEXT_SUBTLE, marginTop: 2 };
+
+function CustomersSection({ report, error, onRetry }: { report: CustomersReport | null; error: string; onRetry: () => void }) {
+  var [query, setQuery] = useState('');
+  var [filter, setFilter] = useState<'all' | CustomerStatus>('all');
+
+  if (error) {
+    return (
+      <div style={{ fontSize: 13, color: C.ERROR_700 }}>
+        {error}{' '}
+        <button onClick={onRetry} style={{ marginLeft: 8, padding: '6px 14px', border: '1px solid ' + C.BORDER, borderRadius: 8, background: C.SURFACE, color: C.TEXT, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}>Try again</button>
+      </div>
+    );
+  }
+  if (!report) return <div style={{ fontSize: 13, color: C.TEXT_SUBTLE }}>Loading customers and checking Stripe...</div>;
+
+  var q = query.trim().toLowerCase();
+  var rows = report.customers.filter(function(c) {
+    if (filter !== 'all' && c.status !== filter) return false;
+    return !q || c.email.toLowerCase().indexOf(q) >= 0 || (c.name || '').toLowerCase().indexOf(q) >= 0;
+  });
+
+  function chip(key: 'all' | CustomerStatus, label: string, count: number) {
+    var on = filter === key;
+    return (
+      <button
+        key={key}
+        onClick={function() { setFilter(key); }}
+        aria-pressed={on}
+        style={{ padding: '6px 12px', borderRadius: 999, border: '1px solid ' + (on ? C.ACCENT : C.BORDER), background: on ? C.ACCENT : C.SURFACE, color: on ? '#FFFFFF' : C.TEXT, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT, minHeight: 34 }}
+      >
+        {label} <span style={{ opacity: 0.75, fontWeight: 500 }}>{count}</span>
+      </button>
+    );
+  }
+
+  return (
+    <div>
+      {!report.stripe.checked && (
+        <div role="status" style={{ padding: '10px 14px', marginBottom: 16, background: '#FFFAEB', border: '1px solid #FEC84B', borderRadius: 8, fontSize: 13, color: '#B54708' }}>
+          Stripe could not be read just now, so billing shows as "Not checked" and revenue is not counted. Refresh to try again.
+        </div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {chip('all', 'All', report.summary.total)}
+        {STATUS_INFO.filter(function(s) { return (report!.summary.by_status[s.key] || 0) > 0; }).map(function(s) {
+          return chip(s.key, s.label, report!.summary.by_status[s.key]);
+        })}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+        <label style={{ flex: '1 1 260px' }}>
+          <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Search customers</span>
+          <input
+            type="search"
+            value={query}
+            onChange={function(e) { setQuery(e.target.value); }}
+            placeholder="Search name or email"
+            style={{ width: '100%', boxSizing: 'border-box', minHeight: 40, padding: '8px 12px', border: '1px solid ' + C.GRAY_300, borderRadius: 8, fontSize: 14, fontFamily: C.FONT, color: C.TEXT }}
+          />
+        </label>
+        <button
+          onClick={function() { downloadCustomersCsv(rows); }}
+          style={{ minHeight: 40, padding: '8px 16px', border: '1px solid ' + C.BORDER, borderRadius: 8, background: C.SURFACE, color: C.TEXT, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: C.FONT }}
+        >
+          Download CSV ({rows.length})
+        </button>
+      </div>
+      <div style={{ overflowX: 'auto', border: '1px solid ' + C.BORDER, borderRadius: 8 }}>
+        <table style={{ width: '100%', minWidth: 1080, borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={TH}>Customer</th>
+              <th style={TH}>Status</th>
+              <th style={TH}>Plan</th>
+              <th style={TH}>Quizzes</th>
+              <th style={TH}>Leads</th>
+              <th style={TH}>Views</th>
+              <th style={TH}>Signed up</th>
+              <th style={TH}>Last sign-in</th>
+              <th style={TH}>Sign-in</th>
+              <th style={TH}>Stripe</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(function(c) {
+              var info = STATUS_INFO.find(function(s) { return s.key === c.status; }) || STATUS_INFO[STATUS_INFO.length - 1];
+              return (
+                <tr key={c.id}>
+                  <td style={TD}>
+                    <div style={{ fontWeight: 600 }}>
+                      {c.name || c.email.split('@')[0]}
+                      {c.is_admin && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: C.GRAY_100, color: C.ACCENT, fontSize: 11, fontWeight: 700 }}>Admin</span>}
+                    </div>
+                    <div style={SUB}>{c.email}</div>
+                  </td>
+                  <td style={TD}>
+                    <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: info.bg, color: info.color, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>{info.label}</span>
+                    <div style={SUB}>{statusDetail(c)}</div>
+                  </td>
+                  <td style={TD}>{capitalize(c.plan)}</td>
+                  <td style={TD}>
+                    {fmt(c.quizzes.total)}
+                    <div style={SUB}>{fmt(c.quizzes.published)} published</div>
+                  </td>
+                  <td style={TD}>
+                    {fmt(c.leads.total)}
+                    <div style={SUB}>{fmt(c.leads.last_30_days)} in 30 days{c.leads.held > 0 ? ', ' + fmt(c.leads.held) + ' held' : ''}</div>
+                  </td>
+                  <td style={TD}>{fmt(c.views)}</td>
+                  <td style={{ ...TD, whiteSpace: 'nowrap' }}>{formatDate(c.signed_up_at)}</td>
+                  <td style={{ ...TD, whiteSpace: 'nowrap' }}>{c.last_sign_in_at ? formatDate(c.last_sign_in_at) : 'Never'}</td>
+                  <td style={TD}>
+                    {c.sign_in_with}
+                    {!c.email_confirmed && <div style={{ ...SUB, color: '#B54708' }}>Email not confirmed</div>}
+                  </td>
+                  <td style={TD}>
+                    {c.stripe_customer_id
+                      ? <a href={'https://dashboard.stripe.com/customers/' + encodeURIComponent(c.stripe_customer_id)} target="_blank" rel="noopener noreferrer" style={{ color: C.ACCENT, fontWeight: 600, textDecoration: 'none' }}>Open in Stripe</a>
+                      : <span style={{ color: C.TEXT_SUBTLE }}>None</span>}
+                  </td>
+                </tr>
+              );
+            })}
+            {rows.length === 0 && (
+              <tr><td colSpan={10} style={{ ...TD, textAlign: 'center', color: C.TEXT_SUBTLE, padding: 24 }}>No customers match.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {report.summary.unlinked_active_subscriptions > 0 && (
+        <div style={{ ...SUB, marginTop: 10 }}>
+          {report.summary.unlinked_active_subscriptions} active Stripe subscription(s) are not linked to any account here. They are still counted in monthly revenue.
+        </div>
+      )}
+    </div>
+  );
 }
 
 function KPICard({ label, value, subtext }: { label: string; value: string; subtext?: string }) {
@@ -180,6 +438,38 @@ function AdminDashboard() {
   var [error, setError] = useState<string>('');
   var [isLoadingData, setIsLoadingData] = useState(true);
   var [retryToken, setRetryToken] = useState(0);
+  var [customers, setCustomers] = useState<CustomersReport | null>(null);
+  var [customersError, setCustomersError] = useState('');
+  var [customersRetry, setCustomersRetry] = useState(0);
+
+  // The customer list loads on its own (it also reads Stripe), so the figures above never wait for it.
+  useEffect(function() {
+    if (!isLoaded || !isSignedIn) return;
+    var cancelled = false;
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+    setCustomers(null);
+    setCustomersError('');
+    (async function() {
+      try {
+        var token = await getToken();
+        var response = await fetch(API + '/api/admin/customers', {
+          method: 'GET',
+          credentials: 'include',
+          headers: { Authorization: 'Bearer ' + token },
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(response.status === 403 ? 'Access denied - admin access required' : 'Could not load customers.');
+        var body = await response.json();
+        if (!cancelled) setCustomers(body);
+      } catch (err: any) {
+        if (!cancelled) setCustomersError(err?.name === 'AbortError' ? 'Loading customers took too long.' : (err?.message || 'Could not load customers.'));
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    })();
+    return function() { cancelled = true; controller.abort(); clearTimeout(timeoutId); };
+  }, [isLoaded, isSignedIn, getToken, retryToken, customersRetry]);
 
   useEffect(function() {
     if (!isLoaded) return;
@@ -357,9 +647,20 @@ function AdminDashboard() {
           }}
         >
           <KPICard label="Total Users" value={fmt(data.users.total)} />
-          <KPICard label="Monthly Recurring Revenue" value={formatCurrency(data.revenue.mrr)} />
+          <KPICard
+            label="Monthly Recurring Revenue"
+            value={data.revenue.mrr === null ? 'Unavailable' : formatCurrency(data.revenue.mrr)}
+            subtext={data.revenue.mrr === null ? 'Stripe could not be read' : 'Confirmed by Stripe, ' + fmt(data.revenue.activeSubscriptions || 0) + ' paying'}
+          />
           <KPICard label="Total Leads" value={fmt(data.leads.total)} />
           <KPICard label="Published Quizzes" value={fmt(data.quizzes.published)} />
+        </div>
+
+        {/* Customers */}
+        <div style={{ marginBottom: 24 }}>
+          <SectionCard title="Customers">
+            <CustomersSection report={customers} error={customersError} onRetry={function() { setCustomersRetry(function(n) { return n + 1; }); }} />
+          </SectionCard>
         </div>
 
         {/* Growth This Month */}
@@ -392,9 +693,9 @@ function AdminDashboard() {
         {/* Key Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 20, margin: '24px 0' }}>
           <KPICard label="Estimated Churn Rate" value={data.metrics.estimatedChurnRate + '%'} subtext="Month-over-month" />
-          <KPICard label="Activation Rate" value={data.metrics.activationRate + '%'} subtext="Published quizzes / users" />
+          <KPICard label="Activation Rate" value={data.metrics.activationRate + '%'} subtext="Accounts with a published quiz" />
           <KPICard label="Leads Per Quiz" value={data.metrics.leadsPerQuiz.toString()} subtext="Average engagement" />
-          <KPICard label="Active Users (30d)" value={fmt(data.users.activeLastMonth)} subtext="From analytics events" />
+          <KPICard label="Active Users (30d)" value={fmt(data.users.activeLastMonth)} subtext="Signed in during the last 30 days" />
         </div>
 
         {/* Two-column: Users by Plan + Revenue */}
@@ -426,7 +727,10 @@ function AdminDashboard() {
                 Monthly Recurring Revenue
               </div>
               <div style={{ fontSize: 32, fontWeight: 700, color: C.ACCENT }}>
-                {formatCurrency(data.revenue.mrr)}
+                {data.revenue.mrr === null ? 'Unavailable' : formatCurrency(data.revenue.mrr)}
+              </div>
+              <div style={{ fontSize: 12, color: C.TEXT_SUBTLE, marginTop: 4 }}>
+                {data.revenue.mrr === null ? 'Stripe could not be read' : 'Active Stripe subscriptions only'}
               </div>
             </div>
             <div style={{ marginBottom: 28 }}>
@@ -508,7 +812,7 @@ function AdminDashboard() {
 
         {/* Footer */}
         <div style={{ marginTop: 32, padding: '14px 20px', background: C.GRAY_50, borderRadius: 8, fontSize: 12, color: C.TEXT_SUBTLE }}>
-          MRR calculated from active subscriptions. Churn estimated from month-to-month user changes. All times in UTC.
+          Monthly recurring revenue and "Paying" come from Stripe's active subscriptions; a plan set without a payment is never counted. Churn estimated from month-to-month user changes.
         </div>
       </div>
     </div>
