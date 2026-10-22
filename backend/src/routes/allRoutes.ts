@@ -30,6 +30,7 @@ import { markPartialAsConverted } from '../services/partialCompletion';
 import { processAutomationEvent } from '../services/automationEngine';
 import { sendPlatformEmail } from '../services/platformEmails';
 import { HELD_LEAD_CAP, deferBillingUntil, winbackEligible, ensureWinbackCoupon, isUnpaidPlan, trialEndsAt } from '../services/upgradeOffers';
+import { buildCustomersReport, listStripeSubscriptions, activeMrrCents } from '../services/adminCustomers';
 import Stripe from 'stripe';
 import { getMailer } from '../services/email/mailer';
 import { UAParser } from 'ua-parser-js';
@@ -3616,38 +3617,39 @@ publicWhiteLabelRouter.get('/:userId', async function(req, res) {
 // ── Admin Analytics ───────────────────────────────────────────────────────────
 export var adminAnalyticsRouter = Router();
 
+/** Sends 401/403 and returns false unless the signed-in account is an admin (ADMIN_EMAILS + confirmed email). */
+async function ensureAdmin(req: AuthenticatedRequest, res: ExpressResponse): Promise<boolean> {
+  if (!req.dbUserId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+  var userResult = await supabase
+    .from('users')
+    .select('id, email, email_verified_at')
+    .eq('id', req.dbUserId)
+    .single();
+  if (userResult.error || !userResult.data) {
+    res.status(401).json({ error: 'User not found' });
+    return false;
+  }
+  if (!isAdminUser(userResult.data)) {
+    res.status(403).json({ error: 'Forbidden - admin access required' });
+    return false;
+  }
+  return true;
+}
+
 /**
  * GET /api/admin/metrics
  * Requires admin authentication (ADMIN_EMAILS env var)
- * Returns key business metrics: MRR, churn, activation, user counts, revenue
+ * Returns key business metrics: MRR (from Stripe), churn, activation, user counts, revenue
  */
 adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
   try {
-    // Verify user is authenticated
-    if (!req.dbUserId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    // Get user from database to check if admin
-    var userResult = await supabase
-      .from('users')
-      .select('id, email, email_verified_at')
-      .eq('id', req.dbUserId)
-      .single();
-
-    if (userResult.error || !userResult.data) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-
-    // Check if user is admin - allow specific admin emails
-    var isAdmin = isAdminUser(userResult.data);
-
-    if (!isAdmin) {
-      return res.status(403).json({ error: 'Forbidden - admin access required' });
-    }
+    if (!(await ensureAdmin(req, res))) return;
 
     // Get all users
-    var usersResult = await supabase.from('users').select('id, email, plan, created_at').order('created_at', { ascending: false });
+    var usersResult = await supabase.from('users').select('id, email, plan, created_at, last_login_at').order('created_at', { ascending: false });
     if (usersResult.error) throw usersResult.error;
     var allUsers = usersResult.data || [];
 
@@ -3666,20 +3668,10 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
       return new Date(u.created_at) >= thisMonthStart;
     }).length;
 
-    // Count active users (logged in last 30 days) - approximate via analytics_events
-    var activeResult = await supabase
-      .from('analytics_events')
-      .select('id, metadata')
-      .gte('created_at', thirtyDaysAgo.toISOString())
-      .limit(1000);
-    if (activeResult.error) throw activeResult.error;
-    var activeUserIds = new Set();
-    (activeResult.data || []).forEach(function(event: any) {
-      if (event.metadata && event.metadata.user_id) {
-        activeUserIds.add(event.metadata.user_id);
-      }
-    });
-    var activeUsers = activeUserIds.size;
+    // Active users: signed in during the last 30 days (last_login_at is refreshed at most hourly while signed in)
+    var activeUsers = allUsers.filter(function(u) {
+      return !!u.last_login_at && new Date(u.last_login_at) >= thirtyDaysAgo;
+    }).length;
 
     // Count quizzes
     var quizzesResult = await supabase.from('quizzes').select('id, status, user_id').order('created_at', { ascending: false });
@@ -3687,6 +3679,7 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
     var allQuizzes = quizzesResult.data || [];
     var totalQuizzes = allQuizzes.length;
     var publishedQuizzes = allQuizzes.filter(function(q) { return q.status === 'live'; }).length;
+    var usersWithPublishedQuiz = new Set(allQuizzes.filter(function(q) { return q.status === 'live'; }).map(function(q) { return q.user_id; })).size;
 
     // Count leads
     var leadsResult = await supabase.from('leads').select('id, created_at').order('created_at', { ascending: false });
@@ -3698,22 +3691,16 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
       return new Date(l.created_at) >= thisMonthStart;
     }).length;
 
-    // Calculate MRR (Monthly Recurring Revenue)
-    // Sum up all paid plans with current pricing
-    var planPrices: Record<string, number> = {
-      'core': 12,
-      'starter': 12,
-      'growth': 12,
-      'pro': 19,
-      'business': 35,
-      'agency': 35
-    };
-    var mrr = 0;
-    allUsers.forEach(function(u) {
-      if (u.plan && planPrices[u.plan]) {
-        mrr += planPrices[u.plan];
-      }
-    });
+    // MRR comes from Stripe's active subscriptions only: a stored plan without a payment (a manual or legacy grant) is not revenue.
+    var mrr: number | null = null;
+    var activeSubscriptions = 0;
+    try {
+      var subs = await listStripeSubscriptions(stripe);
+      mrr = activeMrrCents(subs) / 100;
+      activeSubscriptions = subs.filter(function(s) { return s.status === 'active'; }).length;
+    } catch (stripeErr: any) {
+      log.warn('Admin metrics: Stripe subscriptions could not be read', { err: stripeErr?.message });
+    }
 
     // Get revenue from quiz_payments
     var paymentsResult = await supabase.from('quiz_payments').select('id, amount_cents, created_at');
@@ -3781,19 +3768,40 @@ adminAnalyticsRouter.get('/metrics', requireAuth, attachUser, async (req: Authen
         avgPerUser: totalUsers > 0 ? Math.round(totalLeads / totalUsers * 100) / 100 : 0
       },
       revenue: {
-        mrr: Math.round(mrr * 100) / 100,
+        // null when Stripe could not be read (shown as "unavailable", never guessed from stored plans)
+        mrr: mrr === null ? null : Math.round(mrr * 100) / 100,
+        mrrSource: mrr === null ? 'unavailable' : 'stripe',
+        activeSubscriptions: activeSubscriptions,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         thisMonth: Math.round(revenueThisMonth * 100) / 100,
         quizPaymentsCount: allPayments.length
       },
       metrics: {
         estimatedChurnRate: estimatedChurnRate,
-        activationRate: totalUsers > 0 ? Math.round((publishedQuizzes / totalUsers) * 100) : 0,
+        // share of accounts with at least one published quiz
+        activationRate: totalUsers > 0 ? Math.round((usersWithPublishedQuiz / totalUsers) * 100) : 0,
         leadsPerQuiz: totalQuizzes > 0 ? Math.round((totalLeads / totalQuizzes) * 100) / 100 : 0
       }
     });
   } catch (err: any) {
     log.error('Admin metrics error:', { err: err });
     res.status(500).json({ error: err.message ?? 'Failed to fetch metrics' });
+  }
+});
+
+/**
+ * GET /api/admin/customers
+ * Requires admin authentication. Every account with plan, Stripe-confirmed billing, usage and sign-in details
+ * (services/adminCustomers.ts). Read-only; no password hashes, sessions or tokens.
+ */
+adminAnalyticsRouter.get('/customers', requireAuth, attachUser, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!(await ensureAdmin(req, res))) return;
+    var report = await buildCustomersReport({ stripe: stripe, isAdmin: isAdminUser });
+    res.set('Cache-Control', 'no-store');
+    return res.json(report);
+  } catch (err: any) {
+    log.error('Admin customers error:', { err: err });
+    res.status(500).json({ error: 'Failed to load customers' });
   }
 });
