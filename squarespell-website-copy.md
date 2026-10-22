@@ -226,7 +226,7 @@ Same code block as the hero:
 
 **Links:**
 - Product: Features, Pricing, How it works
-- Company: About, Contact (info@squarespell.com), Blog
+- Company: About, Contact (info@squarespellquiz.com), Blog
 - Legal: Privacy Policy, Terms of Service
 - App: Sign in (app.squarespell.com/sign-in), Start free trial (app.squarespell.com/sign-up)
 

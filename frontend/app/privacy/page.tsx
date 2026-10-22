@@ -78,7 +78,7 @@ export default function PrivacyPage() {
 
         <Section title="Contact">
           Questions about this policy can be sent to{' '}
-          <a href="mailto:info@squarespell.com" style={{ color: '#3154FF' }}>info@squarespell.com</a>.
+          <a href="mailto:info@squarespellquiz.com" style={{ color: '#3154FF' }}>info@squarespellquiz.com</a>.
         </Section>
       </div>
     </div>

@@ -153,7 +153,7 @@ export default function SettingsPage() {
               <div style={{ fontSize: 15, color: C.GRAY_600 }}>Visit our help center or contact our support team.</div>
             </div>
             <a href="/support" target="_blank" rel="noopener noreferrer" className="st-btn" style={{ height: 46 }}>Help center ↗</a>
-            <a href="mailto:support@squarespell.com" className="st-btn" style={{ height: 46, background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>Contact support</a>
+            <a href="mailto:info@squarespellquiz.com" className="st-btn" style={{ height: 46, background: C.ACCENT, color: '#fff', borderColor: C.ACCENT }}>Contact support</a>
           </section>
         </>
       )}

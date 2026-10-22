@@ -170,7 +170,7 @@ describe('messages', () => {
     const msg = analyzeFailureMessage({ errorName: 'network_error', elapsedMs: 5000, retried: true });
     expect(msg).not.toMatch(/failed to fetch/i);
     expect(msg).toMatch(/could not reach our servers/i);
-    expect(msg).toContain('info@squarespell.com');
+    expect(msg).toContain('info@squarespellquiz.com');
   });
 
   it('an address that cannot be read says so and points to templates', () => {

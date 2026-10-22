@@ -147,7 +147,7 @@ export async function analyzeSite(url: string, opts: AnalyzeOptions): Promise<An
 /* ------------------------------------------------------------------ */
 
 /** Where visitors can write when trying again does not help. */
-export const SUPPORT_EMAIL = 'info@squarespell.com';
+export const SUPPORT_EMAIL = 'info@squarespellquiz.com';
 
 export function rateLimitMessage(retryAfterSeconds?: number): string {
   if (!retryAfterSeconds || retryAfterSeconds <= 0) {
